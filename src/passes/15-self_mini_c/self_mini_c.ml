@@ -5,7 +5,7 @@ open Simple_utils.Trace
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->
-    let binder = Var.fresh () in
+    let binder = ValueVar.fresh () in
     let var = e_var binder in_ty in
     let app = e_application e out_ty var in
     { binder = binder ; body = app }
@@ -51,9 +51,9 @@ let get_function_or_eta_expand_views ~raise : expression -> anon_function * (typ
       fun (_,ty) -> trace_option ~raise err @@ Mini_c.get_t_function ty
     in
     let view_tys = List.map ~f:aux lst in
-    let arg = Var.fresh ~name:"_dummy" () in
+    let arg = ValueVar.fresh ~name:"_dummy" () in
     (* let arg_ty = Mini_c.t_tuple @@ List.map ~f:(fun (in_ty,_) -> (None, in_ty)) view_tys in *)
-    let v_prg = Var.fresh () in
+    let v_prg = ValueVar.fresh () in
     let aux : int -> (type_expression * type_expression) -> expression =
       fun i (in_ty,out_ty) ->
         (* let var = e_proj (e_var arg arg_ty) in_ty i i in *)
@@ -357,7 +357,7 @@ let beta ~raise:_ : bool ref -> expression -> expression =
 
   (** (let x = (let y = e1 in e2) in e3) ↦ (let y = e1 in let x = e2 in e3) *)
   | E_let_in ({ content = E_let_in (e1, inline2, ((y, b), e2)); _ }, inline1, ((x, a), e3)) ->
-    let y' = Var.fresh_like y in
+    let y' = ValueVar.fresh_like y in
     let e2 = Subst.replace e2 y y' in
     changed := true;
     {e with content = E_let_in (e1, inline2, ((y', b), {e with content = E_let_in (e2, inline1, ((x, a), e3))}))}
@@ -369,7 +369,7 @@ let beta ~raise:_ : bool ref -> expression -> expression =
   | E_application ({ content = E_let_in (e1, inline, ((x, a), e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then
-      let x' = Var.fresh_like x in
+      let x' = ValueVar.fresh_like x in
       let e2 = Subst.replace e2 x x' in
       changed := true;
       {e with content = E_let_in (e1, inline, ((x', a), {e with content = E_application (e2, e3)}))}
@@ -379,7 +379,7 @@ let beta ~raise:_ : bool ref -> expression -> expression =
   | E_application ({ content = E_let_tuple (e1, (vars, e2)); _ }, e3) ->
     if is_pure e1 || is_pure e3
     then
-      let vars = List.map ~f:(fun (x, a) -> (x, Var.fresh_like x, a)) vars in
+      let vars = List.map ~f:(fun (x, a) -> (x, ValueVar.fresh_like x, a)) vars in
       let e2 = List.fold_left vars ~init:e2 ~f:(fun e2 (x, x', _a) -> Subst.replace e2 x x') in
       let vars = List.map ~f:(fun (_x, x', a) -> (x', a)) vars in
       changed := true;
@@ -411,7 +411,7 @@ let eta ~raise:_ : bool ref -> expression -> expression =
                                                   { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_expression = _ ; location = _}]} ->
     (match (e1.content, e2.content) with
      | E_variable x1, E_variable x2 ->
-       if Var.equal x1 x2
+       if ValueVar.equal x1 x2
        then
          (changed := true;
           { e with content = e1.content })
@@ -438,7 +438,7 @@ let eta ~raise:_ : bool ref -> expression -> expression =
      | Some vars ->
        match vars with
        | var :: _ ->
-         if List.for_all ~f:(Var.equal var) vars
+         if List.for_all ~f:(ValueVar.equal var) vars
          then { e with content = E_variable var }
          else e
        | _ -> e)

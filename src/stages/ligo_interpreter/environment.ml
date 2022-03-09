@@ -12,7 +12,7 @@ let expressions :
 
 let lookup : env -> expression_variable -> (value_expr * bool) option
   = fun env var ->
-  List.Assoc.find (expressions env) ~equal:Var.equal var
+  List.Assoc.find (expressions env) ~equal:ValueVar.equal var
 
 let empty_env = []
 

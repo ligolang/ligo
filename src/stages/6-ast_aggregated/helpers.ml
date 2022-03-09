@@ -85,15 +85,15 @@ let is_michelson_pair (t: row_element label_map) : (row_element * row_element) o
 let rec subst_type v t (u : type_expression) =
   let self = subst_type in
   match u.type_content with
-  | T_variable v' when Var.equal v v' -> t
+  | T_variable v' when TypeVar.equal v v' -> t
   | T_arrow {type1;type2} ->
      let type1 = self v t type1 in
      let type2 = self v t type2 in
      { u with type_content = T_arrow {type1;type2} }
-  | T_abstraction {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_abstraction {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_for_all {ty_binder;kind;type_} }
   | T_constant {language;injection;parameters} ->
@@ -173,7 +173,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
-     if Var.equal x y then Some () else None
+     if TypeVar.equal x y then Some () else None
   | T_variable _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None

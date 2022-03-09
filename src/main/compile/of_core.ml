@@ -28,7 +28,7 @@ let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_t
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =
-  let name = Ast_core.Var.of_input_var entry_point in
+  let name = Ast_core.ValueVar.of_input_var entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content  = Ast_core.E_variable name ;
       sugar    = None ;

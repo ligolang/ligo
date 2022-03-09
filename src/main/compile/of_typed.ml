@@ -47,7 +47,7 @@ let apply_to_entrypoint_view ~raise : Ast_typed.program -> Ast_typed.expression_
 let apply_to_entrypoint ~raise : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
-  let v = Ast_typed.Var.of_input_var entrypoint in
+  let v = Ast_typed.ValueVar.of_input_var entrypoint in
   let ty, _ =
     trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_entry_type entrypoint prg in
   let var_ep = Ast_typed.(e_a_variable v ty) in
@@ -76,8 +76,8 @@ let get_views : Ast_typed.program -> (expression_variable * location) list = fun
   let f : (expression_variable * location) list -> declaration_loc -> (expression_variable * location) list =
     fun acc {wrap_content=decl ; location=_ } ->
       match decl with
-      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.Var.get_location binder)::acc
-      (* TODO: check for [@view] attributes in the AST and warn if [@view] is used anywhere other than top-level 
+      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.ValueVar.get_location binder)::acc
+      (* TODO: check for [@view] attributes in the AST and warn if [@view] is used anywhere other than top-level
         (e.g. warn if [@view] is used inside a module)
         Write a pass to check for known attributes (source_attributes -> known_attributes)
         *)

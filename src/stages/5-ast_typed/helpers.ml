@@ -112,9 +112,9 @@ let destruct_for_alls (t : type_expression) =
   in destruct_for_alls [] t
 
 (* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
-let destruct_arrows (t : type_expression) =
+let destruct_arrows_n (t : type_expression) (n : int) =
   let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
-    | T_arrow { type1 ; type2 } ->
+    | T_arrow { type1 ; type2 } when List.length type_vars < n ->
        destruct_arrows (type1 :: type_vars) type2
     | _ -> (type_vars, t)
   in destruct_arrows [] t
@@ -132,10 +132,10 @@ let build_applications_opt (lamb : expression) (args : expression list) =
   aux lamb args lamb.type_expression
 
 (* These tables are used during inference / for substitution *)
-module TMap = Simple_utils.Map.Make(struct type t = type_variable let compare x y = Var.compare x y end)
+module TMap = Simple_utils.Map.Make(TypeVar)
 
 (* Free type variables in a type *)
-module VarSet = Caml.Set.Make(Var)
+module VarSet = Caml.Set.Make(TypeVar)
 let rec get_fv_type_expression : type_expression -> VarSet.t = fun u ->
   let self = get_fv_type_expression in
   match u.type_content with
@@ -168,25 +168,25 @@ let rec get_fv_type_expression : type_expression -> VarSet.t = fun u ->
 let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   let self = subst_type ~fv in
   match u.type_content with
-  | T_variable v' when Var.equal v v' -> t
+  | T_variable v' when TypeVar.equal v v' -> t
   | T_arrow {type1;type2} ->
      let type1 = self v t type1 in
      let type2 = self v t type2 in
      { u with type_content = T_arrow {type1;type2} }
   | T_abstraction {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
-     let ty_binder' = Var.fresh () in
+     let ty_binder' = TypeVar.fresh () in
      let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
      let ty_binder = ty_binder' in
      self v t { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_abstraction {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_abstraction {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_abstraction {ty_binder;kind;type_} }
   | T_for_all {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
-     let ty_binder' = Var.fresh () in
+     let ty_binder' = TypeVar.fresh () in
      let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
      let ty_binder = ty_binder' in
      self v t { u with type_content = T_for_all {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_for_all {ty_binder;kind;type_} }
   | T_constant {language;injection;parameters} ->

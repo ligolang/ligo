@@ -4,7 +4,7 @@ module Function = Simple_utils.Function
 open Simple_utils.Trace
 open Test_helpers
 open Main_errors
-let get_program = get_program "./contracts/coase.ligo" (Contract (Stage_common.Var.of_input_var "main"))
+let get_program = get_program "./contracts/coase.ligo"
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/coase.ligo" ()
 

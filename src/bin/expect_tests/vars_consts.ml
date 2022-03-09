@@ -286,29 +286,29 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let env_rec#1 = ( ( i ) ) in
-                                    let env_rec#1 =
-                                      LOOP_LEFT(lambda (binder#2) return
-                                                let i = binder#2.0.0 in
+                                    let env_rec#2 = ( ( i ) ) in
+                                    let env_rec#2 =
+                                      LOOP_LEFT(lambda (binder#3) return
+                                                let i = binder#3.0.0 in
                                                  match AND(LT(i , x) , GT(b , 0)) with
                                                   | True () -> LOOP_CONTINUE
                                                                (let i =
                                                                   ADD(i , 1) in
-                                                                let binder#2 =
-                                                                  { binder#2 with
+                                                                let binder#3 =
+                                                                  { binder#3 with
                                                                     { 0 =
-                                                                  { binder#2.0
+                                                                  { binder#3.0
                                                                     with
                                                                     { 0 =
                                                                   i } } } } in
-                                                                let ()#3 : unit =
+                                                                let ()#4 : unit =
                                                                   unit in
-                                                                binder#2)
+                                                                binder#3)
                                                   | False () -> LOOP_STOP
-                                                                (binder#2) ,
-                                                env_rec#1) in
-                                    let env_rec#1 = env_rec#1.0 in
-                                    let i = env_rec#1.0 in i |}]
+                                                                (binder#3) ,
+                                                env_rec#2) in
+                                    let env_rec#2 = env_rec#2.0 in
+                                    let i = env_rec#2.0 in i |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;
@@ -331,7 +331,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
     const foo[@var] =
-      rec (foo:unit -> int => lambda (_#1 : unit) : int return  match (4 , 5) with
+      rec (foo:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
                                                                  | (x[@var],y[@var]) -> {
 
                                                                    x := 2;
@@ -341,8 +341,8 @@ let%expect_test _ =
                                                                    }
                                                                  } )[@@private]
     const bar[@var] =
-      rec (bar:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
+      rec (bar:unit -> int => lambda (_#3 : unit) : int return  match (4 , 5) with
                                                                  | (x,y) ->
-                                                                 let add[@var] = rec (add:unit -> int => lambda (_#3 : unit) : int return C_POLYMORPHIC_ADD(x ,y) )[@@private] in
+                                                                 let add[@var] = rec (add:unit -> int => lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y) )[@@private] in
                                                                  (add)@(unit) )[@@private] |}]
 

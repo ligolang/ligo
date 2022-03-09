@@ -1,10 +1,22 @@
 (ocamllex md)
 
 (executables
- (names test doc_test repl_test parser_negative_tests vendors_test
-   contract_test mydebugplease)
- (libraries simple-utils tezos-memory-proto-alpha ligo repl interpreter
-   alcotest tezos-utils tezos-crypto))
+ (names
+  test
+  doc_test
+  repl_test
+  parser_negative_tests
+  vendors_test
+  contract_test)
+ (libraries
+  simple-utils
+  tezos-memory-proto-alpha
+  ligo
+  repl
+  interpreter
+  alcotest
+  tezos-utils
+  tezos-crypto))
 
 (rule
  (alias doc-test)
@@ -25,9 +37,10 @@
  (alias parser-negative-tests)
  (action
   (run ./parser_negative_tests.exe))
- (deps ../passes/02-parsing/pascaligo/all.ligo
-   ../passes/02-parsing/cameligo/all.mligo
-   ../passes/02-parsing/reasonligo/all.religo))
+ (deps
+  ../passes/02-parsing/pascaligo/all.ligo
+  ../passes/02-parsing/cameligo/all.mligo
+  ../passes/02-parsing/reasonligo/all.religo))
 
 (rule
  (alias ligo-test)

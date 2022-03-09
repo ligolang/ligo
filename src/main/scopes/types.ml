@@ -9,7 +9,7 @@ module Definitions = struct
     | Unresolved
 
   type vdef = {
-    name  : Ast_core.expression_variable;
+    name  : string ;
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
@@ -17,7 +17,7 @@ module Definitions = struct
   }
 
   type tdef = {
-    name : string ;
+    name  : string ;
     range : Location.t ;
     body_range : Location.t ;
     content : Ast_core.type_expression ;
@@ -51,7 +51,7 @@ module Definitions = struct
     Def_map.union merge_refs a b
 
   let get_def_name = function
-    | Variable    d -> Ast_core.Var.to_name_exn d.name
+    | Variable    d -> d.name
     | Type        d -> d.name
     | Module      d -> d.name
 
@@ -60,7 +60,7 @@ module Definitions = struct
     | Variable    v -> v.range
     | Module      m -> m.range
 
-  let make_v_def : Ast_core.expression_variable -> type_case -> Location.t -> Location.t -> def =
+  let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
       Variable { name ; range ; body_range ; t ; references = [] }
 
@@ -75,14 +75,14 @@ module Definitions = struct
   let add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
-      | Variable v -> Ast_core.Var.equal v.name x
+      | Variable v -> Ast_core.ValueVar.is_name x v.name
       | (Type _ | Module _ ) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (Ast_core.Var.get_location x :: v.references) })
+        | Some (Variable v) -> Some (Variable { v with references = (Ast_core.ValueVar.get_location x :: v.references) })
         | Some x -> Some x
         | None -> None
       in

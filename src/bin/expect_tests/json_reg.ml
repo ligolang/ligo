@@ -11,7 +11,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "threshold",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -36,15 +36,17 @@ let%expect_test _ =
                 "point_bol": 17
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "nat",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -108,7 +110,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "max_proposal",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -133,15 +135,17 @@ let%expect_test _ =
                 "point_bol": 39
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "nat",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -205,7 +209,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "max_message_size",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -230,15 +234,17 @@ let%expect_test _ =
                 "point_bol": 64
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "nat",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -302,7 +308,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "state_hash",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -327,15 +333,17 @@ let%expect_test _ =
                 "point_bol": 93
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "bytes",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -399,7 +407,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "addr_set",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -424,7 +432,8 @@ let%expect_test _ =
                 "point_bol": 118
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -432,7 +441,7 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "set",
-                "counter": null,
+                "counter": 0,
                 "location": [
                   "File",
                   {
@@ -457,7 +466,8 @@ let%expect_test _ =
                       "point_bol": 118
                     }
                   }
-                ]
+                ],
+                "generated": false
               },
               "arguments": [
                 {
@@ -465,8 +475,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "address",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -561,7 +572,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "message_store",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -586,7 +597,8 @@ let%expect_test _ =
                 "point_bol": 149
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -594,7 +606,7 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "map",
-                "counter": null,
+                "counter": 0,
                 "location": [
                   "File",
                   {
@@ -619,7 +631,8 @@ let%expect_test _ =
                       "point_bol": 149
                     }
                   }
-                ]
+                ],
+                "generated": false
               },
               "arguments": [
                 {
@@ -627,8 +640,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "bytes",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -664,8 +678,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "addr_set",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -760,7 +775,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "proposal_counters",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -785,7 +800,8 @@ let%expect_test _ =
                 "point_bol": 193
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -793,7 +809,7 @@ let%expect_test _ =
             {
               "type_operator": {
                 "name": "map",
-                "counter": null,
+                "counter": 0,
                 "location": [
                   "File",
                   {
@@ -818,7 +834,8 @@ let%expect_test _ =
                       "point_bol": 193
                     }
                   }
-                ]
+                ],
+                "generated": false
               },
               "arguments": [
                 {
@@ -826,8 +843,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "address",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -863,8 +881,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "nat",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -959,7 +978,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "storage",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -984,7 +1003,8 @@ let%expect_test _ =
                 "point_bol": 239
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -997,8 +1017,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "state_hash",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1039,8 +1060,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "threshold",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1081,8 +1103,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "max_proposal",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1123,8 +1146,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "max_message_size",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1165,8 +1189,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "addr_set",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1207,8 +1232,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "message_store",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1249,8 +1275,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "proposal_counters",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -1348,7 +1375,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "message",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -1373,7 +1400,8 @@ let%expect_test _ =
                 "point_bol": 572
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -1384,8 +1412,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "bytes",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -1420,7 +1449,7 @@ let%expect_test _ =
                   {
                     "type_operator": {
                       "name": "list",
-                      "counter": null,
+                      "counter": 0,
                       "location": [
                         "File",
                         {
@@ -1447,7 +1476,8 @@ let%expect_test _ =
                             "point_bol": 572
                           }
                         }
-                      ]
+                      ],
+                      "generated": false
                     },
                     "arguments": [
                       {
@@ -1455,8 +1485,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "operation",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -1579,7 +1610,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "send_pt",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -1604,15 +1635,17 @@ let%expect_test _ =
                 "point_bol": 614
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "message",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -1676,7 +1709,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "withdraw_pt",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -1701,15 +1734,17 @@ let%expect_test _ =
                 "point_bol": 638
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "message",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -1773,7 +1808,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "default_pt",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -1798,15 +1833,17 @@ let%expect_test _ =
                 "point_bol": 666
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
             "t_variable",
             {
               "name": "unit",
-              "counter": null,
-              "location": [ "Virtual", "dummy" ]
+              "counter": 0,
+              "location": [ "Virtual", "dummy" ],
+              "generated": false
             }
           ],
           "location": [
@@ -1870,7 +1907,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "return",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -1895,7 +1932,8 @@ let%expect_test _ =
                 "point_bol": 691
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -1907,7 +1945,7 @@ let%expect_test _ =
                   {
                     "type_operator": {
                       "name": "list",
-                      "counter": null,
+                      "counter": 0,
                       "location": [
                         "File",
                         {
@@ -1934,7 +1972,8 @@ let%expect_test _ =
                             "point_bol": 691
                           }
                         }
-                      ]
+                      ],
+                      "generated": false
                     },
                     "arguments": [
                       {
@@ -1942,8 +1981,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "operation",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -2008,8 +2048,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "storage",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -2101,7 +2142,7 @@ let%expect_test _ =
       {
         "type_binder": {
           "name": "parameter",
-          "counter": null,
+          "counter": 0,
           "location": [
             "File",
             {
@@ -2126,7 +2167,8 @@ let%expect_test _ =
                 "point_bol": 734
               }
             }
-          ]
+          ],
+          "generated": false
         },
         "type_expr": {
           "type_content": [
@@ -2139,8 +2181,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "send_pt",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -2181,8 +2224,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "withdraw_pt",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -2223,8 +2267,9 @@ let%expect_test _ =
                      "t_variable",
                      {
                        "name": "default_pt",
-                       "counter": null,
-                       "location": [ "Virtual", "dummy" ]
+                       "counter": 0,
+                       "location": [ "Virtual", "dummy" ],
+                       "generated": false
                      }
                    ],
                    "location": [
@@ -2323,7 +2368,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "send",
-            "counter": null,
+            "counter": 0,
             "location": [
               "File",
               {
@@ -2348,7 +2393,8 @@ let%expect_test _ =
                   "point_bol": 826
                 }
               }
-            ]
+            ],
+            "generated": false
           },
           "ty": {
             "type_content": [
@@ -2363,8 +2409,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "send_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -2400,8 +2447,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -2441,8 +2489,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "return",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -2485,8 +2534,9 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 1,
-                  "location": [ "Virtual", "dummy" ]
+                  "counter": 2,
+                  "location": [ "Virtual", "dummy" ],
+                  "generated": true
                 },
                 "ty": {
                   "type_content": [
@@ -2497,8 +2547,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "send_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -2534,8 +2585,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -2577,8 +2629,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "return",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -2616,8 +2669,9 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 1,
-                          "location": [ "Virtual", "dummy" ]
+                          "counter": 2,
+                          "location": [ "Virtual", "dummy" ],
+                          "generated": true
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -2632,7 +2686,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -2659,15 +2713,17 @@ let%expect_test _ =
                                         "point_bol": 826
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "send_pt",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -2706,7 +2762,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -2733,15 +2789,17 @@ let%expect_test _ =
                                         "point_bol": 826
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "storage",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -2851,8 +2909,7 @@ let%expect_test _ =
                                                               "E_variable",
                                                               {
                                                                 "name": "s",
-                                                                "counter":
-                                                                  null,
+                                                                "counter": 0,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -2889,7 +2946,9 @@ let%expect_test _ =
                                                                     957
                                                                     }
                                                                   }
-                                                                ]
+                                                                ],
+                                                                "generated":
+                                                                  false
                                                               }
                                                             ],
                                                             "location": [
@@ -3177,7 +3236,7 @@ let%expect_test _ =
                                     "let_binder": {
                                       "var": {
                                         "name": "message",
-                                        "counter": null,
+                                        "counter": 0,
                                         "location": [
                                           "File",
                                           {
@@ -3204,17 +3263,19 @@ let%expect_test _ =
                                               "point_bol": 1125
                                             }
                                           }
-                                        ]
+                                        ],
+                                        "generated": false
                                       },
                                       "ty": {
                                         "type_content": [
                                           "t_variable",
                                           {
                                             "name": "message",
-                                            "counter": null,
+                                            "counter": 0,
                                             "location": [
                                               "Virtual", "dummy"
-                                            ]
+                                            ],
+                                            "generated": false
                                           }
                                         ],
                                         "location": [
@@ -3252,7 +3313,7 @@ let%expect_test _ =
                                         "E_variable",
                                         {
                                           "name": "param",
-                                          "counter": null,
+                                          "counter": 0,
                                           "location": [
                                             "File",
                                             {
@@ -3279,7 +3340,8 @@ let%expect_test _ =
                                                 "point_bol": 1125
                                               }
                                             }
-                                          ]
+                                          ],
+                                          "generated": false
                                         }
                                       ],
                                       "location": [
@@ -3317,7 +3379,7 @@ let%expect_test _ =
                                           "let_binder": {
                                             "var": {
                                               "name": "packed_msg",
-                                              "counter": null,
+                                              "counter": 0,
                                               "location": [
                                                 "File",
                                                 {
@@ -3344,17 +3406,19 @@ let%expect_test _ =
                                                     "point_bol": 1161
                                                   }
                                                 }
-                                              ]
+                                              ],
+                                              "generated": false
                                             },
                                             "ty": {
                                               "type_content": [
                                                 "t_variable",
                                                 {
                                                   "name": "bytes",
-                                                  "counter": null,
+                                                  "counter": 0,
                                                   "location": [
                                                     "Virtual", "dummy"
-                                                  ]
+                                                  ],
+                                                  "generated": false
                                                 }
                                               ],
                                               "location": [
@@ -3401,7 +3465,7 @@ let%expect_test _ =
                                                       "E_variable",
                                                       {
                                                         "name": "message",
-                                                        "counter": null,
+                                                        "counter": 0,
                                                         "location": [
                                                           "File",
                                                           {
@@ -3438,7 +3502,8 @@ let%expect_test _ =
                                                                 1161
                                                             }
                                                           }
-                                                        ]
+                                                        ],
+                                                        "generated": false
                                                       }
                                                     ],
                                                     "location": [
@@ -3535,7 +3600,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3572,7 +3637,9 @@ let%expect_test _ =
                                                                     1214
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -3665,7 +3732,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3702,7 +3769,9 @@ let%expect_test _ =
                                                                     1214
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4010,7 +4079,7 @@ let%expect_test _ =
                                                       "let_binder": {
                                                         "var": {
                                                           "name": "new_store",
-                                                          "counter": null,
+                                                          "counter": 0,
                                                           "location": [
                                                             "File",
                                                             {
@@ -4047,7 +4116,8 @@ let%expect_test _ =
                                                                   1439
                                                               }
                                                             }
-                                                          ]
+                                                          ],
+                                                          "generated": false
                                                         },
                                                         "ty": {
                                                           "type_content": [
@@ -4055,11 +4125,13 @@ let%expect_test _ =
                                                             {
                                                               "name":
                                                                 "addr_set",
-                                                              "counter": null,
+                                                              "counter": 0,
                                                               "location": [
                                                                 "Virtual",
                                                                 "dummy"
-                                                              ]
+                                                              ],
+                                                              "generated":
+                                                                false
                                                             }
                                                           ],
                                                           "location": [
@@ -4174,7 +4246,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4211,7 +4283,9 @@ let%expect_test _ =
                                                                     1480
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4263,7 +4337,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4300,7 +4374,9 @@ let%expect_test _ =
                                                                     1480
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4443,7 +4519,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "voters",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4480,7 +4556,9 @@ let%expect_test _ =
                                                                     1532
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -4567,7 +4645,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "voters",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4604,7 +4682,9 @@ let%expect_test _ =
                                                                     1729
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4737,7 +4817,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4774,7 +4854,9 @@ let%expect_test _ =
                                                                     1793
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -4789,7 +4871,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4826,7 +4908,9 @@ let%expect_test _ =
                                                                     1793
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5025,7 +5109,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5062,7 +5146,9 @@ let%expect_test _ =
                                                                     1845
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5288,7 +5374,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5325,7 +5411,9 @@ let%expect_test _ =
                                                                     1793
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5581,7 +5669,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5618,7 +5706,9 @@ let%expect_test _ =
                                                                     1914
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -5692,7 +5782,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "voters",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5729,7 +5819,9 @@ let%expect_test _ =
                                                                     1914
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5883,7 +5975,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5920,7 +6012,9 @@ let%expect_test _ =
                                                                     2070
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -5935,7 +6029,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5972,7 +6066,9 @@ let%expect_test _ =
                                                                     2070
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6175,7 +6271,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6212,7 +6308,9 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6438,7 +6536,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6475,7 +6573,9 @@ let%expect_test _ =
                                                                     2070
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6691,7 +6791,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6728,7 +6828,9 @@ let%expect_test _ =
                                                                     2176
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -6926,7 +7028,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "sender_proposal_counter",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6963,7 +7065,9 @@ let%expect_test _ =
                                                                     2308
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -6972,11 +7076,13 @@ let%expect_test _ =
                                                                     "name":
                                                                     "nat",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7098,7 +7204,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7135,7 +7241,9 @@ let%expect_test _ =
                                                                     2349
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7289,7 +7397,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "sender_proposal_counter",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7326,7 +7434,9 @@ let%expect_test _ =
                                                                     2403
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7378,7 +7488,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7415,7 +7525,9 @@ let%expect_test _ =
                                                                     2403
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7736,7 +7848,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "ret_ops",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7773,7 +7885,9 @@ let%expect_test _ =
                                                                     2552
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -7783,7 +7897,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "list",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7820,7 +7934,9 @@ let%expect_test _ =
                                                                     2552
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "arguments": [
                                                                     {
@@ -7830,11 +7946,13 @@ let%expect_test _ =
                                                                     "name":
                                                                     "operation",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7999,7 +8117,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8036,7 +8154,9 @@ let%expect_test _ =
                                                                     2596
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8129,7 +8249,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8166,7 +8286,9 @@ let%expect_test _ =
                                                                     2596
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8306,7 +8428,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8343,7 +8465,9 @@ let%expect_test _ =
                                                                     2650
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -8358,7 +8482,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8395,7 +8519,9 @@ let%expect_test _ =
                                                                     2650
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8460,7 +8586,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8497,7 +8623,9 @@ let%expect_test _ =
                                                                     2650
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8549,7 +8677,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8586,7 +8714,9 @@ let%expect_test _ =
                                                                     2650
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8806,7 +8936,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "ret_ops",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8843,7 +8973,9 @@ let%expect_test _ =
                                                                     2700
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -8858,7 +8990,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "message",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8895,7 +9027,9 @@ let%expect_test _ =
                                                                     2700
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8947,7 +9081,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8984,7 +9118,9 @@ let%expect_test _ =
                                                                     2700
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9163,7 +9299,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9200,7 +9336,9 @@ let%expect_test _ =
                                                                     2772
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -9215,7 +9353,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9252,7 +9390,9 @@ let%expect_test _ =
                                                                     2772
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9299,7 +9439,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9336,7 +9476,9 @@ let%expect_test _ =
                                                                     2772
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9430,7 +9572,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9467,7 +9609,9 @@ let%expect_test _ =
                                                                     2772
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9679,7 +9823,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "addr",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9716,7 +9860,9 @@ let%expect_test _ =
                                                                     2883
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     [
                                                                     "Some",
@@ -9724,7 +9870,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "ctr",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9761,7 +9907,9 @@ let%expect_test _ =
                                                                     2883
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ]
                                                                     ],
@@ -9776,7 +9924,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9813,7 +9961,9 @@ let%expect_test _ =
                                                                     2883
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9926,7 +10076,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "addr",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9963,7 +10113,9 @@ let%expect_test _ =
                                                                     2940
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10011,7 +10163,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10048,7 +10200,9 @@ let%expect_test _ =
                                                                     2940
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10138,7 +10292,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10175,7 +10329,9 @@ let%expect_test _ =
                                                                     2982
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -10190,7 +10346,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10227,7 +10383,9 @@ let%expect_test _ =
                                                                     2982
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10292,7 +10450,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "addr",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10329,7 +10487,9 @@ let%expect_test _ =
                                                                     2982
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10399,7 +10559,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "ctr",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10436,7 +10596,9 @@ let%expect_test _ =
                                                                     2982
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10616,7 +10778,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10653,7 +10815,9 @@ let%expect_test _ =
                                                                     2982
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11013,7 +11177,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11050,7 +11214,9 @@ let%expect_test _ =
                                                                     3062
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -11065,7 +11231,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11102,7 +11268,9 @@ let%expect_test _ =
                                                                     3062
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11167,7 +11335,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11204,7 +11372,9 @@ let%expect_test _ =
                                                                     3062
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11252,7 +11422,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11289,7 +11459,9 @@ let%expect_test _ =
                                                                     3062
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11341,7 +11513,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11378,7 +11550,9 @@ let%expect_test _ =
                                                                     3062
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11637,7 +11811,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "ret_ops",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11674,7 +11848,9 @@ let%expect_test _ =
                                                                     3114
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11722,7 +11898,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11759,7 +11935,9 @@ let%expect_test _ =
                                                                     3114
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12070,20 +12248,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 36,
                   "pos_bol": 826,
-                  "pos_cnum": 835
+                  "pos_cnum": 826
                 },
-                "point_num": 835,
+                "point_num": 826,
                 "point_bol": 826
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 36,
-                  "pos_bol": 826,
-                  "pos_cnum": 839
+                  "pos_lnum": 103,
+                  "pos_bol": 3114,
+                  "pos_cnum": 3135
                 },
-                "point_num": 839,
-                "point_bol": 826
+                "point_num": 3135,
+                "point_bol": 3114
               }
             }
           ]
@@ -12124,7 +12302,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "withdraw",
-            "counter": null,
+            "counter": 0,
             "location": [
               "File",
               {
@@ -12149,7 +12327,8 @@ let%expect_test _ =
                   "point_bol": 3137
                 }
               }
-            ]
+            ],
+            "generated": false
           },
           "ty": {
             "type_content": [
@@ -12164,8 +12343,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "withdraw_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -12201,8 +12381,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -12242,8 +12423,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "return",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -12286,8 +12468,9 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 2,
-                  "location": [ "Virtual", "dummy" ]
+                  "counter": 3,
+                  "location": [ "Virtual", "dummy" ],
+                  "generated": true
                 },
                 "ty": {
                   "type_content": [
@@ -12298,8 +12481,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "withdraw_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -12335,8 +12519,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -12378,8 +12563,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "return",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -12417,8 +12603,9 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 2,
-                          "location": [ "Virtual", "dummy" ]
+                          "counter": 3,
+                          "location": [ "Virtual", "dummy" ],
+                          "generated": true
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -12433,7 +12620,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -12460,15 +12647,17 @@ let%expect_test _ =
                                         "point_bol": 3137
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "withdraw_pt",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -12507,7 +12696,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -12534,15 +12723,17 @@ let%expect_test _ =
                                         "point_bol": 3137
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "storage",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -12585,7 +12776,7 @@ let%expect_test _ =
                               "let_binder": {
                                 "var": {
                                   "name": "message",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -12612,15 +12803,17 @@ let%expect_test _ =
                                         "point_bol": 3222
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "message",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -12658,7 +12851,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "param",
-                                    "counter": null,
+                                    "counter": 0,
                                     "location": [
                                       "File",
                                       {
@@ -12685,7 +12878,8 @@ let%expect_test _ =
                                           "point_bol": 3222
                                         }
                                       }
-                                    ]
+                                    ],
+                                    "generated": false
                                   }
                                 ],
                                 "location": [
@@ -12723,7 +12917,7 @@ let%expect_test _ =
                                     "let_binder": {
                                       "var": {
                                         "name": "packed_msg",
-                                        "counter": null,
+                                        "counter": 0,
                                         "location": [
                                           "File",
                                           {
@@ -12750,17 +12944,19 @@ let%expect_test _ =
                                               "point_bol": 3258
                                             }
                                           }
-                                        ]
+                                        ],
+                                        "generated": false
                                       },
                                       "ty": {
                                         "type_content": [
                                           "t_variable",
                                           {
                                             "name": "bytes",
-                                            "counter": null,
+                                            "counter": 0,
                                             "location": [
                                               "Virtual", "dummy"
-                                            ]
+                                            ],
+                                            "generated": false
                                           }
                                         ],
                                         "location": [
@@ -12807,7 +13003,7 @@ let%expect_test _ =
                                                 "E_variable",
                                                 {
                                                   "name": "message",
-                                                  "counter": null,
+                                                  "counter": 0,
                                                   "location": [
                                                     "File",
                                                     {
@@ -12834,7 +13030,8 @@ let%expect_test _ =
                                                         "point_bol": 3258
                                                       }
                                                     }
-                                                  ]
+                                                  ],
+                                                  "generated": false
                                                 }
                                               ],
                                               "location": [
@@ -12918,7 +13115,7 @@ let%expect_test _ =
                                                                 {
                                                                   "name": "s",
                                                                   "counter":
-                                                                    null,
+                                                                    0,
                                                                   "location": [
                                                                     "File",
                                                                     {
@@ -12955,7 +13152,9 @@ let%expect_test _ =
                                                                     3312
                                                                     }
                                                                     }
-                                                                  ]
+                                                                  ],
+                                                                  "generated":
+                                                                    false
                                                                 }
                                                               ],
                                                               "location": [
@@ -13051,8 +13250,7 @@ let%expect_test _ =
                                                               {
                                                                 "name":
                                                                   "packed_msg",
-                                                                "counter":
-                                                                  null,
+                                                                "counter": 0,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -13089,7 +13287,9 @@ let%expect_test _ =
                                                                     3312
                                                                     }
                                                                   }
-                                                                ]
+                                                                ],
+                                                                "generated":
+                                                                  false
                                                               }
                                                             ],
                                                             "location": [
@@ -13172,7 +13372,7 @@ let%expect_test _ =
                                                         {
                                                           "var": {
                                                             "name": "voters",
-                                                            "counter": null,
+                                                            "counter": 0,
                                                             "location": [
                                                               "File",
                                                               {
@@ -13209,7 +13409,9 @@ let%expect_test _ =
                                                                     3354
                                                                 }
                                                               }
-                                                            ]
+                                                            ],
+                                                            "generated":
+                                                              false
                                                           },
                                                           "ty": null,
                                                           "const_or_var":
@@ -13225,7 +13427,7 @@ let%expect_test _ =
                                                             "var": {
                                                               "name":
                                                                 "new_set",
-                                                              "counter": null,
+                                                              "counter": 0,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -13262,7 +13464,9 @@ let%expect_test _ =
                                                                     3428
                                                                   }
                                                                 }
-                                                              ]
+                                                              ],
+                                                              "generated":
+                                                                false
                                                             },
                                                             "ty": {
                                                               "type_content": [
@@ -13271,11 +13475,13 @@ let%expect_test _ =
                                                                   "name":
                                                                     "addr_set",
                                                                   "counter":
-                                                                    null,
+                                                                    0,
                                                                   "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                  ]
+                                                                  ],
+                                                                  "generated":
+                                                                    false
                                                                 }
                                                               ],
                                                               "location": [
@@ -13389,7 +13595,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "voters",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13426,7 +13632,9 @@ let%expect_test _ =
                                                                     3428
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13545,7 +13753,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "voters",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13582,7 +13790,9 @@ let%expect_test _ =
                                                                     3612
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13682,7 +13892,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_set",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13719,7 +13929,9 @@ let%expect_test _ =
                                                                     3612
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13850,7 +14062,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13887,7 +14099,9 @@ let%expect_test _ =
                                                                     3674
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -13902,7 +14116,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13939,7 +14153,9 @@ let%expect_test _ =
                                                                     3674
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14149,7 +14365,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14186,7 +14402,9 @@ let%expect_test _ =
                                                                     3726
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14453,7 +14671,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14490,7 +14708,9 @@ let%expect_test _ =
                                                                     3674
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14814,7 +15034,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_set",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14851,7 +15071,9 @@ let%expect_test _ =
                                                                     3954
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15028,7 +15250,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15065,7 +15287,9 @@ let%expect_test _ =
                                                                     3995
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -15080,7 +15304,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15117,7 +15341,9 @@ let%expect_test _ =
                                                                     3995
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15182,7 +15408,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15219,7 +15445,9 @@ let%expect_test _ =
                                                                     3995
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15271,7 +15499,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15308,7 +15536,9 @@ let%expect_test _ =
                                                                     3995
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15524,7 +15754,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15561,7 +15791,9 @@ let%expect_test _ =
                                                                     4053
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -15576,7 +15808,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15613,7 +15845,9 @@ let%expect_test _ =
                                                                     4053
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15678,7 +15912,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "packed_msg",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15715,7 +15949,9 @@ let%expect_test _ =
                                                                     4053
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15763,7 +15999,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "new_set",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15800,7 +16036,9 @@ let%expect_test _ =
                                                                     4053
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15852,7 +16090,7 @@ let%expect_test _ =
                                                                     "name":
                                                                     "s",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15889,7 +16127,9 @@ let%expect_test _ =
                                                                     4053
                                                                     }
                                                                     }
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16308,7 +16548,7 @@ let%expect_test _ =
                                                           {
                                                             "type_operator": {
                                                               "name": "list",
-                                                              "counter": null,
+                                                              "counter": 0,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -16345,7 +16585,9 @@ let%expect_test _ =
                                                                     4180
                                                                   }
                                                                 }
-                                                              ]
+                                                              ],
+                                                              "generated":
+                                                                false
                                                             },
                                                             "arguments": [
                                                               {
@@ -16355,11 +16597,13 @@ let%expect_test _ =
                                                                     "name":
                                                                     "operation",
                                                                     "counter":
-                                                                    null,
+                                                                    0,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ]
+                                                                    ],
+                                                                    "generated":
+                                                                    false
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -16476,7 +16720,7 @@ let%expect_test _ =
                                                     "E_variable",
                                                     {
                                                       "name": "s",
-                                                      "counter": null,
+                                                      "counter": 0,
                                                       "location": [
                                                         "File",
                                                         {
@@ -16505,7 +16749,8 @@ let%expect_test _ =
                                                             "point_bol": 4180
                                                           }
                                                         }
-                                                      ]
+                                                      ],
+                                                      "generated": false
                                                     }
                                                   ],
                                                   "location": [
@@ -16648,20 +16893,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 105,
                   "pos_bol": 3137,
-                  "pos_cnum": 3146
+                  "pos_cnum": 3137
                 },
-                "point_num": 3146,
+                "point_num": 3137,
                 "point_bol": 3137
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 105,
-                  "pos_bol": 3137,
-                  "pos_cnum": 3154
+                  "pos_lnum": 133,
+                  "pos_bol": 4180,
+                  "pos_cnum": 4218
                 },
-                "point_num": 3154,
-                "point_bol": 3137
+                "point_num": 4218,
+                "point_bol": 4180
               }
             }
           ]
@@ -16702,7 +16947,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "default",
-            "counter": null,
+            "counter": 0,
             "location": [
               "File",
               {
@@ -16727,7 +16972,8 @@ let%expect_test _ =
                   "point_bol": 4220
                 }
               }
-            ]
+            ],
+            "generated": false
           },
           "ty": {
             "type_content": [
@@ -16742,8 +16988,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "default_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -16779,8 +17026,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -16820,8 +17068,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "return",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -16864,8 +17113,9 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 4,
-                  "location": [ "Virtual", "dummy" ]
+                  "counter": 5,
+                  "location": [ "Virtual", "dummy" ],
+                  "generated": true
                 },
                 "ty": {
                   "type_content": [
@@ -16876,8 +17126,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "default_pt",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -16913,8 +17164,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -16956,8 +17208,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "return",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -16995,8 +17248,9 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 4,
-                          "location": [ "Virtual", "dummy" ]
+                          "counter": 5,
+                          "location": [ "Virtual", "dummy" ],
+                          "generated": true
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -17011,7 +17265,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "_",
-                                  "counter": 3,
+                                  "counter": 4,
                                   "location": [
                                     "File",
                                     {
@@ -17038,15 +17292,17 @@ let%expect_test _ =
                                         "point_bol": 4220
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": true
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "default_pt",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -17085,7 +17341,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -17112,15 +17368,17 @@ let%expect_test _ =
                                         "point_bol": 4220
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "storage",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -17200,7 +17458,7 @@ let%expect_test _ =
                                         {
                                           "type_operator": {
                                             "name": "list",
-                                            "counter": null,
+                                            "counter": 0,
                                             "location": [
                                               "File",
                                               {
@@ -17227,7 +17485,8 @@ let%expect_test _ =
                                                   "point_bol": 4291
                                                 }
                                               }
-                                            ]
+                                            ],
+                                            "generated": false
                                           },
                                           "arguments": [
                                             {
@@ -17235,10 +17494,11 @@ let%expect_test _ =
                                                 "t_variable",
                                                 {
                                                   "name": "operation",
-                                                  "counter": null,
+                                                  "counter": 0,
                                                   "location": [
                                                     "Virtual", "dummy"
-                                                  ]
+                                                  ],
+                                                  "generated": false
                                                 }
                                               ],
                                               "location": [
@@ -17335,7 +17595,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "s",
-                                    "counter": null,
+                                    "counter": 0,
                                     "location": [
                                       "File",
                                       {
@@ -17362,7 +17622,8 @@ let%expect_test _ =
                                           "point_bol": 4291
                                         }
                                       }
-                                    ]
+                                    ],
+                                    "generated": false
                                   }
                                 ],
                                 "location": [
@@ -17439,20 +17700,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 135,
                   "pos_bol": 4220,
-                  "pos_cnum": 4229
+                  "pos_cnum": 4220
                 },
-                "point_num": 4229,
+                "point_num": 4220,
                 "point_bol": 4220
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 135,
-                  "pos_bol": 4220,
-                  "pos_cnum": 4236
+                  "pos_lnum": 136,
+                  "pos_bol": 4291,
+                  "pos_cnum": 4324
                 },
-                "point_num": 4236,
-                "point_bol": 4220
+                "point_num": 4324,
+                "point_bol": 4291
               }
             }
           ]
@@ -17493,7 +17754,7 @@ let%expect_test _ =
         "binder": {
           "var": {
             "name": "main",
-            "counter": null,
+            "counter": 0,
             "location": [
               "File",
               {
@@ -17518,7 +17779,8 @@ let%expect_test _ =
                   "point_bol": 4326
                 }
               }
-            ]
+            ],
+            "generated": false
           },
           "ty": {
             "type_content": [
@@ -17533,8 +17795,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "parameter",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -17570,8 +17833,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -17611,8 +17875,9 @@ let%expect_test _ =
                     "t_variable",
                     {
                       "name": "return",
-                      "counter": null,
-                      "location": [ "Virtual", "dummy" ]
+                      "counter": 0,
+                      "location": [ "Virtual", "dummy" ],
+                      "generated": false
                     }
                   ],
                   "location": [
@@ -17655,8 +17920,9 @@ let%expect_test _ =
               "binder": {
                 "var": {
                   "name": "parameters",
-                  "counter": 5,
-                  "location": [ "Virtual", "dummy" ]
+                  "counter": 6,
+                  "location": [ "Virtual", "dummy" ],
+                  "generated": true
                 },
                 "ty": {
                   "type_content": [
@@ -17667,8 +17933,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "parameter",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -17704,8 +17971,9 @@ let%expect_test _ =
                           "t_variable",
                           {
                             "name": "storage",
-                            "counter": null,
-                            "location": [ "Virtual", "dummy" ]
+                            "counter": 0,
+                            "location": [ "Virtual", "dummy" ],
+                            "generated": false
                           }
                         ],
                         "location": [
@@ -17747,8 +18015,9 @@ let%expect_test _ =
                   "t_variable",
                   {
                     "name": "return",
-                    "counter": null,
-                    "location": [ "Virtual", "dummy" ]
+                    "counter": 0,
+                    "location": [ "Virtual", "dummy" ],
+                    "generated": false
                   }
                 ],
                 "location": [
@@ -17786,8 +18055,9 @@ let%expect_test _ =
                         "E_variable",
                         {
                           "name": "parameters",
-                          "counter": 5,
-                          "location": [ "Virtual", "dummy" ]
+                          "counter": 6,
+                          "location": [ "Virtual", "dummy" ],
+                          "generated": true
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -17802,7 +18072,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "param",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -17829,15 +18099,17 @@ let%expect_test _ =
                                         "point_bol": 4326
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "parameter",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -17876,7 +18148,7 @@ let%expect_test _ =
                               {
                                 "var": {
                                   "name": "s",
-                                  "counter": null,
+                                  "counter": 0,
                                   "location": [
                                     "File",
                                     {
@@ -17903,15 +18175,17 @@ let%expect_test _ =
                                         "point_bol": 4326
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "generated": false
                                 },
                                 "ty": {
                                   "type_content": [
                                     "t_variable",
                                     {
                                       "name": "storage",
-                                      "counter": null,
-                                      "location": [ "Virtual", "dummy" ]
+                                      "counter": 0,
+                                      "location": [ "Virtual", "dummy" ],
+                                      "generated": false
                                     }
                                   ],
                                   "location": [
@@ -17956,7 +18230,7 @@ let%expect_test _ =
                                   "E_variable",
                                   {
                                     "name": "param",
-                                    "counter": null,
+                                    "counter": 0,
                                     "location": [
                                       "File",
                                       {
@@ -17983,7 +18257,8 @@ let%expect_test _ =
                                           "point_bol": 4398
                                         }
                                       }
-                                    ]
+                                    ],
+                                    "generated": false
                                   }
                                 ],
                                 "location": [
@@ -18024,7 +18299,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
-                                          "counter": null,
+                                          "counter": 0,
                                           "location": [
                                             "File",
                                             {
@@ -18051,7 +18326,8 @@ let%expect_test _ =
                                                 "point_bol": 4549
                                               }
                                             }
-                                          ]
+                                          ],
+                                          "generated": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -18067,7 +18343,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "send",
-                                              "counter": null,
+                                              "counter": 0,
                                               "location": [
                                                 "File",
                                                 {
@@ -18094,7 +18370,8 @@ let%expect_test _ =
                                                     "point_bol": 4549
                                                   }
                                                 }
-                                              ]
+                                              ],
+                                              "generated": false
                                             }
                                           ],
                                           "location": [
@@ -18134,7 +18411,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18161,7 +18438,8 @@ let%expect_test _ =
                                                           "point_bol": 4549
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18197,7 +18475,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18224,7 +18502,8 @@ let%expect_test _ =
                                                           "point_bol": 4549
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18325,7 +18604,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
-                                          "counter": null,
+                                          "counter": 0,
                                           "location": [
                                             "File",
                                             {
@@ -18352,7 +18631,8 @@ let%expect_test _ =
                                                 "point_bol": 4617
                                               }
                                             }
-                                          ]
+                                          ],
+                                          "generated": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -18368,7 +18648,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "withdraw",
-                                              "counter": null,
+                                              "counter": 0,
                                               "location": [
                                                 "File",
                                                 {
@@ -18395,7 +18675,8 @@ let%expect_test _ =
                                                     "point_bol": 4617
                                                   }
                                                 }
-                                              ]
+                                              ],
+                                              "generated": false
                                             }
                                           ],
                                           "location": [
@@ -18435,7 +18716,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18462,7 +18743,8 @@ let%expect_test _ =
                                                           "point_bol": 4617
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18498,7 +18780,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18525,7 +18807,8 @@ let%expect_test _ =
                                                           "point_bol": 4617
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18626,7 +18909,7 @@ let%expect_test _ =
                                       {
                                         "var": {
                                           "name": "p",
-                                          "counter": null,
+                                          "counter": 0,
                                           "location": [
                                             "File",
                                             {
@@ -18653,7 +18936,8 @@ let%expect_test _ =
                                                 "point_bol": 4714
                                               }
                                             }
-                                          ]
+                                          ],
+                                          "generated": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -18669,7 +18953,7 @@ let%expect_test _ =
                                             "E_variable",
                                             {
                                               "name": "default",
-                                              "counter": null,
+                                              "counter": 0,
                                               "location": [
                                                 "File",
                                                 {
@@ -18696,7 +18980,8 @@ let%expect_test _ =
                                                     "point_bol": 4714
                                                   }
                                                 }
-                                              ]
+                                              ],
+                                              "generated": false
                                             }
                                           ],
                                           "location": [
@@ -18736,7 +19021,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "p",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18763,7 +19048,8 @@ let%expect_test _ =
                                                           "point_bol": 4714
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18799,7 +19085,7 @@ let%expect_test _ =
                                                   "E_variable",
                                                   {
                                                     "name": "s",
-                                                    "counter": null,
+                                                    "counter": 0,
                                                     "location": [
                                                       "File",
                                                       {
@@ -18826,7 +19112,8 @@ let%expect_test _ =
                                                           "point_bol": 4714
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "generated": false
                                                   }
                                                 ],
                                                 "location": [
@@ -18965,20 +19252,20 @@ let%expect_test _ =
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
                   "pos_lnum": 138,
                   "pos_bol": 4326,
-                  "pos_cnum": 4335
+                  "pos_cnum": 4326
                 },
-                "point_num": 4335,
+                "point_num": 4326,
                 "point_bol": 4326
               },
               "stop": {
                 "byte": {
                   "pos_fname": "../../test/contracts/multisig-v2.ligo",
-                  "pos_lnum": 138,
-                  "pos_bol": 4326,
-                  "pos_cnum": 4339
+                  "pos_lnum": 149,
+                  "pos_bol": 4750,
+                  "pos_cnum": 4753
                 },
-                "point_num": 4339,
-                "point_bol": 4326
+                "point_num": 4753,
+                "point_bol": 4750
               }
             }
           ]

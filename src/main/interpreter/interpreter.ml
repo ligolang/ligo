@@ -1231,18 +1231,10 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
-      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson ->
-        let ast_ty = get_type code in
-        let exp_as_string = Ligo_string.extract x in
-        let code_ty, code = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
-        return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | E_literal (Literal_string x) when is_t_arrow (get_type term) ->
         let exp_as_string = Ligo_string.extract x in
         return @@ V_Ligo (language , exp_as_string)
-      | E_literal (Literal_string x) ->
-        let exp_as_string = Ligo_string.extract x in
-        return @@ V_Ligo (language , exp_as_string)
-      | _ -> failwith "impossible"
+      | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
 
 and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
@@ -1256,7 +1248,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
     let ds, defs = r in
     match decl.Location.wrap_content with
     | Ast_typed.Declaration_constant { binder ; expr ; _ } ->
-       if not (Var.is_generated binder) && (Base.String.is_prefix (Var.to_name_exn binder) ~prefix:"test") then
+       if not (ValueVar.is_generated binder) && (String.is_prefix (ValueVar.to_name_exn binder) ~prefix:"test") then
          let expr = Ast_typed.e_a_variable binder expr.type_expression in
          (* TODO: check that variables are unique, as they are ignored *)
          decl :: ds, (binder, expr.type_expression) :: defs
@@ -1268,7 +1260,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Tezos_state.init_ctxt ~raise options.Compiler_options.backend.protocol_version [] in
   let f (n, t) r =
-    let s, _ = Var.internal_get_name_and_counter n in
+    let s, _ = ValueVar.internal_get_name_and_counter n in
     LMap.add (Label s) (Ast_typed.e_a_variable n t) r in
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
@@ -1278,7 +1270,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = Var.internal_get_name_and_counter n in
+      let s, _ = ValueVar.internal_get_name_and_counter n in
       match LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in

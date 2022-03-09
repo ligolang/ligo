@@ -82,7 +82,7 @@ let rec decompile_expression : O.expression -> I.expression =
       let recs = recursive self self_type recs in
       return @@ I.E_recursive recs
     | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_};rhs=expr1;let_result=expr2}
-      when O.Var.is_name var "()"
+      when O.ValueVar.is_name var "()"
            && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
