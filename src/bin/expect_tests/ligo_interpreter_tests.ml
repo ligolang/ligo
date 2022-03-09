@@ -696,3 +696,13 @@ let%expect_test _ =
     "STARTING BALANCE AND VOTING POWER"
     100000000000mutez
     12n |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
+  [%expect {xxx|
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
+      1 | let test =
+      2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
+      3 |   begin
+
+    Embedded raw code can only have a functional type |xxx}]
