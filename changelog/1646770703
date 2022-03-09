@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1613'
+title: Disallow raw code which is not a function in testing framework
+type: fixed
