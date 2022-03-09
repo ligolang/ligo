@@ -161,8 +161,8 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
          let table = List.zip_exn type_vars type_instances in
          let rhs = { rhs with type_expression = type_ } in
          let rhs, data = match rhs.expression_content with
-           | E_recursive { fun_name = _ ; fun_type = _ ; lambda = { binder ; result } } ->
-              let lambda = { AST.binder ; result = subst_var_expr lid.variable vid.variable result } in
+           | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
+              let lambda = { AST.binder ; result = subst_var_expr lid.variable vid.variable (subst_var_expr fun_name vid.variable result) } in
               let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
               { rhs with expression_content = E_recursive { fun_name = vid.variable ; fun_type = type_ ; lambda } }, data
            | _ -> rhs, data in
