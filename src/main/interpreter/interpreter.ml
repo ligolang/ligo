@@ -1218,18 +1218,10 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
-      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson ->
-        let ast_ty = get_type code in
-        let exp_as_string = Ligo_string.extract x in
-        let code_ty, code = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
-        return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | E_literal (Literal_string x) when is_t_arrow (get_type term) ->
         let exp_as_string = Ligo_string.extract x in
         return @@ V_Ligo (language , exp_as_string)
-      | E_literal (Literal_string x) ->
-        let exp_as_string = Ligo_string.extract x in
-        return @@ V_Ligo (language , exp_as_string)
-      | _ -> failwith "impossible"
+      | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
 
 and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
