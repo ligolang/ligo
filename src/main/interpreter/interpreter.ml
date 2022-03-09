@@ -11,6 +11,23 @@ module Monad = Execution_monad
 
 type interpreter_error = Errors.interpreter_error
 
+(* TODO: move this to some common place (copied from repl.ml) *)
+let resolve_file_name file_name project_root =
+  if Stdlib.Sys.file_exists file_name then file_name
+  else
+    match project_root with
+      Some project_root ->
+        let open Preprocessor in
+        let module_resolutions = ModRes.make project_root in
+        let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
+        (* let () = List.iter inclusion_list ~f:print_endline in *)
+        let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
+        (match external_file with
+          Some external_file -> external_file
+        | None -> file_name)
+    | None -> file_name
+
+
 let check_value value =
   let open Monad in
   match value with
@@ -693,10 +710,14 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
     | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
       match options.Compiler_options.backend.protocol_version, args with
       | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
+        (* let () = if Option.is_some options.frontend.project_root then print_endline "FOUND" else print_endline "NOT FOUND" in *)
+        let source_file = resolve_file_name source_file options.frontend.project_root in
         let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
         let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
         return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
       | Environment.Protocols.Hangzhou , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ] ->
+        (* let () = if Option.is_some options.frontend.project_root then print_endline "FOUND" else print_endline "NOT FOUND" in *)
+        let source_file = resolve_file_name source_file options.frontend.project_root in
         let views = List.map
           ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
           views
