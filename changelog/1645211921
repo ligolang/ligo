@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1544'
+title: Change constant typers to use LIGO types representation
+type: internal

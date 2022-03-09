@@ -1059,7 +1059,7 @@ and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (CS
       let var_attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
       let lhs_type = Option.map lhs_type ~f:(fun t ->
         List.fold_right fv ~init:t ~f:(fun v t ->
-          t_for_all (TypeVar.of_input_var v) () t)) in
+          t_for_all (TypeVar.of_input_var v) Type t)) in
       [({var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)]
     | CST.PArray a ->  (* tuple destructuring (for top-level only) *)
       let matchee = expr in
@@ -1384,7 +1384,7 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
         let aux : CST.type_var -> AST.type_expression -> AST.type_expression =
           fun param type_ ->
             let ty_binder = compile_type_var param in
-            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+            t_abstraction ~loc:(Location.lift region) ty_binder Type type_
         in
         List.fold_right ~f:aux ~init:rhs lst
     in

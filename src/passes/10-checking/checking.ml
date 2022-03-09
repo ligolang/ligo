@@ -12,109 +12,6 @@ type context = Context.t
 
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
-(* The `table` represents the substitutions that have been inferred.
-   For example, if matching `a -> b -> a` with `int -> bool -> int`,
-   it should have information such as `[a ↦ int; b ↦ bool]`. *)
-let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
-  let open O in
-  let self = infer_type_application ~raise ~loc ~default_error in
-  let default_error = default_error loc type_matched type_ in
-  let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    let ad_hoc_maps_unification a b =
-      let open Stage_common.Constant in
-      match a,b with
-      | Map_or_big_map, x              -> (x, x)
-      | x             , Map_or_big_map -> (x, x)
-      | _                              -> (a, b)
-    in
-    let (a,b) = ad_hoc_maps_unification a b in
-    Stage_common.Constant.equal a b
-  in
-  match type_matched.type_content, type_.type_content with
-  | T_variable v, _ -> (
-     match O.Helpers.TMap.find_opt v table with
-     | Some t -> trace_option ~raise (not_matching loc t type_) (assert_type_expression_eq (type_, t));
-                 table
-     | None -> O.Helpers.TMap.add v type_ table)
-  | T_arrow {type1;type2}, T_arrow {type1=type1_;type2=type2_} ->
-     let table = self table type1 type1_ in
-     let table = self table type2 type2_ in
-     table
-  | T_constant {language;injection;parameters}, T_constant {language=language';injection=injection';parameters=parameters'} ->
-     if String.equal language language' && inj_mod_equal injection injection' && Int.equal (List.length parameters) (List.length parameters') then
-       let table = List.fold_right (List.zip_exn parameters parameters') ~f:(fun (t, t') table ->
-                       self table t t') ~init:table in
-       table
-     else
-       raise.raise default_error
-  | T_record {content; layout}, T_record {content=content'; layout=layout'} ->
-     let content_kv = O.LMap.to_kv_list content in
-     let content'_kv = O.LMap.to_kv_list content' in
-     if layout_eq layout layout' &&
-          List.equal equal_label (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
-       let elements = List.zip_exn content_kv content'_kv in
-       let aux ((_, {associated_type;michelson_annotation;decl_pos}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=decl_pos'})) table =
-         if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
-           self table associated_type associated_type'
-         else
-           raise.raise default_error in
-       let table = List.fold_right elements ~f:aux ~init:table in
-       table
-     else
-       raise.raise default_error
-  | T_sum {content; layout}, T_sum {content=content'; layout=layout'} ->
-     let content_kv = O.LMap.to_kv_list content in
-     let content'_kv = O.LMap.to_kv_list content' in
-     if layout_eq layout layout' &&
-          List.equal equal_label (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
-       let elements = List.zip_exn content_kv content'_kv in
-       let aux ((_, {associated_type;michelson_annotation;decl_pos}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=decl_pos'})) table =
-         if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
-           self table associated_type associated_type'
-         else
-           raise.raise default_error in
-       let table = List.fold_right elements ~f:aux ~init:table in
-       table
-     else
-       raise.raise default_error
-  | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table
-  | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
-    (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
-    -> raise.raise default_error
-
-(* This function does some inference for applications: it takes a type
-   `typed_matched` of the form `t1 -> ... -> tn -> t`, a list of types
-   `args` of the form `[t'1;...;t'n]` (representing types on which the
-   function is applied) and possibly a final type `tv_opt` of the form
-   `t'` (representing an annotation for the final result).
-   It will try to infer a table s.t. when substituting variables in
-   `t1 -> ... -> tn -> t`, we get `t'1 -> ... > t'n -> t'`. It works
-   by matching iteratively on each type: `t1` with `t'1`, ..., `tn`
-   with `t'n`, and finally `t` with `t'`. *)
-let infer_type_applications ~raise ~loc type_matched args tv_opt =
-  let table, type_matched = List.fold_left args ~init:(O.Helpers.TMap.empty, type_matched) ~f:(fun ((table, type_matched) : _ O.Helpers.TMap.t * O.type_expression) matched ->
-                  match type_matched.type_content with
-                  | T_arrow { type1 ; type2 } ->
-                     infer_type_application ~raise ~loc table type1 matched, type2
-                  | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
-                     table, type_matched) in
-  match tv_opt with
-  | Some t -> infer_type_application ~raise ~loc ~default_error:(fun loc t t' -> assert_equal loc t' t) table type_matched t
-  | None -> table
-
-(* This wraps a `∀ a . (∀ b . (∀ c . some_type))` with type instantiations,
-   e.g. given the table `[a ↦ int; b ↦ string; c ↦ bool` it will return
-   `(((∀ a . (∀ b . (∀ c . some_type))) @@ int) @@ string) @@ bool` *)
-let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
-  let bound_variables = List.rev bound_variables in
-  let rec build_type_insts (forall : O.expression) = function
-    | [] -> forall
-    | av :: avs' ->
-       let type_ = trace_option ~raise (Errors.not_annotated loc) @@ O.Helpers.TMap.find_opt av table in
-       let O.{ ty_binder ; type_ = t ; kind = _ } = trace_option ~raise (corner_case "Expected a for all type quantifier") @@ O.get_t_for_all forall.type_expression in
-       build_type_insts (make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_no_capture_type ty_binder type_ t)) avs' in
-  build_type_insts forall bound_variables
-
 let rec type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
   let aux (c, acc:(context * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let (c, d') = type_declaration' ~raise ~options c d in
@@ -146,7 +43,7 @@ match Location.unwrap d with
       type_expression' ~options c expr in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
@@ -164,7 +61,7 @@ match Location.unwrap d with
       type_expression' ~options ~tv_opt:tv env expr in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
@@ -409,9 +306,9 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
        | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} ->
           (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
           let avs, type_ = O.Helpers.destruct_for_alls tv' in
-          let table = infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
+          let table = Inference.infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
           let lamb = make_e ~location:e.location (E_variable name) tv' in
-          return_e @@ build_type_insts ~raise ~loc:e.location lamb table avs
+          return_e @@ Inference.build_type_insts ~raise ~loc:e.location lamb table avs
        | _ ->
           return (E_variable name) tv')
   | E_literal Literal_unit ->
@@ -482,9 +379,9 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
         Context.get_constructor_parametric constructor context in
       let expr' = type_expression' ~raise ~options context element in
-      let table = infer_type_application ~raise ~loc:element.location O.Helpers.TMap.empty c_tv expr'.type_expression in
+      let table = Inference.infer_type_application ~raise ~loc:element.location Inference.TMap.empty c_tv expr'.type_expression in
       let table = match tv_opt with
-        | Some tv_opt -> infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
+        | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
         | None -> table in
       let () = trace_option ~raise (not_annotated e.location) @@
                  if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None in
@@ -674,9 +571,9 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
      (* Remove and save prefix for_alls in the lambda *)
      let avs, lamb_type = O.Helpers.destruct_for_alls lamb.type_expression in
      (* Try to infer/check types for the type variables *)
-     let table = infer_type_applications ~raise ~loc:e.location lamb_type (List.map ~f:(fun v -> v.type_expression) args) tv_opt in
+     let table = Inference.infer_type_applications ~raise ~loc:e.location lamb_type (List.map ~f:(fun v -> v.type_expression) args) tv_opt in
      (* Build lambda with type instantiations *)
-     let lamb = build_type_insts ~raise ~loc:e.location lamb table avs in
+     let lamb = Inference.build_type_insts ~raise ~loc:e.location lamb table avs in
      (* Re-build term (i.e. re-add applications) *)
      let app = trace_option ~raise (should_be_a_function_type lamb.type_expression ilamb) @@
                  O.Helpers.build_applications_opt lamb args in
@@ -707,7 +604,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
      let binder = var in
      let rec aux t = function
        | [] -> t
-       | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
@@ -723,7 +620,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     let rhs = type_expression' ~raise ~options ~tv_opt:tv context rhs in
     let rec aux t = function
       | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var () (aux t abs_vars) in
+      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux rhs.type_expression (List.rev av) in
     let rhs = { rhs with type_expression } in
     let binder  = var in
@@ -806,8 +703,6 @@ and type_lambda ~raise ~options e {
       let body = type_expression' ~raise ~options ?tv_opt:output_type e' result in
       let output_type = body.type_expression in
       (({binder; result=body}:O.lambda),(t_arrow input_type output_type ()))
-
-
 
 and type_constant ~raise ~options (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
   let typer = Constant_typers.constant_typers ~raise ~options loc name in

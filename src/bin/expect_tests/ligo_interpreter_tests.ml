@@ -543,23 +543,21 @@ let%expect_test _ =
      baker account initial balance must at least reach 8000 tez |}]
 
 let%expect_test _ =
-(* TODO: this error is not ideal, we should trace that*)
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-26:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
       3 |   Test.originate f () 0tez
 
-    An uncaught error occured:
-    Ill typed contract:
-      1: { parameter unit ; storage unit ; code { DROP ; UNIT } }
-    At line 1 characters 39 to 54,
-      wrong stack type at end of body:
-      - expected return stack type:
-        [ pair (list operation) unit ],
-      - actual stack type:
-        [ unit ].
-    Type unit is not compatible with type pair (list operation) unit. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - ( 'a * 'b ) -> ( list (operation) * 'b )
+    - 'b
+    - tez
+    but got arguments with types:
+    - ( unit * unit ) -> unit
+    - unit
+    - tez. |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
@@ -638,9 +636,13 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
-    These types are not matching:
-     - record[field -> int]
-     - record[property -> string] |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - record[field -> int] -> record[field -> int]
+    - record[property -> string]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
@@ -649,9 +651,13 @@ let%expect_test _ =
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
 
-    These types are not matching:
-     - record[b -> int]
-     - string |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - record[b -> int] -> record[b -> int]
+    - string. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
@@ -660,9 +666,13 @@ let%expect_test _ =
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
 
-    These types are not matching:
-     - int
-     - record[field -> string] |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - 'a -> 'b
+    - 'a
+    but got arguments with types:
+    - int -> int
+    - record[field -> string]. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
@@ -702,3 +712,13 @@ run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" 
   Invalid call to Test primitive. |}]
 
 let () = Sys.chdir pwd
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
+  [%expect {xxx|
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
+      1 | let test =
+      2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
+      3 |   begin
+
+    Embedded raw code can only have a functional type |xxx}]
