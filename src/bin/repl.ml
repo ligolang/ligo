@@ -102,7 +102,7 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
-               project_root : string option;
+               module_resolutions : Preprocessor.ModRes.t option;
               }
 
 let try_eval ~raise ~raw_options state s =
@@ -149,23 +149,19 @@ let try_declaration ~raise ~raw_options state s =
   | Failure _ ->
      raise.raise `Repl_unexpected
 
-let resolve_file_name file_name project_root =
+let resolve_file_name file_name module_resolutions =
   if Stdlib.Sys.file_exists file_name then file_name
   else
-    match project_root with
-      Some project_root ->
-        let open Preprocessor in
-        let module_resolutions = ModRes.make project_root in
-        let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
-        (* let () = List.iter inclusion_list ~f:print_endline in *)
-        let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
-        (match external_file with
-          Some external_file -> external_file
-        | None -> file_name)
-    | None -> file_name
+    let open Preprocessor in
+    let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
+    (* let () = List.iter inclusion_list ~f:print_endline in *)
+    let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
+    (match external_file with
+      Some external_file -> external_file
+    | None -> file_name)
 
 let import_file ~raise ~raw_options state file_name module_name =
-  let file_name = resolve_file_name file_name state.project_root in
+  let file_name = resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ = Build.build_context ~raise ~add_warning ~options file_name in
@@ -175,7 +171,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   (state, Just_ok)
 
 let use_file ~raise ~raw_options state file_name =
-  let file_name = resolve_file_name file_name state.project_root in
+  let file_name = resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
@@ -244,7 +240,7 @@ let make_initial_state syntax protocol dry_run_opts project_root =
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
-    project_root = project_root;
+    module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make;
   }
 
 let rec read_input prompt delim =
