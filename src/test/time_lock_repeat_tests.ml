@@ -4,6 +4,8 @@ open Test_helpers
 open Ast_imperative
 open Main_errors
 
+module Alpha_context = Memory_proto_alpha.Protocol.Alpha_context
+
 let get_program = get_program "./contracts/timelock_repeat.mligo"
 
 let compile_main ~raise ~add_warning () =
@@ -42,13 +44,13 @@ let fake_decompiled_empty_message = e_string "[lambda of type: (lambda %execute 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance ~raise ~add_warning () =
   let program = get_program ~raise ~add_warning () in
-  let now = mk_time ~raise "2000-01-01T10:10:10Z" in
-  let lock_time = mk_time ~raise "2000-01-01T00:10:10Z" in
-  let init_storage = storage lock_time 86400 empty_message in
-  let new_timestamp = mk_time ~raise "2000-01-02T10:10:10Z" in
-  let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ()) in
+    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
+  let now = options.now in
+  let lock_time = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int (-36_000)) in
+  let init_storage = storage lock_time 86400 empty_message in
+  let new_timestamp = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int 86_400) in
+  let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
   expect_eq ~raise ~options program "main"
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 

@@ -3,7 +3,7 @@ module Var      = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
 
-module Tezos_protocol = Tezos_protocol_011_PtHangz2
+module Tezos_protocol = Tezos_protocol_012_Psithaca
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 let string_of_contract t = Format.asprintf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp t
@@ -128,6 +128,10 @@ let make_options ~raise ?param ctxt =
     let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
     let tezos_context = Memory_proto_alpha.Protocol.Alpha_context.Gas.set_limit tezos_context (Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.integral_exn (Z.of_int 800000)) in
     let timestamp = Timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
+    let level =
+      Memory_proto_alpha.Protocol.Alpha_context.((Level.current tezos_context).level |> Raw_level.to_int32
+      |> Script_int.of_int32 |> Script_int.abs)
+    in
     {
       tezos_context ;
       source ;
@@ -137,6 +141,7 @@ let make_options ~raise ?param ctxt =
       chain_id = Memory_proto_alpha.Protocol.Environment.Chain_id.zero;
       balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero ;
       now = timestamp ;
+      level ;
     }
 
 let run_expression_unwrap ~raise ?ctxt ?(loc = Location.generated) (c_expr : Stacking.compiled_expression) =

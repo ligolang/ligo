@@ -55,6 +55,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -162,11 +163,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | C_POLYMORPHIC_ADD -> C_POLYMORPHIC_ADD
+  | C_POLYMORPHIC_SUB -> C_POLYMORPHIC_SUB
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
+  | C_OPTION_MAP -> C_OPTION_MAP
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
   | (   C_TEST_ORIGINATE
-      | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
       | C_TEST_SET_BAKER
       | C_TEST_EXTERNAL_CALL_TO_CONTRACT
@@ -607,6 +609,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_MAP_ITER , lst) -> iter lst
       | (C_LIST_MAP , lst) -> map lst
       | (C_MAP_MAP , lst) -> map lst
+      | (C_OPTION_MAP , lst) -> map lst
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst

@@ -206,16 +206,12 @@ let per_protocol (typer_per_protocol : Ligo_proto.t -> typer) : typer  =
   typer_per_protocol options.protocol_version ~error ~raise ~options ~loc lst tv_opt
 
 (* This prevents wraps a typer, allowing usage only in Hangzhou *)
-let only_supported_hangzhou c (typer : typer) : typer =
-  fun ~error ~raise ~options ~loc lst tv_opt ->
-  match options.protocol_version with
-  | Ligo_proto.Hangzhou -> typer ~error ~raise ~options ~loc lst tv_opt
-  | Ligo_proto.Edo ->
-    raise.raise @@ corner_case (
-      Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string options.protocol_version)
-    )
+let constant_since_protocol ~since ~constant typer : typer = fun ~error ~raise ~options ~loc ->
+  if (Environment.Protocols.compare options.protocol_version since) >= 0 then
+    typer ~error ~raise ~options ~loc
+  else
+    raise.raise (constant_since_protocol loc constant since)
+
 
 module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
 type t = typer CTMap.t
@@ -236,9 +232,9 @@ module Constant_types = struct
   let of_type c t =
     c, any_of [typer_of_ligo_type t]
 
-  let of_type_only_hangzhou c t =
+  let of_type_since ~since ~constant c t =
     let _, t = of_type c t in
-    c, only_supported_hangzhou c @@ t
+    c, constant_since_protocol ~since ~constant @@ t
 
   let typer_of_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
@@ -341,6 +337,8 @@ module Constant_types = struct
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
                     of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);
                     of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
+                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Option.map"
+                      C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
                     (* GLOBAL *)
                     of_type C_ASSERTION O.(t_bool () ^-> t_unit ());
                     of_type C_ASSERTION_WITH_ERROR O.(t_bool () ^-> t_string () ^-> t_unit ());
@@ -408,6 +406,18 @@ module Constant_types = struct
                         O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
                         O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
                       ];
+                    of_types C_POLYMORPHIC_SUB [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_int ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
+                      ];
                     of_types C_ADD [
                         O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
                         O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
@@ -447,6 +457,8 @@ module Constant_types = struct
                         O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
                         O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
+                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Operator.sub_mutez"
+                      C_SUB_MUTEZ O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
                     of_types C_EDIV [
                         O.(t_nat () ^-> t_nat () ^-> t_option (t_pair (t_nat ()) (t_nat ())));
                         O.(t_int () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())));
@@ -505,7 +517,6 @@ module Constant_types = struct
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
                     of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
                     of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
-                    of_type C_TEST_SET_NOW O.(t_timestamp () ^-> t_unit ());
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
                     of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
                     of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
@@ -540,12 +551,10 @@ module Constant_types = struct
                     of_type C_TEST_REGISTER_DELEGATE O.(t_key_hash () ^-> t_unit ());
                     of_type C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_nat () ^-> t_unit ());
                     of_type C_TEST_TO_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> t_contract a);
-                    of_type_only_hangzhou C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
-                    of_type_only_hangzhou C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
-                    of_type_only_hangzhou C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
-                    per_protocol C_TEST_ORIGINATE_FROM_FILE (function
-                        | Edo -> O.(t_string () ^-> t_string () ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
-                        | Hangzhou -> O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ())));
+                    of_type C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
+                    of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
+                    of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
+                    of_type C_TEST_ORIGINATE_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()));
                     of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));

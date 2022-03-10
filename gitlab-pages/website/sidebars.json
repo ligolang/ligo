@@ -78,9 +78,13 @@
       "reference/map-reference",
       "reference/set-reference",
       "reference/string-reference",
+      "reference/option-reference",
       "reference/current-reference",
-      "reference/test",
-      "reference/hangzhou"
+      "reference/test"
+    ],
+    "Protocol Upgrades": [
+      "protocol/hangzhou",
+      "protocol/ithaca"
     ]
   },
   "contributors-docs": {

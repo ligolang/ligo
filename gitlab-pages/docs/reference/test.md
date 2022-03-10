@@ -121,16 +121,16 @@ entrypoint, it needs to be annotated, entrypoint string should omit
 the prefix "%".
 
 <SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let originate_from_file : string => string => michelson_program => tez => (address, michelson_program, int)
+let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_program, int)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate_from_file = (filepath: string, entrypoint: string, init: michelson_program, balance: tez) => [address, michelson_program, int]
+let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_program, int]
 </SyntaxTitle>
 
 Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
@@ -139,7 +139,7 @@ Originate a contract with a path to the contract file, an entrypoint, an initial
 
 ```pascaligo skip
 const originated =
-  Test.originate_from_file (testme_test, "main", init_storage, 0tez)
+  Test.originate_from_file (testme_test, "main", nil : list (string), init_storage, 0tez)
 const addr = originated.0
 const program = originated.1
 const size = originated.2
@@ -150,7 +150,7 @@ const size = originated.2
 
 ```cameligo skip
 let addr, program, size =
-  Test.originate_from_file testme_test "main" init_storage 0tez
+  Test.originate_from_file testme_test "main" ([] : string list) init_storage 0tez
 ...
 ```
 
@@ -158,14 +158,14 @@ let addr, program, size =
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, program, size) = Test.originate_from_file(testme_test,"main", init_storage, 0tez);
+let (addr, program, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, program, size] = Test.originate_from_file(testme_test,"main", init_storage, 0 as tez);
+let [addr, program, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
 ```
 
 </Syntax>
@@ -184,20 +184,6 @@ let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;
 </SyntaxTitle>
 
 Originate a contract with an entrypoint function, initial storage and initial balance.
-
-<SyntaxTitle syntax="pascaligo">
-val set_now : timestamp -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val set_now : timestamp -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let set_now: timestamp => unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let set_now = (now: timestamp) => unit
-</SyntaxTitle>
-Set the timestamp of the predecessor block.
 
 <SyntaxTitle syntax="pascaligo">
 val set_source : address -> unit
@@ -395,8 +381,16 @@ let reset_state: (nat, list(tez)) => unit
 <SyntaxTitle syntax="jsligo">
 let reset_state = (no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
-Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
-By default, the state only has two bootstrapped accounts.
+Generate a number of random bootstrapped accounts with a default
+amount of 4000000 tez. The passed list can be used to overwrite the
+amount. By default, the state only has two bootstrapped accounts.
+
+Notice that since Ithaca, a percentage of an account's balance is
+frozen (5% in testing mode) in case the account can be taken to be a
+validator ([see
+here](https://tezos.gitlab.io/alpha/consensus.html#validator-selection-staking-balance-active-stake-and-frozen-deposits)),
+and thus `Test.get_balance` can show a different amount to the one
+being set with `Test.reset_state`.
 
 <SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> tez option -> unit
@@ -773,3 +767,36 @@ corresponding to big map identifiers. This function allows to override
 the value of a particular big map identifier. It should not be
 normally needed, except in particular circumstances such as using
 custom bootstrap contracts that initialize big maps.
+
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest : bytes => nat => (chest , chest_key)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest : bytes => nat => [chest , chest_key]
+</SyntaxTitle>
+
+Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
+Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+
+Unlock the value and create the time-lock proof.
+Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).

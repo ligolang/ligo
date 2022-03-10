@@ -14,7 +14,7 @@ depends: [
   # Tooling
   "odoc" { build }
   "ocamlfind" { build }
-  "dune" { build & >= "2.7.1" & < "2.9" }
+  "dune" { build & >= "2.7.1" }
   "alcotest" { with-test }
   # Pipelinye
   "ocamlgraph"
@@ -33,7 +33,7 @@ depends: [
   "tezos-base"
   "tezos-crypto"
   "tezos-micheline"
-  # "tezos-011-PtHangz2-test-helpers"
+  # "tezos-012-Psithaca-test-helpers"
   # PPXs
   "ppx_deriving"
   "ppx_deriving_yojson"
@@ -49,21 +49,22 @@ depends: [
   "ocaml-migrate-parsetree" { = "2.1.0" }
   # dependencies of vendored dependencies
   "bls12-381-legacy"
-  "bls12-381"
+  "bls12-381" { >= "1.1.0" & < "1.2.0" }
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
   "ringo-lwt"
+  "pure-splitmix"
   "resto-cohttp-self-serving-client" { >= "0.6" & < "0.7" }
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 pin-depends: [
-  [ "tezos-011-PtHangz2-test-helpers.dev" "./vendors/tezos-ligo/src/proto_011_PtHangz2/lib_protocol/test/helpers" ]
+  [ "tezos-012-Psithaca-test-helpers.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_protocol/test/helpers" ]
   [ "tezos-base.dev" "./vendors/tezos-ligo/src/lib_base" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/src/lib_clic" ]
-  [ "tezos-client-011-PtHangz2.dev" "./vendors/tezos-ligo/src/proto_011_PtHangz2/lib_client" ]
+  [ "tezos-client-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_client" ]
   [ "tezos-client-base.dev" "./vendors/tezos-ligo/src/lib_client_base" ]
   [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/src/lib_client_base_unix" ]
   [ "tezos-client-commands.dev" "./vendors/tezos-ligo/src/lib_client_commands" ]
@@ -81,14 +82,14 @@ pin-depends: [
   [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/src/lib_p2p" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/src/lib_p2p_services" ]
-  [ "tezos-protocol-011-PtHangz2.dev" "./vendors/tezos-ligo/src/proto_011_PtHangz2/lib_protocol" ]
-  [ "tezos-protocol-011-PtHangz2-parameters.dev" "./vendors/tezos-ligo/src/proto_011_PtHangz2/lib_parameters" ]
+  [ "tezos-protocol-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_protocol" ]
+  [ "tezos-protocol-012-Psithaca-parameters.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_parameters" ]
   [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/src/lib_protocol_compiler" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
   [ "tezos-protocol-environment-packer.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
   [ "tezos-protocol-environment-sigs.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
   [ "tezos-protocol-environment-structs.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-plugin-011-PtHangz2.dev" "./vendors/tezos-ligo/src/proto_011_PtHangz2/lib_plugin" ]
+  [ "tezos-protocol-plugin-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_plugin" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/src/lib_proxy" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/src/lib_rpc" ]
   [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/src/lib_rpc_http" ]

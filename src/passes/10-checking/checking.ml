@@ -294,6 +294,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       | Some tv' -> assert_type_expression_eq ~raise e.location (tv' , tv) in
     let location = e.location in
     make_e ~location expr tv in
+  let protocol_version = options.protocol_version in
   let return_e (expr : O.expression) = return expr.expression_content expr.type_expression in
   trace ~raise (expression_tracer e) @@
   fun ~raise -> match e.expression_content with
@@ -552,6 +553,18 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
         | _ -> None in
       let cst =
         Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
+      let (name', tv) =
+        type_constant ~raise ~options cst e.location tv_lst tv_opt in
+      return (E_constant {cons_name=name';arguments=lst'}) tv
+  | E_constant {cons_name = C_POLYMORPHIC_SUB;arguments} ->
+      let lst' = List.map ~f:(type_expression' ~raise ~options context) arguments in
+      let tv_lst = List.map ~f:get_type lst' in
+      let decide = function
+        | Environment.Protocols.Ithaca, O.{ type_expression ; _ } when is_t_mutez type_expression ->
+          Some S.C_SUB_MUTEZ
+        | _ -> None in
+      let cst =
+        Option.value ~default:S.C_SUB @@ List.find_map lst' ~f:(fun e -> decide (protocol_version, e)) in
       let (name', tv) =
         type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv

@@ -8,7 +8,7 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_011_PtHangz2
+module Tezos_protocol = Tezos_protocol_012_Psithaca
 module Location = Simple_utils.Location
 
 open Errors
@@ -50,7 +50,6 @@ module Command = struct
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
     | Contract_exists : LT.value -> bool t
     | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
-    | Set_now : Location.t * Ligo_interpreter.Types.calltrace * Z.t -> unit t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -294,9 +293,6 @@ module Command = struct
       (info, ctxt)
     | Inject_script (loc, calltrace, code, storage, amt) ->
       Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt (code, storage) amt
-    | Set_now (loc, calltrace, now) ->
-      let ctxt = Tezos_state.set_timestamp ~raise ~loc ~calltrace ctxt now in
-      ((), ctxt)
     | Set_source source ->
       let source = trace_option ~raise (corner_case ()) @@ LC.get_address source in
       ((), {ctxt with internals = { ctxt.internals with source }})

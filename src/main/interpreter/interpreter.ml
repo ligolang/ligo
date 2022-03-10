@@ -167,7 +167,7 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
 
-let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
   let eval_ligo = eval_ligo ~raise ~steps ~options in
@@ -312,7 +312,13 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       | Some res -> return_ct @@ C_mutez res
       | None -> fail (Errors.meta_lang_eval loc calltrace "Mutez underflow/overflow")
     )
+    | ( C_SUB_MUTEZ    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
+      match Michelson_backend.Tezos_eq.mutez_sub a' b' with
+      | Some res -> return @@ v_some @@ V_Ct (C_mutez res)
+      | None -> return @@ v_none ()
+    )
     | ( C_SUB , _  ) -> fail @@ error_type
+    | ( C_SUB_MUTEZ , _  ) -> fail @@ error_type
     | ( C_CONS   , [ v                  ; V_List vl          ] ) -> return @@ V_List (v::vl)
     | ( C_CONS , _  ) -> fail @@ error_type
     | ( C_ADD    , [ V_Ct (C_int a  )  ; V_Ct (C_int b  )  ] )
@@ -633,6 +639,17 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       then return @@ V_Set (List.dedup_and_sort ~compare:LC.compare_value (v::elts))
       else return @@ V_Set (List.filter ~f:(fun el -> not (equal_value el v)) elts)
     | ( C_SET_UPDATE , _  ) -> fail @@ error_type
+    | ( C_OPTION_MAP , [ V_Func_val {arg_binder ; body ; env ; rec_name=_ ; orig_lambda=_}  ; V_Construct ("Some" , v) ] ) ->
+      let* opt_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
+      let* ty = monad_option (Errors.generic_error opt_ty.location "Expected option type") @@ AST.get_t_option opt_ty in
+      let* new_v =
+        let env' = Env.extend env arg_binder (ty,v) in
+        eval_ligo body calltrace env'
+      in
+      return (V_Construct ("Some" , new_v))
+    | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
+      return v
+    | ( C_OPTION_MAP , _  ) -> fail @@ error_type
     | ( C_SHA256, [ V_Ct (C_bytes b) ] )->
       let>> value = Sha256 b in
       return @@ value
@@ -691,22 +708,15 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       Test operators
     >>>>>>>>
     *)
-    | ( C_TEST_ORIGINATE_FROM_FILE, args) -> (
-      match options.Compiler_options.backend.protocol_version, args with
-      | Environment.Protocols.Edo , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; storage ; V_Ct ( C_mutez amt ) ] ->
-        let>> (code,size) = Compile_contract_from_file (source_file,entryp,[]) in
-        let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
-        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
-      | Environment.Protocols.Hangzhou , [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ] ->
-        let views = List.map
-          ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
-          views
-        in
-        let>> (code,size) = Compile_contract_from_file (source_file,entryp,views) in
-        let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
-        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
-      | _ -> fail @@ Errors.generic_error loc "Unbound primitive. Check the protocol version you are using"
-    )
+    | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
+      let views = List.map
+                    ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
+                    views
+      in
+      let>> (code,size) = Compile_contract_from_file (source_file,entryp,views) in
+      let>> addr = Inject_script (loc, calltrace, code, storage, amt) in
+      return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
+    | ( C_TEST_ORIGINATE_FROM_FILE , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
       let contract = { address; entrypoint = None } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
@@ -719,10 +729,6 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       return_contract_exec res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_SET_NOW , [ V_Ct (C_timestamp t) ] ) ->
-      let>> () = Set_now (loc,calltrace,t) in
-      return_ct C_unit
-    | ( C_TEST_SET_NOW , _  ) -> fail @@ error_type
     | ( C_TEST_SET_SOURCE , [ addr ] ) ->
       let>> () = Set_source addr in
       return_ct C_unit
@@ -989,6 +995,8 @@ let rec apply_operator ~raise ~steps ~options : Location.t -> calltrace -> AST.t
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
+    | ( C_POLYMORPHIC_SUB , _ ) ->
+      fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_EDIV | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |

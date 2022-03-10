@@ -81,7 +81,7 @@ let%expect_test _  =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    "2042-01-01T00:00:00Z" |}]
+    "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
@@ -2266,7 +2266,8 @@ let%expect_test _ =
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
-  [%expect{| let #Foo#x#2 = L(54) in let #Foo#y#3 = #Foo#x#2 in L(unit) |}]
+  [%expect {|
+    let #Foo#x#2 = L(54) in let #Foo#y#3 = #Foo#x#2 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
@@ -2287,7 +2288,7 @@ let%expect_test _ =
 (* Global constants *)
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--disable-michelson-typechecking" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;

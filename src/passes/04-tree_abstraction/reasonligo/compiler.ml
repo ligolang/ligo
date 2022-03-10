@@ -248,7 +248,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
   | EArith arth ->
     ( match arth with
       Add plus   -> compile_bin_op C_ADD plus
-    | Sub minus  -> compile_bin_op C_SUB minus
+    | Sub minus  -> compile_bin_op C_POLYMORPHIC_SUB minus
     | Mult times -> compile_bin_op C_MUL times
     | Div slash  -> compile_bin_op C_DIV slash
     | Mod mod_   -> compile_bin_op C_MOD mod_

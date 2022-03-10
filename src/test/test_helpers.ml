@@ -9,7 +9,10 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options ()
+let options = 
+  Compiler_options.make 
+    ~raw_options:Compiler_options.default_raw_options 
+    ~protocol_version:Environment.Protocols.Ithaca ()
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)

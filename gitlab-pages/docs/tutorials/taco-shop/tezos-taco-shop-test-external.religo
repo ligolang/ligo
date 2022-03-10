@@ -16,7 +16,7 @@ let test =
       (1n, { current_stock : 50n , max_price : 50tez }) ,
       (2n, { current_stock : 20n , max_price : 75tez }) , ])
     |} : ligo_program) ]) ;
-  let (pedro_taco_shop, _code, _size) = Test.originate_from_file (filename, "buy_taco", init_storage, 0tez) ;
+  let (pedro_taco_shop, _code, _size) = Test.originate_from_file (filename, "buy_taco", ([] : list(string)), init_storage, 0tez) ;
   /* compile test inputs */
   let classico_kind = Test.compile_value (1n) ;
   let unknown_kind = Test.compile_value (3n) ;

@@ -87,13 +87,13 @@ let%expect_test _ =
     - test1 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "views_test.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good ["run"; "test" ; test "test_timelock.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -104,30 +104,6 @@ let%expect_test _ =
     {a = 1 ; b = 2n ; c = "aaa"}
     One (())
     Everything at the top-level was executed. |}]
-
-let%expect_test _ =
-  run_ligo_good ["run"; "test" ; test "test_now.mligo" ] ;
-  [%expect {|
-    "storage at origination"
-    "2000-01-01T10:10:10Z"
-    "setting now at:"
-    "storage after calling"
-    "2010-01-01T10:10:11Z"
-    Everything at the top-level was executed.
-    - test_ts exited with value timestamp(946721410).
-    - test exited with value true. |}]
-
-let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_now_from_file.mligo" ] ;
-  [%expect {|
-    "storage at origination"
-    "2000-01-01T10:10:10Z"
-    "setting now at:"
-    "storage after calling"
-    "2010-01-01T10:10:11Z"
-    Everything at the top-level was executed.
-    - test_ts exited with value timestamp(946721410).
-    - test exited with value true. |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail.mligo" ] ;
@@ -464,7 +440,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1801n , 2125n , 2125n). |}]
+    - test exited with value (1801n , 2165n , 2165n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -485,14 +461,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_baker_account.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    4000000000000mutez
-    500n
+    3800000000000mutez
+    666n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3999360000000mutez
-    500n
+    3800011000000mutez
+    666n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3998720000000mutez
-    500n
+    3800022000000mutez
+    666n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -500,14 +476,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    99360000000mutez
-    12n
+    950038000000mutez
+    166n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    98720000000mutez
-    12n
+    950049000000mutez
+    166n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    98080000000mutez
-    12n
+    950060000000mutez
+    166n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -540,7 +516,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
       1 | let test = Test.reset_state 2n [4000tez;4000tez]
 
-     baker account initial balance must at least reach 8000 tez |}]
+     baker account initial balance must at least reach 6000 tez |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
@@ -694,8 +670,8 @@ let%expect_test _ =
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
-    100000000000mutez
-    12n |}]
+    95000000000mutez
+    16n |}]
 
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
