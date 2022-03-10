@@ -697,6 +697,22 @@ let%expect_test _ =
     100000000000mutez
     12n |}]
 
+let pwd = Sys.getcwd ()
+let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
+
+(* using typed_address in Bytes.pack *)
+let%expect_test _ =
+run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" ; "hangzhou" ] ;
+[%expect{|
+  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+   14 |     let packed = Bytes.pack (fun() ->
+   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
+
+  Invalid call to Test primitive. |}]
+
+let () = Sys.chdir pwd
+
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_michelson_non_func.mligo" ] ;
   [%expect {xxx|
