@@ -1,4 +1,11 @@
-(* TODO: use binding operators e.g. let* etc. *)
+module Option_syntax = struct
+  let (let+) x f    = Option.map f x
+  let (let*) x f    = Option.bind x f
+end
+
+(* TODO: use Core.List *)
+
+open Option_syntax
 
 module SMap = Simple_utils.Map.String
 
@@ -16,13 +23,18 @@ type t = {
   resolutions : (string * inclusion_list) list ;
 }
 
-let traverse : 'a option list -> 'a list option
-  = fun xs ->List.fold_left
-      (fun acc x -> 
-        Option.bind acc 
-          (fun acc -> Option.map (fun x -> x :: acc) x))
-      (Some [])
-      xs
+let traverse : 'a option list -> 'a list option 
+  = 
+  let module List = Core.List in
+  List.fold_left
+      ~init:(Some [])
+      ~f:(
+        fun acc x ->
+          let* acc = acc in
+          let* x = x in
+          Some (x :: acc)
+      )
+      
 
 (* Wrapper over yojson helpers *)
 module JsonHelpers = struct
@@ -82,15 +94,20 @@ module Path = struct
   (* [normalize] gets rid of ".." & "." from Path.t *)
   let normalize : t -> t = Option.map Fpath.normalize
 
+  let ends_with_dir_sep =
+    let regexp = Str.regexp (Format.sprintf "%s$" Filename.dir_sep) in
+    fun path -> Str.string_match regexp path 0
+  let starts_with_dir_sep =
+    let regexp = Str.regexp (Format.sprintf "^%s" Filename.dir_sep) in
+    fun path -> Str.string_match regexp path 0
+
   let join : string -> string -> string =
     fun a b ->
-      let ends_with_dir_sep = Str.string_match (Str.regexp (Format.sprintf "%s$" Filename.dir_sep)) b 0 in
-      let starts_with_dir_sep = Str.string_match (Str.regexp (Format.sprintf "^%s" Filename.dir_sep)) a 0 in
-      match starts_with_dir_sep, ends_with_dir_sep with
+      match ends_with_dir_sep a, starts_with_dir_sep b with
       | false, false -> a ^ Fpath.dir_sep ^ b
       | false, true  
       | true, false  -> a ^ b
-      | true, true   -> a ^ b (* TODO: fix this case ... *)
+      | true, true   -> a ^ "." ^ b (* TODO: fix this case ... *)
 
   let get_absolute_path ?(project_root=".") path = 
     let path' = v path in
@@ -98,6 +115,7 @@ module Path = struct
     else 
       v ((Sys.getcwd ()) ^  dir_sep ^ project_root ^ dir_sep ^ path) (* TODO: use Path.join *)
         |> normalize 
+
 end
 
 (* Module with constants related esy *)
@@ -154,21 +172,20 @@ end
    
 *)
 let clean_installation_json project_root installation_json =
-  match installation_json with
-    None -> None
-  | Some installation_json -> 
-    let open Yojson.Basic in
-    let keys = Util.keys installation_json in
-    let values = Util.values installation_json in
-    List.fold_left2 
-      (fun m key value -> 
-        Option.bind m (fun m -> 
-          let value = Option.bind (JsonHelpers.string value) (Path.get_absolute_path ~project_root) in
-          let value = Option.map Fpath.to_string value in
-          Option.map (fun value -> SMap.add key value m) value
-        )) 
-      (Some SMap.empty) 
-      keys values
+  let open Yojson.Basic in
+  let* installation_json = installation_json in
+  let keys   = Util.keys   installation_json in
+  let values = Util.values installation_json in
+  List.fold_left2
+    (fun m key value ->
+      let* m     = m in
+      let* value = JsonHelpers.string value in
+      let* value = Path.get_absolute_path ~project_root value in
+      let  value = Fpath.to_string value in
+      Some (SMap.add key value m)
+    ) 
+    (Some SMap.empty) 
+    keys values
 
 (* [clean_lock_file_json] converts the esy lock file to a record of type lock_file 
 
@@ -210,48 +227,39 @@ let clean_installation_json project_root installation_json =
     ]; ... })
   } *)
 let clean_lock_file_json lock_json =
-  match lock_json with
-    None -> None
-  | Some lock_json -> 
+  let* lock_json = lock_json in
     let open Yojson.Basic in
-    let root = Util.member "root" lock_json |> JsonHelpers.string in
-    let node = Util.member "node" lock_json in
-    let keys = Util.keys node in
+    let* root = Util.member "root" lock_json |> JsonHelpers.string in
+    let  node = Util.member "node" lock_json in
+    let keys   = Util.keys   node in
     let values = Util.values node in
-    let node = List.fold_left2
+    let* node = List.fold_left2
       (fun m key value ->
-        let dependencies = Util.member "dependencies" value in  
-        let dependencies = JsonHelpers.string_list dependencies in
-        Option.bind m (fun m -> 
-          Option.map (fun dependencies -> SMap.add key dependencies m) dependencies
-        )
+        let* m = m in
+        let  dependencies = Util.member "dependencies" value in  
+        let* dependencies = JsonHelpers.string_list dependencies in
+        Some (SMap.add key dependencies m)
       )
       (Some SMap.empty)
       keys values in
-    match (root,node) with
-      Some root, Some node -> Some ({ root ; node })
-    | _ -> None
+    Some ({ root ; node })
 
 let resolve_path project_root installation pkg_name = 
-  let path = SMap.find_opt pkg_name installation in
-  let path = Option.bind path (Path.get_absolute_path ~project_root) in
-  let path = Option.map Fpath.to_string path in
-  path 
+  let* path = SMap.find_opt pkg_name installation in
+  let* path = Path.get_absolute_path ~project_root path in
+  let path = Fpath.to_string path in
+  Some path 
 
 (* [resolve_paths] takes the installation.json {string SMap.t} and 
    the Map constructed by [find_dependencies] and resolves the the
    package names into file system paths *)
 let resolve_paths project_root installation graph : (string * (string list)) list option =
   SMap.fold (fun k v xs ->
-    Option.bind xs (fun xs -> 
-      let resolved = traverse (List.map (resolve_path project_root installation) v) in
-      let k = resolve_path project_root installation k in
-      (match k,resolved with
-        Some k, Some resolved ->
-          let paths = List.sort String.compare resolved in 
-          Some ((k, paths) :: xs)
-      | _ -> None) 
-    )
+    let* xs = xs in
+    let* resolved = traverse (List.map (resolve_path project_root installation) v) in
+    let* k = resolve_path project_root installation k in
+    let paths = List.sort String.compare resolved in 
+    Some ((k, paths) :: xs)
   ) graph (Some [])
 
 (* [find_dependencies] takes the esy lock file and traverses the dependency
@@ -279,37 +287,26 @@ let find_dependencies (lock_file : lock_file) : dependency_list SMap.t =
    using the [find_dependencies] & [resolve_paths] functions into a uniform
    representation *)
 let make project_root : t option =
-  let installation_json = Esy.installation_json_path project_root 
+  let* installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_installation_json project_root
   in
-  let lock_file_json = Esy.lock_file_path project_root 
+  let* lock_file_json = Esy.lock_file_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
-  (* let () = if Option.is_some installation_json then print_endline "FOUND installation" else print_endline "MISSING installation" in *)
-  (* let () = if Option.is_some lock_file_json then print_endline "FOUND lock" else print_endline "MISSING lock" in *)
-  (match installation_json,lock_file_json with
-    Some installation_json, Some lock_file_json ->
-      let dependencies = find_dependencies lock_file_json in
-      let resolutions = resolve_paths project_root installation_json dependencies in
-      (* let () = if Option.is_some resolutions then print_endline "FOUND resolutions" else print_endline "MISSING resolutions" in *)
-      let root_path = resolve_path project_root installation_json lock_file_json.root in
-      (* let () = if Option.is_some root_path then print_endline "FOUND root_path" else print_endline "MISSING root_path" in *)
-      (match root_path, resolutions with
-        Some root_path, Some resolutions -> Some { root_path ; resolutions = resolutions }
-      | _ -> 
-        (* let () = print_endline "Cannot make module res" in *)
-        None)
-  | _ -> None)
+  let dependencies = find_dependencies lock_file_json in
+  let* resolutions = resolve_paths project_root installation_json dependencies        in
+  let* root_path   = resolve_path  project_root installation_json lock_file_json.root in
+  Some { root_path ; resolutions }
 
 (* [get_root_inclusion_list] is used in the case when external dependencies are
    used in the REPL using the #use or #import commands.
   
    this functions gives the list of paths of dependencies used by the main project
 *)
-let get_root_inclusion_list (module_resolutions : t option) = 
-  match module_resolutions with
+let get_root_inclusion_list =
+  function 
   | Some module_resolutions ->
     let root_path = module_resolutions.root_path in
     let root_inclusion_list = List.find_opt 
@@ -332,8 +329,8 @@ let get_root_inclusion_list (module_resolutions : t option) =
 
    To resolve the external packages used by ligo-list-helpers [get_inclusion_list]
    will give a list of paths of dependencies. *)
-let get_inclusion_list ~file (module_resolutions : t option) =
-  match module_resolutions with
+let get_inclusion_list ~file =
+  function
     Some module_resolutions ->
       let path = Path.get_absolute_path file in
       (match List.find_opt (fun (mod_path, _) ->
@@ -363,21 +360,22 @@ let get_inclusion_list ~file (module_resolutions : t option) =
     rest of path = list.mligo
 *)
 let find_external_file ~file ~inclusion_list =
-  let segs = Path.segs (Path.v file) in
-  Option.bind segs (fun segs -> 
+  let find_in_inclusion_list pkg_name = 
+    let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
+    List.find_opt (fun pkg_path ->
+      normalized_pkg_name = Esy.extract_pkg_name pkg_path ||
+      pkg_name = Filename.basename pkg_path) inclusion_list
+  in
+  let* segs = Path.segs (Path.v file) in
+  let* segs =
     match segs with
       pkg_name::rest_of_path -> 
-        let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
-        let dir = List.find_opt (fun pkg_path ->
-          normalized_pkg_name = Esy.extract_pkg_name pkg_path ||
-          pkg_name = Filename.basename pkg_path) inclusion_list in
+        let* dir = find_in_inclusion_list pkg_name in
         let rest_of_path = String.concat Filename.dir_sep rest_of_path in
-        Option.map (fun dir -> 
-          (* TODO: use Path.join here ... *)
-          let path = dir ^ Fpath.dir_sep ^ rest_of_path in
-          path
-        ) dir
+        let dir = Path.join dir rest_of_path in
+        Some dir
     | _ -> None
-  )
+  in
+  Some segs
 
 (* TODO: pp for ModRes.t *)
