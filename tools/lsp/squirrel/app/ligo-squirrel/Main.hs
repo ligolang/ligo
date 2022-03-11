@@ -5,6 +5,7 @@ module Main (main) where
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
+import Data.Aeson qualified as Aeson
 import Data.Bool (bool)
 import Data.Default
 import Data.Foldable (for_)
@@ -18,7 +19,7 @@ import Language.LSP.Types.Lens qualified as J
 import System.Exit
 import System.Log qualified as L
 import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (modifyMVar_)
+import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
 import AST
 import Cli.Impl (getLigoVersion)
@@ -149,6 +150,8 @@ handlers = mconcat
   , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
+
+  , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
@@ -396,6 +399,16 @@ handleDidChangeWatchedFiles notif = do
     for_ (J.uriToNormalizedFilePath uri) \nfp -> do
       let fp = J.fromNormalizedFilePath nfp
       bool Indexing.handleProjectFileChanged Document.handleLigoFileChanged (isLigoFile fp) nfp change
+
+handleCustomMethod'BuildGraph
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'BuildGraph req respond =
+  case req ^. J.params of
+    Aeson.Null -> do
+      buildGraphM <- tryReadMVar =<< asks reBuildGraph
+      respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
+    _ ->
+      respond $ Left $ J.ResponseError J.InvalidRequest "This request expects null" Nothing
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

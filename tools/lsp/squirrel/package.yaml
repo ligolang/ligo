@@ -179,6 +179,7 @@ tests:
 
     dependencies:
       - aeson
+      - algebraic-graphs
       - data-default
       - ligo-squirrel
       - lsp-test

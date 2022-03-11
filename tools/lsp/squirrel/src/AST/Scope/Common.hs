@@ -45,7 +45,7 @@ module AST.Scope.Common
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import Algebra.Graph.AdjacencyMap qualified as G (gmap)
+import Algebra.Graph.AdjacencyMap qualified as G (edges, gmap, overlay, vertices)
 import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
@@ -54,7 +54,7 @@ import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&), (%~))
 import Control.Monad.Reader
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
@@ -385,8 +385,14 @@ instance Exception ContractNotFoundException where
 -- cyclic imports.
 newtype Includes info = Includes
   { getIncludes :: AdjacencyMap info
-  } deriving stock (Show)
+  } deriving stock (Eq, Show)
     deriving newtype (Graph, ToGraph)
+
+instance (Ord info, FromJSON info) => FromJSON (Includes info) where
+  parseJSON = withObject "Includes" \v -> Includes <$> do
+    G.overlay
+      <$> (G.vertices <$> v .: "vertices")
+      <*> (G.edges    <$> v .: "edges")
 
 instance (Ord info, ToJSON info) => ToJSON (Includes info) where
   toJSON includes = object
