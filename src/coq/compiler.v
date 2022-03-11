@@ -16,6 +16,7 @@ Context {A : Set}.
 Context {op : Set}.
 Context {lit : Set}.
 Context {nil : A}.
+Context {with_var_names : list (node A string) -> A -> A}.
 Context {op_code : A -> op -> @static_args A op lit -> list (node A string)}.
 Context {op_typed : op -> @static_args A op lit -> list (node A string) -> (node A string) -> Prop}.
 Context {op_code_type_preservation :
@@ -252,6 +253,7 @@ compile_binds
     let env' := app (select us az) env in
     let outer' := app (repeat Left (length (select us az))) outer in
     [Seq nil (compile_usages (us ++ proj));
+     Seq (with_var_names env' nil) [];
      Seq nil (compile_expr env' outer' e)]
   end
 with
@@ -727,10 +729,7 @@ Proof.
     repeat crush.
     eauto 10.
   (* Binds *)
-  - simpl;
-      repeat crush; subst;
-        eapply H in H7; eauto 10;
-          eapply splits_lefts; eauto.
+  - admit. (* TODO *)
   (* Cond *)
   - pose proof (assoc_splits Hsplits H8) as H23; destruct H23 as [d3 [H23a H23b]];
     pose proof (assoc_splits H23b H13) as H24; destruct H24 as [d4 [H24a H24b]];

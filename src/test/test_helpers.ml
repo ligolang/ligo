@@ -339,7 +339,7 @@ let compile_main ~raise ~add_warning f () =
   let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise (get_program ~raise ~add_warning f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
   let mini_c    = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
-  let _contract : Location.t Tezos_utils.Michelson.michelson =
+  let _contract : _ Tezos_utils.Michelson.michelson =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract ~raise michelson_prg [] in
   ()

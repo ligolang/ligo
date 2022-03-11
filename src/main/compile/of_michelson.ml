@@ -18,6 +18,11 @@ let parse_constant ~raise code =
   Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer @@
     Memory_proto_alpha.node_to_canonical code
 
+let dummy : Stacking.meta =
+  { location = Location.dummy;
+    env = [];
+    binder = None }
+
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise :
   ?disable_typecheck:bool ->
@@ -40,11 +45,11 @@ let build_contract ~raise :
       let expr = compiled.expr in
       let contract =
         Michelson.lcontract
-          Location.dummy
-          Location.dummy param_ty
-          Location.dummy storage_ty
-          Location.dummy expr
-          Location.dummy views in
+          dummy
+          dummy param_ty
+          dummy storage_ty
+          dummy expr
+          dummy views in
       if disable_typecheck then
         contract
       else

@@ -178,14 +178,18 @@ let michelson_code_format =
 
 let michelson_comments =
   let open Command.Param in
-  let doc = "Selects kinds of comments to be added to the Michelson output. Currently only 'location' is supported, which propagates original source locations (line/col)." in
+  let doc = "Selects kinds of comments to be added to the Michelson output. \
+Currently 'location' and 'env' are supported. 'location' propagates original \
+source locations. 'env' inserts additional empty Seq nodes with comments \
+relating the Michelson stack to the source LIGO environment." in
   let name = "--michelson-comments" in
   flag ~doc name @@
   listed @@
-  Command.Arg_type.create @@ function
-  (* autocomplete:(fun _ -> return ["location"]) *)
-  | "location" -> `Location
-  | s -> failwithf "unexpected value for --%s: %s" name s ()
+  Command.Arg_type.create
+    (function
+      | "location" -> `Location
+      | "env" -> `Env
+      | s -> failwithf "unexpected value for --%s: %s" name s ())
 
 let optimize =
   let open Command.Param in
