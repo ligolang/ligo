@@ -151,3 +151,6 @@ The steps are the same as [publishing yet another library on npm](https://docs.n
 ```bash 
 npm publish # this will publish the library on npm
 ```
+
+## TODO: Add section on how to try out package in REPL
+## TODO: Add info about how to upgrade package(s)

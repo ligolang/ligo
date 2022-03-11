@@ -1,5 +1,4 @@
 module Option_syntax = struct
-  let (let+) x f    = Option.map f x
   let (let*) x f    = Option.bind x f
 end
 
@@ -69,7 +68,7 @@ module Path = struct
   type t = Fpath.t option
 
   (* function for string to Path.t *)
-  let v : string -> t = fun s -> try Some (Fpath.v s) with _ -> None
+  let v : string -> t = fun s -> try Some (Fpath.v s |> Fpath.normalize) with _ -> None
 
   (* alias to Filename.dir_sep *)
   let dir_sep = Filename.dir_sep
@@ -94,26 +93,31 @@ module Path = struct
   (* [normalize] gets rid of ".." & "." from Path.t *)
   let normalize : t -> t = Option.map Fpath.normalize
 
+  (* [ends_with_dir_sep path] checks if [path] ends with [Fpath.dir_sep] *)
   let ends_with_dir_sep =
-    let regexp = Str.regexp (Format.sprintf "%s$" Filename.dir_sep) in
-    fun path -> Str.string_match regexp path 0
-  let starts_with_dir_sep =
-    let regexp = Str.regexp (Format.sprintf "^%s" Filename.dir_sep) in
+    let regexp = Str.regexp (Format.sprintf "%s$" Fpath.dir_sep) in
     fun path -> Str.string_match regexp path 0
 
+  (* [starts_with_dir_sep path] checks if [path] starts with [Fpath.dir_sep] *)
+  let starts_with_dir_sep =
+    let regexp = Str.regexp (Format.sprintf "^%s" Fpath.dir_sep) in
+    fun path -> Str.string_match regexp path 0
+
+  (* [join path1 path2] concatenates path1 / path2, It is aware of Fpath.dir_sep *)
   let join : string -> string -> string =
     fun a b ->
       match ends_with_dir_sep a, starts_with_dir_sep b with
       | false, false -> a ^ Fpath.dir_sep ^ b
       | false, true  
-      | true, false  -> a ^ b
-      | true, true   -> a ^ "." ^ b (* TODO: fix this case ... *)
+      | true , false -> a ^ b
+      | true , true  -> a ^ "." ^ b (* TODO: fix this case ... *)
 
-  let get_absolute_path ?(project_root=".") path = 
+  (* TODO: get rid of project_root *)
+  let get_absolute_path path = 
     let path' = v path in
     if is_abs path' then path'
     else 
-      v ((Sys.getcwd ()) ^  dir_sep ^ project_root ^ dir_sep ^ path) (* TODO: use Path.join *)
+      v (join (Sys.getcwd ()) path) (* TODO: use Path.join *)
         |> normalize 
 
 end
@@ -171,7 +175,7 @@ end
   }
    
 *)
-let clean_installation_json project_root installation_json =
+let clean_installation_json abs_path_to_project_root installation_json =
   let open Yojson.Basic in
   let* installation_json = installation_json in
   let keys   = Util.keys   installation_json in
@@ -180,7 +184,7 @@ let clean_installation_json project_root installation_json =
     (fun m key value ->
       let* m     = m in
       let* value = JsonHelpers.string value in
-      let* value = Path.get_absolute_path ~project_root value in
+      let* value = if Path.is_abs (Path.v value) then (Path.v value) else Path.v (Path.join abs_path_to_project_root value) in
       let  value = Fpath.to_string value in
       Some (SMap.add key value m)
     ) 
@@ -244,20 +248,21 @@ let clean_lock_file_json lock_json =
       keys values in
     Some ({ root ; node })
 
-let resolve_path project_root installation pkg_name = 
+let resolve_path abs_path_to_project_root installation pkg_name = 
   let* path = SMap.find_opt pkg_name installation in
-  let* path = Path.get_absolute_path ~project_root path in
-  let path = Fpath.to_string path in
+  let* path = if Path.is_abs (Path.v path) then Path.v path else Path.v (Path.join abs_path_to_project_root path) in
+  let  path = Fpath.to_string path in
+  (* let () = print_endline path in *)
   Some path 
 
 (* [resolve_paths] takes the installation.json {string SMap.t} and 
    the Map constructed by [find_dependencies] and resolves the the
    package names into file system paths *)
-let resolve_paths project_root installation graph : (string * (string list)) list option =
+let resolve_paths abs_path_to_project_root installation graph : (string * (string list)) list option =
   SMap.fold (fun k v xs ->
     let* xs = xs in
-    let* resolved = traverse (List.map (resolve_path project_root installation) v) in
-    let* k = resolve_path project_root installation k in
+    let* resolved = traverse (List.map (resolve_path abs_path_to_project_root installation) v) in
+    let* k = resolve_path abs_path_to_project_root installation k in
     let paths = List.sort String.compare resolved in 
     Some ((k, paths) :: xs)
   ) graph (Some [])
@@ -287,17 +292,20 @@ let find_dependencies (lock_file : lock_file) : dependency_list SMap.t =
    using the [find_dependencies] & [resolve_paths] functions into a uniform
    representation *)
 let make project_root : t option =
+  let* abs_path_to_project_root = Path.get_absolute_path project_root in
+  let  abs_path_to_project_root = Fpath.to_string abs_path_to_project_root in
+  (* let () = print_endline abs_path_to_project_root in *)
   let* installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
-    |> clean_installation_json project_root
+    |> clean_installation_json abs_path_to_project_root
   in
   let* lock_file_json = Esy.lock_file_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_lock_file_json
   in
   let dependencies = find_dependencies lock_file_json in
-  let* resolutions = resolve_paths project_root installation_json dependencies        in
-  let* root_path   = resolve_path  project_root installation_json lock_file_json.root in
+  let* resolutions = resolve_paths abs_path_to_project_root installation_json dependencies        in
+  let* root_path   = resolve_path  abs_path_to_project_root installation_json lock_file_json.root in
   Some { root_path ; resolutions }
 
 (* [get_root_inclusion_list] is used in the case when external dependencies are
@@ -334,8 +342,9 @@ let get_inclusion_list ~file =
     Some module_resolutions ->
       let path = Path.get_absolute_path file in
       (match List.find_opt (fun (mod_path, _) ->
+        (* let () = Format.printf "%s - %s\n" mod_path file in *)
         let mod_path = Path.v mod_path in
-        Path.is_prefix mod_path path (* do we need to do Path.is_prefix? now that we are comparing 2 absolute paths*)
+        Path.is_prefix mod_path path (* we need is_prefix because path is of the form abs_path/lib/path/to/file and mod_path is of the form abs_path*)
         ) module_resolutions.resolutions 
       with
         Some (_,paths) -> paths
@@ -363,8 +372,7 @@ let find_external_file ~file ~inclusion_list =
   let find_in_inclusion_list pkg_name = 
     let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
     List.find_opt (fun pkg_path ->
-      normalized_pkg_name = Esy.extract_pkg_name pkg_path ||
-      pkg_name = Filename.basename pkg_path) inclusion_list
+      normalized_pkg_name = Esy.extract_pkg_name pkg_path) inclusion_list
   in
   let* segs = Path.segs (Path.v file) in
   let* segs =
