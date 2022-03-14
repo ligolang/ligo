@@ -269,6 +269,9 @@ let rec compare_value (v : value) (v' : value) : int =
     | Contract c, Contract c' -> Caml.compare c c'
     | Ty_code _, Contract _ -> 1
     | Ty_code t, Ty_code t' -> Caml.compare t t'
+    | Untyped_code _, (Ty_code _ | Contract _) -> -1
+    | Untyped_code c, Untyped_code c' -> Caml.compare c c'
+    | (Ty_code _ | Contract _), Untyped_code _ -> 1
   )
   | V_Michelson _, (V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
   | V_Ligo _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _) -> -1

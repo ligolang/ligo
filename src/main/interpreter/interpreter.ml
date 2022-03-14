@@ -987,6 +987,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> tvp = Get_total_voting_power (loc, calltrace) in
       return tvp
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
+    | ( C_TEST_REGISTER_CONSTANT , [ V_Michelson (Ty_code { code ; _ } | Untyped_code code) ] ) ->
+      let>> s = Register_constant (loc, calltrace, code) in
+      return @@ V_Ct (C_string s)
+    | ( C_TEST_REGISTER_CONSTANT , _ ) -> fail @@ error_type
+    | ( C_TEST_CONSTANT_TO_MICHELSON , [ V_Ct (C_string m) ] ) ->
+      let>> s = Constant_to_Michelson (loc, calltrace, m) in
+      return @@ V_Michelson (Untyped_code s)
+    | ( C_TEST_CONSTANT_TO_MICHELSON , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."

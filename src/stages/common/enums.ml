@@ -235,6 +235,8 @@ type constant' =
   | C_TEST_BAKE_UNTIL_N_CYCLE_END [@only_interpreter]
   | C_TEST_GET_VOTING_POWER [@only_interpreter]
   | C_TEST_GET_TOTAL_VOTING_POWER [@only_interpreter]
+  | C_TEST_REGISTER_CONSTANT [@only_interpreter]
+  | C_TEST_CONSTANT_TO_MICHELSON [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK

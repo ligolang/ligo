@@ -29,6 +29,7 @@ and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggreg
 and michelson_code =
   | Contract of mcode
   | Ty_code of typed_michelson_code
+  | Untyped_code of mcode
 
 and contract =
   { address : mcontract;

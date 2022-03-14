@@ -71,6 +71,8 @@ module Command = struct
     | Baker_account : LT.value * LT.value -> unit t
     | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
+    | Register_constant : Location.t * Ligo_interpreter.Types.calltrace * LT.mcode -> string t
+    | Constant_to_Michelson : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.mcode t
 
   let eval
     : type a.
@@ -406,6 +408,14 @@ module Command = struct
       let ctxt = Tezos_state.bake_until_n_cycle_end ~raise ~loc ~calltrace ctxt (Z.to_int n) in
       let value = LC.v_unit () in
       (value, ctxt)
+    )
+    | Register_constant (loc, calltrace, code) -> (
+      let (hash, ctxt) = Tezos_state.register_constant ~raise ~loc ~calltrace ~source:ctxt.internals.source ~value:code ctxt in
+      (hash, ctxt)
+    )
+    | Constant_to_Michelson (loc, calltrace, code) -> (
+      let code = Tezos_state.parse_constant ~raise ~loc ~calltrace code in
+      (code, ctxt)
     )
 end
 

@@ -487,6 +487,18 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 

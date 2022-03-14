@@ -319,6 +319,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: ligo"
   | V_Michelson (Contract _) ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+  | V_Michelson (Untyped_code _) ->
+     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Failure _ ->

@@ -421,6 +421,34 @@ let register_delegate = (account : key_hash) => unit
 Registers a `key_hash` corresponding to an account as a delegate.
 
 <SyntaxTitle syntax="pascaligo">
+val register_constant : michelson_program -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val register_constant : michelson_program -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let register_constant: michelson_program => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let register_constant = (constant : michelson_program) => string
+</SyntaxTitle>
+Registers a global constant `constant`, returns its hash as a string.
+
+<SyntaxTitle syntax="pascaligo">
+val constant_to_michelson_program : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val constant_to_michelson_program : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let constant_to_michelson_program: string => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let constant_to_michelson_program = (constant : string) => michelson_program
+</SyntaxTitle>
+Turn a constant (as a string) into a `michelson_program`. To be used together with `Test.register_constant`.
+
+<SyntaxTitle syntax="pascaligo">
 val bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
