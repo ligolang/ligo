@@ -149,6 +149,10 @@ executable ligo-squirrel
       ASTMap
       Language.LSP.Util
       RIO
+      RIO.Diagnostic
+      RIO.Document
+      RIO.Registration
+      RIO.Types
       Paths_ligo_squirrel
   hs-source-dirs:
       app/ligo-squirrel
