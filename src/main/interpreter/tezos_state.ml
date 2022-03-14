@@ -94,6 +94,29 @@ let canonical_to_ligo : canonical_repr -> ligo_repr =
   x |> Tezos_protocol.Protocol.Michelson_v1_primitives.strings_of_prims
     |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
 
+let node_to_canonical m =
+    let open Tezos_micheline.Micheline in
+    let x = inject_locations (fun _ -> 0) (strip_locations m) in
+    let x = strip_locations x in
+    Tezos_protocol.Protocol.Michelson_v1_primitives.prims_of_strings x
+
+let parse_constant ~raise ~loc ~calltrace code =
+  let open Tezos_micheline in
+  let open Tezos_micheline.Micheline in
+  let (code, errs) = Micheline_parser.tokenize code in
+  let code = (match errs with
+              | _ :: _ -> raise.raise (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | [] ->
+                 let (code, errs) = Micheline_parser.parse_expression ~check:false code in
+                 match errs with
+                 | _ :: _ -> raise.raise (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | [] -> map_node (fun _ -> ()) (fun x -> x) code
+             ) in
+  code
+  (* Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
+   *   node_to_canonical code *)
+
+
 (* REMITODO: NOT STATE RELATED, move out ? *)
 let get_contract_rejection_data :
   state_error -> (Memory_proto_alpha.Protocol.Alpha_context.Contract.t * unit Tezos_utils.Michelson.michelson) option =
@@ -403,6 +426,17 @@ let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
     ctxt
   | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
 
+let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
+  let open Tezos_alpha_test_helpers in
+  let value = ligo_to_canonical ~raise ~loc ~calltrace value in
+  let hash = Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@ Tezos_protocol.Protocol.Script_repr.force_bytes value in
+  let hash = Tezos_protocol.Protocol.Script_expr_hash.hash_bytes [hash] in
+  let hash = Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
+  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value in
+  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  | Success (ctxt,_) ->
+    (hash, ctxt)
+  | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
 
 let add_account ~raise ~loc sk pk pkh : unit =
   let open Tezos_alpha_test_helpers in

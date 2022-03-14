@@ -217,6 +217,8 @@ module Tree_abstraction = struct
     | "Test.bake_until_n_cycle_end" -> some_const C_TEST_BAKE_UNTIL_N_CYCLE_END
     | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
     | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
+    | "Test.register_constant" -> some_const C_TEST_REGISTER_CONSTANT
+    | "Test.constant_to_michelson_program" -> some_const C_TEST_CONSTANT_TO_MICHELSON
 
     (* Operator module *)
 
@@ -414,7 +416,8 @@ module Tree_abstraction = struct
     | C_TEST_BAKE_UNTIL_N_CYCLE_END -> "Test.bake_until_n_cycle_end"
     | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power"
     | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power"
-
+    | C_TEST_REGISTER_CONSTANT -> "Test.register_constant"
+    | C_TEST_CONSTANT_TO_MICHELSON -> "Test.constant_to_michelson_program"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 

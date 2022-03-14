@@ -210,7 +210,10 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_BAKE_UNTIL_N_CYCLE_END
       | C_TEST_SAVE_MUTATION
       | C_TEST_GET_VOTING_POWER
-      | C_TEST_GET_TOTAL_VOTING_POWER) as c ->
+      | C_TEST_GET_TOTAL_VOTING_POWER
+      | C_TEST_REGISTER_CONSTANT
+      | C_TEST_CONSTANT_TO_MICHELSON
+    ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type ~raise (t:AST.type_expression) : type_expression =
