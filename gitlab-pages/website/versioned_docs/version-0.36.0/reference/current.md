@@ -840,7 +840,7 @@ let voting_power: (key_hash:key_hash) => nat
 
 Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
 
-<h2>Sapling</h2>
+## Sapling
 
 Delphi protocol introduced the following sapling types (state and transaction) with N being an int singleton
 
@@ -982,7 +982,7 @@ let f = (tr : tr) : [int , st] =>
 </Syntax>
 
 
-<h2>Tickets</h2>
+## Tickets
 
 <SyntaxTitle syntax="pascaligo">
 val create_ticket&lt;value&gt; : value -> nat -> ticket (value)
