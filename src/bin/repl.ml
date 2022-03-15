@@ -2,7 +2,6 @@ open Simple_utils.Trace
 
 (* Helpers *)
 
-
 let get_declarations_core core_prg =
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
      the absolute file path, and the REPL prints an absolute file path which is confusing
