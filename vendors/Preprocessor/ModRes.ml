@@ -8,6 +8,8 @@ type dependency    = [`Dependency of string]
 type inclusion_list  = inclusion_dir list
 type dependency_list = dependency list
 
+type resolution = inclusion_dir * inclusion_list
+
 module DepMap = Simple_utils.Map.Make (struct 
   type t = dependency
   
@@ -24,7 +26,7 @@ type lock_file = {
 
 type t = {
   root_path   : inclusion_dir ;
-  resolutions : (inclusion_dir * inclusion_list) list ;
+  resolutions : resolution list ;
 }
 
 let traverse : 'a option list -> 'a list option 
@@ -115,13 +117,19 @@ module Path = struct
       | true , false -> a ^ b
       | true , true  -> a ^ "." ^ b (* TODO: fix this case ... *)
 
-  let get_absolute_path path =
+  let abs_path ~abs_path_to_project_root path_str = 
+    if is_abs (v path_str) then (v path_str) else v (join abs_path_to_project_root path_str)
 
+  let get_absolute_path path =
     let path' = v path in
     if is_abs path' then path'
     else
       let cwd = Sys.getcwd () in
       v (join cwd path) |> normalize 
+
+  let to_string path =
+    let* path = path in
+    Some (Fpath.to_string path)
 
 end
 
@@ -187,8 +195,8 @@ let clean_installation_json abs_path_to_project_root installation_json =
       let* m     = m in
       let  key   = `Dependency key in
       let* value = JsonHelpers.string value in
-      let* value = if Path.is_abs (Path.v value) then (Path.v value) else Path.v (Path.join abs_path_to_project_root value) in
-      let  value = Fpath.to_string value in
+      let  value = Path.abs_path ~abs_path_to_project_root value in
+      let* value = Path.to_string value in
       let  value = `Inclusion value in
       Some (DepMap.add key value m)
     ) 
@@ -255,14 +263,14 @@ let clean_lock_file_json lock_json =
 
 let resolve_path abs_path_to_project_root installation pkg_name = 
   let* (`Inclusion path) = DepMap.find_opt pkg_name installation in
-  let* path = if Path.is_abs (Path.v path) then Path.v path else Path.v (Path.join abs_path_to_project_root path) in
-  let  path = Fpath.to_string path in
+  let  path = Path.abs_path ~abs_path_to_project_root path in
+  let* path = Path.to_string path in
   Some path 
 
 (* [resolve_paths] takes the installation.json {string SMap.t} and 
    the Map constructed by [find_dependencies] and resolves the the
    package names into file system paths *)
-let resolve_paths abs_path_to_project_root installation (graph : dependency_map) : (inclusion_dir * (inclusion_list)) list option =
+let resolve_paths abs_path_to_project_root installation graph : resolution list option =
   DepMap.fold (fun k v xs ->
     let* xs = xs in
     let* resolved = traverse (List.map v ~f:(resolve_path abs_path_to_project_root installation)) in
@@ -298,8 +306,8 @@ let find_dependencies (lock_file : lock_file) : dependency_list DepMap.t =
    using the [find_dependencies] & [resolve_paths] functions into a uniform
    representation *)
 let make project_root : t option =
-  let* abs_path_to_project_root = Path.get_absolute_path project_root in
-  let  abs_path_to_project_root = Fpath.to_string abs_path_to_project_root in
+  let  abs_path_to_project_root = Path.get_absolute_path project_root in
+  let* abs_path_to_project_root = Path.to_string abs_path_to_project_root in
   let* installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_installation_json abs_path_to_project_root
@@ -398,7 +406,6 @@ let pp ppf mr =
   List.iter resolutions ~f:(fun ((`Inclusion k), v) -> Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_list v)
 
 (* TODO: Docs update *)
-(* TODO: Dont mix Fpath & Path *)
 
 module Helpers = struct
   (* used by REPL & test interpreter *)
