@@ -2,6 +2,8 @@ module ModRes = Preprocessor.ModRes
 
 let option_eq a b = 0 = Option.compare String.compare (Some a) b
 
+let inclusion_list_eq (`Inclusion a) (`Inclusion b) = String.equal a b
+
 let empty_project ~raise:_ () =
   let t = ModRes.make "projects/uninitialized_project" in
   assert (Option.is_none t)
@@ -19,9 +21,10 @@ let working_project ~raise:_ () =
 
   let inclusion_list = 
     ModRes.get_inclusion_list ~file:"/foo/projects/ligo-foo/main.mligo" t in
-  let () = assert (List.equal String.equal inclusion_list [
-    "/foo/.esy/source/i/ligo_list_helpers__1.0.0__bf074147";
-    "/foo/.esy/source/i/ligo_set_helpers__1.0.2__5cd724a1"]) in
+    (* let () = List.iter inclusion_list ~f:(fun (`Inclusion p) -> print_endline p) in *)
+  let () = assert (List.equal inclusion_list_eq inclusion_list [
+    `Inclusion "/foo/.esy/source/i/ligo_list_helpers__1.0.0__bf074147";
+    `Inclusion "/foo/.esy/source/i/ligo_set_helpers__1.0.2__5cd724a1"]) in
   
   let list_helpers_path = ModRes.find_external_file 
     ~file:"ligo-list-helpers/list.mligo" ~inclusion_list in
@@ -40,12 +43,13 @@ let complex_project ~raise:_ () =
 
   let base_inclusion_list = 
     ModRes.get_inclusion_list ~file:"/foo/projects/ligo-main/main.mligo" t in
-  let () = assert (List.equal String.equal base_inclusion_list [
-    "/foo/.esy/source/i/ligo__test__1__1.0.0__a381d5ee" ;
-    "/foo/.esy/source/i/ligo_foo__1.0.6__2355cc08" ;
-    "/foo/.esy/source/i/ligo_list_helpers__1.0.1__6233bebd" ;
-    "/foo/.esy/source/i/ligo_test__2__1.0.0__d841d05a" ;
-    "/foo/.esy/source/i/webpack__5.68.0__95002730"]) in
+  (* let () = List.iter base_inclusion_list ~f:(fun (`Inclusion p) -> print_endline p) in *)
+  let () = assert (List.equal inclusion_list_eq base_inclusion_list [
+    `Inclusion "/foo/.esy/source/i/ligo__test__1__1.0.0__a381d5ee" ;
+    `Inclusion "/foo/.esy/source/i/ligo_foo__1.0.6__2355cc08" ;
+    `Inclusion "/foo/.esy/source/i/ligo_list_helpers__1.0.1__6233bebd" ;
+    `Inclusion "/foo/.esy/source/i/ligo_test__2__1.0.0__d841d05a" ;
+    `Inclusion "/foo/.esy/source/i/webpack__5.68.0__95002730"]) in
   
   let list_helpers_path = ModRes.find_external_file 
     ~file:"ligo-list-helpers/list.mligo" ~inclusion_list:base_inclusion_list in
