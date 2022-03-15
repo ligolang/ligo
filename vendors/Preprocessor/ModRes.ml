@@ -1,10 +1,12 @@
-let (let*) x f    = Option.bind x f
+module List = Core.List
 
-type inclusion_dir = [`Inclusion of string]
-type dependency = [`Dependency of string]
-type inclusion_list = inclusion_dir list
+let (let*) x f = Option.bind x f
+
+type inclusion_dir = [`Inclusion  of string]
+type dependency    = [`Dependency of string]
+
+type inclusion_list  = inclusion_dir list
 type dependency_list = dependency list
-
 
 module DepMap = Simple_utils.Map.Make (struct 
   type t = dependency
@@ -12,12 +14,8 @@ module DepMap = Simple_utils.Map.Make (struct
   let compare (`Dependency a) (`Dependency b) = String.compare a b 
 end)
 
-type dependency_map = dependency_list DepMap.t
-
+type dependency_map   = dependency_list DepMap.t
 type installation_map = inclusion_list DepMap.t
-
-
-(* module List = Core.List *)
 
 type lock_file = {
   root : dependency ;
@@ -31,15 +29,14 @@ type t = {
 
 let traverse : 'a option list -> 'a list option 
   = 
-  let module List = Core.List in
   List.fold_left
-      ~init:(Some [])
-      ~f:(
-        fun acc x ->
-          let* acc = acc in
-          let* x = x in
-          Some (x :: acc)
-      )
+    ~init:(Some [])
+    ~f:(
+      fun acc x ->
+        let* acc = acc in
+        let* x = x in
+        Some (x :: acc)
+    )
 
 (* Wrapper over yojson helpers *)
 module JsonHelpers = struct
@@ -60,7 +57,6 @@ module JsonHelpers = struct
     let l = list json in
     match l with
       Some l ->
-        let module List = Core.List in
         let strings = List.map ~f:string l in
         traverse strings
     | None -> None
@@ -146,7 +142,6 @@ module Esy = struct
     
   *)
   let extract_pkg_name path =
-    let module List = Core.List in
     Filename.basename path
       |> Str.split (Str.regexp path_separator)
       |> List.rev
@@ -185,10 +180,10 @@ end
 let clean_installation_json abs_path_to_project_root installation_json =
   let open Yojson.Basic in
   let* installation_json = installation_json in
-  let keys   = Util.keys   installation_json in
-  let values = Util.values installation_json in
-  List.fold_left2
-    (fun m key value ->
+  let kvs = Util.to_assoc installation_json in
+  List.fold_left
+    kvs
+    ~f:(fun m (key, value) ->
       let* m     = m in
       let  key   = `Dependency key in
       let* value = JsonHelpers.string value in
@@ -197,8 +192,7 @@ let clean_installation_json abs_path_to_project_root installation_json =
       let  value = `Inclusion value in
       Some (DepMap.add key value m)
     ) 
-    (Some DepMap.empty) 
-    keys values
+    ~init:(Some DepMap.empty)
 
 (* [clean_lock_file_json] converts the esy lock file to a record of type lock_file 
 
@@ -245,26 +239,24 @@ let clean_lock_file_json lock_json =
     let* root = Util.member "root" lock_json |> JsonHelpers.string in
     let  root = `Dependency root in
     let  node = Util.member "node" lock_json in
-    let keys   = Util.keys   node in
-    let values = Util.values node in
-    let* node = List.fold_left2
-      (fun m key value ->
+    let  kvs  = Util.to_assoc   node in
+    let* node = List.fold_left
+      kvs
+      ~f:(fun m (key, value) ->
         let* m = m in
         let key = `Dependency key in
         let  dependencies = Util.member "dependencies" value in  
         let* dependencies = JsonHelpers.string_list dependencies in
-        let dependencies = List.map (fun d -> `Dependency d) dependencies in
+        let dependencies = List.map dependencies ~f:(fun d -> `Dependency d) in
         Some (DepMap.add key dependencies m)
       )
-      (Some DepMap.empty)
-      keys values in
+      ~init:(Some DepMap.empty) in
     Some ({ root ; node })
 
 let resolve_path abs_path_to_project_root installation pkg_name = 
   let* (`Inclusion path) = DepMap.find_opt pkg_name installation in
   let* path = if Path.is_abs (Path.v path) then Path.v path else Path.v (Path.join abs_path_to_project_root path) in
   let  path = Fpath.to_string path in
-  (* let () = print_endline path in *)
   Some path 
 
 (* [resolve_paths] takes the installation.json {string SMap.t} and 
@@ -272,7 +264,6 @@ let resolve_path abs_path_to_project_root installation pkg_name =
    package names into file system paths *)
 let resolve_paths abs_path_to_project_root installation (graph : dependency_map) : (inclusion_dir * (inclusion_list)) list option =
   DepMap.fold (fun k v xs ->
-    let module List = Core.List in
     let* xs = xs in
     let* resolved = traverse (List.map v ~f:(resolve_path abs_path_to_project_root installation)) in
     let* k = resolve_path abs_path_to_project_root installation k in
@@ -293,7 +284,6 @@ let find_dependencies (lock_file : lock_file) : dependency_list DepMap.t =
     let deps = DepMap.find_opt dep node in
     match deps with
       Some deps -> 
-        let module List = Core.List in
         let graph = DepMap.add dep deps graph in
         List.fold_left deps ~init:graph ~f:(fun graph dep -> dfs dep graph)
     | _ -> graph
@@ -310,7 +300,6 @@ let find_dependencies (lock_file : lock_file) : dependency_list DepMap.t =
 let make project_root : t option =
   let* abs_path_to_project_root = Path.get_absolute_path project_root in
   let  abs_path_to_project_root = Fpath.to_string abs_path_to_project_root in
-  (* let () = print_endline abs_path_to_project_root in *)
   let* installation_json = Esy.installation_json_path project_root 
     |> JsonHelpers.from_file_opt
     |> clean_installation_json abs_path_to_project_root
@@ -334,13 +323,9 @@ let make project_root : t option =
 let get_root_inclusion_list =
   function 
   | Some module_resolutions ->
-    let module List = Core.List in
     let root_path = module_resolutions.root_path in
     let root_inclusion_list = List.find module_resolutions.resolutions
-      ~f:(fun (path,_) -> 
-        (* let () = Format.printf "%s - %s\n" path root_path in *)
-        path = root_path) 
-      in
+      ~f:(fun (path,_) -> path = root_path) in
     (match root_inclusion_list with 
       Some (_,root_inclusion_list) -> root_inclusion_list
     | None -> [])
@@ -359,10 +344,8 @@ let get_root_inclusion_list =
 let get_inclusion_list ~file =
   function
     Some module_resolutions ->
-      let module List = Core.List in
       let path = Path.get_absolute_path file in
       (match List.find module_resolutions.resolutions ~f:(fun (`Inclusion mod_path, _) ->
-        (* let () = Format.printf "%s - %s\n" mod_path file in *)
         let mod_path = Path.v mod_path in
         Path.is_prefix mod_path path (* we need is_prefix because path is of the form abs_path/lib/path/to/file and mod_path is of the form abs_path*)
         ) 
@@ -389,7 +372,6 @@ let get_inclusion_list ~file =
     rest of path = list.mligo
 *)
 let find_external_file ~file ~inclusion_list =
-  let module List = Core.List in
   let find_in_inclusion_list pkg_name = 
     let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
     List.find inclusion_list ~f:(fun (`Inclusion pkg_path) ->
@@ -412,14 +394,14 @@ let pp ppf mr =
   let (`Inclusion root_path) = root_path in
   let () = Format.fprintf ppf "Root Path = %s\n" root_path in
   let () = Format.fprintf ppf "Resolutions =\n" in
-  let pp_inclusion_list ppf is = List.iter (fun (`Inclusion i) -> Format.fprintf ppf "\t%s\n" i) is in
-  List.iter (fun ((`Inclusion k), v) -> Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_list v) resolutions
+  let pp_inclusion_list ppf is = List.iter is ~f:(fun (`Inclusion i) -> Format.fprintf ppf "\t%s\n" i) in
+  List.iter resolutions ~f:(fun ((`Inclusion k), v) -> Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_list v)
 
 (* TODO: Docs update *)
 (* TODO: Dont mix Fpath & Path *)
 
 module Helpers = struct
-  
+  (* used by REPL & test interpreter *)
   let resolve_file_name file_name module_resolutions =
     if Stdlib.Sys.file_exists file_name then file_name
     else
@@ -428,5 +410,4 @@ module Helpers = struct
       (match external_file with
         Some external_file -> external_file
       | None -> file_name)
-
 end
