@@ -407,6 +407,13 @@ let find_external_file ~file ~inclusion_list =
   in
   Some segs
 
-(* TODO: pp for ModRes.t *)
+let pp ppf mr =
+  let { root_path ; resolutions } = mr in
+  let (`Inclusion root_path) = root_path in
+  let () = Format.fprintf ppf "Root Path = %s\n" root_path in
+  let () = Format.fprintf ppf "Resolutions =\n" in
+  let pp_inclusion_list ppf is = List.iter (fun (`Inclusion i) -> Format.fprintf ppf "\t%s\n" i) is in
+  List.iter (fun ((`Inclusion k), v) -> Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_list v) resolutions
+
 (* TODO: Docs update *)
 (* TODO: Dont mix Fpath & Path *)
