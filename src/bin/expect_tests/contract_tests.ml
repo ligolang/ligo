@@ -81,7 +81,7 @@ let%expect_test _  =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    "2042-01-01T00:00:00Z" |}]
+    "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
@@ -2194,55 +2194,124 @@ let%expect_test _ =
 (* source location comments *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
-                  "--michelson-comments"; "location" ];
+                  "--michelson-comments"; "location";
+                  "--michelson-comments"; "env";
+                ];
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { DROP ;
-             UNIT ;
+      code { { /* _ */ } ;
+             CDR ;
+             { /* _ */ } ;
+             LAMBDA unit unit { { /* x */ } } ;
+             { /* f, _ */ } ;
+             DUP ;
+             DUG 2 ;
+             SWAP ;
+             EXEC ;
+             { /* s2, f */ } ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             SWAP ;
+             EXEC ;
+             { /* s3, f */ } ;
+             EXEC ;
+             { /* s */ } ;
              NIL operation
-                 /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */
-             /* File "../../test/contracts/noop.mligo", line 2, characters 4-6 */ ;
+                 /* File "../../test/contracts/noop.mligo", line 6, characters 4-6 */
+             /* File "../../test/contracts/noop.mligo", line 6, characters 4-6 */ ;
              PAIR
-             /* File "../../test/contracts/noop.mligo", line 2, characters 3-28 */ } } |}]
+             /* File "../../test/contracts/noop.mligo", line 6, characters 3-27 */ } } |}]
 
 (* JSON source location comments *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "noop.mligo";
                   "--michelson-format"; "json";
-                  "--michelson-comments"; "location" ];
-  [%expect {|
-    { "expression":
-        [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
-          { "prim": "storage", "args": [ { "prim": "unit" } ] },
-          { "prim": "code",
-            "args":
-              [ [ { "prim": "DROP" }, { "prim": "UNIT" },
-                  { "prim": "NIL", "args": [ { "prim": "operation" } ] },
-                  { "prim": "PAIR" } ] ] } ],
-      "locations":
-        [ null, null, null, null, null, null, null, null, null,
-          { "location":
-              { "start":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "4" },
-                "stop":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "6" } } },
-          { "location":
-              { "start":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "4" },
-                "stop":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "6" } } },
-          { "location":
-              { "start":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "3" },
-                "stop":
-                  { "file": "../../test/contracts/noop.mligo", "line": "2",
-                    "col": "28" } } } ] } |}]
+                  "--michelson-comments"; "location";
+                  "--michelson-comments"; "env" ];
+  [%expect{|
+    { "types":
+        [ { "type_content":
+              [ "t_constant",
+                { "language": "Michelson", "injection": "unit",
+                  "parameters": [] } ], "type_meta": [ "None", null ],
+            "location": [ "Virtual", "generated" ],
+            "orig_var": [ "None", null ] },
+          { "type_content":
+              [ "t_arrow",
+                { "type1":
+                    { "type_content":
+                        [ "t_constant",
+                          { "language": "Michelson", "injection": "unit",
+                            "parameters": [] } ], "type_meta": [ "None", null ],
+                      "location": [ "Virtual", "generated" ],
+                      "orig_var": [ "None", null ] },
+                  "type2":
+                    { "type_content":
+                        [ "t_constant",
+                          { "language": "Michelson", "injection": "unit",
+                            "parameters": [] } ], "type_meta": [ "None", null ],
+                      "location": [ "Virtual", "generated" ],
+                      "orig_var": [ "None", null ] } } ],
+            "type_meta": [ "None", null ],
+            "location": [ "Virtual", "generated" ],
+            "orig_var": [ "None", null ] } ],
+      "michelson":
+        { "expression":
+            [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
+              { "prim": "storage", "args": [ { "prim": "unit" } ] },
+              { "prim": "code",
+                "args":
+                  [ [ [], { "prim": "CDR" }, [],
+                      { "prim": "LAMBDA",
+                        "args":
+                          [ { "prim": "unit" }, { "prim": "unit" }, [ [] ] ] },
+                      [], { "prim": "DUP" },
+                      { "prim": "DUG", "args": [ { "int": "2" } ] },
+                      { "prim": "SWAP" }, { "prim": "EXEC" }, [],
+                      { "prim": "SWAP" }, { "prim": "DUP" },
+                      { "prim": "DUG", "args": [ { "int": "2" } ] },
+                      { "prim": "SWAP" }, { "prim": "EXEC" }, [],
+                      { "prim": "EXEC" }, [],
+                      { "prim": "NIL", "args": [ { "prim": "operation" } ] },
+                      { "prim": "PAIR" } ] ] } ],
+          "locations":
+            [ {}, {}, {}, {}, {}, {}, {}, { "environment": [ null ] }, {},
+              { "environment": [ { "source_type": "0" } ] }, {}, {}, {}, {},
+              { "environment": [ { "name": "x", "source_type": "0" } ] },
+              { "environment":
+                  [ { "name": "f", "source_type": "1" }, { "source_type": "0" } ] },
+              {}, {}, {}, {}, {},
+              { "environment":
+                  [ { "name": "s2", "source_type": "0" },
+                    { "name": "f", "source_type": "1" } ] }, {}, {}, {}, {}, {},
+              {},
+              { "environment":
+                  [ { "name": "s3", "source_type": "0" },
+                    { "name": "f", "source_type": "1" } ] }, {},
+              { "environment": [ { "name": "s", "source_type": "0" } ] },
+              { "location":
+                  { "start":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "4" },
+                    "stop":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "6" } } },
+              { "location":
+                  { "start":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "4" },
+                    "stop":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "6" } } },
+              { "location":
+                  { "start":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "3" },
+                    "stop":
+                      { "file": "../../test/contracts/noop.mligo", "line": "6",
+                        "col": "27" } } } ] } } |}]
 
 (* Check that decl_pos is not taken into account when "inferring" about tuples (including long tuples) *)
 let%expect_test _ =
@@ -2266,7 +2335,8 @@ let%expect_test _ =
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
-  [%expect{| let #Foo#x#2 = L(54) in let #Foo#y#3 = #Foo#x#2 in L(unit) |}]
+  [%expect {|
+    let #Foo#x#2 = L(54) in let #Foo#y#3 = #Foo#x#2 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
@@ -2287,7 +2357,7 @@ let%expect_test _ =
 (* Global constants *)
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--disable-michelson-typechecking" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;

@@ -18,7 +18,7 @@ let%expect_test _ =
       storage bool ;
       code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
 
-  run_ligo_good [ "print" ; "ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol"; "edo" ; ] ;
+  run_ligo_good [ "print" ; "ast-typed" ; contract "protocol_dalphanet.mligo" ] ;
   [%expect {xxx|
     type bls_l = list (( bls12_381_g1 * bls12_381_g2 ))
     const a = [%Michelson {|
@@ -32,7 +32,7 @@ let%expect_test _ =
                                          ( LIST_EMPTY() , PAIRING_CHECK(p) ) |xxx}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ; "--protocol"; "edo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
       7 |

@@ -55,6 +55,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -162,11 +163,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
   | C_POLYMORPHIC_ADD -> C_POLYMORPHIC_ADD
+  | C_POLYMORPHIC_SUB -> C_POLYMORPHIC_SUB
   | C_OPEN_CHEST -> C_OPEN_CHEST
   | C_VIEW -> C_VIEW
+  | C_OPTION_MAP -> C_OPTION_MAP
   | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
   | (   C_TEST_ORIGINATE
-      | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
       | C_TEST_SET_BAKER
       | C_TEST_EXTERNAL_CALL_TO_CONTRACT
@@ -208,12 +210,15 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_BAKE_UNTIL_N_CYCLE_END
       | C_TEST_SAVE_MUTATION
       | C_TEST_GET_VOTING_POWER
-      | C_TEST_GET_TOTAL_VOTING_POWER) as c ->
+      | C_TEST_GET_TOTAL_VOTING_POWER
+      | C_TEST_REGISTER_CONSTANT
+      | C_TEST_CONSTANT_TO_MICHELSON
+    ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   let compile_type = compile_type ~raise in
-  let return tc = Expression.make_t ~loc:t.location @@ tc in
+  let return tc = Expression.make_t ~loc:t.location ?source_type:t.source_type @@ tc in
   match t.type_content with
   | T_variable (name) -> raise.raise @@ no_type_variable @@ name
   | t when (AST.Compare.type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
@@ -373,7 +378,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
     let body = k body in
     return (E_let_tuple (expr', (fields, body)))
   | _ ->
-    let tree = Layout.record_tree ~layout:record.layout (compile_type ~raise) record.content in
+    let tree = Layout.record_tree ~layout:record.layout ?source_type:tv.source_type (compile_type ~raise) record.content in
     let body = k body in
     let rec aux expr (tree : Layout.record_tree) body =
       match tree.content with
@@ -607,6 +612,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
       | (C_MAP_ITER , lst) -> iter lst
       | (C_LIST_MAP , lst) -> map lst
       | (C_MAP_MAP , lst) -> map lst
+      | (C_OPTION_MAP , lst) -> map lst
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst
@@ -621,9 +627,7 @@ and compile_expression ~raise (ae:AST.expression) : expression =
         )
     )
   | E_lambda l ->
-    let { type1 ; type2 } = trace_option ~raise (corner_case ~loc:__LOC__ "expected function type") @@
-      AST.get_t_arrow ae.type_expression in
-    compile_lambda ~raise l (type1, type2)
+    compile_lambda ~raise l ae.type_expression
   | E_recursive r ->
     compile_recursive ~raise r
   | E_matching {matchee=expr; cases=m} -> (
@@ -746,15 +750,13 @@ and compile_expression ~raise (ae:AST.expression) : expression =
           raise.raise (raw_michelson_must_be_seq ae.location code)
     )
 
-and compile_lambda ~raise l (input_type , output_type) =
+and compile_lambda ~raise l fun_type =
   let { binder ; result } : AST.lambda = l in
   let result' = compile_expression ~raise result in
-  let input = compile_type ~raise input_type in
-  let output = compile_type ~raise output_type in
-  let tv = Combinators.t_function input output in
-  let binder  = compile_variable binder in
+  let fun_type = compile_type ~raise fun_type in
+  let binder = compile_variable binder in
   let closure = E_closure { binder; body = result'} in
-  Combinators.Expression.make_tpl ~loc:result.location (closure , tv)
+  Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
 and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> expression * expression_variable list = fun fun_name loop_type e ->

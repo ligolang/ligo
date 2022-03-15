@@ -118,7 +118,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
 and compile_type ~raise : I.type_expression -> O.type_expression =
   fun ty ->
     let self = compile_type ~raise in
-    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location } in
+    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location ; source_type = Some ty } in
     let map_rows : I.row_element label_map -> O.row_element label_map = fun rows ->
       let f : I.row_element -> O.row_element = fun row -> { row with associated_type = self row.associated_type} in
       LMap.map f rows
@@ -242,12 +242,12 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
           | E_record_accessor _ ->
             let rec aux' (e : I.expression) acc_path = match e.expression_content with
               | E_variable v ->
-                v, acc_path
+                v, e.type_expression, acc_path
               | E_record_accessor { record ; path } ->
                 aux' record ((path, compile_type ~raise e.type_expression) :: acc_path)
               | _ -> failwith "not allowed in the syntax" in
-            let v, path = aux' exp [] in
-            v, acc_path, acc_types, Some path
+            let v, t, path = aux' exp [] in
+            v, acc_path, acc_types, Some (t, path)
           | _ -> failwith "not allowed in the syntax"
       in
       let v, path, types, record_path = aux (List.Ne.of_list [module_name]) [] element in
@@ -258,8 +258,8 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       | None ->
         let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
-      | Some record_path ->
-        let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
+      | Some (t, record_path) ->
+        let expr = O.e_a_variable v (compile_type ~raise t) in
         let expr = List.fold_right ~f:(fun (l, t) r -> O.e_a_record_accessor r l t) ~init:expr record_path in
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
     )

@@ -15,23 +15,25 @@ let emacs_directory =
 let output_file output_directory file s =
   let oc = (open_out @@ Filename.concat output_directory file) in
   let fmt = Format.formatter_of_out_channel oc in
-  Format.fprintf fmt "%s" s;
+  let () = Format.fprintf fmt "%s" s in
   close_out oc
 
 let vim_syntax_highlighting dir file textmate = 
   let vim_output = SyntaxHighlighting.VIM.to_vim textmate in
-  output_file dir file vim_output;
-  `Ok "Success"
+  let () = output_file dir file vim_output in
+  let () = print_endline "Success" in 
+  `Ok ()
 
-let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHighlighting.Core.t -> string Term.ret = fun dir syntax_file language_file syntax textmate ->
+let vscode_syntax_highlighting: string -> string -> string -> string -> SyntaxHighlighting.Core.t -> unit Term.ret = fun dir syntax_file language_file syntax textmate ->
   let jsons = SyntaxHighlighting.Textmate.to_jsons syntax textmate in
   match jsons with 
     Ok (syntax_highlighting_json, language_conf_json) -> 
       let s = Yojson.Safe.pretty_to_string syntax_highlighting_json in
-      output_file dir syntax_file s;
+      let () = output_file dir syntax_file s in
       let s = Yojson.Safe.pretty_to_string language_conf_json in
-      output_file dir language_file s;
-      `Ok "Success" 
+      let () = output_file dir language_file s in
+      let () = print_endline "Success" in
+      `Ok () 
   | Error SyntaxHighlighting.Core.Referenced_rule_does_not_exist s -> `Error (false, Format.sprintf "Referenced rule '%s' does not exist." s)
   | Error Meta_name_some_but_empty s -> `Error (false, Format.sprintf  "%s.name has no value, but is expected to." s)
   | Error Begin_cant_be_empty s -> `Error (false, Format.sprintf  "%s.begin_ can't be empty." s)
@@ -50,10 +52,11 @@ let emacs_syntax_highlighting dir syntaxes =
     Print.print fmt name t.alt_name t;
   ) syntaxes;
   let emacs_output = Buffer.contents buffer in
-  output_file dir "ligo-mode.el" emacs_output;
-  `Ok "Success"
+  let () = output_file dir "ligo-mode.el" emacs_output in
+  let () = print_endline "Success" in
+  `Ok ()
 
-let ( let* ) o f : string Term.ret  =
+let ( let* ) o f : _ Term.ret  =
   match o with
   | `Error _ as e -> e
   | `Help _ as h -> h
@@ -77,12 +80,15 @@ let output: string -> string -> string -> _ Term.ret = fun vscode_directory vim_
                                                         ("mligo", CameLIGO.syntax_highlighting);
                                                         ("religo", ReasonLIGO.syntax_highlighting)]
     in
-    `Ok "Successfully generated syntaxes"  
+    let () = print_endline "Successfully generated syntaxes" in
+    `Ok ()
   )
 
-let generate_syntax_highlighting =
+let generate_syntax_highlighting : unit Cmd.t =
   let doc = "generate syntax highlighting" in
-  let exits = Term.default_exits in
-  Term.(ret (const output $ vscode_directory $ vim_directory $ emacs_directory)), Term.info "LigoSyntaxHighlighting" ~exits ~doc
+  let exits = Cmd.Exit.defaults in
+  let info = Cmd.info "LigoSyntaxHighlighting" ~exits ~doc in
+  let terms = Term.(ret (const output $ vscode_directory $ vim_directory $ emacs_directory)) in 
+  Cmd.v info terms
 
-let () = Term.(exit @@ eval generate_syntax_highlighting)
+let () = Stdlib.exit @@ Cmd.eval generate_syntax_highlighting

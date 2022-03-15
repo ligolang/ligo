@@ -82,6 +82,16 @@ release-update-versionned-doc:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
 
+update-gitpod-ligo-version:
+  stage: release
+  variables:
+    NEW_VERSION: ${CI_COMMIT_BRANCH#"release/"}
+  trigger: 
+    project: ligolang/template-ligo
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+      when: always
+
 create-doc-update-MR:
   stage: release
   dependencies:

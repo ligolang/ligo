@@ -5,7 +5,10 @@ module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
 let no_comment node =
-  Tezos_micheline.Micheline.(inject_locations (fun _ -> Simple_utils.Location.generated) (strip_locations node))
+  Tezos_micheline.Micheline.(inject_locations (fun _ -> Mini_c.dummy_meta) (strip_locations node))
+
+let has_env_comments michelson_comments =
+  Option.is_some (List.find michelson_comments ~f:(function `Env -> true | _ -> false))
 
 let contract (raw_options : Compiler_options.raw) source_file display_format michelson_code_format michelson_comments () =
     let warning_as_error = raw_options.warning_as_error in
@@ -14,7 +17,12 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       fun ~raise ->
       let options =
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-          Compiler_options.make ~raw_options ~protocol_version ()
+          let has_env_comments = has_env_comments michelson_comments in
+          Compiler_options.make
+            ~raw_options
+            ~protocol_version
+            ~has_env_comments
+            ()
       in
       let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views ; constants ; file_constants ; _ } = options.backend in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
@@ -41,7 +49,11 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make
+          ~protocol_version
+          ~raw_options
+          ~has_env_comments:false
+          ()
       in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
@@ -56,11 +68,15 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
 let constant (raw_options : Compiler_options.raw) constants init_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_constant_format []) get_warnings @@
+    format_result ~warning_as_error ~display_format Formatter.Michelson_formatter.michelson_constant_format get_warnings @@
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make
+          ~protocol_version
+          ~raw_options
+          ~has_env_comments:false
+          ()
       in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
@@ -70,7 +86,7 @@ let constant (raw_options : Compiler_options.raw) constants init_file display_fo
                             Run.clean_constant ~raise compiled_exp.expr
                           else
                             Run.evaluate_constant ~raise compiled_exp.expr compiled_exp.expr_ty in
-      (hash, no_comment @@ value)
+      (hash, value)
 
 let parameter (raw_options : Compiler_options.raw) source_file entry_point expression amount balance sender source now display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
@@ -79,7 +95,11 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
       fun ~raise ->
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        let options = Compiler_options.make ~protocol_version ~raw_options () in
+        let options = Compiler_options.make
+            ~protocol_version
+            ~raw_options
+            ~has_env_comments:false
+            () in
         let Compiler_options.{ syntax ; _ } = options.frontend in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
@@ -105,7 +125,11 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        let options = Compiler_options.make ~protocol_version ~raw_options () in
+        let options = Compiler_options.make
+            ~protocol_version
+            ~raw_options
+            ~has_env_comments:false
+            () in
         let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let app_typed_prg, typed_prg =

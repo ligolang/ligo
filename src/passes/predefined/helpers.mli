@@ -14,7 +14,7 @@ module Stacking : sig
   val special : ((string -> unit michelson) -> unit michelson) -> predicate
 
   val unpredicate :
-    Simple_utils.Location.t ->
+    'a ->
     (string -> unit michelson) ->
-    predicate -> Simple_utils.Location.t michelson
+    predicate -> 'a michelson
 end

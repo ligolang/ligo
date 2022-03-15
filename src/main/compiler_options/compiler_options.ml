@@ -45,6 +45,9 @@ type backend = {
   views : string list ;
   constants : string list ;
   file_constants : string option ;
+  has_env_comments : bool ; (* true if --michelson-comments env. if
+                               true, empty seqs {} with comments will
+                               not be erased during optimisation *)
 }
 
 type t = {
@@ -59,11 +62,15 @@ type t = {
 let make : 
   raw_options : raw ->
   ?protocol_version:Protocols.t ->
-  ?test:bool -> unit -> t =
+  ?test:bool ->
+  ?has_env_comments : bool ->
+  unit -> t =
   fun 
     ~raw_options
     ?(protocol_version = Protocols.current)
-    ?(test = false) () ->
+    ?(test = false)
+    ?(has_env_comments = false)
+    () ->
       let formatter = {
         show_warnings = raw_options.show_warnings;
         warning_as_error = raw_options.warning_as_error;
@@ -96,6 +103,7 @@ let make :
         views = raw_options.views ;
         constants = raw_options.constants ;
         file_constants = raw_options.file_constants ;
+        has_env_comments = has_env_comments ;
       } 
       in
       { 

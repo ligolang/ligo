@@ -250,7 +250,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     let (str, loc) = w_split str in
     e_verbatim ~loc str
   | E_Add plus   -> compile_bin_op C_ADD plus
-  | E_Sub minus  -> compile_bin_op C_SUB minus
+  | E_Sub minus  -> compile_bin_op C_POLYMORPHIC_SUB minus
   | E_Mult times -> compile_bin_op C_MUL times
   | E_Div slash  -> compile_bin_op C_DIV slash
   | E_Mod mod_   -> compile_bin_op C_MOD mod_
