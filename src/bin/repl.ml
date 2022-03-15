@@ -2,6 +2,8 @@ open Simple_utils.Trace
 
 (* Helpers *)
 
+module ModResHelpers = Preprocessor.ModRes.Helpers
+
 let get_declarations_core core_prg =
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
      the absolute file path, and the REPL prints an absolute file path which is confusing
@@ -148,19 +150,8 @@ let try_declaration ~raise ~raw_options state s =
   | Failure _ ->
      raise.raise `Repl_unexpected
 
-let resolve_file_name file_name module_resolutions =
-  if Stdlib.Sys.file_exists file_name then file_name
-  else
-    let open Preprocessor in
-    let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
-    (* let () = List.iter inclusion_list ~f:print_endline in *)
-    let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
-    (match external_file with
-      Some external_file -> external_file
-    | None -> file_name)
-
 let import_file ~raise ~raw_options state file_name module_name =
-  let file_name = resolve_file_name file_name state.module_resolutions in
+  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ = Build.build_context ~raise ~add_warning ~options file_name in
@@ -170,7 +161,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   (state, Just_ok)
 
 let use_file ~raise ~raw_options state file_name =
-  let file_name = resolve_file_name file_name state.module_resolutions in
+  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)

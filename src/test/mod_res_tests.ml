@@ -43,7 +43,6 @@ let complex_project ~raise:_ () =
 
   let base_inclusion_list = 
     ModRes.get_inclusion_list ~file:"/foo/projects/ligo-main/main.mligo" t in
-  (* let () = List.iter base_inclusion_list ~f:(fun (`Inclusion p) -> print_endline p) in *)
   let () = assert (List.equal inclusion_list_eq base_inclusion_list [
     `Inclusion "/foo/.esy/source/i/ligo__test__1__1.0.0__a381d5ee" ;
     `Inclusion "/foo/.esy/source/i/ligo_foo__1.0.6__2355cc08" ;

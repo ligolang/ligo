@@ -417,3 +417,16 @@ let pp ppf mr =
 
 (* TODO: Docs update *)
 (* TODO: Dont mix Fpath & Path *)
+
+module Helpers = struct
+  
+  let resolve_file_name file_name module_resolutions =
+    if Stdlib.Sys.file_exists file_name then file_name
+    else
+      let inclusion_list = get_root_inclusion_list module_resolutions in
+      let external_file  = find_external_file ~file:file_name ~inclusion_list in
+      (match external_file with
+        Some external_file -> external_file
+      | None -> file_name)
+
+end

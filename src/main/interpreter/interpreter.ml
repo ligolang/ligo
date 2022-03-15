@@ -9,19 +9,9 @@ include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
 
-type interpreter_error = Errors.interpreter_error
+module ModResHelpers = Preprocessor.ModRes.Helpers
 
-(* TODO: move this to some common place (copied from repl.ml) *)
-let resolve_file_name file_name module_resolutions =
-  if Stdlib.Sys.file_exists file_name then file_name
-  else
-    let open Preprocessor in
-    let inclusion_list = ModRes.get_root_inclusion_list module_resolutions in
-    (* let () = List.iter inclusion_list ~f:print_endline in *)
-    let external_file = ModRes.find_external_file ~file:file_name ~inclusion_list in
-    (match external_file with
-      Some external_file -> external_file
-    | None -> file_name)
+type interpreter_error = Errors.interpreter_error
 
 let check_value value =
   let open Monad in
@@ -721,7 +711,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ~mod_res : 
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
-      let source_file = resolve_file_name source_file mod_res in
+      let source_file = ModResHelpers.resolve_file_name source_file mod_res in
       let views = List.map
                     ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
                     views

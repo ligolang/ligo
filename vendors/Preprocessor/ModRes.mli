@@ -14,3 +14,9 @@ val get_inclusion_list : file:string -> t option -> inclusion_list
 val find_external_file : file:string -> inclusion_list:inclusion_list -> string option
 
 val pp : Format.formatter -> t -> unit
+
+module Helpers : sig
+
+  val resolve_file_name : string -> t option -> string
+
+end
