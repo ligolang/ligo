@@ -32,11 +32,6 @@ let compile_variable var = let (var,loc) = w_split var in ValueVar.of_input_var 
 let compile_type_var var = let (var,loc) = w_split var in TypeVar.of_input_var ~loc var
 let compile_mod_var var = let (var,loc) = w_split var in ModuleVar.of_input_var ~loc var
 
-let rec e_unpar : CST.expr -> CST.expr =
-  function
-    E_Par e -> e_unpar e.value.inside
-  | e -> e
-
 let rec get_var : CST.expr -> (string * location) option =
   function
   | E_Par x -> get_var x.value.inside
@@ -81,8 +76,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
       let attr = compile_attributes attr in
       let cases = Utils.nsepseq_to_list value.variants in
       let f : CST.variant CST.reg -> string * AST.type_expression * string list =
-        fun { value = {ctor ; ctor_args ; attributes} ; region } ->
-          let _loc = Location.lift region in
+        fun { value = {ctor ; ctor_args ; attributes} ; region = _ } ->
           let t = Option.value ~default:(t_unit ()) (Option.map ~f:(self <@ snd) ctor_args) in
           let case_attr = compile_attributes attributes in
           (ctor#payload, t, case_attr)
@@ -161,8 +155,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
       let loc = Location.lift region in
       t_arrow ~loc (self lhs) (self rhs)
     )
-    | T_ModPath { region ; value = { module_path ; selector = _ ; field } } -> (
-      let _loc = Location.lift region in
+    | T_ModPath { region = _ ; value = { module_path ; selector = _ ; field } } -> (
       let field = self field in
       let f : CST.module_name -> AST.type_expression -> AST.type_expression =
         fun x prev ->
@@ -407,9 +400,8 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
   )
   | E_Fun { value = { parameters; ret_type ; return ; _ } ; region} -> (
     check_no_attributes ~raise (Location.lift region) attr ;
-    let compile_param : CST.param_decl CST.reg -> _  = fun { value = { param_kind ; pattern ; param_type } ; region } ->
+    let compile_param : CST.param_decl CST.reg -> _  = fun { value = { param_kind ; pattern ; param_type } ; region = _ } ->
       (* TODO: feels wrong, binders do not have loc in AST *)
-      let _loc = Location.lift region in
       let var =
         match pattern with
         | P_Var x -> compile_variable x

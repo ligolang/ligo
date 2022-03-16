@@ -34,11 +34,7 @@ let list_to_nsepseq ~sep lst =
 
 let nelist_to_npseq ~sep (hd, lst) = (hd, List.map ~f:(fun e -> (sep, e)) lst)
 
-let npseq_cons ~sep hd lst = hd,(sep, fst lst)::(snd lst)
-
 let par a = CST.{lpar=Token.ghost_lpar;inside=a;rpar=Token.ghost_rpar}
-
-let inject compound a = CST.{compound;elements=a;terminator=None}
 
 let ne_inject compound fields ~attr = CST.{
   compound;
@@ -109,7 +105,6 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
       in
       let arg = Some (Token.ghost_comma, arg) in
       let row_attr = decompile_attributes row_attr in
-      let leading_vbar = Token.ghost_vbar in
       let variant_comp : CST.variant_comp = {constr; params = arg} in
       let tuple = Region.wrap_ghost @@ brackets variant_comp in
       let variant : CST.variant = {tuple; attributes=row_attr} in
@@ -171,13 +166,6 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
   | T_abstraction x -> decompile_type_expr x.type_
   | T_for_all x -> decompile_type_expr x.type_
 
-let get_e_variable : AST.expression -> _ = fun expr ->
-  match expr.expression_content with
-    E_variable var -> var
-  | _ -> failwith @@
-    Format.asprintf "%a should be a variable expression"
-    AST.PP.expression expr
-
 let get_e_tuple : AST.expression -> _ = fun expr ->
   match expr.expression_content with
     E_tuple tuple -> tuple
@@ -205,6 +193,7 @@ let rec s_hd = function
   let lst = list_to_nsepseq ~sep:Token.ghost_semi lst in
   CST.SBlock (Region.wrap_ghost @@ braced @@ lst)
 
+(* UNUSED .... :) *)
 let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr option = fun cons_name arguments ->
   match cons_name, arguments with
   | Const C_ADD, (arg1, [arg2])
@@ -237,7 +226,6 @@ let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr opt
 
 let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun expr ->
   let return_expr expr = expr in
-  let return_expr_with_par expr = return_expr @@ [CST.EPar (Region.wrap_ghost @@ par @@ expr)] in
   match expr.expression_content with
   | E_variable name ->
     let var = decompile_variable name in
@@ -421,7 +409,6 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     return_expr @@ [Expr (CST.ECall (Region.wrap_ghost (var, args)))]
   | E_record record  ->
     let aux (AST.Label str, expr) =
-      let field_name = Region.wrap_ghost str in
       let field_expr = decompile_expression_in expr in
       let expr = e_hd field_expr in
       let field : CST.property = CST.Property (Region.wrap_ghost CST.{name = EVar (Region.wrap_ghost str); colon = Token.ghost_colon; value = expr}) in
@@ -503,7 +490,6 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
       let e = decompile_expression_in e in
       (CST.Expr_entry (e_hd e))
     )) map in
-    let tuple = list_to_nsepseq map in
     let aux (k,v) = CST.EArray (Region.wrap_ghost @@ brackets @@ Some (k,[(Token.ghost_comma,v)])) in
     let map = List.map ~f:aux map in
     (match map with

@@ -3,7 +3,7 @@ module Protocols = Protocols
 
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t
-val pp : Format.formatter -> t -> unit [@@dead "+pp"] 
+val pp : Format.formatter -> t -> unit
 
 val add_declaration : Ast_typed.declaration_loc -> t -> t
 val add_module : ?public:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t

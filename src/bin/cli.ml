@@ -564,7 +564,6 @@ let print_cst =
     return_result ~return @@
     Api.Print.cst raw_options source_file display_format
   in
-  let _cmdname = "print-cst" in
   let summary   = "print the CST.\nWarning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the CST \
                   stage, obtained after preprocessing and parsing." in
@@ -692,7 +691,6 @@ let repl =
     return_result ~return @@ Repl.main raw_options display_format now amount balance sender source init_file
   in
   let summary   = "interactive ligo interpreter" in
-  let _readme () = "" in
   Command.basic ~summary
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 

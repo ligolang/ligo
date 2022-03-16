@@ -47,7 +47,6 @@ let pp =  PP.context
 let union : t -> t -> t = fun a b ->
   {values = a.values @ b.values; types = a.types @ b.types ; modules = a.modules @ b.modules}
 
-let _get_values : t -> Types.values = fun { values ; types=_ ; modules=_ } -> values
 (* TODO: generate *)
 let get_types  : t -> Types.types  = fun { values=_ ; types ; modules=_ } -> types
 (* TODO: generate *)

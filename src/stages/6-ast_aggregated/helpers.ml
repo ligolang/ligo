@@ -117,13 +117,6 @@ let destruct_for_alls (t : type_expression) =
     | _ -> (type_vars, t)
   in destruct_for_alls [] t
 
-let constant_compare ia ib =
-  let open Stage_common.Constant in
-  match ia, ib with
-  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
-  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
-  | _ -> Stage_common.Constant.compare ia ib
-
 let assert_eq = fun a b -> if Caml.(=) a b then Some () else None
 let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None
 

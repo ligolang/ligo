@@ -18,8 +18,6 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 
-let get_value : 'a Raw.reg -> 'a = fun x -> x.value
-
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson"]
 
@@ -407,13 +405,10 @@ let rec compile_expression ~raise : CST.expr -> AST.expr  = fun e ->
     let (binder,fun_,fv) = compile_parameter ~raise binders in
     let body = self body in
     let expr = fun_ body in
-    let fa = Option.value ~default:[] fa in
-    let _fv = List.dedup_and_sort ~compare:TypeVar.compare @@ fa @ fv in
-    (*
-    return @@ List.fold_right fv ~f:(fun v e ->
-      e_type_abs (Var.of_name v) e
-    ) ~init:(e_lambda ~loc binder lhs_type expr)
-    *)
+    let _fv =
+      let fa = Option.value ~default:[] fa in
+      List.dedup_and_sort ~compare:TypeVar.compare @@ fa @ fv
+    in
     return @@ e_lambda ~loc binder lhs_type expr
   | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
@@ -633,9 +628,6 @@ and unepar = function
 | CST.PPar { value = { inside; _ }; _ } -> unepar inside
 | _ as v -> v
 
-and untpar = function
-| CST.TPar { value = { inside; _ }; _ } -> untpar inside
-| _ as v -> v
 
 and compile_let_binding ~raise ?kwd_rec attributes binding =
   let return lst = lst in
