@@ -26,7 +26,6 @@ type test_framework = {
 }
 
 type middle_end = {
-  infer : bool ; [@dead "middle_end.infer"] 
   test : bool ;
   init_env : Environment.t ;
   protocol_version : Protocols.t ;
@@ -79,7 +78,6 @@ let make :
         steps = raw_options.steps;
       } in
       let middle_end = {
-        infer = Default_options.infer ;
         test ;
         init_env = if test then default_with_test protocol_version else default protocol_version ;
         protocol_version;
