@@ -2,16 +2,16 @@
 
 type t
 
-type inclusion_dir = [`Inclusion of string]
-type inclusion_list = inclusion_dir list
+type dependency_path      = [`Path of string]
+type dependency_path_list = dependency_path list
 
 val make : string -> t option
 
-val get_root_inclusion_list : t option -> inclusion_list
+val get_paths_of_root_dependencies : t option -> dependency_path_list
 
-val get_inclusion_list : file:string -> t option -> inclusion_list
+val get_paths_of_dependencies : file:string -> t option -> dependency_path_list
 
-val find_external_file : file:string -> inclusion_list:inclusion_list -> string option
+val find_external_file : file:string -> inclusion_list:dependency_path_list -> string option
 
 val pp : Format.formatter -> t -> unit
 
