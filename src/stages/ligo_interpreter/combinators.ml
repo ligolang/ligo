@@ -272,7 +272,7 @@ let rec compare_value (v : value) (v' : value) : int =
     | c -> c
   )
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> Int.compare (tag_value v) (tag_value v')
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0
