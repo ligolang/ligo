@@ -1,5 +1,6 @@
 module Test.Common.Util
   ( ScopeTester
+  , testDir
   , contractsDir
   , getContractsWithExtension
   , readContract
@@ -31,17 +32,18 @@ import Parser (ParsedInfo, Msg)
 
 type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
 
-contractsDir :: FilePath
-contractsDir =
+testDir, contractsDir :: FilePath
+testDir =
   $(
     let
       getDir :: IO FilePath
-      getDir = getEnv "CONTRACTS_DIR" `catch` \e ->
+      getDir = getEnv "TEST_DIR" `catch` \e ->
         if isDoesNotExistError e
-        then pure "../../../src/test/contracts"
+        then pure $ ".." </> ".." </> ".." </> "src" </> "test"
         else throwIO e
     in liftIO getDir >>= liftString
   )
+contractsDir = testDir </> "contracts"
 
 getContractsWithExtension :: String -> [FilePath] -> FilePath -> IO [FilePath]
 getContractsWithExtension ext ignore dir = listDirectory dir

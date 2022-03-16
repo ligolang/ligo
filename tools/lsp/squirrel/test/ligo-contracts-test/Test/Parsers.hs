@@ -6,11 +6,11 @@ module Test.Parsers
 import AST (Fallback, scanContracts)
 
 import Data.List (isPrefixOf)
-import System.FilePath (takeDirectory, (</>))
+import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-import Test.Common.Util (contractsDir)
+import Test.Common.Util (contractsDir, testDir)
 import Test.Common.Util.Parsers (checkFile)
 
 data TestContracts
@@ -20,9 +20,6 @@ data TestContracts
     , tdIgnoreDirs :: [FilePath]
     }
   | TestContract FilePath
-
-topLevel :: FilePath
-topLevel = takeDirectory contractsDir
 
 okayTests :: [TestContracts]
 okayTests =
@@ -121,7 +118,7 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "simple" </> "pascaligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "simple" </> "pascaligo" </> "original"
     , tdIgnoreFiles =
       [ -- LIGO-446
         "missing_semicolon_between_stmts.ligo"
@@ -140,7 +137,7 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "simple" </> "reasonligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "simple" </> "reasonligo" </> "original"
     , tdIgnoreFiles =
       [ -- LIGO-479
         "two_extra_parenthesis_in_function_application.religo"
@@ -150,12 +147,12 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "simple" </> "cameligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "simple" </> "cameligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
     , tdIgnoreFiles =
       [ -- LIGO-446
         "1loop.ligo"
@@ -167,12 +164,12 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "fuzzing" </> "reasonligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "reasonligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "error-recovery" </> "fuzzing" </> "cameligo" </> "original"
+    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "cameligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
@@ -181,7 +178,7 @@ okayTests =
 badTests :: [TestContracts]
 badTests =
   [ TestDir
-    { tdRoot = topLevel </> "error-recovery"
+    { tdRoot = testDir </> "error-recovery"
     , tdIgnoreFiles =
       [ -- LIGO-474
         "simple" </> "pascaligo" </> "missing_name_of_argument.ligo"
@@ -220,7 +217,7 @@ badTests =
       ]
     }
   , TestDir
-    { tdRoot = topLevel </> "lexer"
+    { tdRoot = testDir </> "lexer"
     , tdIgnoreFiles =
       [ --LIGO-475
         "broken_string.ligo"
@@ -235,7 +232,7 @@ badTests =
     , tdIgnoreDirs = []
     }
   , TestDir
-    { tdRoot = topLevel </> "preprocessor"
+    { tdRoot = testDir </> "preprocessor"
     , tdIgnoreFiles =
       [ --LIGO-475
         "directive_inside_line.ligo"

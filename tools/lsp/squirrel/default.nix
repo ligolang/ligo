@@ -41,7 +41,7 @@ let
 
           # Thanks, I Hate It.
           components.tests.ligo-contracts-test = {
-            preBuild = "export CONTRACTS_DIR=${clearSymlinks ../../.. "src/test/contracts"}";
+            preBuild = "export TEST_DIR=${clearSymlinks ../../.. "src/test"}";
           };
 
           ghcOptions = ["-Werror"];
