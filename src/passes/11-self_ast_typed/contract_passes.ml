@@ -204,11 +204,11 @@ and get_fv_module env acc = function
   | hd :: tl ->
      get_fv_module env (hd :: acc) tl
 
-let remove_unused ~raise : expression_variable -> program -> program = fun main_name prg ->
+let remove_unused ~raise : contract_pass_data -> program -> program = fun data prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder main_name)
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder data.main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
@@ -228,4 +228,3 @@ let remove_unused_expression : expression -> program -> expression * program = f
   let env,main_expr = get_fv expr in
   let _,module_ = get_fv_module env [] prg_decls in
   main_expr, module_
-
