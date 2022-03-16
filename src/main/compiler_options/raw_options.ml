@@ -1,6 +1,5 @@
 type raw = {
   (* Formatter *)
-  show_warnings : bool ;
   warning_as_error : bool ;
   
   (* Frontend *)
@@ -58,7 +57,6 @@ module Default_options = struct
 end
 
 let make 
-  ?(show_warnings = Default_options.show_warnings)
   ?(warning_as_error = Default_options.warning_as_error)
   ?(syntax = Default_options.syntax)
   ?(dialect = Default_options.dialect)
@@ -78,7 +76,6 @@ let make
   () = 
 {
   (* Formatter *)
-  show_warnings ;
   warning_as_error ;
   
   (* Frontend *)
@@ -108,7 +105,6 @@ let make
 let default =
 {
   (* Formatter *)
-  show_warnings = Default_options.show_warnings ;
   warning_as_error = Default_options.show_warnings ;
   
   (* Frontend *)
