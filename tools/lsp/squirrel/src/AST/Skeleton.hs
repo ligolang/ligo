@@ -119,7 +119,7 @@ data Binding it
   | BInclude      it
   | BImport       it it
   | BModuleDecl   it [it] -- ^ (Name) (Expr)
-  | BModuleAlias  it it   -- ^ (Name) (Name)
+  | BModuleAlias  it [it]   -- ^ (Name) (Name)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data TypeParams it

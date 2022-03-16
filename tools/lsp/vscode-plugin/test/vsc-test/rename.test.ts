@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as vscode from 'vscode'
 
-import activate, { contractsDir } from '../common'
+import { contractsDir } from '../common'
 
 const oldContractsDir: string = path.join(contractsDir, 'rename-directory')
 const newContractsDir: string = path.join(contractsDir, 'renamed-directory')
@@ -14,7 +14,8 @@ suite('LIGO: Rename directory', () => {
       const uri = await vscode.Uri.file(path.join(oldContractsDir, 'LIGO-320.mligo'))
       const position = new vscode.Position(1, 5)
 
-      await activate(uri)
+      const doc = await vscode.workspace.openTextDocument(uri)
+      await vscode.window.showTextDocument(doc)
 
       const oldDef = await vscode.commands.executeCommand('vscode.executeDefinitionProvider', uri, position)
       fs.renameSync(oldContractsDir, newContractsDir)
