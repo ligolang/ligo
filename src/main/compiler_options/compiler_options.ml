@@ -10,7 +10,7 @@ let default_raw_options = Raw_options.default
 
 type frontend = {
   syntax : string ;
-  dialect : string ; [@dead "frontend.dialect"] 
+  (* dialect : string ; [@dead "frontend.dialect"]  *)
   entry_point : string ;
   libraries : string list ;
   project_root : string option ;
@@ -65,7 +65,6 @@ let make :
     () ->
       let frontend = {
         syntax = raw_options.syntax ;
-        dialect = raw_options.dialect ;
         libraries = raw_options.libraries;
         entry_point = raw_options.entry_point;
         project_root = raw_options.project_root;

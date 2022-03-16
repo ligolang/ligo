@@ -4,7 +4,6 @@ type raw = {
   
   (* Frontend *)
   syntax : string ;
-  dialect : string ;
   entry_point : string ;
   libraries : string list ;
   project_root : string option ;
@@ -59,7 +58,6 @@ end
 let make 
   ?(warning_as_error = Default_options.warning_as_error)
   ?(syntax = Default_options.syntax)
-  ?(dialect = Default_options.dialect)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
   ?(project_root = Default_options.project_root)
@@ -80,7 +78,6 @@ let make
   
   (* Frontend *)
   syntax ;
-  dialect ;
   entry_point ;
   libraries ;
   project_root ;
@@ -109,7 +106,6 @@ let default =
   
   (* Frontend *)
   syntax = Default_options.syntax ;
-  dialect = Default_options.dialect ;
   entry_point = Default_options.entry_point ;
   libraries = Default_options.libraries ;
   project_root = Default_options.project_root ;
