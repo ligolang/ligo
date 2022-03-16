@@ -50,7 +50,7 @@ let reserved_names = (* Part of names in that list would be caught by some synta
     "sha_256"; "sha_512"; "blake2b"; "cons"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false"; "abs"; "address";
     "amount"; "assert"; "balance"; "black2b"; "check"; "continue"; "failwith"; "gas"; "hash"; "hash_key"; "implicit_account"; "int";
     "pack"; "self_address"; "sender"; "sha256"; "sha512"; "source"; "stop"; "time"; "unit"; "unpack"; "true"; "false";
-    "await"; "break"; "case"; "catch"; "class"; "const"; "continue"; "debugger"; "default"; "delete"; "do";
+    "await"; "break"; "case"; "catch"; "class"; "const"; "continue"; "debugger"; "delete"; "do";
     "else"; "enum"; "export"; "extends"; "false"; "finally"; "for"; "function"; "if"; "import"; "in"; "instanceOf";
     "new"; "null"; "return"; "super"; "switch"; "this"; "throw"; "true"; "try"; "typeof"; "var"; "void";
     "while"; "with"; "yield"; "implements"; "interface"; "package"; "private"; "protected"; "public"; "arguments"; "eval"; "get_force";
