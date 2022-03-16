@@ -99,7 +99,7 @@ ligo install --cache-path /some/path
 ### Upgrading version of a LIGO package
 
 During the lifecycle of a project, if you wish to upgrade the version of a LIGO package, 
-Just update the package version to the desired one.
+Just update the package version to the desired one in the `package.json`.
 
 ```diff
 {
