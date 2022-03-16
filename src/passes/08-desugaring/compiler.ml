@@ -257,7 +257,7 @@ let rec compile_expression : I.expression -> O.expression =
     | I.E_sequence {expr1; expr2} ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
-      let let_binder : _ O.binder = {var = Stage_common.Var.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
+      let let_binder : _ O.binder = {var = I.ValueVar.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true}}
     | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->

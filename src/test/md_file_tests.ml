@@ -119,23 +119,23 @@ let compile_groups ~raise filename grp_list =
   let aux : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> unit =
     fun ((syntax , grp, protocol_version) , (lang , contents)) ->
       trace ~raise (test_md_file filename syntax grp contents) @@
-      fun ~raise -> 
-      let options    = Compiler_options.make ~protocol_version () in
+      fun ~raise ->
+      let options    = Compiler_options.make ~raw_options:Compiler_options.default_raw_options ~protocol_version () in
       let meta       = Ligo_compile.Of_source.make_meta ~raise syntax None in
-      let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options ~meta contents in
+      let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options:options.frontend ~meta contents in
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
-      let core       = Ligo_compile.Of_sugar.compile sugar in
-      let inferred   = Ligo_compile.Of_core.infer ~raise ~options core in
+      let core       = Ligo_compile.Of_sugar.compile ~raise sugar in
       match lang with
       | Meta ->
-        let init_env = Environment.default_with_test options.protocol_version in
-        let options = { options with init_env ; test = true } in
-        let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
-        let _ = Interpreter.eval_test ~protocol_version ~options ~raise ~steps:5000 typed in
+        let init_env = Environment.default_with_test protocol_version in
+        let options = Compiler_options.set_init_env options init_env in
+        let options = Compiler_options.set_test_flag options true in
+        let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
+        let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
-        let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env inferred in
+        let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
         let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise (Ast_typed.e_a_unit ()) agg_prg in
         let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in

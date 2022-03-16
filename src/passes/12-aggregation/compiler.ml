@@ -19,25 +19,25 @@ module Data = struct
   let resolve_path : scope -> path -> scope =
     fun scope requested_path ->
       let f : scope -> module_variable -> scope = fun acc module_variable ->
-        match List.find acc.mod_ ~f:(fun x -> Var.equal x.name module_variable) with
+        match List.find acc.mod_ ~f:(fun x -> ModuleVar.equal x.name module_variable) with
         | Some x -> x.items
         | _ -> failwith "couldnt resolve"
       in
       List.fold requested_path ~init:scope ~f
   let rm_exp : scope -> I.expression_variable -> scope = fun items to_rm ->
-    let exp = List.filter items.exp ~f:(fun x -> not @@ Var.equal x.name to_rm) in
+    let exp = List.filter items.exp ~f:(fun x -> not @@ ValueVar.equal x.name to_rm) in
     { items with exp }
   let add_exp : scope -> exp_ -> scope =
     fun scope new_exp ->
-      let exp = List.filter scope.exp ~f:(fun x -> not (Var.equal x.name new_exp.name)) in
+      let exp = List.filter scope.exp ~f:(fun x -> not (ValueVar.equal x.name new_exp.name)) in
       { scope with exp = new_exp :: exp}
   let shadow_module : scope -> module_variable -> scope -> scope = fun scope mod_var new_items ->
-    let mod_ = List.filter scope.mod_ ~f:(fun x -> not (Var.equal x.name mod_var)) in
+    let mod_ = List.filter scope.mod_ ~f:(fun x -> not (ModuleVar.equal x.name mod_var)) in
     let mod_ = {name = mod_var ; items = new_items } :: mod_ in
     { scope with mod_}
   let resolve_variable : scope -> expression_variable -> expression_variable =
     fun scope v ->
-      match List.find scope.exp ~f:(fun x -> Var.equal v x.name) with
+      match List.find scope.exp ~f:(fun x -> ValueVar.equal v x.name) with
       | Some x -> x.fresh_name
       | None -> v
   let resolve_variable_in_path : scope -> module_variable list -> expression_variable -> expression_variable =
@@ -118,7 +118,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc l
 and compile_type ~raise : I.type_expression -> O.type_expression =
   fun ty ->
     let self = compile_type ~raise in
-    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location } in
+    let return type_content : O.type_expression = { type_content ; orig_var = ty.orig_var ; location = ty.location ; source_type = Some ty } in
     let map_rows : I.row_element label_map -> O.row_element label_map = fun rows ->
       let f : I.row_element -> O.row_element = fun row -> { row with associated_type = self row.associated_type} in
       LMap.map f rows
@@ -242,12 +242,12 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
           | E_record_accessor _ ->
             let rec aux' (e : I.expression) acc_path = match e.expression_content with
               | E_variable v ->
-                v, acc_path
+                v, e.type_expression, acc_path
               | E_record_accessor { record ; path } ->
                 aux' record ((path, compile_type ~raise e.type_expression) :: acc_path)
               | _ -> failwith "not allowed in the syntax" in
-            let v, path = aux' exp [] in
-            v, acc_path, acc_types, Some path
+            let v, t, path = aux' exp [] in
+            v, acc_path, acc_types, Some (t, path)
           | _ -> failwith "not allowed in the syntax"
       in
       let v, path, types, record_path = aux (List.Ne.of_list [module_name]) [] element in
@@ -258,13 +258,13 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       | None ->
         let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
-      | Some record_path ->
-        let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
+      | Some (t, record_path) ->
+        let expr = O.e_a_variable v (compile_type ~raise t) in
         let expr = List.fold_right ~f:(fun (l, t) r -> O.e_a_record_accessor r l t) ~init:expr record_path in
         List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
     )
     | I.E_mod_in { module_binder ; rhs ; let_result } -> (
-      let local_name = Var.add_prefix "LOCAL#in" module_binder in
+      let local_name = ModuleVar.add_prefix "LOCAL#in" module_binder in
       compile ~raise scope path let_result
         [
           Location.wrap @@ I.Declaration_module { module_binder = local_name ; module_ = rhs ; module_attr = {public = false}} ;
@@ -303,7 +303,7 @@ and fresh_name : I.expression_variable -> Data.path -> O.expression_variable  = 
   match path with
   | [] -> v
   | _ ->
-    let name,_ = Var.internal_get_name_and_counter v in
-    let name = List.fold_right ~f:(fun s r -> Var.to_name_exn s ^ "#" ^ r) ~init:name path in
+    let name,_ = ValueVar.internal_get_name_and_counter v in
+    let name = List.fold_right ~f:(fun s r -> ModuleVar.to_name_exn s ^ "#" ^ r) ~init:name path in
     let name = "#" ^ name in
-    Var.fresh ~loc:(Var.get_location v) ~name ()
+    ValueVar.fresh ~loc:(ValueVar.get_location v) ~name ()

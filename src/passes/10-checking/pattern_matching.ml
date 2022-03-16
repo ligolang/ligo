@@ -168,21 +168,21 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
       fun has_subst exp ->
         let ret continue exp has_subst = (continue,has_subst,exp) in
         match exp.expression_content with
-        | I.E_variable var when I.Var.equal var to_subst ->
+        | I.E_variable var when I.ValueVar.equal var to_subst ->
           ret true { exp with expression_content = E_variable new_var } true
-        | I.E_let_in letin when I.Var.equal letin.let_binder.var to_subst ->
+        | I.E_let_in letin when I.ValueVar.equal letin.let_binder.var to_subst ->
           let has_subst',rhs = substitute_var_in_body ~raise to_subst new_var letin.rhs in
           let has_subst = has_subst' || has_subst in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
-        | I.E_lambda lamb when I.Var.equal lamb.binder.var to_subst -> ret false exp has_subst
+        | I.E_lambda lamb when I.ValueVar.equal lamb.binder.var to_subst -> ret false exp has_subst
         | I.E_matching m -> (
           let has_subst',matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
           let has_subst = has_subst' || has_subst in
           let aux : bool -> pattern -> bool =
             fun b p ->
               match p.wrap_content with
-              | P_var x when I.Var.equal x.var to_subst -> true
+              | P_var x when I.ValueVar.equal x.var to_subst -> true
               | _ -> b
           in
           let cases, has_subst = List.fold_right
@@ -331,11 +331,11 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
             | P_var x -> x.var
             | P_unit ->
               let () = assert_unit_pattern ~raise pattern.location t in
-              I.Var.fresh ~name:"unit_proj" ()
-            | _ -> I.Var.fresh ~name:"ctor_proj" ()
+              I.ValueVar.fresh ~name:"unit_proj" ()
+            | _ -> I.ValueVar.fresh ~name:"ctor_proj" ()
           )
           | _ ->
-            I.Var.fresh ~name:"ctor_proj" ()
+            I.ValueVar.fresh ~name:"ctor_proj" ()
         in
         let new_ms = proj::mtl in
         let nested = match_ ~raise ~err_loc ~type_f ~body_t new_ms eq def in
@@ -344,7 +344,7 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
     in
     let aux_m : O.label * O.type_expression -> O.matching_content_case =
       fun (constructor,t) ->
-        let proj = I.Var.fresh ~name:"ctor_proj" () in
+        let proj = I.ValueVar.fresh ~name:"ctor_proj" () in
         let body = O.make_e def t in
         { constructor ; pattern = proj ; body }
     in
@@ -387,7 +387,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
             let field_t = extract_record_type ~raise p l t in
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
             in
             (l, (v,field_t))
         in
@@ -397,7 +397,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
           fun (l,proj_pattern) ->
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
             in
             let field_t = extract_record_type ~raise p l t in
             (l , (v,field_t))
@@ -409,7 +409,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
       fun (pl, (body,env)) ->
       match pl with
       | (prod,t)::ptl -> (
-        let var_filler = (make_var_pattern (I.Var.fresh ~name:"_" ()) , t) in
+        let var_filler = (make_var_pattern (I.ValueVar.fresh ~name:"_" ()) , t) in
         match prod.wrap_content with
         | P_tuple ps ->
           let aux i p =
@@ -434,7 +434,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p (O.Label (string_of_int i)) t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.ValueVar.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in
@@ -444,7 +444,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p l t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.ValueVar.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in

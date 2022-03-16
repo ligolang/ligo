@@ -94,23 +94,43 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "4 lsr 0n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type int, nat. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - int
+    - nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lsr 1" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type nat, int. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - nat
+    - int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14 lsl 2n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type int, nat. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - int
+    - nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "14n lsl 2" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type nat, int. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - nat
+    - int. |}]
 
 
 let%expect_test _ =
@@ -206,20 +226,40 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "4 lsr 0n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type int, nat. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - int
+    - nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lsr 1" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type nat, int. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - nat
+    - int. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14 lsl 2n" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type int, nat. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - int
+    - nat. |}]
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "reasonligo" ; "14n lsl 2" ] ;
   [%expect{|
-    Invalid arguments.
-    Expected an argument of type (nat, nat), but got an argument of type nat, int. |}]
+    Cannot match arguments for operation.
+    Expected arguments with types:
+    - nat
+    - nat
+    but got arguments with types:
+    - nat
+    - int. |}]

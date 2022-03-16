@@ -1,5 +1,5 @@
 [submodule "vendors/tezos-ligo"]
 	path = vendors/tezos-ligo
 	url = https://gitlab.com/ligolang/tezos-ligo.git
-	branch = v11.0+no_adx-ligo
+	branch = v12.0-ligo
 

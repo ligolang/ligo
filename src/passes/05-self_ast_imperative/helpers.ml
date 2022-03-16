@@ -361,10 +361,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
 
 
 let in_vars var vars =
-  List.mem ~equal:Var.equal vars var
+  List.mem ~equal:ValueVar.equal vars var
 
 let remove_from var vars =
-  let f v vars = if Var.equal var v then vars else v :: vars in
+  let f v vars = if ValueVar.equal var v then vars else v :: vars in
   List.fold_right ~f vars ~init:[]
 
 let get_pattern ?(pred = fun _ -> true) pattern =
@@ -379,12 +379,8 @@ module Free_variables :
     val expression : expression -> expression_variable list
   end
   = struct
-  module Var = struct
-    type t = expression_variable
-    let compare e e' = Var.compare e e'
-  end
 
-  module VarSet = Caml.Set.Make(Var)
+  module VarSet = Caml.Set.Make(ValueVar)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union

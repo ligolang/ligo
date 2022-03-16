@@ -1,6 +1,7 @@
 const add_tez : tez = 21mutez + 0.000_021tez
 
-const sub_tez : tez = 21mutez - 20mutez
+const sub_tez : option(tez) = 21mutez - 20mutez
+const sub_tez_none : option(tez) = 20mutez - 21mutez
 
 (* This is not enough. *)
 

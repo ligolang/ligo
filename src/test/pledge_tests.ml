@@ -7,7 +7,6 @@ let file = "./contracts/pledge.ligo"
 let mfile = "./contracts/pledge.mligo"
 let refile = "./contracts/pledge.religo"
 
-let get_program f = get_program f Env
 
 let compile_main ~raise ~add_warning f () =
   Test_helpers.compile_main ~raise ~add_warning f ()
@@ -26,13 +25,13 @@ let (stranger_addr , stranger_contract) =
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (Var.of_input_var "arguments")
+let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 
 
 let pledge  ~raise~add_warning f () =
-  let program = get_program  ~raise~add_warning f() in
+  let program = get_program  ~raise ~add_warning f () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options

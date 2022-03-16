@@ -33,13 +33,13 @@ let of_list_type : (type_variable * type_expression) list -> t = fun tvlist -> L
 
 let get_opt : expression_variable -> t -> element option = fun k x ->
   Option.bind ~f: (fun {expr_var=_ ; env_elt} -> Some env_elt) @@
-    List.find ~f:(fun {expr_var ; env_elt=_} -> Var.equal expr_var k) (get_expr_environment x)
+    List.find ~f:(fun {expr_var ; env_elt=_} -> ValueVar.equal expr_var k) (get_expr_environment x)
 let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
   Option.bind ~f: (fun {type_variable=_ ; type_} -> Some type_) @@
-    List.find ~f:(fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
+    List.find ~f:(fun {type_variable ; type_=_} -> TypeVar.equal type_variable k) (get_type_environment x)
 let get_module_opt : module_variable -> t -> environment option = fun k x ->
   Option.bind ~f: (fun {module_variable=_ ; module_} -> Some module_) @@
-    List.find ~f:(fun {module_variable; module_=_} -> Var.equal module_variable k) (get_module_environment x)
+    List.find ~f:(fun {module_variable; module_=_} -> ModuleVar.equal module_variable k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
   add_expr k (make_element_binder v) e

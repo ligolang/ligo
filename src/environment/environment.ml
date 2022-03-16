@@ -27,7 +27,7 @@ let to_core_program env = List.rev env
 let append_core = append
 
 (* This is an stdlib *)
-let star = ()
+let star = Type
 (*
   Make sure all the type value laoded in the environment have a `Ast_core` value attached to them (`type_meta` field of `type_expression`)
 *)
@@ -76,7 +76,6 @@ let hangzhou_extra : (type_variable * type_expression) list = [
   (v_chest_opening_result , t_chest_opening_result ());
 ]
 
-let edo_types = basic_types @ michelson_base
 let hangzhou_types = basic_types @ michelson_base @ hangzhou_extra
 
 let meta_ligo_types : (type_variable * type_expression) list -> (type_variable * type_expression) list =
@@ -95,9 +94,9 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true}})
 
 let default : Protocols.t -> t = function
-  | Protocols.Edo -> of_list_type edo_types
+  | Protocols.Ithaca -> of_list_type hangzhou_types
   | Protocols.Hangzhou -> of_list_type hangzhou_types
 
 let default_with_test : Protocols.t -> t = function
-  | Protocols.Edo -> of_list_type (meta_ligo_types edo_types)
+  | Protocols.Ithaca -> of_list_type (meta_ligo_types hangzhou_types)
   | Protocols.Hangzhou -> of_list_type (meta_ligo_types hangzhou_types)

@@ -42,7 +42,7 @@ let check_obj_ligo ~raise (t : AST.expression) =
         -> raise.raise @@ Errors.expected_obj_ligo loc
     | _ -> () in
   let folder_types () (expr : AST.expression) =
-    traverse_type_expression (traverser_types expr.type_expression.location) expr.type_expression in
+    traverse_type_expression (traverser_types expr.location) expr.type_expression in
   let () = Helpers.fold_expression folder_constant () t in
   let () = Helpers.fold_expression folder_types () t in
   t

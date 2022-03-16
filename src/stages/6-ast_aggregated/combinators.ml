@@ -22,11 +22,11 @@ type expression_content = [%import: Types.expression_content]
 type type_content = [%import: Types.type_content]
 [@@deriving ez {
       prefixes = [
-        ("make_t" , fun ?(loc = Location.generated) type_content ->
-                  ({ type_content ; location = loc ; orig_var = None } : type_expression)) ;
+        ("make_t" , fun ?(loc = Location.generated) ?source_type type_content ->
+                  ({ type_content ; location = loc ; orig_var = None ; source_type } : type_expression)) ;
         ("get" , fun x -> x.type_content) ;
       ] ;
-      wrap_constructor = ("type_content" , (fun type_content ?loc () -> make_t ?loc type_content)) ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc ?source_type () -> make_t ?loc ?source_type type_content)) ;
       wrap_get = ("type_content" , get) ;
       default_get = `Option ;
     } ]
@@ -47,12 +47,12 @@ let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Var.fresh ~name:"_a" () in
+  let ty_binder = TypeVar.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ty_binder ()] in
   t_abstraction ?loc { ty_binder ; kind ; type_ } ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.fresh ~name:"_l" () in
-  let ty_binder_r = Var.fresh ~name:"_r" () in
+  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
+  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]
@@ -95,7 +95,7 @@ let t_test_exec_error ?loc () : type_expression = t_sum_ez ?loc
 let t_test_exec_result ?loc () : type_expression = t_sum_ez ?loc
   [ ("Success" ,t_unit ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
 
-let t_arrow param result ?loc () : type_expression = t_arrow ?loc {type1=param; type2=result} ()
+let t_arrow param result ?loc ?source_type () : type_expression = t_arrow ?loc ?source_type {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result})
 let t_chest_opening_result ?loc () : type_expression =
   t_sum_ez ?loc [
@@ -231,9 +231,9 @@ let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 
 let e_bool b : expression_content =
   if b then
-    E_constructor { constructor = (Label "True") ; element = (make_e (e_unit ()) (t_unit())) }
+    E_constructor { constructor = (Label "True") ; element = (make_e (e_unit ()) (t_unit ())) }
   else
-    E_constructor { constructor = (Label "False") ; element = (make_e (e_unit ()) (t_unit())) }
+    E_constructor { constructor = (Label "False") ; element = (make_e (e_unit ()) (t_unit ())) }
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())

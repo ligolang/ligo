@@ -20,7 +20,7 @@ let rec type_expression {type_content=tc;location} =
   ]
 
 and type_content = function
-  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_variable        t -> `List [ `String "t_variable"; TypeVar.to_yojson t]
   | T_sum             t -> `List [ `String "t_sum";
                                    (list (pair label row_element)) t.fields;
                                    attributes t.attributes]
@@ -53,7 +53,7 @@ and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal";     literal e ]
   | E_constant    e -> `List [ `String "E_constant";    constant e ]
-  | E_variable    e -> `List [ `String "E_variable";    expression_variable_to_yojson e ]
+  | E_variable    e -> `List [ `String "E_variable";    ValueVar.to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application expression e ]
   | E_lambda      e -> `List [ `String "E_lambda";      lambda    expression type_expression e ]
   | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
@@ -96,21 +96,21 @@ and constant {cons_name;arguments} =
 
 and matching_content_cons (hd, tl, body) =
   `Assoc [
-    ("hd", expression_variable_to_yojson hd);
-    ("tl", expression_variable_to_yojson tl);
+    ("hd", ValueVar.to_yojson hd);
+    ("tl", ValueVar.to_yojson tl);
     ("body", expression body);
   ]
 
 and matching_content_some (opt, body ) =
   `Assoc [
-    ("opt", expression_variable_to_yojson opt);
+    ("opt", ValueVar.to_yojson opt);
     ("body", expression body);
   ]
 
 and matching_content_case ((constructor, pattern), body) =
   `Assoc [
     ("constructor", label constructor);
-    ("pattern", expression_variable_to_yojson pattern);
+    ("pattern", ValueVar.to_yojson pattern);
     ("body", expression body);
   ]
 
