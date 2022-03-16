@@ -7,9 +7,10 @@ module Expression = struct
   let get_content : t -> t' = fun e -> e.content
   let get_type : t -> type_expression = fun e -> e.type_expression
 
-  let make_t ?(loc=Location.generated) = fun tc -> {
+  let make_t ?(loc=Location.generated) ?source_type = fun tc -> {
     type_content = tc;
     location = loc;
+    source_type = source_type;
   }
 
   let make ?(loc=Location.generated) = fun e' t -> {

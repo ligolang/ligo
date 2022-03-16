@@ -8,7 +8,7 @@ let rec type_expression {type_content=tc;location} =
   ]
 
 and type_content = function
-  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_variable        t -> `List [ `String "t_variable"; TypeVar.to_yojson t]
   | T_sum             t -> `List [ `String "t_sum";
                                    label_map row_element t.fields;
                                    attributes t.attributes]
@@ -40,7 +40,7 @@ and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal";     literal e ]
   | E_constant    e -> `List [ `String "E_constant";    constant expression e ]
-  | E_variable    e -> `List [ `String "E_variable";    expression_variable_to_yojson e ]
+  | E_variable    e -> `List [ `String "E_variable";    ValueVar.to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application expression e ]
   | E_lambda      e -> `List [ `String "E_lambda";      lambda      expression type_expression e ]
   | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
@@ -71,7 +71,7 @@ and expression_content = function
 
 and let_in {let_binder;rhs;let_result;attributes=attr;mut} =
   `Assoc [
-    ("let_binder", expression_variable_to_yojson @@ let_binder.var);
+    ("let_binder", ValueVar.to_yojson @@ let_binder.var);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("attributes", attributes attr);

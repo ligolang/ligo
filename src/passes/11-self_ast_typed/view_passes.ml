@@ -10,18 +10,14 @@ let check_view_type ~raise : err_data:(Location.t*Ast_typed.expression_variable*
   fun ~err_data:(loc,main_name,view_name) {storage = c_storage ; _} {arg ; storage = v_storage ; return} ->
     let () = trace_option ~raise (storage_view_contract loc main_name view_name c_storage v_storage) @@
       Ast_typed.assert_type_expression_eq (c_storage,v_storage) in
-    let open Stage_common.Constant in
-    let type_check err (t: Ast_typed.type_expression) : unit =
-      let forbidden = [big_map_name ; sapling_state_name ; operation_name ; ticket_name] in
+      let type_check err (t: Ast_typed.type_expression) : unit =
       let aux (t: Ast_typed.type_expression) =
+        let open Stage_common.Constant in
         match t.type_content with
-        | T_constant { injection ; _} ->
-          List.iter
-            ~f:(fun forbidden ->
-              if String.equal (Ligo_string.extract injection) forbidden then raise.raise err
-              else ()
-            )
-            forbidden
+        | T_constant { injection = Big_map       ; _ }
+        | T_constant { injection = Sapling_state ; _ }
+        | T_constant { injection = Operation     ; _ }
+        | T_constant { injection = Ticket        ; _ } -> raise.raise err
         | _ -> ()
       in
       Helpers.iter_type_expression aux t

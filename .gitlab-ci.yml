@@ -11,9 +11,13 @@ stages:
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
   - push                            # deploy docker images, pages, releases (tag)
   - ide-deploy                      # deploy web IDE
+  - release                         # Manage branch matching ^release/*
 
-# jobs for building and testing LSP
-include: '/tools/lsp/.gitlab-ci.yml'
+include: 
+  # jobs for building and testing LSP
+  - '/tools/lsp/.gitlab-ci.yml'
+  # jobs for managing process around release
+  - '/.ci/.gitlab-ci.yml'
 
 .nix:
   before_script:
@@ -29,6 +33,7 @@ changelog:
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
+    - echo $CI_WORKFLOW
     - nix-build nix -A ligo-changelog
     - cp -L result/* .
   artifacts:
@@ -201,6 +206,7 @@ release:
   dependencies:
     - docker_extract
     - changelog
+    - initialize-git
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -209,6 +215,13 @@ release:
       - ligo.deb
   script:
     - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
+      # git cli initialized in .ci/gitlab-ci.yml. Update release branch metadata
+    - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
+    - git fetch
+    - git checkout release/$CI_COMMIT_TAG  
+    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $CI_JOB_ID 
+    - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
+    - git push -o ci.variable="TRIGGER_DOC_UPDATE='true'" origin HEAD:release/$CI_COMMIT_TAG
 
 .website:
   stage: push

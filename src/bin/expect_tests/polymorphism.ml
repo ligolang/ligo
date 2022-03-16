@@ -6,58 +6,47 @@ let () = Sys.chdir "../../test/contracts/polymorphism/"
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "zip(list [1;2;3], list [4n;5n;6n])" ; "--init-file" ; (test "comb.ligo") ] ;
-  [%expect{|
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "zip (zip(list [1;2;3], list [4n;5n;6n]), list [\"a\";\"b\";\"c\"])" ; "--init-file" ; (test "comb.ligo") ] ;
-  [%expect{|
-    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
+  [%expect{| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "zip [1;2;3] [4n;5n;6n]" ; "--init-file" ; (test "comb.mligo") ] ;
-  [%expect{|
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "zip (zip [1;2;3] [4n;5n;6n]) [\"a\";\"b\";\"c\"]" ; "--init-file" ; (test "comb.mligo") ] ;
-  [%expect{|
-    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
+  [%expect{| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "let (x, y) = diag 4 in x + y" ; "--init-file" ; (test "comb.mligo") ] ;
-  [%expect{|
-    8 |}]
+  [%expect{| 8 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "v" ; "--init-file" ; (test "comb.mligo") ] ;
-  [%expect{|
-    { Pair "a" "a" ; Pair "b" "b" } |}]
+  [%expect{| { Pair "a" "a" ; Pair "b" "b" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "w" ; "--init-file" ; (test "comb.mligo") ] ;
-  [%expect{|
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "(zip([1,2,3]))([4n,5n,6n])" ; "--init-file" ; (test "comb.religo") ] ;
-  [%expect{|
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "(zip((zip([1,2,3]))([4n,5n,6n])))([\"a\",\"b\",\"c\"])" ; "--init-file" ; (test "comb.religo") ] ;
-  [%expect{|
-    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
+  [%expect{| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))" ; "--init-file" ; (test "comb.jsligo") ] ;
-  [%expect{|
-    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;
-  [%expect{|
-    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
+  [%expect{| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (test "ctrct.mligo") ] ;
@@ -77,8 +66,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "bar" ; "--init-file" ; (test "modules.religo") ] ;
-  [%expect{|
-    (Pair (Some 1) (Some "hello")) |}]
+  [%expect{| (Pair (Some 1) (Some "hello")) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "use_nelist.mligo") ] ;
@@ -137,6 +125,12 @@ let%expect_test _ =
     - test_helpers exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; (test "use_rec.jsligo") ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value 55. |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;
   [%expect{|
     1 |}]
@@ -157,6 +151,9 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "annotate.mligo") ] ;
   [%expect{| const f = Λ a ->  lambda (x : a) return x |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; (test "same_vars.mligo") ] ;
+  [%expect{| 4 |}]
 
 let () = Sys.chdir pwd ;
          Sys.chdir "../../test/contracts/negative/polymorphism/"

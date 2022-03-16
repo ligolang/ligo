@@ -35,27 +35,27 @@ type type_content = [%import: Types.type_content]
 let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
 
 let t_constant ?loc ?core injection parameters : type_expression =
-  make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
+  make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = injection ; parameters}) core
 
 (* TODO?: X_name here should be replaced by X_injection *)
-let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type__name []
+let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
-let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type__name [t]
-[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
+[@@map (_type_, ("option", "list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
 
-let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type__name [t; t']
+let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
 
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Var.fresh ~name:"_a" () in
+  let ty_binder = TypeVar.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder ()] in
   t_abstraction { ty_binder ; kind ; type_ } ?loc ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.fresh ~name:"_l" () in
-  let ty_binder_r = Var.fresh ~name:"_r" () in
+  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
+  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]
@@ -93,7 +93,7 @@ let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
   [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
-let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core test_michelson_name []
+let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core Stage_common.Constant.Michelson_program []
 let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
@@ -117,36 +117,36 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
   | _ -> None
 
-let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
+let get_param_inj (t:type_expression) : (string * Stage_common.Constant.t * type_expression list) option =
   match t.type_content with
   | T_constant {language;injection;parameters} -> Some (language,injection,parameters)
   | _ -> None
 
-let get_t_inj (t:type_expression) (v:string) : (type_expression list) option =
+let get_t_inj (t:type_expression) (v:Stage_common.Constant.t) : (type_expression list) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters} when String.equal (Ligo_string.extract injection) v -> Some parameters
+  | T_constant {language=_;injection; parameters} when Stage_common.Constant.equal injection v -> Some parameters
   | _ -> None
-let get_t_base_inj (t:type_expression) (v:string) : unit option =
+let get_t_base_inj (t:type_expression) (v:Stage_common.Constant.t) : unit option =
   match get_t_inj t v with
   | Some [] -> Some ()
   | _ -> None
-let get_t_unary_inj (t:type_expression) (v:string) : type_expression option =
+let get_t_unary_inj (t:type_expression) (v:Stage_common.Constant.t) : type_expression option =
   match get_t_inj t v with
   | Some [a] -> Some a
   | _ -> None
-let get_t_binary_inj (t:type_expression) (v:string) : (type_expression * type_expression) option =
+let get_t_binary_inj (t:type_expression) (v:Stage_common.Constant.t) : (type_expression * type_expression) option =
   match get_t_inj t v with
   | Some [a;b] -> Some (a,b)
   | _ -> None
 
-let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type__name
-[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "test_michelson", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
+[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "michelson_program", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
-let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type__name
+let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
 [@@map (_type_, ("contract", "option", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
-let get_t_michelson_code (t:type_expression) : unit option = get_t_test_michelson t
+let get_t_michelson_code (t:type_expression) : unit option = get_t_michelson_program t
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
@@ -164,27 +164,36 @@ let get_t_tuple (t:type_expression) : type_expression list option = match t.type
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
   | T_record m ->
       let lst = tuple_of_record m.content in
-      ( match List.(length lst = 2) with
-        | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
-        | false -> None
+      ( match lst with
+        | [fst;snd] -> Some (fst,snd)
+        | _ -> None
       )
   | _ -> None
 
+let get_t_or (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
+  | T_sum m ->
+      let lst = List.map ~f:(fun (a,{associated_type;_}) -> a,associated_type) @@ LMap.to_kv_list m.content in
+      ( match lst with
+        | [(Label "left",l);(Label "right",r)]
+        | [(Label "right",r);(Label "left",l)] -> Some (l,r)
+        | _ -> None
+      )
+  | _ -> None
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_name -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) typed_address_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Typed_address -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) big_map_name -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with
@@ -192,7 +201,7 @@ let get_t__type__exn t = match get_t__type_ t with
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 [@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
 
-let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
+let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Constant.Contract with
   | Some _ -> Some ()
   | _ -> None
 
@@ -203,7 +212,7 @@ let is_t_mutez t = is_t_tez t
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
-  | Some t' -> get_t_base_inj t' operation_name
+  | Some t' -> get_t_base_inj t' Stage_common.Constant.Operation
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
@@ -267,7 +276,7 @@ let e_a_type_inst forall type_ u = e_type_inst { forall ; type_ } u
 let e_a_mod_in module_binder rhs let_result = e_mod_in { module_binder ; rhs ; let_result } (get_type let_result)
 
 (* Constants *)
-let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
+let e_a_some s = make_e (e_some s) (t_constant Stage_common.Constant.Option [s.type_expression])
 let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
@@ -321,7 +330,7 @@ let get_declaration_by_name : program -> expression_variable -> declaration opti
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant { binder; expr = _ ; attr = _ } ->
-        Var.equal binder name
+        ValueVar.equal binder name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

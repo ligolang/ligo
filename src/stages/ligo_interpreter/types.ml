@@ -1,7 +1,7 @@
 include Ast_aggregated.Types
 
-module Tezos_protocol = Tezos_protocol_011_PtHangz2
-module Tezos_raw_protocol = Tezos_raw_protocol_011_PtHangz2
+module Tezos_protocol = Tezos_protocol_012_Psithaca
+module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
 
 module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
@@ -29,6 +29,7 @@ and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggreg
 and michelson_code =
   | Contract of mcode
   | Ty_code of typed_michelson_code
+  | Untyped_code of mcode
 
 and contract =
   { address : mcontract;

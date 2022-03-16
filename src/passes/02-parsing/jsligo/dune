@@ -106,6 +106,7 @@
 
 (rule
   (target errors.msg.new)
+  (deps Parser.mly ParToken.mly errors.msg.in)
   (action
    (with-stdout-to
     %{target}

@@ -2,24 +2,22 @@ open Simple_utils.Trace
 
 (* Helpers *)
 
-let variant_to_syntax (v: Ligo_compile.Helpers.v_syntax) =
-  match v with
-  | PascaLIGO -> "pascaligo"
-  | CameLIGO -> "cameligo"
-  | ReasonLIGO -> "reasonligo"
-  | JsLIGO -> "jsligo"
-
 let get_declarations_core core_prg =
-     let func_declarations  = Ligo_compile.Of_core.list_declarations core_prg in
-     let type_declarations  = Ligo_compile.Of_core.list_type_declarations core_prg in
-     let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
+     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
+     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
+     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_core.list_mod_declarations core_prg in
      func_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed typed_prg =
-     let func_declarations  = Ligo_compile.Of_typed.list_declarations typed_prg in
-     let type_declarations  = Ligo_compile.Of_typed.list_type_declarations typed_prg in
-     let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
+     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_typed.list_declarations typed_prg in
+     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_typed.list_type_declarations typed_prg in
+     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_typed.list_mod_declarations typed_prg in
      func_declarations @ type_declarations @ mod_declarations
+
+let pp_declaration ppf = function
+    `Value a  -> Ast_core.PP.expression_variable ppf a
+  | `Type a   -> Ast_core.PP.type_variable       ppf a
+  | `Module a -> Ast_core.PP.module_variable     ppf a
 
 (* Error and warnings *)
 
@@ -42,12 +40,12 @@ let repl_result_ppformat ~display_format f = function
   | Defined_values_core module_ ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Ast_core.PP.expression_variable f
+                                  pp_declaration f
                                   (get_declarations_core module_))
   | Defined_values_typed module' ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
-                                  Ast_typed.PP.expression_variable f
+                                  pp_declaration f
                                   (get_declarations_typed module'))
   | Just_ok -> Simple_utils.PP_helpers.string f "Done."
 
@@ -58,15 +56,15 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let name n = `Assoc [("name", Ast_core.type_variable_to_yojson n)] in
-     let defs = List.map ~f:name (func_declarations @ type_declarations) in
-     `Assoc [("definitions", `List defs)]
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let name n = `Assoc [("name", Ast_typed.type_variable_to_yojson n)] in
-     let defs = List.map ~f:name (func_declarations @ type_declarations) in
-     `Assoc [("definitions", `List defs)]
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Just_ok -> `Assoc []
 
 let repl_result_format : 'a format = {
@@ -77,16 +75,16 @@ let repl_result_format : 'a format = {
 module Run = Ligo_run.Of_michelson
 
 type state = { env : Environment.t; (* The repl should have its own notion of environment *)
-               syntax : Ligo_compile.Helpers.v_syntax;
+               syntax : Syntax_types.t;
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
                project_root : string option;
               }
 
-let try_eval ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
-  let options = {options with init_env = state.env } in
+let try_eval ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options () in
+  let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
   let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
@@ -106,13 +104,13 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
   let () = if declaration then assert (List.length m2 = 1) in
   (m1 @ m2)
 
-let try_declaration ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol ?project_root:state.project_root () in
-  let options = {options with init_env = state.env } in
+let try_declaration ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options () in
+  let options = Compiler_options.set_init_env options state.env in
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s state.env in
+        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
@@ -122,26 +120,26 @@ let try_declaration ~raise state s =
       | (`Cit_pascaligo_tracer _ : Main_errors.all)
       | (`Cit_cameligo_tracer _ : Main_errors.all)
       | (`Cit_reasonligo_tracer _ : Main_errors.all) ->
-         try_eval ~raise state s
+         try_eval ~raise ~raw_options state s
       | e -> raise.raise e)
   with
   | Failure _ ->
      raise.raise `Repl_unexpected
 
-let import_file ~raise state file_name module_name =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
-  let options = {options with init_env = state.env } in
-  let module_ = Build.build_context ~raise ~add_warning ~options (variant_to_syntax state.syntax) file_name in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.Var.of_input_var module_name;module_;module_attr={public=true}}]) in
+let import_file ~raise ~raw_options state file_name module_name =
+  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
+  let options = Compiler_options.set_init_env options state.env in
+  let module_ = Build.build_context ~raise ~add_warning ~options file_name in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise state s =
-  let options = Compiler_options.make ~protocol_version:state.protocol () in
-  let options = {options with init_env = state.env } in
+let use_file ~raise ~raw_options state s =
+  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
+  let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.build_context ~raise ~add_warning ~options (variant_to_syntax state.syntax) s in
+  let module' = Build.build_context ~raise ~add_warning ~options s in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'
@@ -187,12 +185,12 @@ let eval display_format state c =
         | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp in
       (0, state, out)
 
-let parse_and_eval display_format state s =
+let parse_and_eval ~raw_options display_format state s =
   let c = match parse s with
-    | Use s -> use_file state s
-    | Import (fn, mn) -> import_file state fn mn
-    | Expr s -> try_declaration state s in
-  eval display_format state c                    
+    | Use s -> use_file ~raw_options state s
+    | Import (fn, mn) -> import_file state ~raw_options fn mn
+    | Expr s -> try_declaration ~raw_options state s in
+  eval display_format state c
 
 let welcome_msg = "Welcome to LIGO's interpreter!
 Included directives:
@@ -221,24 +219,35 @@ let rec read_input prompt delim =
                  some @@ s ^ "\n" ^ i
               | hd :: _ -> some @@ hd
 
-let rec loop syntax display_format state n =
+let rec loop ~raw_options display_format state n =
   let prompt = Format.sprintf "In  [%d]: " n in
   let s = read_input prompt ";;" in
   match s with
   | Some s ->
-     let k, state, out = parse_and_eval display_format state s in
+     let k, state, out = parse_and_eval ~raw_options display_format state s in
      let out = Format.sprintf "Out [%d]: %s" n out in
      print_endline out;
-     loop syntax display_format state (n + k)
+     loop ~raw_options display_format state (n + k)
   | None -> ()
 
-let main syntax display_format protocol dry_run_opts init_file project_root =
-  print_endline welcome_msg;
-  let state = make_initial_state syntax protocol dry_run_opts project_root in
-  let state = match init_file with
-    | None -> state
-    | Some file_name -> let c = use_file state file_name in
-                        let _, state, _ = eval (Ex_display_format Dev) state c in
-                        state in
-  LNoise.set_multiline true;
-  loop syntax display_format state 1
+let main (raw_options : Compiler_options.raw) display_format now amount balance sender source init_file () =
+  let protocol = Environment.Protocols.protocols_to_variant raw_options.protocol_version in
+  let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
+  let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
+  match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
+  | _, None, _ -> Error ("Please check syntax name.", "")
+  | None, _, _ -> Error ("Please check protocol name.", "")
+  | _, _, None -> Error ("Please check run options.", "")
+  | Some protocol, Some syntax, Some dry_run_opts ->
+    begin
+      print_endline welcome_msg;
+      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
+      let state = match init_file with
+        | None -> state
+        | Some file_name -> let c = use_file state ~raw_options file_name in
+                            let _, state, _ = eval (Ex_display_format Dev) state c in
+                            state in
+      LNoise.set_multiline true;
+      loop ~raw_options display_format state 1;
+      Ok("","")
+    end

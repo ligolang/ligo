@@ -18,7 +18,7 @@ and type_content =
 
 and type_injection = {
   language : string ;
-  injection : Simple_utils.Ligo_string.t ;
+  injection : Stage_common.Constant.t ;
   parameters : ty_expr list ;
 }
 
@@ -47,6 +47,7 @@ and type_expression = {
     type_content: type_content;
     orig_var: type_variable option ;
     location: location;
+    source_type: Ast_typed.type_expression option;
   }
 and ty_expr = type_expression
 

@@ -74,9 +74,9 @@ let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
   let modules = (mv,te)::c.modules in
   {c with modules}
 
-let get_value (e:t)  = List.Assoc.find ~equal:Stage_common.Var.equal e.values
-let get_type (e:t)   = List.Assoc.find ~equal:Stage_common.Var.equal e.types
-let get_module (e:t) = List.Assoc.find ~equal:Stage_common.Var.equal e.modules
+let get_value (e:t)  = List.Assoc.find ~equal:Ast_typed.ValueVar.equal e.values
+let get_type (e:t)   = List.Assoc.find ~equal:Ast_typed.TypeVar.equal e.types
+let get_module (e:t) = List.Assoc.find ~equal:Ast_typed.ModuleVar.equal e.modules
 
 let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
 

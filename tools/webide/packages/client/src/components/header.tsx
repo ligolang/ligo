@@ -19,6 +19,7 @@ const Container = styled.div`
 const Group = styled.div`
   display: flex;
   align-items: center;
+  margin-top: -5px;
 `;
 
 const Logo = styled.img`
@@ -60,14 +61,16 @@ export const HeaderComponent = () => {
         
         <Link href="https://ligolang.org/docs/intro/installation">Install</Link>
         <Link href="https://ligolang.org/docs/intro/introduction">Docs</Link>
-        <Link href="https://ligolang.org/docs/tutorials/get-started/tezos-taco-shop-smart-contract">
+        <Link href="https://ligolang.org/docs/tutorials/getting-started/getting-started">
           Tutorials
         </Link>
         <Link href="https://forum.tezosagora.org/tag/ligo" target="_blank">Blog</Link>
         <Link href="https://ligolang.org/contact">
           Ask Questions
         </Link>
-      
+        <Link href="https://ligolang.org/docs/next/intro/changelog/">
+          Changelog
+        </Link>
       </Group>
       <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
           Cheat Sheet

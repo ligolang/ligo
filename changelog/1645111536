@@ -1,0 +1,6 @@
+---
+  title: "Fixed pretty printing of constant constructors in type expressions."
+  merge_request: "1569"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

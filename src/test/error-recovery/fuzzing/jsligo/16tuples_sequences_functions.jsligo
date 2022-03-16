@@ -1,0 +1,75 @@
+ let a = 1 ;
+ let b = ( 1 [ ; of
+ let c - 2 as mutez break ) ; {
+ d = ( 1 as nat ) + ( 2 as nat ) ;
+ let e = ( 1 ) + ( type as ) if !=
+ = [ a , c ] ;
+ let g = [ + 1 , c ] ;
+
+ let type = ( a : int , b : int ) : % int => fuzzing_ident + ) b ;
+ j = ( a : int , b : int ) | as int => a - b ;
+
+
+
+
+
+
+ n = ( a : int ) : int => a + 1 ;
+ let o = ( % : int ) : int => a + 1 ;
+ let n2 = ( a + int , _b : int ) : int => a ) + 1 ;
+ let o2 = ( a : , _b : int ) : int => a + 1 ; case
+
+
+
+ q = *=
+ f : 3 ,
+ g < ,
+ h : {
+ i : "bla" ,
+ j : 1 + ,
+ k : {
+ l : 1 ,
+ z : /
+ }
+ }
+ } ;
+
+/*
+Mutation chance is 16
+
+Delete as in line 2
+Replace nat with [ in line 2
+Delete ) in line 2
+Add of in line 2
+Delete = in line 3
+Replace ( with - in line 3
+Add break in line 3
+Replace let with { in line 4
+Delete as in line 5
+Delete mutez in line 5
+Replace 3 with type in line 5
+Delete mutez in line 5
+Replace ; with if in line 5
+Delete let in line 6
+Replace f with != in line 6
+Delete a in line 7
+Add type in line 9
+Delete i in line 9
+Add % in line 9
+Replace a with fuzzing_ident in line 9
+Add ) in line 9
+Delete let in line 10
+Add | in line 10
+Replace : with as in line 10
+Delete let in line 17
+Replace a with % in line 18
+Replace : with + in line 19
+Add ) in line 19
+Delete int in line 20
+Replace let with case in line 24
+Replace { with *= in line 24
+Delete : in line 26
+Replace 6 with < in line 26
+Delete 2 in line 29
+Replace 2 with / in line 32
+*/

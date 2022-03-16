@@ -3,12 +3,11 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Var.equal
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
+  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let mem_count : expression_variable -> bindings -> int =
     fun x fvs ->
-    List.length (List.filter ~f:(var_equal x) fvs)
+    List.length (List.filter ~f:(ValueVar.equal x) fvs)
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []

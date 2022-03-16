@@ -115,8 +115,7 @@ and row : formatter -> row_element -> unit =
 and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
-  fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
-
+  fprintf ppf "%s%a" (Stage_common.Constant.to_string injection) (list_sep_d_par type_expression) parameters
 
 and type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
@@ -124,6 +123,40 @@ and type_expression ppf (te : type_expression) : unit =
     fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
   else
     fprintf ppf "%a" type_content te.type_content
+
+let rec type_content_orig : formatter -> type_content -> unit =
+  fun ppf tc ->
+  match tc with
+  | T_variable        tv -> type_variable                 ppf tv
+  | T_constant        tc -> type_injection_orig ppf tc
+  | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row_orig) (LMap.to_kv_list_rev m.content)
+  | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row_orig) m.content
+  | T_arrow            a -> arrow         type_expression_orig ppf a
+  | T_module_accessor ma -> module_access type_expression_orig ppf ma
+  | T_singleton       x  -> literal       ppf             x
+  | T_abstraction     x  -> abstraction   type_expression_orig ppf x
+  | T_for_all         x  -> for_all       type_expression_orig ppf x
+
+and row_orig : formatter -> row_element -> unit =
+  fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
+    fprintf ppf "%a"
+      type_expression_orig associated_type
+
+and type_injection_orig ppf {language;injection;parameters} =
+  (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
+  ignore language;
+  fprintf ppf "%s%a" (Stage_common.Constant.to_string injection) (list_sep_d_par type_expression_orig) parameters
+
+and type_expression_orig ppf (te : type_expression) : unit =
+  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
+  match te.orig_var with
+  | None ->
+     if Option.is_some (Combinators.get_t_bool te) then
+       fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+     else
+       fprintf ppf "%a" type_content_orig te.type_content
+  | Some v ->
+     Ast_core.(PP.type_expression ppf (t_variable v ()))
 
 let rec expression ppf (e : expression) =
   fprintf ppf "%a"

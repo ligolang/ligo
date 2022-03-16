@@ -5,7 +5,6 @@ let file = "./contracts/multisig.ligo"
 let mfile = "./contracts/multisig.mligo"
 let refile = "./contracts/multisig.religo"
 
-let get_program ~add_warning f = get_program ~add_warning f (Contract (Stage_common.Var.of_input_var "main"))
 
 let compile_main ~raise ~add_warning f () =
   Test_helpers.compile_main ~raise ~add_warning f ()
@@ -33,7 +32,7 @@ let empty_op_list =
 
 let chain_id_zero =
   e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
-let empty_message = e_lambda_ez (Var.of_input_var "arguments")
+let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 let chain_id_zero = e_chain_id @@ Tezos_crypto.Base58.simple_encode

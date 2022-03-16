@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1623'
+title: Add deprecation warning for constants marked as deprecated
+type: added

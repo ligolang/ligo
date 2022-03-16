@@ -99,6 +99,7 @@ module Tree_abstraction = struct
 
     | "Option.unopt"            -> some_const C_UNOPT
     | "Option.unopt_with_error" -> some_const C_UNOPT_WITH_ERROR
+    | "Option.map"              -> some_const C_OPTION_MAP
 
     (* List module *)
 
@@ -175,7 +176,6 @@ module Tree_abstraction = struct
 
     | "Test.originate" -> some_const C_TEST_ORIGINATE
     | "Test.originate_from_file" -> some_const C_TEST_ORIGINATE_FROM_FILE
-    | "Test.set_now" -> some_const C_TEST_SET_NOW
     | "Test.set_source" -> some_const C_TEST_SET_SOURCE
     | "Test.set_baker" -> some_const C_TEST_SET_BAKER
     | "Test.transfer_to_contract" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT
@@ -212,14 +212,20 @@ module Tree_abstraction = struct
     | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
     | "Test.add_account" -> some_const C_TEST_ADD_ACCOUNT
     | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
+    | "Test.baker_account" -> some_const C_TEST_BAKER_ACCOUNT
+    | "Test.register_delegate" -> some_const C_TEST_REGISTER_DELEGATE
+    | "Test.bake_until_n_cycle_end" -> some_const C_TEST_BAKE_UNTIL_N_CYCLE_END
     | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
     | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
+    | "Test.register_constant" -> some_const C_TEST_REGISTER_CONSTANT
+    | "Test.constant_to_michelson_program" -> some_const C_TEST_CONSTANT_TO_MICHELSON
 
     (* Operator module *)
 
     | "Operator.neg"   -> some_const C_NEG
     | "Operator.add"   -> some_const C_ADD
-    | "Operator.sub"   -> some_const C_SUB
+    | "Operator.sub"   -> some_const C_POLYMORPHIC_SUB
+    | "Operator.sub_mutez" -> some_const C_SUB_MUTEZ
     | "Operator.times" -> some_const C_MUL
     | "Operator.div"   -> some_const C_DIV
     | "Operator.modulus" -> some_const C_MOD
@@ -258,8 +264,8 @@ module Tree_abstraction = struct
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
     | C_NEVER                   -> "Tezos.never"
-    | C_OPEN_CHEST              -> "Tezos.open_chest" 
-    | C_VIEW                    -> "Tezos.call_view" 
+    | C_OPEN_CHEST              -> "Tezos.open_chest"
+    | C_VIEW                    -> "Tezos.call_view"
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
@@ -267,6 +273,8 @@ module Tree_abstraction = struct
     | C_NEG  -> "Operator.neg"
     | C_ADD  -> "Operator.add"
     | C_SUB  -> "Operator.sub"
+    | C_SUB_MUTEZ -> "Operator.sub_mutez"
+    | C_POLYMORPHIC_SUB -> "Operator.sub"
     | C_MUL  -> "Operator.times"
     | C_DIV  -> "Operator.div"
     | C_MOD  -> "Operator.modulus"
@@ -368,7 +376,6 @@ module Tree_abstraction = struct
 
     | C_TEST_ORIGINATE -> "Test.originate"
     | C_TEST_ORIGINATE_FROM_FILE -> "Test.originate_from_file"
-    | C_TEST_SET_NOW -> "Test.set_now"
     | C_TEST_SET_SOURCE -> "Test.set_source"
     | C_TEST_SET_BAKER -> "Test.set_baker"
     | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> "Test.transfer_to_contract"
@@ -404,9 +411,13 @@ module Tree_abstraction = struct
     | C_TEST_CREATE_CHEST -> "Test.create_chest"
     | C_TEST_ADD_ACCOUNT -> "Test.add_account"
     | C_TEST_NEW_ACCOUNT -> "Test.new_account"
-    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power" 
-    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power" 
-
+    | C_TEST_BAKER_ACCOUNT -> "Test.baker_account"
+    | C_TEST_REGISTER_DELEGATE -> "Test.register_delegate"
+    | C_TEST_BAKE_UNTIL_N_CYCLE_END -> "Test.bake_until_n_cycle_end"
+    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power"
+    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power"
+    | C_TEST_REGISTER_CONSTANT -> "Test.register_constant"
+    | C_TEST_CONSTANT_TO_MICHELSON -> "Test.constant_to_michelson_program"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
@@ -595,14 +606,6 @@ module Tree_abstraction = struct
       | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
 
-      (* Loop module *)
-
-      | "Loop.fold_while" -> some_deprecated C_FOLD_WHILE    (* Deprecated *)
-      | "Loop.resume"     -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "continue"        -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "Loop.stop"       -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-      | "stop"            -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-
       (* Others *)
 
       | "assert"                 -> some_const C_ASSERTION
@@ -696,14 +699,6 @@ module Tree_abstraction = struct
       | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
 
-      (* Loop module *)
-
-      | "Loop.fold_while" -> some_deprecated C_FOLD_WHILE    (* Deprecated *)
-      | "Loop.resume"     -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "continue"        -> some_deprecated C_FOLD_CONTINUE (* Deprecated *)
-      | "Loop.stop"       -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-      | "stop"            -> some_deprecated C_FOLD_STOP     (* Deprecated *)
-
       (* Others *)
 
       | "assert"                 -> some_const C_ASSERTION
@@ -769,6 +764,7 @@ module Stacking = struct
     match c , protocol_version with
     | C_ADD                , _   -> Some ( simple_binary @@ prim "ADD")
     | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
+    | C_SUB_MUTEZ          , _   -> Some ( simple_binary @@ prim "SUB_MUTEZ")
     | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
     | C_EDIV               , _   -> Some ( simple_binary @@ prim "EDIV")
     | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
@@ -800,10 +796,6 @@ module Stacking = struct
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_FOLD_WHILE         , _   ->
-      Some ( simple_binary @@ seq [i_swap ; (i_push (prim "bool") (prim "True"));prim ~children:[seq [dip i_dup; i_exec; i_unpair]] "LOOP" ;i_swap ; i_drop])
-    | C_FOLD_CONTINUE         , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "True")); i_pair])
-    | C_FOLD_STOP             , _   -> Some ( simple_unary @@ seq [(i_push (prim "bool") (prim "False")); i_pair])
     | C_SIZE                  , _   -> Some ( simple_unary @@ prim "SIZE")
     | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
     | C_NEVER                 , _   -> Some ( simple_unary @@ prim "NEVER")
@@ -902,7 +894,7 @@ module Stacking = struct
           ( i_if
             (seq [ i_push_unit ; prim "LEFT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
             (seq [ i_push_unit ; prim "RIGHT" ~children:[t_unit] ; prim "LEFT" ~children:[t_bytes] ])
-          ) 
+          )
       ])
     )
     | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")

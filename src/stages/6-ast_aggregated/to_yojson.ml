@@ -26,15 +26,15 @@ let layout = function
   | L_tree -> `List [ `String "L_tree"; `Null ]
 
 
-let rec type_expression {type_content=tc;location;orig_var} =
+let rec type_expression {type_content=tc; location; orig_var; source_type = _} =
   `Assoc [
     ("type_content", type_content tc);
     ("location", Location.to_yojson location);
-    ("orig_var", option type_variable_to_yojson orig_var);
+    ("orig_var", option TypeVar.to_yojson orig_var);
   ]
 
 and type_content = function
-  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_variable        t -> `List [ `String "t_variable"; TypeVar.to_yojson t]
   | T_sum             t -> `List [ `String "t_sum"; rows t]
   | T_record          t -> `List [ `String "t_record"; rows t]
   | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
@@ -46,7 +46,7 @@ and type_content = function
 and type_injection {language;injection;parameters} =
   `Assoc [
     ("language", `String language);
-    ("injection", `String (Simple_utils.Ligo_string.extract injection));
+    ("injection", `String (Stage_common.Constant.to_string injection));
     ("parameters", list type_expression parameters)
   ]
 
@@ -79,7 +79,7 @@ and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal"; Stage_common.To_yojson.literal e ]
   | E_constant    e -> `List [ `String "E_constant"; constant e ]
-  | E_variable    e -> `List [ `String "E_variable"; expression_variable_to_yojson e ]
+  | E_variable    e -> `List [ `String "E_variable"; ValueVar.to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application e ]
   | E_lambda      e -> `List [ `String "E_lambda"; lambda e ]
   | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
@@ -116,13 +116,13 @@ and application {lamb;args} =
 
 and lambda {binder;result} =
   `Assoc [
-    ("binder", expression_variable_to_yojson binder);
+    ("binder", ValueVar.to_yojson binder);
     ("result", expression result);
   ]
 
 and recursive {fun_name;fun_type;lambda=l} =
   `Assoc [
-    ("fun_name", expression_variable_to_yojson fun_name);
+    ("fun_name", ValueVar.to_yojson fun_name);
     ("fun_type", type_expression fun_type);
     ("lambda", lambda l)
   ]
@@ -148,7 +148,7 @@ and module_attribute ({public}: module_attribute) =
 
 and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
-    ("let_binder", expression_variable_to_yojson let_binder);
+    ("let_binder", ValueVar.to_yojson let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("attr", attribute attr);
@@ -156,7 +156,7 @@ and let_in {let_binder;rhs;let_result;attr} =
 
 and type_in {type_binder;rhs;let_result} =
   `Assoc [
-    ("let_binder", type_variable_to_yojson type_binder );
+    ("let_binder", TypeVar.to_yojson type_binder );
     ("rhs", type_expression rhs);
     ("let_result", expression let_result)
   ]
@@ -207,13 +207,13 @@ and matching_content_variant {cases;tv} =
 and matching_content_case {constructor; pattern; body} =
   `Assoc [
     ("constructor", label constructor);
-    ("pattern", expression_variable_to_yojson pattern);
+    ("pattern", ValueVar.to_yojson pattern);
     ("body", expression body);
   ]
 
 and matching_content_record {fields; body; tv} =
   `Assoc [
-    ("fields", label_map (pair expression_variable_to_yojson type_expression) fields);
+    ("fields", label_map (pair ValueVar.to_yojson type_expression) fields);
     ("body", expression body);
     ("record_type", type_expression tv);
   ]

@@ -1,12 +1,14 @@
 open Cli_helpers
 
+module Default_options = Compiler_options.Default_options
+
 let is_dev = ref true
 
 let entry_point =
   let open Command.Param in
   let name = "e" in
   let doc = "ENTRY-POINT the entry-point that will be compiled." in
-  let spec = optional_with_default "main" string in
+  let spec = optional_with_default Default_options.entry_point string in
   flag ~doc ~aliases:["--entry-point"] name spec
 
 let source_file =
@@ -28,25 +30,40 @@ let libraries : string list Command.Param.t =
   let open Command.Param in
   let name = "--library" in
   let doc  = "LIBS A comma-separated list of paths to directories where to search for files to be included by the preprocessor" in
-  let spec = optional_with_default [] @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
+  let spec = optional_with_default Default_options.libraries 
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["l"] name spec
 
 let syntax =
   let open Command.Param in
   let doc  = "SYNTAX the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and \"jsligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively)." in
-  let spec = optional_with_default "auto" string in
+  let spec = optional_with_default Default_options.syntax string in
   flag ~doc ~aliases:["s"] "--syntax" spec
 
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
   let doc  = "VIEWS A list of declaration name that will be compiled as on-chain views, separated by ','" in
-  let spec = optional_with_default [] @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
+  let spec = optional_with_default Default_options.views
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["v"] "--views" spec
+
+let constants : _ Command.Param.t =
+  let open Command.Param in
+  let doc  = "CONSTANTS A list of global constants that will be assumed in the context, separated by ','" in
+  let spec = optional_with_default Default_options.constants
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
+  flag ~doc ~aliases:["c"] "--constants" spec
+
+let file_constants : _ Command.Param.t =
+  let open Command.Param in
+  let doc  = "FILE_CONSTANTS A file with a JSON list of strings with Michelson code. Those Michelson values will be registered as global constants in the context." in
+  let spec = optional string in
+  flag ~doc "--file-constants" spec
 
 let steps =
   let open Command.Param in
   let doc  = "INT a bound in the number of steps to be done by the interpreter." in
-  let spec = optional_with_default 1000000 int in
+  let spec = optional_with_default Default_options.steps int in
   flag ~doc ~aliases:["n"] "--steps" spec
 
 let protocol_version =
@@ -55,14 +72,14 @@ let protocol_version =
   let plist = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep_d_par Format.pp_print_string) protocols_str in
   let doc   = Format.asprintf "PROTOCOL choose protocol's types/values pre-loaded into the LIGO environment %s. \
                               By default, the current protocol (%s) will be used" plist (variant_to_string current) in
-  let spec  = optional_with_default "current" string in
+  let spec  = optional_with_default Default_options.protocol_version string in
   flag ~doc ~aliases:["--protocol"] "p" spec
 
 let dialect =
   let open Command.Param in
   let name = "--pascaligo-dialect" in
   let doc  = "DIALECT the pascaligo dialect that will be used. Currently supported dialects are \"terse\" and \"verbose\". By default the dialect is \"terse\"." in
-  let spec = optional_with_default "terse" string in
+  let spec = optional_with_default Default_options.dialect string in
   flag ~doc ~aliases:["d";"dialect"] name spec
 
 let req_syntax =
@@ -161,14 +178,18 @@ let michelson_code_format =
 
 let michelson_comments =
   let open Command.Param in
-  let doc = "Selects kinds of comments to be added to the Michelson output. Currently only 'location' is supported, which propagates original source locations (line/col)." in
+  let doc = "Selects kinds of comments to be added to the Michelson output. \
+Currently 'location' and 'env' are supported. 'location' propagates original \
+source locations. 'env' inserts additional empty Seq nodes with comments \
+relating the Michelson stack to the source LIGO environment." in
   let name = "--michelson-comments" in
   flag ~doc name @@
   listed @@
-  Command.Arg_type.create @@ function
-  (* autocomplete:(fun _ -> return ["location"]) *)
-  | "location" -> `Location
-  | s -> failwithf "unexpected value for --%s: %s" name s ()
+  Command.Arg_type.create
+    (function
+      | "location" -> `Location
+      | "env" -> `Env
+      | s -> failwithf "unexpected value for --%s: %s" name s ())
 
 let optimize =
   let open Command.Param in
@@ -198,7 +219,7 @@ let generator =
   let open Command.Param in
   let name = "generator" in
   let doc = "GEN the generator for mutation." in
-  flag ~doc ~aliases:["g"] name @@ optional_with_default "random" string
+  flag ~doc ~aliases:["g"] name @@ optional_with_default Default_options.generator string
 
 let self_pass =
   let open Command.Param in
@@ -228,22 +249,24 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format output_file warn werror michelson_comments project_root  () =
-    return_result ~return ~warn ?output_file @@
-    Api.Compile.contract ~werror source_file entry_point oc_views syntax protocol_version display_format disable_typecheck michelson_format michelson_comments project_root  in
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~show_warnings ~warning_as_error ~constants ~file_constants ~project_root () in
+    return_result ~return ~show_warnings ?output_file @@
+    Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
   let readme () = "This sub-command compiles a contract to Michelson \
                   code. It expects a source file and an entrypoint \
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root )
 
 
 let compile_parameter =
-  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
-    return_result ~return ~warn ?output_file @@
-    Api.Compile.parameter source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
+  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings ?output_file @@
+    Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format 
   in
   let summary   = "compile parameters to a Michelson expression." in
   let readme () = "This sub-command compiles a parameter for a given \
@@ -254,9 +277,10 @@ let compile_parameter =
   (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format warn werror project_root  () =
-    return_result ~return ~warn @@
-    Api.Compile.expression expression syntax protocol_version init_file display_format without_run michelson_format werror project_root 
+  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Compile.expression raw_options expression init_file display_format michelson_format 
     in
   let summary   = "compile to a Michelson value." in
   let readme () = "This sub-command compiles a LIGO expression to a \
@@ -267,9 +291,10 @@ let compile_expression =
   (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> project_root )
 
 let compile_storage =
-  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file warn werror project_root  () =
-    return_result ~return ~warn ?output_file @@
-    Api.Compile.storage source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format werror project_root 
+  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings ?output_file @@
+    Api.Compile.storage raw_options source_file expression amount balance sender source now display_format michelson_format 
   in
   let summary   = "compile an initial storage in LIGO syntax to \
                   a Michelson expression." in
@@ -280,11 +305,27 @@ let compile_storage =
   Command.basic ~summary ~readme
   (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
 
+let compile_constant =
+  let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Compile.constant raw_options expression init_file display_format
+    in
+  let summary   = "compile constant to a Michelson value and its hash." in
+  let readme () = "This sub-command compiles a LIGO expression to a \
+                   Michelson value and its hash as a global constant. \
+                   It works by compiling the LIGO \
+                   expression to a Michelson expression and then \
+                   interpreting it using Michelson's interpreter." in
+  Command.basic ~summary ~readme
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> warn <*> werror <*> project_root )
+
 let compile_group = Command.group ~summary:"compile a ligo program to michelson" @@
   [ "contract",   compile_file;
     "expression", compile_expression;
     "parameter",  compile_parameter;
-    "storage",    compile_storage;]
+    "storage",    compile_storage;
+    "constant",   compile_constant;]
 
 (** Transpile commands *)
 let transpile_contract =
@@ -321,9 +362,10 @@ let transpile_group =
 
 (** Mutate commands *)
 let mutate_cst =
-  let f source_file syntax protocol_version libs display_format seed generator () =
+  let f source_file syntax protocol_version libraries display_format seed generator () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~libraries ~generator () in
     return_result ~return @@
-    Api.Mutate.mutate_cst source_file syntax protocol_version libs display_format seed generator in
+    Api.Mutate.mutate_cst raw_options source_file display_format seed in
   let summary   = "return a mutated version for a given file." in
   let readme () = "This sub-command returns a mutated version for a \
                   given file. It does not use the build system." in
@@ -331,9 +373,10 @@ let mutate_cst =
   (f <$> source_file <*> syntax <*> protocol_version <*> libraries <*> display_format <*> seed <*> generator)
 
 let mutate_ast =
-  let f source_file syntax protocol_version libs display_format seed generator () =
+  let f source_file syntax protocol_version libraries display_format seed generator () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~libraries ~generator () in
     return_result ~return @@
-    Api.Mutate.mutate_ast source_file syntax protocol_version libs display_format seed generator
+    Api.Mutate.mutate_ast raw_options source_file display_format seed
   in
   let summary   = "return a mutated version for a given file." in
   let readme () = "This sub-command returns a mutated version for a \
@@ -349,9 +392,10 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps protocol_version display_format project_root  () =
+  let f source_file syntax steps protocol_version display_format project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root () in
     return_result ~return @@
-    Api.Run.test source_file syntax steps protocol_version display_format project_root 
+    Api.Run.test raw_options source_file display_format
   in
   let summary   = "test a contract with the LIGO test framework (BETA)." in
   let readme () = "This sub-command tests a LIGO contract using a LIGO \
@@ -363,9 +407,10 @@ let test =
   (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format <*> project_root )
 
 let dry_run =
-  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-    return_result ~return ~warn @@
-    Api.Run.dry_run source_file entry_point parameter storage amount balance sender source now syntax protocol_version display_format werror project_root 
+  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Run.dry_run raw_options source_file parameter storage amount balance sender source now display_format 
     in
   let summary   = "run a smart-contract with the given storage and input." in
   let readme () = "This sub-command runs a LIGO contract on a given \
@@ -377,9 +422,10 @@ let dry_run =
   (f <$> source_file <*> expression "PARAMETER" <*> expression "STORAGE" <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let evaluate_call =
-  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-    return_result ~return ~warn @@
-    Api.Run.evaluate_call source_file entry_point parameter amount balance sender source now syntax protocol_version display_format werror project_root 
+  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Run.evaluate_call raw_options source_file parameter amount balance sender source now display_format 
     in
   let summary   = "run a function with the given parameter." in
   let readme () = "This sub-command runs a LIGO function on a given \
@@ -390,9 +436,10 @@ let evaluate_call =
   (f <$> source_file <*> expression "PARAMETER" <*>  entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let evaluate_expr =
-  let f source_file entry_point amount balance sender source now syntax protocol_version display_format warn werror project_root  () =
-    return_result ~return ~warn @@
-    Api.Run.evaluate_expr source_file entry_point amount balance sender source now syntax protocol_version display_format werror project_root 
+  let f source_file entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Run.evaluate_expr raw_options source_file amount balance sender source now display_format 
     in
   let summary   = "evaluate a given definition." in
   let readme () = "This sub-command evaluates a LIGO definition. The \
@@ -403,9 +450,10 @@ let evaluate_expr =
   (f <$> source_file <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let interpret =
-  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root  () =
+  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in 
     return_result ~return @@
-    Api.Run.interpret expression init_file syntax protocol_version amount balance sender source now display_format project_root 
+    Api.Run.interpret raw_options expression init_file amount balance sender source now display_format 
   in
   let summary   = "interpret the expression in the context initialized by the provided source file." in
   let readme () = "This sub-command interprets a LIGO expression. The \
@@ -428,8 +476,9 @@ let run_group =
 (** Info commands *)
 let list_declarations =
   let f source_file syntax display_format () =
+    let raw_options = Compiler_options.make_raw_options ~syntax () in
     return_result ~return @@
-    Api.Info.list_declarations source_file syntax display_format
+    Api.Info.list_declarations raw_options source_file display_format
   in
   let summary   = "list all the top-level declarations." in
   let readme () = "This sub-command prints a list of all top-level \
@@ -438,9 +487,10 @@ let list_declarations =
   (f <$> source_file <*> syntax <*> display_format)
 
 let measure_contract =
-  let f source_file entry_point oc_views syntax protocol_version display_format warn werror project_root  () =
-    return_result ~return ~warn @@
-    Api.Info.measure_contract source_file entry_point oc_views syntax protocol_version display_format werror project_root 
+  let f source_file entry_point views syntax protocol_version display_format show_warnings warning_as_error project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~show_warnings ~warning_as_error ~project_root () in
+    return_result ~return ~show_warnings @@
+    Api.Info.measure_contract raw_options source_file display_format
   in
   let summary   = "measure a contract's compiled size in bytes." in
   let readme () = "This sub-command compiles a source file and measures \
@@ -449,9 +499,10 @@ let measure_contract =
   (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
 
 let get_scope =
-  let f source_file protocol_version libs display_format with_types () =
+  let f source_file protocol_version libraries display_format with_types () =
+    let raw_options = Compiler_options.make_raw_options ~protocol_version ~libraries ~with_types () in
     return_result ~return @@
-    Api.Info.get_scope source_file protocol_version libs display_format with_types
+    Api.Info.get_scope raw_options source_file  display_format
   in
   let summary   = "return the JSON encoded environment for a given file." in
   let readme () = "This sub-command returns the environment for a given \
@@ -468,9 +519,10 @@ let info_group =
 
 (** Print commands *)
 let preprocessed =
-  let f source_file syntax libraries display_format project_root  () =
+  let f source_file syntax libraries display_format project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~libraries ~project_root () in
     return_result ~return @@
-      Api.Print.preprocess source_file syntax libraries display_format project_root  in
+      Api.Print.preprocess raw_options source_file display_format  in
   let summary   = "preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command runs the pre-processor on a LIGO \
                   source file and outputs the result. The directive \
@@ -482,20 +534,22 @@ let preprocessed =
   Command.basic ~summary ~readme @@
   (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root )
 let pretty_print =
-  let f source_file syntax display_format () =
+  let f source_file syntax display_format warning_as_error () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~warning_as_error () in
     return_result ~return @@
-    Api.Print.pretty_print source_file syntax display_format in
+    Api.Print.pretty_print raw_options source_file display_format in
   let summary   = "pretty-print the source file." in
   let readme () = "This sub-command pretty-prints a source file in \
                   LIGO. The width of the pretty-printed text is \
                   adjusted to the number of columns in the terminal (or \
                   60 if it cannot be determined)." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> syntax <*> display_format <*> werror)
 let print_graph =
-  let f source_file syntax display_format project_root  () =
+  let f source_file syntax display_format project_root () =
+  let raw_options = Compiler_options.make_raw_options ~syntax ~project_root () in
     return_result ~return @@
-    Api.Print.dependency_graph source_file syntax display_format project_root 
+    Api.Print.dependency_graph raw_options source_file display_format 
   in
   let summary   = "print the dependency graph.\nWarning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the dependency graph created \
@@ -506,8 +560,9 @@ let print_graph =
 
 let print_cst =
   let f source_file syntax display_format () =
+    let raw_options = Compiler_options.make_raw_options ~syntax () in
     return_result ~return @@
-    Api.Print.cst source_file syntax display_format
+    Api.Print.cst raw_options source_file display_format
   in
   let _cmdname = "print-cst" in
   let summary   = "print the CST.\nWarning: Intended for development of LIGO and can break at any time." in
@@ -518,8 +573,9 @@ let print_cst =
 
 let print_ast =
   let f source_file syntax display_format () =
-    return_result ~return@@
-    Api.Print.ast source_file syntax display_format
+    let raw_options = Compiler_options.make_raw_options ~syntax () in
+    return_result ~return @@
+    Api.Print.ast raw_options source_file display_format
   in
   let summary   = "print the AST with imperative construct.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -530,8 +586,9 @@ let print_ast =
 
 let print_ast_sugar =
   let f source_file syntax display_format self_pass () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~self_pass () in
     return_result ~return @@
-    Api.Print.ast_sugar source_file syntax display_format self_pass
+    Api.Print.ast_sugar raw_options source_file display_format
   in
   let summary   = "print the AST with syntatic sugar.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -540,9 +597,10 @@ let print_ast_sugar =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass)
 
 let print_ast_core =
-  let f source_file syntax display_format self_pass project_root  () =
+  let f source_file syntax display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~self_pass ~project_root () in
     return_result ~return @@
-    Api.Print.ast_core source_file syntax display_format self_pass project_root 
+    Api.Print.ast_core raw_options source_file display_format 
   in
   let summary  = "print the core ligo AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -551,9 +609,10 @@ let print_ast_core =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format self_pass project_root  () =
+  let f source_file syntax protocol_version display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root () in
     return_result ~return @@
-    Api.Print.ast_typed source_file syntax protocol_version display_format self_pass project_root 
+    Api.Print.ast_typed raw_options source_file  display_format   
   in
   let summary   = "print the typed AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -564,9 +623,10 @@ let print_ast_typed =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_aggregated =
-  let f source_file syntax protocol_version display_format self_pass project_root  () =
+  let f source_file syntax protocol_version display_format self_pass project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root () in
     return_result ~return @@
-      Api.Print.ast_aggregated source_file syntax protocol_version display_format self_pass project_root 
+      Api.Print.ast_aggregated raw_options source_file display_format 
   in
   let summary = "print the contract after aggregation.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -575,9 +635,10 @@ let print_ast_aggregated =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_combined =
-  let f source_file syntax protocol_version display_format project_root  () =
+  let f source_file syntax protocol_version display_format project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
     return_result ~return @@
-    Api.Print.ast_combined source_file syntax protocol_version display_format project_root 
+    Api.Print.ast_combined raw_options source_file display_format 
   in
   let summary   = "print the contract after combination with the build system.\n Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the AST \
@@ -588,9 +649,10 @@ let print_ast_combined =
   (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> project_root )
 
 let print_mini_c =
-  let f source_file syntax protocol_version display_format optimize project_root  () =
+  let f source_file syntax protocol_version display_format optimize project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
     return_result ~return @@
-    Api.Print.mini_c source_file syntax protocol_version display_format optimize project_root 
+    Api.Print.mini_c raw_options source_file display_format optimize 
   in
   let summary   = "print Mini-C. Warning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the Mini-C \
@@ -625,17 +687,10 @@ let changelog =
   (f <$> display_format)
 
 let repl =
-  let f syntax_name protocol_version amount balance sender source now display_format init_file project_root  () =
-     return_result ~return @@ fun () ->
-    (let protocol = Environment.Protocols.protocols_to_variant protocol_version in
-    let syntax = Ligo_compile.Helpers.syntax_to_variant (Syntax_name syntax_name) None in
-    let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
-    match protocol, Simple_utils.Trace.to_option syntax, Simple_utils.Trace.to_option dry_run_opts with
-    | _, None, _ -> Error ("", "Please check syntax name.")
-    | None, _, _ -> Error ("", "Please check protocol name.")
-    | _, _, None -> Error ("", "Please check run options.")
-    | Some protocol, Some syntax, Some dry_run_opts ->
-       (Repl.main syntax display_format protocol dry_run_opts init_file project_root ); Ok("","")) in
+  let f syntax protocol_version amount balance sender source now display_format init_file project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
+    return_result ~return @@ Repl.main raw_options display_format now amount balance sender source init_file
+  in
   let summary   = "interactive ligo interpreter" in
   let _readme () = "" in
   Command.basic ~summary

@@ -8,6 +8,9 @@ From ligo_coq Require Import bytes.
 
 Definition annot := list string.
 
+(* AST of Micheline types.
+   l can contain arbitrary metadata (l stands for location, which is commonly used as metadata on nodes)
+   p is the inductive type listing the primitive type constructors, e.g. List | Set | Map. *)
 Inductive node (l p : Set) : Set :=
 | Int : l -> Z.t -> node l p
 | String : l -> string -> node l p
@@ -20,6 +23,7 @@ Arguments Int {l p}.
 Arguments String {l p}.
 Arguments Bytes {l p}.
 
+(* annotate a type with the given string if it is a Prim node (leave unchanged otherwise) *)
 Definition annotate {l p} (x : node l p) (ann : string) : node l p :=
   match x with
     | Prim l p args annot => Prim l p args (ann :: annot)

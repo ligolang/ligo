@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1577'
+title: Rename recursive function calls when doing monomorphisation
+type: fixed

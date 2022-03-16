@@ -1,0 +1,20 @@
+ let foo = ( input : int ) : int => {
+ let a = 2 ;
+ if => ( input > 1000 ) {
+ return 1000 ;
+ } ;
+ if ( input > 100 ) {
+ return 100
+ } ;
+ ( input > 0 ) {
+ return 0
+ } ;
+ return a
+ } ;
+
+/*
+Mutation chance is 2
+
+Add => in line 3
+Delete if in line 9
+*/

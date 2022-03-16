@@ -1,0 +1,6 @@
+---
+  title: "Compile only top-level views"
+  merge_request: "1598"
+  author: "melwyn95"
+  type: "fixed"
+

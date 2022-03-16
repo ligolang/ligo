@@ -18,7 +18,7 @@ let%expect_test _ =
       storage bool ;
       code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}] ;
 
-  run_ligo_good [ "print" ; "ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol"; "edo" ; ] ;
+  run_ligo_good [ "print" ; "ast-typed" ; contract "protocol_dalphanet.mligo" ] ;
   [%expect {xxx|
     type bls_l = list (( bls12_381_g1 * bls12_381_g2 ))
     const a = [%Michelson {|
@@ -27,12 +27,12 @@ let%expect_test _ =
     const b = [%Michelson {|
         { PUSH @vk_delta bls12_381_g2 0x10c6d5cdca84fc3c7f33061add256f48e0ab03a697832b338901898b650419eb6f334b28153fb73ad2ecd1cd2ac67053161e9f46cfbdaf7b1132a4654a55162850249650f9b873ac3113fa8c02ef1cd1df481480a4457f351d28f4da89d19fa405c3d77f686dc9a24d2681c9184bf2b091f62e6b24df651a3da8bd7067e14e7908fb02f8955b84af5081614cb5bc49b416d9edf914fc608c441b3f2eb8b6043736ddb9d4e4d62334a23b5625c14ef3e1a7e99258386310221b22d83a5eac035c; }
       |}]
-    const main = lambda (gen#3) return  match gen#3 with
+    const main = lambda (gen#2) return  match gen#2 with
                                          | ( p , s ) ->
                                          ( LIST_EMPTY() , PAIRING_CHECK(p) ) |xxx}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ; "--protocol"; "edo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ] ;
   [%expect {|
     File "../../test/contracts/sapling.mligo", line 8, characters 14-19:
       7 |

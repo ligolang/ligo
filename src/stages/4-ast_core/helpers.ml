@@ -23,8 +23,6 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let is_generalizable_variable = Var.is_generalizable
-
 (* This function transforms an application expression `l e1 ... en` into the pair `([ e1 ; ... ; en ] , l)` *)
 let destruct_applications (e : expression) =
   let rec destruct_applications acc (lamb : expression) =
@@ -45,12 +43,7 @@ let destruct_for_alls (t : type_expression) =
 
 module Free_type_variables = struct
 
-  module Var = struct
-    type t = type_variable
-    let compare e e' = Var.compare e e'
-  end
-
-  module VarSet = Caml.Set.Make(Var)
+  module VarSet = Caml.Set.Make(TypeVar)
 
   let unions : VarSet.t list -> VarSet.t =
     fun l -> List.fold l ~init:VarSet.empty
@@ -70,8 +63,8 @@ module Free_type_variables = struct
     | T_app { arguments ; _ } ->
        let arguments = List.map ~f:self arguments in
        unions arguments
-    | T_variable v when List.mem type_env v ~equal:(fun v1 v2 -> Var.compare v1 v2 = 0) -> VarSet.empty
-    | T_variable v when is_generalizable_variable v  -> VarSet.singleton v
+    | T_variable v when List.mem type_env v ~equal:(fun v1 v2 -> TypeVar.compare v1 v2 = 0) -> VarSet.empty
+    | T_variable v when TypeVar.is_generalizable v  -> VarSet.singleton v
     | T_variable _ -> VarSet.empty
     | T_module_accessor _ -> VarSet.empty
        (* self element *)

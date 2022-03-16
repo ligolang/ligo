@@ -96,12 +96,12 @@ let error_ppformat : display_format:string display_format ->
        let pp_var ppf ((decl_loc, var) : location * expression_variable) =
          Format.fprintf ppf
            "@[<hv>%a@ Invalid capture of non-constant variable \"%a\", declared at@.%a@]"
-           Snippet.pp (Var.get_location var) PP.expression_variable var Snippet.pp decl_loc in
+           Snippet.pp (ValueVar.get_location var) PP.expression_variable var Snippet.pp decl_loc in
        Format.fprintf f "%a" (PP_helpers.list_sep pp_var (PP_helpers.tag "@.")) vars
     | `Self_ast_imperative_const_assigned (loc, var) ->
        Format.fprintf f
          "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
-         Snippet.pp loc PP.expression_variable var Snippet.pp (Var.get_location var)
+         Snippet.pp loc PP.expression_variable var Snippet.pp (ValueVar.get_location var)
     | `Self_ast_imperative_no_shadowing l ->
         Format.fprintf f
             "@[<hv>%a@ Cannot redeclare block-scoped variable. @]"
