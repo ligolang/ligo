@@ -94,7 +94,7 @@ let reserved_names_exp ~raise : expression -> unit = fun exp ->
   | _ -> ()
 
 let reserved_names_mod ~raise : module_ -> module_ = fun m ->
-  let rec aux  = function
+  let aux  = function
     | Location.{wrap_content = Declaration_type _; _} -> ()
     | {wrap_content = Declaration_constant {binder ; expr ; _ }; location = loc } ->
       check_reserved ~raise ~loc binder ;
