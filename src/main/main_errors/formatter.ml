@@ -86,17 +86,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_typecheck_contract_tracer (_c,err_l) ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_could_not_serialize errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"
@@ -121,35 +121,37 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>An error occurred while evaluating an expression: %s@]"
         value
     | `Main_entrypoint_not_a_function -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not a function.@]"
-    | `Main_view_not_a_function var -> Format.fprintf f "@[<hv>Invalid command line argument. @.View \"%a\" is not a function.@]" Ast_typed.PP.type_variable var
+    | `Main_view_not_a_function var -> Format.fprintf f "@[<hv>Invalid command line argument. @.View \"%a\" is not a function.@]" Ast_typed.PP.expression_variable var
     | `Main_entrypoint_not_found -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not found in the contract.@]"
     | `Main_invalid_balance a -> Format.fprintf f "@[<hv>Invalid command line option \"--balance\". @.The provided balance \"%s\" is invalid. Use an integer instead. @]" a
     | `Main_invalid_amount a -> Format.fprintf f "@[<hv>Invalid command line option \"--amount\". @.The provided amount \"%s\" is invalid. Use an integer instead. @]" a
     | `Main_invalid_source a -> Format.fprintf f "@[<hv>Invalid command line option \"--source\". @.The provided source address \"%s\" is invalid. A valid Tezos address is a string prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@]" a
     | `Main_invalid_sender a -> Format.fprintf f "@[<hv>Invalid command line option \"--sender\". @.The provided sender address \"%s\" is invalid. A valid Tezos address is a string prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.@]" a
     | `Main_invalid_timestamp t -> Format.fprintf f "@[<hv>Invalid command line option \"--now\". @.The provided now \"%s\" is invalid. It should use RFC3339 notation in a string, or the number of seconds since Epoch.@]" t
+    | `Main_cannot_open_global_constants s -> Format.fprintf f "@[<hv>Cannot open global constants file. @.Check that the provided file \"%s\" exists.@]" s
+    | `Main_cannot_parse_global_constants (fn, s) -> Format.fprintf f "@[<hv>Cannot parse global constants file: %s. @.Check that the provided file consists of JSON list of strings (one string per Michelson constant). @.JSON Error: %s@]" fn s
 
     | `Unparsing_michelson_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Parsing_payload_tracer _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
     | `Packing_payload_tracer _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
     | `Parsing_input_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Parsing_code_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
-        (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Error_of_execution_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
-      (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Preproc_tracer e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format f e
@@ -163,7 +165,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Depurification_tracer _e -> () (*no error in this pass*)
     | `Desugaring_tracer _e -> () (*no error in this pass*)
     | `Sugaring_tracer _e -> () (*no error in this pass*)
-    | `Inference_tracer e -> Inference.Errors.error_ppformat ~display_format f e
     | `Checking_tracer e -> Checking.Errors.error_ppformat ~display_format f e
     | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
     | `Aggregation_tracer e -> Aggregation.Errors.error_ppformat ~display_format f e
@@ -181,11 +182,11 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_target_lang_error (loc, [], errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
     | `Main_interpret_target_lang_error (loc, calltrace, errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_011_PtHangz2.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
         (PP_helpers.list_sep_d Location.pp) calltrace
     | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
@@ -236,7 +237,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
-    | `Main_decompile_inferred e -> Inference.Errors.error_ppformat ~display_format f  e
 
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
@@ -352,6 +352,11 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
     let value = `String t in
     let content = `Assoc [("message", message) ; ("value", value)] in
     json_error ~stage:"parsing command line parameters" ~content
+  | `Main_cannot_open_global_constants _ ->
+    json_error ~stage:"global constants parsing" ~content:(`String "cannot open global constants file")
+  | `Main_cannot_parse_global_constants _ ->
+    json_error ~stage:"global constants parsing" ~content:(`String "cannot parse global constants file")
+
 
   | `Unparsing_michelson_tracer _ ->
     json_error ~stage:"michelson execution" ~content:(`String "error unparsing michelson result")
@@ -387,7 +392,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Depurification_tracer _ -> `Null (*no error in this pass*)
   | `Desugaring_tracer _ -> `Null (*no error in this pass*)
   | `Sugaring_tracer _ -> `Null (*no error in this pass*)
-  | `Inference_tracer e -> Inference.Errors.error_jsonformat e
   | `Checking_tracer e -> Checking.Errors.error_jsonformat e
   | `Self_ast_typed_tracer e -> Self_ast_typed.Errors.error_jsonformat e
   | `Aggregation_tracer e -> Aggregation.Errors.error_jsonformat e
@@ -412,7 +416,6 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_aggregated e -> Aggregation.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-  | `Main_decompile_inferred e -> Inference.Errors.error_jsonformat e
 
   | `Repl_unexpected ->
      let message = `String "unexpected error" in

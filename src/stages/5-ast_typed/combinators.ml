@@ -42,7 +42,7 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
-[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+[@@map (_type_, ("option", "list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
 
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
@@ -50,12 +50,12 @@ let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t
 let t_mutez = t_tez
 
 let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Var.fresh ~name:"_a" () in
+  let ty_binder = TypeVar.fresh ~name:"_a" () in
   let type_ = t_constant name [t_variable ~type_meta:(Ast_core.t_variable ty_binder ()) ty_binder ()] in
   t_abstraction { ty_binder ; kind ; type_ } ?loc ()
 let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.fresh ~name:"_l" () in
-  let ty_binder_r = Var.fresh ~name:"_r" () in
+  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
+  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
   let type_ = t_constant name
     [ t_variable ty_binder_l () ;
       t_variable ty_binder_r () ]
@@ -164,12 +164,21 @@ let get_t_tuple (t:type_expression) : type_expression list option = match t.type
 let get_t_pair (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
   | T_record m ->
       let lst = tuple_of_record m.content in
-      ( match List.(length lst = 2) with
-        | true -> Some (List.(nth_exn lst 0 , nth_exn lst 1))
-        | false -> None
+      ( match lst with
+        | [fst;snd] -> Some (fst,snd)
+        | _ -> None
       )
   | _ -> None
 
+let get_t_or (t:type_expression) : (type_expression * type_expression) option = match t.type_content with
+  | T_sum m ->
+      let lst = List.map ~f:(fun (a,{associated_type;_}) -> a,associated_type) @@ LMap.to_kv_list m.content in
+      ( match lst with
+        | [(Label "left",l);(Label "right",r)]
+        | [(Label "right",r);(Label "left",l)] -> Some (l,r)
+        | _ -> None
+      )
+  | _ -> None
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
@@ -321,7 +330,7 @@ let get_declaration_by_name : program -> expression_variable -> declaration opti
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant { binder; expr = _ ; attr = _ } ->
-        Var.equal binder name
+        ValueVar.equal binder name
     | Declaration_type   _
     | Declaration_module _
     | Module_alias       _ -> false

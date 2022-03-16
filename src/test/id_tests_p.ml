@@ -1,7 +1,7 @@
 open Test_helpers
 open Ast_imperative
 
-let get_program = get_program "./contracts/id.ligo" (Contract (Var.of_input_var "main"))
+let get_program = get_program "./contracts/id.ligo"
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/id.ligo" ()
 

@@ -8,7 +8,7 @@ let test =
   let c = Tezos.implicit_account pkh in
   let a = Tezos.address c in
 
-  let _ = Test.transfer_to_contract_exn c () 100000tez in
+  let _ = Test.transfer_to_contract_exn c () 1000000tez in
   let () = Test.register_delegate pkh in
   let () = Test.bake_until_n_cycle_end 8n in
 

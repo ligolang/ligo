@@ -1,0 +1,6 @@
+---
+  title: "Fix: Raise error if typed_address is passes to Bytes.pack"
+  merge_request: "1612"
+  author: "melwyn95"
+  type: "fixed"
+

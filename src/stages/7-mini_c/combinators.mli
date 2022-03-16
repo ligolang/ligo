@@ -9,7 +9,10 @@ module Expression : sig
   (*
   val is_toplevel : t -> bool 
 *)
-  val make_t   : ?loc:Location.t -> type_content -> type_expression
+  val make_t :
+    ?loc:Location.t ->
+    ?source_type : Ast_typed.type_expression ->
+    type_content -> type_expression
   val make     : ?loc:Location.t -> t' -> type_expression -> t
   val make_tpl : ?loc:Location.t -> t' * type_expression -> t
 

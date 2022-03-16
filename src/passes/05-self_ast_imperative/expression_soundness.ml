@@ -28,7 +28,7 @@ let check_linearity_patterns ~raise : expression -> unit = fun exp ->
     List.iter _patterns
       ~f:(fun p ->
         let lst = aux [] p in
-        if List.contains_dup ~compare:Var.compare lst then raise.raise (non_linear_pattern p)
+        if List.contains_dup ~compare:ValueVar.compare lst then raise.raise (non_linear_pattern p)
       )
   | _ -> ()
 
@@ -37,6 +37,6 @@ let checks_linearity : raise:[<Errors.self_ast_imperative_error] Trace.raise -> 
     check_linearity_record_fields ~raise x;
     check_linearity_patterns ~raise x;
     ()
-  
+
 
 let linearity ~(raise:[<Errors.self_ast_imperative_error] Trace.raise) m = (fun x -> checks_linearity ~raise x ; x) m

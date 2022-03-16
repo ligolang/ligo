@@ -4,19 +4,19 @@ module AST = Ast_aggregated
 let fold_map_expression = Helpers.fold_map_expression
 
 let to_name_safe v =
-  fst (AST.Var.internal_get_name_and_counter v)
+  fst (AST.ValueVar.internal_get_name_and_counter v)
 let poly_counter = ref 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
-                  AST.Var.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
+                  AST.ValueVar.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
 
 module Longident = struct
   type t = { variable : AST.expression_variable }
 
   let equal ({ variable } : t) ({ variable = variable' } : t) =
-    AST.equal_expression_variable variable variable'
+    AST.ValueVar.equal variable variable'
 
   let compare ({ variable } : t) ({ variable = variable' } : t) =
-    AST.compare_expression_variable variable variable'
+    AST.ValueVar.compare variable variable'
 
   let pp ppf ({ variable } : t) =
     Format.fprintf ppf "%a" AST.PP.expression_variable variable
@@ -78,7 +78,7 @@ end
 (* This is not a proper substitution, it might capture variables: it should be used only with v' a fresh variable *)
 let rec subst_var_expr v v' (e : AST.expression) =
   let (), e = fold_map_expression (fun () e ->
-                  let (=) = AST.equal_expression_variable in
+                  let (=) = AST.ValueVar.equal in
                   let return expression_content = (true, (), { e with expression_content }) in
                   let return_f expression_content = (false, (), { e with expression_content }) in
                   match e.expression_content with
@@ -161,8 +161,8 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
          let table = List.zip_exn type_vars type_instances in
          let rhs = { rhs with type_expression = type_ } in
          let rhs, data = match rhs.expression_content with
-           | E_recursive { fun_name = _ ; fun_type = _ ; lambda = { binder ; result } } ->
-              let lambda = { AST.binder ; result = subst_var_expr lid.variable vid.variable result } in
+           | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
+              let lambda = { AST.binder ; result = subst_var_expr lid.variable vid.variable (subst_var_expr fun_name vid.variable result) } in
               let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
               { rhs with expression_content = E_recursive { fun_name = vid.variable ; fun_type = type_ ; lambda } }, data
            | _ -> rhs, data in

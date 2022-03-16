@@ -103,33 +103,6 @@ let get_entrypoint (entrypoint : string) (t : type_expression) : type_expression
      List.Assoc.find annots ~equal:String.equal entrypoint
   | _ -> None
 
-let rec subst_type v t (u : type_expression) =
-  let self = subst_type in
-  match u.type_content with
-  | T_variable v' when Var.equal v v' -> t
-  | T_arrow {type1;type2} ->
-     let type1 = self v t type1 in
-     let type2 = self v t type2 in
-     { u with type_content = T_arrow {type1;type2} }
-  | T_abstraction {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
-     let type_ = self v t type_ in
-     { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
-     let type_ = self v t type_ in
-     { u with type_content = T_for_all {ty_binder;kind;type_} }
-  | T_constant {language;injection;parameters} ->
-     let parameters = List.map ~f:(self v t) parameters in
-     { u with type_content = T_constant {language;injection;parameters} }
-  | T_sum {content; layout} ->
-     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
-                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
-     { u with type_content = T_sum {content; layout} }
-  | T_record {content; layout} ->
-     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
-                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
-     { u with type_content = T_record {content; layout} }
-  | _ -> u
-
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
 let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
@@ -139,9 +112,9 @@ let destruct_for_alls (t : type_expression) =
   in destruct_for_alls [] t
 
 (* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
-let destruct_arrows (t : type_expression) =
+let destruct_arrows_n (t : type_expression) (n : int) =
   let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
-    | T_arrow { type1 ; type2 } ->
+    | T_arrow { type1 ; type2 } when List.length type_vars < n ->
        destruct_arrows (type1 :: type_vars) type2
     | _ -> (type_vars, t)
   in destruct_arrows [] t
@@ -157,3 +130,113 @@ let build_applications_opt (lamb : expression) (args : expression list) =
     | _, _ ->
        None in
   aux lamb args lamb.type_expression
+
+(* These tables are used during inference / for substitution *)
+module TMap = Simple_utils.Map.Make(TypeVar)
+
+(* Free type variables in a type *)
+module VarSet = Caml.Set.Make(TypeVar)
+let rec get_fv_type_expression : type_expression -> VarSet.t = fun u ->
+  let self = get_fv_type_expression in
+  match u.type_content with
+  | T_variable v -> VarSet.singleton v
+  | T_arrow { type1 ; type2 } ->
+     let type1 = self type1 in
+     let type2 = self type2 in
+     VarSet.union type1 type2
+  | T_abstraction { ty_binder ; kind = _ ; type_ } ->
+     let type_ = self type_ in
+     VarSet.remove ty_binder type_
+  | T_for_all { ty_binder ; kind = _ ; type_ } ->
+     let type_ = self type_ in
+     VarSet.remove ty_binder type_
+  | T_constant {language = _ ; injection = _ ; parameters} ->
+     let parameters = List.map ~f:self parameters in
+     List.fold_right ~f:VarSet.union ~init:VarSet.empty parameters
+  | T_sum { content ; layout = _ } ->
+     let content = List.map ~f:(fun { associated_type ; _ } -> self associated_type) @@ LMap.values content in
+     List.fold_right ~f:VarSet.union ~init:VarSet.empty content
+  | T_record { content ; layout = _ } ->
+     let content = List.map ~f:(fun { associated_type ; _ } -> self associated_type) @@ LMap.values content in
+     List.fold_right ~f:VarSet.union ~init:VarSet.empty content
+  | _ -> VarSet.empty
+
+(* Substitutes a type variable `v` for a type `t` in the type `u`. In
+   principle, variables could be captured. But in case a binder
+   (forall, abstraction) is found in `fv`, a new (fresh) binder is
+   generated and subtituted to prevent capture. *)
+let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
+  let self = subst_type ~fv in
+  match u.type_content with
+  | T_variable v' when TypeVar.equal v v' -> t
+  | T_arrow {type1;type2} ->
+     let type1 = self v t type1 in
+     let type2 = self v t type2 in
+     { u with type_content = T_arrow {type1;type2} }
+  | T_abstraction {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
+     let ty_binder' = TypeVar.fresh () in
+     let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
+     let ty_binder = ty_binder' in
+     self v t { u with type_content = T_abstraction {ty_binder;kind;type_} }
+  | T_abstraction {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
+     let type_ = self v t type_ in
+     { u with type_content = T_abstraction {ty_binder;kind;type_} }
+  | T_for_all {ty_binder;kind;type_} when (VarSet.mem ty_binder fv) ->
+     let ty_binder' = TypeVar.fresh () in
+     let type_ = self ty_binder (Combinators.t_variable ty_binder' ()) type_ in
+     let ty_binder = ty_binder' in
+     self v t { u with type_content = T_for_all {ty_binder;kind;type_} }
+  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
+     let type_ = self v t type_ in
+     { u with type_content = T_for_all {ty_binder;kind;type_} }
+  | T_constant {language;injection;parameters} ->
+     let parameters = List.map ~f:(self v t) parameters in
+     { u with type_content = T_constant {language;injection;parameters} }
+  | T_sum {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_sum {content; layout} }
+  | T_record {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_record {content; layout} }
+  | _ -> u
+
+(* Substitution as `subst_type`, but does not capture variables in
+   `t`, by using `fv` = free variables of `t`. *)
+let subst_no_capture_type v t (u : type_expression) =
+  let fv = get_fv_type_expression t in
+  subst_type ~fv v t u
+
+(* Parallel substitution, it takes a map of variables pointing to
+   expressions. Variables can be captured. *)
+let rec psubst_type t (u : type_expression) =
+  let self = psubst_type t in
+  match u.type_content with
+  | T_variable v' -> (
+     match TMap.find_opt v' t with
+     | Some t -> t
+     | None -> u
+  )
+  | T_arrow {type1;type2} ->
+     let type1 = self type1 in
+     let type2 = self type2 in
+     { u with type_content = T_arrow {type1;type2} }
+  | T_abstraction {ty_binder;kind;type_} when not (TMap.mem ty_binder t) ->
+     let type_ = self type_ in
+     { u with type_content = T_abstraction {ty_binder;kind;type_} }
+  | T_for_all {ty_binder;kind;type_} when not (TMap.mem ty_binder t) ->
+     let type_ = self type_ in
+     { u with type_content = T_for_all {ty_binder;kind;type_} }
+  | T_constant {language;injection;parameters} ->
+     let parameters = List.map ~f:self parameters in
+     { u with type_content = T_constant {language;injection;parameters} }
+  | T_sum {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_sum {content; layout} }
+  | T_record {content; layout} ->
+     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self associated_type; michelson_annotation;decl_pos}) content in
+     { u with type_content = T_record {content; layout} }
+  | _ -> u

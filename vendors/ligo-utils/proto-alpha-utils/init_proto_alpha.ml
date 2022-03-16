@@ -47,11 +47,11 @@ module Context_init = struct
     let open Alpha_context.Constants in
     let open Error_monad in
     let { blocks_per_cycle ; blocks_per_commitment ;
-          blocks_per_roll_snapshot ; _ } = constants in
+      blocks_per_stake_snapshot ; _ } = constants in
     Error_monad.unless (blocks_per_commitment <= blocks_per_cycle)
       (fun () -> failwith "Inconsistent constants : blocks per commitment must be \
                            less than blocks per cycle") >>=? fun () ->
-    Error_monad.unless (blocks_per_cycle >= blocks_per_roll_snapshot)
+    Error_monad.unless (blocks_per_cycle >= blocks_per_stake_snapshot)
       (fun () -> failwith "Inconsistent constants : blocks per cycle \
                            must be superior than blocks per roll snapshot") >>=?
       return
@@ -106,7 +106,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.parametric = Tezos_protocol_011_PtHangz2_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.parametric = Tezos_protocol_012_Psithaca_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
 
     let hash =
@@ -116,7 +116,7 @@ module Context_init = struct
                   ~level:0l
                   ~predecessor:hash
                   ~timestamp:Tezos_base.TzPervasives.Time.Protocol.epoch
-                  ~fitness: (Fitness_repr.from_int64 0L)
+                  ~fitness:[]
                   ~operations_hash: Alpha_environment.Operation_list_list_hash.zero in
     initial_context
       constants
@@ -142,24 +142,26 @@ module Context_init = struct
     return (ctxt, accounts, contracts)
 
   let contents
+        ~predecessor
         ?(proof_of_work_nonce = default_proof_of_work_nonce)
-        ?(priority = 0) ?seed_nonce_hash ?(liquidity_baking_escape_vote = false) () =
+        ?(round = Alpha_context.Round.zero) ?seed_nonce_hash ?(liquidity_baking_escape_vote = false) () =
+    let payload_hash = Alpha_context.Block_payload.hash ~predecessor round Alpha_environment.Operation_list_hash.zero in
     Alpha_context.Block_header.({
-        priority ;
+        payload_hash ;
+        payload_round = round ;
         proof_of_work_nonce ;
         seed_nonce_hash ;
         liquidity_baking_escape_vote ;
       })
 
 
-  let begin_construction ?(priority=0) ~timestamp ~(header:Alpha_context.Block_header.shell_header) ~hash ctxt =
-    let contents = contents ~priority () in
+  let begin_construction ?(round=Alpha_context.Round.zero) ~timestamp ~(header:Alpha_context.Block_header.shell_header) ~hash ctxt =
+    let contents = contents ~round ~predecessor:hash () in
     let protocol_data =
       let open! Alpha_context.Block_header in {
         contents ;
         signature = Signature.zero ;
       } in
-    let timestamp = Alpha_environment.Time.add timestamp @@ Int64.of_int 180 in
     Main.begin_construction
       ~chain_id: Alpha_environment.Chain_id.zero
       ~predecessor_context: ctxt
@@ -174,7 +176,7 @@ module Context_init = struct
 
   let main n =
     init n >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_seconds @@ Int64.of_float @@ Unix.time () in
+    let timestamp = Environment.Time.of_seconds @@ 1645576185L in
     begin_construction ~timestamp ~header ~hash ctxt >>=? fun ctxt ->
     return (ctxt, accounts, contracts)
 

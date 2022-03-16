@@ -3,6 +3,6 @@
  (public_name ligo.ast_aggregated)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_core stage_common UnionFind)
+ (libraries simple-utils ast_core ast_typed stage_common UnionFind)
  (preprocess
   (staged_pps ppx_import ppx_map ppx_woo)))

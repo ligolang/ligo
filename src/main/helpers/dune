@@ -4,7 +4,9 @@
  (modules syntax_types)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils))
+ (libraries simple-utils)
+ (preprocess
+  (pps ppx_deriving.eq)))
 
 (library
  (name syntax)

@@ -3,8 +3,7 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Var.equal
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
+  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
@@ -80,11 +79,6 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
     assert_list_eq f tla tlb
   )
 
-let layout_eq a b = match (a,b) with
-  | L_comb, L_comb
-  | L_tree, L_tree -> true
-  | _ -> false
-
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
@@ -119,12 +113,12 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
-  | T_app {type_operator=ta;arguments=aa}, T_app {type_operator=tb;arguments=ab} when Var.equal ta tb ->
+  | T_app {type_operator=ta;arguments=aa}, T_app {type_operator=tb;arguments=ab} when TypeVar.equal ta tb ->
     assert_list_eq (fun a b -> assert_type_expression_eq (a,b)) aa ab
   | T_app _, _ -> None
   | T_variable _x, T_variable _y -> failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
   | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when Var.equal mna mnb ->
+  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when ModuleVar.equal mna mnb ->
     assert_type_expression_eq (ea, eb)
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
@@ -209,7 +203,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_constructor (ca), E_constructor (cb) when Caml.(=) ca.constructor cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
-  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when Var.equal maa mab -> (
+  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when ModuleVar.equal maa mab -> (
       assert_value_eq (a,b)
   )
   | E_record sma, E_record smb -> (
@@ -259,7 +253,14 @@ let is_value_eq (a , b) =
   match assert_value_eq (a , b) with
   | Some () -> true
   | None -> false
-
+let rec assert_list_eq f = fun a b -> match (a,b) with
+  | [], [] -> Some ()
+  | [], _  -> None
+  | _ , [] -> None
+  | hda::tla, hdb::tlb -> Simple_utils.Option.(
+    let* () = f hda hdb in
+    assert_list_eq f tla tlb
+  )
 let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
   let open Simple_utils.Option in
   match a, b with
@@ -272,72 +273,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) asser
       | _, None -> Some a
       | _, Some _ -> Some b
 
-let get_entry (lst : module_) (name : expression_variable) : expression option =
-  let aux x =
-    match Location.unwrap x with
-    | Declaration_constant {binder; expr ; attr=_ } -> (
-      if Var.equal name binder.var
-      then Some expr
-      else None
-    )
-    | Declaration_type   _
-    | Declaration_module _
-    | Module_alias       _ -> None
-  in
-  List.find_map ~f:aux lst
-
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> Var.equal a b
+  | E_variable a, E_variable b -> ValueVar.equal a b
   |  _, _ -> false
-
-let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
-  Reasons.wrap Builtin_type @@
-    P_constant {
-      p_ctor_tag : constant_tag ;
-      p_ctor_args : p_ctor_args ;
-    }
-
-let p_row (p_row_tag : row_tag) (p_row_args : row_lmap ) =
-  Reasons.wrap Builtin_type @@
-    P_row {
-      p_row_tag ;
-      p_row_args ;
-    }
-
-let p_for_all (binder : type_variable) (constraints: p_constraints) (body: type_value) =
-  Reasons.wrap Forall @@
-    P_forall { binder ; constraints ; body }
-
-let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
-  let p_row_args = LMap.of_list @@ List.mapi ~f:(fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in
-  p_row p_row_tag p_row_args
-
-let p_apply tf targ =
-  Reasons.wrap Builtin_type @@
-    P_apply { tf ; targ }
-
-let p_var var =
-  Reasons.wrap Builtin_type @@
-    P_variable var
-
-let p_var_ez var =
-  Reasons.wrap Builtin_type @@
-    P_variable (Var.of_input_var var)
-
-let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
-let c_apply f arg reason = {c = C_apply {f; arg}; reason}
-
-let reason_simpl_ : type_constraint_simpl -> string = function
-  | SC_Apply { reason_apply_simpl=reason; _ }
-  | SC_Abs { reason_abs_simpl=reason; _ }
-  | SC_Constructor { reason_constr_simpl=reason; _ }
-  | SC_Row { reason_row_simpl=reason; _ }
-  | SC_Alias { reason_alias_simpl=reason; _ }
-  | SC_Poly { reason_poly_simpl=reason; _ }
-  | SC_Access_label { reason_access_label_simpl=reason; _ }
-  | SC_Typeclass { reason_typeclass_simpl=reason; _ }
-  -> reason
-
-let reason_simpl : type_constraint_simpl -> string = fun c -> reason_simpl_ c
-

@@ -3,4 +3,4 @@
  (public_name ligo.scoping)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils mini_c predefined ligo_coq_ocaml))
+ (libraries simple-utils stage_common mini_c predefined ligo_coq_ocaml))

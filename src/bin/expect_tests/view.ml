@@ -3,7 +3,7 @@ open Cli_expect
 let contract = test
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;
@@ -12,7 +12,7 @@ let%expect_test _ =
 
 (* not warning is expected because the annotated view is still being included in the contract *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ; "--protocol" ; "hangzhou" ; "--views" ; "v1,v2" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ; "--views" ; "v1,v2" ] ;
   [%expect {|
     { parameter unit ;
       storage int ;
@@ -22,7 +22,7 @@ let%expect_test _ =
 
 (* the following should trigger a warning because an annotated view is being ignored *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ; "--protocol" ; "hangzhou" ; "--views" ; "v2" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "view.mligo" ; "--views" ; "v2" ] ;
   [%expect {|
     File "../../test/contracts/view.mligo", line 3, characters 12-14:
       2 |
@@ -39,7 +39,7 @@ let%expect_test _ =
 
 (* bad view type *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "view.mligo" ; "--protocol" ; "hangzhou" ; "--views" ; "v1,bad_view" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; contract "view.mligo" ; "--views" ; "v1,bad_view" ] ;
   [%expect {|
     File "../../test/contracts/view.mligo", line 5, characters 14-17:
       4 | let v2 (_,s: int * int) : int = s + 2
@@ -48,3 +48,17 @@ let%expect_test _ =
 
     Invalid view argument.
     View 'bad_view' has storage type 'nat' and contract 'main' has storage type 'int'. |}]
+
+(* view + #import *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "view_import.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {| 
+    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+
+(* view inside module *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "view_inside_module.mligo" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]

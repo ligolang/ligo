@@ -57,7 +57,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_011_PtHangz2.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_012_Psithaca.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -114,6 +114,12 @@ let strings_of_prims michelson =
   let michelson = Michelson_v1_primitives.strings_of_prims michelson in
   Tezos_micheline.Micheline.root michelson
 
+let node_to_canonical m =
+    let open Tezos_micheline.Micheline in
+    let x = inject_locations (fun _ -> 0) (strip_locations m) in
+    let x = strip_locations x in
+    Michelson_v1_primitives.prims_of_strings x
+
 let unparse_michelson_data
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ty value =
@@ -124,7 +130,7 @@ let unparse_michelson_data
 let unparse_michelson_ty
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ty =
-  Lwt.return @@ Script_ir_translator.unparse_ty tezos_context ty >>=?? fun (michelson, _) ->
+  Lwt.return @@ Script_ir_translator.unparse_ty ~loc:() tezos_context ty >>=?? fun (michelson, _) ->
   return (strings_of_prims michelson)
 
 type options = {
@@ -136,6 +142,7 @@ type options = {
   chain_id: Environment.Chain_id.t ;
   balance : Alpha_context.Tez.t;
   now : Alpha_context.Script_timestamp.t;
+  level : Alpha_context.Script_int.n Alpha_context.Script_int.num ;
 }
 
 let t_unit = Tezos_micheline.Micheline.(strip_locations (Prim (0, Michelson_v1_primitives.T_unit, [], [])))
@@ -145,11 +152,11 @@ let default_self =
 
 (* fake bake a block in order to set the predecessor timestamp *)
 let fake_bake tezos_context chain_id now =
-  let tezos_context = (Alpha_context.finalize tezos_context).context in
   let ((_, header, hash), _, _) =
     force_lwt ~msg:("bad init"^__LOC__)
       (Init_proto_alpha.Context_init.init 1) in
-  let contents = Init_proto_alpha.Context_init.contents ~priority:0 () in
+  let tezos_context = (Alpha_context.finalize tezos_context header.fitness).context in
+  let contents = Init_proto_alpha.Context_init.contents ~predecessor:hash () in
   let protocol_data =
     let open! Alpha_context.Block_header in {
       contents ;
@@ -166,7 +173,7 @@ let fake_bake tezos_context chain_id now =
         ~predecessor_fitness:header.fitness
         ~predecessor_level:header.level
         ~predecessor:hash
-        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add Z.one (Alpha_context.Script_timestamp.to_zint now))) with
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Alpha_context.Script_timestamp.to_zint now))) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp")
         ~protocol_data
@@ -217,14 +224,17 @@ let make_options
   let script = Script.{code = dummy_script; storage = lazy_dummy_storage} in
   let tezos_context =
     force_lwt_alpha ~msg:("bad options "^__LOC__)
-      (Alpha_context.Contract.originate
+      (Alpha_context.Contract.raw_originate
         tezos_context
+        ~prepaid_bootstrap_storage:false
         self
-        ~balance
-        ~delegate:None
         ~script:(script, None)) in
   (* fake bake to set the predecessor timestamp *)
   let time_between_blocks = 1 in
+  let level =
+    (Level.current tezos_context).level |> Raw_level.to_int32
+    |> Script_int.of_int32 |> Script_int.abs
+  in
   let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
   {
     tezos_context ;
@@ -235,6 +245,7 @@ let make_options
     chain_id ;
     balance ;
     now = Script_timestamp.now tezos_context ;
+    level ;
   }
 
 let no_trace_logger = None
@@ -248,15 +259,16 @@ let interpret ?(options = make_options ()) (instr:('a, 'b, 'c, 'd) kdescr) bef :
     amount ;
     chain_id ;
     balance = _ ;
-    now = _ ;
+    now ;
+    level ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; now ; level } in
   (* (EmptyCell, EmptyCell) feels wrong here ..*)
   Script_interpreter.step no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
   fun (stack, _, _) -> return stack
 
 let unparse_ty_michelson ty =
-  Lwt.return @@ Script_ir_translator.unparse_ty (dummy_environment ()).tezos_context ty >>=??
+  Lwt.return @@ Script_ir_translator.unparse_ty ~loc:() (dummy_environment ()).tezos_context ty >>=??
   fun (n,_) -> return n
 
 type typecheck_res =
@@ -265,13 +277,16 @@ type typecheck_res =
   | Err_gas
   | Err_unknown
 
-let typecheck_contract contract =
+let typecheck_contract ?(environment = dummy_environment ()) contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
   let legacy = false in
-  Script_ir_translator.typecheck_code ~legacy (dummy_environment ()).tezos_context contract' >>= fun x ->
+  Script_ir_translator.typecheck_code ~show_types:true ~legacy environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
+
+let register_constant tezos_context constant =
+  Alpha_context.Global_constants_storage.register tezos_context constant
 
 type 'a interpret_res =
   | Succeed of 'a
@@ -290,7 +305,8 @@ let failure_interpret
     amount ;
     chain_id ;
     balance = _ ;
-    now = _ ;
+    now ;
+    level ;
   } = options in
 
   let descr = instr in
@@ -305,7 +321,7 @@ let failure_interpret
   } in
   let instr = kdescr in
 
-  let step_constants = { source ; self ; payer ; amount ; chain_id } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; now  ; level } in
   Script_interpreter.step no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
   match x with
   | Ok (s, _, _ctxt) -> return @@ Succeed s

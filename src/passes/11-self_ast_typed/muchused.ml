@@ -2,11 +2,7 @@ open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-module V = struct
-  type t = expression_variable
-  let compare x y = Var.compare x y
-end
-
+module V = ValueVar
 module M = Simple_utils.Map.Make(V)
 
 type muchuse = int M.t * V.t list
@@ -161,8 +157,8 @@ let rec muchuse_of_expr expr : muchuse =
   | E_module_accessor {element;module_name} ->
      match element.expression_content with
      | E_variable v ->
-        let name = Var.of_input_var ~loc:expr.location @@
-          (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn v) in
+        let name = V.of_input_var ~loc:expr.location @@
+          (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn v) in
         (M.add name 1 M.empty,[])
      | _ -> muchuse_neutral
 
@@ -219,12 +215,12 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
     let aux = fun ({wrap_content=x;location} : declaration Location.wrap) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
-          let name = Var.of_input_var ~loc:location @@ (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn binder) in
+          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn binder) in
           [(name, expr.type_expression)]
       | Declaration_module {module_binder;module_;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
-          let name = Var.of_input_var ~loc:location @@ (Var.to_name_exn module_name) ^ "." ^ (Var.to_name_exn v) in
+          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn v) in
           (name, t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in
@@ -251,6 +247,6 @@ let muchused_map_module ~add_warning : module_ -> module_ = function module_ ->
   let _,muchused = muchused_helper muchuse_neutral module_ in
   let warn_var v =
     `Self_ast_typed_warning_muchused
-      (Var.get_location v, Format.asprintf "%a" Var.pp v) in
+      (V.get_location v, Format.asprintf "%a" V.pp v) in
   let () = update_annotations @@ List.map ~f:warn_var muchused in
   module_
