@@ -43,24 +43,18 @@ let linearity ~(raise:[<Errors.self_ast_imperative_error] Trace.raise) m = (fun 
 
 let reserved_names = (* Part of names in that list would be caught by some syntaxes *)
   List.map ~f:ValueVar.of_input_var
-  [ "get_force" ; "get_chain_id" ; "transaction"; "get_contract"; "get_entrypoint"; "size"; "int"; "abs"; "is_nat"; "amount"; "balance"; "now";
+  [ "get_force" ; "transaction"; "get_entrypoint"; "size"; "int"; "is_nat"; "amount"; "balance"; "now";
     "unit"; "source"; "sender"; "failwith"; "bitwise_or"; "bitwise_and"; "bitwise_xor"; "string_concat"; "string_slice"; "crypto_check"; "crypto_hash_key";
     "bytes_concat"; "bytes_slice"; "bytes_pack"; "bytes_unpack"; "set_empty"; "set_mem"; "set_add"; "set_remove"; "set_iter"; "set_fold"; "list_iter";
     "list_fold"; "list_fold_left"; "list_fold_right"; "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem";
-    "sha_256"; "sha_512"; "blake2b"; "cons"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false"; "abs"; "address";
-    "amount"; "assert"; "balance"; "black2b"; "check"; "continue"; "failwith"; "gas"; "hash"; "hash_key"; "implicit_account"; "int";
-    "pack"; "self_address"; "sender"; "sha256"; "sha512"; "source"; "stop"; "time"; "unit"; "unpack"; "true"; "false";
+    "sha_256"; "sha_512"; "blake2b"; "cons"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false"; "address";
+    "assert"; "black2b"; "check"; "continue";  "gas"; "hash"; "hash_key"; "implicit_account";
+    "pack"; "self_address"; "sha256"; "sha512"; "stop"; "time"; "unpack";
     "await"; "break"; "case"; "catch"; "class"; "const"; "continue"; "debugger"; "delete"; "do";
-    "else"; "enum"; "export"; "extends"; "false"; "finally"; "for"; "function"; "if"; "import"; "in"; "instanceOf";
+    "else"; "enum"; "export"; "extends"; "finally"; "for"; "function"; "if"; "import"; "in"; "instanceOf";
     "new"; "null"; "return"; "super"; "switch"; "this"; "throw"; "true"; "try"; "typeof"; "var"; "void";
-    "while"; "with"; "yield"; "implements"; "interface"; "package"; "private"; "protected"; "public"; "arguments"; "eval"; "get_force";
-    "get_chain_id"; "transaction"; "get_contract"; "get_entrypoint"; "size"; "int"; "abs"; "is_nat"; "amount"; "balance"; "now"; "unit";
-    "source"; "sender"; "failwith"; "bitwise_or"; "bitwise_and"; "bitwise_xor"; "string_concat"; "string_slice"; "crypto_check"; "crypto_hash_key"; "bytes_concat"; "bytes_slice";
-    "bytes_pack"; "bytes_unpack"; "set_empty"; "set_mem"; "set_add"; "set_remove"; "set_iter"; "set_fold"; "list_iter"; "list_fold"; "list_fold_left"; "list_fold_right";
-    "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem"; "sha_256"; "sha_512"; "blake2b"; "cons";
-    "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false"; "abs"; "address"; "amount"; "assert"; "balance";
-    "black2b"; "check"; "continue"; "failwith"; "gas"; "hash"; "hash_key"; "implicit_account"; "int"; "pack"; "self_address"; "sender";
-    "sha256"; "sha512"; "source"; "stop"; "time"; "unit"; "unpack"; "true"; "false"
+    "while"; "with"; "yield"; "implements"; "interface"; "package"; "private"; "protected"; "public"; "arguments"; "eval";
+    "get_chain_id"; "abs";
   ]
 let check_reserved ~raise ~loc binder =
   match List.find ~f:(fun reserved -> ValueVar.equal binder.var reserved) reserved_names with
