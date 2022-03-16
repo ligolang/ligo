@@ -6,7 +6,7 @@ let v_pair : value * value -> value =
 let v_record : (string * value) list -> value =
   fun lst ->
     if List.contains_dup ~compare:(fun (l1,_) (l2,_) -> String.compare l1 l2) lst then
-      failwith "trying to create a record with duplicated field" ;
+      failwith "trying to create a record value with duplicate field" ;
     V_Record (LMap.of_list (List.map ~f:(fun (l,v) -> (Label l , v)) lst))
 
 let v_bool : bool -> value =
