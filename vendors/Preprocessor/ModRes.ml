@@ -113,29 +113,18 @@ module Path = struct
       | false, false -> a ^ Fpath.dir_sep ^ b
       | false, true  
       | true , false -> a ^ b
-      | true , true  -> a ^ "." ^ b (* TODO: fix this case ... *)
+      | true , true  -> a ^ "." ^ b
 
-  (* [to_abs_path ~abs_path_to_project_root path_str] returns the absolute path w.r.t.
-      project-root *)
-  let to_abs_path ~abs_path_to_project_root path = 
-    let path' = v path in
-    if is_abs path' 
-    then path' 
-    else v (join abs_path_to_project_root path)
-
-  (* [get_absolute_path path] returns the absolute path w.r.t. CWD *)
-  let get_absolute_path path =
+  (* [get_absolute_path path] returns the absolute path w.r.t. root *)
+  let get_absolute_path ?(root=Sys.getcwd ()) path =
     let path' = v path in
     if is_abs path' then path'
-    else
-      let cwd = Sys.getcwd () in
-      v (join cwd path) 
+    else v (join root path) 
 
   (* [to_string path] wrapper over Fpath.to_string *)
   let to_string path =
     let* path = path in
     Some (Fpath.to_string path)
-
 end
 
 (* Module with constants related esy *)
@@ -202,7 +191,7 @@ let clean_installation_json abs_path_to_project_root installation_json =
       let* m     = m in
       let  key   = `Package key in
       let* value = JsonHelpers.string value in
-      let  abs_p = Path.to_abs_path ~abs_path_to_project_root value in
+      let  abs_p = Path.get_absolute_path ~root:abs_path_to_project_root value in
       let* abs_s = Path.to_string abs_p in
       let  incl  = `Path abs_s in
       Some (PackageMap.add key incl m)
@@ -242,7 +231,7 @@ let clean_lock_file_json lock_json =
     let* root = Util.member "root" lock_json |> JsonHelpers.string in
     let  root = `Package root in
     let  node = Util.member "node" lock_json in
-    let  kvs  = Util.to_assoc   node in
+    let  kvs  = Util.to_assoc node in
     let* node = List.fold_left
       kvs
       ~f:(fun m (key, value) ->
@@ -250,7 +239,7 @@ let clean_lock_file_json lock_json =
         let key = `Package key in
         let  dependencies = Util.member "dependencies" value in  
         let* dependencies = JsonHelpers.string_list dependencies in
-        let dependencies = List.map dependencies ~f:(fun d -> `Package d) in
+        let  dependencies = List.map dependencies ~f:(fun d -> `Package d) in
         Some (PackageMap.add key dependencies m)
       )
       ~init:(Some PackageMap.empty) in
@@ -260,7 +249,7 @@ let clean_lock_file_json lock_json =
    path w.r.t. root of the project *)
 let resolve_path abs_path_to_project_root installation pkg_name = 
   let* (`Path path) = PackageMap.find_opt pkg_name installation in
-  let  path = Path.to_abs_path ~abs_path_to_project_root path in
+  let  path = Path.get_absolute_path ~root:abs_path_to_project_root path in
   let* path = Path.to_string path in
   Some path 
 
@@ -349,7 +338,6 @@ let get_paths_of_dependencies ~file =
       let path = Path.get_absolute_path file in
       let resolution = List.find resolutions ~f:(fun (`Path mod_path, _) ->
         let mod_path = Path.v mod_path in
-        (* TODO: explain, we need is_prefix because path is of the form abs_path/lib/path/to/file and mod_path is of the form abs_path*)
         Path.is_prefix mod_path path) 
       in 
       (match resolution with
@@ -404,8 +392,6 @@ let pp ppf mr =
   List.iter resolutions 
     ~f:(fun ((`Path k), v) -> 
           Format.fprintf ppf "%s = [\n%a\n]\n" k pp_inclusion_list v)
-
-(* TODO: Give descriptive name to variables *)
 
 module Helpers = struct
   (* [resolve_file_name file_name module_resolutions] is a helper used by REPL 
