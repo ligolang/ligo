@@ -1,0 +1,6 @@
+---
+  title: "[Ithaca] Command line option `--protocol ithaca` now allow users to use Ithaca specifics"
+  merge_request: "1582"
+  author: "er433 & melwyn95"
+  type: "added"
+

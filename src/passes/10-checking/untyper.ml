@@ -31,7 +31,7 @@ let rec untype_type_expression_nofail (t:O.type_expression) : I.type_expression 
   | O.T_constant {language;injection;parameters} ->
     ignore language ;
     let arguments = List.map ~f:untype_type_expression_nofail parameters in
-    let type_operator = I.Var.fresh ~name:(Ligo_string.extract injection) () in
+    let type_operator = I.TypeVar.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
   | O.T_variable name -> return @@ I.T_variable name
   | O.T_module_accessor {module_name;element} ->

@@ -2,6 +2,6 @@
  (name checking)
  (public_name ligo.checking)
  (libraries simple-utils tezos-utils ast_core ast_typed predefined
-   environment self_ast_core)
+   environment self_ast_core compiler_options)
  (preprocess
   (pps ppx_poly_constructor)))

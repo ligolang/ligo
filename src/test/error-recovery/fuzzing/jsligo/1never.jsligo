@@ -1,0 +1,22 @@
+
+ type parameter =
+ | [ "Increment" , int ]
+ | [ "Extend" , never ] ;
+
+ type storage = int ;
+
+ let main = ( [ action , store ] : [ parameter , storage ] ) } [ list < operation > , storage ] return => {
+ return [
+ ( list ( [ ] ) as list < operation > ) ,
+ ( match ( action , {
+ Increment : ( n : int ) => store + n ,
+ Extend : ( k : never ) => ( Tezos . never ( k ) as storage ) } ) )
+ ]
+ } ;
+
+/*
+Mutation chance is 1
+
+Replace : with } in line 8
+Add return in line 8
+*/

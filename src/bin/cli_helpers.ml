@@ -27,8 +27,8 @@ let return_bad v : unit = (
     Format.eprintf "%s\n" v;
     Format.pp_print_flush Format.err_formatter ();
   )
-let return_with_warn ~warn warns f =
-  if not (String.length (String.strip warns) = 0) && warn then
+let return_with_warn ~show_warnings warns f =
+  if not (String.length (String.strip warns) = 0) && show_warnings then
     begin
       Format.eprintf "%s\n" warns;
       Format.pp_print_flush Format.err_formatter ()
@@ -36,12 +36,12 @@ let return_with_warn ~warn warns f =
   f ()
 
 type return = Done | Compileur_Error | Exception of exn
-let return_result : return:return ref -> ?warn:bool -> ?output_file:string ->(unit -> ('value, _) result) -> unit =
-  fun ~return ?(warn=false) ?output_file f ->
+let return_result : return:return ref -> ?show_warnings:bool -> ?output_file:string ->(unit -> ('value, _) result) -> unit =
+  fun ~return ?(show_warnings=false) ?output_file f ->
     try 
       match f () with
-      | Ok    (v,w) -> return:=Done; return_with_warn ~warn w (fun () -> return_good ?output_file v)
-      | Error (e,w) -> return:=Compileur_Error; return_with_warn ~warn w (fun () -> return_bad e)
+      | Ok    (v,w) -> return:=Done; return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
+      | Error (e,w) -> return:=Compileur_Error; return_with_warn ~show_warnings w (fun () -> return_bad e)
     with exn -> return := Exception exn;;
 
 type command = (string * string array)

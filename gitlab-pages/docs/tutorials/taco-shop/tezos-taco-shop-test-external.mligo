@@ -15,7 +15,7 @@ let test =
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
     |} : ligo_program) ]
   in
-  let (pedro_taco_shop, _code, _size) = Test.originate_from_file filename "buy_taco" init_storage 0tez in
+  let (pedro_taco_shop, _code, _size) = Test.originate_from_file filename "buy_taco" ([] : string list) init_storage 0tez in
   (* compile test inputs *)
   let classico_kind = Test.compile_value 1n in
   let unknown_kind = Test.compile_value 3n in

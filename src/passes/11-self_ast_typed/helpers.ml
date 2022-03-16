@@ -360,7 +360,7 @@ and fold_module_decl : ('a, 'err) folder -> ('a, 'err) decl_folder -> 'a -> modu
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
-        if Var.is_name binder main_fname
+        if ValueVar.is_name binder main_fname
         then Some p
         else None
     | Declaration_type   _
@@ -383,7 +383,7 @@ type contract_type = {
 let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_} as p) ->
-       if Var.equal binder main_fname
+       if ValueVar.equal binder main_fname
        then Some p
        else None
     | Declaration_type   _
@@ -392,7 +392,7 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" Var.pp main_fname : string)) @@
+    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_} = main_decl in
@@ -421,7 +421,7 @@ type view_type = {
 let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Location.t) = fun main_fname m ->
   let aux (declt : declaration Location.wrap) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
-        if Var.equal binder main_fname
+        if ValueVar.equal binder main_fname
         then Some p
         else None
     | Declaration_type   _
@@ -430,7 +430,7 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let main_decl =
-    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" Var.pp main_fname : string)) @@
+    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
     in
   let { binder=_ ; expr ; attr=_ } = main_decl in
@@ -438,7 +438,7 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
   | Some ({binder; result=_} , (tin,return))-> (
     match get_t_tuple tin with
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view @@ Var.get_location binder)
+    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder)
   )
   | None -> raise.raise @@ bad_contract_io main_fname expr
 
@@ -454,9 +454,9 @@ module Free_variables :
     val expression : expression -> (module_variable list * expression_variable list)
   end
   = struct
-  module VarSet = Caml.Set.Make(Var)
-  module ModVarSet = Caml.Set.Make(Var)
-  module VarMap = Caml.Map.Make(Var)
+  module VarSet    = Caml.Set.Make(ValueVar)
+  module ModVarSet = Caml.Set.Make(ModuleVar)
+  module VarMap    = Caml.Map.Make(ModuleVar)
 
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
   and moduleEnv = moduleEnv' VarMap.t
@@ -558,14 +558,9 @@ module Free_module_variables :
     val module' : module_ -> (module_variable list * expression_variable list)
   end
   = struct
-  module ModVar = struct
-    type t = module_variable
-    let compare e e' = compare_module_variable e e'
-  end
 
-  module ModVarSet = Caml.Set.Make(ModVar)
-
-  module VarSet = Caml.Set.Make(Var)
+  module ModVarSet = Caml.Set.Make(ModuleVar)
+  module VarSet = Caml.Set.Make(ValueVar)
 
   let unions : (ModVarSet.t * VarSet.t) list -> (ModVarSet.t * VarSet.t) =
     fun l -> List.fold l ~init:(ModVarSet.empty, VarSet.empty)

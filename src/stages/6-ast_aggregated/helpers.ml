@@ -85,15 +85,15 @@ let is_michelson_pair (t: row_element label_map) : (row_element * row_element) o
 let rec subst_type v t (u : type_expression) =
   let self = subst_type in
   match u.type_content with
-  | T_variable v' when Var.equal v v' -> t
+  | T_variable v' when TypeVar.equal v v' -> t
   | T_arrow {type1;type2} ->
      let type1 = self v t type1 in
      let type2 = self v t type2 in
      { u with type_content = T_arrow {type1;type2} }
-  | T_abstraction {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_abstraction {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_abstraction {ty_binder;kind;type_} }
-  | T_for_all {ty_binder;kind;type_} when not (Var.equal ty_binder v) ->
+  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
      let type_ = self v t type_ in
      { u with type_content = T_for_all {ty_binder;kind;type_} }
   | T_constant {language;injection;parameters} ->
@@ -119,12 +119,10 @@ let destruct_for_alls (t : type_expression) =
 
 let constant_compare ia ib =
   let open Stage_common.Constant in
-  let ia' = Simple_utils.Ligo_string.extract ia in
-  let ib' = Simple_utils.Ligo_string.extract ib in
-  match ia',ib' with
-  | a,b when (String.equal a map_name || String.equal a map_or_big_map_name) && (String.equal b map_name || String.equal b map_or_big_map_name) -> 0
-  | a,b when (String.equal a big_map_name || String.equal a map_or_big_map_name) && (String.equal b big_map_name || String.equal b map_or_big_map_name) -> 0
-  | _ -> Simple_utils.Ligo_string.compare ia ib
+  match ia, ib with
+  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
+  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
+  | _ -> Stage_common.Constant.compare ia ib
 
 let assert_eq = fun a b -> if Caml.(=) a b then Some () else None
 let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None
@@ -133,7 +131,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
   | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
-    if (String.equal la lb) && (constant_compare ia ib = 0) then (
+    if (String.equal la lb) && (Stage_common.Constant.equal ia ib) then (
       let* _ = assert_same_size lsta lstb in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
     ) else
@@ -175,7 +173,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
-     if Var.equal x y then Some () else None
+     if TypeVar.equal x y then Some () else None
   | T_variable _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None

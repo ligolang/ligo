@@ -1,0 +1,9 @@
+let recursion : ( xs : list<_a>) => option<_a> =
+   (xs : list<_a>) : option<_a> => {
+        return recursion(xs);
+   };
+
+export let main = ([parameter, storage] : [list<string>, int]) : [list<operation>, int] => {
+   let _ = recursion(parameter);
+   return [list([]) as list<operation>, storage]
+}

@@ -1,7 +1,7 @@
 module Var = Simple_utils.Var
 open Test_helpers
 
-let get_program = get_program "./contracts/replaceable_id.ligo" (Contract (Stage_common.Var.of_input_var "main"))
+let get_program = get_program "./contracts/replaceable_id.ligo"
 
 let compile_main ~raise ~add_warning () =
   Test_helpers.compile_main ~raise ~add_warning "./contracts/replaceable_id.ligo" ()
@@ -10,7 +10,7 @@ open Ast_imperative
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda_ez (Var.of_input_var "arguments")
+let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   ~ascr:(t_unit ()) (Some (t_list (t_operation ())))
   empty_op_list
 

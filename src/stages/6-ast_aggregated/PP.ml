@@ -114,7 +114,7 @@ and row : formatter -> row_element -> unit =
 and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
-  fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
+  fprintf ppf "%s%a" (Stage_common.Constant.to_string injection) (list_sep_d_par type_expression) parameters
 
 
 and type_expression ppf (te : type_expression) : unit =
@@ -125,7 +125,7 @@ and type_expression ppf (te : type_expression) : unit =
     fprintf ppf "%a" type_content te.type_content
 
 let expression_variable ppf (ev : expression_variable) : unit =
-  fprintf ppf "%a" Var.pp ev
+  fprintf ppf "%a" ValueVar.pp ev
 
 
 let rec expression ppf (e : expression) =
@@ -160,7 +160,7 @@ and expression_content ppf (ec: expression_content) =
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->
       fprintf ppf "@[<h>let %a = %a%a%a in@.%a@]" expression_variable let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   {type_binder; rhs; let_result} -> 
+  | E_type_in   {type_binder; rhs; let_result} ->
       fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
         type_variable type_binder
         type_expression rhs

@@ -44,3 +44,7 @@ let bind_format :
       | Error (e) -> error_format.to_json e
       | Ok (v) -> value_format.to_json v in
     { pp ; to_json }
+
+let map (fmt : 'b format) ~(f : 'a -> 'b) : 'a format =
+  { pp = (fun ~display_format ppf x -> fmt.pp ~display_format ppf (f x));
+    to_json = (fun x -> fmt.to_json (f x)) }

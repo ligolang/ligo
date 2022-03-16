@@ -19,7 +19,7 @@ let cmp7 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 = match f a1 b1
 let cmp_pair f g (a1, a2) (b1, b2) = cmp2 f a1 b1 g a2 b2
 
 let compare_lmap_entry  compare (Label na, va) (Label nb, vb) = cmp2 String.compare na nb compare va vb
-let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare va vb
+let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 TypeVar.compare tva tvb compare va vb
 
 let bool a b = (Stdlib.compare : bool -> bool -> int) a b
 let label (Label a) (Label b) = String.compare a b
@@ -32,9 +32,9 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
-let expression_variable = Var.compare
-let type_variable       = Var.compare
-let module_variable     = Var.compare
+let expression_variable = ValueVar.compare
+let type_variable       = TypeVar.compare
+let module_variable     = ModuleVar.compare
 
 let module_access f {module_name=mna; element=ea}
                     {module_name=mnb; element=eb} =
@@ -82,7 +82,7 @@ and type_content a b =
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
   cmp3
     String.compare la lb
-    Ligo_string.compare ia ib
+    Stage_common.Constant.compare ia ib
     (List.compare type_expression) pa pb
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
@@ -189,7 +189,7 @@ and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
 
 and type_abs ({type_binder=ba;result=ra}) ({type_binder=bb;result=rb}) =
   cmp2
-    type_variable ba bb 
+    type_variable ba bb
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =

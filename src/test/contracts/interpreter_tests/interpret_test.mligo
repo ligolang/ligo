@@ -172,13 +172,6 @@ let test_sizes =
 
 let test_modi = assert (3 mod 2 = 1n)
 
-let test_fold_while =
-  let aux : int -> bool * int =
-    fun (i : int) ->
-    if i < 10 then Loop.resume (i + 1) else Loop.stop i
-  in
-  assert ((Loop.fold_while aux 20 = 20) &&  (Loop.fold_while aux 0 = 10))
-
 let test_assertion_pass =
   let unitt = assert (1=1) in
   assert true

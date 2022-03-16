@@ -16,7 +16,7 @@ const test = {
       1n -> record [ current_stock = 50n ; max_price = 50tez ] ;
       2n -> record [ current_stock = 20n ; max_price = 75tez ] ; ]
     |} : ligo_program) ] ) ;
-  const (pedro_taco_shop, _code, _size) = Test.originate_from_file (filename, "buy_taco", init_storage, 0tez) ;
+  const (pedro_taco_shop, _code, _size) = Test.originate_from_file (filename, "buy_taco", nil : list (string), init_storage, 0tez) ;
   // compile test inputs
   const classico_kind = Test.compile_value (1n) ;
   const unknown_kind = Test.compile_value (3n) ;

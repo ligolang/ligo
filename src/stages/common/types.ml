@@ -1,6 +1,8 @@
-module Location = Simple_utils.Location
-module List     = Simple_utils.List
-module Var      = Var
+module Location  = Simple_utils.Location
+module List      = Simple_utils.List
+module ValueVar  = Var.ValueVar
+module TypeVar   = Var.TypeVar
+module ModuleVar = Var.ModuleVar
 include Enums
 
 module SMap = Simple_utils.Map.Make(String)
@@ -17,11 +19,12 @@ type known_attributes = {
   public: bool;
 }
 
-type expression_variable = Var.t [@@deriving yojson, equal, compare]
-type type_variable       = Var.t [@@deriving yojson, equal, compare]
-type module_variable     = Var.t [@@deriving yojson, equal, compare]
+type expression_variable = ValueVar.t
+type type_variable       = TypeVar.t
+type module_variable     = ModuleVar.t
 
-type kind = unit [@@deriving yojson,equal,compare]
+type kind = | Type
+            | Singleton [@@deriving yojson,equal,compare]
 
 type label = Label of string
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]

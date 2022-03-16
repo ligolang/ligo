@@ -46,8 +46,8 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
   [%expect{|
     const test_foo = lambda (x) return  match x with
-                                         | Fail _#4 ->
-                                           "" | Success _#3 ->
+                                         | Fail _#3 ->
+                                           "" | Success _#2 ->
                                                 ""[@private] |}]
 
 let%expect_test _ =

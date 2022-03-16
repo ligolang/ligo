@@ -61,7 +61,7 @@ and we write some tests for our smart contract in `main.test.mligo`
 
 let test = 
     let storage = Test.compile_value [1; 2; 3] in
-    let (addr, _, _) = Test.originate_from_file "./main.mligo" "main" storage 0tez in
+    let (addr, _, _) = Test.originate_from_file "./main.mligo" "main" ([] : string list)) storage 0tez in
     let taddr : (parameter, storage) typed_address = Test.cast_address addr in
     let contr : parameter contract = Test.to_contract taddr in
     let _ = Test.transfer_to_contract_exn contr Reverse 1mutez in

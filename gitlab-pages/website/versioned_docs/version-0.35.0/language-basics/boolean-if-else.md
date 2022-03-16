@@ -197,7 +197,7 @@ let logical_or: bool = false || true
 
   </div>
   <div className="operation">
-    !
+    not
   </div>
   <div className="description">
     Logical not

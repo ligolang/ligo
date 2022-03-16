@@ -142,8 +142,10 @@ let is_binary_op op : bool =
 let is_ternary_op op : bool =
   get_arity op |> Option.exists ~f:((=) 3)
 
-let unseq : _ michelson -> _ michelson list = function
-  | Seq (_, args) -> args
+let unseq : type meta. has_comment:(meta -> bool) -> meta michelson -> meta michelson list =
+  fun ~has_comment ->
+  function
+  | Seq (m, args) when not (has_comment m) -> args
   | x -> [x]
 
 (* Replace `PUSH (lambda a b) {}` with `LAMBDA a b {}` *)
@@ -152,6 +154,8 @@ let rec use_lambda_instr : _ michelson -> _ michelson =
   match x with
   | Seq (l, args) ->
     Seq (l, List.map ~f:use_lambda_instr args)
+  | Prim (_, "PUSH", [Prim (_, "lambda", [_; _], _); (Prim (_, "constant", _, _))], _) ->
+    x
   | Prim (l, "PUSH", [Prim (_, "lambda", [arg; ret], _); code], _) ->
     Prim (l, "LAMBDA", [arg; ret; code], [])
   | Prim (_, "PUSH", _, _) ->
@@ -163,15 +167,15 @@ let rec use_lambda_instr : _ michelson -> _ michelson =
 (* This flattens nested seqs. {} is erased, { { code1 } ; { code2 } }
    becomes { code1 ; code2 }, etc. This is important because each seq
    costs 5 bytes, for the "Seq" tag and a 4 byte length. *)
-let rec flatten_seqs : _ michelson -> _ michelson =
-  fun x ->
+let rec flatten_seqs : type meta. has_comment:(meta -> bool) -> meta michelson -> meta michelson =
+  fun ~has_comment x ->
   match x with
   | Seq (l, args) ->
-     let args = List.concat @@ List.map ~f:(fun x -> unseq (flatten_seqs x)) args in
+     let args = List.concat @@ List.map ~f:(fun x -> unseq ~has_comment (flatten_seqs ~has_comment x)) args in
      Seq (l, args)
   (* Should not flatten literal seq data in PUSH. Ugh... *)
   | Prim (_, "PUSH", _, _) -> x
-  | Prim (l, p, args, annot) -> Prim (l, p, List.map ~f:flatten_seqs args, annot)
+  | Prim (l, p, args, annot) -> Prim (l, p, List.map ~f:(flatten_seqs ~has_comment) args, annot)
   | _ -> x
 
 (* apply f to all seqs *)
@@ -358,8 +362,9 @@ let opt_beta3 : _ peep3 = function
   | Prim (_, "PUSH", [Prim(_, "lambda", _, _); code], _),
     Prim (_, "SWAP", _, _),
     Prim (_, "EXEC", _, _) ->
-      (match flatten_seqs code with
+      (match code with
        | Seq (_, code) -> Some code
+       | Prim (_, "constant", _, _) -> Some [code]
        | _ -> None)
   | _ -> None
 
@@ -627,10 +632,10 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
     end
   | x -> x
 
-let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
-  fun proto x ->
+let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) -> meta michelson -> meta michelson =
+  fun proto ~has_comment x ->
   ignore proto;
-  let x = flatten_seqs x in
+  let x = flatten_seqs ~has_comment x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
                      peephole @@ peep3 opt_drop3 ;

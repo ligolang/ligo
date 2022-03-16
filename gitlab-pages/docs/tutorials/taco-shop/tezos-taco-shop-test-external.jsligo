@@ -19,7 +19,7 @@ let _test = (_: unit): unit => {
       [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
       [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ]))` as ligo_program )
     ) ;
-  let [pedro_taco_shop, _code, _size] = Test.originate_from_file (filename, "buy_taco", init_storage, 0 as tez) ;
+  let [pedro_taco_shop, _code, _size] = Test.originate_from_file (filename, "buy_taco", list([]) : list<string>, init_storage, 0 as tez) ;
   /* compile test inputs */
   let classico_kind = Test.compile_value (1 as nat) ;
   let unknown_kind = Test.compile_value (3 as nat) ;
