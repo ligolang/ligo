@@ -229,10 +229,10 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
   | V_Ct c, V_Ct c' -> compare_constant_val c c'
-  | V_Ct _, (V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Ct _, (V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_List _, V_Ct _ -> - 1
   | V_List l, V_List l' -> List.compare compare_value l l'
-  | V_List _, (V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_List _, (V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Record _, (V_Ct _ | V_List _) -> -1
   | V_Record r, V_Record r' ->
      let compare (Label l, v) (Label l', v') = match String.compare l l' with
@@ -241,7 +241,7 @@ let rec compare_value (v : value) (v' : value) : int =
      let r = LMap.to_kv_list r |> List.sort ~compare in
      let r' = LMap.to_kv_list r' |> List.sort ~compare in
      List.compare compare r r'
-  | V_Record _, (V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Record _, (V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Map _, (V_Ct _ | V_List _ | V_Record _) -> -1
   | V_Map m, V_Map m' ->
      let compare (k1, v1) (k2, v2) = match compare_value k1 k2 with
@@ -250,18 +250,18 @@ let rec compare_value (v : value) (v' : value) : int =
      let m = List.sort ~compare m in
      let m' = List.sort ~compare m' in
     List.compare compare m m'
-  | V_Map _, (V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Map _, (V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Set _, (V_Ct _ | V_List _ | V_Record _ | V_Map _) -> -1
   | V_Set s, V_Set s' ->
     List.compare compare_value (List.dedup_and_sort ~compare:compare_value s) (List.dedup_and_sort ~compare:compare_value s')
-  | V_Set _, (V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Set _, (V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Construct _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _) -> -1
   | V_Construct (c, l), V_Construct (c', l') -> (
      match String.compare c c' with
        0 -> compare_value l l'
      | c -> c
   )
-  | V_Construct _, (V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Construct _, (V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Michelson _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _) -> -1
   | V_Michelson m, V_Michelson m' -> (
     match m, m' with
@@ -273,25 +273,22 @@ let rec compare_value (v : value) (v' : value) : int =
     | Untyped_code c, Untyped_code c' -> Caml.compare c c'
     | (Ty_code _ | Contract _), Untyped_code _ -> 1
   )
-  | V_Michelson _, (V_Ligo _ | V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Michelson _, (V_Ligo _ | V_Mutation _ | V_Func_val _) -> 1
   | V_Ligo _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _) -> -1
   | V_Ligo (l,v), V_Ligo (l',v') -> (
     match String.compare l l' with
       0 -> String.compare v v'
     | c -> c
   )
-  | V_Ligo _, (V_Mutation _ | V_Failure _ | V_Func_val _) -> 1
+  | V_Ligo _, (V_Mutation _ | V_Func_val _) -> 1
   | V_Mutation _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _) -> -1
   | V_Mutation (l, e), V_Mutation (l', e') -> (
     match Location.compare l l' with
       0 -> Caml.compare e e'
     | c -> c
   )
-  | V_Mutation _, (V_Failure _ | V_Func_val _) -> 1
-  | V_Failure _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _) -> -1
-  | V_Failure e, V_Failure e' -> Caml.compare e e'
-  | V_Failure _, V_Func_val _ -> 1
-  | V_Func_val _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ | V_Failure _) -> -1
+  | V_Mutation _, V_Func_val _ -> 1
+  | V_Func_val _, (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Ligo _ | V_Mutation _ ) -> -1
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0

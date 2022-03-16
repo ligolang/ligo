@@ -323,8 +323,6 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
-  | V_Failure _ ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: failure"
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
