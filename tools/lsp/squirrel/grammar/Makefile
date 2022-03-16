@@ -1,4 +1,4 @@
-DIRS = jsligo
+DIRS = camligo pascaligo reasonligo jsligo
 
 generate: $(DIRS)
 
