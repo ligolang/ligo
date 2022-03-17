@@ -1,5 +1,7 @@
 const common = require('../common.js')
 
+// TODO: handle preprocessor directives
+
 module.exports = grammar({
   name: 'JsLigo',
 
@@ -11,13 +13,11 @@ module.exports = grammar({
     source_file: $ => 
       common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace)),
 
-    _statement_or_namespace: $ => choice($._statement, $._namespace_statement),
+    _statement_or_namespace: $ => choice($._statement, $.namespace_statement),
 
-    _namespace_statement: $ => seq(optional("export"), $.namespace_statement),
-
-    namespace_statement: $ => seq("namespace", field("moduleName", $.ModuleName), 
+    namespace_statement: $ => seq(optional("export"), "namespace", field("moduleName", $.ModuleName), 
     '{',
-      common.sepEndBy1(";", $._statement_or_namespace), 
+      common.sepEndBy(";", $._statement_or_namespace), 
     '}'
     ),
 

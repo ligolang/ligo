@@ -81,7 +81,6 @@ bool tree_sitter_JsLigo_external_scanner_scan(
               lexer->result_symbol = OCAML_COMMENT;
               return true;
             }
-            // handle comment & attribute
             // automatic SEMI insertion
             // automatic VBAR insertion
           } else {
