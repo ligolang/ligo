@@ -49,7 +49,7 @@ let reserved_names = (* Part of names in that list would be caught by some synta
     "list_fold"; "list_fold_left"; "list_fold_right"; "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem";
     "sha_256"; "sha_512"; "blake2b"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false";
     "assert"; "black2b"; "continue";  "gas"; "hash"; "hash_key"; "pack"; "sha256"; "sha512"; "stop"; "time"; "unpack";
-    "await"; "break"; "case"; "catch"; "class"; "const"; "continue"; "debugger"; "do";
+    "continue"; "debugger"; "do";
     "get_chain_id"; "abs";
   ]
 let check_reserved ~raise ~loc binder =
