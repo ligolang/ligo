@@ -54,6 +54,14 @@ bool tree_sitter_JsLigo_external_scanner_scan(
     } else if (lexer->lookahead == '*') {
       lexer->advance(lexer, false);
 
+      // skip white spaces
+      while (iswspace(lexer->lookahead)) lexer->advance(lexer, false);
+
+      // If multi-line comment is of the form `/* @<att-name> */` it is an attribute
+      if (lexer->lookahead == '@') {
+        return false;
+      }
+
       bool after_star = false;
       unsigned nesting_depth = 1;
       for (;;) {

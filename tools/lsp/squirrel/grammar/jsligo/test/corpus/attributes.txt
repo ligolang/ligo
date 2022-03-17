@@ -13,9 +13,9 @@ type foo = /* @boom */ | ["True"] | ["False"]
         (declaration_statement
           (type_decl
             (TypeName)
-            (ocaml_comment)
             (type_expr
               (sum_type
+                (attr)
                 (variant
                   (ConstrName))
                 (variant
@@ -38,7 +38,7 @@ type foo = /* @boom */ | ["True"] | ["False"]
 //            (TypeName)
 //            (type_expr
 //              (sum_type
-//                (ocaml_comment)
+//                (attr)
 //                (variant
 //                  (ConstrName))
 //                (variant
@@ -62,8 +62,8 @@ type foo = | /* @boom */ ["True"] | ["False"]
             (TypeName)
             (type_expr
               (sum_type
-                (ocaml_comment)
                 (variant
+                  (attr)
                   (ConstrName))
                 (variant
                   (ConstrName))))))))))
@@ -85,10 +85,10 @@ type person = /* @layout:comb */ {
         (declaration_statement
           (type_decl
             (TypeName)
-            (ocaml_comment)
             (type_expr
               (core_type
                 (object_type
+                  (attr)
                   (field_decl
                     (FieldName)
                     (type_annotation
@@ -116,9 +116,9 @@ type person = {
             (type_expr
               (core_type
                 (object_type
-                  (ocaml_comment)
-                  (ocaml_comment)
                   (field_decl
+                    (attr)
+                    (attr)
                     (FieldName)
                     (type_annotation
                       (type_expr
@@ -134,12 +134,12 @@ let decl
 ---
 
 (source_file
-  (ocaml_comment)
   (statement_or_namespace
     (statement
       (base_statement
         (declaration_statement
           (let_decl
+            (attr)
             (binding_list
               (binding_initializer
                 (binding_pattern
@@ -171,13 +171,13 @@ let decl twice
 ---
 
 (source_file
-  (ocaml_comment)
-  (ocaml_comment)
   (statement_or_namespace
     (statement
       (base_statement
         (declaration_statement
           (let_decl
+            (attr)
+            (attr)
             (binding_list
               (binding_initializer
                 (binding_pattern
@@ -250,13 +250,13 @@ let bar = (b : int) : int => {
                           (core_type
                             (TypeName))))
                       (body
-                        (ocaml_comment)
-                        (ocaml_comment)
                         (statements
                           (statement
                             (base_statement
                               (declaration_statement
                                 (let_decl
+                                  (attr)
+                                  (attr)
                                   (binding_list
                                     (binding_initializer
                                       (binding_pattern
