@@ -32,6 +32,14 @@ bool tree_sitter_JsLigo_external_scanner_scan(
     if (lexer->lookahead == '/') {
       lexer->advance(lexer, false);
 
+      // skip white spaces
+      while (iswspace(lexer->lookahead)) lexer->advance(lexer, false);
+
+      // If single-line comment is of the form `// @<att-name>` it is an attribute
+      if (lexer->lookahead == '@') {
+        return false;
+      }
+
       for (;;) {
         switch (lexer->lookahead) {
         case '\n':
@@ -65,6 +73,9 @@ bool tree_sitter_JsLigo_external_scanner_scan(
               lexer->result_symbol = OCAML_COMMENT;
               return true;
             }
+            // handle comment & attribute
+            // automatic SEMI insertion
+            // automatic VBAR insertion
           } else {
             lexer->advance(lexer, false);
             after_star = false;

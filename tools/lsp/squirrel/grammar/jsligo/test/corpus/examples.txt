@@ -1,7 +1,7 @@
-=========
-modules
-=========
-
+//=========
+//modules
+//=========
+//
 //namespace EURO {
 //    export type t = nat;
 //    export let one : t = 1 as nat;
@@ -16,6 +16,6 @@ modules
 //type storage = EURO.t;
 //let uno : storage = EURO.one;
 
----
+//---
 
  

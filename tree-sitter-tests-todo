@@ -1,3 +1,7 @@
+- Automatic Semicolon insertion + A VBAR insertion
+- prec.left & prec.right for operator precedence
+- Add fields to nodes
+
 JsLIGO tests
 
 operators:  
