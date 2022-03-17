@@ -9,97 +9,99 @@ module.exports = grammar({
 
   rules: {
     source_file: $ => 
-      common.sepEndBy(optional(';'), field("toplevel", $.statement_or_namespace)),
+      common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace)),
 
-    statement_or_namespace: $ => choice($.statement, $.namespace_statement),
+    _statement_or_namespace: $ => choice($._statement, $._namespace_statement),
 
-    namespace_statement: $ => seq(optional("export"), $.namespace),
+    _namespace_statement: $ => seq(optional("export"), $.namespace_statement),
 
-    namespace: $ => seq("namespace", field("moduleName", $.ModuleName), common.block($.statements_or_namespace)),
+    namespace_statement: $ => seq("namespace", field("moduleName", $.ModuleName), 
+    '{',
+      common.sepEndBy1(";", $._statement_or_namespace), 
+    '}'
+    ),
 
-    statements_or_namespace: $ => common.sepEndBy1(";", $.statement_or_namespace),
+    _statement: $ => prec.right(1, choice($._base_statement, $.if_statement)),
 
-    statement: $ => prec.right(1, choice($.base_statement, $.if_statement)),
+    if_statement: $ => seq("if", common.par($.expr), $._statement),
 
-    if_statement: $ => seq("if", common.par($.expr), $.statement),
-
-    base_statement: $ => choice(
+    _base_statement: $ => choice(
       $.expr_statement,
       $.return_statement,
       $.block_statement,
       $.switch_statement,
       $.import_statement,
       $.export_statement,
-      $.declaration_statement,
+      $._declaration_statement,
       $.if_else_statement,
       $.for_of_statement,
       $.while_statement,
     ),
 
     expr_statement: $ => choice(
-      seq($.assignment_expr_level, "=", $.expr_statement),
-      seq($.assignment_expr_level, "*=", $.expr_statement),
-      seq($.assignment_expr_level, "/=", $.expr_statement),
-      seq($.assignment_expr_level, "%=", $.expr_statement),
-      seq($.assignment_expr_level, "+=", $.expr_statement),
-      seq($.assignment_expr_level, "-=", $.expr_statement),
+      seq($._assignment_expr_level, "=", $.expr_statement),
+      seq($._assignment_expr_level, "*=", $.expr_statement),
+      seq($._assignment_expr_level, "/=", $.expr_statement),
+      seq($._assignment_expr_level, "%=", $.expr_statement),
+      seq($._assignment_expr_level, "+=", $.expr_statement),
+      seq($._assignment_expr_level, "-=", $.expr_statement),
       $.fun_expr,
-      $.assignment_expr_level
+      $._assignment_expr_level
     ),
 
-    assignment_expr_level: $ => choice(
-      seq($.assignment_expr_level, "as", $.core_type),
-      $.disjunction_expr_level
+    _assignment_expr_level: $ => choice(
+      seq($._assignment_expr_level, "as", $._core_type),
+      $._disjunction_expr_level
     ),
 
-    disjunction_expr_level: $ => choice(
-      seq($.disjunction_expr_level, "||", $.conjunction_expr_level),
-      $.conjunction_expr_level
+    _disjunction_expr_level: $ => choice(
+      seq($._disjunction_expr_level, "||", $._conjunction_expr_level),
+      $._conjunction_expr_level
     ),
 
-    conjunction_expr_level: $ => choice(
-      seq($.conjunction_expr_level, "&&", $.comparison_expr_level),
-      $.comparison_expr_level
+    _conjunction_expr_level: $ => choice(
+      seq($._conjunction_expr_level, "&&", $._comparison_expr_level),
+      $._comparison_expr_level
     ),
 
-    comparison_expr_level: $ => choice(
-      seq($.comparison_expr_level, "<", $.addition_expr_level),
-      seq($.comparison_expr_level, "<=", $.addition_expr_level),
-      seq($.comparison_expr_level, ">", $.addition_expr_level),
-      seq($.comparison_expr_level, ">=", $.addition_expr_level),
-      seq($.comparison_expr_level, "==", $.addition_expr_level),
-      seq($.comparison_expr_level, "!=", $.addition_expr_level),
-      $.addition_expr_level
+    _comparison_expr_level: $ => choice(
+      seq($._comparison_expr_level, "<", $._addition_expr_level),
+      seq($._comparison_expr_level, "<=", $._addition_expr_level),
+      seq($._comparison_expr_level, ">", $._addition_expr_level),
+      seq($._comparison_expr_level, ">=", $._addition_expr_level),
+      seq($._comparison_expr_level, "==", $._addition_expr_level),
+      seq($._comparison_expr_level, "!=", $._addition_expr_level),
+      $._addition_expr_level
     ),
 
-    addition_expr_level: $ => prec.left(2, choice(
-      seq($.addition_expr_level, "+", $.multiplication_expr_level),
-      seq($.addition_expr_level, "-", $.multiplication_expr_level),
-      $.multiplication_expr_level
+    _addition_expr_level: $ => prec.left(2, choice(
+      seq($._addition_expr_level, "+", $._multiplication_expr_level),
+      seq($._addition_expr_level, "-", $._multiplication_expr_level),
+      $._multiplication_expr_level
     )),
 
-    multiplication_expr_level: $ => choice(
-      seq($.multiplication_expr_level, "*", $.unary_expr_level),
-      seq($.multiplication_expr_level, "/", $.unary_expr_level),
-      seq($.multiplication_expr_level, "%", $.unary_expr_level),
-      $.unary_expr_level
+    _multiplication_expr_level: $ => choice(
+      seq($._multiplication_expr_level, "*", $._unary_expr_level),
+      seq($._multiplication_expr_level, "/", $._unary_expr_level),
+      seq($._multiplication_expr_level, "%", $._unary_expr_level),
+      $._unary_expr_level
     ),
 
-    unary_expr_level: $ => choice(
-      seq("-", $.call_expr_level),
-      seq("!", $.call_expr_level),
-      $.call_expr_level
+    _unary_expr_level: $ => choice(
+      seq("-", $._call_expr_level),
+      seq("!", $._call_expr_level),
+      $._call_expr_level
     ),
 
-    call_expr_level: $ => prec.left(2, choice($.call_expr, $.member_expr)),
+    _call_expr_level: $ => prec.left(2, choice($._call_expr, $._member_expr)),
 
-    call_expr: $ => seq($.lambda, common.par(common.sepBy(",", $.expr))),
+    _call_expr: $ => seq($.lambda, common.par(common.sepBy(",", $.expr))),
 
-    lambda: $ => choice($.call_expr, $.member_expr),
+    lambda: $ => choice($._call_expr, $._member_expr),
 
     expr: $ => choice($.expr_statement, $.object_literal),
 
-    member_expr: $ => choice(
+    _member_expr: $ => choice(
       $.Name,
       $.Int,
       $.Bytes,
@@ -118,8 +120,8 @@ module.exports = grammar({
     ctor_args: $ => common.par(common.sepBy(",", $.expr)),
 
     projection: $ => choice(
-      seq($.member_expr, common.brackets($.expr)),
-      seq($.member_expr, ".", $.Name)
+      seq($._member_expr, common.brackets($.expr)),
+      seq($._member_expr, ".", $.Name)
     ),
 
     michelson_interop: $ => seq(
@@ -127,7 +129,7 @@ module.exports = grammar({
         seq(
           field("code", $.michelson_code),
           "as",
-          field("type", $.core_type),
+          field("type", $._core_type),
         ),
       ")"
     ),
@@ -150,9 +152,9 @@ module.exports = grammar({
 
     body: $ => choice(common.block($.statements), $.expr_statement),
 
-    statements: $ => common.sepEndBy1(";", $.statement),
+    statements: $ => common.sepEndBy1(";", $._statement),
 
-    type_annotation: $ => seq(":", $.type_expr),
+    type_annotation: $ => seq(":", $._type_expr),
 
     parameters: $ => common.sepBy1(",", $.parameter),
 
@@ -168,13 +170,13 @@ module.exports = grammar({
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
-    type_expr: $ => choice(
+    _type_expr: $ => choice(
       $.fun_type,
       $.sum_type,
-      $.core_type
+      $._core_type
     ),
 
-    fun_type: $ => seq(common.par(common.sepBy(",", $.fun_param)), "=>", $.type_expr),
+    fun_type: $ => seq(common.par(common.sepBy(",", $.fun_param)), "=>", $._type_expr),
 
     fun_param: $ => seq($.Name, $.type_annotation),
 
@@ -183,11 +185,11 @@ module.exports = grammar({
     variant: $ => common.withAttrs($, common.brackets(
       choice(
         seq('"', $.ConstrName, '"'),
-        seq('"', $.ConstrName, '"', ",", common.sepBy(",", $.type_expr))
+        seq('"', $.ConstrName, '"', ",", common.sepBy(",", $._type_expr))
       )
     )),
 
-    core_type: $ => choice(
+    _core_type: $ => choice(
       $.String,
       $.Int,
       $.wildcard,
@@ -196,7 +198,7 @@ module.exports = grammar({
       $.object_type,
       $.type_ctor_app,
       common.withAttrs($, $.type_tuple),
-      common.par($.type_expr)
+      common.par($._type_expr)
     ),
 
     module_access_t: $ => seq($.ModuleName, ".", $.module_var_t),
@@ -210,33 +212,33 @@ module.exports = grammar({
       seq($.FieldName, $.type_annotation)
     )),
 
-    type_ctor_app: $ => seq($.TypeName, common.chev(common.sepBy1(",", $.type_expr))),
+    type_ctor_app: $ => seq($.TypeName, common.chev(common.sepBy1(",", $._type_expr))),
 
-    type_tuple: $ => common.brackets(common.sepBy1(",", $.type_expr)),
+    type_tuple: $ => common.brackets(common.sepBy1(",", $._type_expr)),
 
-    import_statement: $ => prec.left(1, seq("import", $.ModuleName, "=", common.sepEndBy1(".", $.ModuleName))),
+    import_statement: $ => seq("import", $.ModuleName, "=", common.sepBy1(".", $.ModuleName)),
 
-    export_statement: $ => seq("export", $.declaration_statement),
+    export_statement: $ => seq("export", $._declaration_statement),
 
-    declaration_statement: $ => choice(
+    _declaration_statement: $ => choice(
       $.let_decl,
       $.const_decl,
       $.type_decl
     ),
 
-    type_decl: $ => seq("type", $.TypeName, optional($.type_params), "=", $.type_expr),
+    type_decl: $ => seq("type", $.TypeName, optional($.type_params), "=", $._type_expr),
 
     type_params: $ => common.chev(common.sepBy1(",", $.TypeVariableName)),
 
-    let_decl: $ => common.withAttrs($, seq("let", $.binding_list)),
+    let_decl: $ => common.withAttrs($, seq("let", $._binding_list)),
 
-    const_decl: $ => common.withAttrs($, seq("const", $.binding_list)),
+    const_decl: $ => common.withAttrs($, seq("const", $._binding_list)),
     
-    binding_list: $ => common.sepBy1(",", $.binding_initializer),
+    _binding_list: $ => common.sepBy1(",", $._binding_initializer),
     
-    binding_initializer: $ => seq($.binding_pattern, optional($.type_annotation), "=", $.expr),
+    _binding_initializer: $ => seq($._binding_pattern, optional($.type_annotation), "=", $.expr),
 
-    binding_pattern: $ => choice(
+    _binding_pattern: $ => choice(
       $.var_pattern,
       $.wildcard,
       $.object_pattern,
@@ -255,7 +257,7 @@ module.exports = grammar({
 
     property_pattern: $ => choice(
       seq($.Name, "=", $.expr),
-      seq($.Name, ":", $.binding_initializer),
+      seq($.Name, ":", $._binding_initializer),
       $.var_pattern
     ),
 
@@ -291,17 +293,17 @@ module.exports = grammar({
     case_statements: $ => seq(":", optional(common.sepBy(";", $.case_statement))),
 
     case_statement: $ => choice(
-      $.statement,
+      $._statement,
       "break"
     ),
 
-    if_else_statement: $ => seq("if", common.par($.expr), $.base_statement, "else", $.statement),
+    if_else_statement: $ => seq("if", common.par($.expr), $._base_statement, "else", $._statement),
 
-    for_of_statement: $ => seq("for", common.par(seq($.index_kind, $.Name, "of", $.expr_statement)), $.statement),
+    for_of_statement: $ => seq("for", common.par(seq($.index_kind, $.Name, "of", $.expr_statement)), $._statement),
 
     index_kind: $ => choice("let", "const"),
     
-    while_statement: $ => seq("while", common.par($.expr), $.statement),
+    while_statement: $ => seq("while", common.par($.expr), $._statement),
 
     ConstrName: $ => $._NameCapital,
     ConstrNameDecl: $ => seq('"', $._NameCapital, '"'),
@@ -320,9 +322,9 @@ module.exports = grammar({
 
     String: $ => /\"(\\.|[^"])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,
-    PositiveInt: $ => /([1-9][0-9_]*|0)/,
-    Tez: $ => seq($.PositiveInt, "as", "tez"),
-    Nat: $ => seq($.PositiveInt, "as", "nat"),
+    _PositiveInt: $ => /([1-9][0-9_]*|0)/,
+    Tez: $ => seq($._PositiveInt, "as", "tez"),
+    Nat: $ => seq($._PositiveInt, "as", "nat"),
     Bytes: $ => /0x[0-9a-fA-F]+/,
 
     _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,

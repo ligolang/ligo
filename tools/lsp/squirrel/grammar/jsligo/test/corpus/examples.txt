@@ -1,21 +1,21 @@
-//=========
-//modules
-//=========
-//
-//namespace EURO {
-//    export type t = nat;
-//    export let one : t = 1 as nat;
-//    export namespace CONST {
-//        let zero : t = 0 as nat;
-//        let one : t = 1 as nat;
-//    };
-//};
-//
-//import US_DOLLAR = EURO;
-//
-//type storage = EURO.t;
-//let uno : storage = EURO.one;
+=========
+modules
+=========
 
-//---
+namespace EURO {
+    export type t = nat;
+    export let one : t = 1 as nat;
+    export namespace CONST {
+        let zero : t = 0 as nat;
+        let one : t = 1 as nat;
+    };
+};
+
+import US_DOLLAR = EURO;
+
+type storage = EURO.t;
+let uno : storage = EURO.one;
+
+---
 
  
