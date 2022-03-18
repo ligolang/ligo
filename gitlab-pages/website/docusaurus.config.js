@@ -137,7 +137,6 @@ const siteConfig = {
           { from: ["/docs/next/manpages/measure-contract"     ], to: "/docs/next/manpages/info measure-contract"  },
           { from: ["/docs/next/manpages/preprocess"           ], to: "/docs/next/manpages/print preprocessed"     },
           { from: ["/docs/next/manpages/pretty-print"         ], to: "/docs/next/manpages/print pretty"           },
-          { from: ["/docs/next/manpages/print-ast"            ], to: "/docs/next/manpages/print ast"              },
           { from: ["/docs/next/manpages/print-ast-combined"   ], to: "/docs/next/manpages/print ast-combined"     },
           { from: ["/docs/next/manpages/print-ast-core"       ], to: "/docs/next/manpages/print ast-core"         },
           { from: ["/docs/next/manpages/print-ast-sugar"      ], to: "/docs/next/manpages/print ast-sugar"        },
@@ -149,7 +148,12 @@ const siteConfig = {
           { from: ["/docs/next/manpages/test"                 ], to: "/docs/next/manpages/run test"               },
           { from: ["/docs/next/manpages/transpile-contract"   ], to: "/docs/next/manpages/transpile contract"     },
           { from: ["/docs/next/manpages/transpile-expression" ], to: "/docs/next/manpages/transpile expression"   },
-          { from: ["/docs/next/language-basics/strings"       ], to: "/docs/next/language-basics/strings-bytes"        },
+          { from: ["/docs/next/language-basics/strings"       ], to: "/docs/next/language-basics/strings-bytes"   },
+
+          { from: ["/docs/next/manpages/print-ast"            ], to: "/docs/next/manpages/print ast-imperative"   },
+          { from: ["/docs/next/manpages/print ast"            ], to: "/docs/next/manpages/print ast-imperative"   },
+          { from: ["/docs/next/manpages/run evaluate-value"   ], to: "/docs/next/manpages/run evaluate-expr"      },
+          { from: ["/docs/next/manpages/run run-function"     ], to: "/docs/next/manpages/run evaluate-call"      },
         ],      
       }
     ]
