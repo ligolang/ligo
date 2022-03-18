@@ -703,7 +703,7 @@ let install =
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path)
 
-let main = Command.group ~preserve_subcommand_order:() ~summary:"the LigoLANG compiler" @@
+let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
     "transpile", transpile_group;

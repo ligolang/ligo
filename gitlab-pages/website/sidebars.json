@@ -38,6 +38,7 @@
     "Command Line Options": [
       "manpages/ligo",
       "manpages/changelog",
+      "manpages/compile constant",
       "manpages/compile contract",
       "manpages/compile expression",
       "manpages/compile parameter",
@@ -45,8 +46,10 @@
       "manpages/info get-scope",
       "manpages/info list-declarations",
       "manpages/info measure-contract",
+      "manpages/install",
       "manpages/mutate ast",
       "manpages/mutate cst",
+      "manpages/print ast-aggregated",
       "manpages/print ast-combined",
       "manpages/print ast-core",
       "manpages/print ast-imperative",
@@ -62,7 +65,9 @@
       "manpages/run evaluate-call",
       "manpages/run evaluate-expr",
       "manpages/run interpret",
-      "manpages/run test"
+      "manpages/run test",
+      "manpages/transpile contract",
+      "manpages/transpile expression"
     ],
     "API":[
       "reference/toplevel",
