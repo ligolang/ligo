@@ -30,7 +30,7 @@ module Command = struct
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
-    | Put_state : Tezos_state.context -> unit t
+
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
       -> [`Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t] t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
@@ -41,14 +41,12 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_contract_from_file : string * string * string list -> (LT.value * LT.value) t
-    | Compile_meta_value : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_aggregated.type_expression -> LT.value t
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
-    | Contract_exists : LT.value -> bool t
     | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
     | Set_source : LT.value -> unit t
     | Set_baker : LT.value -> unit t
@@ -145,8 +143,6 @@ module Command = struct
       ((),ctxt)
     | Get_state () ->
       (ctxt,ctxt)
-    | Put_state (ctxt) ->
-      ((),ctxt)
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
@@ -197,9 +193,6 @@ module Command = struct
     | Check_obj_ligo e ->
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj e in
       ((), ctxt)
-    | Compile_meta_value (loc,x,ty) ->
-      let x = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc x ty in
-      (LT.V_Michelson (LT.Ty_code x), ctxt)
     | Get_size (contract_code) -> (
       match contract_code with
       | LT.V_Michelson (LT.Contract contract_code) ->
@@ -289,10 +282,6 @@ module Command = struct
       let () = trace_option ~raise (Errors.generic_error loc "Storage type does not match expected type") @@
           (Ast_aggregated.Helpers.assert_type_expression_eq (ligo_ty, ty)) in
       ((), ctxt)
-    | Contract_exists addr ->
-      let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
-      let info = Tezos_state.contract_exists ctxt addr in
-      (info, ctxt)
     | Inject_script (loc, calltrace, code, storage, amt) ->
       Tezos_state.originate_contract ~raise ~loc ~calltrace ctxt (code, storage) amt
     | Set_source source ->

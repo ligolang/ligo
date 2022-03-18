@@ -28,9 +28,6 @@ type kind = | Type
 
 type label = Label of string
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]
-let label_of_yojson = function
-  | `List [`String "Label"; `String l] -> Ok (Label l)
-  | _ -> Simple_utils.Utils.error_yojson_format "Label of string"
 let equal_label (Label a) (Label b) = String.equal a b
 let compare_label (Label a) (Label b) = String.compare a b
 
@@ -40,9 +37,6 @@ type 'a label_map = 'a LMap.t
 let const_name = function
   | Deprecated {const;_} -> const
   | Const      const     -> const
-let bindings_to_yojson f g xs = `List (List.map ~f:(fun (x,y) -> `List [f x; g y]) xs)
-let label_map_to_yojson row_elem_to_yojson m =
-  bindings_to_yojson label_to_yojson row_elem_to_yojson (LMap.bindings m)
 
 type 'ty_expr row_element_mini_c = {
   associated_type      : 'ty_expr ;

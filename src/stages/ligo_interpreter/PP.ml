@@ -51,16 +51,6 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
      Format.fprintf ppf "%s" code
   | V_Mutation (l, e) ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_aggregated.PP.expression e
-  | V_Failure err ->
-     match err with
-     | Object_lang_ex {location;errors;calltrace = _} ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%a@]"
-          Snippet.pp location
-          (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errors
-     | Meta_lang_ex {location;reason = Reason s;calltrace = _} ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%s@]" Snippet.pp location s
-     | Meta_lang_ex {location;reason = Val s;calltrace = _} ->
-        Format.fprintf ppf "@[<v 4>%a@.An uncaught error occured:@.%a@]" Snippet.pp location pp_value s
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term

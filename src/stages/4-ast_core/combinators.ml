@@ -186,17 +186,6 @@ let get_e_unit (t:expression) =
   | E_literal (Literal_unit) -> Some ()
   | _ -> None
 
-let get_e_bool (t:expression) =
-  match t.expression_content with
-  | E_constructor {constructor=Label name;element} when (String.equal name "True")
-    && Compare.expression_content element.expression_content (e_unit ()).expression_content = 0 ->
-      Some true
-  | E_constructor {constructor=Label name;element} when (String.equal name "False")
-    && Compare.expression_content element.expression_content (e_unit ()).expression_content = 0 ->
-      Some false
-  | _ -> None
-
-
 let get_e_pair = fun t ->
   match t with
   | E_record r -> (

@@ -11,11 +11,6 @@ let label_range i j =
 let is_tuple_lmap m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
-let get_pair m =
-  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some e1, Some e2 -> Some (e1,e2)
-  | _ -> None
-
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in
@@ -23,18 +18,6 @@ let tuple_of_record (m: _ LMap.t) =
     Option.bind ~f:(fun opt -> Some ((label,opt),i+1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
-
-let list_of_record_or_tuple (m: _ LMap.t) =
-  if (is_tuple_lmap m) then
-    List.map ~f:snd @@ tuple_of_record m
-  else
-    LMap.to_list m
-
-let kv_list_of_record_or_tuple (m: _ LMap.t) =
-  if (is_tuple_lmap m) then
-    tuple_of_record m
-  else
-    LMap.to_kv_list m
 
 let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
   fun f acc p ->
@@ -50,8 +33,6 @@ let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
     | P_variant (_,p) -> fold_pattern f acc' p
     | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
     | P_record (_,lp) -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
-
-let fold_pattern_list f acc l = List.fold_left ~f:(fold_pattern f) ~init:acc l
 
 let rec map_pattern_t : ('a binder -> 'b binder) -> 'a pattern -> 'b pattern =
   fun f p ->

@@ -8,12 +8,12 @@ let raw_options = Compiler_options.default_raw_options
 let init_state_cameligo = Repl.make_initial_state
                             (CameLIGO: Syntax_types.t)
                             Environment.Protocols.Hangzhou
-                            dry_run_options None
+                            dry_run_options
 
 let init_state_jsligo = Repl.make_initial_state
                           (JsLIGO: Syntax_types.t)
                           Environment.Protocols.Hangzhou
-                          dry_run_options None
+                          dry_run_options
 
 let apply_repl_sequence ~raw_options init_state commands =
   let f state command =

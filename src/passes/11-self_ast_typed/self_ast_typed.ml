@@ -36,7 +36,7 @@ let all_contract ~raise main_name prg =
     } in
   let all_p = List.map ~f:(fun pass -> Helpers.fold_map_module pass data) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
-  let prg = Contract_passes.remove_unused ~raise main_name prg in
+  let prg = Contract_passes.remove_unused ~raise data prg in
   prg
 
 let all_view ~raise views_name main_name prg =
@@ -51,11 +51,5 @@ let all_view ~raise views_name main_name prg =
 let all = [
   Recursion.check_tail_expression
 ]
-
-let map_expression = Helpers.map_expression
-
-let fold_expression = Helpers.fold_expression
-
-let fold_map_expression = Helpers.fold_map_expression
 
 let remove_unused_expression = Contract_passes.remove_unused_expression

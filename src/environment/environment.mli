@@ -8,7 +8,6 @@ val pp : Format.formatter -> t -> unit
 val add_declaration : Ast_typed.declaration_loc -> t -> t
 val add_module : ?public:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t
 val append : Ast_typed.program -> t -> t
-val init   : Ast_typed.program -> t
 
 val default : Protocols.t -> t
 val default_with_test : Protocols.t -> t

@@ -24,19 +24,6 @@ let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : A
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form core in
   typed
 
-let to_mini_c ~raise ~add_warning ~options f stx env =
-  let typed  = type_file ~raise ~add_warning ~options f stx env in
-  let mini_c     = Of_typed.compile_program ~raise typed in
-  mini_c
-
-let compile_file ~raise ~add_warning ~options f stx ep =
-  let typed    = type_file ~raise ~add_warning ~options f stx @@ Contract ep in
-  let aggregated = Of_typed.apply_to_entrypoint_contract ~raise typed ep in
-  let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
-  let michelson  = Of_mini_c.compile_contract ~raise ~options mini_c in
-  let contract   = Of_michelson.build_contract ~raise michelson in
-  contract
-
 let type_expression_string ~raise ~options syntax expression init_prog =
   let meta              = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
@@ -63,21 +50,6 @@ let type_expression ~raise ~options source_file syntax expression init_prog =
   let core_exp          = Of_sugar.compile_expression ~raise sugar_exp in
   let typed_exp         = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
-
-let expression_to_aggregated ~raise ~options source_file syntax expression init_prog =
-  let typed_exp  = type_expression ~raise ~options source_file syntax expression init_prog in
-  Of_typed.compile_expression ~raise typed_exp
-
-let expression_to_mini_c ~raise ~options source_file syntax expression env =
-  let aggregated  = expression_to_aggregated ~raise ~options source_file syntax expression env in
-  let mini_c_exp  = Of_aggregated.compile_expression ~raise aggregated in
-  mini_c_exp
-
-let compile_expression ~raise ~options source_file syntax expression env =
-  let mini_c_exp = expression_to_mini_c ~raise ~options source_file syntax expression env in
-  let compiled   = Of_mini_c.compile_expression ~options mini_c_exp in
-  compiled
-
 
 let compile_contract_input ~raise ~options parameter storage source_file syntax init_prog =
   let meta       = Of_source.extract_meta ~raise syntax source_file in

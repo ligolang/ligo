@@ -60,6 +60,3 @@ let compile_expression ~raise : options:Compiler_options.t -> expression -> comp
 let compile_type = fun e ->
   let expr_ty = Scoping.translate_type e in
   dummy_locations (forward expr_ty)
-
-let pretty_print program =
-  Mini_c.PP.expression program

@@ -12,7 +12,6 @@ val type_declaration : raise:typer_error raise -> options:Compiler_options.middl
 val type_expression  : raise:typer_error raise -> options:Compiler_options.middle_end -> ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
 
 
-val untype_type_expression : O.type_expression -> I.type_expression
 val untype_expression : O.expression -> I.expression
 
 val untype_program : O.program -> I.module_

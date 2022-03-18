@@ -14,7 +14,6 @@ let add_declaration decl env = decl :: env
 let append program env = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 
 let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
-let init p = append p []
 
 (* Artefact for build system *)
 type core = Ast_core.module'

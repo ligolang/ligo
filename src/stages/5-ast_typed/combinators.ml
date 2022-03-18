@@ -314,29 +314,6 @@ let get_a_unit (t:expression) =
   | E_literal (Literal_unit) -> Some ()
   | _ -> None
 
-let get_a_bool (t:expression) =
-  match t.expression_content with
-  | E_constructor {constructor=Label name;element} when
-    (String.equal name "True")
-    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
-      Some true
-  | E_constructor {constructor=Label name;element} when
-    (String.equal name "False")
-    && Compare.expression_content element.expression_content @@ e_unit () = 0 ->
-      Some false
-  | _ -> None
-
-let get_declaration_by_name : program -> expression_variable -> declaration option = fun p name ->
-  let aux : declaration -> bool = fun declaration ->
-    match declaration with
-    | Declaration_constant { binder; expr = _ ; attr = _ } ->
-        ValueVar.equal binder name
-    | Declaration_type   _
-    | Declaration_module _
-    | Module_alias       _ -> false
-  in
-  List.find ~f:aux @@ List.map ~f:Location.unwrap p
-
 let get_record_field_type (t : type_expression) (label : label) : type_expression option =
   match get_t_record t with
   | None -> None

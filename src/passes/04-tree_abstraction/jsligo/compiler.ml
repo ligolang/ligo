@@ -9,15 +9,6 @@ module Token = Lexing_jsligo.Token
 
 open AST
 
-(* type nonrec 'a result = 'a  *)
-
-let ghost =
-  object
-    method region = Region.ghost
-    method attributes = []
-    method payload = ""
-  end
-
 type nested_match_repr = (*TODO  , move that in AST. (see !909) *)
   | PatternVar of AST.ty_expr binder
   | TupleVar of AST.ty_expr binder * nested_match_repr list
@@ -28,11 +19,6 @@ let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
-
-let pseq_to_list = function
-  | None -> []
-  | Some lst -> npseq_to_list lst
-let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
@@ -301,13 +287,6 @@ let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | EVar var -> var
   | _ as e -> raise.raise @@ expected_a_variable e
 
-let selection_to_variable ~raise : CST.selection -> CST.variable = function
-  | FieldName sfn -> (
-      let (sfn , _) = r_split sfn in
-      sfn.value
-    )
-  | _ as f -> raise.raise @@ expected_a_field_name f
-
 let compile_expression_to_int ~raise : CST.expr -> z = function
   | EArith (Int i) -> (snd (i.value))
   | _ as e -> raise.raise @@ expected_an_int e
@@ -334,10 +313,6 @@ let arguments_to_expr_nseq (args : CST.arguments) : CST.expr Utils.nseq * Locati
   | Multiple xs ->
     let hd,tl = xs.value.inside in
     ((hd,List.map ~f:snd tl), Location.lift xs.region)
-
-let get_t_string_singleton_opt = function
-| CST.TString s -> Some s.value
-| _ -> None
 
 type statement_result =
   Binding of (AST.expression -> AST.expression)
@@ -700,8 +675,10 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let body = compile_function_body_to_expression ~raise body in
     let aux (binder,attr,rhs) expr = e_let_in binder attr rhs expr in
     let expr = List.fold_right ~f:aux exprs ~init:body  in
-    let fa = Option.value ~default:[] fa in
-    let _fv = List.dedup_and_sort ~compare:String.compare @@ fa @ fv in
+    let _fv =
+      let fa = Option.value ~default:[] fa in
+      List.dedup_and_sort ~compare:String.compare @@ fa @ fv
+    in
     return @@ e_lambda ~loc binder lhs_type expr
   | EAnnot {value = (EArith(Int i), _, TVar {value = "nat"; _}); region=_ } ->
     let ((_,i), loc) = r_split i in

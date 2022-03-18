@@ -5,8 +5,6 @@ open Stage_common.Constant
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-let extract = Ligo_string.extract
-
 let rec check_no_nested_bigmap ~raise is_in_bigmap e =
   match e.type_content with
   | T_constant {injection=Big_map; _} when is_in_bigmap ->
