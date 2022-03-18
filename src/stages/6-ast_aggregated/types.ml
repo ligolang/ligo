@@ -13,7 +13,6 @@ and type_content =
   | T_record   of rows
   | T_arrow    of ty_expr arrow
   | T_singleton of literal
-  | T_abstraction of ty_expr abstraction
   | T_for_all of ty_expr abstraction
 
 and type_injection = {

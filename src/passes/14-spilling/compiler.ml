@@ -340,8 +340,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   )
   | T_singleton _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
-  | T_abstraction _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "Abstraction type uncaught"
   | T_for_all _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
