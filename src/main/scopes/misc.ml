@@ -2,9 +2,6 @@ open Types
 
 type tenv = Environment.t
 
-let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -> bool = fun v1 v2 ->
-  Ast_typed.ValueVar.equal v1 v2
-
 let extract_variable_types :
   bindings_map -> Ast_typed.declaration -> bindings_map =
   fun prev decl ->

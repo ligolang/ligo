@@ -5,7 +5,10 @@ module Test.Integrational.Capabilities.Completion
 import AST.Scope (Standard)
 
 import Test.Common.Capabilities.Completion
-import Test.Tasty (TestTree)
+import Test.Tasty (TestTree, testGroup)
 
 test_completion :: IO TestTree
-test_completion = completionDriver @Standard caseInfos
+test_completion = testGroup "Simple completion" <$> sequenceA
+  [ completionDriver @Standard caseInfos
+  --, completionDriver @FromCompiler caseInfos  -- FIXME (LIGO-93) (LIGO-208)
+  ]

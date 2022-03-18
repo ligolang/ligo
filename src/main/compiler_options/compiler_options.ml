@@ -8,14 +8,9 @@ let make_raw_options = Raw_options.make
 
 let default_raw_options = Raw_options.default
 
-type formatter = {
-  show_warnings : bool ;
-  warning_as_error : bool ;
-}
-
 type frontend = {
   syntax : string ;
-  dialect : string ;
+  (* dialect : string ; [@dead "frontend.dialect"]  *)
   entry_point : string ;
   libraries : string list ;
   project_root : string option ;
@@ -28,11 +23,9 @@ type tools = {
 
 type test_framework = {
   steps : int ;
-  generator : string ;
 }
 
 type middle_end = {
-  infer : bool ;
   test : bool ;
   init_env : Environment.t ;
   protocol_version : Protocols.t ;
@@ -51,7 +44,6 @@ type backend = {
 }
 
 type t = {
-  formatter : formatter ;
   frontend : frontend ;
   tools : tools ;
   test_framework : test_framework ;
@@ -71,13 +63,8 @@ let make :
     ?(test = false)
     ?(has_env_comments = false)
     () ->
-      let formatter = {
-        show_warnings = raw_options.show_warnings;
-        warning_as_error = raw_options.warning_as_error;
-      } in
       let frontend = {
         syntax = raw_options.syntax ;
-        dialect = raw_options.dialect ;
         libraries = raw_options.libraries;
         entry_point = raw_options.entry_point;
         project_root = raw_options.project_root;
@@ -88,10 +75,8 @@ let make :
       } in
       let test_framework = {
         steps = raw_options.steps;
-        generator = raw_options.generator;
       } in
       let middle_end = {
-        infer = Default_options.infer ;
         test ;
         init_env = if test then default_with_test protocol_version else default protocol_version ;
         protocol_version;
@@ -107,7 +92,6 @@ let make :
       } 
       in
       { 
-        formatter ;
         frontend ;
         tools ;
         test_framework ;

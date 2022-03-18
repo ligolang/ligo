@@ -7,8 +7,6 @@ module Fold_helpers(M : Monad) = struct
   type 'a monad = 'a t
   let ok x = return x
 
-  let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
-
   let bind_map_npseq f (hd, tl) =
     let* hd = f hd in
     let* tl = bind_map_list (fun (a,b) -> let* b = f b in ok (a,b)) tl
@@ -19,253 +17,11 @@ module Fold_helpers(M : Monad) = struct
     let* tl = bind_map_list (fun a -> let* a = f a in ok a) tl
     in ok (hd,tl)
 
-  let bind_fold_npseq f init (hd,tl) =
-    let* res = f init hd in
-    let* res = bind_fold_list (fun init (_,b) -> f init b) res tl
-    in ok res
-
-  let bind_fold_nseq f init (hd,tl) =
-    let* res = f init hd in
-    let* res = bind_fold_list (fun init b -> f init b) res tl
-    in ok res
-
   type 'a folder = {
       e : 'a -> expr -> 'a monad;
       t : 'a -> type_expr -> 'a monad ;
       d : 'a -> statement -> 'a monad;
     }
-
-  let rec fold_type_expression : 'a folder -> 'a -> type_expr -> 'a monad = fun f init t ->
-    let self = fold_type_expression f in
-    let self_variant = fold_variant f in
-    let* init = f.t init t in
-    match t with
-    | TProd  {inside={value={inside; _}; _}; _} ->
-      bind_fold_ne_list self init @@ npseq_to_ne_list inside
-    | TSum    {value;region=_} ->
-      let {variants; attributes=_;leading_vbar=_} = value in
-      bind_fold_ne_list self_variant init @@ npseq_to_ne_list variants.value
-    | TObject {value;region=_} ->
-       let aux init ({value;region=_} : _ reg) =
-         let {field_name=_;colon=_;field_type;attributes=_} = value in
-         self init field_type
-       in
-       bind_fold_ne_list aux init @@ npseq_to_ne_list value.ne_elements
-    | TApp    {value;region=_} ->
-       let (_, tuple) = value in
-       bind_fold_ne_list self init @@ npseq_to_ne_list tuple.value.inside
-    | TFun    {value;region=_} ->
-       let (ty1, _, ty2) = value in
-       let fold_function_arg init ({type_expr; _}: fun_type_arg) = self init type_expr in
-       let* res = bind_fold_ne_list fold_function_arg init @@ npseq_to_ne_list ty1.inside in
-       let* res = self res  ty2 in
-       ok res
-    | TPar    {value;region=_} ->
-       self init value.inside
-    | TVar    _
-    | TModA _
-    | TInt _
-    | TString _ -> ok @@ init
-
-  and fold_variant : 'a folder -> 'a -> variant reg -> 'a monad =
-    fun f init v ->
-    let self_type = fold_type_expression f in
-    let component = v.value.tuple.value.inside in
-    let ({params; _}:variant_comp) = component in
-    match params with 
-       Some params -> bind_fold_ne_list self_type init (npseq_to_ne_list (snd params))
-    | None         -> ok init
-
-  let rec fold_expression : 'a folder -> 'a -> expr -> 'a monad = fun f init e  ->
-    let self = fold_expression f in
-    let self_type = fold_type_expression f in
-    let self_statement = fold_statement f in
-    let _self_module = fold_module f in
-    let* init = f.e init e in
-    let bin_op value =
-      let {op=_;arg1;arg2} = value in
-      let* res = fold_expression f init arg1 in
-      let* res = fold_expression f res  arg2 in
-      ok res
-    in
-    match e with
-      EAnnot   {value;region=_} ->
-       let (expr, _, type_expr) = value in
-       let* res = self init expr in
-       let* res = self_type res type_expr in
-       ok res
-    | ELogic BoolExpr Or  {value;region=_} -> bin_op value
-    | ELogic BoolExpr And {value;region=_} -> bin_op value
-    | ELogic BoolExpr Not {value;region=_} ->
-       let {op=_;arg} = value in
-       let* res = fold_expression f init arg in
-       ok res
-    | ELogic CompExpr Lt    {value;region=_}
-      | ELogic CompExpr Leq   {value;region=_}
-      | ELogic CompExpr Gt    {value;region=_}
-      | ELogic CompExpr Geq   {value;region=_}
-      | ELogic CompExpr Equal {value;region=_}
-      | ELogic CompExpr Neq   {value;region=_} ->
-       bin_op value
-    | EArith Add   {value;region=_}
-      | EArith Sub   {value;region=_}
-      | EArith Mult  {value;region=_}
-      | EArith Div   {value;region=_}
-      | EArith Mod   {value;region=_} ->
-       bin_op value
-    | EArith Neg   {value;region=_} ->
-       let {op=_;arg} = value in
-       let* res = fold_expression f init arg in
-       ok res
-    | EArith Int _ -> ok init
-    | EString String   _
-      | EString Verbatim _
-      | EModA _
-      | EVar _ -> ok init
-    | EObject  {value;region=_} ->
-       let aux init = function
-           Punned_property {value; _} -> self init value
-         | Property {value; _} ->
-            let {name; value; _} = value in
-            let* res = self init name in
-            let* res = self res value in
-            self res name
-         | Property_rest {value; _} ->
-            let ({expr; _}: property_rest) = value in
-            self init expr
-       in
-       bind_fold_ne_list aux init @@ npseq_to_ne_list value.inside
-    | EProj    {value; _} ->
-       let {expr; selection} = value in
-       let fold_selection init = function
-           FieldName _ -> ok init
-         | Component {value = {inside; _}; _} ->
-            let* res = self init inside in
-            ok res
-       in
-       let* res = self init expr in
-       let* res = fold_selection res selection in
-       ok res
-    | ECall    {value;region=_} ->
-       let (lam, args) = value in
-       let* res = self init lam in
-       (match args with
-        | Unit _ -> ok res
-        | Multiple {value;region=_} ->
-           bind_fold_ne_list self res @@ npseq_to_ne_list value.inside
-       )
-    | EBytes   _ -> ok @@ init
-    | EUnit    _ -> ok @@ init
-    | EPar     {value;region=_} ->
-       self init value.inside
-    | EFun     {value;region=_} ->
-       let {parameters; lhs_type; arrow=_; body} = value in
-       let* res = self init parameters in
-       let* res =
-         (match lhs_type with
-            Some (_, ty) -> self_type res ty
-          | None ->    ok res
-         ) in
-       (match body with
-          FunctionBody {value = {inside; _}; _} ->
-           bind_fold_npseq self_statement res inside
-        | ExpressionBody e -> self res e
-       )
-    | ESeq     {value;region=_} ->
-       bind_fold_npseq self init value
-    | ECodeInj _ ->
-       ok @@ init
-    | EArray {value = {inside; _}; _} ->
-       let fold_array_item init = function
-           Expr_entry e -> self init e
-         | Rest_entry {value = {expr; _}; _} -> self init expr
-       in
-       (match inside with 
-          Some inside -> bind_fold_npseq fold_array_item init inside
-        | None -> ok init)
-    | EAssign (e1, _, e2) ->
-       let* res = self init e1 in
-       let* res = self res e2 in
-       self res e1    
-    | EConstr {value;region=_} ->
-       let _, expr = value in
-       (match expr with
-          None -> ok @@ init
-        | Some e -> self init e
-       )
-  
-  and fold_statement : 'a folder -> 'a -> statement -> 'a monad =
-    fun f init d ->
-    let self_expr = fold_expression f in
-    let self_type = fold_type_expression f in
-    let _self_module = fold_module f in
-    let self = fold_statement f in
-    let* init = f.d init d in
-    match d with
-      SBlock {value = {inside; _}; _} -> bind_fold_npseq self init inside
-    | SExpr e -> self_expr init e
-    | SCond {value = {kwd_if=_; test; ifso; ifnot}; _} ->
-       let* res = self_expr init test.inside in
-       let* res = self res ifso in
-       (match ifnot with
-        | None -> ok res
-        | Some (_,e) -> self res e
-       )
-    | SReturn {value = {expr; _}; _} ->
-       (match expr with
-        | None -> ok init
-        | Some e -> self_expr init e
-       )
-    | SLet {value = {bindings; _}; _}
-    | SConst {value = {bindings; _}; _} ->
-       let fold_binding init ({value; _}: val_binding reg) =
-      let {lhs_type; expr; _} = value in
-      let* res =
-        match lhs_type with
-        | None -> ok init
-        | Some (_, t) -> self_type init t
-      in
-      self_expr res expr
-      in
-      bind_fold_npseq fold_binding init bindings
-    | SType {value; _} -> self_type init value.type_expr
-    | SSwitch {value = {expr; cases; _}; _} ->
-       let* res = self_expr init expr in
-       let fold_case init = function
-           Switch_case {expr; statements; _} ->
-            let* res = self_expr init expr in
-            (match statements with
-               None -> ok res
-             | Some s -> bind_fold_npseq self res s
-            )
-         | Switch_default_case {statements; _} ->
-            (match statements with
-               None -> ok res
-             | Some s -> bind_fold_npseq self res s
-            )
-       in
-       bind_fold_ne_list fold_case res cases
-    | SBreak _ -> ok init
-    | SNamespace {value = (_, _, {value = {inside; _}; _}, _); _} -> bind_fold_npseq self init inside
-    | SExport {value = (_, s); _} -> self init s 
-    | SImport _ -> ok init
-    | SForOf {value = {expr; statement; _}; _}
-      | SWhile {value = {expr; statement; _}; _} ->
-       let* res = self_expr init expr in
-       self res statement
-
-  and remove_directives : toplevel_statements -> statement list =
-    fun (first, rest) ->
-    let app top acc =
-      match top with
-        TopLevel (stmt, _) -> stmt::acc
-      | Directive _ -> acc in
-    List.fold_right ~f:app (first::rest) ~init:[]
-
-  and fold_module : 'a folder -> 'a -> Cst.Jsligo.t -> 'a monad =
-    fun f init {statements; _} ->
-    let stmts = remove_directives statements in
-    bind_fold_list (fold_statement f) init stmts
 
   type mapper = {
       e : expr -> (bool * expr) monad;
@@ -347,7 +103,6 @@ module Fold_helpers(M : Monad) = struct
 
   let rec map_expression : mapper -> expr -> expr monad = fun f e  ->
     let self_type = map_type_expression f in
-    let _self_module = map_module f in
     let self_statement = map_statement f in
     let return = ok in
     let* (b, e) = f.e e in
@@ -532,7 +287,6 @@ module Fold_helpers(M : Monad) = struct
     let self = map_statement f in
     let self_expr = map_expression f in
     let self_type = map_type_expression f in
-    let _self_module = map_module f in
     let return = ok in
     match s with
       SBlock {value; region} ->

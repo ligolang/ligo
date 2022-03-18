@@ -225,8 +225,6 @@ and declaration = function
   | Module_alias         ma -> `List [ `String "Module_alias";         module_alias ma]
 
 and module_ (p) = list (Location.wrap_to_yojson declaration) p
-let module_with_unification_vars (Module_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
-
 
 (* Environment *)
 

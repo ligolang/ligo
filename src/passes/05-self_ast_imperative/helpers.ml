@@ -3,13 +3,6 @@ module Var  = Simple_utils.Var
 open Ast_imperative
 open Stage_common
 
-let map_lmap_t f map =
-  LMap.map
-    (fun ({associated_type;_} as field : _ row_element) ->
-      let associated_type = f associated_type in
-      {field with associated_type })
-    map
-
 type ('a,'err) folder = 'a -> expression -> 'a
 let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
@@ -358,10 +351,6 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
     (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> (init, return e')
-
-
-let in_vars var vars =
-  List.mem ~equal:ValueVar.equal vars var
 
 let remove_from var vars =
   let f v vars = if ValueVar.equal var v then vars else v :: vars in

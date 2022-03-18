@@ -1,7 +1,5 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
 let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 

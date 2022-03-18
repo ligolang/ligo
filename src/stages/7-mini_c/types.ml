@@ -52,11 +52,6 @@ and environment_element = expression_variable * type_expression
 
 and environment = environment_element list
 
-and environment_wrap = {
-  pre_environment : environment ;
-  post_environment : environment ;
-}
-
 and var_name = expression_variable
 and fun_name = expression_variable
 

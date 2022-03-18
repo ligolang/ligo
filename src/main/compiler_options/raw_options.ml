@@ -1,11 +1,9 @@
 type raw = {
   (* Formatter *)
-  show_warnings : bool ;
   warning_as_error : bool ;
   
   (* Frontend *)
   syntax : string ;
-  dialect : string ;
   entry_point : string ;
   libraries : string list ;
   project_root : string option ;
@@ -58,10 +56,8 @@ module Default_options = struct
 end
 
 let make 
-  ?(show_warnings = Default_options.show_warnings)
   ?(warning_as_error = Default_options.warning_as_error)
   ?(syntax = Default_options.syntax)
-  ?(dialect = Default_options.dialect)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
   ?(project_root = Default_options.project_root)
@@ -78,12 +74,10 @@ let make
   () = 
 {
   (* Formatter *)
-  show_warnings ;
   warning_as_error ;
   
   (* Frontend *)
   syntax ;
-  dialect ;
   entry_point ;
   libraries ;
   project_root ;
@@ -108,12 +102,10 @@ let make
 let default =
 {
   (* Formatter *)
-  show_warnings = Default_options.show_warnings ;
   warning_as_error = Default_options.show_warnings ;
   
   (* Frontend *)
   syntax = Default_options.syntax ;
-  dialect = Default_options.dialect ;
   entry_point = Default_options.entry_point ;
   libraries = Default_options.libraries ;
   project_root = Default_options.project_root ;

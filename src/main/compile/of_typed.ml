@@ -19,9 +19,6 @@ let compile_expression ~raise : Ast_typed.expression -> Ast_aggregated.expressio
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression x
 
-let compile_type ~raise : Ast_typed.type_expression -> Ast_aggregated.type_expression = fun e ->
-  trace ~raise aggregation_tracer @@ compile_type e
-
 let apply_to_entrypoint_contract ~raise : Ast_typed.program -> Ast_typed.expression_variable -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in

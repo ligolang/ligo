@@ -84,9 +84,9 @@ and environment_element_definition =
 and free_variables = expression_variable list
 
 and environment_element =
-  { type_value: type_expression
-  ; source_environment: environment
-  ; definition: environment_element_definition }
+  { type_value: type_expression ;
+    definition: environment_element_definition
+  }
 
 and expr_environment = (expression_variable * environment_element) list
 and type_environment = (type_variable * type_expression) list

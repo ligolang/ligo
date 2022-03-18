@@ -57,9 +57,6 @@ let get_timestamp (ctxt : context) =
 let get_balance ~raise ~loc ~calltrace (ctxt :context) addr =
   Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
-let get_contract ~raise ~loc ~calltrace (ctxt :context) addr =
-  Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-    Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> bool = fun ctxt contract ->
   let info = Lwt_main.run @@
     Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
@@ -94,12 +91,6 @@ let canonical_to_ligo : canonical_repr -> ligo_repr =
   x |> Tezos_protocol.Protocol.Michelson_v1_primitives.strings_of_prims
     |> Tezos_micheline.Micheline.inject_locations (fun _ -> ())
 
-let node_to_canonical m =
-    let open Tezos_micheline.Micheline in
-    let x = inject_locations (fun _ -> 0) (strip_locations m) in
-    let x = strip_locations x in
-    Tezos_protocol.Protocol.Michelson_v1_primitives.prims_of_strings x
-
 let parse_constant ~raise ~loc ~calltrace code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in
@@ -113,8 +104,6 @@ let parse_constant ~raise ~loc ~calltrace code =
                  | [] -> map_node (fun _ -> ()) (fun x -> x) code
              ) in
   code
-  (* Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@
-   *   node_to_canonical code *)
 
 
 (* REMITODO: NOT STATE RELATED, move out ? *)
@@ -129,12 +118,6 @@ let get_contract_rejection_data :
       let x = canonical_to_ligo x in
       Some (contract,x)
     | _ -> None
-
-let get_big_map ~raise (ctxt : context) id key key_ty  =
-  let data = List.Assoc.find_exn ctxt.transduced.bigmaps ~equal:Int.equal id in
-  let key_value = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps key_ty key in
-  let state = data.version in
-  List.Assoc.find state ~equal:equal_value key_value
 
 let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
   let open Tezos_micheline.Micheline in

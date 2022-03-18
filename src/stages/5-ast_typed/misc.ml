@@ -210,45 +210,6 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
-let rec assert_value_eq (a, b: (expression*expression)) : unit option =
-  let open Option in
-  match (a.expression_content, b.expression_content) with
-  | E_literal a, E_literal b ->
-      assert_literal_eq (a, b)
-  | E_constant {cons_name=ca;arguments=lsta}, E_constant {cons_name=cb;arguments=lstb} when Caml.(=) ca cb -> (
-    let* _ = assert_same_size lsta lstb in
-    List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_value_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
-  )
-  | E_constant _, E_constant _ -> None
-  | E_constant _, _ -> None
-  | E_constructor {constructor=ca;element=a}, E_constructor {constructor=cb;element=b} when Caml.(=) ca cb -> (
-    assert_value_eq (a, b)
-  )
-  | E_constructor _, E_constructor _ -> None
-  | E_constructor _, _ -> None
-  | E_record sma, E_record smb -> (
-      let aux (Label _k) a b =
-        match a, b with
-        | Some a, Some b -> assert_value_eq (a, b)
-        | _              -> None
-      in
-      let all = LMap.merge aux sma smb in
-      if    ((LMap.cardinal all) = (LMap.cardinal sma))
-         || ((LMap.cardinal all) = (LMap.cardinal smb)) then
-        Some ()
-      else None
-    )
-  | E_module_accessor {module_name=mna;element=a}, E_module_accessor {module_name=mnb;element=b} when ModuleVar.equal mna mnb -> (
-    assert_value_eq (a,b)
-  )
-  | E_record _, _
-  | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_type_abstraction _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
-  | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
-  | (E_record_accessor _, _) | (E_record_update _,_) | (E_type_inst _, _)
-  | (E_matching _, _)
-  | E_module_accessor _, _
-  -> None
 
 let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
   let open Option in
@@ -275,8 +236,3 @@ let get_entry (lst : program) (name : expression_variable) : expression option =
     | Module_alias       _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
-
-let equal_variables a b : bool =
-  match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> ValueVar.equal a b
-  |  _, _ -> false

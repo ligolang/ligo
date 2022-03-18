@@ -517,22 +517,6 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
   else
     restore_mutable_variable fold free_vars env_rec
 
-and compile_declaration ~raise : I.declaration Location.wrap -> _ =
-  fun {wrap_content=declaration;location} ->
-  let return decl = Location.wrap ~loc:location decl in
-  match declaration with
-  | I.Declaration_type dt ->
-    let dt = declaration_type (compile_type_expression ~raise) dt in
-    return @@ O.Declaration_type dt
-  | I.Declaration_constant dc ->
-    let dc = declaration_constant (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dc in
-    return @@ O.Declaration_constant dc
-  | I.Declaration_module dm ->
-    let dm = declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dm in
-    return @@ O.Declaration_module dm
-  | I.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ O.Module_alias ma
 
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
   module' (compile_expression ~raise ~last:true) (compile_type_expression ~raise) m

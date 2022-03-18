@@ -140,22 +140,5 @@ let rec decompile_expression : O.expression -> I.expression =
     let set = List.map ~f:self set in
     return @@ I.E_set set
 
-let decompile_declaration : O.declaration Location.wrap -> _ = fun {wrap_content=declaration;location} ->
-  let return decl = Location.wrap ~loc:location decl in
-  match declaration with
-  | O.Declaration_type dt ->
-    let dt = declaration_type decompile_type_expression dt in
-    return @@ I.Declaration_type dt
-  | O.Declaration_constant dc ->
-    let dc = declaration_constant decompile_expression decompile_type_expression dc in
-    return @@ I.Declaration_constant dc
-  | O.Declaration_module dm ->
-    let dm = declaration_module decompile_expression decompile_type_expression dm in
-    return @@ I.Declaration_module dm
-  | O.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ I.Module_alias ma
-
-
 let decompile_module : O.module_ -> I.module_ = fun m ->
   module' decompile_expression decompile_type_expression m

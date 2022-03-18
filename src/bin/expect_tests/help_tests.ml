@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_good [ "-help" ] ;
   [%expect {|
-    the LigoLANG compiler
+    The LigoLANG compiler
 
       ligo SUBCOMMAND
 
@@ -35,59 +35,66 @@ let%expect_test _ =
 
     === flags ===
 
-      [--constants CONSTANTS]             A list of global constants that will be
-                                          assumed in the context, separated by ','
-                                          (alias: -c)
-      [--disable-michelson-typechecking]  Disable Michelson typecking, this might
-                                          produce ill-typed Michelson code.
-      [--display-format format]           the format that will be used by the CLI.
-                                          Available formats are 'dev', 'json', and
-                                          'human-readable' (default). When
-                                          human-readable lacks details (we are still
-                                          tweaking it), please contact us and use
-                                          another format in the meanwhile.
-                                          (alias: --format)
-      [--file-constants FILE_CONSTANTS]   A file with a JSON list of strings with
-                                          Michelson code. Those Michelson values
-                                          will be registered as global constants in
-                                          the context.
-      [--michelson-comments Selects] ...  kinds of comments to be added to the
-                                          Michelson output. Currently 'location' and
-                                          'env' are supported. 'location' propagates
-                                          original source locations. 'env' inserts
-                                          additional empty Seq nodes with comments
-                                          relating the Michelson stack to the source
-                                          LIGO environment.
-      [--michelson-format format]         is the format that will be used by
-                                          compile-contract for the resulting
-                                          Michelson. Available formats are 'text'
-                                          (default), 'json' and 'hex'.
-      [--no-warn]                         disable warning messages
-      [--output-file FILENAME]            if used, prints the output into the
-                                          specified file instead of stdout
-                                          (alias: -o)
-      [--project-root PATH]               The path to root of the project.
-      [--syntax SYNTAX]                   the syntax that will be used. Currently
-                                          supported syntaxes are "pascaligo",
-                                          "cameligo", "reasonligo" and "jsligo". By
-                                          default, the syntax is guessed from the
-                                          extension (.ligo, .mligo, .religo, and
-                                          .jsligo respectively).
-                                          (alias: -s)
-      [--views VIEWS]                     A list of declaration name that will be
-                                          compiled as on-chain views, separated by
-                                          ','
-                                          (alias: -v)
-      [--werror]                          treat warnings as errors
-      [-e ENTRY-POINT]                    the entry-point that will be compiled.
-                                          (alias: --entry-point)
-      [-p PROTOCOL]                       choose protocol's types/values pre-loaded
-                                          into the LIGO environment (hangzhou ,
-                                          ithaca). By default, the current protocol
-                                          (hangzhou) will be used
-                                          (alias: --protocol)
-      [-help]                             print this help text and exit
-                                          (alias: -?)
+      [--constants CONSTANTS]                  A list of global constants that will
+                                               be assumed in the context, separated
+                                               by ','
+                                               (alias: -c)
+      [--disable-michelson-typechecking]       Disable Michelson typecking, this
+                                               might produce ill-typed Michelson
+                                               code.
+      [--display-format FORMAT]                the format that will be used by the
+                                               CLI. Available formats are 'dev',
+                                               'json', and 'human-readable'
+                                               (default). When human-readable lacks
+                                               details (we are still tweaking it),
+                                               please contact us and use another
+                                               format in the meanwhile.
+                                               (alias: --format)
+      [--file-constants FILE_CONSTANTS]        A file with a JSON list of strings
+                                               with Michelson code. Those Michelson
+                                               values will be registered as global
+                                               constants in the context.
+      [--michelson-comments COMMENT_TYPE] ...  Selects kinds of comments to be added
+                                               to the Michelson output. Currently
+                                               'location' and 'env' are supported.
+                                               'location' propagates original source
+                                               locations. 'env' inserts additional
+                                               empty Seq nodes with comments
+                                               relating the Michelson stack to the
+                                               source LIGO environment.
+      [--michelson-format CODE_FORMAT]         format that will be used by
+                                               compile-contract for the resulting
+                                               Michelson. Available formats are
+                                               'text' (default), 'json' and 'hex'.
+      [--no-warn]                              disable warning messages
+      [--output-file FILENAME]                 if used, prints the output into the
+                                               specified file instead of stdout
+                                               (alias: -o)
+      [--project-root PATH]                    The path to root of the project.
+      [--syntax SYNTAX]                        the syntax that will be used.
+                                               Currently supported syntaxes are
+                                               "pascaligo", "cameligo", "reasonligo"
+                                               and "jsligo". By default, the syntax
+                                               is guessed from the extension (.ligo,
+                                               .mligo, .religo, and .jsligo
+                                               respectively).
+                                               (alias: -s)
+      [--views VIEWS]                          A list of declaration name that will
+                                               be compiled as on-chain views,
+                                               separated by ','
+                                               (alias: -v)
+      [--werror]                               treat warnings as errors
+      [-e ENTRY-POINT]                         the entry-point that will be
+                                               compiled.
+                                               (alias: --entry-point)
+      [-p PROTOCOL]                            choose protocol's types/values
+                                               pre-loaded into the LIGO environment
+                                               (hangzhou ,
+                                               ithaca). By default, the current
+                                               protocol (hangzhou) will be used
+                                               (alias: --protocol)
+      [-help]                                  print this help text and exit
+                                               (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ]
 
@@ -102,48 +109,49 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]               the tezos amount the Michelson interpreter will
-                                   use for the transaction.
-      [--balance INT]              the balance the Michelson interpreter will use
-                                   for the contract balance.
-      [--display-format format]    the format that will be used by the CLI.
-                                   Available formats are 'dev', 'json', and
-                                   'human-readable' (default). When human-readable
-                                   lacks details (we are still tweaking it), please
-                                   contact us and use another format in the
-                                   meanwhile.
-                                   (alias: --format)
-      [--michelson-format format]  is the format that will be used by
-                                   compile-contract for the resulting Michelson.
-                                   Available formats are 'text' (default), 'json'
-                                   and 'hex'.
-      [--no-warn]                  disable warning messages
-      [--now TIMESTAMP]            the NOW value the Michelson interpreter will use
-                                   (e.g. '2000-01-01T10:10:10Z')
-      [--output-file FILENAME]     if used, prints the output into the specified
-                                   file instead of stdout
-                                   (alias: -o)
-      [--project-root PATH]        The path to root of the project.
-      [--sender ADDRESS]           the sender the Michelson interpreter transaction
-                                   will use.
-      [--source ADDRESS]           the source the Michelson interpreter transaction
-                                   will use.
-      [--syntax SYNTAX]            the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
-                                   (alias: -s)
-      [--werror]                   treat warnings as errors
-      [-e ENTRY-POINT]             the entry-point that will be compiled.
-                                   (alias: --entry-point)
-      [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (hangzhou ,
-                                   ithaca). By default, the current protocol
-                                   (hangzhou) will be used
-                                   (alias: --protocol)
-      [-help]                      print this help text and exit
-                                   (alias: -?)
+      [--amount INT]                    the tezos amount the Michelson interpreter
+                                        will use for the transaction.
+      [--balance INT]                   the balance the Michelson interpreter will
+                                        use for the contract balance.
+      [--display-format FORMAT]         the format that will be used by the CLI.
+                                        Available formats are 'dev', 'json', and
+                                        'human-readable' (default). When
+                                        human-readable lacks details (we are still
+                                        tweaking it), please contact us and use
+                                        another format in the meanwhile.
+                                        (alias: --format)
+      [--michelson-format CODE_FORMAT]  format that will be used by compile-contract
+                                        for the resulting Michelson. Available
+                                        formats are 'text' (default), 'json' and
+                                        'hex'.
+      [--no-warn]                       disable warning messages
+      [--now TIMESTAMP]                 the NOW value the Michelson interpreter will
+                                        use (e.g. '2000-01-01T10:10:10Z')
+      [--output-file FILENAME]          if used, prints the output into the
+                                        specified file instead of stdout
+                                        (alias: -o)
+      [--project-root PATH]             The path to root of the project.
+      [--sender ADDRESS]                the sender the Michelson interpreter
+                                        transaction will use.
+      [--source ADDRESS]                the source the Michelson interpreter
+                                        transaction will use.
+      [--syntax SYNTAX]                 the syntax that will be used. Currently
+                                        supported syntaxes are "pascaligo",
+                                        "cameligo", "reasonligo" and "jsligo". By
+                                        default, the syntax is guessed from the
+                                        extension (.ligo, .mligo, .religo, and
+                                        .jsligo respectively).
+                                        (alias: -s)
+      [--werror]                        treat warnings as errors
+      [-e ENTRY-POINT]                  the entry-point that will be compiled.
+                                        (alias: --entry-point)
+      [-p PROTOCOL]                     choose protocol's types/values pre-loaded
+                                        into the LIGO environment (hangzhou ,
+                                        ithaca). By default, the current protocol
+                                        (hangzhou) will be used
+                                        (alias: --protocol)
+      [-help]                           print this help text and exit
+                                        (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ]
 
@@ -158,48 +166,49 @@ let%expect_test _ =
 
     === flags ===
 
-      [--amount INT]               the tezos amount the Michelson interpreter will
-                                   use for the transaction.
-      [--balance INT]              the balance the Michelson interpreter will use
-                                   for the contract balance.
-      [--display-format format]    the format that will be used by the CLI.
-                                   Available formats are 'dev', 'json', and
-                                   'human-readable' (default). When human-readable
-                                   lacks details (we are still tweaking it), please
-                                   contact us and use another format in the
-                                   meanwhile.
-                                   (alias: --format)
-      [--michelson-format format]  is the format that will be used by
-                                   compile-contract for the resulting Michelson.
-                                   Available formats are 'text' (default), 'json'
-                                   and 'hex'.
-      [--no-warn]                  disable warning messages
-      [--now TIMESTAMP]            the NOW value the Michelson interpreter will use
-                                   (e.g. '2000-01-01T10:10:10Z')
-      [--output-file FILENAME]     if used, prints the output into the specified
-                                   file instead of stdout
-                                   (alias: -o)
-      [--project-root PATH]        The path to root of the project.
-      [--sender ADDRESS]           the sender the Michelson interpreter transaction
-                                   will use.
-      [--source ADDRESS]           the source the Michelson interpreter transaction
-                                   will use.
-      [--syntax SYNTAX]            the syntax that will be used. Currently supported
-                                   syntaxes are "pascaligo", "cameligo",
-                                   "reasonligo" and "jsligo". By default, the syntax
-                                   is guessed from the extension (.ligo, .mligo,
-                                   .religo, and .jsligo respectively).
-                                   (alias: -s)
-      [--werror]                   treat warnings as errors
-      [-e ENTRY-POINT]             the entry-point that will be compiled.
-                                   (alias: --entry-point)
-      [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (hangzhou ,
-                                   ithaca). By default, the current protocol
-                                   (hangzhou) will be used
-                                   (alias: --protocol)
-      [-help]                      print this help text and exit
-                                   (alias: -?)
+      [--amount INT]                    the tezos amount the Michelson interpreter
+                                        will use for the transaction.
+      [--balance INT]                   the balance the Michelson interpreter will
+                                        use for the contract balance.
+      [--display-format FORMAT]         the format that will be used by the CLI.
+                                        Available formats are 'dev', 'json', and
+                                        'human-readable' (default). When
+                                        human-readable lacks details (we are still
+                                        tweaking it), please contact us and use
+                                        another format in the meanwhile.
+                                        (alias: --format)
+      [--michelson-format CODE_FORMAT]  format that will be used by compile-contract
+                                        for the resulting Michelson. Available
+                                        formats are 'text' (default), 'json' and
+                                        'hex'.
+      [--no-warn]                       disable warning messages
+      [--now TIMESTAMP]                 the NOW value the Michelson interpreter will
+                                        use (e.g. '2000-01-01T10:10:10Z')
+      [--output-file FILENAME]          if used, prints the output into the
+                                        specified file instead of stdout
+                                        (alias: -o)
+      [--project-root PATH]             The path to root of the project.
+      [--sender ADDRESS]                the sender the Michelson interpreter
+                                        transaction will use.
+      [--source ADDRESS]                the source the Michelson interpreter
+                                        transaction will use.
+      [--syntax SYNTAX]                 the syntax that will be used. Currently
+                                        supported syntaxes are "pascaligo",
+                                        "cameligo", "reasonligo" and "jsligo". By
+                                        default, the syntax is guessed from the
+                                        extension (.ligo, .mligo, .religo, and
+                                        .jsligo respectively).
+                                        (alias: -s)
+      [--werror]                        treat warnings as errors
+      [-e ENTRY-POINT]                  the entry-point that will be compiled.
+                                        (alias: --entry-point)
+      [-p PROTOCOL]                     choose protocol's types/values pre-loaded
+                                        into the LIGO environment (hangzhou ,
+                                        ithaca). By default, the current protocol
+                                        (hangzhou) will be used
+                                        (alias: --protocol)
+      [-help]                           print this help text and exit
+                                        (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ]
 
@@ -214,7 +223,7 @@ let%expect_test _ =
 
     === flags ===
 
-      [--display-format format]  the format that will be used by the CLI. Available
+      [--display-format FORMAT]  the format that will be used by the CLI. Available
                                  formats are 'dev', 'json', and 'human-readable'
                                  (default). When human-readable lacks details (we
                                  are still tweaking it), please contact us and use
@@ -251,7 +260,7 @@ let%expect_test _ =
                                  for the transaction.
       [--balance INT]            the balance the Michelson interpreter will use for
                                  the contract balance.
-      [--display-format format]  the format that will be used by the CLI. Available
+      [--display-format FORMAT]  the format that will be used by the CLI. Available
                                  formats are 'dev', 'json', and 'human-readable'
                                  (default). When human-readable lacks details (we
                                  are still tweaking it), please contact us and use
@@ -299,7 +308,7 @@ let%expect_test _ =
                                  for the transaction.
       [--balance INT]            the balance the Michelson interpreter will use for
                                  the contract balance.
-      [--display-format format]  the format that will be used by the CLI. Available
+      [--display-format FORMAT]  the format that will be used by the CLI. Available
                                  formats are 'dev', 'json', and 'human-readable'
                                  (default). When human-readable lacks details (we
                                  are still tweaking it), please contact us and use
@@ -348,7 +357,7 @@ let%expect_test _ =
                                  for the transaction.
       [--balance INT]            the balance the Michelson interpreter will use for
                                  the contract balance.
-      [--display-format format]  the format that will be used by the CLI. Available
+      [--display-format FORMAT]  the format that will be used by the CLI. Available
                                  formats are 'dev', 'json', and 'human-readable'
                                  (default). When human-readable lacks details (we
                                  are still tweaking it), please contact us and use
@@ -392,29 +401,29 @@ let%expect_test _ =
 
     === flags ===
 
-      [--display-format format]    the format that will be used by the CLI.
-                                   Available formats are 'dev', 'json', and
-                                   'human-readable' (default). When human-readable
-                                   lacks details (we are still tweaking it), please
-                                   contact us and use another format in the
-                                   meanwhile.
-                                   (alias: --format)
-      [--init-file FILENAME]       the path to the smart contract file to be used
-                                   for context initialization.
-      [--michelson-format format]  is the format that will be used by
-                                   compile-contract for the resulting Michelson.
-                                   Available formats are 'text' (default), 'json'
-                                   and 'hex'.
-      [--no-warn]                  disable warning messages
-      [--project-root PATH]        The path to root of the project.
-      [--werror]                   treat warnings as errors
-      [--without-run]              disable running of compiled expression.
-      [-p PROTOCOL]                choose protocol's types/values pre-loaded into
-                                   the LIGO environment (hangzhou ,
-                                   ithaca). By default, the current protocol
-                                   (hangzhou) will be used
-                                   (alias: --protocol)
-      [-help]                      print this help text and exit
-                                   (alias: -?)
+      [--display-format FORMAT]         the format that will be used by the CLI.
+                                        Available formats are 'dev', 'json', and
+                                        'human-readable' (default). When
+                                        human-readable lacks details (we are still
+                                        tweaking it), please contact us and use
+                                        another format in the meanwhile.
+                                        (alias: --format)
+      [--init-file FILENAME]            the path to the smart contract file to be
+                                        used for context initialization.
+      [--michelson-format CODE_FORMAT]  format that will be used by compile-contract
+                                        for the resulting Michelson. Available
+                                        formats are 'text' (default), 'json' and
+                                        'hex'.
+      [--no-warn]                       disable warning messages
+      [--project-root PATH]             The path to root of the project.
+      [--werror]                        treat warnings as errors
+      [--without-run]                   disable running of compiled expression.
+      [-p PROTOCOL]                     choose protocol's types/values pre-loaded
+                                        into the LIGO environment (hangzhou ,
+                                        ithaca). By default, the current protocol
+                                        (hangzhou) will be used
+                                        (alias: --protocol)
+      [-help]                           print this help text and exit
+                                        (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ] ;

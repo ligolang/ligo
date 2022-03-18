@@ -684,6 +684,22 @@ Transfer `tez` to an account, or run code of another smart contract.
 To indicate an account, use `unit` as `param`.
 
 <SyntaxTitle syntax="pascaligo">
+val create_contract &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> key_hash option -> tez -> storage -> (operation * address)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_contract : ('param * 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_contract : (('param, 'storage) -> (list(operation), 'storage)) => option(key_hash) => tez => 'storage => (operation, address)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), delegate: option&lt;key_hash&gt;, balance: tez, init: 'storage) => [operation, address]
+</SyntaxTitle>
+
+Construct an operation that originates a contract from a function. The
+optional argument of type `key_hash` represents a delegate.
+
+<SyntaxTitle syntax="pascaligo">
 val set_delegate : option (key_hash) -> operation
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -840,7 +856,7 @@ let voting_power: (key_hash:key_hash) => nat
 
 Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
 
-<h2>Sapling</h2>
+## Sapling
 
 Delphi protocol introduced the following sapling types (state and transaction) with N being an int singleton
 
@@ -981,8 +997,7 @@ let f = (tr : tr) : [int , st] =>
 
 </Syntax>
 
-
-<h2>Tickets</h2>
+## Tickets
 
 <SyntaxTitle syntax="pascaligo">
 val create_ticket&lt;value&gt; : value -> nat -> ticket (value)

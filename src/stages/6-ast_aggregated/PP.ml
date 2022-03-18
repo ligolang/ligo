@@ -103,7 +103,6 @@ let rec type_content : formatter -> type_content -> unit =
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.content
   | T_arrow            a -> arrow         type_expression ppf a
   | T_singleton       x  -> literal       ppf             x
-  | T_abstraction     x  -> abstraction   type_expression ppf x
   | T_for_all         x  -> for_all       type_expression ppf x
 
 and row : formatter -> row_element -> unit =
