@@ -18,59 +18,43 @@ let uno : storage = EURO.one;
 
 ---
 (source_file
-      (namespace_statement
-        (ModuleName)
-          (export_statement
-            (type_decl
-              (TypeName)
-              (TypeName)))
-          (export_statement
-            (let_decl
-              (var_pattern
-                (Name))
-              (type_annotation
-                (TypeName))
-              (expr
-                (expr_statement
-                  (Int)
-                  (TypeName)))))
-          (namespace_statement
-            (ModuleName)
-              (let_decl
-                (var_pattern
-                  (Name))
-                (type_annotation
-                  (TypeName))
-                (expr
-                  (expr_statement
-                    (Int)
-                    (TypeName))))
-              (let_decl
-                (var_pattern
-                  (Name))
-                (type_annotation
-                  (TypeName))
-                (expr
-                  (expr_statement
-                    (Int)
-                    (TypeName))))))
-          (import_statement
-            (ModuleName)
-              (ModuleName))
-              (type_decl
-                (TypeName)
-                (module_access_t
-                  (ModuleName) 
-                  (module_var_t
-                      (Name))))
-                (let_decl
-                  (var_pattern
-                    (Name))
-                  (type_annotation
-                    (TypeName))
-                  (expr
-                    (expr_statement
-                      (module_access
-                        (ModuleName)
-                          (module_var
-                            (Name)))))))
+  (namespace_statement (ModuleName)
+    (export_statement
+      (type_decl (TypeName) (TypeName)))
+    (export_statement
+      (let_decl 
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (expr
+          (expr_statement
+            (Int)
+            (TypeName)))))
+    (namespace_statement (ModuleName)
+      (let_decl 
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (expr
+          (expr_statement
+            (Int)
+            (TypeName))))
+      (let_decl
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (expr
+          (expr_statement
+            (Int)
+            (TypeName))))))
+  (import_statement (ModuleName) (ModuleName))
+  (type_decl 
+    (TypeName)
+    (module_access_t
+      (ModuleName) 
+      (module_var_t (Name))))
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr
+      (expr_statement
+        (module_access
+          (ModuleName)
+          (module_var (Name)))))))

@@ -1,26 +1,11 @@
-=========
-sum
-=========
-
-type foo = /* @boom */ | ["True"] | ["False"]
-
-----
-
-(source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (type_decl
-            (TypeName)
-            (type_expr
-              (sum_type
-                (attr)
-                (variant
-                  (ConstrName))
-                (variant
-                  (ConstrName))))))))))
-
+//=========
+//sum
+//=========
+//
+//type foo = /* @boom */ | ["True"] | ["False"]
+//
+//----
+//
 //=========
 //constr
 //=========
@@ -29,45 +14,16 @@ type foo = /* @boom */ | ["True"] | ["False"]
 //
 //----
 //
-//(source_file
-//  (statement_or_namespace
-//    (statement
-//      (base_statement
-//        (declaration_statement
-//          (type_decl
-//            (TypeName)
-//            (type_expr
-//              (sum_type
-//                (attr)
-//                (variant
-//                  (ConstrName))
-//                (variant
-//                  (ConstrName))))))))))
+//
+//=========
+//constr with bar
+//=========
+//
+//type foo = | /* @boom */ ["True"] | ["False"]
+//
+//----
 //
 //
-=========
-constr with bar
-=========
-
-type foo = | /* @boom */ ["True"] | ["False"]
-
-----
-
-(source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (type_decl
-            (TypeName)
-            (type_expr
-              (sum_type
-                (variant
-                  (attr)
-                  (ConstrName))
-                (variant
-                  (ConstrName))))))))))
-
 =========
 record
 =========
@@ -79,127 +35,44 @@ type person = /* @layout:comb */ {
 ----
 
 (source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (type_decl
-            (TypeName)
-            (type_expr
-              (core_type
-                (object_type
-                  (attr)
-                  (field_decl
-                    (FieldName)
-                    (type_annotation
-                      (type_expr
-                        (core_type
-                          (TypeName))))))))))))))
+  (type_decl
+    (TypeName)
+    (object_type
+      (attr)
+      (field_decl
+        (FieldName)
+        (type_annotation
+          (TypeName))))))
 
-=========
-field twice
-=========
-
-type person = {
-  /* @foo *//* @bar */ name: string,
-}
-
-----
-
-(source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (type_decl
-            (TypeName)
-            (type_expr
-              (core_type
-                (object_type
-                  (field_decl
-                    (attr)
-                    (attr)
-                    (FieldName)
-                    (type_annotation
-                      (type_expr
-                        (core_type
-                          (TypeName))))))))))))))
-
-=========
-let decl
-=========
-
-/* @annot */ let x : int = 1;
-
----
-
-(source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (let_decl
-            (attr)
-            (binding_list
-              (binding_initializer
-                (binding_pattern
-                  (var_pattern
-                    (Name)))
-                (type_annotation
-                  (type_expr
-                    (core_type
-                      (TypeName))))
-                (expr
-                  (expr_statement
-                    (assignment_expr_level
-                      (disjunction_expr_level
-                        (conjunction_expr_level
-                          (comparison_expr_level
-                            (addition_expr_level
-                              (multiplication_expr_level
-                                (unary_expr_level
-                                  (call_expr_level
-                                    (member_expr
-                                      (Int))))))))))))))))))))
-
-=========
-let decl twice
-=========
-
-/* @annot1 *//* @annot2 */ let x : int = 1;
-
----
-
-(source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (let_decl
-            (attr)
-            (attr)
-            (binding_list
-              (binding_initializer
-                (binding_pattern
-                  (var_pattern
-                    (Name)))
-                (type_annotation
-                  (type_expr
-                    (core_type
-                      (TypeName))))
-                (expr
-                  (expr_statement
-                    (assignment_expr_level
-                      (disjunction_expr_level
-                        (conjunction_expr_level
-                          (comparison_expr_level
-                            (addition_expr_level
-                              (multiplication_expr_level
-                                (unary_expr_level
-                                  (call_expr_level
-                                    (member_expr
-                                      (Int))))))))))))))))))))
-
+//=========
+//field twice
+//=========
+//
+//type person = {
+//  /* @foo *//* @bar */ name: string,
+//}
+//
+//----
+//
+//
+//=========
+//let decl
+//=========
+//
+///* @annot */ let x : int = 1;
+//
+//---
+//
+//
+//=========
+//let decl twice
+//=========
+//
+///* @annot1 *//* @annot2 */ let x : int = 1;
+//
+//---
+//
+//
 =========
 let expr
 =========
@@ -214,78 +87,24 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (statement_or_namespace
-    (statement
-      (base_statement
-        (declaration_statement
-          (let_decl
-            (binding_list
-              (binding_initializer
-                (binding_pattern
-                  (var_pattern
-                    (Name)))
-                (expr
-                  (expr_statement
-                    (fun_expr
-                      (parameters
-                        (parameter
-                          (expr
-                            (expr_statement
-                              (assignment_expr_level
-                                (disjunction_expr_level
-                                  (conjunction_expr_level
-                                    (comparison_expr_level
-                                      (addition_expr_level
-                                        (multiplication_expr_level
-                                          (unary_expr_level
-                                            (call_expr_level
-                                              (member_expr
-                                                (Name))))))))))))
-                          (type_annotation
-                            (type_expr
-                              (core_type
-                                (TypeName))))))
-                      (type_annotation
-                        (type_expr
-                          (core_type
-                            (TypeName))))
-                      (body
-                        (statements
-                          (statement
-                            (base_statement
-                              (declaration_statement
-                                (let_decl
-                                  (attr)
-                                  (attr)
-                                  (binding_list
-                                    (binding_initializer
-                                      (binding_pattern
-                                        (var_pattern
-                                          (Name)))
-                                      (expr
-                                        (expr_statement
-                                          (assignment_expr_level
-                                            (disjunction_expr_level
-                                              (conjunction_expr_level
-                                                (comparison_expr_level
-                                                  (addition_expr_level
-                                                    (multiplication_expr_level
-                                                      (unary_expr_level
-                                                        (call_expr_level
-                                                          (member_expr
-                                                            (Int))))))))))))))))))
-                          (statement
-                            (base_statement
-                              (return_statement
-                                (expr
-                                  (expr_statement
-                                    (assignment_expr_level
-                                      (disjunction_expr_level
-                                        (conjunction_expr_level
-                                          (comparison_expr_level
-                                            (addition_expr_level
-                                              (multiplication_expr_level
-                                                (unary_expr_level
-                                                  (call_expr_level
-                                                    (member_expr
-                                                      (Name))))))))))))))))))))))))))))
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (expr_statement
+        (fun_expr
+          (parameters
+            (parameter
+              (expr
+                (expr_statement (Name)))
+              (type_annotation (TypeName))))
+          (type_annotation
+            (TypeName))
+              (body
+          (statements
+            (let_decl (attr) (attr)
+              (var_pattern (Name))
+              (expr
+                (expr_statement (Int))))
+            (return_statement
+              (expr
+                (expr_statement (Name)))))))))))
