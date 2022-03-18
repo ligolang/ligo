@@ -1,142 +1,106 @@
-const sanitize = doc => doc.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-const { JSDOM } = require("jsdom");
 const fs = require("fs");
+const { exec } = require("child_process");
 
-const html = process.argv[2]
-const dom = new JSDOM(html);
+const commands = [
+    "compile constant",
+    "compile contract",
+    "compile expression",
+    "compile parameter",
+    "compile storage",
 
-const document = dom.window.document;
+    "run dry-run",
+    "run evaluate-call",
+    "run evaluate-expr",
+    "run interpret",
+    "run test",
 
-const lists = Array.from(document.body.querySelectorAll("ul"))
-    .slice(3);
+    "info get-scope",
+    "info list-declarations",
+    "info measure-contract",
 
-const capitalizeFirstChar = s => `${s.charAt(0).toUpperCase()}${s.slice(1)}`
+    "mutate ast",
+    "mutate cst",
 
-const parseDoc = doc => capitalizeFirstChar(doc.split(":").slice(1)[0].trim())
+    "repl",
 
-const parseCommand = li => {
-    const cmdlinenode = li.querySelector(".cmdline")
-    const kwds = Array.from(cmdlinenode.querySelectorAll(".kwd")).map(k => k.textContent)
-    const ags = Array.from(cmdlinenode.querySelectorAll(".arg")).map(a => a.textContent)
-    const ops = Array.from(cmdlinenode.querySelectorAll(".opt")).map(o => o.textContent)
-    const cmdline = { kwds, ags, ops }
+    "changelog",
 
-    const cmddocnode = li.querySelector(".cmddoc")
-    const cmddoc = cmddocnode ? cmddocnode.textContent.split("\n") : []
-    let idx = 1
-    const args = cmddocnode ? Array.from(cmddocnode.querySelectorAll(".arg"))
-        .map(arg => ({ arg: arg.textContent, doc: parseDoc(cmddoc[idx++])}))
-        : []
-    const opts = cmddocnode ? Array.from(cmddocnode.querySelectorAll(".opt"))
-        .map(opt => ({ opt: opt.textContent, doc: parseDoc(cmddoc[idx++])}))
-        : []
+    "print preprocessed",
+    "print pretty",
+    "print dependency-graph",
+    "print cst",
+    "print ast-imperative",
+    "print ast-sugar",
+    "print ast-core",
+    "print ast-typed",
+    "print ast-combined",
+    "print ast-aggregated",
+    "print mini-c",
 
-    const entry = {
-        cmdline,
-        cmddoc: cmddoc[0] || "",
-        args,
-        opts
-    }
-
-    return entry;
-}
-
-const commands = lists.map(ul => {
-    const lis = Array.from(ul.querySelectorAll("li"))
-    const subcommands = lis.map(li => parseCommand(li))
-    return subcommands;
-}).flatMap(x => x);
-
-const render = ({ cmdline: { kwds, ags }, cmddoc, args, opts }) => {
-const kwdsContent = `**ligo ${kwds.join(" ")}**`
-const agsContent = ags.map(a => `*${a}*`).join(" ")
-const description = cmddoc ? `
-### DESCRIPTION
-
-${cmddoc}
-` : ""
-const cmdlineContent = `${kwdsContent} ${agsContent} \\[*OPTION*\\]\\...`
-const argsContent = args.map(({ arg, doc }) => `**${arg}**\n\n${doc}`).join("\n\n");
-const arguments = argsContent.length > 0 ? 
-`### ARGUMENTS
-
-${argsContent}
-` : ""
-const optsContent = opts.map(({ opt, doc }) => `**${opt}**\n\n${doc}`).join("\n\n");
-const options = optsContent.length > 0 ? 
-`### OPTIONS
-
-${optsContent}
-` : ""
-
-return `
+    "install",
+]                            
+            
+const TEMPLATE = ({ synopsis, descrption, flags }) => `
 ### SYNOPSIS
+${synopsis}
 
-${cmdlineContent}
-${description}
-${arguments}
-${options}
+### DESCRIPTION
+${descrption}
+
+### FLAGS
+${flags.map(({ name, desc }) => `**${name}**\n${desc}\n`).join("\n")}
+
 `
-}
 
-const basepath = "../../gitlab-pages/docs/manpages";
+commands.map(command => {
+    const cmd = `/home/melwyn95/projects/nuke/ligo/_build/install/default/bin/ligo ${command} --help`;
+    exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
 
-commands.forEach(command => {
-    const name = command.cmdline.kwds.join(" ")
-    fs.writeFileSync(`${basepath}/${name}.md`, sanitize(render(command)))
-})
+        const lines = stdout.split("\n").filter(x => x != '')
+        let i = 1
+        if (lines[i].includes("Warning:")) {
+            i += 1
+        }
+        const synopsis = lines[i].trim();
+        const descrption = lines[i+1].trim();
+        let [flags, last] = lines.slice(i+2)
+                           .map(line => line.trim())
+                           .reduce(([acc, sofar], line) => {
+                               if (line.startsWith("[-")) {
+                                    acc.push(sofar)
+                                    sofar = []
+                               }
+                               sofar.push(line);
+                               return [acc, sofar];
+                           }, [[], []])
+        flags.push(last);
+        flags.shift();
+        flags = flags.map(flag => {
+            let [name, desc] = flag[0].split("]");
+            name = name.slice(1)
+            desc = desc.replace("... ", "")
+            desc = [desc.trim(), ...flag.slice(1)]
+            desc = desc.join(" ")
+            return { name, desc }
+        })
 
-const headings = Array.from(document.body.querySelectorAll("h3"))
-    .slice(0, 4).map(h => h.textContent).filter(h => h !== "Global options (must come before the command)")
-const mainCommands =  Array.from(document.body.querySelectorAll("ul"))
-    .slice(0, 3)
-
-const cs = mainCommands.map(ul => {
-    const lis = Array.from(ul.querySelectorAll("li"))
-    const subcommands = lis.map(li => parseCommand(li))
-    return subcommands;
-});
-
-const ligo = cs.map((c, i) => {
-const heading = headings[i]
-const commands = c.map(({ cmdline, cmddoc, args, opts }) => {
-const kwds = cmdline.kwds.length > 0 ? `*${cmdline.kwds.join("")}*` : ""
-const ops = cmdline.ops
-    .filter(o => o !== "global options")
-    .map(o => `\\[*${o.substring(0,2) === "--" ? "\\"+o : o}*\\]`)
-    .join(" ")
-const ags = cmdline.ags.map(a => `*${a}*`).join(" ")
-const description = cmddoc ? `
-#### DESCRIPTION
-
-${cmddoc}
-` : ""
-const argsContent = args.map(({ arg, doc }) => `**${arg}**\n\n${doc}`).join("\n\n");
-const arguments = argsContent.length > 0 ? `
-#### ARGUMENTS
-
-${argsContent}
-` : ""
+        const data = {
+            synopsis,
+            descrption,
+            flags
+        }
         
-const optsContent = opts.map(({ opt, doc }) => `**${opt}**\n\n${doc}`).join("\n\n");
-const options = optsContent.length > 0 ? `
-#### OPTIONS
+        const manpage = TEMPLATE(data) 
+        
+        fs.writeFileSync(`${command}.md`, manpage)
 
-${optsContent}
-` : ""
-
-return `
-**ligo** ${kwds} ${ags} ${ops}
-
-${description}
-${arguments}
-${options}
-`}).join("\n")
-return `
-### ${heading}
-${commands}
-`
-}).join("\n\n")
-
-fs.writeFileSync(`${basepath}/ligo.md`, sanitize(ligo))
+    })
+})

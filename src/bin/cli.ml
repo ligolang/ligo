@@ -149,7 +149,7 @@ let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
   let name = "--display-format" in
-  let doc  = "format the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
+  let doc  = "FORMAT the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
   flag ~doc ~aliases:["--format"] name @@
   optional_with_default human_readable @@
   Command.Arg_type.create @@ function
@@ -167,7 +167,7 @@ let output_file =
 let michelson_code_format =
   let open Command.Param in
   let docv = "--michelson-format" in
-  let doc = "format is the format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'." in
+  let doc = "CODE_FORMAT format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'." in
   flag ~doc docv @@
   optional_with_default `Text @@
   Command.Arg_type.create @@ function
@@ -178,7 +178,7 @@ let michelson_code_format =
 
 let michelson_comments =
   let open Command.Param in
-  let doc = "Selects kinds of comments to be added to the Michelson output. \
+  let doc = "COMMENT_TYPE Selects kinds of comments to be added to the Michelson output. \
 Currently 'location' and 'env' are supported. 'location' propagates original \
 source locations. 'env' inserts additional empty Seq nodes with comments \
 relating the Michelson stack to the source LIGO environment." in
@@ -692,8 +692,8 @@ let repl =
     return_result ~return @@ Repl.main raw_options display_format now amount balance sender source init_file
   in
   let summary   = "interactive ligo interpreter" in
-  let _readme () = "" in
-  Command.basic ~summary
+  let readme () = "REPL (Read-Eval-Print-Loop) for LIGO" in
+  Command.basic ~summary ~readme
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
