@@ -15,15 +15,24 @@
 //----
 //
 //
-//=========
-//constr with bar
-//=========
-//
-//type foo = | /* @boom */ ["True"] | ["False"]
-//
-//----
-//
-//
+=========
+constr with bar
+=========
+
+type foo = | /* @boom */ ["True"] | ["False"]
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+      (sum_type
+        (variant
+          (attr)
+          (ConstrName))
+        (variant
+          (ConstrName)))))
+
 =========
 record
 =========
@@ -44,35 +53,59 @@ type person = /* @layout:comb */ {
         (type_annotation
           (TypeName))))))
 
-//=========
-//field twice
-//=========
-//
-//type person = {
-//  /* @foo *//* @bar */ name: string,
-//}
-//
-//----
-//
-//
-//=========
-//let decl
-//=========
-//
-///* @annot */ let x : int = 1;
-//
-//---
-//
-//
-//=========
-//let decl twice
-//=========
-//
-///* @annot1 *//* @annot2 */ let x : int = 1;
-//
-//---
-//
-//
+=========
+field twice
+=========
+
+type person = {
+  /* @foo *//* @bar */ name: string,
+}
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+    (object_type
+      (field_decl
+        (attr)
+        (attr)
+        (FieldName)
+        (type_annotation (TypeName))))))
+
+=========
+let decl
+=========
+
+/* @annot */ let x : int = 1;
+
+---
+
+(source_file
+  (let_decl
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr
+      (expr_statement (Int)))))
+
+=========
+let decl twice
+=========
+
+/* @annot1 *//* @annot2 */ let x : int = 1;
+
+---
+
+(source_file
+  (let_decl
+    (attr)
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr
+      (expr_statement (Int)))))
+
 =========
 let expr
 =========
