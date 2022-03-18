@@ -114,8 +114,6 @@ and mod_in = {
 
 and module' = declaration location_wrap list
 
-and module_with_unification_vars = Module_With_Unification_Vars of module'
-
 and matching_expr = (expr, ty_expr) match_exp
 
 (* Env types*)

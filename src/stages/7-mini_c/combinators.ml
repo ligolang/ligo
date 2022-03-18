@@ -209,7 +209,3 @@ let ec_pair a b : expression_content =
   E_constant {cons_name=C_PAIR;arguments=[a; b]}
 
 let d_unit : value = D_unit
-
-
-let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
-let id_environment_wrap e = environment_wrap e e

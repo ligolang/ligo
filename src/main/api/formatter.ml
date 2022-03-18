@@ -126,15 +126,6 @@ module Michelson_formatter = struct
     | `String s -> `String s
     | `Int n -> `String (string_of_int n)
 
-  let location_encoding : Ast_typed.location Data_encoding.t =
-    Data_encoding.(conv
-                     (fun loc ->
-                        if Location.is_virtual loc
-                        then `Null
-                        else `O [("location", yojson_to_json (Location.to_human_yojson loc))])
-                     (fun _s -> failwith ("internal error: not implemented @ " ^ __LOC__))
-                     Data_encoding.json)
-
   let location_to_json (location : Location.t) : Data_encoding.Json.t option =
     if Location.is_virtual location
     then None

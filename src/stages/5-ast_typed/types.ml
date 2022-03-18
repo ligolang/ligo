@@ -41,15 +41,6 @@ and annot_option = string option
 
 and row_element = type_expression row_element_mini_c
 
-and type_map_args = {
-    k : type_expression;
-    v : type_expression;
-  }
-
-and michelson_or_args = {
-    l : type_expression;
-    r : type_expression;
-  }
 
 and type_expression = {
     type_content: type_content;
@@ -132,11 +123,6 @@ and expr = expression
 and map_kv = {
     key : expression ;
     value : expression ;
-  }
-
-and look_up = {
-    ds : expression;
-    ind : expression;
   }
 
 and expression_label_map = expression label_map

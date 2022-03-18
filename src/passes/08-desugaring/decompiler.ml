@@ -147,13 +147,6 @@ let rec decompile_expression : O.expression -> I.expression =
       let ma = module_access self ma in
       return @@ E_module_accessor ma
 
-and decompile_lambda : _ O.lambda -> _ I.lambda =
-  fun {binder=b;output_type;result}->
-    let binder = binder decompile_type_expression b in
-    let output_type = Option.map ~f:decompile_type_expression output_type in
-    let result = decompile_expression result in
-    I.{binder;output_type;result}
-
 and decompile_declaration : O.declaration -> I.declaration =
   fun declaration ->
   let return (decl: I.declaration) = decl in

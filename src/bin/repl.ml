@@ -79,7 +79,6 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
-               project_root : string option;
               }
 
 let try_eval ~raise ~raw_options state s =
@@ -197,14 +196,13 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol dry_run_opts project_root =
+let make_initial_state syntax protocol dry_run_opts =
   {
     env = Environment.default protocol ;
     top_level = [];
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
-    project_root = project_root;
   }
 
 let rec read_input prompt delim =
@@ -241,7 +239,7 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;
-      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
+      let state = make_initial_state syntax protocol dry_run_opts in
       let state = match init_file with
         | None -> state
         | Some file_name -> let c = use_file state ~raw_options file_name in

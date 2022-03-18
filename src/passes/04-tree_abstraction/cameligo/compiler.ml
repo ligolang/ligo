@@ -21,7 +21,6 @@ and type_vars_to_list : CST.type_vars -> CST.type_var Region.reg list = function
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
-let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson";"Loop";"Current"]

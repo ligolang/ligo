@@ -4,23 +4,9 @@ open Ast_imperative
 module Fold_helpers(M : Monad) = struct
   open Monad_context(M)
 
-  let bind_lmap (l:_ label_map) =
-    let open LMap in
-    let aux k v prev =
-      let* prev' = prev in
-      let* v' = v in
-      return @@ add k v' prev' in
-    fold aux l (return empty)
-
-  let bind_map_lmap f map = bind_lmap (LMap.map f map)
 
   type 'a monad = 'a t
   let ok x = return x
-
-  let constant : ('a ->  'b monad) -> 'a Stage_common.Types.constant -> ('b Stage_common.Types.constant) monad
-    = fun f {cons_name;arguments} ->
-    let* arguments = bind_map_list f arguments in
-    ok @@ {Stage_common.Types.cons_name;arguments}
 
   let constructor : ('a -> 'b monad) -> 'a constructor -> ('b constructor) monad
     = fun f {constructor;element} ->
@@ -74,10 +60,6 @@ module Fold_helpers(M : Monad) = struct
     in
     bind_map_list aux path
 
-  let record : ('a -> 'b monad) -> 'a label_map -> ('b label_map) monad
-    = fun f record ->
-    bind_map_lmap f record
-
   let recursive : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) recursive -> (('b,'d) recursive) monad
     = fun f g {fun_name;fun_type;lambda=l} ->
     let* fun_type = g fun_type in
@@ -97,16 +79,6 @@ module Fold_helpers(M : Monad) = struct
     let* update = f update in
     ok @@ ({record;path;update} : 'b update)
 
-  let record_accessor : ('a -> 'b monad) -> 'a record_accessor -> ('b record_accessor) monad
-    = fun f {record;path} ->
-    let* record = f record in
-    ok @@ ({record;path} : 'b record_accessor)
-
-  let record_update : ('a -> 'b monad) -> 'a record_update -> ('b record_update) monad
-    = fun f {record;path;update} ->
-    let* record = f record in
-    let* update = f update in
-    ok @@ ({record;path;update} : 'b record_update)
 
   let sequence : ('a -> 'b monad) -> 'a sequence -> ('b sequence) monad
     = fun f {expr1;expr2} ->
@@ -120,10 +92,6 @@ module Fold_helpers(M : Monad) = struct
     let* type_annotation = g type_annotation in
     ok @@ {anno_expr; type_annotation}
 
-  let raw_code : ('a -> 'b monad) -> 'a raw_code -> ('b raw_code) monad
-    = fun f {language;code} ->
-    let* code = f code in
-    ok @@ {language;code}
 
   let conditional : ('a -> 'b monad) -> 'a conditional -> ('b conditional) monad
     = fun f {condition;then_clause;else_clause} ->
@@ -202,7 +170,6 @@ module Fold_helpers(M : Monad) = struct
   type 'err ty_exp_mapper = type_expression -> type_expression monad
   type 'err abs_mapper =
     | Expression of 'err exp_mapper
-    | Type_expression of 'err ty_exp_mapper
 
   let rec map_expression : 'err exp_mapper -> expression -> expression monad = fun f e ->
     let self = map_expression f in
@@ -325,12 +292,7 @@ module Fold_helpers(M : Monad) = struct
         let* dc = declaration_constant (map_expression m') ok dc in
         ok (Declaration_constant dc)
       )
-      (* | (Declaration_type dt, Type_expression m') -> (
-       *     let* dt = declaration_type (map_type_expression m') dt in
-       *     ok (Declaration_type dt)
-       *   ) *)
       | decl,_ -> ok decl
-                     (* | Declaration_type of (type_variable * type_expression) *)
     in
 
    bind_map_list (bind_map_location aux) p

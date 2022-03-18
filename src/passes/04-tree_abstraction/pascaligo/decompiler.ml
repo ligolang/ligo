@@ -30,7 +30,6 @@ let list_to_nsepseq ~sep lst =
   | None   -> failwith "List is not a non_empty list" (* TODO: NO failwith! *)
 let nelist_to_npseq ~sep (hd, tl) =
   hd, List.map ~f:(fun e -> (sep, e)) tl
-let npseq_cons hd tl = hd, ((Wrap.ghost "", fst tl) :: snd tl)
 let par a = CST.{lpar=Token.ghost_lpar; inside=a; rpar=Token.ghost_rpar}
 let type_vars_of_list : CST.variable list -> CST.variable CST.tuple =
   fun lst ->
@@ -38,7 +37,6 @@ let type_vars_of_list : CST.variable list -> CST.variable CST.tuple =
   Region.wrap_ghost (par lst)
 let brackets a = CST.{lbracket=Token.ghost_lbracket;inside=a;rbracket=Token.ghost_rbracket}
 let prefix_colon a = (Wrap.ghost "", a)
-let suffix_with a = (a, Wrap.ghost "")
 
 (* Dialect-relevant functions *)
 open Syntax_types

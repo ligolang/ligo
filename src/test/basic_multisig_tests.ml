@@ -22,7 +22,7 @@ let init_storage threshold counter pkeys =
     ("auth" , e_typed_list keys (t_key ())) ;
   ]
 
-let (first_owner , first_contract) =
+let (_ , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth_exn (test_environment ()).identities 0 in
   let kt = id.implicit_contract in
