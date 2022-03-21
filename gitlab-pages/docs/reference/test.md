@@ -23,6 +23,7 @@ type michelson_program
 <SyntaxTitle syntax="jsligo">
 type michelson_program
 </SyntaxTitle>
+
 A type for code that is compiled to Michelson.
 
 <SyntaxTitle syntax="pascaligo">
@@ -49,6 +50,7 @@ type test_exec_error =
 | ["Balance_too_low", { contract_too_low : address , contract_balance : tez , spend_request : tez }]
 | ["Other", string]
 </SyntaxTitle>
+
 A test error:
   - The `Rejected` case means the called contract or its transitive callees (identified by the address in the second constructor argument) failed with some data (first constructor argument)
   - The `Balance_too_low` case means a contract tried to push an operation but did not have enough balance.
@@ -75,6 +77,7 @@ type test_exec_result =
   ["Success", nat]
 | ["Fail", test_exec_error]
 </SyntaxTitle>
+
 A test execution result:
  - The `Success` case means the transaction went through without an issue. Its argument represent the total amount of gas consumed by the transaction
  - The "Fail reason" case means something went wrong. Its argument encode the causes of the failure (see type `test_exec_error`)
@@ -91,6 +94,7 @@ type typed_address ('param, 'storage)
 <SyntaxTitle syntax="jsligo">
 type typed_address &lt;&apos;param, &apos;s&gt;
 </SyntaxTitle>
+
 A type for an address of a contract with parameter `'param` and storage
 `'storage`.
 
