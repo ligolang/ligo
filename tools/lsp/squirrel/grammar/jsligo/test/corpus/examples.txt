@@ -25,25 +25,16 @@ let uno : storage = EURO.one;
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr
-          (expr_statement
-            (Int)
-            (TypeName)))))
+        (expr (Int) (TypeName))))
     (namespace_statement (ModuleName)
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr
-          (expr_statement
-            (Int)
-            (TypeName))))
+        (expr (Int) (TypeName)))
       (let_decl
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr
-          (expr_statement
-            (Int)
-            (TypeName))))))
+        (expr (Int) (TypeName)))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl 
     (TypeName)
@@ -53,8 +44,6 @@ let uno : storage = EURO.one;
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (expr_statement
-        (module_access
+    (expr (module_access
           (ModuleName)
-          (module_var (Name)))))))
+          (module_var (Name))))))

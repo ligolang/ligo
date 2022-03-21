@@ -10,13 +10,10 @@ let x = (foo (42))
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
-        (expr
-          (expr_statement
-            (lambda (Name))
-            (expr
-              (expr_statement
-                (Int)))))))))
+      (paren_expr
+        (expr 
+          (lambda (Name))
+          (expr (Int)))))))
 
 =========
 tuple
@@ -30,17 +27,13 @@ let x = [1, "foo", 3]
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
-        (array_literal
-          (array_item
-            (expr
-              (expr_statement (Int))))
-          (array_item
-            (expr
-              (expr_statement (String))))
-          (array_item
-            (expr
-              (expr_statement (Int)))))))))
+      (array_literal
+        (array_item
+          (expr (Int)))
+        (array_item
+          (expr (String)))
+        (array_item
+          (expr (Int)))))))
 
 =========
 single paren
@@ -54,10 +47,8 @@ let x = (1);
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
-        (expr
-          (expr_statement
-            (Int)))))))
+      (paren_expr
+        (expr (Int))))))
 
 =========
 tuples and parens
@@ -72,34 +63,26 @@ let y = [(1), ("foo"), 3];
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
+      (paren_expr
         (expr
-          (expr_statement
-            (array_literal
-              (array_item
-                (expr
-                  (expr_statement (Int))))
-              (array_item
-                (expr
-                  (expr_statement (String))))
-              (array_item
-                (expr
-                  (expr_statement (Int))))))))))
+          (array_literal
+            (array_item
+              (expr (Int)))
+            (array_item
+              (expr (String)))
+            (array_item
+              (expr (Int))))))))
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
-        (array_literal
-          (array_item
-            (expr
-              (expr_statement
-                (expr
-                  (expr_statement (Int))))))
-          (array_item
-            (expr
-              (expr_statement
-                (expr
-                  (expr_statement (String))))))
-          (array_item
-            (expr
-              (expr_statement (Int)))))))))
+      (array_literal
+        (array_item
+          (expr
+            (paren_expr
+              (expr (Int)))))
+        (array_item
+          (expr
+            (paren_expr
+              (expr (String)))))
+        (array_item
+          (expr (Int)))))))

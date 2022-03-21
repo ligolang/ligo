@@ -86,8 +86,7 @@ let decl
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (expr_statement (Int)))))
+    (expr (Int))))
 
 =========
 let decl twice
@@ -103,8 +102,7 @@ let decl twice
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (expr_statement (Int)))))
+    (expr (Int))))
 
 =========
 let expr
@@ -123,21 +121,17 @@ let bar = (b : int) : int => {
   (let_decl
     (var_pattern (Name))
     (expr
-      (expr_statement
-        (fun_expr
-          (parameters
-            (parameter
-              (expr
-                (expr_statement (Name)))
-              (type_annotation (TypeName))))
-          (type_annotation
-            (TypeName))
-              (body
-          (statements
-            (let_decl (attr) (attr)
-              (var_pattern (Name))
-              (expr
-                (expr_statement (Int))))
-            (return_statement
-              (expr
-                (expr_statement (Name)))))))))))
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+        (type_annotation
+          (TypeName))
+            (body
+        (statements
+          (let_decl (attr) (attr)
+            (var_pattern (Name))
+            (expr (Int)))
+          (return_statement
+            (expr (Name)))))))))

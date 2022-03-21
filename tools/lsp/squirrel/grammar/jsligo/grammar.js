@@ -26,7 +26,7 @@ module.exports = grammar({
     if_statement: $ => seq("if", common.par($.expr), $._statement),
 
     _base_statement: $ => choice(
-      $.expr_statement,
+      $._expr_statement,
       $.return_statement,
       $.block_statement,
       $.switch_statement,
@@ -38,13 +38,13 @@ module.exports = grammar({
       $.while_statement,
     ),
 
-    expr_statement: $ => choice(
-      seq($._assignment_expr_level, "=", $.expr_statement),
-      seq($._assignment_expr_level, "*=", $.expr_statement),
-      seq($._assignment_expr_level, "/=", $.expr_statement),
-      seq($._assignment_expr_level, "%=", $.expr_statement),
-      seq($._assignment_expr_level, "+=", $.expr_statement),
-      seq($._assignment_expr_level, "-=", $.expr_statement),
+    _expr_statement: $ => choice(
+      seq($._assignment_expr_level, "=", $._expr_statement),
+      seq($._assignment_expr_level, "*=", $._expr_statement),
+      seq($._assignment_expr_level, "/=", $._expr_statement),
+      seq($._assignment_expr_level, "%=", $._expr_statement),
+      seq($._assignment_expr_level, "+=", $._expr_statement),
+      seq($._assignment_expr_level, "-=", $._expr_statement),
       $.fun_expr,
       $._assignment_expr_level
     ),
@@ -99,7 +99,7 @@ module.exports = grammar({
 
     lambda: $ => choice($._call_expr, $._member_expr),
 
-    expr: $ => choice($.expr_statement, $.object_literal),
+    expr: $ => choice($._expr_statement, $.object_literal),
 
     _member_expr: $ => choice(
       $.Name,
@@ -109,11 +109,13 @@ module.exports = grammar({
       $.ctor_expr,
       $.projection,
       $.michelson_interop,
-      common.par($.expr),
+      $.paren_expr,
       $.module_access,
       $.array_literal,
       $.wildcard
     ),
+
+    paren_expr: $ => common.par($.expr),
 
     ctor_expr: $ => seq($.ConstrName, $.ctor_args),
 
@@ -150,7 +152,7 @@ module.exports = grammar({
       seq($.Name, "=>", $.body)
     ),
 
-    body: $ => choice(common.block($.statements), $.expr_statement),
+    body: $ => choice(common.block($.statements), $._expr_statement),
 
     statements: $ => common.sepEndBy1(";", $._statement),
 
@@ -166,7 +168,7 @@ module.exports = grammar({
 
     object_literal: $ => common.block(common.sepBy(",", $.property)),
 
-    property: $ => choice($.Name, seq($.property_name, ":", $.expr), seq("...", $.expr_statement)),
+    property: $ => choice($.Name, seq($.property_name, ":", $.expr), seq("...", $._expr_statement)),
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
@@ -299,7 +301,7 @@ module.exports = grammar({
 
     if_else_statement: $ => seq("if", common.par($.expr), $._base_statement, "else", $._statement),
 
-    for_of_statement: $ => seq("for", common.par(seq($.index_kind, $.Name, "of", $.expr_statement)), $._statement),
+    for_of_statement: $ => seq("for", common.par(seq($.index_kind, $.Name, "of", $._expr_statement)), $._statement),
 
     index_kind: $ => choice("let", "const"),
     
