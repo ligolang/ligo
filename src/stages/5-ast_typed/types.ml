@@ -2,12 +2,6 @@
 
 include Stage_common.Types
 
-(* pseudo-typeclasses: interfaces that must be provided for arguments
-   of the givent polymmorphic types. For now, only one typeclass can
-   be specified for a given polymorphic type. The implementation is
-   provided by the Comparable module *)
-(*@ typeclass poly_unionfind comparable *)
-(*@ typeclass poly_set       comparable *)
 type ast_core_type_expression = Ast_core.type_expression
 
 type te_lmap = row_element label_map
