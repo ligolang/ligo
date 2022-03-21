@@ -5,7 +5,7 @@ let module_ppformat ~display_format f p =
   | Human_readable | Dev -> PP.module_ f p
 
 let module_jsonformat p : json =
-  To_yojson.module_ p
+  To_yojson.declarations p
 
 let module_format : 'a format = {
   pp = module_ppformat;

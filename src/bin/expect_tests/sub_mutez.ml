@@ -55,40 +55,47 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.mligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{|
-    const sub = lambda (gen#2) return  match gen#2 with
-                                        | ( store , delta ) ->
-                                        SUB_MUTEZ(store , delta)
-    const main = lambda (gen#3) return  match gen#3 with
-                                         | ( _#4 , store ) ->
-                                         ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
+    const sub =
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB_MUTEZ(store , delta)
+    const main =
+      lambda (gen#3) return  match gen#3 with
+                              | ( _#4 , store ) ->
+                              ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.ligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{|
-    const sub = lambda (parameters#2) return  match parameters#2 with
-                                               | ( store , delta ) ->
-                                               SUB_MUTEZ(store , delta)
-    const main = lambda (parameters#4) return  match parameters#4 with
-                                                | ( _#3 , store ) ->
-                                                ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
+    const sub =
+      lambda (parameters#2) return  match parameters#2 with
+                                     | ( store , delta ) ->
+                                     SUB_MUTEZ(store , delta)
+    const main =
+      lambda (parameters#4) return  match parameters#4 with
+                                     | ( _#3 , store ) ->
+                                     ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.religo") ; "--protocol" ; "ithaca" ] ;
   [%expect{|
-    const sub = lambda (gen#2) return  match gen#2 with
-                                        | ( store , delta ) ->
-                                        SUB_MUTEZ(store , delta)
-    const main = lambda (gen#3) return  match gen#3 with
-                                         | ( _#4 , store ) ->
-                                         ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
+    const sub =
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB_MUTEZ(store , delta)
+    const main =
+      lambda (gen#3) return  match gen#3 with
+                              | ( _#4 , store ) ->
+                              ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.jsligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{|
-    const sub = lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB_MUTEZ(store ,
-    delta)[@private]
-    const main = lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in
-    ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) )[@private] |}]
+    const sub =
+      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB_MUTEZ(store ,
+      delta)[@private]
+    const main =
+      lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , UNOPT((sub)@(( store , 1000000mutez ))) )[@private] |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.mligo") ] ;
@@ -186,43 +193,50 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.mligo") ] ;
   [%expect{|
-    const sub = lambda (gen#2) return  match gen#2 with
-                                        | ( store , delta ) ->
-                                        SUB(store , delta)
-    const main = lambda (gen#3) return  match gen#3 with
-                                         | ( _#4 , store ) ->
-                                         ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
+    const sub =
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB(store , delta)
+    const main =
+      lambda (gen#3) return  match gen#3 with
+                              | ( _#4 , store ) ->
+                              ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
   |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.ligo") ] ;
   [%expect{|
-    const sub = lambda (parameters#2) return  match parameters#2 with
-                                               | ( store , delta ) ->
-                                               SUB(store , delta)
-    const main = lambda (parameters#4) return  match parameters#4 with
-                                                | ( _#3 , store ) ->
-                                                ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
+    const sub =
+      lambda (parameters#2) return  match parameters#2 with
+                                     | ( store , delta ) ->
+                                     SUB(store , delta)
+    const main =
+      lambda (parameters#4) return  match parameters#4 with
+                                     | ( _#3 , store ) ->
+                                     ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
   |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.religo") ] ;
   [%expect{|
-    const sub = lambda (gen#2) return  match gen#2 with
-                                        | ( store , delta ) ->
-                                        SUB(store , delta)
-    const main = lambda (gen#3) return  match gen#3 with
-                                         | ( _#4 , store ) ->
-                                         ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
+    const sub =
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB(store , delta)
+    const main =
+      lambda (gen#3) return  match gen#3 with
+                              | ( _#4 , store ) ->
+                              ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
   |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.jsligo") ] ;
   [%expect{|
-    const sub = lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB(store ,
-    delta)[@private]
-    const main = lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in
-    ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )[@private]
+    const sub =
+      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB(store ,
+      delta)[@private]
+    const main =
+      lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )[@private]
   |}]
 
 let%expect_test _ =

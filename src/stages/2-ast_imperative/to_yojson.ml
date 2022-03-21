@@ -1,19 +1,8 @@
 open Types
 include Stage_common.To_yojson
 
-
-let deprecated {name;const} =
-  `Assoc [
-    ("name", `String name);
-    ("const", constant' const);
-  ]
-
-let rich_constant = function
-  | Deprecated d -> `List [`String "Deprecatd"; deprecated d ]
-  | Const      c -> `List [`String "Const"; constant' c ]
-
-
-let rec type_expression {type_content=tc;location} =
+let rec type_expression ({type_content=tc;location} : type_expression) =
+  let location : Location.t = location in
   `Assoc [
     ("type_content", type_content tc);
     ("location", Location.to_yojson location);
@@ -31,7 +20,7 @@ and type_content = function
   | T_arrow           t -> `List [ `String "t_arrow"; arrow type_expression t]
   | T_annoted         t -> `List [ `String "t_annoted"; `List [type_expression @@ fst t;`String (snd t)]]
   | T_app             t -> `List [ `String "t_app"; t_app type_expression t]
-  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
+  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access TypeVar.to_yojson t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
   | T_abstraction     t -> `List [ `String "t_abstraction" ; for_all type_expression t ]
   | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t ]
@@ -60,8 +49,7 @@ and expression_content = function
   | E_recursive   e -> `List [ `String "E_recursive";   recursive expression type_expression e ]
   | E_let_in      e -> `List [ `String "E_let_in";      let_in    expression type_expression e ]
   | E_type_in     e -> `List [ `String "E_type_in";     type_in   expression type_expression e ]
-  | E_mod_in      e -> `List [ `String "E_mod_in";      mod_in    expression type_expression e ]
-  | E_mod_alias   e -> `List [ `String "E_mod_alias";   mod_alias expression                 e ]
+  | E_mod_in      e -> `List [ `String "E_mod_in";      mod_in    expression type_expression attributes attributes attributes e ]
   | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code  expression e ]
   (* Variant *)
   | E_constructor e -> `List [ `String "E_constructor"; constructor expression e ]
@@ -71,7 +59,7 @@ and expression_content = function
   | E_accessor        e -> `List [ `String "E_record_accessor"; accessor    expression e ]
   | E_update          e -> `List [ `String "E_record_update";   update      expression e ]
   | E_ascription      e -> `List [ `String "E_ascription";      ascription  expression type_expression e ]
-  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
+  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access ValueVar.to_yojson e]
   | E_cond            e -> `List [ `String "E_cond";            conditional expression e ]
   | E_sequence        e -> `List [ `String "E_sequence";        sequence    expression e ]
   | E_skip              -> `List [ `String "E_skip"; `Null ]
@@ -114,6 +102,6 @@ and matching_content_case ((constructor, pattern), body) =
     ("body", expression body);
   ]
 
-let declaration = declaration expression type_expression
+let declaration = declaration expression type_expression attributes attributes attributes
 
-let module_ = module' expression type_expression
+let module_ = declarations expression type_expression attributes attributes attributes

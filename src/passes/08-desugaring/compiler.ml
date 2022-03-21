@@ -1,5 +1,6 @@
 module I = Ast_sugar
 module O = Ast_core
+module C = Stage_common.Types
 
 module Location = Simple_utils.Location
 module Var      = Simple_utils.Var
@@ -33,14 +34,25 @@ let get_layout : (string list) -> O.layout option = fun attributes ->
   in
   aux attributes
 
-let is_inline attr = String.equal "inline" attr
-let is_no_mutation attr = String.equal "no_mutation" attr
-let is_view attr = String.equal "view" attr
-let get_inline : (string list) -> bool = List.exists ~f:is_inline
-let get_no_mutation : (string list) -> bool = List.exists ~f:is_no_mutation
-let get_view : (string list) -> bool = List.exists ~f:is_view
+let compile_exp_attributes : I.attributes -> O.known_attributes = fun attributes ->
+  let is_inline attr = String.equal "inline" attr in
+  let is_no_mutation attr = String.equal "no_mutation" attr in
+  let is_view attr = String.equal "view" attr in
+  let get_inline : (string list) -> bool = List.exists ~f:is_inline in
+  let get_no_mutation : (string list) -> bool = List.exists ~f:is_no_mutation in
+  let get_view : (string list) -> bool = List.exists ~f:is_view in
+  let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
+  let inline = get_inline attributes in
+  let no_mutation = get_no_mutation attributes in
+  let public = get_public attributes in
+  let view = get_view attributes in
+  O.{inline; no_mutation; view; public}
 
-let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal)
+let compile_type_attributes : I.attributes -> O.type_attribute = fun attributes ->
+  let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
+  let public = get_public attributes in
+  O.{public}
+let compile_module_attributes : I.attributes -> O.module_attribute = compile_type_attributes
 
 let rec compile_type_expression : I.type_expression -> O.type_expression =
   fun te ->
@@ -54,7 +66,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
     | I.T_sum {fields ; attributes} ->
       let fields =
         O.LMap.map (fun v ->
-          let {associated_type ; attributes ; decl_pos} : _ I.row_element = v in
+          let {associated_type ; attributes ; decl_pos} : _ C.row_element = v in
           let michelson_annotation = get_michelson_annotation attributes in
           let associated_type = compile_type_expression associated_type in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
@@ -66,7 +78,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
     | I.T_record {fields ; attributes} ->
       let fields =
         O.LMap.map (fun v ->
-          let {associated_type ; attributes ; decl_pos} : _ I.row_element = v in
+          let {associated_type ; attributes ; decl_pos} : _ C.row_element = v in
           let associated_type = compile_type_expression associated_type in
           let michelson_annotation = get_michelson_annotation attributes in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
@@ -85,9 +97,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
     | I.T_arrow arr ->
       let arr = arrow self arr in
       return @@ T_arrow arr
-    | I.T_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ O.T_module_accessor ma
+    | I.T_module_accessor ma -> return @@ O.T_module_accessor ma
     | I.T_singleton x ->
       return @@ O.T_singleton x
     | I.T_abstraction x ->
@@ -126,23 +136,15 @@ let rec compile_expression : I.expression -> O.expression =
       let let_binder = binder self_type let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
-      let inline = get_inline attributes in
-      let no_mutation = get_no_mutation attributes in
-      let public = get_public attributes in
-      (* TODO: attribute 'view' will be ignored here, warning ? *)
-      let view = get_view attributes in
-      return @@ O.E_let_in {let_binder;attr = {inline; no_mutation; view; public};rhs;let_result}
+      let attr = compile_exp_attributes attributes in
+      return @@ O.E_let_in {let_binder;attr;rhs;let_result}
     | I.E_type_in {type_binder; rhs; let_result} ->
       let rhs = self_type rhs in
       let let_result = self let_result in
       return @@ O.E_type_in {type_binder; rhs; let_result}
-    | I.E_mod_in {module_binder;rhs;let_result} ->
-      let rhs = compile_module rhs in
-      let let_result = self let_result in
-      return @@ O.E_mod_in {module_binder;rhs;let_result}
-    | I.E_mod_alias ma ->
-      let ma = mod_alias self ma in
-      return @@ O.E_mod_alias ma
+    | I.E_mod_in mi ->
+      let mi = (mod_in self self_type compile_exp_attributes compile_type_attributes compile_module_attributes) mi in
+      return @@ O.E_mod_in mi
     | I.E_raw_code rc ->
       let rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -240,9 +242,7 @@ let rec compile_expression : I.expression -> O.expression =
       let anno_expr = self anno_expr in
       let type_annotation = self_type type_annotation in
       return @@ O.E_ascription {anno_expr; type_annotation}
-    | I.E_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ O.E_module_accessor ma
+    | I.E_module_accessor ma -> return @@ O.E_module_accessor ma
     | I.E_cond {condition; then_clause; else_clause} ->
       let matchee = self condition in
       let match_true = self then_clause in
@@ -268,30 +268,9 @@ let rec compile_expression : I.expression -> O.expression =
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
 
-and compile_declaration : I.declaration -> O.declaration =
-  fun declaration ->
-  let return (decl: O.declaration) = decl in
-  match declaration with
-  | I.Declaration_type {type_binder; type_expr; type_attr} ->
-    let type_expr = compile_type_expression type_expr in
-    let public = get_public type_attr in
-    return @@ O.Declaration_type {type_binder; type_expr; type_attr = {public}}
-  | I.Declaration_constant {binder;attr;expr} ->
-    let binder = compile_binder binder in
-    let expr = compile_expression expr in
-    let inline = get_inline attr in
-    let no_mutation = get_no_mutation attr in
-    let public = get_public attr in
-    let view = get_view attr in
-    return @@ O.Declaration_constant {binder; attr={inline;no_mutation;view;public}; expr}
-  | I.Declaration_module {module_binder;module_;module_attr} ->
-    let module_ = compile_module module_ in
-    let public = get_public module_attr in
-    return @@ O.Declaration_module {module_binder;module_;module_attr={public}}
-  | I.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ O.Module_alias ma
-
-
-and compile_module : I.module_ -> O.module_ = fun m ->
-  List.map ~f:(Location.map compile_declaration) m
+and compile_module : I.module_ -> O.module_ = fun x ->
+  let pass = Stage_common.Maps.declarations
+    compile_expression compile_type_expression
+    compile_exp_attributes compile_type_attributes compile_module_attributes
+  in
+  pass x

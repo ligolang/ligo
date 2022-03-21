@@ -35,10 +35,10 @@ let expression_variable = ValueVar.compare
 let type_variable       = TypeVar.compare
 let module_variable     = ModuleVar.compare
 
-let module_access f {module_name=mna; element=ea}
-                    {module_name=mnb; element=eb} =
+let module_access f {module_path=mna; element=ea}
+                    {module_path=mnb; element=eb} =
   cmp2
-    module_variable mna mnb
+    (List.compare module_variable) mna mnb
     f ea eb
 
 let layout_tag = function
@@ -137,7 +137,6 @@ and declaration_tag = function
   | Declaration_constant _ -> 1
   | Declaration_type     _ -> 2
   | Declaration_module   _ -> 3
-  | Module_alias         _ -> 4
 
 let rec expression a b =
   expression_content a.expression_content b.expression_content

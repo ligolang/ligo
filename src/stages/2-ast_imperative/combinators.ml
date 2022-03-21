@@ -27,6 +27,17 @@ type type_content = [%import: Types.type_content]
       (* default_get = `Option ; *)
     } ]
 
+type module_expr_content = [%import: Types.module_expr_content]
+[@@deriving ez {
+      prefixes = [
+        ("make_m" , fun ?(loc = Location.generated) wrap_content ->
+                  ({ wrap_content ; location = loc } :  module_expr)) ;
+        ("get" , fun (x:module_expr) -> x.wrap_content) ;
+      ] ;
+      wrap_constructor = ("module_content" , (fun wrap_content ?loc () -> make_m ?loc wrap_content)) ;
+      wrap_get = ("module_content" , get) ;
+    } ]
+
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x
 let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_input_var n)
@@ -62,7 +73,7 @@ let t_sum_ez_attr ?loc ?(attr=[]) fields =
   t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
-let t_module_accessor ?loc module_name element = make_t ?loc @@ T_module_accessor {module_name;element}
+let t_module_accessor ?loc module_path element = make_t ?loc @@ T_module_accessor {module_path;element}
 
 let t_arrow ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
 let t_abstraction ?loc ty_binder kind type_ : type_expression = make_t ?loc @@ T_abstraction { ty_binder ; kind ; type_ }
@@ -128,7 +139,9 @@ let e_let_in_ez ?loc var ?ascr ?const_or_var attributes rhs let_result = make_e 
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_input_var binder, ascr) inline rhs let_result *)
 let e_type_in   ?loc type_binder rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result}
 let e_mod_in    ?loc module_binder rhs let_result = make_e ?loc @@ E_mod_in  { module_binder; rhs ; let_result }
-let e_mod_alias ?loc alias binders result = make_e ?loc @@ E_mod_alias { alias; binders ; result }
+let m_path ?loc path = make_m ?loc (M_module_path path)
+let m_variable ?loc x = make_m ?loc (M_variable x)
+let m_struct ?loc x = make_m ?loc (M_struct x)
 
 let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 
@@ -152,7 +165,7 @@ let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
 let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
-let e_module_accessor ?loc module_name element = make_e ?loc @@ E_module_accessor {module_name;element}
+let e_module_accessor ?loc module_path element = make_e ?loc @@ E_module_accessor {module_path;element}
 
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
 
@@ -186,7 +199,6 @@ let e_map_find_opt ?loc k map = e_constant ?loc (Const C_MAP_FIND_OPT) [k;map]
 let e_set_remove ?loc ele set = e_constant ?loc (Const C_SET_REMOVE) [ele;set]
 let e_map_remove ?loc ele map = e_constant ?loc (Const C_MAP_REMOVE) [ele;map]
 let e_set_add ?loc ele set = e_constant ?loc (Const C_SET_ADD) [ele; set]
-
 
 let e_typed_none ?loc t_opt =
   let type_annotation = t_option t_opt in

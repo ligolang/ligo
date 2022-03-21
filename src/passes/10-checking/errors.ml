@@ -713,7 +713,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_module_tracer (p,err) ->
     let message = `String "Typing module" in
-    let over = List.fold_left ~f:(fun a (p:Ast_core.declaration Location.wrap) -> match p.location with File reg -> Simple_utils.Region.cover a reg | Virtual _ -> a) ~init:Simple_utils.Region.ghost p in
+    let over = List.fold_left ~f:(fun a (p:Ast_core.declaration) -> match p.location with File reg -> Simple_utils.Region.cover a reg | Virtual _ -> a) ~init:Simple_utils.Region.ghost p in
     let loc = `String (Format.asprintf "%a" Location.pp_lift over) in
     let content = `Assoc [
       ("message", message);

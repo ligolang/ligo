@@ -32,7 +32,7 @@ type abs_error = [
   | `Concrete_jsligo_expected_a_function of Raw.expr
   | `Concrete_jsligo_not_supported_assignment of Raw.expr
   | `Concrete_jsligo_array_rest_not_supported of Raw.array_item
-  | `Concrete_jsligo_expected_a_variable of Raw.expr
+  | `Concrete_jsligo_expected_a_variable of Region.t
   | `Concrete_jsligo_expected_a_field_name of Raw.selection
   | `Concrete_jsligo_expected_an_int of Raw.expr
   | `Concrete_jsligo_invalid_list_pattern_match of Raw.array_item list
@@ -150,9 +150,9 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>%a@.Rest property not supported here.@]"
           Snippet.pp_lift (Raw.array_item_to_region e)
     )
-    | `Concrete_jsligo_expected_a_variable e -> (
+    | `Concrete_jsligo_expected_a_variable reg -> (
       Format.fprintf f "@[<hv>%a@.Expected a variable.@]"
-          Snippet.pp_lift (Raw.expr_to_region e)
+        Snippet.pp_lift reg
     )
     | `Concrete_jsligo_expected_a_field_name s -> (
       Format.fprintf f "@[<hv>%a@.Expected a field name.@]"
@@ -339,9 +339,9 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("message", message);
       ("location", `String loc);] in
     json_error ~stage ~content
-  | `Concrete_jsligo_expected_a_variable e ->
+  | `Concrete_jsligo_expected_a_variable reg ->
     let message = `String "Expected a variable." in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let loc = Format.asprintf "%a" Location.pp_lift reg in
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);] in

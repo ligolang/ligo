@@ -39,13 +39,12 @@ module Free_variables = struct
     | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
     | E_type_abstraction { type_binder=_; result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
-    | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
     | E_type_inst {type_=_;forall} -> self forall
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
-    | E_module_accessor {element;_} -> self element
+    | E_module_accessor _ -> empty
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
@@ -139,8 +138,10 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
      if TypeVar.equal x y then Some () else None
   | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when ModuleVar.equal mna mnb ->
-    assert_type_expression_eq (ea, eb)
+  | T_module_accessor {module_path=mna;element=ea}, T_module_accessor {module_path=mnb;element=eb} ->
+    let open Simple_utils.Option in
+    let* _ = if TypeVar.equal ea eb then Some () else None in
+    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) mna mnb
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
@@ -210,7 +211,6 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
-
 let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
   let open Option in
   match a, b with
@@ -227,12 +227,11 @@ let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
-      if   (ValueVar.equal name binder)
+      if   (ValueVar.equal name binder.var)
       then Some expr
       else None
     )
     | Declaration_type   _
-    | Declaration_module _
-    | Module_alias       _ -> None
+    | Declaration_module _ -> None
   in
   List.find_map ~f:aux (List.rev lst)

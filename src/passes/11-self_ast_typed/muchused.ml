@@ -150,17 +150,13 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr let_result
   | E_mod_in {let_result;_} ->
      muchuse_of_expr let_result
-  | E_mod_alias {result;_} ->
-     muchuse_of_expr result
   | E_type_inst {forall;_} ->
      muchuse_of_expr forall
-  | E_module_accessor {element;module_name} ->
-     match element.expression_content with
-     | E_variable v ->
-        let name = V.of_input_var ~loc:expr.location @@
-          (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn v) in
-        (M.add name 1 M.empty,[])
-     | _ -> muchuse_neutral
+  | E_module_accessor {module_path;element} ->
+    let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep PP.module_variable (Simple_utils.PP_helpers.tag ".")) module_path in
+    let name = V.of_input_var ~loc:expr.location @@
+      pref ^ "." ^ (V.to_name_exn element) in
+    (M.add name 1 M.empty,[])
 
 and muchuse_of_lambda t {binder; result} =
   muchuse_of_binder binder t (muchuse_of_expr result)
@@ -212,12 +208,12 @@ and muchuse_of_record {body;fields;_} =
 let rec get_all_declarations (module_name : module_variable) : module_ ->
                                (expression_variable * type_expression) list =
   function m ->
-    let aux = fun ({wrap_content=x;location} : declaration Location.wrap) ->
+    let aux = fun ({wrap_content=x;location} : declaration) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
-          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn binder) in
+          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn binder.var) in
           [(name, expr.type_expression)]
-      | Declaration_module {module_binder;module_;module_attr=_} ->
+      | Declaration_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
           let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn v) in
@@ -228,12 +224,12 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
 
 let rec muchused_helper (muchuse : muchuse) : module_ -> muchuse =
   function m ->
-  let aux = fun (x : declaration) s ->
+  let aux = fun (x : declaration_content) s ->
     match x with
     | Declaration_constant {expr ; binder; _} ->
        muchuse_union (muchuse_of_expr expr)
-         (muchuse_of_binder binder expr.type_expression s)
-    | Declaration_module {module_;module_binder;module_attr=_} ->
+         (muchuse_of_binder binder.var expr.type_expression s)
+    | Declaration_module {module_ = { wrap_content = M_struct module_ ; _ } ;module_binder;module_attr=_} ->
        let decls = get_all_declarations module_binder module_ in
        List.fold_right ~f:(fun (v, t) (c,m) -> muchuse_of_binder v t (c, m))
          decls ~init:(muchused_helper s module_)

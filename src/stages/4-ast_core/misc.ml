@@ -56,6 +56,16 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
+let rec assert_list_eq f = fun a b -> match (a,b) with
+  | [], [] -> Some ()
+  | [], _  -> None
+  | _ , [] -> None
+  | hda::tla, hdb::tlb -> Simple_utils.Option.(
+    let* () = f hda hdb in
+    assert_list_eq f tla tlb
+  )
+
+
 (* TODO this was supposed to mean equality of _values_; if
    assert_value_eq (a, b) = Some (), then a and b should be values *)
 let rec assert_value_eq (a, b: (expression * expression )) : unit option =
@@ -70,8 +80,10 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_constructor (ca), E_constructor (cb) when Caml.(=) ca.constructor cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
-  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when ModuleVar.equal maa mab -> (
-      assert_value_eq (a,b)
+  | E_module_accessor {module_path=maa;element=a}, E_module_accessor {module_path=mab;element=b} -> (
+    let open Simple_utils.Option in
+    let* _ = if ValueVar.equal a b then Some () else None in
+    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) maa mab
   )
   | E_record sma, E_record smb -> (
       let aux _ a b =
@@ -101,7 +113,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
 
   | (E_variable _, _) | (E_lambda _, _) | (E_type_abstraction _, _)
   | (E_application _, _) | (E_let_in _, _)
-  | (E_type_in _, _) | (E_mod_in _, _) | (E_mod_alias _, _)
+  | (E_type_in _, _) | (E_mod_in _, _)
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)

@@ -44,7 +44,7 @@ let list_declarations (m : Ast_core.module_) : Ast_core.expression_variable list
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
-      match (el.wrap_content : Ast_core.declaration) with
+      match (el.wrap_content : Ast_core.declaration_content) with
       | Declaration_constant {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m
@@ -54,7 +54,7 @@ let list_type_declarations (m : Ast_core.module_) : Ast_core.type_variable list 
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
-      match (el.wrap_content : Ast_core.declaration) with
+      match (el.wrap_content : Ast_core.declaration_content) with
       | Declaration_type {type_binder;_} -> type_binder::prev
       | _ -> prev)
     ~init:[] m
@@ -64,9 +64,8 @@ let list_mod_declarations (m : Ast_core.module_) : Ast_core.module_variable list
     ~f:(fun prev el ->
       let open Location in
       let open Ast_core in
-      match (el.wrap_content : Ast_core.declaration) with
+      match (el.wrap_content : Ast_core.declaration_content) with
       | Declaration_module {module_binder;_} -> module_binder::prev
-      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m
 

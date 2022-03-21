@@ -43,6 +43,9 @@ val trace_option : raise:'a raise -> 'a -> 'b option -> 'b
 (* Raise error if the option is Some *)
 val trace_assert_fail_option : raise:'a raise -> 'a -> 'b option -> unit
 
+(* Raise error if the option is None *)
+val trace_assert_option : raise:'a raise -> 'a -> 'b option -> unit
+
 (* Unwrap the result, raising the error if needed *)
 val from_result  : raise:'b raise -> ('a,'b) result -> 'a
 

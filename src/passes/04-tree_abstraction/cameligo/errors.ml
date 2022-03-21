@@ -19,6 +19,7 @@ type abs_error = [
   | `Concrete_cameligo_missing_funarg_annotation of Raw.variable
   | `Concrete_cameligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
   | `Concrete_cameligo_type_params_not_annotated of Region.t
+  | `Concrete_cameligo_expected_access_to_variable of Region.t
   ] [@@deriving poly_constructor { prefix = "concrete_cameligo_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -27,6 +28,10 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Concrete_cameligo_expected_access_to_variable reg ->
+      Format.fprintf f
+      "@[<hv>%a@.Expected access to a variable.@]"
+        Snippet.pp_lift reg
     | `Concrete_cameligo_untyped_recursive_fun reg ->
       Format.fprintf f
       "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
@@ -86,6 +91,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Concrete_cameligo_expected_access_to_variable reg ->
+    let message = `String "Expected access to a variable" in
+    let loc = Format.asprintf "%a" Location.pp_lift reg in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
   | `Concrete_cameligo_untyped_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift reg in
