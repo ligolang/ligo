@@ -31,8 +31,6 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n final_path let_result
   | E_mod_in {rhs=_;let_result;_} ->
     check_recursive_call ~raise n final_path let_result
-  | E_mod_alias {alias=_;binders=_;result} ->
-    check_recursive_call ~raise n final_path result
   | E_raw_code _ -> ()
   | E_constructor {element;_} ->
     check_recursive_call ~raise n false element

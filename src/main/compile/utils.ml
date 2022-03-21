@@ -14,7 +14,7 @@ let to_sugar ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
 
 let to_core ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   let sugar  = to_sugar ~raise ~add_warning ~options ~meta c_unit file_path in
-  let core   = Of_sugar.compile ~raise sugar in
+  let core   = Of_sugar.compile sugar in
   core
 
 let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : Ast_typed.program =
@@ -38,7 +38,7 @@ let type_contract_string ~raise ~add_warning ~options syntax expression =
   let c_unit, _     = Of_source.compile_string_without_preproc expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
-  let core          = Of_sugar.compile ~raise sugar in
+  let core          = Of_sugar.compile sugar in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options Env core in
   typed,core
 

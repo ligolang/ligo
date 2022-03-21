@@ -90,7 +90,6 @@ let reserved_names_mod ~raise : module_ -> module_ = fun m ->
       check_reserved ~raise ~loc binder ;
       reserved_names_exp ~raise expr
     | {wrap_content = Declaration_module _ ; _} -> ()
-    | {wrap_content = Module_alias _; _} -> ()
   in
   List.iter ~f:aux m ;
   m

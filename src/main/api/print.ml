@@ -72,7 +72,7 @@ let ast_core (raw_options : Compiler_options.raw) source_file display_format () 
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let core = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
       if self_pass then
-        Self_ast_core.all_module ~raise core
+        Self_ast_core.all_module ~init:core
       else
         core
 

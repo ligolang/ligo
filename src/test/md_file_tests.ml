@@ -125,7 +125,7 @@ let compile_groups ~raise filename grp_list =
       let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options:options.frontend ~meta contents in
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
-      let core       = Ligo_compile.Of_sugar.compile ~raise sugar in
+      let core       = Ligo_compile.Of_sugar.compile sugar in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test protocol_version in
