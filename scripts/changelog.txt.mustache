@@ -1,13 +1,85 @@
-LIGO Changelog
+# LIGO Changelog
 
 {{#changelog}}
-*** {{{version}}} ***
+## <ins>[{{{version}}}](https://gitlab.com/ligolang/ligo/-/releases/{{{version}}})</ins>
+> Run this release with Docker: `docker run ligolang/ligo:{{{version}}}`
 
 {{#changes}}
-{{type}}: {{{title}}} (!{{merge_request}} by {{{author}}})
-{{/changes}}
-{{^changes}}
-No changes for this version
+{{#breaking_ind}}
+### Breaking :
+{{#breaking}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/breaking}}
+{{/breaking_ind}}
+
+{{#added_ind}}
+### Added :
+{{#added}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/added}}
+{{/added_ind}}
+
+{{#fixed_ind}}
+### Fixed :
+{{#fixed}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/fixed}}
+{{/fixed_ind}}
+
+{{#changed_ind}}
+### Changed :
+{{#changed}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/changed}}
+{{/changed_ind}}
+
+{{#deprecated_ind}}
+### Deprecated :
+{{#deprecated}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/deprecated}}
+{{/deprecated_ind}}
+
+{{#removed_ind}}
+### Removed :
+{{#removed}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/removed}}
+{{/removed_ind}}
+
+{{#performance_ind}}
+### Performance :
+{{#performance}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/performance}}
+{{/performance_ind}}
+
+{{#internal_ind}}
+### Internal :
+{{#internal}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/internal}}
+{{/internal_ind}}
+
+{{#other_ind}}
+### Other :
+{{#other}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/other}}
+{{/other_ind}}
+
+{{#null_ind}}
+### Uncategorized :
+{{#null}}
+* {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+{{/null}}
+{{/null_ind}}
+
 {{/changes}}
 
+{{^changes}}
+_No changes for this version_
+{{/changes}}
+
+---
 {{/changelog}}

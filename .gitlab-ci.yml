@@ -7,17 +7,20 @@ variables:
 stages:
   - pretooling                      # changelog
   - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
   - push                            # deploy docker images, pages, releases (tag)
   - ide-deploy                      # deploy web IDE
   - release                         # Manage branch matching ^release/*
 
-include: 
+include:
+  # jobs for managing process around changelog generation
+  - '/.ci/.gitlab-ci-changelog.yml'
   # jobs for building and testing LSP
   - '/tools/lsp/.gitlab-ci.yml'
   # jobs for managing process around release
-  - '/.ci/.gitlab-ci.yml'
+  - '/.ci/.gitlab-ci-release.yml'
 
 .nix:
   before_script:
