@@ -40,3 +40,57 @@ let checks_linearity : raise:[<Errors.self_ast_imperative_error] Trace.raise -> 
 
 
 let linearity ~(raise:[<Errors.self_ast_imperative_error] Trace.raise) m = (fun x -> checks_linearity ~raise x ; x) m
+
+let reserved_names = (* Part of names in that list would be caught by some syntaxes *)
+  List.map ~f:ValueVar.of_input_var
+  [ "get_force" ; "transaction"; "get_entrypoint"; "int"; "is_nat"; "amount"; "balance"; "now";
+    "unit"; "source"; "sender"; "failwith"; "bitwise_or"; "bitwise_and"; "bitwise_xor"; "string_concat"; "string_slice"; "crypto_check"; "crypto_hash_key";
+    "bytes_concat"; "bytes_slice"; "bytes_pack"; "bytes_unpack"; "set_empty"; "set_mem"; "set_add"; "set_remove"; "set_iter"; "set_fold"; "list_iter";
+    "list_fold"; "list_fold_left"; "list_fold_right"; "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem";
+    "sha_256"; "sha_512"; "blake2b"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false";
+    "assert"; "black2b"; "continue";  "gas"; "hash"; "hash_key"; "pack"; "sha256"; "sha512"; "stop"; "time"; "unpack";
+    "continue"; "debugger"; "do";
+    "get_chain_id"; "abs";
+  ]
+let check_reserved ~raise ~loc binder =
+  match List.find ~f:(fun reserved -> ValueVar.equal binder.var reserved) reserved_names with
+  | Some v ->
+    let str : string = Format.asprintf "%a" ValueVar.pp v in
+    let loc : Location.t = loc in
+    raise.raise (reserved_name str loc)
+  | None -> ()
+
+let reserved_names_exp ~raise : expression -> unit = fun exp ->
+  match exp.expression_content with
+  | E_let_in {let_binder ; _ } ->
+    check_reserved ~raise ~loc:exp.location let_binder
+  | E_lambda {binder ; _} ->
+    check_reserved ~raise ~loc:exp.location binder
+  | E_matching { cases ; _ } ->
+    let rec aux : type_expression pattern -> unit = fun p ->
+      match p.wrap_content with
+      | P_unit -> ()
+      | P_var binder -> check_reserved ~raise ~loc:p.location binder
+      | P_list (Cons (p1,p2)) ->
+        let () = aux p1 in
+        aux p2
+      | P_list (List lst) | P_tuple lst | P_record (_,lst) ->
+        let () = List.iter ~f:aux lst in
+        ()
+      | P_variant (_,p) ->
+        aux p
+    in
+    List.iter ~f:aux (List.map ~f:(fun (x: _ match_case) -> x.pattern) cases)
+  | _ -> ()
+
+let reserved_names_mod ~raise : module_ -> module_ = fun m ->
+  let aux  = function
+    | Location.{wrap_content = Declaration_type _; _} -> ()
+    | {wrap_content = Declaration_constant {binder ; expr ; _ }; location = loc } ->
+      check_reserved ~raise ~loc binder ;
+      reserved_names_exp ~raise expr
+    | {wrap_content = Declaration_module _ ; _} -> ()
+    | {wrap_content = Module_alias _; _} -> ()
+  in
+  List.iter ~f:aux m ;
+  m
