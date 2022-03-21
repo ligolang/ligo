@@ -2791,3 +2791,20 @@ let%expect_test _ =
          PAIR ;
          NIL operation ;
          PAIR } } |}]
+
+(* check get contract with error typing *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "cbo" ; "--init-file" ; contract "get_contract_with_error.ligo" ] ;
+  [%expect{|
+{ PUSH string "contract not found" ;
+  SENDER ;
+  CONTRACT unit ;
+  IF_NONE { FAILWITH } { SWAP ; DROP } ;
+  SWAP ;
+  NIL operation ;
+  DIG 2 ;
+  PUSH mutez 0 ;
+  UNIT ;
+  TRANSFER_TOKENS ;
+  CONS ;
+  PAIR } |}]

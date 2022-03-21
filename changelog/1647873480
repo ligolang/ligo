@@ -1,0 +1,4 @@
+author: er433
+title: Fix in typing for Tezos.get_contract_with_error
+type: fixed
+merge_request: '1645'
