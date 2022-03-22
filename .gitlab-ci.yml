@@ -272,7 +272,7 @@ deploy_website_preview:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - gitlab-pages/**/*
-      when: always
+      when: on_success
 
 # This job will deploy the web-ide docker container to the test server.
 deploy-handoff-feature:
