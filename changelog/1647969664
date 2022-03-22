@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+title: Better error when accessing a parametric type through a module
+type: fixed
+merge_request: '1589'

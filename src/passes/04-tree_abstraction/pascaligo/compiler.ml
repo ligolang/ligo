@@ -149,7 +149,9 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
         let lst = List.map ~f:self lst in
         t_app ~loc operator lst
       )
-      | _ -> failwith "TODO: t_app in the AST should be able to take a type expression in"
+      | T_ModPath x ->
+        raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region x.value.field))
+      | _ -> raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region type_constant))
     )
     | T_Fun { region ; value = (lhs , _ , rhs) } -> (
       let loc = Location.lift region in
