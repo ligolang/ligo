@@ -68,7 +68,7 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp loc
     | `Concrete_pascaligo_expected_variable loc ->
       Format.fprintf f
-        "@[<hv>%a@.Attribute being ignored@]"
+        "@[<hv>%a@.Expected a declaration name@]"
         Snippet.pp loc
     | `Concrete_pascaligo_wrong_functional_updator reg ->
       Format.fprintf f

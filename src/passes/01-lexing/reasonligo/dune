@@ -29,7 +29,9 @@
 (rule
  (target es6fun_errors.msg.new)
  (deps
-  (:ParToken ../../02-parsing/reasonligo/ParToken.mly))
+  PreParser.mly
+  (:ParToken ../../02-parsing/reasonligo/ParToken.mly)
+  es6fun_errors.msg.in)
  (action
   (with-stdout-to
    %{target}

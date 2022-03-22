@@ -4,7 +4,7 @@ let stage = "aggregation"
 
 type aggregation_error = [
   | `Aggregation_corner_case of string
-]
+] [@@deriving poly_constructor { prefix = "aggregation_" }]
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> aggregation_error -> unit =

@@ -4,7 +4,7 @@ open Ast_typed
 open Errors
 open Simple_utils.Trace
 
-let var_equal = Var.equal
+let var_equal = ValueVar.equal
 
 let rec check_recursive_call ~raise : expression_variable -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
@@ -31,8 +31,6 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n final_path let_result
   | E_mod_in {rhs=_;let_result;_} ->
     check_recursive_call ~raise n final_path let_result
-  | E_mod_alias {alias=_;binders=_;result} ->
-    check_recursive_call ~raise n final_path result
   | E_raw_code _ -> ()
   | E_constructor {element;_} ->
     check_recursive_call ~raise n false element

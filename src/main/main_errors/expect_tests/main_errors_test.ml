@@ -145,7 +145,7 @@ let%expect_test "self_ast_imperative" =
   let open Location in
   let error e = human_readable_error (self_ast_imperative_tracer e) in
   let location_t = File default_location in
-  let type_content = T_variable (Var.of_input_var "foo") in
+  let type_content = T_variable (TypeVar.of_input_var "foo") in
   let type_expression = {type_content; location= location_t} in
   let expression_content = E_skip in
   let expression = {expression_content; location= location_t} in
@@ -379,9 +379,9 @@ let%expect_test "typer" =
   let open Location in
   let error e = human_readable_error (checking_tracer e) in
   let location_t = File default_location in
-  let type_variable = Var.of_input_var "foo" in
-  let expression_variable = Var.of_input_var "bar" in
-  let ast_core_expression_variable : Ast_core.expression_variable = Var.of_input_var "bar"
+  let type_variable = TypeVar.of_input_var "foo" in
+  let expression_variable = ValueVar.of_input_var "bar" in
+  let ast_core_expression_variable : Ast_core.expression_variable = ValueVar.of_input_var "bar"
   in
   let ast_core_expression_content : Ast_core.expression_content =
     E_variable ast_core_expression_variable
@@ -390,13 +390,13 @@ let%expect_test "typer" =
     {expression_content= ast_core_expression_content; sugar= None; location= location_t}
   in
   let type_expression : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_input_var "foo");
+    { type_content= T_variable (TypeVar.of_input_var "foo");
       type_meta= None;
       orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_input_var "bar");
+    { type_content= T_variable (TypeVar.of_input_var "bar");
       type_meta= None;
       orig_var = None ;
       location= File default_location }
@@ -848,16 +848,16 @@ let%expect_test "self_ast_typed" =
   let open Ast_typed in
   let open Location in
   let error e = human_readable_error (self_ast_typed_tracer e) in
-  let expression_variable = Var.of_input_var "bar" in
+  let expression_variable = ValueVar.of_input_var "bar" in
   let location_t = File default_location in
   let type_expression : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_input_var "foo");
+    { type_content= T_variable (TypeVar.of_input_var "foo");
       type_meta= None ;
       orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
-    { type_content= T_variable (Var.of_input_var "bar");
+    { type_content= T_variable (TypeVar.of_input_var "bar");
       type_meta= None ;
       orig_var = None ;
       location= File default_location }
@@ -915,7 +915,7 @@ let%expect_test "self_ast_typed" =
   error (`Self_ast_typed_corner_case "foo") ;
   [%expect {|
     Internal error: foo |}] ;
-  error (`Self_ast_typed_bad_contract_io (Var.of_input_var "foo", expression)) ;
+  error (`Self_ast_typed_bad_contract_io (ValueVar.of_input_var "foo", expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -923,7 +923,7 @@ let%expect_test "self_ast_typed" =
     Invalid type for entrypoint "foo".
     An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
   error
-    (`Self_ast_typed_expected_list_operation (Var.of_input_var "foo", type_expression, expression)) ;
+    (`Self_ast_typed_expected_list_operation (ValueVar.of_input_var "foo", type_expression, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -933,7 +933,7 @@ let%expect_test "self_ast_typed" =
     We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
-      (Var.of_input_var "foo", type_expression, type_expression2, expression)) ;
+      (ValueVar.of_input_var "foo", type_expression, type_expression2, expression)) ;
   [%expect
     {|
     File "a dummy file name", line 20, character 5:
@@ -971,13 +971,14 @@ let%expect_test "self_mini_c" =
 let%expect_test "spilling" =
   let error (e:Spilling.Errors.spilling_error) = human_readable_error (spilling_tracer e) in
   let open Location in
-  let type_variable : Ast_typed.type_variable = Ast_typed.Var.of_input_var "foo" in
+  let type_variable : Ast_typed.type_variable = Ast_typed.TypeVar.of_input_var "foo" in
   let location_t = File default_location in
-  let expression_variable = Ast_aggregated.Var.of_input_var "bar" in
+  let expression_variable = Ast_aggregated.ValueVar.of_input_var "bar" in
   let type_expression : Ast_aggregated.type_expression =
-    { type_content= T_variable (Ast_aggregated.Var.of_input_var "foo");
+    { type_content= T_variable (Ast_aggregated.TypeVar.of_input_var "foo");
       orig_var = None ;
-      location= File default_location }
+      location= File default_location;
+      source_type = None }
   in
   let value = Mini_c.D_none in
   error (`Spilling_corner_case ("foo", "bar")) ;

@@ -13,7 +13,6 @@ let signature_of_string ~raise s =
 
 let wrong_mini_c_value _t _v = Errors.generic_error Location.generated "wrong_mini_c_value"
 let corner_case ~loc s = ignore loc; Errors.generic_error Location.generated @@ "corner_case: " ^ s
-let bad_decompile _ = Errors.generic_error Location.generated "bad_decompile"
 let untranspilable t v =
   let v = v |> Tezos_micheline.Micheline.map_node (fun _ -> {Tezos_micheline.Micheline_printer.comment = None}) (fun x -> x) in
   let t = t |> Tezos_micheline.Micheline.map_node (fun _ -> {Tezos_micheline.Micheline_printer.comment = None}) (fun x -> x) in
@@ -179,7 +178,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   ) *)
   | Prim (_, "lambda", [_; _], _), ((Seq (_, _)) as c) ->
       let open! Ast_aggregated in
-      let arg_binder = Var.fresh () in
+      let arg_binder = ValueVar.fresh () in
       (* These are temporal types, need to be patched later: *)
       let t_input = t_unit () in
       let t_output = t_unit () in

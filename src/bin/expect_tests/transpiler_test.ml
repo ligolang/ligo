@@ -43,8 +43,8 @@ let%expect_test _ =
       | Transfer_single of action_transfer_single
 
     function transfer_single
-      (const gen__parameters1 : action_transfer_single * storage) is
-      case gen__parameters1 of [
+      (const gen__parameters2 : action_transfer_single * storage) is
+      case gen__parameters2 of [
         (action, s) ->
           {
             const cards : cards = s.cards;
@@ -71,8 +71,8 @@ let%expect_test _ =
       ]
 
     function sell_single
-      (const gen__parameters2 : action_sell_single * storage) is
-      case gen__parameters2 of [
+      (const gen__parameters3 : action_sell_single * storage) is
+      case gen__parameters3 of [
         (action, s) ->
           {
             const card : card
@@ -135,8 +135,8 @@ let%expect_test _ =
       ]
 
     function buy_single
-      (const gen__parameters3 : action_buy_single * storage) is
-      case gen__parameters3 of [
+      (const gen__parameters4 : action_buy_single * storage) is
+      case gen__parameters4 of [
         (action, s) ->
           {
             const card_pattern : card_pattern
@@ -184,8 +184,8 @@ let%expect_test _ =
           } with ((list [] : list (operation)), s)
       ]
 
-    function main (const gen__parameters4 : parameter * storage) is
-      case gen__parameters4 of [
+    function main (const gen__parameters5 : parameter * storage) is
+      case gen__parameters5 of [
         (action, s) ->
           case action of [
             Buy_single (bs) -> buy_single (bs, s)
@@ -229,8 +229,8 @@ let%expect_test _ =
 
     let transfer_single
     : action_transfer_single * storage -> return =
-      (fun gen__parameters1 : action_transfer_single * storage ->
-         match gen__parameters1 with
+      (fun gen__parameters2 : action_transfer_single * storage ->
+         match gen__parameters2 with
          action, [@var] s ->
              let [@var] cards : cards = s.cards in
              let [@var] card : card =
@@ -258,8 +258,8 @@ let%expect_test _ =
              end)
 
     let sell_single : action_sell_single * storage -> return =
-      (fun gen__parameters2 : action_sell_single * storage ->
-         match gen__parameters2 with
+      (fun gen__parameters3 : action_sell_single * storage ->
+         match gen__parameters3 with
          action, [@var] s ->
              let card : card =
                match Map.find_opt action.card_to_sell s.cards
@@ -316,8 +316,8 @@ let%expect_test _ =
              end)
 
     let buy_single : action_buy_single * storage -> return =
-      (fun gen__parameters3 : action_buy_single * storage ->
-         match gen__parameters3 with
+      (fun gen__parameters4 : action_buy_single * storage ->
+         match gen__parameters4 with
          action, [@var] s ->
              let [@var] card_pattern : card_pattern =
                match Map.find_opt
@@ -359,8 +359,8 @@ let%expect_test _ =
              end)
 
     let main : parameter * storage -> return =
-      (fun gen__parameters4 : parameter * storage ->
-         match gen__parameters4 with
+      (fun gen__parameters5 : parameter * storage ->
+         match gen__parameters5 with
          action, s ->
              match action with
                Buy_single bs -> buy_single bs s
@@ -403,9 +403,9 @@ type parameter =
 
 let transfer_single
 : (action_transfer_single, storage) => return =
-  ((gen__parameters1: (action_transfer_single, storage))
+  ((gen__parameters2: (action_transfer_single, storage))
    : return =>
-     switch  gen__parameters1 {
+     switch  gen__parameters2 {
      | action, [@var] s =>
          let [@var] cards: cards = s.cards;
          let [@var] card: card =
@@ -437,8 +437,8 @@ let transfer_single
      });
 
 let sell_single: (action_sell_single, storage) => return =
-  ((gen__parameters2: (action_sell_single, storage)): return =>
-     switch  gen__parameters2 {
+  ((gen__parameters3: (action_sell_single, storage)): return =>
+     switch  gen__parameters3 {
      | action, [@var] s =>
          let card: card =
            switch Map.find_opt(action.card_to_sell, s.cards) {
@@ -499,8 +499,8 @@ let sell_single: (action_sell_single, storage) => return =
      });
 
 let buy_single: (action_buy_single, storage) => return =
-  ((gen__parameters3: (action_buy_single, storage)): return =>
-     switch  gen__parameters3 {
+  ((gen__parameters4: (action_buy_single, storage)): return =>
+     switch  gen__parameters4 {
      | action, [@var] s =>
          let [@var] card_pattern: card_pattern =
            switch
@@ -547,8 +547,8 @@ let buy_single: (action_buy_single, storage) => return =
      });
 
 let main: (parameter, storage) => return =
-  ((gen__parameters4: (parameter, storage)): return =>
-     switch  gen__parameters4 {
+  ((gen__parameters5: (parameter, storage)): return =>
+     switch  gen__parameters5 {
      | action, s =>
          switch  action {
          | Buy_single bs => buy_single(bs, s)
@@ -566,7 +566,7 @@ let%expect_test _ =
 
     type ppp is ppi * ppi
 
-    function main (const gen___1 : unit) is
+    function main (const gen___2 : unit) is
     {
       const a : ppp
       = (record [x = (0, 1); y = (10, 11)],
@@ -575,7 +575,7 @@ let%expect_test _ =
       a.0 := a.0.x with a.0. x.0 with 2
     } with a.0. x. 0
 
-    function asymetric_tuple_access (const gen___2 : unit) is
+    function asymetric_tuple_access (const gen___3 : unit) is
     {
       const tuple : int * int * int * int = (0, (1, (2, 3)))
     } with
@@ -607,7 +607,7 @@ let%expect_test _ =
     type ppp = ppi * ppi
 
     let main : unit -> int =
-      (fun gen___1 : unit ->
+      (fun gen___2 : unit ->
          let [@var] a : ppp =
            {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
          let a =
@@ -616,7 +616,7 @@ let%expect_test _ =
          a.0.x.0)
 
     let asymetric_tuple_access : unit -> int =
-      (fun gen___2 : unit ->
+      (fun gen___3 : unit ->
          let [@var] tuple : int * int * int * int = 0, 1, 2, 3 in
          (((tuple.0 + tuple.1.0) + tuple.1.1.0) + tuple.1.1.1))
 
@@ -643,7 +643,7 @@ let%expect_test _ =
     type ppp = (ppi, ppi);
 
     let main: unit => int =
-      ((gen___1: unit): int =>
+      ((gen___2: unit): int =>
          let [@var] a: ppp =
            {
               x: 0, 1,
@@ -655,7 +655,7 @@ let%expect_test _ =
          a[0].x[0]);
 
     let asymetric_tuple_access: unit => int =
-      ((gen___2: unit): int =>
+      ((gen___3: unit): int =>
          let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
          ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 
@@ -833,8 +833,8 @@ type storage is unit
 
 type return is list (operation) * storage
 
-function main (const gen__parameters1 : parameter * storage) is
-  case gen__parameters1 of [
+function main (const gen__parameters2 : parameter * storage) is
+  case gen__parameters2 of [
     (p, s) ->
       {
         case p of [
@@ -854,58 +854,58 @@ function foobar (const i : int) is
 {
   const p : parameter = (Zero (42n));
 
-  const gen__env12 = (i);
+  const gen__env13 = (i);
 
-  const gen__env12
+  const gen__env13
   = if Operator.gt (i, 0)
     then
       {
         const i = Operator.add (i, 1);
 
-        gen__env12.0 := i;
+        gen__env13.0 := i;
 
-        const gen__env10 = (i);
+        const gen__env11 = (i);
 
-        const gen__env10
+        const gen__env11
         = if Operator.gt (i, 10)
           then
             {
               const i = 20;
 
-              gen__env10.0 := i;
+              gen__env11.0 := i;
 
               failwith ("who knows");
 
               const i = 30;
 
-              gen__env10.0 := i;
+              gen__env11.0 := i;
 
               skip
-            } with gen__env10
+            } with gen__env11
           else
             {
               skip
-            } with gen__env10;
+            } with gen__env11;
 
-        const i = gen__env10.0;
+        const i = gen__env11.0;
 
-        gen__env12.0 := i;
+        gen__env13.0 := i;
 
         skip
-      } with gen__env12
+      } with gen__env13
     else
       {
         case p of [
-          Zero (gen___4) -> failwith (42n)
-        | Pos (gen___5) -> skip
+          Zero (gen___5) -> failwith (42n)
+        | Pos (gen___6) -> skip
         ]
-      } with gen__env12;
+      } with gen__env13;
 
-  const i = gen__env12.0
+  const i = gen__env13.0
 } with
     case p of [
-      Zero (gen___2) -> i
-    | Pos (gen___3) -> (failwith ("waaaa") : int)
+      Zero (gen___3) -> i
+    | Pos (gen___4) -> (failwith ("waaaa") : int)
     ]
 
 function failer (const p : int) is
@@ -914,78 +914,78 @@ function failer (const p : int) is
 } with p |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "cameligo" ] ;
   [%expect {|
-    type parameter = Pos of nat | Zero of nat
+type parameter = Pos of nat | Zero of nat
 
-    type storage = unit
+type storage = unit
 
-    type return = operation list * storage
+type return = operation list * storage
 
-    let main : parameter * storage -> return =
-      (fun gen__parameters1 : parameter * storage ->
-         match gen__parameters1 with
-         p, s ->
-             begin
-               match p with
-                 Zero n ->
-                   if (n > 0n) then (failwith ("fail")) else ()
-               | Pos n ->
-                   if (n = 0n) then (failwith ("fail")) else ();
-               ([] : operation list), s
-             end)
+let main : parameter * storage -> return =
+  (fun gen__parameters2 : parameter * storage ->
+     match gen__parameters2 with
+     p, s ->
+         begin
+           match p with
+             Zero n ->
+               if (n > 0n) then (failwith ("fail")) else ()
+           | Pos n ->
+               if (n = 0n) then (failwith ("fail")) else ();
+           ([] : operation list), s
+         end)
 
-    let foobar : int -> int =
-      (fun [@var] i : int ->
-         let [@var] p : parameter = (Zero 42n) in
-         let gen__env12 = i in
-         let gen__env12 =
-           if (i > 0)
+let foobar : int -> int =
+  (fun [@var] i : int ->
+     let [@var] p : parameter = (Zero 42n) in
+     let gen__env13 = i in
+     let gen__env13 =
+       if (i > 0)
+       then
+         let i = (i + 1) in
+         let gen__env13 = {gen__env13 with {0 = i}} in
+         let gen__env11 = i in
+         let gen__env11 =
+           if (i > 10)
            then
-             let i = (i + 1) in
-             let gen__env12 = {gen__env12 with {0 = i}} in
-             let gen__env10 = i in
-             let gen__env10 =
-               if (i > 10)
-               then
-                 let i = 20 in
-                 let gen__env10 = {gen__env10 with {0 = i}} in
-                 begin
-                   (failwith ("who knows"));
-                   let i = 30 in
-                   let gen__env10 = {gen__env10 with {0 = i}} in
-                   begin
-                     ();
-                     gen__env10
-                   end
-                 end
-               else
-                 begin
-                   ();
-                   gen__env10
-                 end in
-             let i = gen__env10.0 in
-             let gen__env12 = {gen__env12 with {0 = i}} in
+             let i = 20 in
+             let gen__env11 = {gen__env11 with {0 = i}} in
              begin
-               ();
-               gen__env12
+               (failwith ("who knows"));
+               let i = 30 in
+               let gen__env11 = {gen__env11 with {0 = i}} in
+               begin
+                 ();
+                 gen__env11
+               end
              end
            else
              begin
-               match p with
-                 Zero gen___4 -> (failwith (42n))
-               | Pos gen___5 -> ();
-               gen__env12
+               ();
+               gen__env11
              end in
-         let i = gen__env12.0 in
-         match p with
-           Zero gen___2 -> i
-         | Pos gen___3 -> ((failwith ("waaaa")) : int))
-
-    let failer : int -> int =
-      (fun p : int ->
+         let i = gen__env11.0 in
+         let gen__env13 = {gen__env13 with {0 = i}} in
          begin
-           if (p = 1) then (failwith (42)) else ();
-           p
-         end) |}];
+           ();
+           gen__env13
+         end
+       else
+         begin
+           match p with
+             Zero gen___5 -> (failwith (42n))
+           | Pos gen___6 -> ();
+           gen__env13
+         end in
+     let i = gen__env13.0 in
+     match p with
+       Zero gen___3 -> i
+     | Pos gen___4 -> ((failwith ("waaaa")) : int))
+
+let failer : int -> int =
+  (fun p : int ->
+     begin
+       if (p = 1) then (failwith (42)) else ();
+       p
+     end) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
 type parameter = Pos(nat) | Zero(nat);
@@ -995,8 +995,8 @@ type storage = unit;
 type return = (list(operation), storage);
 
 let main: (parameter, storage) => return =
-  ((gen__parameters1: (parameter, storage)): return =>
-     switch  gen__parameters1 {
+  ((gen__parameters2: (parameter, storage)): return =>
+     switch  gen__parameters2 {
      | p, s =>
          {
            switch  p {
@@ -1022,54 +1022,54 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   (([@var] i: int): int =>
      let [@var] p: parameter = (Zero 42n);
-     let gen__env12 = i;
-     let gen__env12 =
+     let gen__env13 = i;
+     let gen__env13 =
        if(((i) > (0))) {
 
          let i = ((i) + (1));
-         let gen__env12 = {...gen__env12, {0: i }};
-         let gen__env10 = i;
-         let gen__env10 =
+         let gen__env13 = {...gen__env13, {0: i }};
+         let gen__env11 = i;
+         let gen__env11 =
            if(((i) > (10))) {
 
              let i = 20;
-             let gen__env10 = {...gen__env10, {0: i }};
+             let gen__env11 = {...gen__env11, {0: i }};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env10 = {...gen__env10, {0: i }};
+               let gen__env11 = {...gen__env11, {0: i }};
                {
                  ();
-                 gen__env10
+                 gen__env11
                }
              }
            } else {
 
              {
                ();
-               gen__env10
+               gen__env11
              }
              };
-         let i = gen__env10[0];
-         let gen__env12 = {...gen__env12, {0: i }};
+         let i = gen__env11[0];
+         let gen__env13 = {...gen__env13, {0: i }};
          {
            ();
-           gen__env12
+           gen__env13
          }
        } else {
 
          {
            switch  p {
-           | Zero gen___4 => (failwith((42n)))
-           | Pos gen___5 => ()
+           | Zero gen___5 => (failwith((42n)))
+           | Pos gen___6 => ()
            };
-           gen__env12
+           gen__env13
          }
          };
-     let i = gen__env12[0];
+     let i = gen__env13[0];
      switch  p {
-     | Zero gen___2 => i
-     | Pos gen___3 => ((failwith(("waaaa"))) : int)
+     | Zero gen___3 => i
+     | Pos gen___4 => ((failwith(("waaaa"))) : int)
      });
 
 let failer: int => int =
@@ -1086,8 +1086,8 @@ let failer: int => int =
 let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;
   [%expect {|
-    recursive function sum (const gen__parameters1 : int * int) is
-      case gen__parameters1 of [
+    recursive function sum (const gen__parameters2 : int * int) is
+      case gen__parameters2 of [
         (n, acc) ->
           if Operator.lt (n, 1)
           then acc
@@ -1095,8 +1095,8 @@ let%expect_test _ =
       ]
 
     recursive function fibo
-      (const gen__parameters2 : int * int * int) is
-      case gen__parameters2 of [
+      (const gen__parameters3 : int * int * int) is
+      case gen__parameters3 of [
         (n, n_1, n_0) ->
           if Operator.lt (n, 2)
           then n_1
@@ -1107,14 +1107,14 @@ let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
     let rec sum : int * int -> int =
-      (fun gen__parameters1 : int * int ->
-         match gen__parameters1 with
+      (fun gen__parameters2 : int * int ->
+         match gen__parameters2 with
          n, acc ->
              if (n < 1) then acc else sum (n - 1) (acc + n))
 
     let rec fibo : int * int * int -> int =
-      (fun gen__parameters2 : int * int * int ->
-         match gen__parameters2 with
+      (fun gen__parameters3 : int * int * int ->
+         match gen__parameters3 with
          n, n_1, n_0 ->
              if (n < 2)
              then n_1
@@ -1122,8 +1122,8 @@ let%expect_test _ =
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =
-      ((gen__parameters1: (int, int)): int =>
-         switch  gen__parameters1 {
+      ((gen__parameters2: (int, int)): int =>
+         switch  gen__parameters2 {
          | n, acc =>
              if(((n) < (1))) {
                acc
@@ -1134,8 +1134,8 @@ let%expect_test _ =
          });
 
     let rec fibo: (int, int, int) => int =
-      ((gen__parameters2: (int, int, int)): int =>
-         switch  gen__parameters2 {
+      ((gen__parameters3: (int, int, int)): int =>
+         switch  gen__parameters3 {
          | n, n_1, n_0 =>
              if(((n) < (2))) {
                n_1

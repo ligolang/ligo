@@ -1617,7 +1617,8 @@ let website2_ligo ~raise ~add_warning f : unit =
 let tez_ligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/tez.ligo" in
   let _ = expect_eq_evaluate ~raise program "add_tez" (e_mutez 42) in
-  let _ = expect_eq_evaluate ~raise program "sub_tez" (e_mutez 1) in
+  let _ = expect_eq_evaluate ~raise program "sub_tez" (e_some (e_mutez 1)) in
+  let _ = expect_eq_evaluate ~raise program "sub_tez_none" (e_none ()) in
   let _ = expect_eq_evaluate ~raise program "not_enough_tez" (e_mutez 4611686018427387903) in
   let _ = expect_eq_evaluate ~raise program "nat_mul_tez" (e_mutez 100) in
   let _ = expect_eq_evaluate ~raise program "tez_mul_nat" (e_mutez 1000) in
@@ -1632,7 +1633,8 @@ let tez_ligo ~raise ~add_warning () : unit =
 let tez_mligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/tez.mligo" in
   let _ = expect_eq_evaluate ~raise program "add_tez" (e_mutez 42) in
-  let _ = expect_eq_evaluate ~raise program "sub_tez" (e_mutez 1) in
+  let _ = expect_eq_evaluate ~raise program "sub_tez" (e_some (e_mutez 1)) in
+  let _ = expect_eq_evaluate ~raise program "sub_tez_none" (e_none ()) in
   let _ = expect_eq_evaluate ~raise program "not_enough_tez" (e_mutez 4611686018427387903) in
   let _ = expect_eq_evaluate ~raise program "add_more_tez" (e_mutez 111111000) in
   ()
@@ -1713,13 +1715,13 @@ let jsligo_let_multiple ~raise ~add_warning () : unit =
 
 let balance_test_options ~raise () =
   let balance = trace_option ~raise (test_internal "could not convert balance") @@
-    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "4000000" in
+    Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "0" in
   Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~balance ())
 
 let balance_constant ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
-  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  let expected = e_tuple [e_list []; e_mutez 0] in
   let options = balance_test_options ~raise () in
   expect_eq ~raise ~options program "main" input expected
 

@@ -171,43 +171,50 @@ let while_loop
   (acc, {cond; body})
 
 (* Declaration *)
-let declaration_type : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a declaration_type -> 'acc * 'b declaration_type
+let declaration_type : ('acc -> 'a -> 'acc * 'b) -> 'acc -> ('a,'attr) declaration_type' -> 'acc * ('b,'attr) declaration_type'
 = fun g acc {type_binder; type_expr; type_attr} ->
   let acc,type_expr = g acc type_expr in
   (acc,{type_binder; type_expr; type_attr})
 
-let declaration_constant : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) declaration_constant -> 'acc * ('b,'d) declaration_constant
+let declaration_constant : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c,'attr) declaration_constant' -> 'acc * ('b,'d,'attr) declaration_constant'
 = fun f g acc {binder=b; attr; expr} ->
   let acc,binder = binder g acc b in
   let acc,expr   = f acc expr     in
   (acc,{binder;attr;expr})
 
-let rec declaration_module : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) declaration_module -> 'acc * ('b,'d) declaration_module
+let rec declaration_module : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc ->
+  ('a,'c,'attr_e,'attr_t,'attr_m) declaration_module' -> 'acc * ('b,'d,'attr_e,'attr_t,'attr_m) declaration_module'
 = fun f g acc {module_binder; module_;module_attr} ->
-  let acc,module_ = module' f g acc module_ in
+  let acc,module_ = module_expr f g acc module_ in
   (acc, {module_binder;module_;module_attr})
 
 and module_alias
 = fun acc ma ->  (acc, ma)
 
-and declaration' :  ('acc -> 'a -> 'acc * 'b) -> (_) -> 'acc -> ('a,'c) declaration' -> 'acc * ('b,'d) declaration'
-= fun f g acc -> function
-  Declaration_type    ty -> let (acc,ty) = declaration_type      g acc ty in  (acc,Declaration_type   ty)
-| Declaration_constant c -> let (acc,c)  = declaration_constant f g acc c in  (acc,Declaration_constant c)
-| Declaration_module   m -> let (acc,m)  = declaration_module   f g acc m in  (acc,Declaration_module   m)
-| Module_alias        ma -> let (acc,ma) = module_alias            acc ma in  (acc,Module_alias        ma)
+and declaration' :  ('acc -> 'a -> 'acc * 'b) -> (_) -> 'acc -> ('a,'c,'attr_e,'attr_t,'attr_m) declaration' -> 'acc * ('b,'d,'attr_e,'attr_t,'attr_m) declaration'
+= fun f g acc d ->
+  let return x y =
+    (x,{d with wrap_content = y})
+  in
+  match d.wrap_content with
+  | Declaration_type    ty -> let (acc,ty) = declaration_type      g acc ty in return acc (Declaration_type     ty)
+  | Declaration_constant c -> let (acc,c)  = declaration_constant f g acc c in return acc (Declaration_constant c)
+  | Declaration_module   m -> let (acc,m)  = declaration_module   f g acc m in return acc (Declaration_module   m)
 
-and module' : ('acc -> 'a -> 'acc * 'b) -> (_) -> 'acc -> ('a,'c) module' -> 'acc * ('b,'d) module'
-= fun f g acc prg ->
-  List.fold_map ~f:(Location.fold_map (declaration' f g)) ~init:acc prg
+and module_expr : ('acc -> 'a -> 'acc * 'b) -> (_) -> 'acc -> ('a,'c,'attr_e,'attr_t,'attr_m) module_expr' -> 'acc * ('b,'d,'attr_e,'attr_t,'attr_m) module_expr' =
+  fun f g acc mexp ->
+    let return x y =
+      (x,{mexp with wrap_content = y})
+    in
+    match mexp.wrap_content with
+    | M_struct prg ->
+      let (x,prg) = List.fold_map ~f:(declaration' f g) ~init:acc prg in
+      return x (M_struct prg)
+    | M_variable _ | M_module_path _ -> (acc,mexp)
 
-let mod_in :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) mod_in -> 'acc * ('b,'d) mod_in
+let mod_in :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc ->
+  ('a,'c,'attr_e,'attr_t,'attr_m) mod_in' -> 'acc * ('b,'d,'attr_e,'attr_t,'attr_m) mod_in'
 = fun f g acc {module_binder; rhs; let_result} ->
-  let acc,rhs        = module' f g acc rhs in
+  let acc,rhs        = module_expr f g acc rhs in
   let acc,let_result = f acc let_result in
   (acc,{module_binder; rhs; let_result})
-
-let mod_alias :  ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a mod_alias -> 'acc * 'b mod_alias
-= fun f acc {alias; binders; result} ->
-  let acc,result = f acc result in
-  (acc,{alias; binders; result})

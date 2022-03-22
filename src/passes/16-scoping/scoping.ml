@@ -5,13 +5,18 @@ module Location    = Simple_utils.Location
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Option      = Simple_utils.Option
+module Var = Stage_common.Types.ValueVar
 open Ligo_coq_ocaml.Micheline
 open Ligo_coq_ocaml.Micheline_wrapper
 
-type meta = Location.t
+type meta = Mini_c.meta
+type binder_meta = Mini_c.binder_meta
 
 (* We should use this less: *)
-let nil = Location.generated
+let nil : meta =
+  { location = Location.generated;
+    env = [];
+    binder = None }
 
 (* Maybe add a field annotation to x, which is expected to be a prim: *)
 let annotate (ann : string option) (x : (meta, string) node) : (meta, string) node =
@@ -23,9 +28,20 @@ let annotate (ann : string option) (x : (meta, string) node) : (meta, string) no
       Prim (l, p, args, ("%"^ann) :: anns)
     | x -> x
 
+let binder_meta (var : Var.t option) (source_type : I.type_expression) : binder_meta option =
+  Option.map var
+    ~f:(fun var -> ({ location = Location.dummy; (* TODO propagate the location of the binder *)
+                      name = (if Var.is_generated var then None else Some (Format.asprintf "%a" Var.pp var));
+                      source_type = source_type.source_type }
+                    : binder_meta))
+
 (* Next stage uses Micheline for its types: *)
-let rec translate_type : I.type_expression -> (meta, string) node =
+let rec translate_type ?var : I.type_expression -> (meta, string) node =
   fun a ->
+  let nil : meta =
+    { location = Location.generated;
+      env = [];
+      binder = binder_meta var a } in
   match a.type_content with
   | I.T_tuple ts ->
     tuple_comb ts
@@ -90,7 +106,7 @@ and tuple_comb ts =
     Prim (nil, "pair", ts, [])
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
-  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.Var.pp x in
+  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.ValueVar.pp x in
   let usages = List.repeat idx Drop
                @ [ Keep ]
                @ List.repeat (List.length env - idx - 1) Drop in
@@ -120,7 +136,10 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
 let rec translate_expression (expr : I.expression) (env : I.environment) =
-  let meta = expr.location in
+  let meta : meta =
+    { location = expr.location;
+      env = [];
+      binder = None } in
   let ty = expr.type_expression in
   match expr.content with
   | E_literal lit ->
@@ -223,7 +242,14 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (a, b) = match Mini_c.get_t_function ty with
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
-    (E_raw_michelson (meta, translate_type a, translate_type b, List.map ~f:backward code), use_nothing env)
+    (E_raw_michelson (meta, translate_type a, translate_type b,
+                      List.map
+                        ~f:(fun node -> backward (Tezos_micheline.Micheline.map_node
+                                                    (fun l -> ({location = l; env = []; binder = None} : meta))
+                                                    (fun p -> p)
+                                                    node))
+                        code),
+     use_nothing env)
   | E_global_constant (hash, args) ->
     let (args, us) = translate_args args env in
     let output_ty = translate_type ty in
@@ -232,26 +258,25 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
 and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
   let (body, usages) = translate_expression body env' in
-  let (_, binder_type) = binder in
-  (O.Binds ([List.hd_exn usages], [translate_type binder_type], body), List.tl_exn usages)
+  let (binder, binder_type) = binder in
+  (O.Binds ([List.hd_exn usages], [translate_type ~var:binder binder_type], body), List.tl_exn usages)
 
 and translate_binder2 ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
   let (body, usages) = translate_expression body env' in
-  let (_, binder1_type) = binder1 in
-  let (_, binder2_type) = binder2 in
+  let (binder1, binder1_type) = binder1 in
+  let (binder2, binder2_type) = binder2 in
   (O.Binds ([List.hd_exn usages; List.hd_exn (List.tl_exn usages)],
-            [translate_type binder1_type; translate_type binder2_type],
+            [translate_type ~var:binder1 binder1_type; translate_type ~var:binder2 binder2_type],
             body),
    List.tl_exn (List.tl_exn usages))
 
 and translate_binderN (vars, body) env =
   let env' = List.fold_right ~f:I.Environment.add vars ~init:env in
   let (body, usages) = translate_expression body env' in
-  let var_types = List.map ~f:snd vars in
   let n = List.length vars in
   (O.Binds (List.take usages n,
-            List.map ~f:translate_type var_types,
+            List.map ~f:(fun (var, ty) -> translate_type ~var ty) vars,
             body),
    List.drop usages n)
 
@@ -380,4 +405,4 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
 
 and translate_closed_function ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
   let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) env) in
-  Binds (usages, [translate_type input_ty], body)
+  Binds (usages, [translate_type ~var:binder input_ty], body)

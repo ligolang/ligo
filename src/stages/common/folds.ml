@@ -1,5 +1,4 @@
 open Types
-open Simple_utils.Function
 
 (* Types level *)
 
@@ -39,7 +38,7 @@ let application : ('acc -> 'a -> 'acc) -> 'acc -> 'a application -> 'acc
   let acc = f acc args in
    acc
 
-let option f acc = (Option.value ~default:acc) <@ Option.map ~f:(f acc)
+let option f init = Option.fold ~init ~f
 
 let binder : ('acc -> 'a -> 'acc) -> 'acc -> 'a binder -> 'acc
 = fun f acc {var=_; ascr; attributes=_} ->
@@ -66,7 +65,7 @@ let lambda : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) lam
   let acc = f acc result in
   acc
 
-let type_abs : ('acc -> 'a -> 'acc) -> 'acc -> ('a) type_abs -> 'acc 
+let type_abs : ('acc -> 'a -> 'acc) -> 'acc -> 'a type_abs -> 'acc 
 = fun f acc {type_binder=_;result}->
   let acc = f acc result in
   acc
@@ -98,13 +97,13 @@ let recursive : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) 
   let acc = lambda f g acc l in
    acc
 
-let accessor : ('acc -> 'a -> 'b) -> 'acc -> 'a accessor -> 'acc
+let accessor : ('acc -> 'a -> 'acc) -> 'acc -> 'a accessor -> 'acc
 = fun f acc {record;path=p} ->
   let acc = f acc record in
   let acc = path f acc p in
    acc
 
-let record_accessor : ('acc -> 'a -> 'b) -> 'acc -> 'a record_accessor -> 'acc
+let record_accessor : ('acc -> 'a -> 'acc) -> 'acc -> 'a record_accessor -> 'acc
 = fun f acc {record;path=_} ->
   let acc = f acc record in
    acc
@@ -146,13 +145,13 @@ let conditional : ('acc -> 'a -> 'acc) -> 'acc -> 'a conditional -> 'acc
   let acc = f acc else_clause in
    acc
 
-let assign : ('acc -> 'a -> 'b) -> 'acc -> 'a assign -> 'acc
+let assign : ('acc -> 'a -> 'acc) -> 'acc -> 'a assign -> 'acc
 = fun f acc {variable=_; access_path; expression} ->
   let acc = path f acc access_path in
   let acc = f acc expression in
    acc
 
-let for_ : ('acc -> 'a -> 'b) -> 'acc -> 'a for_ -> 'acc
+let for_ : ('acc -> 'a -> 'acc) -> 'acc -> 'a for_ -> 'acc
 = fun f acc {binder=_;start;final;incr;f_body} ->
   let acc = f acc start in
   let acc = f acc final in
@@ -160,57 +159,51 @@ let for_ : ('acc -> 'a -> 'b) -> 'acc -> 'a for_ -> 'acc
   let acc = f acc f_body in
   acc
 
-let for_each : ('acc -> 'a -> 'b) -> 'acc -> 'a for_each -> 'acc
+let for_each : ('acc -> 'a -> 'acc) -> 'acc -> 'a for_each -> 'acc
 = fun f acc {fe_binder=_;collection;fe_body;collection_type=_} ->
   let acc = f acc collection in
   let acc = f acc fe_body in
   acc
 
-let while_loop : ('acc -> 'a -> 'b) -> 'acc -> 'a while_loop -> 'acc
+let while_loop : ('acc -> 'a -> 'acc) -> 'acc -> 'a while_loop -> 'acc
 = fun f acc {cond; body} ->
   let acc = f acc cond in
   let acc = f acc body in
   acc
 
+let rec mod_in : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) mod_in' -> 'acc
+= fun f g acc { module_binder=_; rhs ; let_result} ->
+  let acc = (module_expr f g) acc rhs in
+  let acc = f acc let_result in
+  acc
 (* Declaration *)
-let declaration_type : ('acc -> 'a -> 'acc) -> 'acc -> 'a declaration_type -> 'acc
+and declaration_type : ('acc -> 'a -> 'acc) -> 'acc -> ('a,'attr) declaration_type' -> 'acc
 = fun g acc {type_binder=_; type_expr; type_attr=_} ->
   let acc = g acc type_expr in
   acc
 
-let declaration_constant : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) declaration_constant -> 'acc
+and declaration_constant : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp,'attr) declaration_constant' -> 'acc
 = fun f g acc {binder=b; attr=_; expr} ->
   let acc = binder g acc b in
   let acc = f acc expr     in
   acc
 
-let rec declaration_module : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) declaration_module -> 'acc
+and declaration_module : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration_module' -> 'acc
 = fun f g acc {module_binder=_;module_;module_attr=_} ->
-  let acc = module' f g acc module_ in
+  let acc = module_expr f g acc module_ in
    acc
 
-and module_alias
-= fun acc _ ->
-   acc
+and declaration : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration' -> 'acc
+= fun f g acc d ->
+  match d.wrap_content with
+  | Declaration_type    ty -> declaration_type       g acc ty
+  | Declaration_constant c -> declaration_constant f g acc c
+  | Declaration_module   m -> declaration_module   f g acc m
 
-and declaration : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) declaration' -> 'acc
-= fun f g acc -> function
-  Declaration_type    ty -> declaration_type       g acc ty
-| Declaration_constant c -> declaration_constant f g acc c
-| Declaration_module   m -> declaration_module   f g acc m
-| Module_alias        ma -> module_alias             acc ma
-
-and module' : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) module' -> 'acc
-= fun f g acc prg ->
-  List.fold ~f:(fun init a -> (declaration f g) init @@ Location.unwrap a) ~init:acc prg
-
-let mod_in : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) mod_in -> 'acc
-= fun f g acc { module_binder=_; rhs ; let_result} ->
-  let acc = (module' f g) acc rhs in
-  let acc = f acc let_result in
-   acc
-
-let mod_alias : ('acc -> 'a -> 'acc) -> 'acc -> 'a mod_alias -> 'acc
-= fun f acc { alias=_; binders=_; result} ->
-  let acc = f acc result in
-   acc
+and module_expr : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr' -> 'acc =
+  fun f g acc mexp ->
+    match mexp.wrap_content with
+    | M_variable _ -> acc
+    | M_struct prg ->
+      List.fold ~f:(fun acc d -> (declaration f g) acc d) ~init:acc prg
+    | M_module_path _ -> acc

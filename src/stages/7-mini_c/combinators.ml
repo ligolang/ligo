@@ -7,9 +7,10 @@ module Expression = struct
   let get_content : t -> t' = fun e -> e.content
   let get_type : t -> type_expression = fun e -> e.type_expression
 
-  let make_t ?(loc=Location.generated) = fun tc -> {
+  let make_t ?(loc=Location.generated) ?source_type = fun tc -> {
     type_content = tc;
     location = loc;
+    source_type = source_type;
   }
 
   let make ?(loc=Location.generated) = fun e' t -> {
@@ -208,7 +209,3 @@ let ec_pair a b : expression_content =
   E_constant {cons_name=C_PAIR;arguments=[a; b]}
 
 let d_unit : value = D_unit
-
-
-let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }
-let id_environment_wrap e = environment_wrap e e

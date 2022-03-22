@@ -21,7 +21,6 @@ and type_vars_to_list : CST.type_vars -> CST.type_var Region.reg list = function
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
-let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson";"Loop";"Current"]
@@ -30,10 +29,10 @@ open Predefined.Tree_abstraction.Cameligo
 
 let r_split = Location.r_split
 
-let mk_var ?loc var = if String.equal var "_" then Var.fresh ?loc () else Var.of_input_var ?loc var
 let quote_var var = "'"^var
-let compile_variable var = let (var,loc) = r_split var in mk_var ~loc var
-let compile_type_var var : AST.type_variable  = let (var,loc) = r_split var in mk_var ~loc var
+let compile_variable var = let (var,loc) = r_split var in ValueVar.of_input_var ~loc var
+let compile_type_var var : AST.type_variable  = let (var,loc) = r_split var in TypeVar.of_input_var ~loc var
+let compile_mod_var var : AST.module_variable  = let (var,loc) = r_split var in ModuleVar.of_input_var ~loc var
 let compile_attributes : CST.attributes -> string list = fun attr ->
   let f : CST.attribute Region.reg -> string =
     fun x ->
@@ -151,7 +150,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
         | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
       )
     | _ ->
-      let operator = Var.of_input_var operator.value in
+      let operator = TypeVar.of_input_var operator.value in
       let lst = List.map ~f:self args in
       return @@ t_app ~loc operator lst
   )
@@ -167,20 +166,28 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
 
   | TVar var ->
     let (name,loc) = r_split var in
-    let v = Var.of_input_var name in
+    let v = TypeVar.of_input_var name in
     return @@ t_variable ~loc v
   | TString _s -> raise.raise @@ unsupported_string_singleton te
   | TInt _s -> raise.raise @@ unsupported_string_singleton te
   | TArg var ->
     let (quoted_var,loc) = r_split var in
-    let v = Var.of_input_var (quote_var quoted_var.name.value) in
+    let v = TypeVar.of_input_var (quote_var quoted_var.name.value) in
     return @@ t_variable ~loc v
-  | TModA ma ->
+  | TModA ma -> (
     let (ma, loc) = r_split ma in
-    let (module_name, _) = r_split ma.module_name in
-    let module_name = Var.of_input_var module_name in
-    let element = self ma.field in
-    return @@ t_module_accessor ~loc module_name element
+    let module_name = compile_mod_var ma.module_name in
+    let rec aux : module_variable list -> CST.type_expr -> AST.type_expression = fun acc exp ->
+      match exp with
+      | TVar v ->
+        let accessed_el = compile_type_var v in
+        return @@ t_module_accessor ~loc acc accessed_el
+      | TModA ma ->
+        aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
+      | _ -> raise.raise (expected_access_to_variable (CST.type_expr_to_region ma.field))
+    in
+    aux [module_name] ma.field
+  )
 
 let compile_selection (selection : CST.selection) =
   match selection with
@@ -256,7 +263,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EArith arth ->
     ( match arth with
       Add plus   -> compile_bin_op C_ADD plus
-    | Sub minus  -> compile_bin_op C_SUB minus
+    | Sub minus  -> compile_bin_op C_POLYMORPHIC_SUB minus
     | Mult times -> compile_bin_op C_MUL times
     | Div slash  -> compile_bin_op C_DIV slash
     | Mod mod_   -> compile_bin_op C_MOD mod_
@@ -352,26 +359,40 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let var  = e_variable_ez ~loc:loc_var var in
     let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
     return @@ e_accessor ~loc var sels
-  | EModA ma ->
+  | EModA ma -> (
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
-    let element = self ma.field in
     (*TODO: move to proper module*)
     if List.mem ~equal:Caml.(=) build_ins module_name then
       let fun_name = match ma.field with
-        EVar v -> v.value
-      | EModA _ -> raise.raise @@ unknown_constant module_name loc
-      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+        | EVar v -> v.value
+        | EModA _ -> raise.raise @@ unknown_constant module_name loc
+        |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+        |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
+        |EModAlias _|ETuple _| EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name ^ "." ^ fun_name in
-      (match constants var with
+      match constants var with
         Some const -> return @@ e_constant ~loc const []
       | None -> return @@ e_variable_ez ~loc var
-      )
     else
-      return @@ e_module_accessor ~loc (Var.of_input_var module_name) element
+      let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
+        match exp with
+        | EVar v ->
+          let accessed_el = compile_variable v in
+          return @@ e_module_accessor ~loc acc accessed_el
+        | EProj proj ->
+          let (proj, _) = r_split proj in
+          let (var, _) = r_split proj.struct_name in
+          let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
+          let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
+          return @@ e_accessor ~loc moda sels
+        | EModA ma ->
+          aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
+        | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+      in
+      aux [compile_mod_var ma.module_name] ma.field
+  )
   | EUpdate update ->
     let (update, _loc) = r_split update in
     let record = compile_path update.record in
@@ -476,7 +497,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let binders = List.map ~f:(compile_parameter ~raise) args in
     (* collect type annotation for let function declaration *)
     let let_rhs, lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
-      e_lambda ~loc:(Var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+      e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
     let let_binder   = {let_binder with ascr = lhs_type} in
     (* This handle the recursion *)
     let let_rhs = match kwd_rec with
@@ -499,24 +520,31 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in
-    let type_binder = compile_variable name in
+    let type_binder = compile_type_var name in
     let rhs = compile_type_expression ~raise type_expr in
     let body = self body in
     return @@ e_type_in ~loc type_binder rhs body
   | EModIn mi ->
     let (mi, loc) = r_split mi in
-    let ({mod_decl={name;module_;_};kwd_in=_;body} : CST.mod_in) = mi in
-    let module_binder = compile_variable name in
-    let rhs = compile_module ~raise module_ in
+    let ({mod_decl={kwd_module;name;module_;kwd_end ; _};kwd_in=_;body} : CST.mod_in) = mi in
+    let module_binder = compile_mod_var name in
+    let rhs =
+      let loc = Location.lift @@ CST.Region.cover kwd_module#region kwd_end#region in
+      let decls = compile_module ~raise module_ in
+      m_struct ~loc decls
+    in
     let body = self body in
     return @@ e_mod_in ~loc module_binder rhs body
-  | EModAlias ma ->
+  | EModAlias ma -> (* This node is a bit too generic, should be moved to a dedicated module language *)
     let (ma, loc) = r_split ma in
     let ({mod_alias={alias;binders;_};kwd_in=_;body} : CST.mod_alias) = ma in
-    let module_alias   = compile_variable alias in
-    let module_binders = List.Ne.map compile_variable @@ npseq_to_ne_list binders in
+    let alias = compile_mod_var alias in
+    let rhs =
+      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list binders in
+      m_path ~loc:Location.generated path
+    in
     let body = self body in
-    return @@ e_mod_alias ~loc module_alias module_binders body
+    return @@ e_mod_in ~loc alias rhs body
   | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
@@ -660,16 +688,15 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     PConstr _ -> raise.raise @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
-    return_1 ~ascr:(t_unit ~loc ()) @@ Var.fresh ~loc ()
+    return_1 ~ascr:(t_unit ~loc ()) @@ ValueVar.fresh ~loc ()
   | PVar pvar ->
     let (pvar, _loc) = r_split pvar in (* TODO: shouldn't _loc be used somewhere bellow ?*)
     let {variable;attributes=var_attributes} : CST.var_pattern = pvar in
-    let (var,loc) = r_split variable in
     let attributes = Tree_abstraction_shared.Helpers.binder_attributes_of_strings (compile_attributes var_attributes) in
-    return_1 ~attributes @@ mk_var ~loc var
+    return_1 ~attributes @@ compile_variable variable
   | PTuple tuple ->
     let (tuple, loc) = r_split tuple in
-    let var = Var.fresh ~loc () in
+    let var = ValueVar.fresh ~loc () in
     let aux pattern (binder_lst, fun_) =
       let (binder,fun_') = compile_parameter ~raise pattern in
       (binder :: binder_lst, fun_' <@ fun_)
@@ -685,7 +712,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     return ?ascr ~attributes expr var
   | PRecord record ->
     let record,loc = r_split record in
-    let var = Var.fresh () in
+    let var = ValueVar.fresh ~loc () in
     let aux ({value={field_name;eq=_;pattern};_}:CST.field_pattern CST.reg) (binder_lst,fun_') =
       let field_name = field_name.value in
       let binder,fun_ = compile_parameter ~raise pattern in
@@ -720,26 +747,34 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
         let aux : CST.type_var Region.reg -> AST.type_expression -> AST.type_expression =
           fun param type_ ->
             let (param,ploc) = r_split param in
-            let ty_binder = Var.of_input_var ~loc:ploc (quote_var param.name.value) in
-            t_abstraction ~loc:(Location.lift region) ty_binder () type_
+            let ty_binder = TypeVar.of_input_var ~loc:ploc (quote_var param.name.value) in
+            t_abstraction ~loc:(Location.lift region) ty_binder Type type_
         in
         List.fold_right ~f:aux ~init:rhs lst
     in
-    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_input_var ~loc name; type_expr; type_attr=[]}
+    return_1 region @@ AST.Declaration_type  {type_binder=TypeVar.of_input_var ~loc name; type_expr; type_attr=[]}
   )
 
   | Directive _ -> []
 
-  | ModuleDecl {value={name; module_; _};region} ->
-      let module_binder = compile_variable name in
-      let module_ = compile_module ~raise module_ in
-      let ast = AST.Declaration_module  {module_binder; module_; module_attr=[]}
-      in return_1 region ast
+  | ModuleDecl {value={kwd_module ; name; module_; kwd_end ; _};region} ->
+    let module_binder = compile_mod_var name in
+    let module_ =
+      let loc = Location.lift @@ CST.Region.cover kwd_module#region kwd_end#region in
+      let decls = compile_module ~raise module_ in
+      m_struct ~loc decls
+    in
+    let ast = AST.Declaration_module  {module_binder; module_; module_attr=[]}
+    in return_1 region ast
 
   | ModuleAlias {value={alias; binders; _};region} ->
-    let alias   = compile_variable alias in
-    let binders = List.Ne.map compile_variable @@ npseq_to_ne_list binders in
-    return_1 region @@ AST.Module_alias {alias; binders}
+    let module_binder = compile_mod_var alias in
+    let module_ =
+      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list binders in
+      m_path ~loc:Location.generated path (* wrong location *)
+    in
+    return_1 region @@ AST.Declaration_module { module_binder; module_ ; module_attr = [] }
+
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     let attr = compile_attributes attributes in
     let {type_params;binders;lhs_type;eq=_;let_rhs} : CST.let_binding = let_binding in
@@ -779,7 +814,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       let binders = List.map ~f:(compile_parameter ~raise) args in
       (* collect type annotation for let function declaration *)
       let let_rhs,lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
-        e_lambda ~loc:(Var.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+        e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
       let binder   = {binder with ascr = lhs_type} in
       (* This handle the recursion *)
       let let_rhs = match kwd_rec with
@@ -799,7 +834,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       ) type_params in
       return_1 region @@ AST.Declaration_constant {binder;attr;expr=let_rhs}
 
-and compile_module ~raise : CST.ast -> _  =
+and compile_module ~raise : CST.ast -> AST.module_  =
   fun t ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list t.decl in
     List.concat lst

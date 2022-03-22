@@ -9,6 +9,9 @@ Context {A : Set}.
 Context {op : Set}.
 Context {lit : Set}.
 
+Context {raw_typed : node A string -> list (node A string) -> (node A string) -> Prop}.
+
+(* AST of the LIGO language at this stage in the compiler *)
 Inductive expr : Set :=
 | E_var : A -> expr
 | E_let_in : A -> splitting -> expr -> binds -> expr
@@ -107,15 +110,24 @@ Inductive tuple : list (node A string) -> node A string -> Prop :=
     `{tuple (a1 :: a2 :: az) (Prim l "pair" [a1; a2z'] n)}
 .
 
+(* These expressions work on a local fragment of the stack.
+   list (node A string)  is the initial stack
+   expr                  is the corresponding untyped expression / type-erased expression
+   node A string         is the type of the only value left on the stack after evaluating the expression *)
 Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
 | E_var_typed {a} :
+    (* Given a stack containing only [a], `E_var l` returns a value of type `a` (l is the srcloc) *)
     `{expr_typed [a] (E_var l) a}
 | E_let_in_typed {ss e1 e2 g g1 g2 a b} :
-    `{splits ss g g1 g2 ->
-      expr_typed g1 e1 a ->
-      binds_typed g2 e2 [a] b ->
-      expr_typed g (E_let_in l ss e1 e2) b}
+    (* In "TE_let_in l ss e1 e2", e1 is the RHS and e2 is the body, ss splits the stack into values
+       required to compute e1 and values required to compute e2 (e2 also has the result of e1 appended
+       to the stack by binds_typed) *)
+    `{splits ss g g1 g2 -> (* given a splitting ss of the stack g into g1 and g2, *)
+      expr_typed g1 e1 a ->  (* an RHS expression (which erases to e1) going from g1 to a, *)
+      binds_typed g2 e2 [a] b -> (* a body e2 which, when evaluated in g2 ++ [a] returns b *)
+      expr_typed g (E_let_in l ss e1 e2) b} (* we can say that the expression (E_let_in l ss e1 e2) is well-typed in the environment/stack g and returns a value of type b *)
 | E_tuple_typed {g args az t} :
+    
     `{tuple az t ->
       args_typed g args az ->
       expr_typed g (E_tuple l1 args) t}
@@ -235,10 +247,11 @@ with args_typed : list (node A string) -> args -> list (node A string) -> Prop :
     args_typed env2 args d ->
     args_typed env (Args_cons ss e args) (d ++ [a])
 with binds_typed : list (node A string) -> binds -> list (node A string) -> node A string -> Prop :=
+(* stack/env -> expr -> local_bindings -> result *)
 | Binds_typed {env us az az' e b} :
-    used us az' az ->
-    expr_typed (az' ++ env) e b ->
-    binds_typed env (Binds us az e) az b
+    used us az' az -> (* given a selection which keeps only the parts of the original stack (az) which are actually used (az') in the expression `e` *)
+    expr_typed (az' ++ env) e b -> (* and typed expression (which erases to e) from (az' ++ env) to a result b *)
+    binds_typed env (Binds us az e) az b (* we can say that e is well-typed as the body of the binding form which adds az to to the existing stack "env", and the binding form returns a value of type b *)
 with cond_typed : list (node A string) -> cond -> node A string -> list (node A string) -> list (node A string) -> node A string -> Prop :=
 | Cond_typed {env env1 env' env2 env3 ss1 e1 ss2 b2 b3 a bs cs d} :
     splits ss1 env env1 env' ->
@@ -258,6 +271,38 @@ with script_typed : script -> Prop :=
     `{binds_typed [] e [Prim l1 "pair" [p; s] n1] (Prim l2 "pair" [Prim l3 "list" [Prim l4 "operation" [] n4] n3; s] n2) ->
       script_typed (Script p s e)}
 .
+
+Definition example_int := fun (srcloc : A) => Prim srcloc "int" [] [].
+
+(* Example checking that the `E_var_typed` typing rule is a correct witness for the typed expression
+   expr_typed [example_int] (E_var srcloc) (example_int) *)
+Check fun srcloc =>
+  (* typing rule  extra information ... *)
+  @E_var_typed    (example_int srcloc) srcloc
+  (*           in this stack             this expression  returns a result of this type *)
+  : expr_typed [example_int srcloc] (E_var srcloc)   (example_int srcloc).
+
+Ltac typecheck := try intro srcloc; repeat first [econstructor; eauto].
+
+(* Example proving the well-typedness of the typed expression
+   expr_typed [example_int] (E_var srcloc) (example_int)
+   using a tactic to find the typing rules that need to be used. *)
+Goal forall (srcloc : A), expr_typed [example_int srcloc] (E_var srcloc) (example_int srcloc).
+typecheck.
+Qed.
+
+(* The following examples will prove the well-typedness of a typed expression
+   using a tactic to find the typing rules that need to be used.
+   These examples will exercise some of the typing rules listed as constructors of expr_typed. *)
+Goal forall (l : A),
+      let g := [example_int l] in
+      let ss := [Left] in
+      let e1 := (E_var l) in
+      let e2 := (Binds [Keep] [example_int l] (E_var l)) in
+      let b := (example_int l) in
+      expr_typed g (E_let_in l ss e1 e2) b.
+typecheck.
+Qed.
 
 Definition binds_length (e : binds) : nat :=
   match e with

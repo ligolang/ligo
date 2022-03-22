@@ -1,0 +1,6 @@
+---
+  title: "Testing framework: Dropping support for `Test.set_now` LIGO 0.38.0 onwards."
+  merge_request: "1582"
+  author: "er433 & melwyn95"
+  type: "added"
+

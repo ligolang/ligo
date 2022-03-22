@@ -168,7 +168,7 @@ instance Pretty1 Binding where
     BInclude      fname         -> sexpr "#include" [fname]
     BImport       fname alias   -> sexpr "#import" [fname, alias]
     BModuleDecl   mname body    -> sexpr "module" [mname, pp body]
-    BModuleAlias  mname alias   -> sexpr "module" [mname, alias]
+    BModuleAlias  mname alias   -> sexpr "module" [mname, pp alias]
 
     BFunction isRec name params ty body ->
       sexpr "fun" $ concat

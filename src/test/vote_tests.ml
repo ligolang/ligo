@@ -2,7 +2,7 @@ open Simple_utils.Trace
 open Test_helpers
 open Main_errors
 
-let get_program = get_program "./contracts/vote.mligo" (Contract (Stage_common.Var.of_input_var "main"))
+let get_program = get_program "./contracts/vote.mligo"
 
 open Ast_imperative
 
@@ -14,13 +14,6 @@ let init_storage name = e_record_ez [
     ("start_time" , e_timestamp 0) ;
     ("finish_time" , e_timestamp 1000000000) ;
   ]
-
-let reset title start_time finish_time =
-  let reset_action = e_record_ez [
-      ("title" , e_string title) ;
-      ("start_time" , e_timestamp start_time) ;
-      ("finish_time" , e_timestamp finish_time)]
-  in e_constructor "Reset" reset_action
 
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
