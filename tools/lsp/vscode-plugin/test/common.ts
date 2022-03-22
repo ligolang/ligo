@@ -16,7 +16,7 @@ export function getExt(lang: Dialect): string {
     case Dialect.REASONLIGO:
       return 'religo'
     default:
-      throw new Error(`Unrecognized extesion: ${lang}`)
+      throw new Error(`Unrecognized dialect: ${lang}`)
   }
 }
 
@@ -29,18 +29,7 @@ export function getLang(lang: Dialect): string {
     case Dialect.REASONLIGO:
       return 'ReasonLIGO'
     default:
-      throw new Error(`Unrecognized extesion: ${lang}`)
-  }
-}
-
-export default async function activate(uri: vscode.Uri) {
-  const ext = vscode.extensions.getExtension('ligolang-publish.ligo-vscode')
-  await ext.activate()
-  try {
-    const doc = await vscode.workspace.openTextDocument(uri)
-    await vscode.window.showTextDocument(doc)
-  } catch (e) {
-    console.error(e)
+      throw new Error(`Unrecognized dialect: ${lang}`)
   }
 }
 

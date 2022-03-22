@@ -60,6 +60,11 @@ let rec constraint_identifier_unicode (ci : Int64.t) =
   in
   if Int64.equal ci 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
 
+let t_attributes ppf ({ public } : type_attribute) =
+  fprintf ppf "%a"
+    option_public public
+let m_attributes ppf x = t_attributes ppf x
+
 let constraint_identifier_short ppf x =
   if Int64.equal x 0L
   then Format.fprintf ppf "₀"
@@ -84,7 +89,7 @@ and type_content : formatter -> type_content -> unit =
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.fields
   | T_arrow            a -> arrow         type_expression ppf a
   | T_app              a -> type_app type_expression ppf a
-  | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_module_accessor ma -> module_access type_variable ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
   | T_for_all         x  -> for_all       type_expression ppf x
@@ -93,7 +98,6 @@ and row : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos=_ } ->
     fprintf ppf "%a"
       type_expression associated_type
-
 
 let rec expression ppf (e : expression) =
   fprintf ppf "@[%a@]" expression_content e.expression_content
@@ -111,45 +115,27 @@ and expression_content ppf (ec : expression_content) =
   | E_type_abstraction e -> type_abs expression ppf e
   | E_recursive r -> recursive expression type_expression ppf r
   | E_matching x -> fprintf ppf "%a" (match_exp expression type_expression) x
-  | E_let_in { let_binder ;rhs ; let_result; attr = { inline ; no_mutation ; view; _ }} ->
-    fprintf ppf "@[let %a =@;<1 2>%a%a%a%a in@ %a@]" (binder type_expression) let_binder expression rhs option_inline inline option_no_mutation no_mutation option_view view expression let_result
+  | E_let_in { let_binder ;rhs ; let_result; attr } ->
+    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]"
+      (binder type_expression) let_binder
+      expression rhs
+      e_attributes attr
+      expression let_result
   | E_type_in   {type_binder; rhs; let_result} ->
     fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
       type_variable type_binder
       type_expression rhs
       expression let_result
-  | E_mod_in {module_binder; rhs; let_result;} ->
-    fprintf ppf "@[let module %a = struct@; @[<v>%a@] end in@ %a@]" module_variable module_binder module_ rhs expression let_result
-  | E_mod_alias ma -> mod_alias expression ppf ma
+  | E_mod_in {module_binder; rhs ; let_result;} ->
+    fprintf ppf "@[let module %a = struct@; @[<v>%a@] end in@ %a@]"
+      module_variable module_binder
+      (module_expr expression type_expression e_attributes t_attributes m_attributes) rhs
+      expression let_result
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
-  | E_module_accessor ma -> module_access expression ppf ma
+  | E_module_accessor ma -> module_access expression_variable ppf ma
 
-and declaration ppf (d : declaration) =
-  match d with
-  | Declaration_type     {type_binder;type_expr;type_attr={public}} ->
-    fprintf ppf "@[<2>type %a =@ %a%a@]" type_variable type_binder type_expression type_expr option_public public
-  | Declaration_constant { binder=b ; attr = { inline ; no_mutation ; view ; public } ; expr} ->
-      fprintf ppf "@[<2>const %a =@ %a%a%a%a%a@]"
-        (binder type_expression) b
-        expression expr
-        option_inline inline
-        option_no_mutation no_mutation
-        option_view view
-        option_public public
-  | Declaration_module {module_binder;module_=m;module_attr={public}} ->
-      fprintf ppf "module %a = struct @; @[%a@]@;end %a"
-        module_variable module_binder
-        module_ m
-        option_public public
-  | Module_alias {alias;binders} ->
-    fprintf ppf "module %a =@ %a" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
-
-
-and module_ ppf (p : module_) =
-  fprintf ppf "@[<v>%a@]"
-    (list_sep declaration (tag "@;"))
-    (List.map ~f:Location.unwrap p)
+let module_ ppf (p : module_) = declarations expression type_expression e_attributes t_attributes m_attributes ppf p
 
 let biMap = fun fk fv ppf idmap ->
       let lst = RedBlackTrees.PolyBiMap.bindings idmap in

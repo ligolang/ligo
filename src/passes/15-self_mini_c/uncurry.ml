@@ -251,9 +251,9 @@ let rec uncurry_in_expression
    no errors here *)
 let map_expression = Helpers.map_expression
 
-let uncurry_expression ~raise : expression -> expression =
-  map_expression ~raise
-    (fun ~raise:_ e ->
+let uncurry_expression : expression -> expression =
+  map_expression
+    (fun e ->
        match e.content with
        | E_let_in (e1, inline, ((v, _t), e2)) ->
          let return e1 e2 =

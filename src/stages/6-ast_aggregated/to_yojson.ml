@@ -40,7 +40,6 @@ and type_content = function
   | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
-  | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
   | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =

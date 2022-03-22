@@ -19,7 +19,7 @@ and type_content =
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
-  | T_module_accessor of ty_expr module_access
+  | T_module_accessor of type_variable module_access
   | T_singleton of literal
   | T_abstraction of ty_expr abstraction
   | T_for_all of ty_expr abstraction
@@ -41,15 +41,6 @@ and annot_option = string option
 
 and row_element = type_expression row_element_mini_c
 
-and type_map_args = {
-    k : type_expression;
-    v : type_expression;
-  }
-
-and michelson_or_args = {
-    l : type_expression;
-    r : type_expression;
-  }
 
 and type_expression = {
     type_content: type_content;
@@ -85,41 +76,17 @@ and matching_expr =
   | Match_variant of matching_content_variant
   | Match_record of matching_content_record
 
-and declaration_loc = declaration location_wrap
-
-and module_ = declaration_loc list
-
-and program = module_
-
 and type_attribute = { public : bool }
+and module_attribute = type_attribute
 
-and module_attribute = { public : bool }
-
-and declaration_constant = {
-    binder : expression_variable ;
-    expr : expression ;
-    attr : known_attributes ;
-  }
-
-and declaration_type = {
-    type_binder : type_variable ;
-    type_expr   : type_expression ;
-    type_attr   : type_attribute
-  }
-
-and declaration_module = {
-    module_binder : module_variable ;
-    module_       : program ;
-    module_attr   : module_attribute
-  }
-
-and declaration' =
-  | Declaration_constant of declaration_constant
-  | Declaration_type of declaration_type
-  | Declaration_module of declaration_module
-  | Module_alias       of module_alias
-
-and declaration = declaration'
+and program              = module_
+and module_expr          = (expression , ty_expr , known_attributes , type_attribute , module_attribute) module_expr'
+and module_              = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declarations'
+and declaration          = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration'
+and declaration_content  = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_content'
+and declaration_module   = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_module'
+and declaration_constant = (expression , ty_expr , known_attributes) declaration_constant'
+and declaration_type     = (ty_expr , type_attribute) declaration_type'
 
 and expression = {
     expression_content: expression_content ;
@@ -132,11 +99,6 @@ and expr = expression
 and map_kv = {
     key : expression ;
     value : expression ;
-  }
-
-and look_up = {
-    ds : expression;
-    ind : expression;
   }
 
 and expression_label_map = expression label_map
@@ -153,7 +115,6 @@ and expression_content =
   | E_let_in of let_in
   | E_type_in of (expr, ty_expr) type_in
   | E_mod_in of mod_in
-  | E_mod_alias of expr mod_alias
   | E_raw_code of raw_code
   | E_type_inst of type_inst
   | E_type_abstraction of expr type_abs
@@ -164,7 +125,7 @@ and expression_content =
   | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
-  | E_module_accessor of expression module_access
+  | E_module_accessor of expression_variable module_access
 
 and type_inst = {
     forall: expression ;
@@ -193,11 +154,7 @@ and let_in = {
     attr: known_attributes ;
   }
 
-and mod_in = {
-    module_binder: module_variable ;
-    rhs: program ;
-    let_result: expression ;
-  }
+and mod_in = (expression , ty_expr , known_attributes , type_attribute , module_attribute) mod_in'
 
 and raw_code = {
   language : string;

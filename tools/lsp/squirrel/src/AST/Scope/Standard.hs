@@ -3,13 +3,12 @@ module AST.Scope.Standard
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Control.Lens ((%~))
 import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), HasScopeForest (..), Includes (..)
-  , ParsedContract (..), MergeStrategy (..), cMsgs, contractNotFoundException
-  , getContract, lookupContract, mergeScopeForest
+  , ParsedContract (..), MergeStrategy (..), addLigoErrToMsg, contractNotFoundException
+  , lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
@@ -31,7 +30,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
     tryMergeWithFromCompiler fbForest `catches`
       [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
           -- catch only errors that we expect from ligo and try to use fallback parser
-          pure $ addLigoErrToMsg fbForest $ fromLigoErrorToMsg err
+          pure $ Includes $ G.gmap (addLigoErrToMsg (fromLigoErrorToMsg err)) $ getIncludes fbForest
       , Handler \(_ :: SomeLigoException) ->
           pure fbForest
       , Handler \(e :: IOError) -> do
@@ -43,9 +42,6 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
       tryMergeWithFromCompiler fbForest = do
         lgForest <- scopeForest @FromCompiler reportProgress pc
         merge lgForest fbForest
-
-      addLigoErrToMsg (Includes forest) err =
-        Includes $ G.gmap (getContract . cMsgs %~ (err :)) forest
 
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
         let src = _cFile lf

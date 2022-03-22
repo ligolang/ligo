@@ -46,19 +46,6 @@ let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 
 let t_mutez = t_tez
 
-let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = TypeVar.fresh ~name:"_a" () in
-  let type_ = t_constant name [t_variable ty_binder ()] in
-  t_abstraction ?loc { ty_binder ; kind ; type_ } ()
-let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = TypeVar.fresh ~name:"_l" () in
-  let ty_binder_r = TypeVar.fresh ~name:"_r" () in
-  let type_ = t_constant name
-    [ t_variable ty_binder_l () ;
-      t_variable ty_binder_r () ]
-  in
-  t_abstraction ?loc { ty_binder = ty_binder_l ; kind = kind_l ; type_ = (t_abstraction ?loc { ty_binder = ty_binder_r ; kind = kind_r ; type_ } ()) } ()
-
 let t_record ?loc ~layout content  : type_expression = make_t ?loc (T_record {content;layout})
 let default_layout = L_tree
 let make_t_ez_record ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =

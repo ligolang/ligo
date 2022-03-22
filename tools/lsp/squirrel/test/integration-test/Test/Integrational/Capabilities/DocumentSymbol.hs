@@ -11,13 +11,21 @@ import Test.Common.Capabilities.DocumentSymbol
 import Test.HUnit (Assertion)
 
 unit_document_symbols_example_heap :: Assertion
-unit_document_symbols_example_heap = documentSymbolsExampleHeapDriver @Standard
+unit_document_symbols_example_heap = do
+  documentSymbolsExampleHeapDriver @Standard
+  --documentSymbolsExampleHeapDriver @FromCompiler  -- FIXME (LIGO-208)
 
 unit_document_symbols_example_access :: Assertion
-unit_document_symbols_example_access = documentSymbolsExampleAccessDriver @Standard
+unit_document_symbols_example_access = do
+  documentSymbolsExampleAccessDriver @Standard
+  --documentSymbolsExampleAccessDriver @FromCompiler  -- FIXME (LIGO-93)
 
 unit_document_symbols_example_let_camligo :: Assertion
-unit_document_symbols_example_let_camligo = documentSymbolsExampleLetCamligoDriver @Standard
+unit_document_symbols_example_let_camligo = do
+  documentSymbolsExampleLetCamligoDriver @Standard
+  --documentSymbolsExampleLetCamligoDriver @FromCompiler  -- FIXME (LIGO-93)
 
 unit_document_symbols_example_let_religo :: Assertion
-unit_document_symbols_example_let_religo = documentSymbolsExampleLetReligoDriver @Standard
+unit_document_symbols_example_let_religo = do
+  documentSymbolsExampleLetReligoDriver @Standard
+  --documentSymbolsExampleLetReligoDriver @FromCompiler  -- FIXME (LIGO-208)

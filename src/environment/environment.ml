@@ -7,19 +7,23 @@ module Protocols = Protocols
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t = module_
 let pp ppf m = PP.module_ ppf @@ m
-let add_module ?public module_binder module_ env =
-  (Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}}) :: env
+let add_module : ?public:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t = fun ?public module_binder module_ env ->
+  let module_ = Location.wrap @@ Ast_core.M_struct module_ in
+  let new_d = Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}} in
+  new_d :: env
 
 let add_declaration decl env = decl :: env
 let append program env = List.fold_left ~f:(fun l m -> m :: l ) ~init:env program
 
 let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
-let init p = append p []
 
 (* Artefact for build system *)
-type core = Ast_core.module'
-let add_core_module ?public : Ast_core.module_variable -> Ast_core.module' -> core -> core = fun module_binder module_ env ->
-  (Location.wrap @@ Ast_core.Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}}) :: env
+type core = Ast_core.module_
+let add_core_module ?public : Ast_core.module_variable -> Ast_core.module_ -> core -> core =
+  fun module_binder module_ env ->
+    let module_ = Location.wrap @@ Ast_core.M_struct module_ in
+    let new_d = Location.wrap @@ Ast_core.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public}} in
+    new_d :: env
 
 let to_program env = List.rev env
 let init_core p = append p []

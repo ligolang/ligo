@@ -11,9 +11,6 @@ module Stacking = struct
   let simple_unary c = Simple c
   let simple_binary c = Simple c
   let simple_ternary c = Simple c
-  let simple_tetrary c = Simple c
-  let simple_pentary c = Simple c
-  let simple_hexary c = Simple c
 
   (* A special operator which just applies type arguments to a
      Michelson prim. *)

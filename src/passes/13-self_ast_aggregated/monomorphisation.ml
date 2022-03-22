@@ -12,9 +12,6 @@ let poly_name v = poly_counter := ! poly_counter + 1 ;
 module Longident = struct
   type t = { variable : AST.expression_variable }
 
-  let equal ({ variable } : t) ({ variable = variable' } : t) =
-    AST.ValueVar.equal variable variable'
-
   let compare ({ variable } : t) ({ variable = variable' } : t) =
     AST.ValueVar.compare variable variable'
 
@@ -48,9 +45,6 @@ module Data = struct
         Longident.pp lid (PP_helpers.list_sep_d Instance.pp) instances_of_lid
     in
     List.iter (LIMap.to_kv_list instances) ~f
-
-  let instances_lookup (lid : Longident.t) (data : t) =
-    Option.value ~default:[] @@ LIMap.find_opt lid data.instances
 
   let instances_lookup_and_remove (lid : Longident.t) (data : t) =
     Option.value ~default:[] @@ LIMap.find_opt lid data.instances,

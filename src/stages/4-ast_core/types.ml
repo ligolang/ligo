@@ -8,43 +8,15 @@ type sugar_expression_option = Ast_sugar.expression option
 
 type string_option = string option
 
-type type_attribute = {
-  public: bool;
-}
+type type_attribute = { public: bool }
+and module_attribute = type_attribute
 
-and module_attribute = {
-  public: bool;
-}
-
-and module_ = declaration Location.wrap list
-
-and declaration_constant = {
-  binder : ty_expr binder;
-  attr : known_attributes ;
-  expr : expression ;
-}
-
-and declaration_type = {
-  type_binder : type_variable ;
-  type_expr   : ty_expr ;
-  type_attr   : type_attribute
-}
-
-and declaration_module = {
-  module_binder : module_variable ;
-  module_       : module_ ;
-  module_attr   : module_attribute
-}
-and declaration =
-  | Declaration_type     of declaration_type
-  (* A Declaration_constant is described by
-   *   a name
-   *   an optional type annotation
-   *   a boolean indicating whether it should be inlined
-   *   an expression *)
-  | Declaration_constant of declaration_constant
-  | Declaration_module   of declaration_module
-  | Module_alias         of module_alias
+and module_              = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declarations'
+and declaration          = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration'
+and declaration_content  = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_content'
+and declaration_module   = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declaration_module'
+and declaration_constant = (expression , ty_expr , known_attributes) declaration_constant'
+and declaration_type     = (ty_expr , type_attribute) declaration_type'
 
 and type_content =
   | T_variable        of type_variable
@@ -52,7 +24,7 @@ and type_content =
   | T_record          of rows
   | T_arrow           of ty_expr arrow
   | T_app             of ty_expr type_app
-  | T_module_accessor of ty_expr module_access
+  | T_module_accessor of type_variable module_access
   | T_singleton       of literal
   | T_abstraction     of ty_expr abstraction
   | T_for_all         of ty_expr abstraction
@@ -87,7 +59,6 @@ and expression_content =
   | E_let_in    of let_in
   | E_type_in of (expr, ty_expr) type_in
   | E_mod_in  of mod_in
-  | E_mod_alias  of expr mod_alias
   | E_raw_code of expr raw_code
   | E_constructor of expr constructor
   | E_matching of matching_expr
@@ -95,9 +66,12 @@ and expression_content =
   | E_record_accessor of expr record_accessor
   | E_record_update   of expr record_update
   | E_ascription      of (expr,ty_expr) ascription
-  | E_module_accessor of expr module_access
+  | E_module_accessor of expression_variable module_access
 
 and type_expression_option = type_expression option
+
+and mod_in = (expression,ty_expr,known_attributes,type_attribute,module_attribute) mod_in'
+and module_expr = (expression,ty_expr,known_attributes,type_attribute,module_attribute) module_expr'
 
 and let_in = {
     let_binder: ty_expr binder ;
@@ -105,16 +79,6 @@ and let_in = {
     let_result: expression ;
     attr: known_attributes ;
   }
-
-and mod_in = {
-  module_binder: module_variable ;
-  rhs          : module_ ;
-  let_result   : expression ;
-}
-
-and module' = declaration location_wrap list
-
-and module_with_unification_vars = Module_With_Unification_Vars of module'
 
 and matching_expr = (expr, ty_expr) match_exp
 

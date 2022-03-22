@@ -11,10 +11,6 @@ let add_binder b var vars =
   let vars = remove_from var vars in
   if b then var :: vars else vars
 
-let add_binders binders vars =
-  let vars = List.fold_right ~f:remove_from binders ~init:vars in
-  binders @ vars
-
 let rec assign_expression ~raise : ?vars:expression_variable list -> expression -> expression  = fun ?(vars = []) e ->
   let self = assign_expression ~raise in
   let _ = fold_map_expression

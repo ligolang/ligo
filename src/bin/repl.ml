@@ -79,7 +79,6 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
-               project_root : string option;
               }
 
 let try_eval ~raise ~raw_options state s =
@@ -129,7 +128,10 @@ let try_declaration ~raise ~raw_options state s =
 let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
-  let module_ = Build.build_context ~raise ~add_warning ~options file_name in
+  let module_ =
+    let prg = Build.build_context ~raise ~add_warning ~options file_name in
+    Simple_utils.Location.wrap (Ast_typed.M_struct prg)
+  in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
@@ -197,14 +199,13 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol dry_run_opts project_root =
+let make_initial_state syntax protocol dry_run_opts =
   {
     env = Environment.default protocol ;
     top_level = [];
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
-    project_root = project_root;
   }
 
 let rec read_input prompt delim =
@@ -241,7 +242,7 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;
-      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
+      let state = make_initial_state syntax protocol dry_run_opts in
       let state = match init_file with
         | None -> state
         | Some file_name -> let c = use_file state ~raw_options file_name in

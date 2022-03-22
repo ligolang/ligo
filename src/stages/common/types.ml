@@ -1,3 +1,5 @@
+[@@@warning "-30"]
+
 module Location  = Simple_utils.Location
 module List      = Simple_utils.List
 module ValueVar  = Var.ValueVar
@@ -28,9 +30,6 @@ type kind = | Type
 
 type label = Label of string
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]
-let label_of_yojson = function
-  | `List [`String "Label"; `String l] -> Ok (Label l)
-  | _ -> Simple_utils.Utils.error_yojson_format "Label of string"
 let equal_label (Label a) (Label b) = String.equal a b
 let compare_label (Label a) (Label b) = String.compare a b
 
@@ -40,9 +39,6 @@ type 'a label_map = 'a LMap.t
 let const_name = function
   | Deprecated {const;_} -> const
   | Const      const     -> const
-let bindings_to_yojson f g xs = `List (List.map ~f:(fun (x,y) -> `List [f x; g y]) xs)
-let label_map_to_yojson row_elem_to_yojson m =
-  bindings_to_yojson label_to_yojson row_elem_to_yojson (LMap.bindings m)
 
 type 'ty_expr row_element_mini_c = {
   associated_type      : 'ty_expr ;
@@ -62,7 +58,7 @@ type 'ty_expr row_element = {
   }
 
 type 'a module_access = {
-  module_name : module_variable ;
+  module_path : module_variable list ;
   element     : 'a ;
 }
 
@@ -219,52 +215,50 @@ type ('exp , 'ty_exp) match_exp = {
   cases : ('exp , 'ty_exp) match_case list
 }
 
-(* Declaration types *)
-type 'ty_exp declaration_type = {
+(*** Declarations language ***)
+
+type ('ty_exp,'attr) declaration_type' = {
     type_binder : type_variable ;
     type_expr : 'ty_exp ;
-    type_attr : attributes ;
+    type_attr : 'attr ;
   }
 
-and ('exp,'ty_exp) declaration_constant = {
+and ('exp,'ty_exp,'attr) declaration_constant' = {
     binder : 'ty_exp binder;
-    attr : attributes ;
     expr : 'exp ;
+    attr : 'attr ;
   }
 
-and ('exp,'ty_expr) declaration_module = {
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration_module' = {
     module_binder : module_variable ;
-    module_ : ('exp,'ty_expr) module' ;
-    module_attr : attributes
+    module_ : ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr' ;
+    module_attr : 'attr_m
   }
 
-and module_alias = {
-    alias   : module_variable ;
-    binders : module_variable List.Ne.t;
-}
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration_content' =
+  | Declaration_type     of ('ty_exp,'attr_t) declaration_type'
+  | Declaration_constant of ('exp,'ty_exp,'attr_e) declaration_constant'
+  | Declaration_module   of ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration_module'
 
-(* Module types *)
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration' = ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration_content' location_wrap
 
-and ('exp,'ty_exp) declaration' =
-  | Declaration_type of 'ty_exp declaration_type
-  | Declaration_constant of ('exp,'ty_exp) declaration_constant
-  | Declaration_module   of ('exp, 'ty_exp) declaration_module
-  | Module_alias         of module_alias
+(*** Modules language ***)
+
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declarations' = ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declaration' list
 
 
-(* Program types *)
-
-and ('exp,'ty_exp) module' = ('exp,'ty_exp) declaration' location_wrap list
-
-
-type ('exp,'type_exp) mod_in = {
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) mod_in' = {
   module_binder : module_variable ;
-  rhs           : ('exp,'type_exp) module' ;
+  rhs           : ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr' ;
   let_result    : 'exp ;
 }
 
-and 'exp mod_alias = {
-  alias   : module_variable ;
-  binders : module_variable List.Ne.t;
-  result  : 'exp ;
-}
+and module_path_' = module_variable List.Ne.t
+
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr_content' =
+  | M_struct of ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) declarations'
+  | M_variable of module_variable
+  | M_module_path of module_path_'
+  (* FUTURE: Functor ; Apply *)
+
+and ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr' = ('exp,'ty_exp,'attr_e,'attr_t,'attr_m) module_expr_content' Location.wrap

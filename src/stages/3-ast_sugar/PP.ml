@@ -5,22 +5,6 @@ open Simple_utils.PP_helpers
 
 include Stage_common.PP
 
-(* TODO: move to common *)
-let lmap_sep value sep ppf m =
-  let lst = LMap.to_kv_list m in
-  let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-let lmap_sep_d x = lmap_sep x (tag " ,@ ")
-
-let record_sep_t value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
-  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" expression_variable ev
 
@@ -38,7 +22,7 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_tuple            t -> type_tuple    type_expression ppf t
   | T_arrow            a -> arrow         type_expression ppf a
   | T_app            app -> type_app      type_expression ppf app
-  | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_module_accessor ma -> module_access type_variable ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
   | T_for_all         x  -> for_all       type_expression ppf x
@@ -90,13 +74,12 @@ and expression_content ppf (ec : expression_content) =
         attributes attr
         expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
-  | E_mod_in    mi -> mod_in  expression type_expression ppf mi
-  | E_mod_alias ma -> mod_alias expression ppf ma
+  | E_mod_in    mi -> mod_in  expression type_expression attributes attributes attributes ppf mi
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
       fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
-  | E_module_accessor ma -> module_access expression ppf ma
+  | E_module_accessor ma -> module_access expression_variable ppf ma
   | E_cond {condition; then_clause; else_clause} ->
       fprintf ppf "if %a then %a else %a"
         expression condition
@@ -135,6 +118,6 @@ and attributes ppf attributes =
     List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
   in fprintf ppf "%s" attr
 
-let declaration ppf (d : declaration) = declaration expression type_expression ppf d
+let declaration ppf (d : declaration) = declaration expression type_expression attributes attributes attributes ppf d
 
-let module_ ppf (p : module_) = module' expression type_expression ppf p
+let module_ ppf (p : module_) = declarations expression type_expression attributes attributes attributes ppf p
