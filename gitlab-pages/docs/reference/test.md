@@ -35,19 +35,19 @@ type test_exec_error =
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Balance_too_low of { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+| Balance_too_low of \{ contract_too_low : address ; contract_balance : tez ; spend_request : tez \}
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_error =
   Rejected(michelson_program, address)
-| Balance_too_low of { contract_too_low : address , contract_balance : tez , spend_request : tez }
+| Balance_too_low of \{ contract_too_low : address , contract_balance : tez , spend_request : tez \}
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_error =
   ["Rejected", michelson_program, address]
-| ["Balance_too_low", { contract_too_low : address , contract_balance : tez , spend_request : tez }]
+| ["Balance_too_low", \{ contract_too_low : address , contract_balance : tez , spend_request : tez \}]
 | ["Other", string]
 </SyntaxTitle>
 
