@@ -87,13 +87,3 @@ and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _
   cmp2
     type_expression ta tb
     type_variable ba bb
-
-(* Environment *)
-let free_variables = List.compare expression_variable
-
-let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
-  cmp2
-    type_variable va vb
-    type_expression ta tb
-
-let type_environment = List.compare type_environment_binding
