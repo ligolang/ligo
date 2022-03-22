@@ -1,0 +1,5 @@
+author: Rémi Lesénéchal
+title: Enable the check for reserved names again. It was removed unintentionally in
+  the previous version
+type: fixed
+merge_request: '1632'

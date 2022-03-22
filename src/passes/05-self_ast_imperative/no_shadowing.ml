@@ -52,8 +52,6 @@ let peephole_module ~raise : module_ -> module_ = fun m ->
                raise.raise @@ no_shadowing location
             else
                aux vars types (mod_ :: mods) remaining
-   |  {wrap_content = Module_alias _; _} :: remaining ->
-         aux vars types mods remaining
    | [] -> ()
    in
    aux [] [] [] m;

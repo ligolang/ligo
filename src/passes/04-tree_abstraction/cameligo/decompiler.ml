@@ -127,10 +127,21 @@ let rec decompile_type_expr : AST.type_expression -> CST.type_expr = fun te ->
     return @@ CST.TApp (wrap (type_constant,lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
-  | T_module_accessor {module_name;element} ->
-    let module_name = decompile_mod_var module_name in
-    let field  = decompile_type_expr element in
-    return @@ CST.TModA (wrap CST.{module_name;selector=Token.ghost_dot;field})
+  | T_module_accessor {module_path;element} -> (
+    let rec aux : AST.module_variable list -> (CST.type_expr -> CST.type_expr) -> CST.type_expr = fun lst f_acc ->
+      match lst with
+      | module_name::tl ->
+        let module_name = decompile_mod_var module_name in
+        let f = fun field ->
+          f_acc (CST.TModA (wrap CST.{module_name;selector=Token.ghost_dot;field}))
+        in
+        aux tl f
+      | [] ->
+        let element = CST.TVar (decompile_type_var element) in
+        f_acc element
+    in
+    return @@ (aux module_path (fun x -> x))
+  )
   | T_singleton x -> (
     match x with
     | Literal_int i ->
@@ -333,20 +344,35 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let body = decompile_expression let_result in
     let tin : CST.type_in = {type_decl;kwd_in=Token.ghost_in;body} in
     return_expr @@ CST.ETypeIn (wrap tin)
-  | E_mod_in {module_binder;rhs;let_result} ->
+  | E_mod_in {module_binder;rhs;let_result} -> (
     let name = decompile_mod_var module_binder in
-    let module_ = decompile_module rhs in
-    let mod_decl : CST.module_decl = {kwd_module=Token.ghost_module;name;eq=Token.ghost_eq;kwd_struct=Token.ghost_struct;module_;kwd_end=Token.ghost_end} in
-    let body = decompile_expression let_result in
-    let min : CST.mod_in = {mod_decl;kwd_in=Token.ghost_in;body} in
-    return_expr @@ CST.EModIn (wrap min)
-  | E_mod_alias {alias; binders; result} ->
-    let alias   = wrap (Format.asprintf "%a" AST.ModuleVar.pp alias) in
-    let binders = nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" AST.ModuleVar.pp x)) binders in
-    let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
-    let body = decompile_expression result in
-    let mod_alias : CST.mod_alias = {mod_alias;kwd_in=Token.ghost_in;body} in
-    return_expr @@ CST.EModAlias (wrap mod_alias)
+    match rhs.wrap_content with
+    | M_struct prg -> (
+      let module_ = decompile_module prg in
+      let mod_decl : CST.module_decl = {kwd_module=Token.ghost_module;name;eq=Token.ghost_eq;kwd_struct=Token.ghost_struct;module_;kwd_end=Token.ghost_end} in
+      let body = decompile_expression let_result in
+      let min : CST.mod_in = {mod_decl;kwd_in=Token.ghost_in;body} in
+      return_expr @@ CST.EModIn (wrap min)
+    )
+    | M_variable v -> (
+      let alias = name in
+      let binders = decompile_mod_var v , [] in
+      let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
+      let body = decompile_expression let_result in
+      let mod_alias : CST.mod_alias = {mod_alias;kwd_in=Token.ghost_in;body} in
+      return_expr @@ CST.EModAlias (wrap mod_alias)
+    )
+    | M_module_path path -> (
+      let alias = name in
+      let binders =
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" AST.ModuleVar.pp x)) path
+      in
+      let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
+      let body = decompile_expression let_result in
+      let mod_alias : CST.mod_alias = {mod_alias;kwd_in=Token.ghost_in;body} in
+      return_expr @@ CST.EModAlias (wrap mod_alias)
+    )
+  )
   | E_raw_code {language; code} ->
     let language = wrap @@ wrap @@ language in
     let code = decompile_expression code in
@@ -493,10 +519,21 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let expr = decompile_expression anno_expr in
     let ty   = decompile_type_expr type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,Token.ghost_colon,ty))
-  | E_module_accessor {module_name;element} ->
-    let module_name = decompile_mod_var module_name in
-    let field  = decompile_expression element in
-    return_expr @@ CST.EModA (wrap CST.{module_name;selector=Token.ghost_dot;field})
+  | E_module_accessor {module_path;element} -> (
+    let rec aux : AST.module_variable list -> (CST.expr -> CST.expr) -> CST.expr = fun lst f_acc ->
+      match lst with
+      | module_name::tl ->
+        let module_name = decompile_mod_var module_name in
+        let f = fun field ->
+          f_acc (CST.EModA (wrap CST.{module_name;selector=Token.ghost_dot;field}))
+        in
+        aux tl f
+      | [] ->
+        let element = CST.EVar (decompile_variable element) in
+        f_acc element
+    in
+    return_expr @@ (aux module_path (fun x -> x))
+  )
   | E_cond {condition;then_clause;else_clause} ->
     let test  = decompile_expression condition in
     let ifso  = decompile_expression then_clause in
@@ -574,7 +611,7 @@ and decompile_lambda : (AST.expr,AST.ty_expr) AST.lambda -> _ = fun {binder;outp
     let result = decompile_expression result in
     (param,ret_type,None,result)
 
-and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = fun decl ->
+and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
@@ -625,16 +662,33 @@ and decompile_declaration : AST.declaration Location.wrap -> CST.declaration = f
       let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )
-  | Declaration_module {module_binder;module_;module_attr=_} ->
+  | Declaration_module {module_binder;module_;module_attr=_} -> (
     let name    = decompile_mod_var module_binder in
-    let module_ = decompile_module module_ in
-    let module_decl :CST.module_decl = {kwd_module=Token.ghost_module;name;eq=Token.ghost_eq;kwd_struct=Token.ghost_struct;module_;kwd_end=Token.ghost_end} in
-    CST.ModuleDecl (wrap @@ module_decl)
-  | Module_alias {alias;binders} ->
-    let alias   = wrap (Format.asprintf "%a" AST.ModuleVar.pp alias) in
-    let binders = nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" AST.ModuleVar.pp x)) binders in
-    let module_alias :CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
-    CST.ModuleAlias (wrap @@ module_alias)
+    match module_.wrap_content with
+    | M_struct prg -> (
+      let module_ = decompile_module prg in
+      let module_decl :CST.module_decl = {
+          kwd_module=Token.ghost_module; name; eq=Token.ghost_eq;
+          kwd_struct=Token.ghost_struct; module_; kwd_end=Token.ghost_end
+        }
+      in
+      CST.ModuleDecl (wrap @@ module_decl)
+    )
+    | M_variable v -> (
+      let alias = name in
+      let binders = decompile_mod_var v , [] in
+      let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
+      CST.ModuleAlias (wrap mod_alias)
+    )
+    | M_module_path path -> (
+      let alias = name in
+      let binders =
+        nelist_to_npseq ~sep:Token.ghost_dot @@ List.Ne.map (fun x -> wrap (Format.asprintf "%a" AST.ModuleVar.pp x)) path
+      in
+      let mod_alias : CST.module_alias = {kwd_module=Token.ghost_module;alias;eq=Token.ghost_eq;binders} in
+      CST.ModuleAlias (wrap mod_alias)
+    )
+  )
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
@@ -683,7 +737,7 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
       let inj = ne_inject braces field_patterns ~attr:[] in
       CST.PRecord (wrap inj)
 
-and decompile_module : AST.module_ -> CST.ast = fun prg ->
+and decompile_module : AST.declarations -> CST.ast = fun prg ->
   let decl = List.map ~f:decompile_declaration prg in
   let decl = List.Ne.of_list decl in
   ({decl;eof=Token.ghost_eof}: CST.ast)

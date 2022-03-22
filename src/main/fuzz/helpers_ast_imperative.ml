@@ -124,20 +124,20 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {cond; body}
 
   (* Declaration *)
-  let declaration_type : ('a -> 'b monad) -> 'a declaration_type -> ('b declaration_type) monad
+  let declaration_type : ('a -> 'b monad) -> ('a,_) declaration_type' -> (('b,_) declaration_type') monad
     = fun g {type_binder; type_expr; type_attr} ->
     let* type_expr = g type_expr in
     ok @@ {type_binder; type_expr; type_attr}
 
-  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_constant -> (('b,'d) declaration_constant) monad
+  let declaration_constant : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_) declaration_constant' -> (('b,'d,_) declaration_constant') monad
     = fun f g {binder=b; attr; expr} ->
     let* binder = binder g b in
     let* expr   = f expr     in
     ok @@ {binder;attr;expr}
 
-  let rec declaration_module : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) declaration_module -> (('b,'d) declaration_module) monad
+  let rec declaration_module : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) declaration_module' -> (('b,'d,_,_,_) declaration_module') monad
     = fun f g {module_binder; module_;module_attr} ->
-    let* module_ = module' f g module_ in
+    let* module_ = module_expr f g module_ in
     ok @@ {module_binder;module_;module_attr}
 
   and module_alias
@@ -149,22 +149,29 @@ module Fold_helpers(M : Monad) = struct
                 Declaration_type    ty -> let* ty = declaration_type      g ty in ok @@ Declaration_type ty
               | Declaration_constant c -> let* c  = declaration_constant f g c in ok @@ Declaration_constant c
               | Declaration_module   m -> let* m  = declaration_module   f g m in ok @@ Declaration_module   m
-              | Module_alias        ma -> let* ma = module_alias            ma in ok @@ Module_alias        ma
 
-  and module' : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) module' -> (('b,'d) module') monad
+  and module' : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) declarations' -> (('b,'d,_,_,_) declarations') monad
     = fun f g prg ->
     bind_map_list (bind_map_location (declaration f g)) prg
 
-  and mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) mod_in -> (('b,'d) mod_in) monad
+  and module_expr : ('e_src -> 'e_dst monad) -> ('ty_src -> 'ty_dst monad) ->  ('e_src,'ty_src,_,_,_) module_expr' -> ('e_dst,'ty_dst,_,_,_) module_expr' monad =
+    fun map_e map_t mexp ->
+      bind_map_location
+        (function
+        | M_struct prg ->
+          let* prg = module' map_e map_t prg in
+          ok (M_struct prg)
+        | M_variable x -> ok (M_variable x)
+        | M_module_path path -> ok (M_module_path path)
+        )
+        mexp
+
+  and mod_in :  ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c,_,_,_) mod_in' -> (('b,'d,_,_,_) mod_in') monad
     = fun f g {module_binder; rhs; let_result} ->
-    let* rhs        = (module' f g) rhs in
+    let* rhs        = (module_expr f g) rhs in
     let* let_result = f let_result in
     ok @@ {module_binder; rhs; let_result}
 
-  and mod_alias :  ('a -> 'b monad) -> 'a mod_alias -> ('b mod_alias) monad
-    = fun f {alias; binders; result} ->
-    let* result = f result in
-    ok @@ {alias; binders; result}
 
   type 'err exp_mapper = expression -> expression monad
   type 'err ty_exp_mapper = type_expression -> type_expression monad
@@ -236,10 +243,6 @@ module Fold_helpers(M : Monad) = struct
       let* ti = type_in self ok ti in
       return @@ E_type_in ti
     )
-    | E_mod_alias ma -> (
-      let* ma = mod_alias self ma in
-      return @@ E_mod_alias ma
-    )
     | E_mod_in mi -> (
       let* mi = mod_in self ok mi in
       return @@ E_mod_in mi
@@ -279,14 +282,10 @@ module Fold_helpers(M : Monad) = struct
     | E_while w ->
        let* w = while_loop self w in
        return @@ E_while w
-    | E_module_accessor { module_name; element } -> (
-      let* element = self element in
-      return @@ E_module_accessor { module_name; element }
-    )
-    | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
+    | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> return e'
 
   and map_module : 'err abs_mapper -> module_ -> (module_ ) monad = fun m p ->
-    let aux = fun (x : declaration) ->
+    let aux = fun (x : declaration_content) ->
       match x,m with
       | (Declaration_constant dc, Expression m') -> (
         let* dc = declaration_constant (map_expression m') ok dc in
