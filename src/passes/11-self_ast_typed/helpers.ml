@@ -433,7 +433,7 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
     | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder.var)
   )
-  | None -> raise.raise @@ bad_contract_io main_fname expr
+  | None -> raise.raise @@ bad_view_io main_fname expr
 
 
 module Free_variables :
