@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal & Melwyn Saldanha
+title: Fix a bug where views would be declared as module accesses
+type: fixed
+merge_request: '1652'
