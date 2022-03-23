@@ -25,16 +25,19 @@ let uno : storage = EURO.one;
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr (Int) (TypeName))))
+        (expr 
+          (type_as_annotation (Int) (TypeName)))))
     (namespace_statement (ModuleName)
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr (Int) (TypeName)))
+        (expr 
+          (type_as_annotation (Int) (TypeName))))
       (let_decl
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr (Int) (TypeName)))))
+        (expr
+         (type_as_annotation (Int) (TypeName))))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl 
     (TypeName)

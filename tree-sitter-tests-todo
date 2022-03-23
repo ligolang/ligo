@@ -1,8 +1,10 @@
 - Automatic Semicolon insertion + A VBAR insertion
 - [done] detect attributes
-- prec.left & prec.right for operator precedence
+- [done] prec.left & prec.right for operator precedence - remove precedence levels
 - Add fields to nodes
-- [] Mark nodes as hidden to avoid deep nesting
+- [done] Mark nodes as hidden to avoid deep nesting
+- [done] paren_expr
+- add labels on nodes 
 
 JsLIGO tests
 

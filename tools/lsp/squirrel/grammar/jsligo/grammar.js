@@ -41,12 +41,12 @@ module.exports = grammar({
     _expr_statement: $ => choice(
       prec.right(2, seq($._expr_statement, choice("=", "*=", "/=", "%=", "+=", "-="), $._expr_statement)),
       $.fun_expr,
-      $.type_annotation,
+      $.type_as_annotation,
       $.binary_operator,
       $._call_expr_level
     ),
 
-    type_annotation: $ => seq($._expr_statement, "as", $._core_type),
+    type_as_annotation: $ => seq($._expr_statement, "as", $._core_type),
 
     binary_operator: $ => choice(
       prec.left(4, seq($._expr_statement, "||", $._expr_statement)),
@@ -116,7 +116,7 @@ module.exports = grammar({
       seq($.Name, "=>", $.body)
     ),
 
-    body: $ => choice(common.block($.statements), $._expr_statement),
+    body: $ => prec.right(3, choice(common.block($.statements), $._expr_statement)),
 
     statements: $ => common.sepEndBy1(";", $._statement),
 
