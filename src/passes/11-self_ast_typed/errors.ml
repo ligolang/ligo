@@ -14,6 +14,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
   | `Self_ast_typed_bad_contract_io of Ast_typed.expression_variable * Ast_typed.expression
+  | `Self_ast_typed_bad_view_io of Ast_typed.expression_variable * Ast_typed.expression
   | `Self_ast_typed_expected_list_operation of Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
     Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
@@ -92,6 +93,11 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        Snippet.pp e.location
+        Ast_typed.PP.expression_variable entrypoint
+    | `Self_ast_typed_bad_view_io (entrypoint, e) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
         Snippet.pp e.location
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
@@ -228,6 +234,20 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
     let message = `String "badly typed contract" in
     let description = `String "unexpected entrypoint type" in
+    let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
+    let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
+    let content = `Assoc [
+       ("message", message);
+       ("description", description);
+       ("entrypoint", entrypoint);
+       ("location", Location.to_yojson e.location);
+       ("type", eptype);
+       ]
+    in
+    json_error ~stage ~content
+  | `Self_ast_typed_bad_view_io (entrypoint, e) ->
+    let message = `String "badly typed view" in
+    let description = `String "unexpected view type" in
     let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
     let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
     let content = `Assoc [
