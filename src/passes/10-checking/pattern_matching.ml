@@ -201,7 +201,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
         )
         | _ -> ret true exp has_subst
     in
-    let (has_subst, res) = Self_ast_core.fold_map_expression ~raise aux false body in
+    let (has_subst, res) = Self_ast_core.fold_map_expression (aux ~raise) false body in
     (has_subst,res)
 
 let make_var_pattern : O.expression_variable -> pattern =

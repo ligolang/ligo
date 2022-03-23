@@ -27,6 +27,12 @@ let option_public ppf public =
   else
     fprintf ppf ""
 
+let e_attributes ppf { inline ; no_mutation ; view ; public } =
+  fprintf ppf "%a%a%a%a"
+    option_inline inline
+    option_no_mutation no_mutation
+    option_view view
+    option_public public
 
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l
@@ -99,8 +105,8 @@ let attributes ppf attributes =
     List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
   in fprintf ppf "%s" attr
 
-let module_access f ppf = fun {module_name;element} ->
-  fprintf ppf "%a.%a" module_variable module_name f element
+let module_access f ppf = fun {module_path;element} ->
+  fprintf ppf "%a.%a" (list_sep (module_variable) (const ".")) module_path f element
 
 (* Types *)
 let for_all type_expression ppf ({ty_binder ; kind ; type_}) : unit =
@@ -306,48 +312,53 @@ let match_case expression type_expression ppf = fun {pattern ; body} ->
 
 let match_exp expression type_expression ppf = fun {matchee ; cases} ->
   fprintf ppf "@[<v 2> match %a with@,%a@]" expression matchee (list_sep (match_case expression type_expression) (tag "@ ")) cases
-
+let rec mod_in expression type_expression a_e a_t a_m ppf = fun {module_binder; rhs; let_result;} ->
+  fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
+    module_variable module_binder
+    (module_expr expression type_expression a_e a_t a_m) rhs
+    expression let_result
 (* Declaration *)
-let declaration_type type_expression ppf = fun {type_binder;type_expr; type_attr} ->
+and declaration_type type_expression a_t ppf = fun {type_binder;type_expr; type_attr} ->
   fprintf ppf "@[<2>type %a =@ %a%a@]"
     type_variable type_binder
     type_expression type_expr
-    attributes type_attr
+    a_t type_attr
 
-let declaration_constant expression type_expression ppf = fun {binder=binder'; attr ; expr} ->
+and declaration_constant ?(print_type = true) expression type_expression a_e ppf = fun {binder=binder'; attr ; expr} ->
+  let cond ppf b =
+    if print_type then
+      fprintf ppf "%a" (binder type_expression) b
+    else
+      fprintf ppf "%a" expression_variable b.var
+  in
   fprintf ppf "@[<2>const %a =@ %a%a@]"
-    (binder type_expression) binder'
+    cond binder'
     expression expr
-    attributes attr
+    a_e attr
 
-let rec declaration_module expression type_expression ppf = fun {module_binder;module_;module_attr} ->
+and declaration_module ?(print_type = true) expression type_expression a_e a_t a_m ppf = fun {module_binder;module_;module_attr} ->
   fprintf ppf "@[<2>module %a =@ %a%a@]"
     module_variable module_binder
-    (module' expression type_expression) module_
-    attributes module_attr
+    (module_expr ~print_type expression type_expression a_e a_t a_m) module_
+    a_m module_attr
 
-and module_alias ppf = fun ({alias;binders} : module_alias) ->
-  fprintf ppf "@[<2>module %a =@ %a@]" module_variable alias (list_sep_d module_variable) @@ List.Ne.to_list binders
-
-and declaration expression type_expression ppf = function
-    Declaration_type    ty -> declaration_type                type_expression ppf ty
-  | Declaration_constant c -> declaration_constant expression type_expression ppf c
-  | Declaration_module   m -> declaration_module   expression type_expression ppf m
-  | Module_alias        ma -> module_alias                                    ppf ma
-
-and module' expression type_expression ppf = fun p ->
+and declaration_content ?(print_type = true) expression type_expression a_e a_t a_m ppf = function
+    Declaration_type    ty -> declaration_type type_expression a_t ppf ty
+  | Declaration_constant c -> declaration_constant ~print_type expression type_expression a_e ppf c
+  | Declaration_module   m -> declaration_module ~print_type expression type_expression a_e a_t a_m ppf m
+and declaration ?(print_type = true) expression type_expression a_e a_t a_m ppf x =
+  declaration_content ~print_type expression type_expression a_e a_t a_m ppf (Location.unwrap x)
+and declarations ?(print_type = true) expression type_expression a_e a_t a_m ppf x =
   fprintf ppf "@[<v>%a@]"
-    (list_sep (declaration expression type_expression) (tag "@,"))
-    (List.map ~f:Location.unwrap p)
+    (list_sep (declaration ~print_type expression type_expression a_e a_t a_m) (tag "@,"))
+    x
+and module_expr_content ?(print_type = true) expression type_expression a_e a_t a_m ppf = function
+  | M_struct p ->
+    fprintf ppf "@[<v>struct@,%a@,end@]"
+      (declarations ~print_type expression type_expression a_e a_t a_m) p
+  | M_variable x -> module_variable ppf x
+  | M_module_path path ->
+    (ne_list_sep (module_variable) (tag ".")) ppf path
 
-and mod_in expression type_expression ppf = fun {module_binder; rhs; let_result;} ->
-  fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
-    module_variable module_binder
-    (module' expression type_expression) rhs
-    expression let_result
-
-and mod_alias expression ppf = fun {alias; binders; result} ->
-  fprintf ppf "@[module %a =@;<1 2>%a in@ %a@]"
-    module_variable alias
-    (list_sep module_variable (tag ".")) (List.Ne.to_list binders)
-    expression result
+and module_expr ?(print_type = true) expression type_expression a_e a_t a_m ppf x =
+  module_expr_content ~print_type expression type_expression a_e a_t a_m ppf (Location.unwrap x)

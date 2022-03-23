@@ -19,10 +19,10 @@ let expression_variable = ValueVar.compare
 let type_variable       = TypeVar.compare
 let module_variable     = ModuleVar.compare
 
-let module_access f {module_name=mna; element=ea}
-                    {module_name=mnb; element=eb} =
+let module_access f {module_path=mna; element=ea}
+                    {module_path=mnb; element=eb} =
   cmp2
-    module_variable mna mnb
+    (List.compare module_variable) mna mnb
     f ea eb
 
 let layout_tag = function
@@ -53,7 +53,7 @@ and type_content a b =
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
   | T_app      a, T_app      b -> app a b
-  | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
+  | T_module_accessor a, T_module_accessor b -> module_access type_variable a b
   | T_singleton a , T_singleton b -> literal a b
   | T_abstraction a , T_abstraction b -> for_all a b
   | T_for_all a , T_for_all b -> for_all a b
@@ -87,14 +87,3 @@ and for_all {ty_binder = ba ; kind = _ ; type_ = ta } {ty_binder = bb ; kind = _
   cmp2
     type_expression ta tb
     type_variable ba bb
-
-
-(* Environment *)
-let free_variables = List.compare expression_variable
-
-let type_environment_binding {type_variable=va;type_=ta} {type_variable=vb;type_=tb} =
-  cmp2
-    type_variable va vb
-    type_expression ta tb
-
-let type_environment = List.compare type_environment_binding

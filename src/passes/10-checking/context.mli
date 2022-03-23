@@ -17,7 +17,7 @@ val get_module : t -> module_variable     -> t option
 
 val get_type_vars : t -> type_variable list
 
-val add_ez_module : t -> module_variable -> module_ -> t
+val context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t
 
 val init : ?env:Environment.t -> unit -> t
 

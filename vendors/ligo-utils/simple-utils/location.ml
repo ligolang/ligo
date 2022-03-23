@@ -98,9 +98,6 @@ let get_location x = x.location
 let unwrap { wrap_content ; _ } = wrap_content
 let map f x = { x with wrap_content = f x.wrap_content }
 let fold f acc x = f acc x.wrap_content
-let fold_map f acc x = 
-  let acc,wrap_content = f acc x.wrap_content in
-  acc,{ x with wrap_content}
 
 let pp_wrap f ppf { wrap_content ; _ } = Format.fprintf ppf "%a" f wrap_content
 

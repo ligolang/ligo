@@ -62,6 +62,8 @@ let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
+let type_and_module_attr ppf {public} = Stage_common.PP.option_public ppf public
+
 open Format
 
 let rec constraint_identifier_unicode (ci : Int64.t) =
@@ -102,7 +104,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row) (LMap.to_kv_list_rev m.content)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row) m.content
   | T_arrow            a -> arrow         type_expression ppf a
-  | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_module_accessor ma -> module_access type_variable ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
   | T_for_all         x  -> for_all       type_expression ppf x
@@ -132,7 +134,7 @@ let rec type_content_orig : formatter -> type_content -> unit =
   | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d row_orig) (LMap.to_kv_list_rev m.content)
   | T_record           m -> fprintf ppf "%a" (tuple_or_record_sep_type row_orig) m.content
   | T_arrow            a -> arrow         type_expression_orig ppf a
-  | T_module_accessor ma -> module_access type_expression_orig ppf ma
+  | T_module_accessor ma -> module_access type_variable ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression_orig ppf x
   | T_for_all         x  -> for_all       type_expression_orig ppf x
@@ -197,9 +199,8 @@ and expression_content ppf (ec: expression_content) =
         expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder
-        module_ rhs
+        (module_expr expression type_expression e_attributes type_and_module_attr type_and_module_attr) rhs
         expression let_result
-  | E_mod_alias ma -> mod_alias expression ppf ma
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_type_inst {forall;type_} ->
@@ -209,7 +210,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_module_accessor ma -> module_access expression ppf ma
+  | E_module_accessor ma -> module_access expression_variable ppf ma
 
 
 and option_inline ppf inline =
@@ -233,19 +234,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         f body
 
 and declaration ppf (d : declaration) =
-  match d with
-  | Declaration_constant {binder; expr; attr = { inline; no_mutation ; view ; public } } ->
-      fprintf ppf "const %a = %a%a%a%a%a" expression_variable binder expression expr option_inline inline option_no_mutation no_mutation option_view view option_public public
-  | Declaration_type {type_binder; type_expr; type_attr = { public }} ->
-    fprintf ppf "type %a = %a%a" type_variable type_binder type_expression type_expr option_public public
-  | Declaration_module {module_binder; module_ = m; module_attr = {public}} ->
-      fprintf ppf "module %a = struct@; @[<v>%a@]@;end %a" module_variable module_binder module_ m option_public public
-  | Module_alias {alias; binders} ->
-      fprintf ppf "module %a = %a" module_variable alias (list_sep module_variable (tag ".")) @@ List.Ne.to_list binders
+  Stage_common.PP.(declaration ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
+    ppf d
 
 and module_ ppf (m : module_) =
-  fprintf ppf "@[<v>%a@]"
-    (list_sep declaration (tag "@;"))
-    (List.map ~f:Location.unwrap m)
-
+  Stage_common.PP.(declarations ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
+    ppf m
 let program ppf p = module_ ppf p

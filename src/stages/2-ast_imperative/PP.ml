@@ -5,7 +5,6 @@ open Simple_utils.PP_helpers
 
 include Stage_common.PP
 
-(* TODO: move to common *)
 let sum_set_t value sep ppf m =
   let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
@@ -50,7 +49,7 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_arrow            a -> arrow         type_expression ppf a
   | T_annoted  (ty, str) -> fprintf ppf "(%a%%%s)" type_expression ty str
   | T_app            app -> type_app      type_expression ppf app
-  | T_module_accessor ma -> module_access type_expression ppf ma
+  | T_module_accessor ma -> module_access type_variable ppf ma
   | T_singleton       x  -> literal       ppf             x
   | T_abstraction     x  -> abstraction   type_expression ppf x
   | T_for_all         x  -> for_all       type_expression ppf x
@@ -80,11 +79,10 @@ and expression_content ppf (ec : expression_content) =
   | E_recursive  r -> recursive expression type_expression ppf r
   | E_let_in    li -> let_in  expression type_expression ppf li
   | E_type_in   ti -> type_in expression type_expression ppf ti
-  | E_mod_in    mi -> mod_in  expression type_expression ppf mi
-  | E_mod_alias ma -> mod_alias  expression ppf ma
+  | E_mod_in    mi -> mod_in  expression type_expression attributes attributes attributes ppf mi
   | E_raw_code   r -> raw_code   expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
-  | E_module_accessor ma -> module_access expression ppf ma
+  | E_module_accessor ma -> module_access expression_variable ppf ma
   | E_cond       c -> cond       expression ppf c
   | E_sequence   s -> sequence   expression ppf s
   | E_skip         -> skip                  ppf ()
@@ -105,6 +103,6 @@ and attributes ppf attributes =
     List.map ~f:(fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat
   in fprintf ppf "%s" attr
 
-let declaration ppf (d : declaration) = declaration expression type_expression ppf d
+let declaration ppf (d : declaration) = declaration expression type_expression attributes attributes attributes ppf d
 
-let module_ ppf (p : module_) = module' expression type_expression ppf p
+let module_ ppf (p : module_) = declarations expression type_expression attributes attributes attributes ppf p
