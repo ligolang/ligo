@@ -49,16 +49,25 @@ let%expect_test _ =
     Invalid view argument.
     View 'bad_view' has storage type 'nat' and contract 'main' has storage type 'int'. |}]
 
-(* view + #import *)
+(* view + #import : no view expected *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "view_import.mligo" ; "--protocol" ; "hangzhou" ] ;
   [%expect {| 
     { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
-(* view inside module *)
+(* view inside module : no view expected *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "view_inside_module.mligo" ; "--protocol" ; "hangzhou" ] ;
   [%expect {|
     { parameter unit ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
+
+(* view + #import + alias : view expected *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "view_import_and_alias.mligo" ] ;
+  [%expect {| 
+    { parameter unit ;
+      storage int ;
+      code { CDR ; NIL operation ; PAIR } ;
+      view "v1" int int { UNPAIR ; PUSH int 1 ; SWAP ; DIG 2 ; ADD ; ADD } } |}]
