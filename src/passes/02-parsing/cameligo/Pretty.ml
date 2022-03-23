@@ -82,16 +82,24 @@ and pp_attributes = function
 | attrs -> separate_map (break 0) pp_attribute attrs
 
 and pp_let_binding (binding : let_binding) =
-  let {binders; lhs_type; let_rhs; _} = binding in
+  let {type_params; binders; lhs_type; let_rhs; _} = binding in
   let head, tail = binders in
-  let patterns =
-    group (nest 2 (separate_map (break 1) pp_pattern (head::tail))) in
+  let thread = pp_type_params (pp_pattern head) type_params in
+  let thread =
+    thread ^^ string " " ^^
+    group (nest 2 (separate_map (break 1) pp_pattern tail)) in
   let lhs =
-    patterns ^^
+    thread ^^
     match lhs_type with
             None -> empty
     | Some (_,e) -> group (break 1 ^^ string ": " ^^ pp_type_expr e)
   in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
+
+and pp_type_params thread = function
+  None -> thread
+| Some type_params ->
+    let params = pp_nseq pp_ident type_params.value.inside.type_vars
+    in thread ^//^ string "(type " ^^ params ^^ string ")"
 
 and pp_pattern = function
   PConstr   p -> pp_pconstr p
@@ -163,10 +171,22 @@ and pp_ptyped {value; _} =
   group (pp_pattern pattern ^^ string " :" ^/^ pp_type_expr type_expr)
 
 and pp_type_decl decl =
-  let {name; type_expr; _} = decl.value in
+  let {name; params; type_expr; _} = decl.value in
+  let params = pp_type_vars params in
   let padding = match type_expr with TSum _ -> 0 | _ -> 2 in
-  string "type " ^^ pp_ident name ^^ string " ="
+  string "type " ^^ params ^^ pp_ident name ^^ string " ="
   ^^ group (nest padding (break 1 ^^ pp_type_expr type_expr))
+
+and pp_type_vars (node : type_vars option) =
+  match node with
+    None -> empty
+  | Some QParam param ->
+      pp_type_var param ^^ string " "
+  | Some QParamTuple tuple ->
+      pp_par (pp_nsepseq "," pp_type_var) tuple ^^ string " "
+
+and pp_type_var (node : type_var reg) =
+  string "'" ^^ pp_ident node.value.name
 
 and pp_module_decl decl =
   let {name; module_; _} = decl.value in
