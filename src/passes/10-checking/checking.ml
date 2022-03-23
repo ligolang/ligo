@@ -12,8 +12,32 @@ type context = Context.t
 
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
-let rec type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
-  let aux (c, acc:(context * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+let rec type_module_expr ~raise ~init_context ~options : I.module_expr -> context * O.module_expr = fun m_expr ->
+  let return x =
+    let ret = Location.wrap ~loc:m_expr.location x in
+    let ctxt = Context.context_of_module_expr ~outer_context:init_context ret in
+    ctxt, ret
+  in
+  let is_bound ctxt v =
+    trace_assert_option ~raise (unbound_module_variable v (I.ModuleVar.get_location v)) (Context.get_module ctxt v)
+  in
+  match m_expr.wrap_content with
+  | I.M_struct prg ->
+    let prg = type_module ~init_context ~raise ~options prg in
+    return (O.M_struct prg)
+  | I.M_module_path path ->
+    let _ctxt : context = List.fold
+      ~f:(fun acc v -> trace_option ~raise (unbound_module_variable v (I.ModuleVar.get_location v)) (Context.get_module acc v))
+      ~init:init_context
+      (List.Ne.to_list path)
+    in
+    return (O.M_module_path path)
+  | I.M_variable v ->
+    let () = is_bound init_context v in
+    return (O.M_variable v)
+
+and type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
+  let aux (c, acc:(context * O.declaration list)) (d:I.declaration) =
     let (c, d') = type_declaration' ~raise ~options c d in
     (c, d' :: acc)
   in
@@ -22,20 +46,20 @@ let rec type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
       List.fold ~f:aux ~init:(init_context, []) p in
   List.rev lst
 
-and type_declaration' : raise: typer_error raise -> options: Compiler_options.middle_end -> context -> I.declaration Location.wrap -> context * O.declaration Location.wrap =
+and type_declaration' : raise: typer_error raise -> options: Compiler_options.middle_end -> context -> I.declaration -> context * O.declaration =
 fun ~raise ~options c d ->
 let loc = d.location in
-let return ?(loc = loc) c (d : O.declaration) = c,Location.wrap ~loc d in
+let return ?(loc = loc) c (d : O.declaration_content) = c,Location.wrap ~loc d in
 match Location.unwrap d with
   | Declaration_type {type_binder ; _} when Ast_core.TypeVar.is_generalizable type_binder ->
     raise.raise (wrong_generalizable d.location type_binder)
-  | Declaration_type {type_binder ; type_expr; type_attr={public}} -> (
+  | Declaration_type {type_binder ; type_expr; type_attr={public} } -> (
     let tv = evaluate_type ~raise c type_expr in
     let tv = {tv with orig_var = Some type_binder} in
     let env' = Context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
-  | Declaration_constant { binder = { ascr = None ; var ; attributes=_ } ; attr  ; expr} -> (
+  | Declaration_constant { binder = { ascr = None ; var ; attributes } ; attr  ; expr} -> (
     let av, expr = Ast_core.Combinators.get_type_abstractions expr in
     let c = List.fold_right av ~f:(fun v c -> Context.add_type_var c v ()) ~init:c in
     let expr =
@@ -48,9 +72,9 @@ match Location.unwrap d with
     let expr = { expr with type_expression } in
     let binder : O.expression_variable = var in
     let post_env = Context.add_value c binder expr.type_expression in
-    return post_env @@ Declaration_constant { binder ; expr ; attr }
+    return post_env @@ Declaration_constant { binder = { var ; ascr = None ; attributes } ; expr ; attr }
   )
-  | Declaration_constant { binder = { ascr = Some tv ; var ; attributes=_ } ; attr ; expr } ->
+  | Declaration_constant { binder = { ascr = Some tv ; var ; attributes } ; attr ; expr } ->
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let av', expr = Ast_core.Combinators.get_type_abstractions expr in
     let av = av @ av' in
@@ -64,23 +88,12 @@ match Location.unwrap d with
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux expr.type_expression (List.rev av) in
     let expr = { expr with type_expression } in
-    let binder : O.expression_variable = var in
-    let c = Context.add_value c binder expr.type_expression in
-    return c @@ Declaration_constant { binder ; expr ; attr }
-  | Declaration_module {module_binder;module_; module_attr = {public}} -> (
-    let module_ = type_module ~raise ~options ~init_context:c module_ in
-    let post_env = Context.add_ez_module c module_binder module_ in
+    let c = Context.add_value c var expr.type_expression in
+    return c @@ Declaration_constant { binder = { ascr = Some tv ; var ; attributes } ; expr ; attr }
+  | Declaration_module { module_binder ; module_ ; module_attr = {public} } -> (
+    let module_ctxt, module_ = type_module_expr ~raise ~init_context:c ~options module_ in
+    let post_env = Context.add_module c module_binder module_ctxt in
     return post_env @@ Declaration_module { module_binder; module_; module_attr = {public}}
-  )
-  | Module_alias {alias;binders} -> (
-    let f context binder =
-      trace_option ~raise (unbound_module_variable binder d.location)
-      @@ Context.get_module context binder
-    in
-    let (hd, tl) = binders in
-    let e = List.fold_left ~f ~init:(f c hd) tl in
-    let post_env = Context.add_module c alias e in
-    return post_env @@ Module_alias { alias; binders}
   )
 
 and evaluate_otype ~raise (c:context) (t:O.type_expression) : O.type_expression =
@@ -140,12 +153,11 @@ and evaluate_otype ~raise (c:context) (t:O.type_expression) : O.type_expression 
     | Some x -> x
     | None -> raise.raise (unbound_type_variable name t.location)
   )
-  | T_module_accessor {module_name; element} ->
-    let module_ = match Context.get_module c module_name with
-      Some m -> m
-    | None   -> raise.raise @@ unbound_module_variable module_name t.location
-    in
-    evaluate_otype ~raise module_ element
+  | T_module_accessor {module_path; element} -> (
+    let f = fun acc el -> trace_option ~raise (unbound_module_variable el t.location) (Context.get_module acc el) in
+    let module_ = List.fold ~init:c ~f module_path in
+    trace_option ~raise (unbound_type_variable element t.location) (Context.get_type module_ element)
+  )
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
     let c = Context.add_kind c x.ty_binder () in
@@ -264,12 +276,11 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
       return (T_constant {language;injection;parameters=args})
     | _ -> evaluate_otype ~raise env' ty_body
   )
-  | T_module_accessor {module_name; element} ->
-    let module_ = match Context.get_module c module_name with
-      Some m -> m
-    | None   -> raise.raise @@ unbound_module_variable module_name t.location
-    in
-    evaluate_type ~raise module_ element
+  | T_module_accessor {module_path; element} -> (
+    let f = fun acc el -> trace_option ~raise (unbound_module_variable el t.location) (Context.get_module acc el) in
+    let module_ = List.fold ~init:c ~f module_path in
+    trace_option ~raise (unbound_type_variable element t.location) (Context.get_type module_ element)
+  )
   | T_singleton x -> return (T_singleton x)
   | T_abstraction x ->
     let c = Context.add_kind c x.ty_binder () in
@@ -286,6 +297,17 @@ and type_expression ~raise ~options : ?env:Environment.t -> ?tv_opt:O.type_expre
     let res = type_expression' ~raise ~options c ?tv_opt e in
     res
 
+and infer_t_insts ~raise ~loc ?(args = []) ?last ( (tc,t) : O.expression_content * O.type_expression )  =
+  match t with
+  | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} ->
+    (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
+    let avs, type_ = O.Helpers.destruct_for_alls t in
+    let table = Inference.infer_type_applications ~raise ~loc type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
+    let lamb = make_e ~location:loc tc t in
+    let x = Inference.build_type_insts ~raise ~loc lamb table avs in
+    x.expression_content , x.type_expression
+  | _ -> tc, t
+
 and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun context ?tv_opt e ->
   let return expr tv =
     let () =
@@ -299,19 +321,11 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
   trace ~raise (expression_tracer e) @@
   fun ~raise -> match e.expression_content with
   (* Basic *)
-  | E_variable name ->
-      let tv' =
-        trace_option ~raise (unbound_variable name e.location)
-        @@ Context.get_value context name in
-      (match tv' with
-       | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} ->
-          (* TODO: This is some inference, and we should reconcile it with the inference pass. *)
-          let avs, type_ = O.Helpers.destruct_for_alls tv' in
-          let table = Inference.infer_type_applications ~raise ~loc:e.location type_ (List.map ~f:(fun ({type_expression;_} : O.expression) -> type_expression) args) last in
-          let lamb = make_e ~location:e.location (E_variable name) tv' in
-          return_e @@ Inference.build_type_insts ~raise ~loc:e.location lamb table avs
-       | _ ->
-          return (E_variable name) tv')
+  | E_variable name -> (
+    let tv' = trace_option ~raise (unbound_variable name e.location) @@ Context.get_value context name in
+    let tc , tv = infer_t_insts ~raise ~loc:e.location ~args ?last (E_variable name, tv') in
+    return tc tv
+  )
   | E_literal Literal_unit ->
       return (E_literal (Literal_unit)) (t_unit ())
   | E_literal (Literal_string s) ->
@@ -648,18 +662,10 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     let let_result = type_expression' ~raise ~options e' let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
-    let rhs = type_module ~raise ~options ~init_context:context rhs in
-    let e' = Context.add_ez_module context module_binder rhs in
+    let rhs_ctxt,rhs = type_module_expr ~raise ~options ~init_context:context rhs in
+    let e' = Context.add_module context module_binder rhs_ctxt in
     let let_result = type_expression' ~raise ~options e' let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
-  | E_mod_alias {alias; binders; result} ->
-    let aux c binder =
-      trace_option ~raise (unbound_module_variable binder e.location) @@
-      Context.get_module c binder in
-    let env = List.Ne.fold_left ~f:aux ~init:context binders in
-    let e' = Context.add_module context alias env in
-    let result = type_expression' ~raise ~options e' result in
-    return (E_mod_alias {alias; binders; result}) result.type_expression
   | E_raw_code {language;code} ->
     let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
       I.get_e_ascription code.expression_content in
@@ -691,13 +697,13 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       | None -> ()
       | Some tv' -> assert_type_expression_eq ~raise anno_expr.location (tv' , type_annotation) in
     {expr' with type_expression=type_annotation}
-  | E_module_accessor {module_name; element} ->
-    let module_env = match Context.get_module context module_name with
-      Some m -> m
-    | None   -> raise.raise @@ unbound_module_variable module_name e.location
-    in
-    let element = type_expression' ~raise ~options  ~args ?last ?tv_opt module_env element in
-    return (E_module_accessor {module_name; element}) element.type_expression
+  | E_module_accessor {module_path; element} -> (
+    let f = fun acc el -> trace_option ~raise (unbound_module_variable el (I.ModuleVar.get_location el)) (Context.get_module acc el) in
+    let module_env = List.fold ~init:context ~f module_path in
+    let tv' = trace_option ~raise (unbound_variable element e.location) @@ Context.get_value module_env element in
+    let tc , tv = infer_t_insts ~raise ?last ~loc:e.location ~args (E_module_accessor {module_path; element}, tv') in
+    return tc tv
+  )
 
 
 and type_lambda ~raise ~options e {
@@ -774,9 +780,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     let arguments = List.map ~f:self parameters in
     let type_operator = I.TypeVar.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
-  | O.T_module_accessor ma ->
-    let ma = Stage_common.Maps.module_access self ma in
-    return @@ I.T_module_accessor ma
+  | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
   | O.T_singleton l ->
     return @@ I.T_singleton l
   | O.T_abstraction x ->
@@ -882,12 +886,9 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let let_result = untype_expression let_result in
       return @@ make_e @@ E_type_in {type_binder; rhs; let_result }
   | E_mod_in {module_binder;rhs;let_result} ->
-      let rhs = untype_module rhs in
+      let rhs = untype_module_expr rhs in
       let result = untype_expression let_result in
       return @@ e_mod_in module_binder rhs result
-  | E_mod_alias ma ->
-      let ma = Stage_common.Maps.mod_alias untype_expression ma in
-      return @@ make_e @@ E_mod_alias ma
   | E_raw_code {language; code} ->
       let code = untype_expression code in
       return (e_raw_code language code)
@@ -896,9 +897,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let unty_expr= untype_expression_content ty @@ E_lambda lambda in
       let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
-  | E_module_accessor ma ->
-    let ma = Stage_common.Maps.module_access untype_expression ma in
-    return @@ I.make_e @@ E_module_accessor ma
+  | E_module_accessor ma -> return @@ I.make_e @@ E_module_accessor ma
   | E_type_inst {forall;type_=type_inst} ->
     match forall.type_expression.type_content with
     | T_for_all {ty_binder;type_;kind=_} ->
@@ -908,23 +907,53 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
     | _ ->
      failwith "Impossible case: cannot untype a type instance of a non polymorphic type"
 
-and untype_declaration : O.declaration -> I.declaration =
-let return (d: I.declaration) = d in
-function
-  Declaration_type {type_binder; type_expr;type_attr={public}} ->
-  let type_expr = untype_type_expression type_expr in
-  return @@ Declaration_type {type_binder; type_expr;type_attr={public}}
-| Declaration_constant {binder;expr;attr={inline;no_mutation;public;view}} ->
-  let ty = untype_type_expression expr.type_expression in
-  let var = binder in
-  let expr = untype_expression expr in
-  return @@ Declaration_constant {binder={var;ascr=Some ty;attributes = Stage_common.Helpers.empty_attribute};expr;attr={inline;no_mutation;view;public}}
-| Declaration_module {module_binder;module_;module_attr={public}} ->
-  let module_ = untype_module module_ in
-  return @@ Declaration_module {module_binder;module_; module_attr={public}}
-| Module_alias ma ->
-  return @@ Module_alias ma
+and untype_module_expr : O.module_expr -> I.module_expr =
+  fun module_expr ->
+    let return wrap_content = { module_expr with wrap_content } in
+    match module_expr.wrap_content with
+    | M_struct prg ->
+      let prg = untype_module prg in
+      return (I.M_struct prg)
+    | M_module_path path ->
+      return (I.M_module_path path)
+    | M_variable v ->
+      return (I.M_variable v)
+and untype_declaration_constant : (O.expression -> I.expression) -> O.declaration_constant -> I.declaration_constant =
+  fun untype_expression O.{binder;expr;attr} ->
+    let ty = untype_type_expression expr.type_expression in
+    let var = binder.var in
+    let binder = ({var;ascr=Some ty;attributes=Stage_common.Helpers.empty_attribute}: _ I.binder) in
+    let expr = untype_expression expr in
+    let expr = I.e_ascription expr ty in
+    I.{binder;attr;expr;}
 
-and untype_module : O.module_ -> I.module_ = fun p -> List.map ~f:(Location.map untype_declaration) p
+and untype_declaration_type : O.declaration_type -> I.declaration_type =
+  fun O.{type_binder; type_expr; type_attr={public}} ->
+    let type_expr = untype_type_expression type_expr in
+    let type_attr = (I.{public}: I.type_attribute) in
+    I.{type_binder; type_expr; type_attr}
+
+and untype_declaration_module : O.declaration_module -> I.declaration_module =
+  fun O.{module_binder; module_; module_attr={public}} ->
+    let module_ = untype_module_expr module_ in
+    let module_attr = (I.{public}: I.module_attribute) in
+    I.{module_binder; module_ ; module_attr}
+      
+and untype_declaration =
+  let return (d: I.declaration_content) = d in
+  fun (d: O.declaration_content) -> match d with
+  | Declaration_constant dc ->
+    let dc = untype_declaration_constant untype_expression dc in
+    return @@ Declaration_constant dc
+  | Declaration_type dt ->
+    let dt = untype_declaration_type dt in
+    return @@ Declaration_type dt
+  | Declaration_module dm ->
+    let dm = untype_declaration_module dm in
+    return @@ Declaration_module dm
+and untype_declarations : O.module_ -> I.module_ = fun p ->
+  List.map ~f:(Location.map untype_declaration) p
+    
+and untype_module : O.module_ -> I.module_ = fun x -> untype_declarations x
 
 let untype_program = untype_module

@@ -74,27 +74,3 @@ let build_contract ~raise :
 let measure ~raise = fun m ->
   Trace.trace_tzresult_lwt ~raise (main_could_not_serialize) @@
     Proto_alpha_utils.Measure.measure m
-
-(* find pairs of canonical Michelson locations, and the original Ligo
-   locations recorded there by the compiler *)
-let source_map contract =
-  let open Tezos_micheline in
-  let (_, locs) = Micheline.extract_locations contract in
-  let module LocSet = Caml.Set.Make(struct type t = Location.t ;; let compare = Location.compare end) in
-  let ignored = LocSet.of_list [Location.dummy; Location.generated] in
-  List.filter ~f:(fun (_, loc) -> not (LocSet.mem loc ignored)) locs
-
-(* find pairs of "canonical" and concrete Michelson locations by
-   printing and then parsing again *)
-let michelson_location_map contract =
-  let open Tezos_micheline in
-  let contract = Tezos_micheline.Micheline_printer.printable (fun s -> s) (Tezos_micheline.Micheline.strip_locations contract) in
-  let contract = Format.asprintf "%a" Micheline_printer.print_expr contract in
-  match Micheline_parser.(no_parsing_error (tokenize contract)) with
-  | Error _ -> Stdlib.failwith (Format.asprintf "TODO error tokenizing Michelson %s" __LOC__)
-  | Ok contract ->
-    match Micheline_parser.(no_parsing_error (parse_expression contract)) with
-    | Error _ -> Stdlib.failwith (Format.asprintf "TODO error parsing Michelson %s" __LOC__)
-    | Ok contract ->
-      let (_, clocs) = Micheline.extract_locations contract in
-      clocs

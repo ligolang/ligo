@@ -11,22 +11,24 @@ type type_content =
   | T_annoted         of (type_expression * string)
   | T_app             of ty_expr type_app
   | T_singleton       of literal
-  | T_module_accessor of ty_expr module_access
+  | T_module_accessor of type_variable module_access
   | T_abstraction     of ty_expr abstraction
   | T_for_all         of ty_expr abstraction
 
 and 'ty_exp non_linear_rows = {
   fields     : (label * ('ty_exp row_element)) list;
-  attributes : string list ;
+  attributes : attributes ;
   }
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression
 
-type module_ = (expr,ty_expr) module'
+type module_expr        = (expr,ty_expr,attributes,attributes,attributes) module_expr'
+and module_expr_content = (expr,ty_expr,attributes,attributes,attributes) module_expr_content'
+and declaration_content = (expr,ty_expr,attributes,attributes,attributes) declaration_content'
+and declaration         = (expr,ty_expr,attributes,attributes,attributes) declaration'
+and declarations        = (expr,ty_expr,attributes,attributes,attributes) declarations'
+and module_ = declarations
 
-and declaration = (expr,ty_expr) declaration'
-
-(* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
 and expr = expression
 
@@ -41,8 +43,7 @@ and expression_content =
   | E_recursive of (expr, ty_expr) recursive
   | E_let_in  of (expr, ty_expr) let_in
   | E_type_in of (expr, ty_expr) type_in
-  | E_mod_in  of (expr, ty_expr) mod_in
-  | E_mod_alias  of expr mod_alias
+  | E_mod_in  of (expr, ty_expr, attributes,attributes,attributes) mod_in'
   | E_raw_code of expr raw_code
   (* Variant *)
   | E_constructor of expr constructor (* For user defined constructors *)
@@ -53,7 +54,7 @@ and expression_content =
   | E_update   of expr update
   (* Advanced *)
   | E_ascription of (expr, ty_expr) ascription
-  | E_module_accessor of expr module_access
+  | E_module_accessor of expression_variable module_access
   (* Sugar *)
   | E_cond of expr conditional
   | E_sequence of expr sequence
@@ -77,6 +78,8 @@ and constant =
 
 and matching = (expression , type_expression) match_exp
 
+
+(*** REMITODO: what is this ? hoping this is unused ***)
 and environment_element_definition =
   | ED_binder
   | ED_declaration of (expression * free_variables)
@@ -84,9 +87,9 @@ and environment_element_definition =
 and free_variables = expression_variable list
 
 and environment_element =
-  { type_value: type_expression
-  ; source_environment: environment
-  ; definition: environment_element_definition }
+  { type_value: type_expression ;
+    definition: environment_element_definition
+  }
 
 and expr_environment = (expression_variable * environment_element) list
 and type_environment = (type_variable * type_expression) list

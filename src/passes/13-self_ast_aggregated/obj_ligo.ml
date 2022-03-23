@@ -14,7 +14,6 @@ let rec traverse_type_expression : 'err ty_exp_mapper -> AST.type_expression -> 
   let () = f te in
   match te.type_content with
   | T_sum temap -> rows self temap
-  | T_abstraction x -> self x.type_
   | T_for_all x -> self x.type_
   | T_record temap -> rows self temap
   | T_arrow arr ->

@@ -2,11 +2,8 @@ open Types
 
 type tenv = Environment.t
 
-let var_equal : Ast_typed.expression_variable -> Ast_typed.expression_variable -> bool = fun v1 v2 ->
-  Ast_typed.ValueVar.equal v1 v2
-
 let extract_variable_types :
-  bindings_map -> Ast_typed.declaration -> bindings_map =
+  bindings_map -> Ast_typed.declaration_content -> bindings_map =
   fun prev decl ->
     let add env b =
       let aux : Ast_typed.expression_variable *  Ast_typed.type_expression -> Ast_typed.expression_variable * Ast_typed.type_expression = fun (v,t) ->
@@ -20,7 +17,7 @@ let extract_variable_types :
       let return = add env in
       match exp.expression_content with
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
-      | E_type_in _ | E_type_abstraction _ | E_mod_in _ | E_mod_alias _
+      | E_type_in _ | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_module_accessor _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
@@ -71,11 +68,10 @@ let extract_variable_types :
     in
     match decl with
     | Declaration_constant { binder ; expr ; _ } ->
-      let prev = add prev [binder,expr.type_expression] in
+      let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | Declaration_type _ -> prev
     | Declaration_module _ -> prev
-    | Module_alias _ -> prev
 
 let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
   if Ast_typed.ValueVar.is_generated v

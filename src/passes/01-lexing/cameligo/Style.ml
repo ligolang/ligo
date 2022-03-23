@@ -36,51 +36,6 @@ let fail region error =
   let msg = error_to_string error in
   Stdlib.Error Region.{value=msg;region}
 
-(* Predicates on the tokens *)
-
-let is_int    = function Token.Int _ -> true | _ -> false
-let is_string = function Token.String _ -> true | _ -> false
-let is_bytes  = function Token.Bytes _ -> true | _ -> false
-
-let hex_digits = ["A"; "B"; "C"; "D"; "E"; "F";
-                  "a"; "b"; "c"; "d"; "e"; "f"]
-
-let is_hex = function
-  Token.UIdent t | Token.Ident t ->
-    List.mem hex_digits t#payload ~equal:String.equal
-| _ -> false
-
-let is_sym =
-  let open Token in
-  function
-    ARROW _
-  | CONS _
-  | CARET _
-  | MINUS _
-  | PLUS _
-  | SLASH _
-  | TIMES _
-  | LPAR _
-  | RPAR _
-  | LBRACKET _
-  | RBRACKET _
-  | LBRACE _
-  | RBRACE _
-  | COMMA _
-  | SEMI _
-  | VBAR _
-  | COLON _
-  | DOT _
-  | WILD _
-  | EQ _
-  | NE _
-  | LT _
-  | GT _
-  | LE _
-  | GE _
-  | BOOL_OR _
-  | BOOL_AND _ -> true
-  | _ -> false
 
 (* Checking the style *)
 

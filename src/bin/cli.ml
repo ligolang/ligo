@@ -149,7 +149,7 @@ let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
   let name = "--display-format" in
-  let doc  = "format the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
+  let doc  = "FORMAT the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
   flag ~doc ~aliases:["--format"] name @@
   optional_with_default human_readable @@
   Command.Arg_type.create @@ function
@@ -167,7 +167,7 @@ let output_file =
 let michelson_code_format =
   let open Command.Param in
   let docv = "--michelson-format" in
-  let doc = "format is the format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'." in
+  let doc = "CODE_FORMAT format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'." in
   flag ~doc docv @@
   optional_with_default `Text @@
   Command.Arg_type.create @@ function
@@ -178,7 +178,7 @@ let michelson_code_format =
 
 let michelson_comments =
   let open Command.Param in
-  let doc = "Selects kinds of comments to be added to the Michelson output. \
+  let doc = "COMMENT_TYPE Selects kinds of comments to be added to the Michelson output. \
 Currently 'location' and 'env' are supported. 'location' propagates original \
 source locations. 'env' inserts additional empty Seq nodes with comments \
 relating the Michelson stack to the source LIGO environment." in
@@ -250,7 +250,7 @@ I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
   let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~show_warnings ~warning_as_error ~constants ~file_constants ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~warning_as_error ~constants ~file_constants ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -264,7 +264,7 @@ let compile_file =
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format 
   in
@@ -278,7 +278,7 @@ let compile_parameter =
 
 let compile_expression =
   let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format 
     in
@@ -292,7 +292,7 @@ let compile_expression =
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.storage raw_options source_file expression amount balance sender source now display_format michelson_format 
   in
@@ -307,7 +307,7 @@ let compile_storage =
 
 let compile_constant =
   let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Compile.constant raw_options expression init_file display_format
     in
@@ -408,7 +408,7 @@ let test =
 
 let dry_run =
   let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Run.dry_run raw_options source_file parameter storage amount balance sender source now display_format 
     in
@@ -423,7 +423,7 @@ let dry_run =
 
 let evaluate_call =
   let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_call raw_options source_file parameter amount balance sender source now display_format 
     in
@@ -437,7 +437,7 @@ let evaluate_call =
 
 let evaluate_expr =
   let f source_file entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_expr raw_options source_file amount balance sender source now display_format 
     in
@@ -488,7 +488,7 @@ let list_declarations =
 
 let measure_contract =
   let f source_file entry_point views syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~show_warnings ~warning_as_error ~project_root () in
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Info.measure_contract raw_options source_file display_format
   in
@@ -564,7 +564,6 @@ let print_cst =
     return_result ~return @@
     Api.Print.cst raw_options source_file display_format
   in
-  let _cmdname = "print-cst" in
   let summary   = "print the CST.\nWarning: Intended for development of LIGO and can break at any time." in
   let readme () = "This sub-command prints the source file in the CST \
                   stage, obtained after preprocessing and parsing." in
@@ -692,8 +691,8 @@ let repl =
     return_result ~return @@ Repl.main raw_options display_format now amount balance sender source init_file
   in
   let summary   = "interactive ligo interpreter" in
-  let _readme () = "" in
-  Command.basic ~summary
+  let readme () = "REPL (Read-Eval-Print-Loop) for LIGO" in
+  Command.basic ~summary ~readme
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
@@ -703,7 +702,7 @@ let install =
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path)
 
-let main = Command.group ~preserve_subcommand_order:() ~summary:"the LigoLANG compiler" @@
+let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
     "transpile", transpile_group;

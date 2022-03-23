@@ -19,7 +19,6 @@ let peep_of_option : 'a list option -> 'a peep = function
 (* A let* syntax for Peep, see example usage in peepN below *)
 type peep_dummy = Peep_dummy | Peek_dummy
 let peep = Peep_dummy
-let peek = Peek_dummy
 module Let_syntax = struct
   let bind : peep_dummy -> f:('a -> 'a peep) -> 'a peep =
     fun _ ~f -> Peep f

@@ -44,7 +44,14 @@ const args: TestSettings = parse<TestSettings>({
       )
     })
 
-    await runTests({ extensionDevelopmentPath, extensionTestsPath, vscodeExecutablePath })
+    await runTests({
+      extensionDevelopmentPath,
+      extensionTestsPath,
+      vscodeExecutablePath,
+      launchArgs: [
+        '--disable-extensions',
+      ],
+    })
   } catch (err) {
     console.error(`Failed to run tests with ${err}`)
     process.exit(1)

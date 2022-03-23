@@ -1390,7 +1390,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
-  [%expect {| const y = lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in UNIT() in let ()#4 = let _x = +23 in UNIT() in let ()#3 = let _x = +42 in UNIT() in _x |}]
+  [%expect {|
+    const y =
+      lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in UNIT() in let ()#4 = let _x = +23 in UNIT() in let ()#3 = let _x = +42 in UNIT() in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -2296,23 +2298,25 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f = lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#4 = EQ(n ,
-    0) in  match gen#4 with
-            | False unit_proj#5 ->
-              (f)@(SUB(n ,
-              1)) | True unit_proj#6 ->
-                    1 ) in (f)@(4)
-    const g = rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#7 = EQ(n ,
-    0) in  match gen#7 with
-            | False unit_proj#8 ->
-              (h)@(SUB(n ,
-              1)) | True unit_proj#9 ->
-                    1 ) in h) ) |}]
+    const f =
+      lambda (n) return let f = rec (f:int -> int => lambda (n) return let gen#4 = EQ(n ,
+      0) in  match gen#4 with
+              | False unit_proj#5 ->
+                (f)@(SUB(n ,
+                1)) | True unit_proj#6 ->
+                      1 ) in (f)@(4)
+    const g =
+      rec (g:int -> int -> int -> int => lambda (f) return (g)@(let h = rec (h:int -> int => lambda (n) return let gen#7 = EQ(n ,
+      0) in  match gen#7 with
+              | False unit_proj#8 ->
+                (h)@(SUB(n ,
+                1)) | True unit_proj#9 ->
+                      1 ) in h) ) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 0-14:
+    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 10-14:
       1 | let dog = 1;
       2 | let dog = true;
 
@@ -2345,11 +2349,10 @@ let%expect_test _ =
   [%expect {|
     const x = 1[@inline][@private]
     const foo = lambda (a) return let test = ADD(2 ,
-    a)[@inline] in test[@inline][@private]
+      a)[@inline] in test[@inline][@private]
     const y = 1[@private]
-    const bar = lambda (b) return let test = lambda (z) return ADD(ADD(2 ,
-    b) ,
-    z)[@inline] in (test)@(b)[@private]
+    const bar = lambda (b) return let test = lambda (z) return ADD(ADD(2 , b) ,
+      z)[@inline] in (test)@(b)[@private]
     const check = 4[@private] |}]
 
 (* literal type "casting" inside modules *)
@@ -2365,21 +2368,21 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_type.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_type.jsligo", line 5, characters 13-16:
+      File "../../test/contracts/negative/modules_export_type.jsligo", line 5, characters 9-16:
         4 |
         5 | type a = Bar.foo
 
       Type "foo" not found. |}];
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_const.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 12-15:
+      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 8-15:
         4 |
         5 | let a = Bar.foo;
 
       Variable "foo" not found. |}];
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_namespace.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 0-20:
+      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 17-20:
         6 |
         7 | import Foo = Bar.Foo
 
@@ -2599,20 +2602,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-                     const c = lambda (gen#5) return CREATE_CONTRACT(lambda (gen#2) return
-                      match gen#2 with
-                       | ( _#4 , _#3 ) ->
-                       ( LIST_EMPTY() , unit ) ,
-                     NONE() ,
-                     0mutez ,
-                     unit)
-                     const foo = let gen#11 = (c)@(unit) in  match gen#11 with
-                                                              | ( _a , _b ) ->
-                                                              unit
-                     const c = lambda (gen#6) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
-                     const foo = let gen#13 = (c)@(unit) in  match gen#13 with
-                                                              | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                                              unit |} ]
+                     const c =
+                       lambda (gen#5) return CREATE_CONTRACT(lambda (gen#2) return  match
+                                                                                     gen#2 with
+                                                                                     | ( _#4 , _#3 ) ->
+                                                                                     ( LIST_EMPTY() , unit ) ,
+                       NONE() , 0mutez , unit)
+                     const foo =
+                       let gen#11 = (c)@(unit) in  match gen#11 with
+                                                    | ( _a , _b ) ->
+                                                    unit
+                     const c =
+                       lambda (gen#6) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+                     const foo =
+                       let gen#13 = (c)@(unit) in  match gen#13 with
+                                                    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+                                                    unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =
@@ -2791,3 +2796,20 @@ let%expect_test _ =
          PAIR ;
          NIL operation ;
          PAIR } } |}]
+
+(* check get contract with error typing *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "cbo" ; "--init-file" ; contract "get_contract_with_error.ligo" ] ;
+  [%expect{|
+{ PUSH string "contract not found" ;
+  SENDER ;
+  CONTRACT unit ;
+  IF_NONE { FAILWITH } { SWAP ; DROP } ;
+  SWAP ;
+  NIL operation ;
+  DIG 2 ;
+  PUSH mutez 0 ;
+  UNIT ;
+  TRANSFER_TOKENS ;
+  CONS ;
+  PAIR } |}]

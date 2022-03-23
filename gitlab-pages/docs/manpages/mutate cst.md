@@ -1,45 +1,30 @@
 
 ### SYNOPSIS
-
-**ligo mutate cst** *SOURCE_FILE* \[*OPTION*\]\...
+ligo mutate cst SOURCE_FILE
 
 ### DESCRIPTION
-
 This sub-command returns a mutated version for a given file. It does not use the build system.
 
-### ARGUMENTS
+### FLAGS
+**--display-format FORMAT**
+the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)
 
-**SOURCE_FILE**
+**--library LIBS**
+A comma-separated list of paths to directories where to search for files to be included by the preprocessor (alias: -l)
 
-SOURCE_FILE is the path to the smart contract file.
+**--seed SEED**
+the seed or counter used for generation.
 
-### OPTIONS
+**--syntax SYNTAX**
+the syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively). (alias: -s)
 
-**-s --syntax &lt;SYNTAX&gt;**
+**-generator GEN**
+the generator for mutation. (alias: -g)
 
-The syntax that will be used. Currently supported syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively).
+**-p PROTOCOL**
+choose protocol's types/values pre-loaded into the LIGO environment (hangzhou , ithaca). By default, the current protocol (hangzhou) will be used (alias: --protocol)
 
-**--infer**
+**-help**
+print this help text and exit (alias: -?)
 
-Enable type inference
-
-**-p --protocol &lt;PROTOCOL_VERSION&gt;**
-
-Choose protocol's types/values pre-loaded into the LIGO environment  (edo). By default, the current protocol (edo) will be used
-
-**-l --lib &lt;LIBRARY&gt;**
-
-A list of path to a directory containing included files, separated by ','
-
-**--format &lt;DISPLAY-FORMAT&gt;**
-
-The format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile.
-
-**--seed &lt;SEED&gt;**
-
-Is the seed or counter used for generation.
-
-**-g --generator &lt;GENERATOR&gt;**
-
-Is the generator for mutation.
 

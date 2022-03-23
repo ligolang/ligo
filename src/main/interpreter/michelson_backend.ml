@@ -323,8 +323,6 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
-  | V_Failure _ ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: failure"
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
@@ -403,38 +401,6 @@ and make_subst_ast_env_exp ~raise env expr =
          aux fv acc tl in
   aux (get_fv expr) [] env
 
-let get_literal_type : Ast_aggregated.literal -> Ast_aggregated.type_expression =
-  fun t ->
-  let open Ast_aggregated in
-  match t with
-  | (Literal_unit) -> t_unit ()
-  | (Literal_int _) -> t_int ()
-  | (Literal_nat _) -> t_nat ()
-  | (Literal_mutez _) -> t_mutez ()
-  | (Literal_string _) -> t_string ()
-  | (Literal_bytes _) -> t_bytes ()
-  | (Literal_timestamp _) -> t_timestamp ()
-  | (Literal_address _) -> t_address ()
-  | (Literal_signature _) -> t_signature ()
-  | (Literal_key _) -> t_key ()
-  | (Literal_key_hash _) -> t_key_hash ()
-  | (Literal_chain_id _) -> t_chain_id ()
-  | (Literal_operation _) -> t_operation ()
-  | (Literal_bls12_381_g1 _) -> t_bls12_381_g1 ()
-  | (Literal_bls12_381_g2 _) -> t_bls12_381_g2 ()
-  | (Literal_bls12_381_fr _) -> t_bls12_381_fr ()
-  | (Literal_chest _) -> t_chest ()
-  | (Literal_chest_key _) -> t_chest_key ()
-
-let compile_literal ~raise ~loc : Ast_aggregated.literal -> _ =
-  fun v ->
-  let open Ligo_interpreter.Types in
-  let type_lit = get_literal_type v in
-  let typed_exp = Ast_aggregated.e_a_literal v type_lit in
-  let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
-  let compiled_exp = compile_value ~raise ~options typed_exp in
-  let expr, expr_ty = run_expression_unwrap ~raise ~loc compiled_exp in
-  (expr, expr_ty, typed_exp.type_expression)
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
@@ -482,14 +448,3 @@ let parse_raw_michelson_code ~raise code ty =
   let code = parse_code ~raise code in
   let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
   (code, code_ty)
-
-let parse_and_run_raw_michelson_code ~raise ~loc code ty =
-  let open Tezos_micheline in
-  let code, code_ty = parse_raw_michelson_code ~raise code ty in
-  match Ligo_run.Of_michelson.run_expression ~raise code code_ty with
-  | Success (ty, value) ->
-    let code = Micheline.map_node (fun _ -> ()) (fun x -> x) value in
-    let code_ty = Micheline.map_node (fun _ -> ()) (fun x -> x) ty in
-    (code_ty, code)
-  | _ ->
-     raise.raise (Errors.generic_error loc "Could not execute Michelson code")
