@@ -86,3 +86,18 @@ let y = [(1), ("foo"), 3];
               (expr (String)))))
         (array_item
           (expr (Int)))))))
+
+=========
+binary operator
+=========
+
+let x = 1 + 2;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (expr
+      (binary_operator (Int) (Int)))))

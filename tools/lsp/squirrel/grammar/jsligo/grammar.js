@@ -39,58 +39,22 @@ module.exports = grammar({
     ),
 
     _expr_statement: $ => choice(
-      seq($._assignment_expr_level, "=", $._expr_statement),
-      seq($._assignment_expr_level, "*=", $._expr_statement),
-      seq($._assignment_expr_level, "/=", $._expr_statement),
-      seq($._assignment_expr_level, "%=", $._expr_statement),
-      seq($._assignment_expr_level, "+=", $._expr_statement),
-      seq($._assignment_expr_level, "-=", $._expr_statement),
+      prec.right(2, seq($._expr_statement, choice("=", "*=", "/=", "%=", "+=", "-="), $._expr_statement)),
       $.fun_expr,
-      $._assignment_expr_level
-    ),
-
-    _assignment_expr_level: $ => choice(
-      seq($._assignment_expr_level, "as", $._core_type),
-      $._disjunction_expr_level
-    ),
-
-    _disjunction_expr_level: $ => choice(
-      seq($._disjunction_expr_level, "||", $._conjunction_expr_level),
-      $._conjunction_expr_level
-    ),
-
-    _conjunction_expr_level: $ => choice(
-      seq($._conjunction_expr_level, "&&", $._comparison_expr_level),
-      $._comparison_expr_level
-    ),
-
-    _comparison_expr_level: $ => choice(
-      seq($._comparison_expr_level, "<", $._addition_expr_level),
-      seq($._comparison_expr_level, "<=", $._addition_expr_level),
-      seq($._comparison_expr_level, ">", $._addition_expr_level),
-      seq($._comparison_expr_level, ">=", $._addition_expr_level),
-      seq($._comparison_expr_level, "==", $._addition_expr_level),
-      seq($._comparison_expr_level, "!=", $._addition_expr_level),
-      $._addition_expr_level
-    ),
-
-    _addition_expr_level: $ => prec.left(2, choice(
-      seq($._addition_expr_level, "+", $._multiplication_expr_level),
-      seq($._addition_expr_level, "-", $._multiplication_expr_level),
-      $._multiplication_expr_level
-    )),
-
-    _multiplication_expr_level: $ => choice(
-      seq($._multiplication_expr_level, "*", $._unary_expr_level),
-      seq($._multiplication_expr_level, "/", $._unary_expr_level),
-      seq($._multiplication_expr_level, "%", $._unary_expr_level),
-      $._unary_expr_level
-    ),
-
-    _unary_expr_level: $ => choice(
-      seq("-", $._call_expr_level),
-      seq("!", $._call_expr_level),
+      $.type_annotation,
+      $.binary_operator,
       $._call_expr_level
+    ),
+
+    type_annotation: $ => seq($._expr_statement, "as", $._core_type),
+
+    binary_operator: $ => choice(
+      prec.left(4, seq($._expr_statement, "||", $._expr_statement)),
+      prec.left(5, seq($._expr_statement, "&&", $._expr_statement)),
+      prec.left(10, seq($._expr_statement, choice("<", "<=", ">", ">=", "==", "!="), $._expr_statement)),
+      prec.left(12, seq($._expr_statement, choice("+", "-"), $._expr_statement)),
+      prec.left(13, seq($._expr_statement, choice("*", "/", "%"), $._expr_statement)),
+      prec.right(15, seq(choice("-", "!"), $._expr_statement))
     ),
 
     _call_expr_level: $ => prec.left(2, choice($._call_expr, $._member_expr)),
@@ -214,7 +178,7 @@ module.exports = grammar({
       seq($.FieldName, $.type_annotation)
     )),
 
-    type_ctor_app: $ => seq($.TypeName, common.chev(common.sepBy1(",", $._type_expr))),
+    type_ctor_app: $ => prec(3, seq($.TypeName, common.chev(common.sepBy1(",", $._type_expr)))),
 
     type_tuple: $ => common.brackets(common.sepBy1(",", $._type_expr)),
 
