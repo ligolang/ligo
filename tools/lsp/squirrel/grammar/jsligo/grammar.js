@@ -139,7 +139,7 @@ module.exports = grammar({
       ")"
     ),
 
-    michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'), // check ???
+    michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
 
     module_access: $ => seq($.ModuleName, ".", $.module_var),
 
@@ -173,7 +173,9 @@ module.exports = grammar({
 
     object_literal: $ => common.block(common.sepBy(",", $.property)),
 
-    property: $ => choice($.Name, seq($.property_name, ":", $.expr), seq("...", $._expr_statement)),
+    property: $ => choice($.Name, seq($.property_name, ":", $.expr), $.property_spread),
+
+    property_spread: $ => seq("...", $._expr_statement), 
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 

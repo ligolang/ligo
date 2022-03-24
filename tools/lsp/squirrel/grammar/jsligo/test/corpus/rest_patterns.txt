@@ -29,3 +29,35 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
 
 ---
 
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr
+              (array_literal
+                (expr (Name))
+                (expr (Name))))
+            (type_annotation
+              (type_tuple (TypeName) (TypeName)))))
+        (type_annotation (TypeName))
+        (body
+          (paren_expr
+            (expr
+              (object_literal
+                (property
+                  (property_spread (Name)))
+                (property
+                  (property_name (Name))
+                  (expr
+                    (binary_operator
+                      (projection (Name) (Name))
+                      (projection (Name) (Name)))))
+                (property
+                  (property_name (Name))
+                  (expr
+                    (binary_operator
+                      (projection (Name) (Name))
+                      (projection (Name) (Name)))))))))))))
