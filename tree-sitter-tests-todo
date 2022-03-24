@@ -32,14 +32,14 @@ JsLIGO tests
 - [done] import
 
 - [done] if else 
-- [] switch case default
+- [done] switch case default
 
 
 - [] for of
 - [] while 
 
 
-- [] michelson interop
+- [done] michelson interop
 
 - [done] export + type
 - [done] export + let
