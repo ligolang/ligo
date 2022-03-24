@@ -1,12 +1,4 @@
 //=========
-//sum
-//=========
-//
-//type foo = /* @boom */ | ["True"] | ["False"]
-//
-//----
-//
-//=========
 //constr
 //=========
 //
@@ -15,6 +7,23 @@
 //----
 //
 //
+
+=========
+sum
+=========
+
+type foo = /* @boom */ | ["True"] | ["False"]
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+      (sum_type
+        (attr)
+        (variant (ConstrName))
+        (variant (ConstrName)))))
+
 =========
 constr with bar
 =========
