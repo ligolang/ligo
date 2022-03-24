@@ -50,3 +50,13 @@ let uno : storage = EURO.one;
     (expr (module_access
           (ModuleName)
           (module_var (Name))))))
+
+=========
+module access function call
+=========
+
+let x : int = int(List.length(x)) 
+
+---
+
+// wrong

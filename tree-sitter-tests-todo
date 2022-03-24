@@ -4,8 +4,9 @@
 - [] Add fields to nodes
 - [done] Mark nodes as hidden to avoid deep nesting
 - [done] paren_expr
-- [] add many tests
+- [done] add many tests
 - [done] rename productions which are same as keywords
+- [] fix module_access bug
 
 JsLIGO tests
 
@@ -13,7 +14,7 @@ JsLIGO tests
 
 - [done] type app: list<int>
 
-- [] pattern matching list 
+- [done] pattern matching list 
 - [done] pattern matching constrs
 
 - [done] array rest [x, ...xs]
