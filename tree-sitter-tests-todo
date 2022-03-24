@@ -12,18 +12,13 @@ JsLIGO tests
 
 - [done] type app: list<int>
 
-- [] pattern matching list + constrs
+- [] pattern matching list 
+- [done] pattern matching constrs
+
 - [] array rest [x, ...xs]
 - [] object rest
 
-- [done] all preprocessor directives 
-#include ... preprocessor ...
-#import
-#if else elif
-#endif
-#define
-#undef
-#error
+- [done] all preprocessor directives (#include #import #if else elif #endif #define #undef #error)
 
 - [done] namespace
 - [done] export

@@ -62,13 +62,45 @@ module.exports = grammar({
 
     unary_operator: $ => prec.right(15, seq(choice("-", "!"), $._expr_statement)),
 
-    _call_expr_level: $ => prec.left(2, choice($._call_expr, $._member_expr)),
+    _call_expr_level: $ => prec(4, choice($.call_expr, $._member_expr, $.match_expr)),
 
-    _call_expr: $ => seq($.lambda, common.par(common.sepBy(",", $.expr))),
+    call_expr: $ => prec.right(2, seq($.lambda, common.par(common.sepBy(",", $.expr)))),
 
-    lambda: $ => choice($._call_expr, $._member_expr),
+    lambda: $ => prec(5, choice($.call_expr, $._member_expr)),
 
     expr: $ => choice($._expr_statement, $.object_literal),
+
+    match_expr: $ => seq("match", common.par(seq($._member_expr, ",", choice($._list_cases, $._ctor_cases)))),
+
+    _list_cases: $ => seq("list", 
+      common.par(
+        common.brackets(
+          common.sepBy1(",", 
+            $.list_case
+          )
+        )
+      )
+    ),
+
+    list_case: $ => seq(
+      common.par(seq($.array_literal, optional($.type_annotation))), 
+      "=>", 
+      $.body
+    ),
+
+    _ctor_cases: $ => common.block(
+      common.sepBy1(",", 
+        $.ctor_case
+      )
+    ),
+
+    ctor_param: $ => seq($.expr, $.type_annotation),
+
+    ctor_case: $ => seq(
+      $.ConstrName, ":", 
+      common.par(common.sepBy(",", $.ctor_param)), 
+      "=>", 
+      $.body),
 
     _member_expr: $ => choice(
       $.Name,
@@ -113,7 +145,7 @@ module.exports = grammar({
 
     module_var: $ => choice($.module_access, $.Name),
 
-    array_literal: $ => common.brackets(common.sepBy1(",", $.array_item)),
+    array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $.array_item))),
 
     array_item: $ => choice($.expr, seq("...", $.expr)), 
 

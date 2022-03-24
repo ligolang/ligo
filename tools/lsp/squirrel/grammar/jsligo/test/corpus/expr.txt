@@ -11,9 +11,10 @@ let x = (foo (42))
     (var_pattern (Name))
     (expr
       (paren_expr
-        (expr 
-          (lambda (Name))
-          (expr (Int)))))))
+        (expr
+          (call_expr
+            (lambda (Name))
+            (expr (Int))))))))
 
 =========
 tuple

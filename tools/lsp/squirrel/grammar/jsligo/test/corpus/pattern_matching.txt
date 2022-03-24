@@ -1,0 +1,66 @@
+=========
+pattern-matching: list
+=========
+
+let weird_length = (v : list<int>) : int =>
+  match(v, list([
+    ([] : list<int>) => -1,
+    ([hd, ...tl] : list<int>) => 1 + int(List.length(tl))
+  ]));
+
+---
+
+
+
+=========
+pattern-matching: constructors
+=========
+
+let int_of_color = (c : color) : int =>
+  match(c, {
+    RGB: (rgb : [int,int,int]) => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
+    Gray: (i : int) => 232 + i,
+    Default: () => 0 });
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+        (type_annotation (TypeName))
+        (body
+          (match_expr
+            (Name)
+            (ctor_case
+              (ConstrName)
+              (ctor_param 
+                (expr (Name))
+                (type_annotation (type_tuple (TypeName) (TypeName) (TypeName))))
+              (body
+                (binary_operator
+                  (binary_operator
+                    (binary_operator
+                      (Int)
+                      (projection (Name) (expr (Int))))
+                    (binary_operator
+                      (projection (Name) (expr (Int)))
+                      (Int)))
+                  (binary_operator
+                    (projection (Name) (expr (Int)))
+                    (Int)))))
+            (ctor_case
+              (ConstrName)
+              (ctor_param
+                (expr (Name))
+                (type_annotation (TypeName)))
+              (body
+                (binary_operator (Int) (Name))))
+            (ctor_case
+              (ConstrName)
+                (body (Int)))))))))
