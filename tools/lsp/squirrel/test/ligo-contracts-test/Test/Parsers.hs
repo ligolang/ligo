@@ -136,21 +136,8 @@ badTests =
   [ TestDir
     { tdRoot = testDir </> "error-recovery"
     , tdIgnoreFiles =
-      [ -- LIGO-474
-        "simple" </> "pascaligo" </> "missing_name_of_argument.ligo"
-      , "simple" </> "reasonligo" </> "missing_ident_in_type_decl.religo"
-      , "simple" </> "cameligo" </> "missing_ident_in_type_decl.mligo"
-      , "fuzzing" </> "pascaligo" </> "2long_assign.ligo"
-      , "fuzzing" </> "pascaligo" </> "2transpiler_nested.ligo"
-      , "fuzzing" </> "reasonligo" </> "4match_bis.religo"
-      , "fuzzing" </> "reasonligo" </> "2self_address.religo"
-      , "fuzzing" </> "reasonligo" </> "1bytes_arithmetic.religo"
-      , "fuzzing" </> "reasonligo" </> "1loop.religo"
-      , "fuzzing" </> "reasonligo" </> "16is_nat.religo"
-      , "fuzzing" </> "reasonligo" </> "2record.religo"
-
-        -- LIGO-476
-      , "simple" </> "reasonligo" </> "unfinished_code06.religo"
+      [ -- LIGO-476
+        "simple" </> "reasonligo" </> "unfinished_code06.religo"
       , "simple" </> "reasonligo" </> "unfinished_code10.religo"
       , "simple" </> "reasonligo" </> "unfinished_code12.religo"
       , "simple" </> "reasonligo" </> "unfinished_code05.religo"
