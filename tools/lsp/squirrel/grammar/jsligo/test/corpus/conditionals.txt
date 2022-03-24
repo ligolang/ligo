@@ -18,12 +18,12 @@ let x = () => {
       (fun_expr
         (body
           (if_statement
-            (expr (True))
+            (expr (True_kwd))
             (block_statement
               (return_statement
-                (expr (False)))))
+                (expr (False_kwd)))))
           (return_statement
-            (expr (True))))))))
+            (expr (True_kwd))))))))
 
 =========
 conditional: if else
@@ -46,11 +46,11 @@ let x = () => {
       (fun_expr
         (body
           (if_else_statement
-            (expr (True))
+            (expr (True_kwd))
             (block_statement
-              (return_statement (expr (False))))
+              (return_statement (expr (False_kwd))))
             (block_statement
-              (return_statement (expr (True))))))))))
+              (return_statement (expr (True_kwd))))))))))
 
 =========
 conditional: if else if else
@@ -77,13 +77,13 @@ let x = () => {
           (if_else_statement
             (expr (binary_operator (Int) (Int)))
             (block_statement
-              (return_statement (expr (False))))
+              (return_statement (expr (False_kwd))))
             (if_else_statement
               (expr (binary_operator (Int) (Int)))
               (block_statement
-                (return_statement (expr (False))))
+                (return_statement (expr (False_kwd))))
               (block_statement
-                (return_statement (expr (False)))))))))))
+                (return_statement (expr (False_kwd)))))))))))
 
 =========
 conditional: switch = case + default
@@ -120,7 +120,7 @@ let x = (x : string) => {
                   (break_statement)))
             (default_case
               (block_statement
-                (return_statement (expr (False)))))))))))
+                (return_statement (expr (False_kwd)))))))))))
 
 =========
 conditional: switch = case
@@ -152,7 +152,7 @@ let x = (x : string) => {
                 (expr (String))
                 (block_statement
                   (return_statement
-                    (expr (False)))))))))))
+                    (expr (False_kwd)))))))))))
 
 =========
 conditional: switch = default
@@ -183,4 +183,4 @@ let x = (x : string) => {
             (default_case
               (block_statement
                 (return_statement
-                  (expr (False)))))))))))
+                  (expr (False_kwd)))))))))))

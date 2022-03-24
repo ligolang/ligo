@@ -5,6 +5,7 @@
 - [done] Mark nodes as hidden to avoid deep nesting
 - [done] paren_expr
 - [] add many tests
+- [done] rename productions which are same as keywords
 
 JsLIGO tests
 

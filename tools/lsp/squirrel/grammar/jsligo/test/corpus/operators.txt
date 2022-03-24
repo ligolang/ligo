@@ -44,7 +44,7 @@ let x = true || false;
     (var_pattern
       (Name))
     (expr
-      (binary_operator (True) (False)))))
+      (binary_operator (True_kwd) (False_kwd)))))
 
 =========
 unary operator
