@@ -10,15 +10,13 @@ JsLIGO tests
 
 - [done] operators:  + - * / % , = += -= *= /= %= , == != >= <= > <
 
-- [] types: option<int>
+- [done] type app: list<int>
 
-- [] pattern matching
+- [] pattern matching list + constrs
 - [] array rest [x, ...xs]
 - [] object rest
 
-
-
-- [] all preprocessor directives 
+- [done] all preprocessor directives 
 #include ... preprocessor ...
 #import
 #if else elif

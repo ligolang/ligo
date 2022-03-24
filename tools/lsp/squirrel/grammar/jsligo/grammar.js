@@ -1,7 +1,5 @@
 const common = require('../common.js')
 
-// TODO: handle preprocessor directives
-
 module.exports = grammar({
   name: 'JsLigo',
 
@@ -11,13 +9,13 @@ module.exports = grammar({
 
   rules: {
     source_file: $ => 
-      common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace)),
+      common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace_or_preprocessor)),
 
-    _statement_or_namespace: $ => choice($._statement, $.namespace_statement),
+    _statement_or_namespace_or_preprocessor: $ => choice($._statement, $.namespace_statement, $.preprocessor),
 
     namespace_statement: $ => seq(optional("export"), "namespace", field("moduleName", $.ModuleName), 
     '{',
-      common.sepEndBy(";", $._statement_or_namespace), 
+      common.sepEndBy(";", $._statement_or_namespace_or_preprocessor), 
     '}'
     ),
 
@@ -277,6 +275,47 @@ module.exports = grammar({
     _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
     
     while_statement: $ => seq("while", common.par($.expr), $._statement),
+
+    /// PREPROCESSOR
+
+    // copied from cameligo/grammar.js
+
+    preprocessor: $ => field("preprocessor_command", choice(
+      $.p_include,
+      $.p_import,
+      $.p_if,
+      $.p_error,
+      $.p_define,
+    )),
+
+    p_include: $ => seq(
+      '#',
+      'include',
+      field("filename", $.String)
+    ),
+
+    p_import: $ => seq(
+      '#',
+      'import',
+      field("filename", $.String),
+      field("alias", $.String),
+    ),
+
+    p_if: $ => choice(
+      seq(
+        '#',
+        choice('if', 'elif', 'else'),
+        field("rest", $._till_newline),
+      ),
+      seq(
+        '#',
+        'endif',
+      ),
+    ),
+
+    p_error: $ => seq('#', 'error', field("message", $._till_newline)),
+    p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
+
 
     ConstrName: $ => $._NameCapital,
     ConstrNameDecl: $ => seq('"', $._NameCapital, '"'),
