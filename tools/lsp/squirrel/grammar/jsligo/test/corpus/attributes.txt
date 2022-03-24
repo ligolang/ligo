@@ -114,7 +114,6 @@ let bar = (b : int) : int => {
   return test;
 };
 
-
 ---
 
 (source_file
@@ -135,3 +134,65 @@ let bar = (b : int) : int => {
             (expr (Int)))
           (return_statement
             (expr (Name)))))))))
+
+=========
+const expr
+=========
+
+const bar = (b : int) : int => {
+  /* @foo *//* @bar */
+  const test = 2;
+  return test;
+};
+
+---
+
+(source_file
+  (const_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+        (type_annotation
+          (TypeName))
+            (body
+        (statements
+          (const_decl (attr) (attr)
+            (var_pattern (Name))
+            (expr (Int)))
+          (return_statement
+            (expr (Name)))))))))
+
+=========
+const decl
+=========
+
+/* @annot */ const x : int = 1;
+
+---
+
+(source_file
+  (const_decl
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr (Int))))
+
+=========
+const decl twice
+=========
+
+/* @annot1 *//* @annot2 */ const x : int = 1;
+
+---
+
+(source_file
+  (const_decl
+    (attr)
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr (Int))))

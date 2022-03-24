@@ -18,7 +18,7 @@ assignment operator
 =========
 
 
-let x = () => { x += 2; return y };
+let x = () => { x += 2; return x };
 
 ---
 

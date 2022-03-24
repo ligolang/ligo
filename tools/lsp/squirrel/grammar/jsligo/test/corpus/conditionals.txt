@@ -1,0 +1,107 @@
+=========
+conditional: if
+=========
+
+let x = () => { 
+  if (true) { 
+    return false 
+  };
+  return true;  
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (body
+          (statements
+            (if_statement
+              (expr (True))
+              (block_statement
+                (statements
+                  (return_statement
+                    (expr (False))))))
+            (return_statement
+              (expr (True)))))))))
+
+=========
+conditional: if else
+=========
+
+let x = () => { 
+  if (true) { 
+    return false 
+  } else { 
+    return true; 
+  } 
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (body
+          (statements
+            (if_else_statement
+              (expr (True))
+              (block_statement
+                (statements
+                  (return_statement (expr (False)))))
+              (block_statement
+                (statements
+                  (return_statement (expr (True))))))))))))
+
+=========
+conditional: if else if else
+=========
+
+let x = () => { 
+  if (1 == 2) { 
+    return false 
+  } else if (2 == 3) { 
+    return false; 
+  } else {
+    return false;
+  }
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (body
+          (statements
+            (if_else_statement
+              (expr (binary_operator (Int) (Int)))
+              (block_statement
+                (statements
+                  (return_statement (expr (False)))))
+              (if_else_statement
+                (expr (binary_operator (Int) (Int)))
+                (block_statement
+                  (statements
+                    (return_statement (expr (False)))))
+                (block_statement
+                  (statements
+                    (return_statement (expr (False)))))))))))))
+
+=========
+conditional: switch = case + default
+=========
+
+=========
+conditional: switch = case
+=========
+
+=========
+conditional: switch = default
+=========

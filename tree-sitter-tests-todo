@@ -1,14 +1,14 @@
-- Automatic Semicolon insertion + A VBAR insertion
+- [] Automatic Semicolon insertion + A VBAR insertion
 - [done] detect attributes
 - [done] prec.left & prec.right for operator precedence - remove precedence levels
-- Add fields to nodes
+- [] Add fields to nodes
 - [done] Mark nodes as hidden to avoid deep nesting
 - [done] paren_expr
-- add many tests
+- [] add many tests
 
 JsLIGO tests
 
-operators:  
+- [done] operators:  
 + - * / %
 = += -= *= /= %=
 == != >= <= > <
@@ -17,8 +17,11 @@ types:
 option<int>
 
 [x, ...xs]
+pattern matching
 
-[] all preprocessor directives 
+
+
+- [] all preprocessor directives 
 #include ... preprocessor ...
 #import
 #if else elif
@@ -27,28 +30,25 @@ option<int>
 #undef
 #error
 
-namespace
-export
+- [done] namespace
+- [done] export
+- [done] import
+
+- [] if else 
+- [] switch case default
 
 
-if else 
-switch case default
+- [] for of
+- [] while 
 
 
-for of
+- [] michelson interop
 
-while 
+- [done] export + type
+- [done] export + let
+- [done] export + module decl
 
+- [done] let 
+- [done] const
 
-michelson interop
-
-[x] export + type
-[] export + let
-[] export + module decl
-[] export + module alias
-
-let 
-const
-
-
-return
+- [done] return
