@@ -238,15 +238,15 @@ module.exports = grammar({
 
     object_rest_pattern: $ => seq("...", $.Name),
 
-    array_pattern: $ => common.brackets($.array_item_patterns),
+    array_pattern: $ => common.brackets($._array_item_patterns),
 
-    array_item_patterns: $ => choice(
-      $.array_item_pattern,
-      seq($.array_item_patterns, ",", $.array_item_pattern),
-      seq($.array_item_patterns, ",", $.array_rest_pattern)
+    _array_item_patterns: $ => choice(
+      $._array_item_pattern,
+      seq($._array_item_patterns, ",", $._array_item_pattern),
+      seq($._array_item_patterns, ",", $.array_rest_pattern)
     ),
 
-    array_item_pattern: $ => choice(
+    _array_item_pattern: $ => choice(
       $.var_pattern,
       $.wildcard,
       $.array_pattern
@@ -272,9 +272,9 @@ module.exports = grammar({
 
     if_else_statement: $ => seq("if", common.par($.expr), $._base_statement, "else", $._statement),
 
-    for_of_statement: $ => seq("for", common.par(seq($.index_kind, $.Name, "of", $._expr_statement)), $._statement),
+    for_of_statement: $ => seq("for", common.par(seq($._index_kind, $.Name, "of", $._expr_statement)), $._statement),
 
-    index_kind: $ => choice("let", "const"),
+    _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
     
     while_statement: $ => seq("while", common.par($.expr), $._statement),
 
@@ -314,5 +314,7 @@ module.exports = grammar({
     Export: $ => 'export',
     Return: $ => 'return',
     wildcard: $ => '_',
+    Let_kwd: $ => "let",
+    Const_kwd: $ => "const", 
   }
 });
