@@ -15,7 +15,7 @@ JsLIGO tests
 - [] pattern matching list 
 - [done] pattern matching constrs
 
-- [] array rest [x, ...xs]
+- [done] array rest [x, ...xs]
 - [] object rest
 
 - [done] all preprocessor directives (#include #import #if else elif #endif #define #undef #error)

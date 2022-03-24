@@ -145,9 +145,11 @@ module.exports = grammar({
 
     module_var: $ => choice($.module_access, $.Name),
 
-    array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $.array_item))),
+    array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $._array_item))),
 
-    array_item: $ => choice($.expr, seq("...", $.expr)), 
+    _array_item: $ => choice($.expr, $.array_item_rest_expr), 
+
+    array_item_rest_expr: $ => seq("...", $.expr),
 
     fun_expr: $ => choice(
       seq(common.par($.parameters), optional($.type_annotation), "=>", $.body),
@@ -263,7 +265,7 @@ module.exports = grammar({
     property_pattern: $ => choice(
       seq($.Name, "=", $.expr),
       seq($.Name, ":", $._binding_initializer),
-      $.var_pattern
+      $.var_pattern,
     ),
 
     object_rest_pattern: $ => seq("...", $.Name),

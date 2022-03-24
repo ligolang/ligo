@@ -80,10 +80,8 @@ let gcd = (x: nat, y: nat): nat => {
               (var_pattern (Name)))
             (expr
               (array_literal
-                (array_item
-                  (expr (Name)))
-                (array_item
-                  (expr (Name))))))
+                (expr (Name))
+                (expr (Name)))))
           (if_statement
             (expr (binary_operator (Name) (Name)))
             (block_statement
