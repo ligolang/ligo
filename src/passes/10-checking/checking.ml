@@ -389,7 +389,6 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       | _ -> raise.raise (michelson_or_no_annotation constructor e.location)
     )
   )
-  (* Sum *)
   | E_constructor {constructor; element} ->
       let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
         Context.get_constructor_parametric constructor context in
@@ -434,23 +433,11 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
-     let lambda =
-         match tv_opt with
-         | None -> lambda
-         | Some tv' ->
-            match O.get_t_arrow tv' with
-            | None -> lambda
-            | Some { type1 = input_type ; type2 = _ } ->
-               let input_type = Untyper.untype_type_expression_nofail input_type in
-               match lambda.binder.ascr with
-               | None -> let binder = {lambda.binder with ascr = Some input_type } in
-                         { lambda with binder = binder }
-               | Some _ -> lambda in
-     let (lambda,lambda_type) = type_lambda ~raise ~options context lambda in
+     let (lambda,lambda_type) = type_lambda ~raise ~options ~loc:e.location ~tv_opt context lambda in
      return (E_lambda lambda ) lambda_type
   | I.E_type_abstraction {type_binder;result} ->
     let context = Context.add_type_var context type_binder () in
-    let result  = type_expression' ~raise ~options context result in
+    let result  = type_expression' ~raise ~options ?tv_opt context result in
     return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
@@ -635,7 +622,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
      let e' = Context.add_value context binder rhs.type_expression in
-     let let_result = type_expression' ~raise ~options e' let_result in
+     let let_result = type_expression' ~raise ~options ?tv_opt e' let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -652,7 +639,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     let rhs = { rhs with type_expression } in
     let binder  = var in
     let context = Context.add_value pre_context binder type_expression in
-    let let_result = type_expression' ~raise ~options context let_result in
+    let let_result = type_expression' ~raise ~options ?tv_opt context let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; _} when Ast_core.TypeVar.is_generalizable type_binder ->
     raise.raise (wrong_generalizable e.location type_binder)
@@ -679,7 +666,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Context.add_type_var e v ()) in
-    let (lambda,lambda_type) = type_lambda ~raise ~options e' lambda in
+    let (lambda,lambda_type) = type_lambda ~raise ~loc:e.location ~options ~tv_opt e' lambda in
     let () = assert_type_expression_eq ~raise fun_type.location (fun_type,lambda_type) in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
@@ -706,15 +693,35 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
   )
 
 
-and type_lambda ~raise ~options e {
-      binder ;
-      output_type ;
-      result ;
-    } =
-      let input_type =
+and type_lambda ~raise ~options ~loc ~tv_opt e { binder ; output_type ; result } =
+      let top_i_t , top_o_t = match tv_opt with
+        | None -> (None,None)
+        | Some tv -> (
+          match O.get_t_arrow tv with
+          | None -> (None,None)
+          | Some {type1 ; type2} -> (Some type1 , Some type2)
+        )
+      in
+      let ascr_i_t =
         Option.map ~f:(evaluate_type ~raise e) binder.ascr in
-      let output_type =
+      let ascr_o_t =
         Option.map ~f:(evaluate_type ~raise e) output_type
+      in
+      let input_type =
+        match ascr_i_t , top_i_t with
+        | Some t1 , Some t2 ->
+          assert_type_expression_eq ~raise loc (t1,t2) ; Some t2
+        | _ , Some t -> Some t
+        | Some t , _ -> Some t
+        | _ -> None
+      in
+      let output_type =
+        match ascr_o_t , top_o_t with
+        | Some t1 , Some t2 ->
+          assert_type_expression_eq ~raise loc (t1,t2) ; Some t2
+        | _ , Some t -> Some t
+        | Some t , _ -> Some t
+        | _ -> None
       in
       let binder = binder.var in
       let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
