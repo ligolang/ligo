@@ -2504,8 +2504,8 @@ let%expect_test _ =
              EXEC ;
              { /* s */ } ;
              NIL operation
-                 /* File "../../test/contracts/noop.mligo", line 6, characters 4-6 */
-             /* File "../../test/contracts/noop.mligo", line 6, characters 4-6 */ ;
+                 /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
+             /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */ ;
              PAIR
              /* File "../../test/contracts/noop.mligo", line 6, characters 3-27 */ } } |}]
 
@@ -2579,17 +2579,17 @@ let%expect_test _ =
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
-                        "col": "4" },
+                        "col": "3" },
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
-                        "col": "6" } } },
+                        "col": "24" } } },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
-                        "col": "4" },
+                        "col": "3" },
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
-                        "col": "6" } } },
+                        "col": "24" } } },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",

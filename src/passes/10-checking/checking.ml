@@ -373,11 +373,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       in
       let e = aux e' path in
       (* check type annotation of the final accessed element *)
-      let () =
-        match tv_opt with
-        | None -> ()
-        | Some tv' -> assert_type_expression_eq ~raise e.location (tv' , e.type_expression) in
-      e
+      return_e e
   | E_constructor {constructor = Label s as constructor ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let t = trace_option ~raise (michelson_or_no_annotation constructor e.location) @@ tv_opt in
     let expr' = type_expression' ~raise ~options context element in
@@ -651,7 +647,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
   | E_mod_in {module_binder; rhs; let_result} ->
     let rhs_ctxt,rhs = type_module_expr ~raise ~options ~init_context:context rhs in
     let e' = Context.add_module context module_binder rhs_ctxt in
-    let let_result = type_expression' ~raise ~options e' let_result in
+    let let_result = type_expression' ~raise ~options ?tv_opt e' let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_raw_code {language;code} ->
     let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
@@ -672,18 +668,7 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise context type_annotation in
     let expr' = type_expression' ~raise ~options ~last:tv ~tv_opt:tv context anno_expr in
-    let type_annotation =
-      trace_option ~raise (corner_case "merge_annotations (Some ...) (Some ...) failed") @@
-      O.merge_annotation
-        (Some tv)
-        (Some expr'.type_expression)
-        O.assert_type_expression_eq in
-    (* check type annotation of the expression as a whole (e.g. let x : t = (v : t') ) *)
-    let () =
-      match tv_opt with
-      | None -> ()
-      | Some tv' -> assert_type_expression_eq ~raise anno_expr.location (tv' , type_annotation) in
-    {expr' with type_expression=type_annotation}
+    return_e expr'
   | E_module_accessor {module_path; element} -> (
     let f = fun acc el -> trace_option ~raise (unbound_module_variable el (I.ModuleVar.get_location el)) (Context.get_module acc el) in
     let module_env = List.fold ~init:context ~f module_path in

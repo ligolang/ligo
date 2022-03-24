@@ -550,7 +550,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 5-24:
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
       4 |   else
