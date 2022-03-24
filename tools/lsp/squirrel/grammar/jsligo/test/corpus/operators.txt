@@ -1,0 +1,63 @@
+=========
+binary operator
+=========
+
+let x = 1 + 2;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (expr
+      (binary_operator (Int) (Int)))))
+
+=========
+assignment operator
+=========
+
+
+let x = () => { x += 2; return y };
+
+---
+
+(source_file
+  (let_decl
+  (var_pattern (Name))
+  (expr
+    (fun_expr
+      (body
+        (statements
+          (assignment_operator (Name) (Int))
+          (return_statement (expr (Name)))))))))
+
+=========
+binary operator - ||
+=========
+
+let x = true || false;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (expr
+      (binary_operator (True) (False)))))
+
+=========
+unary operator
+=========
+
+let x = - 1;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (expr
+      (unary_operator (Int)))))

@@ -4,7 +4,7 @@
 - Add fields to nodes
 - [done] Mark nodes as hidden to avoid deep nesting
 - [done] paren_expr
-- add labels on nodes 
+- add many tests
 
 JsLIGO tests
 

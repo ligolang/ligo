@@ -39,12 +39,15 @@ module.exports = grammar({
     ),
 
     _expr_statement: $ => choice(
-      prec.right(2, seq($._expr_statement, choice("=", "*=", "/=", "%=", "+=", "-="), $._expr_statement)),
       $.fun_expr,
       $.type_as_annotation,
+      $.assignment_operator,
       $.binary_operator,
+      $.unary_operator,
       $._call_expr_level
     ),
+
+    assignment_operator: $ => prec.right(2, seq($._expr_statement, choice("=", "*=", "/=", "%=", "+=", "-="), $._expr_statement)),
 
     type_as_annotation: $ => seq($._expr_statement, "as", $._core_type),
 
@@ -53,9 +56,10 @@ module.exports = grammar({
       prec.left(5, seq($._expr_statement, "&&", $._expr_statement)),
       prec.left(10, seq($._expr_statement, choice("<", "<=", ">", ">=", "==", "!="), $._expr_statement)),
       prec.left(12, seq($._expr_statement, choice("+", "-"), $._expr_statement)),
-      prec.left(13, seq($._expr_statement, choice("*", "/", "%"), $._expr_statement)),
-      prec.right(15, seq(choice("-", "!"), $._expr_statement))
+      prec.left(13, seq($._expr_statement, choice("*", "/", "%"), $._expr_statement))
     ),
+
+    unary_operator: $ => prec.right(15, seq(choice("-", "!"), $._expr_statement)),
 
     _call_expr_level: $ => prec.left(2, choice($._call_expr, $._member_expr)),
 
@@ -70,6 +74,8 @@ module.exports = grammar({
       $.Int,
       $.Bytes,
       $.String,
+      $.True,
+      $.False,
       $.ctor_expr,
       $.projection,
       $.michelson_interop,
