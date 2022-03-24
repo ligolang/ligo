@@ -128,12 +128,11 @@ let bar = (b : int) : int => {
         (type_annotation
           (TypeName))
             (body
-        (statements
-          (let_decl (attr) (attr)
-            (var_pattern (Name))
-            (expr (Int)))
-          (return_statement
-            (expr (Name)))))))))
+        (let_decl (attr) (attr)
+          (var_pattern (Name))
+          (expr (Int)))
+        (return_statement
+          (expr (Name))))))))
 
 =========
 const expr
@@ -159,12 +158,11 @@ const bar = (b : int) : int => {
         (type_annotation
           (TypeName))
             (body
-        (statements
-          (const_decl (attr) (attr)
-            (var_pattern (Name))
-            (expr (Int)))
-          (return_statement
-            (expr (Name)))))))))
+        (const_decl (attr) (attr)
+          (var_pattern (Name))
+          (expr (Int)))
+        (return_statement
+          (expr (Name))))))))
 
 =========
 const decl

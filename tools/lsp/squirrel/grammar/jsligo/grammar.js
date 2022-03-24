@@ -25,7 +25,7 @@ module.exports = grammar({
 
     if_statement: $ => seq("if", common.par($.expr), $._statement),
 
-    _base_statement: $ => choice(
+    _base_statement: $ => prec(5, choice(
       $._expr_statement,
       $.return_statement,
       $.block_statement,
@@ -36,7 +36,10 @@ module.exports = grammar({
       $.if_else_statement,
       $.for_of_statement,
       $.while_statement,
-    ),
+      $.break_statement
+    )),
+
+    break_statement: $ => "break",
 
     _expr_statement: $ => choice(
       $.fun_expr,
@@ -122,9 +125,9 @@ module.exports = grammar({
       seq($.Name, "=>", $.body)
     ),
 
-    body: $ => prec.right(3, choice(common.block($.statements), $._expr_statement)),
+    body: $ => prec.right(3, choice(common.block($._statements), $._expr_statement)),
 
-    statements: $ => common.sepEndBy1(";", $._statement),
+    _statements: $ => common.sepEndBy1(";", $._statement),
 
     type_annotation: $ => seq(":", $._type_expr),
 
@@ -134,7 +137,7 @@ module.exports = grammar({
 
     return_statement: $ => prec.left(2, choice("return", seq("return", $.expr))),
 
-    block_statement: $ => common.block($.statements),
+    block_statement: $ => common.block($._statements),
 
     object_literal: $ => common.block(common.sepBy(",", $.property)),
 
@@ -251,23 +254,21 @@ module.exports = grammar({
 
     array_rest_pattern: $ => seq("...", $.Name),
 
-    switch_statement: $ => seq("switch", common.par($.expr), common.block($.cases)),
+    switch_statement: $ => seq("switch", common.par($.expr), common.block($._cases)),
 
-    cases: $ => choice(
+    _cases: $ => choice(
       seq(seq($.case, repeat($.case)), optional($.default_case)),
       $.default_case
     ),
 
-    case: $ => seq("case", $.expr, $.case_statements),
+    case: $ => seq("case", $.expr, $._case_statements),
 
-    default_case: $ => seq("default", $.case_statements),
+    default_case: $ => seq("default", $._case_statements),
 
-    case_statements: $ => seq(":", optional(common.sepBy(";", $.case_statement))),
-
-    case_statement: $ => choice(
-      $._statement,
-      "break"
-    ),
+    _case_statements: $ => seq(":", choice(
+      optional($._statements), 
+      $.block_statement,
+    )), 
 
     if_else_statement: $ => seq("if", common.par($.expr), $._base_statement, "else", $._statement),
 

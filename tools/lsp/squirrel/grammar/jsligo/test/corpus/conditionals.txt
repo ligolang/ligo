@@ -17,15 +17,13 @@ let x = () => {
     (expr
       (fun_expr
         (body
-          (statements
-            (if_statement
-              (expr (True))
-              (block_statement
-                (statements
-                  (return_statement
-                    (expr (False))))))
-            (return_statement
-              (expr (True)))))))))
+          (if_statement
+            (expr (True))
+            (block_statement
+              (return_statement
+                (expr (False)))))
+          (return_statement
+            (expr (True))))))))
 
 =========
 conditional: if else
@@ -47,15 +45,12 @@ let x = () => {
     (expr
       (fun_expr
         (body
-          (statements
-            (if_else_statement
-              (expr (True))
-              (block_statement
-                (statements
-                  (return_statement (expr (False)))))
-              (block_statement
-                (statements
-                  (return_statement (expr (True))))))))))))
+          (if_else_statement
+            (expr (True))
+            (block_statement
+              (return_statement (expr (False))))
+            (block_statement
+              (return_statement (expr (True))))))))))
 
 =========
 conditional: if else if else
@@ -79,29 +74,113 @@ let x = () => {
     (expr
       (fun_expr
         (body
-          (statements
+          (if_else_statement
+            (expr (binary_operator (Int) (Int)))
+            (block_statement
+              (return_statement (expr (False))))
             (if_else_statement
               (expr (binary_operator (Int) (Int)))
               (block_statement
-                (statements
-                  (return_statement (expr (False)))))
-              (if_else_statement
-                (expr (binary_operator (Int) (Int)))
-                (block_statement
-                  (statements
-                    (return_statement (expr (False)))))
-                (block_statement
-                  (statements
-                    (return_statement (expr (False)))))))))))))
+                (return_statement (expr (False))))
+              (block_statement
+                (return_statement (expr (False)))))))))))
 
 =========
 conditional: switch = case + default
 =========
 
+let x = (x : string) => { 
+  switch (x) {
+    case "true": {
+      break;
+    };
+    default: {
+      return false;
+    }; 
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+        (body
+          (switch_statement
+            (expr (Name))
+            (case
+              (expr (String))
+                (block_statement
+                  (break_statement)))
+            (default_case
+              (block_statement
+                (return_statement (expr (False)))))))))))
+
 =========
 conditional: switch = case
 =========
 
+let x = (x : string) => { 
+  switch (x) {
+    case "true": {
+      return false;
+    };
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+          (body
+            (switch_statement
+              (expr (Name))
+              (case 
+                (expr (String))
+                (block_statement
+                  (return_statement
+                    (expr (False)))))))))))
+
 =========
 conditional: switch = default
 =========
+
+let x = (x : string) => { 
+  switch (x) {
+    default: {
+      return false;
+    };
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (expr
+      (fun_expr
+        (parameters
+          (parameter
+            (expr (Name))
+            (type_annotation (TypeName))))
+        (body
+          (switch_statement
+            (expr (Name))
+            (default_case
+              (block_statement
+                (return_statement
+                  (expr (False)))))))))))

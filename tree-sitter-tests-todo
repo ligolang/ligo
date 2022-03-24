@@ -8,16 +8,13 @@
 
 JsLIGO tests
 
-- [done] operators:  
-+ - * / %
-= += -= *= /= %=
-== != >= <= > <
+- [done] operators:  + - * / % , = += -= *= /= %= , == != >= <= > <
 
-types:
-option<int>
+- [] types: option<int>
 
-[x, ...xs]
-pattern matching
+- [] pattern matching
+- [] array rest [x, ...xs]
+- [] object rest
 
 
 
@@ -34,7 +31,7 @@ pattern matching
 - [done] export
 - [done] import
 
-- [] if else 
+- [done] if else 
 - [] switch case default
 
 
