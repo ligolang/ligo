@@ -211,18 +211,6 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
-let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
-  let open Option in
-  match a, b with
-  | None, None -> None
-  | Some a, None -> Some a
-  | None, Some b -> Some b
-  | Some a, Some b ->
-      let* _ = assert_eq_fun (a, b) in
-      match a.type_meta, b.type_meta with
-      | _, None -> Some a
-      | _, Some _ -> Some b
-
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with

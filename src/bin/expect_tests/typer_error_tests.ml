@@ -89,7 +89,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_3.mligo", line 3, characters 36-44:
+    File "../../test/contracts/negative/error_typer_3.mligo", line 3, characters 34-53:
       2 |
       3 | let foo : (int * string * bool) = ((1, "foo") : toto)
       4 |
@@ -99,7 +99,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_4.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_4.mligo", line 4, characters 18-48:
+    File "../../test/contracts/negative/error_typer_4.mligo", line 4, characters 17-56:
       3 |
       4 | let foo : tata = ({a = 1 ; b = "foo" ; c = true} : toto)
       5 |
@@ -117,7 +117,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_6.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 31-45:
+    File "../../test/contracts/negative/error_typer_6.mligo", line 1, characters 30-64:
       1 | let foo : (int, string) map = (Map.literal [] : (int, bool) map)
       2 | let main (p:int) (storage : int) =
 
@@ -268,7 +268,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
   [%expect {|
-      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 13-53:
+      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 12-69:
         7 |     Some contract -> contract
         8 |   | None -> (failwith "The entrypoint does not exist" : int contract)
         9 |
