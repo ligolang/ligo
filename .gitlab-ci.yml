@@ -34,6 +34,7 @@ changelog:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - echo $CI_WORKFLOW
@@ -66,6 +67,7 @@ docker_build:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - docker build .
@@ -88,6 +90,7 @@ docker_extract:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   extends: .nix
   dependencies :

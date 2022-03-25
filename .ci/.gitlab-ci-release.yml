@@ -40,7 +40,7 @@ build_release_env_vars:
     reports:
       dotenv: releaseversion.env
   rules:
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ )
       when: always
 
 #######################################################################
@@ -66,8 +66,8 @@ create-tag:
 # Following script is executed when pipeline has executed Tag process
 # Related to documentation and web-ide
 #######################################################################
-release-update-versionned-doc:
-  stage: release  
+update-versionned-doc:
+  stage: tooling  
   image: node:12.20.0-buster
   tags:
     - docker
@@ -86,22 +86,26 @@ release-update-versionned-doc:
     - apt-get install -y --no-install-recommends jq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
-    - RELEASE_VERSION=${CI_COMMIT_BRANCH#"release/"}
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
+    - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
-    - git add gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile
+    - git add gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
+  needs:
+    - job: docker_extract
+    - job: build_release_env_vars
+      artifacts: true
   rules:
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
-
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null) 
       when: always
+
 create-doc-update-MR:
-  stage: release
+  stage: tooling
   dependencies:
-    - release-update-versionned-doc
+    - update-versionned-doc
   script:
     - HOST=${CI_PROJECT_URL} CI_PROJECT_ID=${CI_PROJECT_ID} CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME} PRIVATE_TOKEN=${TOKEN_API} ./.ci/scripts/auto_merge_request.sh
   rules:
@@ -114,7 +118,7 @@ create-doc-update-MR:
 #######################################################################
 
 update-gitpod-ligo-version:
-  stage: release
+  stage: tooling
   variables:
     RELEASE_VERSION: "${RELEASE_VERSION}"
   trigger: 
