@@ -170,7 +170,7 @@ and evaluate_otype ~raise (c:context) (t:O.type_expression) : O.type_expression 
     let type_ = evaluate_otype ~raise c x.type_ in
     return (T_for_all {x with type_})
 
-and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
+and evaluate_type ~raise : context -> I.type_expression -> O.type_expression = fun c t ->
   let return tv' = make_t ~loc:t.location tv' (Some t) in
   match t.type_content with
   | T_arrow {type1;type2} ->
@@ -178,30 +178,16 @@ and evaluate_type ~raise (c:context) (t:I.type_expression) : O.type_expression =
       let type2 = evaluate_type ~raise c type2 in
       return (T_arrow {type1;type2})
   | T_sum m -> (
-    let lmap =
+    let rows =
+      let layout = Option.value ~default:default_layout m.layout in
       let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
         let associated_type = evaluate_type ~raise c associated_type in
         ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in
-      O.LMap.map aux m.fields
+      let content = O.LMap.map aux m.fields in
+      O.{ content ; layout }
     in
-    let sum : O.rows  = match Context.get_sum lmap c with
-      | None ->
-        let layout = Option.value ~default:default_layout m.layout in
-        {content = lmap; layout}
-      | Some r -> r
-    in
-    let ty = make_t (T_sum sum) None in
-    let () =
-      let aux k _v acc = match Context.get_constructor k c with
-          | Some (_,type_) ->
-            if Ast_typed.Misc.type_expression_eq (acc,type_) then type_
-            else if I.LMap.mem (Label "M_left") m.fields || I.LMap.mem (Label "M_right") m.fields then type_
-            else raise.raise (redundant_constructor k t.location)
-          | None -> acc in
-      let _ = O.LMap.fold aux m.fields ty in ()
-    in
-    return @@ T_sum sum
+    return @@ T_sum rows
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
@@ -387,20 +373,30 @@ and type_expression' ~raise ~options ?(args = []) ?last : context -> ?tv_opt:O.t
       | _ -> raise.raise (michelson_or_no_annotation constructor e.location)
     )
   )
-  | E_constructor {constructor; element} ->
-      let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
-        Context.get_constructor_parametric constructor context in
-      let expr' = type_expression' ~raise ~options context element in
-      let table = Inference.infer_type_application ~raise ~loc:element.location Inference.TMap.empty c_tv expr'.type_expression in
-      let table = match tv_opt with
-        | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
-        | None -> table in
-      let () = trace_option ~raise (not_annotated e.location) @@
-                 if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None in
-      let c_tv = Ast_typed.Helpers.psubst_type table c_tv in
-      let sum_tv = Ast_typed.Helpers.psubst_type table sum_tv in
-      let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
-      return (E_constructor {constructor; element=expr'}) sum_tv
+  | E_constructor {constructor; element} -> (
+    let expr' = type_expression' ~raise ~options context element in
+    let (avs, c_tv, sum_tv) =
+      match tv_opt with
+      | Some sum_tv ->
+        let c_tv = trace_option ~raise (expected_variant e.location sum_tv) @@ O.get_sum_label_type sum_tv constructor in
+        let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
+        (avs,c_tv,sum_tv)
+      | None ->
+        trace_option ~raise (unbound_constructor constructor e.location) @@
+          Context.get_constructor_parametric constructor context
+    in
+    let table = Inference.infer_type_application ~raise ~loc:element.location Inference.TMap.empty c_tv expr'.type_expression in
+    let table = match tv_opt with
+      | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) table sum_tv tv_opt
+      | None -> table in
+    let () = trace_option ~raise (not_annotated e.location) @@
+      if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
+    in
+    let c_tv = Ast_typed.Helpers.psubst_type table c_tv in
+    let sum_tv = Ast_typed.Helpers.psubst_type table sum_tv in
+    let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
+    return (E_constructor {constructor; element=expr'}) sum_tv
+  )
   (* Record *)
   | E_record m ->
       let m' = O.LMap.map (type_expression' ~raise ~options context) m in

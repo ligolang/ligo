@@ -1569,17 +1569,8 @@ let%expect_test _ =
     ( LIST_EMPTY() , 3 ) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "redundant_constructors.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:
-      6 | type union_b =
-      7 | | Add of nat
-      8 | | Remove of nat
-      9 | | Config of nat
-     10 |
-
-    Invalid variant.
-    Constructor "Add" already exists as part of another variant. |}]
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "redundant_constructors.mligo" ] ;
+  [%expect{| (Pair (Left (Left 42)) (Left 42)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_toplevel.mligo" ] ;
@@ -2154,7 +2145,7 @@ let%expect_test _ =
 
     Warning: layout attribute only applying to B, probably ignored.
 
-    (Left (Right 42))
+    (Left 42)
   |}]
 
 (* never test for PascaLIGO *)

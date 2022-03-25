@@ -25,8 +25,8 @@ let%expect_test _ =
       8 |   | Add si -> Add si
       9 |   | Sub si -> Sub si
 
-    Invalid type(s).
-    Expected: "( list (operation) * op )", but got: "op". |}];
+    Invalid argument.
+    Expected a variant, but got an argument of type "( list (operation) * sum[Add -> int , Sub -> int] )". |}];
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_no_tail_recursive_function.mligo"; "--entry-point"; "unvalid"];
   [%expect {|
