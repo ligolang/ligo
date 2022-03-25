@@ -28,8 +28,9 @@ add-changelog-entry:
       changes:
           - changelog/$CI_MERGE_REQUEST_IID
       when: never
-    - if: ($CI_PIPELINE_SOURCE == "merge_request_event")
-      when: manual
     - if: ($CI_MERGE_REQUEST_EVENT_TYPE == "merge_train")
       when: always
+    - if: ($CI_PIPELINE_SOURCE == "merge_request_event")
+      when: manual
+
 
