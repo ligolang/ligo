@@ -17,6 +17,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let lamb = decompile ~raise lamb in
        return (O.E_application { lamb ; args })
     | E_lambda { binder ; result } ->
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        let result = decompile ~raise result in
        return (O.E_lambda { binder ; result })
     | E_type_abstraction { type_binder ; result } ->
@@ -25,10 +26,12 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
     | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
        let fun_type = decompile_type ~raise fun_type in
        let result = decompile ~raise result in
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        return (O.E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = decompile ~raise rhs in
        let let_result = decompile ~raise let_result in
+       let let_binder = Stage_common.Maps.binder (decompile_type ~raise) let_binder in
        return (O.E_let_in { let_binder ; rhs ; let_result ; attr })
     | E_type_in { type_binder ; rhs ; let_result } ->
        let rhs = decompile_type ~raise rhs in

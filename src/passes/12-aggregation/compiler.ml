@@ -15,7 +15,7 @@ module Data = struct
   type scope = { exp : exp_ list ; mod_ : mod_ list ; decls : decl list }
   and decl = Mod of mod_ | Exp of exp_
   and mod_ = { name: module_variable ; in_scope : scope }
-  and exp_ = { name: expression_variable ; fresh_name : expression_variable ; item: Ast_aggregated.expression ; attr : Ast_aggregated.known_attributes }
+  and exp_ = { name: expression_variable ; fresh_name : expression_variable ; item: Ast_aggregated.expression ; attr : Ast_aggregated.known_attributes ; attributes : Ast_aggregated.binder_attributes }
   (* Important note: path is _only_ used for naming of fresh variables, so that debuging a printed AST is easier *)
   and path = module_variable list
   module PP_DEBUG = struct
@@ -65,8 +65,8 @@ let aggregate_scope : Data.scope -> leaf:O.expression -> O.expression = fun scop
   let rec f : O.expression -> Data.decl -> O.expression =
     fun acc_exp d ->
       match d with
-      | Exp { name = _ ; fresh_name ; item ; attr } ->
-        O.e_a_let_in fresh_name item acc_exp attr
+      | Exp { name = _ ; fresh_name ; item ; attr ; attributes} ->
+        O.e_a_let_in {var=fresh_name;ascr=Some item.type_expression;attributes} item acc_exp attr
       | Mod { in_scope = { decls ; _ } ; _ } ->
         List.fold_left decls ~f ~init:acc_exp
   in
@@ -88,7 +88,7 @@ and compile_declarations ~raise : Data.scope -> Data.path -> I.module_ -> Data.s
           let exp =
             let item = compile_expression ~raise acc_scope [] expr in
             let fresh_name = fresh_name binder.var path in
-            ({ name = binder.var ; fresh_name ; item ; attr } : Data.exp_)
+            ({ name = binder.var ; fresh_name ; item ; attr ; attributes = binder.attributes} : Data.exp_)
           in
           Data.add_exp acc_scope exp
         )
@@ -190,8 +190,9 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
     )
     | I.E_let_in { let_binder ; rhs ; let_result; attr } -> (
       let rhs = self rhs in
-      let data = Data.rm_exp scope let_binder in
+      let data = Data.rm_exp scope let_binder.var in
       let let_result = self ~data let_result in
+      let let_binder = Stage_common.Maps.binder (compile_type ~raise) let_binder in
       return @@ O.E_let_in { let_binder ; rhs ; let_result; attr }
     )
     | I.E_type_in {type_binder; rhs; let_result} -> (
@@ -200,7 +201,8 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       return @@ O.E_type_in {type_binder; rhs; let_result}
     )
     | I.E_lambda { binder ; result } -> (
-      let data = Data.rm_exp scope binder in
+      let data = Data.rm_exp scope binder.var in
+      let binder = Stage_common.Maps.binder (compile_type ~raise) binder in
       let result = self ~data result in
       return @@ O.E_lambda { binder ; result }
     )
@@ -214,10 +216,11 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       return @@ O.E_type_inst { forall ; type_ }
     )
     | I.E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
-      let data = Data.rm_exp scope binder in
+      let data = Data.rm_exp scope binder.var in
       let data = Data.rm_exp data fun_name in
       let result = self ~data result in
       let fun_type = compile_type ~raise fun_type in
+      let binder = Stage_common.Maps.binder (compile_type ~raise) binder in
       return @@ O.E_recursive { fun_name; fun_type; lambda = {binder;result}}
     )
     | I.E_constant { cons_name ; arguments } -> (

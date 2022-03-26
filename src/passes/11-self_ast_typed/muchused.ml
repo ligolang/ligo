@@ -130,7 +130,7 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr result
   | E_let_in {let_binder;rhs;let_result;_} ->
      muchuse_union (muchuse_of_expr rhs)
-       (muchuse_of_binder let_binder rhs.type_expression
+       (muchuse_of_binder let_binder.var rhs.type_expression
           (muchuse_of_expr let_result))
   | E_recursive {fun_name;lambda;fun_type} ->
      muchuse_of_binder fun_name fun_type (muchuse_of_lambda fun_type lambda)
@@ -160,7 +160,7 @@ let rec muchuse_of_expr expr : muchuse =
     muchuse_of_expr expression
 
 and muchuse_of_lambda t {binder; result} =
-  muchuse_of_binder binder t (muchuse_of_expr result)
+  muchuse_of_binder binder.var t (muchuse_of_expr result)
 
 and muchuse_of_cases = function
   | Match_variant x -> muchuse_of_variant x

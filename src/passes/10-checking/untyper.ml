@@ -87,7 +87,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let (input_type , output_type) =
         Simple_utils.Pair.map ~f:untype_type_expression (type1, type2) in
       let result = untype_expression result in
-      return (e_lambda {var=binder;ascr=Some input_type;attributes=Stage_common.Helpers.empty_attribute} (Some output_type) result)
+      return (e_lambda {binder with ascr=Some input_type} (Some output_type) result)
     )
   | E_type_abstraction {type_binder;result} -> (
     let result = untype_expression result in
@@ -153,7 +153,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let tv = untype_type_expression rhs.type_expression in
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
-      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result attr)
+      return (e_let_in {let_binder with ascr=(Some tv)} rhs result attr)
   | E_type_in {type_binder;rhs;let_result} ->
       let rhs = untype_type_expression rhs in
       let let_result = untype_expression let_result in

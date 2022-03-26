@@ -179,7 +179,7 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
 
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
   cmp2
-    expression_variable ba bb
+    (binder type_expression) ba bb
     expression ra rb
 
 and type_abs ({type_binder=ba;result=ra}) ({type_binder=bb;result=rb}) =
@@ -195,7 +195,7 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
 
 and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma;view=va;public=pua;thunk=ta;hidden=ha}} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb;view=vb;public=pub;thunk=tb;hidden=hb}} =
   cmp9
-    expression_variable ba bb
+    (binder type_expression) ba bb
     expression ra rb
     expression la lb
     bool  aa ab

@@ -78,10 +78,10 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse result
   | E_let_in {let_binder;rhs;let_result;_} ->
      let defuse,unused = defuse_of_expr defuse rhs in
-     let old_binder = M.find_opt let_binder defuse in
-     let defuse, unused' = defuse_of_expr (M.add let_binder false defuse) let_result in
-     let unused' = add_if_unused unused' let_binder defuse in
-     replace_opt let_binder old_binder defuse, unused@unused'
+     let old_binder = M.find_opt let_binder.var defuse in
+     let defuse, unused' = defuse_of_expr (M.add let_binder.var false defuse) let_result in
+     let unused' = add_if_unused unused' let_binder.var defuse in
+     replace_opt let_binder.var old_binder defuse, unused@unused'
   | E_raw_code {code;_} ->
      defuse_of_expr defuse code
   | E_matching {matchee;cases} ->
@@ -106,7 +106,7 @@ let rec defuse_of_expr defuse expr : defuse =
 
 
 and defuse_of_lambda defuse {binder; result} =
-  remove_defined_var_after defuse binder defuse_of_expr result
+  remove_defined_var_after defuse binder.var defuse_of_expr result
 
 and defuse_of_cases defuse = function
   | Match_variant x -> defuse_of_variant defuse x

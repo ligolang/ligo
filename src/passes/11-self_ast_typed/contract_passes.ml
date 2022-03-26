@@ -103,13 +103,13 @@ and get_fv expr =
      return env @@ E_type_inst {forall;type_}
   | E_lambda {binder ; result} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove binder @@ used_var} @@ E_lambda {binder;result}
+     return {env;used_var=VVarSet.remove binder.var @@ used_var} @@ E_lambda {binder;result}
   | E_type_abstraction {type_binder;result} ->
      let env,result = self result in
      return env @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name; lambda = {binder; result};fun_type} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove binder @@ used_var} @@
+     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove binder.var @@ used_var} @@
        E_recursive {fun_name; lambda = {binder; result};fun_type}
   | E_constructor {constructor;element} ->
      let env,element = self element in
@@ -133,7 +133,7 @@ and get_fv expr =
      return env @@ E_record_accessor {record;path}
   | E_let_in { let_binder ; rhs ; let_result ; attr} ->
      let env,let_result = (self let_result) in
-     let env = {env with used_var=VVarSet.remove let_binder env.used_var} in
+     let env = {env with used_var=VVarSet.remove let_binder.var env.used_var} in
      let env', rhs = self rhs in
      return (merge_env env env') @@ E_let_in {let_binder; rhs; let_result; attr}
   | E_type_in {type_binder;rhs;let_result} ->

@@ -32,7 +32,7 @@ module Free_variables = struct
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
-      let b' = union (singleton let_binder) b in
+      let b' = union (singleton let_binder.var) b in
       union
         (expression b' let_result)
         (self rhs)
@@ -50,7 +50,7 @@ module Free_variables = struct
       expression b' e
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
-    let b' = union (singleton l.binder) b in
+    let b' = union (singleton l.binder.var) b in
     expression b' l.result
 
   and expression : bindings -> expression -> bindings = fun b e ->

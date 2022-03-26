@@ -405,7 +405,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
-                    ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None;attributes=_};
+                    ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None;attributes};
                                                    output_type = None ;
                                                    result }) ;
                         location = _ ; sugar=_}) as _lambda ;
@@ -427,7 +427,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let e' = Typing_context.add_value context lname input_type in
       let body = type_expression' ~raise ~add_warning ~options ?tv_opt:(Some tv_out) (app_context, e') result in
       let output_type = body.type_expression in
-      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
+      let lambda' = make_e (E_lambda {binder = {var=lname;ascr=Some input_type;attributes} ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda'; v_col; v_initr] in
       let tv_lst = List.map ~f:get_type lst' in
       let (opname', tv) =
@@ -435,7 +435,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name= C_LOOP_LEFT as opname;
                 arguments = [
-                    ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None ; attributes=_};
+                    ( { expression_content = (I.E_lambda { binder = {var=lname ; ascr = None ; attributes};
                                                    output_type = None ;
                                                    result }) ;
                         location = _ ; sugar=_}) as _lambda ;
@@ -447,7 +447,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let context = Typing_context.add_value context lname input_type in
       let body = type_expression' ~raise ~add_warning ~options (app_context, context) result in
       let output_type = body.type_expression in
-      let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
+      let lambda' = make_e (E_lambda {binder = {var=lname;ascr=Some input_type;attributes} ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda';v_initr] in
       let tv_lst = List.map ~f:get_type lst' in
       let (opname',tv) = type_constant ~raise ~options opname e.location tv_lst tv_opt in
@@ -556,23 +556,22 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let matcheevar = I.ValueVar.fresh () in
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
-      let x = O.E_let_in { let_binder = matcheevar ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; thunk = false ; hidden = false } } in
+      let x = O.E_let_in { let_binder = {var=matcheevar;ascr=None;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; thunk = false ; hidden = false } } in
       return x case_exp.type_expression
   )
-  | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
+  | E_let_in {let_binder = {var ; ascr = None ; attributes} ; rhs ; let_result; attr } ->
      let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
      let context = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:context in
      let rhs = type_expression' ~raise ~add_warning ~options (app_context, context) rhs in
-     let binder = var in
      let rec aux t = function
        | [] -> t
        | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
-     let e' = Typing_context.add_value context binder rhs.type_expression in
+     let e' = Typing_context.add_value context var rhs.type_expression in
      let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, e') let_result in
-     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
-  | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
+     return (E_let_in {let_binder = {var;ascr=None;attributes}; rhs; let_result; attr }) let_result.type_expression
+  | E_let_in {let_binder = {var ; ascr = Some tv ; attributes} ; rhs ; let_result; attr } ->
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
     let av = av @ av' in
@@ -585,10 +584,9 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
     let type_expression = aux rhs.type_expression av in
     let rhs = { rhs with type_expression } in
-    let binder  = var in
-    let context = Typing_context.add_value pre_context binder type_expression in
+    let context = Typing_context.add_value pre_context var type_expression in
     let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, context) let_result in
-    return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
+    return (E_let_in {let_binder = {var;ascr=Some tv;attributes}; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise context rhs in
     let e' = Typing_context.add_type context type_binder rhs in
@@ -682,12 +680,11 @@ and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; out
         | Some t , _ -> Some t
         | _ -> None
       in
-      let binder = binder.var in
-      let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
-      let e' = Typing_context.add_value e binder input_type in
+      let input_type = trace_option ~raise (missing_funarg_annotation binder.var) input_type in
+      let e' = Typing_context.add_value e binder.var input_type in
       let body = type_expression' ~raise ~add_warning ~options ?tv_opt:output_type (ac, e') result in
       let output_type = body.type_expression in
-      (({binder; result=body}:O.lambda),(t_arrow input_type output_type ()))
+      (({binder={binder with ascr=Some input_type}; result=body}:O.lambda),(t_arrow input_type output_type ()))
 
 and type_constant ~raise ~options (name:I.constant') (loc:Location.t) (lst:O.type_expression list) (tv_opt:O.type_expression option) : O.constant' * O.type_expression =
   let typer = Constant_typers.constant_typers ~raise ~options loc name in

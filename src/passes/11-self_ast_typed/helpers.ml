@@ -479,12 +479,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
-      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder @@ fv}
+      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder.var @@ fv}
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
-      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder @@ fv}
+      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv}
     | E_constructor {constructor=_;element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -499,7 +499,7 @@ module Free_variables :
       self record
     | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
-      let fv2 = VarSet.remove let_binder fv2 in
+      let fv2 = VarSet.remove let_binder.var fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
     | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result

@@ -125,12 +125,12 @@ and application = {
   }
 
 and lambda =  {
-    binder: expression_variable ;
+    binder: type_expression binder ;
     result: expression ;
   }
 
 and let_in = {
-    let_binder: expression_variable ;
+    let_binder: type_expression binder ;
     rhs: expression ;
     let_result: expression ;
     attr: known_attributes ;

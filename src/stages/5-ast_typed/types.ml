@@ -138,12 +138,12 @@ and application = {
   }
 
 and lambda =  {
-    binder: expression_variable ;
+    binder: ty_expr binder ;
     result: expression ;
   }
 
 and let_in = {
-    let_binder: expression_variable ;
+    let_binder: ty_expr binder ;
     rhs: expression ;
     let_result: expression ;
     attr: known_attributes ;
@@ -159,7 +159,7 @@ and raw_code = {
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
-  lambda : lambda;
+  lambda   : lambda;
   }
 
 and constructor = {
