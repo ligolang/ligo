@@ -103,7 +103,7 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages (self matchee ::
             List.map ~f:(fun { constructor = _; pattern; body } -> self_binder [pattern] body) cases)
   | E_matching { matchee; cases = Ast_aggregated.Match_record { fields; body; tv = _ } } ->
-    usages [self matchee; self_binder (List.map ~f:fst (LMap.to_list fields)) body]
+    usages [self matchee; self_binder (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) body]
   | E_record fields ->
     usages (List.map ~f:self (LMap.to_list fields))
   | E_record_accessor { record; path = _ } ->
@@ -156,7 +156,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
                   type_expression = record_type } in
   let fields =
     try
-      LMap.of_list (List.zip_exn labels (List.zip_exn vars arg_types))
+      LMap.of_list (List.zip_exn labels (List.map2_exn ~f:(fun var ty -> {var;ascr=Some ty;attributes={const_or_var=None}}) vars arg_types))
     with
       | _ -> failwith @@
         Format.asprintf "Uncurry: mismatching number of arguments, expr: %a, type %a\n%!"
@@ -248,7 +248,7 @@ let rec uncurry_in_expression ~raise
     return (E_matching { matchee; cases = Match_variant { cases; tv } } )
   | E_matching { matchee; cases = Match_record { fields; body; tv } } ->
     let matchee = self matchee in
-    let body = self_binder (List.map ~f:fst (LMap.to_list fields)) body in
+    let body = self_binder (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) body in
     return (E_matching { matchee; cases = Match_record { fields; body; tv } })
   | E_record fields ->
     let fields =

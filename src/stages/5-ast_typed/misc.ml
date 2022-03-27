@@ -63,7 +63,7 @@ module Free_variables = struct
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
       | Match_record {fields; body; tv = _} ->
-        f (union (List.map ~f:fst (LMap.to_list fields)) b) body
+        f (union (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) b) body
 
     and matching_expression = fun x -> matching expression x
 

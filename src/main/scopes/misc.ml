@@ -59,7 +59,8 @@ let extract_variable_types :
             )
         )
         | Match_record { fields ; _ }  ->
-          return (Ast_typed.LMap.to_list fields)
+          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ascr) in
+          return (List.map ~f:aux @@ Ast_typed.LMap.to_list fields)
       )
     in
     match decl with

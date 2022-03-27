@@ -378,30 +378,30 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
   fun ~err_loc ~type_f ~body_t product_shape ms eqs def ->
   match ms with
   | mhd::_ -> (
-    let lb =
+    let lb :(_ * _ O.binder) list =
       let (p,t) = product_shape in
       match (p.wrap_content,t) with
       | P_tuple ps , t ->
-        let aux : int -> _ O.pattern_repr Location.wrap -> (O.label * (O.expression_variable * O.type_expression)) =
+        let aux : int -> _ O.pattern_repr Location.wrap -> (O.label * (O.type_expression O.binder)) =
           fun i proj_pattern ->
             let l = (O.Label (string_of_int i)) in
             let field_t = extract_record_type ~raise p l t in
-            let v = match proj_pattern.wrap_content with
-              | P_var x -> x.var
-              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
+            let var,attributes = match proj_pattern.wrap_content with
+              | P_var x -> x.var,x.attributes
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" (),Stage_common.Helpers.empty_attribute
             in
-            (l, (v,field_t))
+            (l, {var;ascr=Some field_t;attributes})
         in
         List.mapi ~f:aux ps
       | P_record (labels,patterns) , t ->
-        let aux : (O.label * _ O.pattern_repr Location.wrap)  -> (O.label * (O.expression_variable * O.type_expression)) =
+        let aux : (O.label * _ O.pattern_repr Location.wrap)  -> (O.label * (O.type_expression O.binder)) =
           fun (l,proj_pattern) ->
-            let v = match proj_pattern.wrap_content with
-              | P_var x -> x.var
-              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
+            let var,attributes = match proj_pattern.wrap_content with
+              | P_var x -> x.var,x.attributes
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" (),Stage_common.Helpers.empty_attribute
             in
             let field_t = extract_record_type ~raise p l t in
-            (l , (v,field_t))
+            (l , {var;ascr= Some field_t; attributes})
         in
         List.map ~f:aux (List.zip_exn labels patterns)
       | _ -> raise.raise @@ corner_case __LOC__
@@ -461,7 +461,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
     let matchee_t = type_matchee ~raise eqs in
     let eqs' = List.map ~f:aux eqs in
     let fields = O.LMap.of_list lb in
-    let new_matchees = List.map ~f:(fun (_,((x:O.expression_variable),_)) -> x) lb in
+    let new_matchees = List.map ~f:(fun (_,b) -> b.var) lb in
     let body = match_ ~raise ~err_loc ~type_f ~body_t (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body ; tv = snd product_shape } in
     let matchee = O.e_a_variable mhd matchee_t in

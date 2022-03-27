@@ -371,7 +371,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
             (corner_case ~loc:__LOC__ ("missing label in record"))
             (LMap.find_opt l fields)
           in
-          (compile_variable @@ fst x, t)
+          (compile_variable @@ x.var, t)
         )
         record_fields
     in
@@ -387,7 +387,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (corner_case ~loc:__LOC__ ("missing label in record"))
           (LMap.find_opt l fields)
         in
-        let var = compile_variable @@ fst x in
+        let var = compile_variable @@ x.var in
         return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in

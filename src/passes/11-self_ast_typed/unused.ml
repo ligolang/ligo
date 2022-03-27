@@ -120,7 +120,7 @@ and defuse_of_variant defuse {cases;_} =
       cases
 
 and defuse_of_record defuse {body;fields;_} =
-  let vars = LMap.to_list fields |> List.map ~f:fst in
+  let vars = LMap.to_list fields |> List.map ~f:(fun b -> b.var) in
   let map = List.fold_left ~f:(fun m v -> M.add v false m) ~init:defuse vars in
   let vars' = List.map ~f:(fun v -> (v, M.find_opt v defuse)) vars in
   let defuse,unused = defuse_of_expr map body in

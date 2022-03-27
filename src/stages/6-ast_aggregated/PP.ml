@@ -91,7 +91,6 @@ let constraint_identifier_short ppf x =
 
 let list_sep_d_par f ppf lst =
   match lst with
-  | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
 let rec type_content : formatter -> type_content -> unit =
@@ -192,7 +191,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = LMap.map (fun (v,_) -> v) fields in
+      let fields = LMap.map (fun b -> b.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
         (tuple_or_record_sep_expr expression_variable) fields
         f body

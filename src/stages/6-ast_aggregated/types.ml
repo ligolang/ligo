@@ -57,7 +57,7 @@ and matching_content_variant = {
   }
 
 and matching_content_record = {
-  fields : (expression_variable * type_expression) label_map;
+  fields : type_expression binder label_map;
   body : expression;
   tv : type_expression;
 }

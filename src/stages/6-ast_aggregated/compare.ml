@@ -253,7 +253,7 @@ and matching_content_record
     {fields = fields1; body = body1; tv = t1}
     {fields = fields2; body = body2; tv = t2} =
   cmp3
-    (label_map ~compare:(cmp_pair expression_variable type_expression)) fields1 fields2
+    (label_map ~compare:(binder type_expression)) fields1 fields2
     expression body1 body2
     type_expression t1 t2
 and record ra rb = label_map ~compare:expression ra rb

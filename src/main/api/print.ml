@@ -90,7 +90,7 @@ let ast_typed (raw_options : Compiler_options.raw) source_file display_format ()
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let typed = Build.type_contract ~raise ~add_warning ~options source_file in
       if self_pass then
-        Trace.trace ~raise Main_errors.self_ast_typed_tracer 
+        Trace.trace ~raise Main_errors.self_ast_typed_tracer
           @@ Self_ast_typed.all_module ~add_warning ~warn_unused_rec:options.middle_end.warn_unused_rec typed
       else
         typed
@@ -105,25 +105,13 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let typed = Build.build_context ~raise ~add_warning ~options source_file in
+      let typed = Build.type_contract ~raise ~add_warning ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
         Trace.trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:options.middle_end.test aggregated
       else
         aggregated
-
-let ast_combined (raw_options : Compiler_options.raw) source_file display_format () =
-  Trace.warning_with @@ fun add_warning get_warnings ->
-  format_result ~display_format Ast_typed.Formatter.program_format get_warnings @@
-  fun ~raise ->
-    let options = (* TODO: options should be computed outside of the API *)
-      let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
-      let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-      Compiler_options.make ~protocol_version ~raw_options ~syntax ()
-    in
-    let typed = Build.build_context ~raise ~add_warning ~options source_file in
-    typed
 
 let mini_c (raw_options : Compiler_options.raw) source_file display_format optimize () =
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -134,7 +122,7 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
-      let typed = Build.build_context ~raise ~add_warning ~options source_file in
+      let typed = Build.merge_and_type_contract ~raise ~add_warning ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       match optimize with
         | None ->

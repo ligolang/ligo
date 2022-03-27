@@ -230,7 +230,7 @@ and matching_content_case {constructor; pattern; body} =
 
 and matching_content_record {fields; body; tv} =
   `Assoc [
-    ("fields", label_map (pair ValueVar.to_yojson type_expression) fields);
+    ("fields", label_map (binder type_expression) fields);
     ("body", expression body);
     ("record_type", type_expression tv);
   ]

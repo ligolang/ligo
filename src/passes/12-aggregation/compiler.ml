@@ -264,8 +264,8 @@ and compile_cases ~raise : Data.scope -> Data.path -> I.matching_expr -> O.match
         Match_variant {cases ; tv}
       )
     | Match_record {fields; body; tv} ->
-      let fields = O.LMap.map (fun (v, t) -> (v, compile_type ~raise t)) fields in
-      let lst = List.map ~f:fst (O.LMap.values fields) in
+      let fields = O.LMap.map (fun (b : _ O.binder) -> {b with ascr = Option.map ~f:(compile_type ~raise) b.ascr}) fields in
+      let lst = List.map ~f:(fun b -> b.var) (O.LMap.values fields) in
       let data = List.fold_right ~f:(fun v data -> Data.rm_exp data v) ~init:scope lst in
       let body = compile_expression ~raise data path body in
       let tv = compile_type ~raise tv in

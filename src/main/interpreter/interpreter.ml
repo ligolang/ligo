@@ -1215,13 +1215,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
-        let aux : label -> ( expression_variable * _ ) -> env -> env =
-          fun l (v,ty) env ->
+        let aux : label ->  _ binder -> env -> env =
+          fun l {var;ascr;attributes=_} env ->
             let iv = match LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env v (ty,iv)
+            Env.extend env var (Option.value_exn ascr,iv)
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body calltrace env'

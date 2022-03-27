@@ -153,8 +153,8 @@ and get_fv expr =
     let init = {env=MVarMap.empty ;used_var=VVarSet.singleton element} in
     let env = List.fold_right module_path ~f:(fun module_name env -> {env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) ~init in
     return env @@ E_module_accessor {module_path;element}
-  | E_assign { variable=_; access_path=_; expression } ->
-    self expression
+  | E_assign { variable; access_path; expression } ->
+     return {env=MVarMap.empty ;used_var=VVarSet.singleton variable} @@ E_assign { variable; access_path; expression}
 and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
   match m with
   | Match_variant {cases;tv} ->
@@ -164,7 +164,7 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
      let envs,cases = List.unzip @@  List.map ~f:aux cases in
      (unions envs), Match_variant {cases;tv}
   | Match_record {fields; body; tv} ->
-     let pattern = LMap.values fields |> List.map ~f:fst in
+     let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
      let env,body = get_fv body in
      {env with used_var=List.fold_right pattern ~f:VVarSet.remove ~init:env.used_var}, Match_record {fields;body;tv}
 

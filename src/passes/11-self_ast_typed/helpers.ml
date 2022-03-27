@@ -521,7 +521,7 @@ module Free_variables :
         {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet} in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = LMap.values fields |> List.map ~f:fst in
+      let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
       let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
       {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 

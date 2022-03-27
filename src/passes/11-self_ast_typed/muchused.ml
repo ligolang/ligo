@@ -192,7 +192,7 @@ and muchuse_of_variant {cases;tv} =
 
 and muchuse_of_record {body;fields;_} =
   let typed_vars = LMap.to_list fields in
-  List.fold_left ~f:(fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
+  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var (Option.value_exn b.ascr) (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
 let rec get_all_declarations (module_name : module_variable) : module_ ->

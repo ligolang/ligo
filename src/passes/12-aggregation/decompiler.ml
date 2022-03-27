@@ -60,9 +60,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let matchee = decompile ~raise matchee in
        let tv = decompile_type ~raise tv in
        let body = decompile ~raise body in
-       let f (v, t) =
-         let t = decompile_type ~raise t in
-         (v, t) in
+       let f (b: _ I.binder) = {b with ascr = Option.map ~f:(decompile_type ~raise) (b.ascr) } in
        let fields = I.LMap.map f fields in
        return (O.E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
     (* Record *)

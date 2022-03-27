@@ -130,9 +130,9 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let cases = List.map ~f:aux cases in
       return (e_matching matchee cases)
     | Match_record {fields ; body ; tv=_} -> (
-      let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
-        fun (Ast_typed.Label label, (proj,_)) -> (
-          let proj = Location.wrap @@ P_var { ascr = None ; var = proj ; attributes = Stage_common.Helpers.empty_attribute } in
+      let aux : (Ast_typed.label * Ast_typed.type_expression binder) -> label * Ast_core.type_expression pattern =
+        fun (Ast_typed.Label label, binder) -> (
+          let proj = Location.wrap @@ P_var {binder with ascr = Option.map ~f:untype_type_expression binder.ascr} in
           (Label label, proj)
         )
       in
