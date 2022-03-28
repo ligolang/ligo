@@ -132,24 +132,6 @@ module Typing = struct
                     Environment.fold ~f ~init:empty env
 
   open Ast_typed.Types
-  let get_constructor : label -> t -> (type_expression * type_expression) option = fun k x -> (* Left is the constructor, right is the sum type *)
-    let rec rec_aux e =
-      let aux = fun (_,type_) ->
-        match type_.type_content with
-        | T_sum m ->
-           (match LMap.find_opt k m.content with
-              Some {associated_type ; _} -> Some (associated_type , type_)
-            | None -> None)
-        | _ -> None
-      in
-      match List.find_map ~f:aux @@ get_types e with
-        Some _ as s -> s
-      | None ->
-         let modules = get_modules e in
-         List.fold_left ~f:(fun res (_,module_) ->
-             match res with Some _ as s -> s | None -> rec_aux module_
-           ) ~init:None modules
-    in rec_aux x
 
 (*
   for any constructor [ctor] matching a sum-type `t` in the context [ctxt], return:
