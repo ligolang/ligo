@@ -1,7 +1,7 @@
 (* used to show code snippets in error messages *)
 
 let print_code ppf (l:Region.t) (input_line: unit -> string) =
-  let dumb =String.equal (Sys.getenv "TERM") "dumb" in
+  let dumb =String.equal "dumb" (Option.value_exn ~message:"env variable TERM not set" (Sys.getenv "TERM")) in
   let start = l#start#line in
   let start_column = l#start#offset `Byte in
   let stop = l#stop#line in
