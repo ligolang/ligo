@@ -1,0 +1,12 @@
+{
+    "name": "ligo_test_1",
+    "version": "1.0.0",
+    "description": "LIGO test 1",
+    "scripts": {
+      "test": "esy ligo run test set.test.mligo"
+    },
+    "dependencies": {
+      "temp-ligo-bin": "0.28.1"
+    }
+  }
+  
