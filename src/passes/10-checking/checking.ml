@@ -112,31 +112,16 @@ and evaluate_otype ~raise (c:typing_context) (t:O.type_expression) : O.type_expr
       let type1 = evaluate_otype ~raise c type1 in
       let type2 = evaluate_otype ~raise c type2 in
       return (T_arrow {type1;type2})
-  | T_sum m -> (
-    let lmap =
+  | T_sum {content ; layout} -> (
+    let rows =
       let aux ({associated_type;michelson_annotation;decl_pos} : O.row_element) =
         let associated_type = evaluate_otype ~raise c associated_type in
         ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in
-      O.LMap.map aux m.content
+      let content = O.LMap.map aux content in
+      O.{ content ; layout }
     in
-    let sum : O.rows  = match Typing_context.get_sum lmap c with
-      | None ->
-        let layout = m.layout in
-        {content = lmap; layout}
-      | Some r -> r
-    in
-    let ty = make_t (T_sum sum) None in
-    let () =
-      let aux k _v acc = match Typing_context.get_constructor k c with
-          | Some (_,type_) ->
-            if Ast_typed.Misc.type_expression_eq (acc,type_) then type_
-            else if I.LMap.mem (Label "M_left") m.content || I.LMap.mem (Label "M_right") m.content then type_
-            else raise.raise (redundant_constructor k t.location)
-          | None -> acc in
-      let _ = O.LMap.fold aux m.content ty in ()
-    in
-    return @@ T_sum sum
+    return @@ T_sum rows
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: O.row_element) =
