@@ -764,7 +764,7 @@ module Stacking = struct
     match c , protocol_version with
     | C_ADD                , _   -> Some ( simple_binary @@ prim "ADD")
     | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
-    | C_SUB_MUTEZ          , _   -> Some ( simple_binary @@ prim "SUB_MUTEZ")
+    | C_SUB_MUTEZ          , Ithaca -> Some ( simple_binary @@ prim "SUB_MUTEZ")
     | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
     | C_EDIV               , _   -> Some ( simple_binary @@ prim "EDIV")
     | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
@@ -886,7 +886,7 @@ module Stacking = struct
               (fun with_args ->
                  seq [with_args "CREATE_CONTRACT";
                       i_pair]))
-    | C_OPEN_CHEST , Hangzhou -> (
+    | C_OPEN_CHEST , _ -> (
       Some (simple_ternary @@ seq [
         prim "OPEN_CHEST" ;
         i_if_left
@@ -897,8 +897,8 @@ module Stacking = struct
           )
       ])
     )
-    | C_VIEW , Hangzhou -> Some (trivial_special "VIEW")
-    | C_GLOBAL_CONSTANT , Hangzhou ->
+    | C_VIEW , _ -> Some (trivial_special "VIEW")
+    | C_GLOBAL_CONSTANT , _ ->
       Some (special
         (fun with_args ->  with_args "PUSH")
         )
