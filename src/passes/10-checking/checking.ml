@@ -366,11 +366,11 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     let expr' = type_expression' ~raise ~options (app_context, context) element in
     let (avs, c_tv, sum_tv) =
       match tv_opt with
-      | Some sum_tv ->
+      | Some sum_tv when (Option.is_some (O.get_t_sum sum_tv)) ->
         let c_tv = trace_option ~raise (expected_variant e.location sum_tv) @@ O.get_sum_label_type sum_tv constructor in
         let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
         (avs,c_tv,sum_tv)
-      | None ->
+      | (None | Some _) ->
         trace_option ~raise (unbound_constructor constructor e.location) @@
           Typing_context.get_constructor_parametric constructor context
     in
