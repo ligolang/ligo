@@ -12,16 +12,17 @@ import {
 } from 'vscode-languageclient/node';
 
 import { registerCommands } from './command'
+import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 let client: LanguageClient;
-let compileButton: vscode.StatusBarItem;
+let optionButton: vscode.StatusBarItem;
 
-// Hides compilation button in case current active text editor is not .(m/re)ligo file.
+// Hides compilation button in case current active text editor is not .(m/re)ligo file
 // If currently active text window is not an opened file (terminal, explorer, etc.)
-// button will remain in it's previous state.
-function updateCompileButton() {
+// button will remain in it's previous state
+function updateLigoButton() {
   const path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
 
@@ -31,9 +32,9 @@ function updateCompileButton() {
   }
 
   if (ext === '.ligo' || ext === '.mligo' || ext === '.religo') {
-    compileButton.show();
+    optionButton.show();
   } else {
-    compileButton.hide();
+    optionButton.hide();
   }
 }
 
@@ -50,17 +51,21 @@ export async function activate(context: vscode.ExtensionContext) {
     },
   };
 
-  // This section adds "Compile LIGO" status bar button,
-  // which allows to compile ligo from inside the extension
-  const compileCommandId = 'ligo.compileContract';
-  compileButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
-  compileButton.command = compileCommandId;
-  compileButton.text = 'Compile LIGO';
-  context.subscriptions.push(compileButton);
+  // This section adds 'LIGO Options' status bar button,
+  // which allows to execute different ligo commands from inside the extension.
 
-  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateCompileButton));
-  context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateCompileButton));
-  updateCompileButton();
+  initializeExtensionState();
+
+  const optionCommandId = 'ligo.chooseOption';
+  optionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+  optionButton.command = optionCommandId;
+  optionButton.text = 'LIGO Options';
+  optionButton.tooltip = 'Display LIGO options';
+  context.subscriptions.push(optionButton);
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateLigoButton));
+  context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateLigoButton));
+  updateLigoButton();
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {

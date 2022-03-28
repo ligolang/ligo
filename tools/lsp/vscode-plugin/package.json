@@ -127,8 +127,28 @@
             },
             {
                 "command": "ligo.compileContract",
-                "title": "LIGO: Compile current LIGO contract",
-                "description": "Compiles the current LIGO contract and prints output to the console"
+                "title": "LIGO: Compile the current LIGO contract",
+                "description": "Compiles the current LIGO contract and prints the output to the console"
+            },
+            {
+                "command": "ligo.compileExpression",
+                "title": "LIGO: Compile an entrypoint in the current LIGO contract",
+                "description": "Compiles an entrypoint in the current LIGO contract and prints the output to the console"
+            },
+            {
+                "command": "ligo.dryRun",
+                "title": "LIGO: Run the current LIGO contract",
+                "description": "Runs the current LIGO contract with the given parameter and storage"
+            },
+            {
+                "command": "ligo.evaluateFunction",
+                "title": "LIGO: Run a function in the current LIGO contract",
+                "description": "Runs a function in the current ligo contract on a given argument"
+            },
+            {
+                "command": "ligo.evaluateValue",
+                "title": "LIGO: Evaluate a LIGO definition",
+                "description": "Evaluates a LIGO definition"
             }
         ]
     },
