@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ExtensionContext, ExtensionMode } from 'vscode';
-
+import * as vscode from 'vscode';
+import { extname } from 'path';
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -16,9 +16,29 @@ import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 let client: LanguageClient;
+let compileButton: vscode.StatusBarItem;
 
-export async function activate(context: ExtensionContext) {
-  if (context.extensionMode === ExtensionMode.Production) {
+// Hides compilation button in case current active text editor is not .(m/re)ligo file.
+// If currently active text window is not an opened file (terminal, explorer, etc.)
+// button will remain in it's previous state.
+function updateCompileButton() {
+  const path = vscode.window.activeTextEditor.document.uri.fsPath;
+  const ext = extname(path);
+
+  // Ignore vscode windows
+  if (path.startsWith('extension')) {
+    return;
+  }
+
+  if (ext === '.ligo' || ext === '.mligo' || ext === '.religo') {
+    compileButton.show();
+  } else {
+    compileButton.hide();
+  }
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+  if (context.extensionMode === vscode.ExtensionMode.Production) {
     await updateLigo()
     await updateExtension(context)
   }
@@ -29,6 +49,18 @@ export async function activate(context: ExtensionContext) {
       cwd: `${context.extensionPath}`,
     },
   };
+
+  // This section adds "Compile LIGO" status bar button,
+  // which allows to compile ligo from inside the extension
+  const compileCommandId = 'ligo.compileContract';
+  compileButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+  compileButton.command = compileCommandId;
+  compileButton.text = 'Compile LIGO';
+  context.subscriptions.push(compileButton);
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateCompileButton));
+  context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateCompileButton));
+  updateCompileButton();
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
@@ -53,7 +85,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   // Register VSC-specific server commands
-  registerCommands(client)
+  registerCommands(client);
 
   // Start the client. This will also launch the server
   client.start();
