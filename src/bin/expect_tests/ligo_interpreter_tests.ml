@@ -252,7 +252,8 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value ().
-    - test_mutation exited with value (). |}]
+    - test_mutation exited with value ().
+    - test_mutation_all exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;

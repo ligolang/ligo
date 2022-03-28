@@ -16,10 +16,10 @@ FAIL,missing_argument_bracketR.religo,-1,-1,-1,-1,-1
 PASS,missing_arrow_in_lambda_expr.religo,5,22,14,2,0
 PASS,missing_arrow_in_match_expr.religo,0,0,0,0,0
 PASS,missing_comma_in_arguments.religo,3,65,29,22,3
-PASS,missing_comma_in_record_decl.religo,7,3,3,4,0
+PASS,missing_comma_in_record_decl.religo,6,3,3,4,0
 FAIL,missing_curly_bracket_in_record_decl.religo,-1,-1,-1,-1,-1
 PASS,missing_dot_in_list_pat.religo,2,2,2,1,0
-PASS,missing_dot_in_record_update.religo,2,13,11,3,0
+PASS,missing_dot_in_record_update.religo,2,13,11,1,0
 FAIL,missing_end_kw_in_the_nested_module.religo,-1,-1,-1,-1,-1
 PASS,missing_eq_in_type_decl.religo,0,0,0,0,0
 FAIL,missing_expr_parenthesesL.religo,-1,-1,-1,-1,-1
