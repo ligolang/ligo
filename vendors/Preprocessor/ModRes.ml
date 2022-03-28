@@ -106,6 +106,7 @@ module Path = struct
     let regexp = Str.regexp (Format.sprintf "^%s" Fpath.dir_sep) in
     fun path -> Str.string_match regexp path 0
 
+  (* TODO: Try to have a single representation of path *)
   (* [join path1 path2] concatenates path1 / path2, It is aware of Fpath.dir_sep *)
   let join : string -> string -> string =
     fun a b ->
