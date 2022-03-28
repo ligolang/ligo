@@ -159,6 +159,7 @@ let test_long_jsligo ~raise ~raw_options () =
 let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
   let project_root = Some "projects/demo" in
   let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #use (equivalent of #include) the dependencies of the root project *)
   test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
       "#use \"ligo-foo/foo.mligo\"";
       "#use \"ligo-list-helpers/list.mligo\"";
@@ -180,6 +181,7 @@ let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
 let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
   let project_root = Some "projects/demo" in
   let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #import the dependecies of the root project under separate namespaces *)
   test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
       "#import \"ligo-foo/foo.mligo\" \"Foo\"";
       "#import \"ligo-list-helpers/list.mligo\" \"ListX\"";
