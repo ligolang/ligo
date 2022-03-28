@@ -212,7 +212,7 @@ recognise (SomeRawTree dialect rawTree)
     -- TField
   , Descent do
       boilerplate $ \case
-        "field_decl" -> TField <$> field "field" <*> field "type"
+        "field_decl" -> TField <$> field "field" <*> (Just <$> field "type")
         _            -> fallthrough
 
     -- TypeName

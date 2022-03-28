@@ -1,34 +1,64 @@
 const common = require('../common.js')
 
-let non_empty_injection = (Kind, element) =>
-  choice(
-    seq(
-      Kind,
-      common.sepEndBy1(';', element),
-      'end',
-    ),
-    seq(
-      Kind,
-      '[',
-      common.sepEndBy1(';', element),
-      ']',
-    ),
-  )
+// Compound
 
-let injection = (Kind, element) =>
-  choice(
-    seq(
-      Kind,
-      common.sepEndBy(';', element),
-      'end',
-    ),
-    seq(
-      Kind,
-      '[',
-      common.sepEndBy(';', element),
-      ']',
-    ),
-  )
+const injection = (Kind, element) => seq(
+  Kind,
+  common.brackets(common.sepEndBy(';', element)),
+)
+
+// Instructions
+
+const if_then_else_instr = ($, right_instr) => seq(
+  'if',
+  field("selector", $._expr),
+  'then',
+  field("then", $._test_clause_closed),
+  'else',
+  field("else", right_instr),
+)
+
+// Expressions
+
+const if_then_else_expr = ($, right_expr) => seq(
+  'if',
+  field("selector", $._expr),
+  'then',
+  field("then", $._closed_expr),
+  'else',
+  field("else", right_expr),
+)
+
+const block_with = ($, right_expr) => seq(
+  field("locals", $.block),
+  'with',
+  field("body", right_expr),
+)
+
+const fun_expr = ($, right_expr) => seq(
+  'function',
+  $.parameters,
+  optional(seq(':', field("type", $._type_expr))),
+  'is',
+  field("body", right_expr),
+)
+
+// Case expression
+const case_base = ($, case_clause_rhs) => seq(
+  'case',
+  field("subject", $._expr),
+  'of',
+  common.brackets(seq(
+    optional('|'),
+    common.sepBy1('|', field("case", case_clause_rhs)),
+  )),
+)
+
+const case_clause_base = ($, rhs) => seq(
+  field("pattern", $._pattern),
+  '->',
+  field("body", rhs),
+)
 
 module.exports = grammar({
   name: 'PascaLigo',
@@ -36,7 +66,7 @@ module.exports = grammar({
   word: $ => $.Keyword,
   externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
-  inline: $ => [$.parameters, $.arguments],
+  inline: $ => [$.parameters],
 
   rules: {
     source_file: $ => common.sepEndBy(optional(';'), field("declaration", $._declaration)),
@@ -55,15 +85,15 @@ module.exports = grammar({
 
     type_decl: $ =>
       seq(
-        "type",
+        'type',
         field("typeName", $.TypeName),
         optional(field("params", $.type_params)),
-        "is",
+        'is',
         field("typeValue", $._type_expr),
       ),
 
     type_params: $ => common.par(
-      common.sepBy1(",", field("param", $.var_type)),
+      common.sepBy1(',', field("param", $.var_type)),
     ),
 
     _type_expr: $ => choice(
@@ -101,8 +131,10 @@ module.exports = grammar({
     field_decl: $ => common.withAttrs($,
       seq(
         field("fieldName", $.FieldName),
-        ':',
-        field("fieldType", $._type_expr),
+        optional(seq(
+          ':',
+          field("fieldType", $._type_expr),
+        )),
       ),
     ),
 
@@ -255,87 +287,66 @@ module.exports = grammar({
         field("value", $._expr),
       ),
 
-    _instruction: $ =>
-      choice(
-        $.conditional,
-        $.case_instr,
-        $.assignment,
-        $._loop,
-        $.fun_call,
-        $.projection_call,
-        $.skip,
-        $.record_patch,
-        $.map_patch,
-        $.set_patch,
-        $.map_remove,
-        $.set_remove,
-      ),
+    _instruction: $ => choice(
+      $._base_instr,
+      $.if_then_instr,
+    ),
+    _closed_instr: $ => $._base_instr_closed,
+
+    _base_instr_common: $ => choice(
+      $.patch_instr,
+      $.remove_instr,
+      $.case_instr,
+      $._call_instr,
+      $.for_int,
+      $.for_in,
+      $.while_loop,
+      $.skip,
+    ),
+    _base_instr: $ => choice(
+      $.if_then_else_instr,
+      $.assignment,
+      $._base_instr_common,
+    ),
+    _base_instr_closed: $ => choice(
+      $.if_then_else_instr_closed,
+      $.assignment_closed,
+      $._base_instr_common,
+    ),
 
     // Conditional Instruction
-    conditional: $ =>
-      seq(
-        'if',
-        field("selector", $._expr),
-        'then',
-        field("then", $._if_clause),
-        optional(';'),
-        'else',
-        field("else", $._if_clause),
-      ),
+    if_then_else_instr: $ => if_then_else_instr($, $._test_clause),
+    if_then_else_instr_closed: $ => if_then_else_instr($, $._test_clause_closed),
+    if_then_instr: $ => seq(
+      'if',
+      field("selector", $._expr),
+      'then',
+      field("then", $._test_clause),
+    ),
 
-    _if_clause: $ =>
-      choice(
-        $._instruction,
-        $.clause_block,
-        $.block,
-      ),
+    _test_clause: $ => choice($._instruction, $.block),
+    _test_clause_closed: $ => choice($._closed_instr, $.block),
 
-    clause_block: $ =>
-      seq('{', common.sepEndBy1(';', field("statement", $._statement)), '}'),
+    // Call instruction
+    _call_instr: $ => $.call_expr,
 
-    // Case Instruction
-    case_instr: $ =>
-      choice(
-        seq(
-          'case',
-          field("subject", $._expr),
-          'of',
-          optional('|'),
-          common.sepEndBy1('|', field("case", $.case_clause_instr)),
-          'end'
-        ),
-        seq(
-          'case',
-          field("subject", $._expr),
-          'of',
-          '[',
-          optional('|'),
-          common.sepEndBy1('|', field("case", $.case_clause_instr)),
-          ']'
-        ),
-      ),
-
-    case_clause_instr: $ =>
-      seq(
-        field("pattern", $._pattern),
-        '->',
-        field("body", $._if_clause),
-      ),
+    // Case instruction
+    case_instr: $ => case_base($, $.case_clause_instr),
+    case_clause_instr: $ => case_clause_base($, $._test_clause),
 
     // Assignment
-    assignment: $ =>
-      seq(
-        field("LHS", $._lhs),
-        ':=',
-        field("RHS", $._rhs),
-      ),
-
-    _lhs: $ => choice($._path, $.map_lookup),
-    _rhs: $ => $._expr,
+    assignment: $ => seq(
+      field("LHS", $._left_expr),
+      ':=',
+      field("RHS", $._expr),
+    ),
+    assignment_closed: $ => seq(
+      field("LHS", $._left_expr),
+      ':=',
+      field("RHS", $._closed_expr),
+    ),
 
     // Loops
-    _loop: $ => choice($.while_loop, $._for_loop),
-
     while_loop: $ =>
       seq(
         'while',
@@ -343,18 +354,12 @@ module.exports = grammar({
         field("body", $.block),
       ),
 
-    _for_loop: $ =>
-      choice(
-        $.for_cycle,
-        $.for_box,
-      ),
-
-    for_cycle: $ =>
+    for_int: $ =>
       seq(
         'for',
         field("name", $.Name),
         ':=',
-        field("begin", $._rhs),
+        field("begin", $._expr),
         'to',
         field("end", $._expr),
         optional(seq(
@@ -364,7 +369,7 @@ module.exports = grammar({
         field("body", $.block),
       ),
 
-    for_box: $ =>
+    for_in: $ =>
       seq(
         'for',
         field("key", $.Name),
@@ -376,66 +381,44 @@ module.exports = grammar({
       ),
 
     collection: $ => choice('map', 'set', 'list'),
+    removable: $ => choice('map', 'set'),
 
-    // Function call
-    fun_call: $ =>
-      seq(
-        field("f", choice($.Name)),
-        $.arguments,
-      ),
+    // Patch instruction
+    patch_instr: $ => seq(
+      'patch',
+      field("container", $._core_expr),
+      'with',
+      field("expr", $._patch_expr),
+    ),
 
-    // Projection call
-    projection_call: $ => prec(1, seq(
-      field("f", $._projection),
-      $.arguments,
-    )),
+    _patch_expr: $ => choice(
+      $.record_expr,
+      $.map_expr,
+      $.set_expr,
+      $.patchable_call_expr,
+      $.patchable_paren_expr,
+    ),
 
-    // Record patch
-    record_patch: $ =>
-      seq(
-        'patch',
-        field("container", $._path),
-        'with',
-        non_empty_injection('record', field("binding", $.field_path_assignment)),
-      ),
+    patchable_call_expr: $ => seq(
+      field("patchable", $._patchable),
+      field("expr", $.call_expr),
+    ),
 
-    // Map patch
-    map_patch: $ =>
-      seq(
-        'patch',
-        field("container", $._path),
-        'with',
-        non_empty_injection('map', field("binding", $.binding)),
-      ),
+    patchable_paren_expr: $ => seq(
+      field("patchable", $._patchable),
+      field("expr", $.paren_expr),
+    ),
 
-    // Set patch
-    set_patch: $ =>
-      seq(
-        'patch',
-        field("container", $._path),
-        'with',
-        non_empty_injection('set', field("key", $._expr)),
-      ),
+    _patchable: $ => $.collection,
 
-    // Map remove
-    map_remove: $ =>
-      seq(
-        'remove',
-        field("key", $._expr),
-        'from',
-        'map',
-        field("container", $._path),
-      ),
-
-    // Set remove
-    set_remove: $ =>
-      seq(
-        'remove',
-        field("key", $._expr),
-        'from',
-        'set',
-        field("container", $._path),
-      ),
+    // Remove instruction
+    remove_instr: $ => seq(
+      'remove',
+      field("key", $._expr),
+      'from',
+      field("remove", $.removable),
+      field("container", $._left_expr),
+    ),
 
     /// PATTERNS
 
@@ -460,21 +443,12 @@ module.exports = grammar({
         $.Int,
         $.Nat,
         $.String,
-        $._constr_pattern,
+        $.user_constr_pattern,
         $._list_pattern,
         $.record_pattern,
         $.tuple_pattern,
         $.var_pattern,
       ),
-
-    // Constructor Pattern
-    _constr_pattern: $ => choice(
-      $.Unit,
-      $.False,
-      $.True,
-      $.None,
-      $.user_constr_pattern,
-    ),
 
     user_constr_pattern: $ =>
       seq(
@@ -516,75 +490,56 @@ module.exports = grammar({
 
     /// EXPRESSIONS
 
-    _expr: $ =>
-      choice(
-        $.case_expr,
-        $.cond_expr,
-        $.fun_expr,
-        $.let_expr,
-        $.michelson_interop,
-        $._op_expr,
-      ),
+    _expr: $ => choice(
+      common.withAttrs($, $.if_then_expr),
+      $._base_expr,
+    ),
+    _closed_expr: $ => choice(
+      common.withAttrs($, $._attr_base_expr_closed),
+      $._op_expr,
+    ),
+    _base_expr: $ => choice(
+      common.withAttrs($, $._attr_base_expr),
+      $._op_expr,
+    ),
+    _attr_base_expr: $ => choice(
+      $.if_then_else_expr,
+      $.block_with,
+      $.fun_expr,
+      $.case_expr,
+    ),
+    _attr_base_expr_closed: $ => choice(
+      $.if_then_else_expr_closed,
+      $.block_with_closed,
+      $.fun_expr_closed,
+      $.case_expr,
+    ),
 
-     // Case Expressions
-     case_expr: $ =>
-      choice(
-        seq(
-          'case',
-          field("subject", $._expr),
-          'of',
-          optional('|'),
-          common.sepEndBy1('|', field("case", $.case_clause_expr)),
-          'end'
-        ),
-        seq(
-          'case',
-          field("subject", $._expr),
-          'of',
-          '[',
-          optional('|'),
-          common.sepEndBy1('|', field("case", $.case_clause_expr)),
-          ']'
-        ),
-      ),
+    _left_expr: $ => choice($.map_lookup, $._path_expr),
 
-    case_clause_expr: $ =>
-      seq(
-        field("pattern", $._pattern),
-        '->',
-        field("body", $._expr),
-      ),
+    // Case expressions
+    case_expr: $ => case_base($, $.case_clause_expr),
+    case_clause_expr: $ => case_clause_base($, $._expr),
 
     // Conditional expressions
-    cond_expr: $ =>
-      seq(
-        'if',
-        field("selector", $._expr),
-        'then',
-        field("then", $._expr),
-        optional(';'),
-        'else',
-        field("else", $._expr),
-      ),
 
-    // Function Expressions
-    fun_expr: $ =>
-      seq(
-        field("recursive", optional($.recursive)),
-        'function',
-        $.parameters,
-        optional(seq(':', field("type", $._type_expr))),
-        'is',
-        field("body", $._expr),
-      ),
+    if_then_else_expr: $ => if_then_else_expr($, $._expr),
+    if_then_else_expr_closed: $ => if_then_else_expr($, $._closed_expr),
+    if_then_expr: $ => seq(
+      'if',
+      field("selector", $._expr),
+      'then',
+      field("then", $._expr),
+    ),
 
-    // Let expressions
-    let_expr: $ =>
-      seq(
-        field("locals", $.block),
-        'with',
-        field("body", $._expr),
-      ),
+    // Function expressions
+    fun_expr: $ => fun_expr($, $._expr),
+    fun_expr_closed: $ => fun_expr($, $._closed_expr),
+
+
+    // Block expressions
+    block_with: $ => block_with($, $._expr),
+    block_with_closed: $ => block_with($, $._closed_expr),
 
     // Michelson expressions
     michelson_interop: $ => seq(
@@ -641,24 +596,21 @@ module.exports = grammar({
         $.Int,
         $.Nat,
         $.Tez,
-        $.Name,
         $.String,
         $.Bytes,
-        $.False,
-        $.True,
-        $.Unit,
-        $.None,
 
         $.annot_expr,
         $.tuple_expr,
         $._list_expr,
-        $._fun_call_or_par_or_projection,
-        $._map_expr,
+        $.map_expr,
+        $.big_map_expr,
         $.set_expr,
         $.record_expr,
+        $.michelson_interop,
         $.update_record,
-        $._constr_use,
-        $.paren_expr,
+        $._ctor_app_expr,
+        $.call_expr,
+        $._left_expr,
       ),
 
     // Annotation expression
@@ -681,37 +633,21 @@ module.exports = grammar({
 
     list_injection: $ => injection('list', field("element", $._expr)),
 
-    // Function Call/Par Call/Projection
-    _fun_call_or_par_or_projection: $ =>
-      choice(
-        $.par_call,
-        $.projection_call,
-        $.fun_call,
-        $._projection,
-      ),
+    // Call expression
+    call_expr: $ => seq(
+      field("f", $._path_expr),
+      common.par(common.sepBy(',', field("argument", $._expr))),
+    ),
 
-    par_call: $ =>
-      prec.right(1, seq(
-        common.par(field("f", $._expr)),
-        $.arguments,
-      )),
-
-    // Map Expression
-    _map_expr: $ =>
-      choice(
-        $.map_lookup,
-        $.map_injection,
-        $.big_map_injection,
-      ),
+    // (Big) Map expression
+    map_expr: $ => injection('map', field("binding", $.binding)),
+    big_map_expr: $ => injection('big_map', field("binding", $.binding)),
 
     map_lookup: $ =>
       seq(
-        field("container", $._path),
-        common.brackets(field("index", $._expr)),
+        field("container", $._path_expr),
+        repeat1(common.brackets(field("index", $._expr))),
       ),
-
-    map_injection: $ => injection('map', field("binding", $.binding)),
-    big_map_injection: $ => injection('big_map', field("binding", $.binding)),
 
     // Set Expression
     set_expr: $ => injection('set', field("element", $._expr)),
@@ -723,40 +659,54 @@ module.exports = grammar({
     // Update Record Expression
     update_record: $ =>
       seq(
-        field("record", $._path),
+        field("record", $._core_expr),
         'with',
-        non_empty_injection('record', field("assignment", $.field_path_assignment)),
+        injection('record', field("assignment", $.field_path_assignment)),
       ),
 
-    // Constructor use expression
-    _constr_use: $ =>
-      choice(
-        $.constr_call,
-        $.ConstrName
-      ),
+    // Constructor application expression
+    _ctor_app_expr: $ => choice(
+      $.ctor_app_expr,
+      $.ConstrName,
+    ),
 
-    constr_call: $ =>
-      seq(
-        field("constr", $.ConstrName),
-        $.arguments
-      ),
+    ctor_app_expr: $ => seq(
+      field("ctor", $.ConstrName),
+      common.par(common.sepBy1(',', field("arguments", $._expr))),
+    ),
 
     // Paren expression
     paren_expr: $ => common.par(field("expr", $._expr)),
 
-    /// PROJECTION
+    /// Path expressions
 
-    _projection: $ =>
-      choice(
-        $.data_projection,
-        $.module_access,
-      ),
+    _path_expr: $ => choice(
+      $.module_access,
+      $._local_path,
+    ),
 
-    data_projection: $ => prec(11, seq(
-      field("struct", $.Name),
+    _local_path: $ => choice(
+      $.data_projection,
+      $._field_path,
+    ),
+
+    data_projection: $ => seq(
+      field("selector", $.paren_expr),
       '.',
       $._accessor_chain,
-    )),
+    ),
+
+    _field_path: $ => choice(
+      $.field_path,
+      $.paren_expr,
+      $.Name,
+    ),
+
+    field_path: $ => seq(
+      field("selector", $.Name),
+      '.',
+      $._accessor_chain,
+    ),
 
     _accessor_chain: $ => prec.right(common.sepBy1('.', field("accessor", $._accessor))),
     _accessor: $ => choice($.FieldName, $.Int),
@@ -803,22 +753,19 @@ module.exports = grammar({
 
     /// MISCELLANEOUS UTILITIES
 
-    _path: $ => choice($.Name, $._projection),
-
-    block: $ =>
-      choice(
-        seq(
-          'begin',
-          common.sepEndBy(';', field("statement", $._statement)),
-          'end',
-        ),
-        seq(
-          'block',
-          '{',
-          common.sepEndBy(';', field("statement", $._statement)),
-          '}',
-        ),
+    block: $ => choice(
+      seq(
+        'begin',
+        common.sepEndBy(';', field("statement", $._statement)),
+        'end',
       ),
+      seq(
+        optional('block'),
+        '{',
+        common.sepEndBy(';', field("statement", $._statement)),
+        '}',
+      )
+    ),
 
     binding: $ =>
      seq(
@@ -826,8 +773,6 @@ module.exports = grammar({
         '->',
         field("value", $._expr),
       ),
-
-    arguments: $ => common.par(common.sepBy(',', field("argument", $._expr))),
 
     field_path_assignment: $ =>
       seq(
@@ -862,10 +807,6 @@ module.exports = grammar({
     TypeWildcard: $ => '_',
     Keyword: $ => /[A-Za-z][a-z]*/,
 
-    False: $ => 'False',
-    True: $ => 'True',
-    Unit: $ => 'Unit',
-    None: $ => 'None',
     skip: $ => 'skip',
     recursive: $ => 'recursive',
   }

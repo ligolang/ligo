@@ -18,7 +18,7 @@ module AST.Skeleton
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
   , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
-  , TypeParams (..)
+  , TypeParams (..), PatchableExpr (..)
 
   , getLIGO
   , setLIGO
@@ -69,7 +69,7 @@ type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
-  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand
+  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
   , ModuleName, ModuleAccess, TypeParams
   ]
 
@@ -145,7 +145,7 @@ data Variant it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data TField it
-  = TField it it  -- (Name) (Type)
+  = TField it (Maybe it)  -- (Name) (Maybe (Type))
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 -- | TODO: break onto smaller types? Literals -> Constant; mapOps; mmove Annots to Decls.
@@ -168,8 +168,7 @@ data Expr it
   | Attrs     [it]
   | BigMap    [it] -- [MapBinding]
   | Map       [it] -- [MapBinding]
-  | MapRemove it it -- (Expr) (QualifiedName)
-  | SetRemove it it -- (Expr) (QualifiedName)
+  | Remove    it it it -- (Expr) (Collection) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
@@ -178,13 +177,21 @@ data Expr it
   | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
-  | MapPatch  it [it] -- (QualifiedName) [MapBinding]
-  | SetPatch  it [it] -- (QualifiedName) [Expr]
+  | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
+data PatchableExpr it
+  = PatchableExpr it it  -- (Collection) (Expr)
+  deriving stock (Generic, Functor, Foldable, Traversable)
+
+-- Different productions only allow different collections, for example:
+-- Remove: CMap | CSet
+-- Patch: CList | CMap | CSet
+-- ForBox: CList | CSet
+-- But we chose to reuse them here to make it simpler.
 data Collection it
   = CList
   | CMap
@@ -393,6 +400,9 @@ instance Eq1 Expr where
   liftEq f (BigMap xs) (BigMap ys) = liftEqList f xs ys
   liftEq _ _ _ = False
 
+instance Eq1 PatchableExpr where
+  liftEq f (PatchableExpr c1 a) (PatchableExpr c2 b) = f c1 c2 && f a b
+
 instance Eq1 Collection where
   liftEq _ CList    CList   = True
   liftEq _ CMap     CMap    = True
@@ -428,7 +438,7 @@ instance Eq1 Variant where
   liftEq _ _ _ = False
 
 instance Eq1 TField where
-  liftEq f (TField an at) (TField bn bt) = f an bn && f at bt
+  liftEq f (TField an at) (TField bn bt) = f an bn && liftEqMaybe f at bt
 
 instance Eq1 ModuleAccess where
   liftEq f (ModuleAccess ap asrc) (ModuleAccess bp bsrc) =

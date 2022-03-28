@@ -58,6 +58,7 @@ okayTests =
         -- LIGO-331
       , "polymorphism" </> "cases_annotation1.mligo"
       , "polymorphism" </> "cases_annotation2.mligo"
+      , "polymorphism" </> "comb.ligo"
       , "polymorphism" </> "comb.mligo"
       , "polymorphism" </> "ctrct.mligo"
       , "polymorphism" </> "error_monad.mligo"
@@ -76,31 +77,6 @@ okayTests =
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"
 
-        -- LIGO-446
-      , "match.ligo"
-      , "loop.ligo"
-      , "failwith.ligo"
-      , "type_puning.ligo"
-      , "heap.ligo"
-      , "tutorials" </> "optimisation" </> "LargeEntrypointV2.ligo"
-      , "tutorials" </> "optimisation" </> "EffectfulBindingV1.ligo"
-      , "tutorials" </> "optimisation" </> "EffectfulBindingV2.ligo"
-      , "tutorials" </> "optimisation" </> "LargeEntrypointV1.ligo"
-      , "tutorials" </> "optimisation" </> "EffectfulBindingV3.ligo"
-      , "multisig-v2.ligo"
-      , "polymorphism" </> "comb.ligo" -- LIGO-331
-      , "pascaligo_long_remove.ligo"
-      , "patch_long_path.ligo"
-      , "long_remove.ligo"
-      , "record.ligo"
-      , "basic_multisig" </> "multisig.ligo"
-      , "loop14.ligo"
-      , "loop17.ligo"
-      , "multisig.ligo"
-      , "hashlock.ligo"
-      , "id.ligo"
-      , "long_assign.ligo"
-
         -- LIGO-481
       , "aggregation" </> "bug_module_record.ligo"
 
@@ -111,6 +87,7 @@ okayTests =
       , "negative" </> "bad_michelson_insertion_3.ligo"
 
         -- LIGO fails to parse these:
+      , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
       , "negative" </> "error_function_arguments.religo"
       , "negative" </> "error_syntax.ligo"
@@ -119,21 +96,7 @@ okayTests =
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "simple" </> "pascaligo" </> "original"
-    , tdIgnoreFiles =
-      [ -- LIGO-446
-        "missing_semicolon_between_stmts.ligo"
-      , "unfinished_code00.ligo"
-      , "unfinished_code01.ligo"
-      , "unfinished_code02.ligo"
-      , "unfinished_code03.ligo"
-      , "unfinished_code04.ligo"
-      , "unfinished_code05.ligo"
-      , "unfinished_code06.ligo"
-      , "unfinished_code07.ligo"
-      , "unfinished_code08.ligo"
-      , "unfinished_code10.ligo"
-      , "unfinished_code11.ligo"
-      ]
+    , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
   , TestDir
@@ -153,14 +116,7 @@ okayTests =
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
-    , tdIgnoreFiles =
-      [ -- LIGO-446
-        "1loop.ligo"
-      , "2hashlock.ligo"
-      , "2long_assign.ligo"
-      , "2long_remove.ligo"
-      , "4failwith.ligo"
-      ]
+    , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
   , TestDir
@@ -184,6 +140,7 @@ badTests =
         "simple" </> "pascaligo" </> "missing_name_of_argument.ligo"
       , "simple" </> "reasonligo" </> "missing_ident_in_type_decl.religo"
       , "simple" </> "cameligo" </> "missing_ident_in_type_decl.mligo"
+      , "fuzzing" </> "pascaligo" </> "2long_assign.ligo"
       , "fuzzing" </> "pascaligo" </> "2transpiler_nested.ligo"
       , "fuzzing" </> "reasonligo" </> "4match_bis.religo"
       , "fuzzing" </> "reasonligo" </> "2self_address.religo"
@@ -206,6 +163,10 @@ badTests =
       , "fuzzing" </> "cameligo" </> "1incr_decr.mligo"
       , "fuzzing" </> "cameligo" </> "2local_type_decl.mligo"
       , "fuzzing" </> "cameligo" </> "2address.mligo"
+
+        -- Accepted by LIGO's parser:
+      , "simple" </> "pascaligo" </> "unfinished_code00.ligo"
+      , "simple" </> "pascaligo" </> "unfinished_code04.ligo"
       ]
     , tdIgnoreDirs =
       [ "fuzzing" </> "cameligo" </> "original"
