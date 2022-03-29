@@ -1,0 +1,11 @@
+{
+  "name": "ligo-list-helpers",
+  "version": "1.0.0",
+  "description": "List helpers for LIGO",
+  "scripts": {
+    "test": "esy ligo run test list.test.mligo"
+  },
+  "dependencies": {
+    "temp-ligo-bin": "0.25.0"
+  }
+}

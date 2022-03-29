@@ -5,15 +5,19 @@ let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(t
 
 let raw_options = Compiler_options.default_raw_options
 
-let init_state_cameligo = Repl.make_initial_state
+let make_init_state_cameligo ?(project_root=None) () = Repl.make_initial_state
                             (CameLIGO: Syntax_types.t)
                             Environment.Protocols.Hangzhou
-                            dry_run_options
+                            dry_run_options project_root
 
-let init_state_jsligo = Repl.make_initial_state
+let init_state_cameligo = make_init_state_cameligo ()
+
+let make_init_state_jsligo ?(project_root=None) () = Repl.make_initial_state
                           (JsLIGO: Syntax_types.t)
                           Environment.Protocols.Hangzhou
-                          dry_run_options
+                          dry_run_options project_root
+
+let init_state_jsligo = make_init_state_jsligo ()
 
 let apply_repl_sequence ~raw_options init_state commands =
   let f state command =
@@ -152,6 +156,50 @@ let test_long_jsligo ~raise ~raw_options () =
         "+32"]
         ()
 
+let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/demo" in
+  let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #use (equivalent of #include) the dependencies of the root project *)
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#use \"ligo-foo/foo.mligo\"";
+      "#use \"ligo-list-helpers/list.mligo\"";
+      "#use \"ligo-test_2/test2.mligo\"";
+      "y";
+      "#use \"ligo_test_1/test1.mligo\"";
+      "x";
+    ]
+    [
+      "uniq_concat , reverse , concat ,\nSetX";
+      "sum , reverse ,\nconcat";
+      "y";
+      "24";
+      "x";
+      "42";
+    ]
+    ()
+
+let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/demo" in
+  let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #import the dependecies of the root project under separate namespaces *)
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#import \"ligo-foo/foo.mligo\" \"Foo\"";
+      "#import \"ligo-list-helpers/list.mligo\" \"ListX\"";
+      "#import \"ligo-test_2/test2.mligo\" \"Test2\"";
+      "#import \"ligo_test_1/test1.mligo\" \"Test1\"";
+      "Test1.x";
+      "Test2.y";
+    ]
+    [
+      "Done.";
+      "Done.";
+      "Done.";
+      "Done.";
+      "42";
+      "24";
+      ]
+    ()
+
 let () =
   Printexc.record_backtrace true ;
   run_test @@ test_suite "LIGO" [
@@ -170,7 +218,10 @@ let () =
         test "mod" (test_mod_jsligo ~raw_options);
         test "use" (test_use_jsligo ~raw_options);
         test "long" (test_long_jsligo ~raw_options)
-      ]
-
+      ] ;
+    test_suite "REPL + package-management" [
+      test "#use external packages" (test_use_external_packages ~raw_options);
+      test "#import external packages" (test_import_external_packages ~raw_options);
     ] ;
+  ] ;
   ()

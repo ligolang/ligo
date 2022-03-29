@@ -9,6 +9,8 @@ include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
 
+module ModResHelpers = Preprocessor.ModRes.Helpers
+
 type interpreter_error = Errors.interpreter_error
 
 let check_value value =
@@ -709,6 +711,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
+      let>> mod_res = Get_mod_res () in
+      let source_file = ModResHelpers.resolve_file_name source_file mod_res in
       let views = List.map
                     ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
                     views
@@ -1255,7 +1259,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
-  let initial_state = Tezos_state.init_ctxt ~raise options.Compiler_options.backend.protocol_version [] in
+  let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
     let s, _ = ValueVar.internal_get_name_and_counter n.var in
     LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
