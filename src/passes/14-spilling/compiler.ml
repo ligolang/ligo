@@ -383,15 +383,28 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
               let i' = self i in
               return @@ E_iterator (iterator_name , f' , i')
           )
+          | (code :: args), C_CREATE_CONTRACT -> (
+              let code' = expression_to_iterator_body code in
+              let args' = List.map ~f:self args in
+              let code_type = compile_type ~raise code.type_expression in
+              let (code_input_type, _) =
+                trace_option ~raise (corner_case ~loc:__LOC__ "Wrong type : expecting function for CREATE_CONTRACT script")
+                  (get_t_function code_type) in
+              let (p, s) =
+                trace_option ~raise (corner_case ~loc:__LOC__ "Wrong type : expecting function for CREATE_CONTRACT script")
+                  (get_t_pair code_input_type) in
+              return @@ E_create_contract (p, s, code', args')
+            )
           | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold, fold_left, fold_right,loop_left) = iterator_generator C_ITER,
-                                                       iterator_generator C_MAP,
-                                                       iterator_generator C_FOLD,
-                                                       iterator_generator C_FOLD_LEFT,
-                                                       iterator_generator C_FOLD_RIGHT,
-                                                       iterator_generator C_LOOP_LEFT
-                                                       in
+      let iter = iterator_generator C_ITER in
+      let map = iterator_generator C_MAP in
+      let fold = iterator_generator C_FOLD in
+      let fold_left = iterator_generator C_FOLD_LEFT in
+      let fold_right = iterator_generator C_FOLD_RIGHT in
+      let loop_left = iterator_generator C_LOOP_LEFT in
+      (* wait what *)
+      let create_contract = iterator_generator C_CREATE_CONTRACT in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -407,6 +420,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
       | (C_LOOP_LEFT, lst) -> loop_left lst
+      | (C_CREATE_CONTRACT , lst) -> create_contract lst
       | _ -> (
           let lst' = List.map ~f:(self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}

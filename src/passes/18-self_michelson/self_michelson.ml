@@ -372,6 +372,11 @@ let rec remove_last : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun
      Seq (l, init @ last)
   | t -> t
 
+let opt_drop1 : _ peep1 = function
+  | Prim (l, "DROP", [Int (_, n)], annot) when Z.equal n Z.one ->
+    Some [Prim (l, "DROP", [], annot)]
+  | _ -> None
+
 let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
   | op, Prim (_, "DROP", [], _) when is_nullary_op op -> Some []
@@ -514,8 +519,10 @@ let opt_swap2 : _ peep2 = function
 
 (* for inserted Michelson lambdas *)
 let opt_beta3 : _ peep3 = function
-  (* PUSH (lambda ...) code ; SWAP ; EXEC  ↦  f *)
-  | Prim (_, "PUSH", [Prim(_, "lambda", _, _); code], _),
+  (* PUSH (lambda ...) code ; SWAP ; EXEC  ↦  code *)
+  (* LAMBDA a b code ; SWAP ; EXEC  ↦  code *)
+  | (Prim (_, "PUSH", [Prim(_, "lambda", _, _); code], _) |
+     Prim (_, "LAMBDA", [_; _; code], _)),
     Prim (_, "SWAP", _, _),
     Prim (_, "EXEC", _, _) ->
       (match code with
@@ -594,6 +601,13 @@ let opt_beta2 : _ peep2 = function
   (* PAIR ; UNPAIR  ↦  *)
   | Prim (_, "PAIR", [], _), Prim (_, "UNPAIR", [], _) ->
     Some []
+  (* PAIR ; CAR  ↦  SWAP ; DROP *)
+  (* not really any better but looks less stupid *)
+  | Prim (l1, "PAIR", [], _), Prim (l2, "CAR", [], _) ->
+    Some [Prim (l1, "SWAP", [], []); Prim (l2, "DROP", [], [])]
+  (* PAIR ; CDR  ↦  DROP *)
+  | Prim (_, "PAIR", [], _), Prim (l, "CDR", [], _) ->
+    Some [Prim (l, "DROP", [], [])]
   | _ -> None
 
 let opt_eta2 : _ peep2 = function
@@ -610,11 +624,21 @@ let opt_unpair_edo : _ peep4 = function
     Some [Prim (l, "UNPAIR", [], [])]
   | _ -> None
 
+let opt_dup1 : _ peep1 = function
+  | Prim (l, "DUP", [Int (_, n)], annot) when Z.equal n Z.one ->
+    Some [Prim (l, "DUP", [], annot)]
+  | _ -> None
+
 let opt_dupn_edo : _ peep3 = function
   | (Prim (l1, "DIG", [Int (l2, n)], []),
      Prim (_, "DUP", [], []),
      Prim (_, "DUG", [Int (_, m)], []))
     when Z.equal (Z.succ n) m ->
+    Some [Prim (l1, "DUP", [Int (l2, m)], [])]
+  | (Prim (_, "SWAP", [], []),
+     Prim (l1, "DUP", [], []),
+     Prim (_, "DUG", [Int (l2, m)], []))
+    when Z.equal (Z.of_int 2) m ->
     Some [Prim (l1, "DUP", [Int (l2, m)], [])]
   | _ -> None
 
@@ -793,7 +817,8 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
   ignore proto;
   let x = flatten_seqs ~has_comment x in
   let x = opt_tail_fail x in
-  let optimizers = [ peephole @@ peep2 opt_drop2 ;
+  let optimizers = [ peephole @@ peep1 opt_drop1 ;
+                     peephole @@ peep2 opt_drop2 ;
                      peephole @@ peep3 opt_drop3 ;
                      peephole @@ peep4 opt_drop4 ;
                      peephole @@ peep3 opt_dip3 ;
@@ -812,6 +837,7 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
                      peephole @@ opt_unpair_car () ;
                      peephole @@ opt_unpair_cdr () ;
                      peephole @@ peep4 opt_unpair_edo ;
+                     peephole @@ peep1 opt_dup1 ;
                      peephole @@ peep3 opt_dupn_edo ;
                      peephole @@ opt_pair2 () ;
                      peephole @@ opt_unpair2 () ;
@@ -822,6 +848,10 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
   let optimizers = List.map ~f:on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_tail_fail x in
+  (* round two *)
+  let optimizers = [ peephole @@ peep1 opt_dup1 ] in
+  let optimizers = List.map ~f:on_seqs optimizers in
+  let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
   let x = opt_strip_annots x in
   let x = use_lambda_instr x in

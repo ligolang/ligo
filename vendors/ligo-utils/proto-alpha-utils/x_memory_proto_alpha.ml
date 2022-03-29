@@ -366,12 +366,15 @@ let pack (data_ty: ('a,_) ty) (data: 'a) : bytes tzresult Lwt.t =
 
 let strings_of_prims = Michelson_v1_primitives.strings_of_prims
 
-let to_hex = fun michelson ->
+let to_bytes = fun michelson ->
   let michelson =
     X_error_monad.force_lwt ~msg:"Internal error: could not serialize Michelson"
       (prims_of_strings michelson) in
   let canonical = Tezos_micheline.Micheline.strip_locations michelson in
-  let bytes = Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical in
+  Data_encoding.Binary.to_bytes_exn Script_repr.expr_encoding canonical
+
+let to_hex = fun michelson ->
+  let bytes = to_bytes michelson in
   Hex.of_bytes bytes
 
 (*

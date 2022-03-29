@@ -7,6 +7,8 @@
   a new constructor at all those places.
 *)
 
+module Ligo_string = Simple_utils.Ligo_string
+
 module Tree_abstraction = struct
 
   open Ast_imperative
@@ -145,13 +147,13 @@ module Tree_abstraction = struct
       | Const x -> pseudo_module_to_string x
 end
 
-module Stacking = struct
+module Michelson = struct
   (*
     Most constants pass through the Spilling unchanged. So they need to be
     compiled down to Michelson. This is the last step.
 
     When compiling the constant, we need to provide its arity (through the type
-    predicate, defined in `Helpers.Stacking`, and its michelson code.
+    predicate, defined in `Helpers.Michelson`, and its michelson code.
     In the case of an n-ary constant, we assume that the stack has the form:
     `x1 :: x2 :: x3 ... :: xn :: _`.
 
@@ -160,7 +162,7 @@ module Stacking = struct
     be written by hand.
    *)
   type protocol_type = Environment.Protocols.t
-  include Helpers.Stacking
+  include Helpers.Michelson
   open Tezos_utils.Michelson
   open Stage_common.Types
 

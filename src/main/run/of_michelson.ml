@@ -123,7 +123,12 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     Memory_proto_alpha.prims_of_strings input_ty in
   let (param_type, storage_type) =
     match input_ty with
-    | Prim (_, T_pair, [x; y], _) -> (x, y)
+    | Prim (_, T_pair, (x :: y :: ys), _) ->
+      let y =
+        if List.is_empty ys
+        then y
+        else Tezos_micheline.Micheline.Prim (-1, Michelson_v1_primitives.T_pair, y :: ys, []) in
+      (x, y)
     | _ -> failwith ("Internal error: input_ty was not a pair " ^ __LOC__) in
   let (Ex_ty input_ty) =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@

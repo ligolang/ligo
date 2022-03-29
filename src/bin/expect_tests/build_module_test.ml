@@ -67,9 +67,7 @@ let%expect_test _ =
       storage int ;
       code { PUSH int 1 ;
              PUSH int 42 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              ADD ;
              DIG 2 ;
              CDR ;
