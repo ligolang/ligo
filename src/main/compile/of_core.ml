@@ -8,7 +8,7 @@ type form =
   | Env
 
 let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
-  let typed = trace ~raise checking_tracer @@ Checking.type_program ~options:options.middle_end ~env:options.middle_end.init_env m in
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~add_warning ~options:options.middle_end ~env:options.middle_end.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
     let selfed = Self_ast_typed.all_module ~raise ~add_warning typed in
@@ -18,12 +18,12 @@ let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) 
     | Env -> selfed in
   applied
 
-let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
+let compile_expression ~raise ~add_warning ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
   let Compiler_options.{ init_env ; _ } = options.middle_end in
   let env = Environment.append init_prog init_env in
 
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env expr in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~add_warning ~options:options.middle_end ~env expr in
   let applied = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_expression typed in
   applied
 

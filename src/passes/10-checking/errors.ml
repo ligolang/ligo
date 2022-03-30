@@ -15,7 +15,6 @@ type typer_error = [
   | `Typer_match_missing_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_match_extra_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_unbound_constructor of Ast_core.label * Location.t
-  | `Typer_redundant_constructor of Ast_core.label * Location.t
   | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable option * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
@@ -188,11 +187,6 @@ let rec error_ppformat : display_format:string display_format ->
     | `Typer_unbound_constructor (c,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Constructor \"%a\" not found. @]"
-        Snippet.pp loc
-        Ast_core.PP.label c
-    | `Typer_redundant_constructor (c,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid variant.@.Constructor \"%a\" already exists as part of another variant. @]"
         Snippet.pp loc
         Ast_core.PP.label c
     | `Typer_type_constant_wrong_number_of_arguments (op_opt,e,a,loc) ->
@@ -671,16 +665,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_unbound_constructor (c,loc) ->
     let message = `String "unbound type variable" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.label c in
-    let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);
-      ("value", `String value);
-    ] in
-    json_error ~stage ~content
-  | `Typer_redundant_constructor (c,loc) ->
-    let message = `String "redundant constructor" in
     let loc = Format.asprintf "%a" Location.pp loc in
     let value = Format.asprintf "%a" Ast_core.PP.label c in
     let content = `Assoc [
