@@ -363,13 +363,13 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     )
   )
   | E_constructor {constructor; element} -> (
-    let expr' = type_expression' ~raise ~options (app_context, context) element in
-    let (avs, c_tv, sum_tv) =
+    let c_arg = type_expression' ~raise ~options (app_context, context) element in
+    let (avs, c_arg_t, sum_t) =
       match tv_opt with
-      | Some sum_tv when (Option.is_some (O.get_t_sum sum_tv)) -> (* if tv_opt is a type sum, we don't need to search the typing context *)
-        let c_tv = trace_option ~raise (expected_variant e.location sum_tv) @@ O.get_sum_label_type sum_tv constructor in
+      | Some sum_t when (Option.is_some (O.get_t_sum sum_t)) ->
+        let c_tv = trace_option ~raise (expected_variant e.location sum_t) @@ O.get_sum_label_type sum_t constructor in
         let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
-        (avs,c_tv,sum_tv)
+        (avs,c_tv,sum_t)
       | (None | Some _) ->
         trace_option ~raise (unbound_constructor constructor e.location) @@
           Typing_context.get_constructor_parametric constructor context
@@ -378,10 +378,10 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     let () = trace_option ~raise (not_annotated e.location) @@
       if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
     in
-    let c_tv = Ast_typed.Helpers.psubst_type table c_tv in
-    let sum_tv = Ast_typed.Helpers.psubst_type table sum_tv in
-    let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
-    return (E_constructor {constructor; element=expr'}) sum_tv
+    let c_t = Ast_typed.Helpers.psubst_type table c_arg_t in
+    let sum_t = Ast_typed.Helpers.psubst_type table sum_t in
+    let () = assert_type_expression_eq ~raise c_arg.location (c_t, c_arg.type_expression) in
+    return (E_constructor {constructor; element=c_arg}) sum_t
   )
   (* Record *)
   | E_record m ->
