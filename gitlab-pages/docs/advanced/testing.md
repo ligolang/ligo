@@ -592,8 +592,8 @@ let test =
       let tester = ([balances, threshold] : [balances, tez]) : nat => Map.size (balances_under (balances, threshold));
       let size = Test.run(tester, [balances, threshold]);
       let expected_size_ = Test.eval(expected_size) ;
-      let unit = Test.log (["expected", expected_size]) ;
-      let unit_ = Test.log (["actual",size]) ;
+      let unit_ = Test.log (["expected", expected_size]) ;
+      let unit__ = Test.log (["actual",size]) ;
       return (assert (Test.michelson_equal (size,expected_size_)))
     },
     list ([ [15 as tez,2 as nat] , [130 as tez,1 as nat] , [1200 as tez,0 as nat]]) );

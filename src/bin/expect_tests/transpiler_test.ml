@@ -370,7 +370,7 @@ let%expect_test _ =
   [%expect {|
 type card_pattern_id = nat;
 
-type card_pattern = {coefficient: tez, quantity: nat };
+type card_pattern = {coefficient: tez, quantity: nat};
 
 type card_patterns = map(card_pattern_id, card_pattern);
 
@@ -378,23 +378,21 @@ type card_id = nat;
 
 type card = {
   card_owner: address,
-  card_pattern: card_pattern_id
-};
+  card_pattern: card_pattern_id};
 
 type cards = map(card_id, card);
 
-type storage = {card_patterns, cards, next_id: nat };
+type storage = {card_patterns, cards, next_id: nat};
 
 type return = (list(operation), storage);
 
-type action_buy_single = {card_to_buy: card_pattern_id };
+type action_buy_single = {card_to_buy: card_pattern_id};
 
-type action_sell_single = {card_to_sell: card_id };
+type action_sell_single = {card_to_sell: card_id};
 
 type action_transfer_single = {
   card_to_transfer: card_id,
-  destination: address
-};
+  destination: address};
 
 type parameter =
   Buy_single(action_buy_single)
@@ -425,13 +423,13 @@ let transfer_single
              };
            let card =
              {...card,
-               {card_owner: action.destination }};
+               {card_owner: action.destination}};
            let cards =
              (
               Map.add((action.card_to_transfer),
                  (card),
                  (cards)));
-           let s = {...s, {cards: cards }};
+           let s = {...s, {cards: cards}};
            ([] : list(operation)), s
          }
      });
@@ -466,8 +464,7 @@ let sell_single: (action_sell_single, storage) => return =
              {...card_pattern,
                {
                  quantity:
-                   (abs((((card_pattern.quantity) - (1n)))))
-               }};
+                   (abs((((card_pattern.quantity) - (1n)))))}};
            let [@var] card_patterns: card_patterns =
              s.card_patterns;
            let card_patterns =
@@ -475,11 +472,11 @@ let sell_single: (action_sell_single, storage) => return =
               Map.add((card.card_pattern),
                  (card_pattern),
                  (card_patterns)));
-           let s = {...s, {card_patterns: card_patterns }};
+           let s = {...s, {card_patterns: card_patterns}};
            let [@var] cards: cards = s.cards;
            let cards =
              (Map.remove((action.card_to_sell), (cards)));
-           let s = {...s, {cards: cards }};
+           let s = {...s, {cards: cards}};
            let price: tez =
              ((card_pattern.coefficient) * (card_pattern.
                  quantity));
@@ -522,7 +519,7 @@ let buy_single: (action_buy_single, storage) => return =
              };
            let card_pattern =
              {...card_pattern,
-               {quantity: ((card_pattern.quantity) + (1n)) }};
+               {quantity: ((card_pattern.quantity) + (1n))}};
            let [@var] card_patterns: card_patterns =
              s.card_patterns;
            let card_patterns =
@@ -530,18 +527,17 @@ let buy_single: (action_buy_single, storage) => return =
               Map.add((action.card_to_buy),
                  (card_pattern),
                  (card_patterns)));
-           let s = {...s, {card_patterns: card_patterns }};
+           let s = {...s, {card_patterns: card_patterns}};
            let [@var] cards: cards = s.cards;
            let cards =
              (
               Map.add((s.next_id),
                  ({
                    card_owner: Tezos.sender,
-                   card_pattern: action.card_to_buy
-                 }),
+                   card_pattern: action.card_to_buy}),
                  (cards)));
-           let s = {...s, {cards: cards }};
-           let s = {...s, {next_id: ((s.next_id) + (1n)) }};
+           let s = {...s, {cards: cards}};
+           let s = {...s, {next_id: ((s.next_id) + (1n))}};
            ([] : list(operation)), s
          }
      });
@@ -638,7 +634,7 @@ let%expect_test _ =
   [%expect{|
     type pii = (int, int);
 
-    type ppi = {x: pii, y: pii };
+    type ppi = {x: pii, y: pii};
 
     type ppp = (ppi, ppi);
 
@@ -647,11 +643,8 @@ let%expect_test _ =
          let [@var] a: ppp =
            {
               x: 0, 1,
-              y: 10, 11
-            }, {x: 100, 101, y: 110, 111 };
-         let a =
-           {...a,
-             {0: {...a, {0.x: {...a, {0.x[0]: 2 }} }} }};
+              y: 10, 11}, {x: 100, 101, y: 110, 111};
+         let a = {...a, {0: {...a, {0.x: {...a, {0.x[0]: 2}}}}}};
          a[0].x[0]);
 
     let asymetric_tuple_access: unit => int =
@@ -659,7 +652,7 @@ let%expect_test _ =
          let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
          ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 
-    type nested_record_t = {nesty: {mymap: map(int, string) } };
+    type nested_record_t = {nesty: {mymap: map(int, string)}};
 
     let nested_record: nested_record_t => string =
       (([@var] nee: nested_record_t): string =>
@@ -670,9 +663,7 @@ let%expect_test _ =
                  {...nee,
                    {
                      nesty.mymap:
-                       (Map.add((1), ("one"), (nee.nesty.mymap)))
-                   }}
-             }};
+                       (Map.add((1), ("one"), (nee.nesty.mymap)))}}}};
          switch Map.find_opt(1, nee.nesty.mymap) {
          | Some s => s
          | None() =>
@@ -1027,17 +1018,17 @@ let foobar: int => int =
        if(((i) > (0))) {
 
          let i = ((i) + (1));
-         let gen__env13 = {...gen__env13, {0: i }};
+         let gen__env13 = {...gen__env13, {0: i}};
          let gen__env11 = i;
          let gen__env11 =
            if(((i) > (10))) {
 
              let i = 20;
-             let gen__env11 = {...gen__env11, {0: i }};
+             let gen__env11 = {...gen__env11, {0: i}};
              {
                (failwith(("who knows")));
                let i = 30;
-               let gen__env11 = {...gen__env11, {0: i }};
+               let gen__env11 = {...gen__env11, {0: i}};
                {
                  ();
                  gen__env11
@@ -1051,7 +1042,7 @@ let foobar: int => int =
              }
              };
          let i = gen__env11[0];
-         let gen__env13 = {...gen__env13, {0: i }};
+         let gen__env13 = {...gen__env13, {0: i}};
          {
            ();
            gen__env13

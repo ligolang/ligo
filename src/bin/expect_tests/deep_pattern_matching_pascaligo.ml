@@ -76,10 +76,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.ligo", line 21, characters 12-53:
-     20 |           block {
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.ligo", line 22, characters 17-24:
      21 |             const f = function (const b:int) is b + a ;
      22 |           } with f (b+1)
+     23 |         | Cons (a,b) -> "invalid"
 
     Invalid type(s).
     Expected: "string", but got: "int". |}]

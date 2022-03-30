@@ -30,7 +30,8 @@
  (action
   (run ./repl_test.exe))
  (deps
-  (source_tree ../../gitlab-pages/docs)))
+  (source_tree ../../gitlab-pages/docs)
+  (source_tree projects)))
 
 (rule
  (alias parser-negative-tests)
