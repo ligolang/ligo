@@ -378,13 +378,18 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     )
   )
   | E_constructor {constructor; element} -> (
+    let destructed_tv_opt =
+      Option.value_map tv_opt
+        ~default:None
+        ~f:(fun sum_t -> Option.value_map (O.get_sum_label_type sum_t constructor) ~default:None ~f:(fun x -> Some (sum_t , x)))
+    in 
     let (avs, c_arg_t, sum_t) =
-      match tv_opt with
-      | Some sum_t when (Option.is_some (O.get_t_sum sum_t)) ->
-        let c_tv = trace_option ~raise (expected_variant e.location sum_t) @@ O.get_sum_label_type sum_t constructor in
+      match destructed_tv_opt with
+      | Some (sum_t,c_tv) -> (
         let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
         (avs,c_tv,sum_t)
-      | (None | Some _) -> (
+      )
+      | None -> (
         let matching_t_sum = Context.Typing.get_sum constructor context in
         match matching_t_sum with
         | (v_ty,tvl,c_arg_t,sum_t) :: ignored ->
