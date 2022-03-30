@@ -2135,6 +2135,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
+    The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Hint: You might want to add a type annotation.
+
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
       2 |   [@layout:comb]
       3 |     B of nat
@@ -2804,3 +2807,24 @@ let%expect_test _ =
   TRANSFER_TOKENS ;
   CONS ;
   PAIR } |}]
+
+(* some check about the warnings of the E_constructor cases *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo" ] ;
+  [%expect{|
+File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
+  8 |
+  9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
+
+The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
+Hint: You might want to add a type annotation.
+
+{ parameter unit ;
+  storage (or (int %a) (nat %b)) ;
+  code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
+  
+  run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
+  [%expect{|
+{ parameter unit ;
+  storage (or (nat %a) (nat %b)) ;
+  code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]

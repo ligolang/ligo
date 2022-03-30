@@ -16,6 +16,21 @@ let untype_expression = Untyper.untype_expression
 let untype_program = Untyper.untype_program
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
+(*
+  This function operates on the return type of Context.get_sum.
+  If type match the constructor label and its argument type, warns user about ambiguous constructor 
+*)
+let warn_ambiguous_constructor ~add_warning loc (var_chosen,c_arg_t) ignored =
+  let ignored_match = List.find
+    ~f:(fun (_,_,a,_) ->
+      Option.is_some (O.Misc.assert_type_expression_eq (c_arg_t, a))
+      )
+      ignored
+  in
+  match ignored_match with
+  | Some (var_ignored,_,_,_) -> add_warning (`Checking_ambiguous_contructor (loc,var_chosen,var_ignored))
+  | None -> ()
+
 let rec type_module_expr ~raise ~add_warning ~init_context ~options : I.module_expr -> typing_context * O.module_expr = fun m_expr ->
   let return x =
     let ret = Location.wrap ~loc:m_expr.location x in
@@ -363,7 +378,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     )
   )
   | E_constructor {constructor; element} -> (
-    let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     let (avs, c_arg_t, sum_t) =
       match tv_opt with
       | Some sum_t when (Option.is_some (O.get_t_sum sum_t)) ->
@@ -371,11 +385,15 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
         let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
         (avs,c_tv,sum_t)
       | (None | Some _) -> (
-        match List.hd (Context.Typing.get_sum constructor context) with
-        | Some (_,tvl,ctor_t,sum_t) -> (tvl,ctor_t,sum_t)
-        | None -> raise.raise (unbound_constructor constructor e.location)
+        let matching_t_sum = Context.Typing.get_sum constructor context in
+        match matching_t_sum with
+        | (v_ty,tvl,c_arg_t,sum_t) :: ignored ->
+          let () = warn_ambiguous_constructor ~add_warning e.location (v_ty,c_arg_t) ignored in
+          (tvl,c_arg_t,sum_t)
+        | [] -> raise.raise (unbound_constructor constructor e.location)
       )
     in
+    let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
     let () = trace_option ~raise (not_annotated e.location) @@
       if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
