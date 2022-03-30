@@ -32,7 +32,7 @@ let dry_run (raw_options : Compiler_options.raw) source_file parameter storage a
         let _contract : Mini_c.meta Tezos_utils.Michelson.michelson = Compile.Of_michelson.build_contract ~raise compile_exp [] in
         Option.map ~f:fst @@ Self_michelson.fetch_contract_ty_inputs compile_exp.expr_ty
       in
-      let compiled_input    = Compile.Utils.compile_contract_input ~raise ~options parameter storage source_file syntax typed_prg in
+      let compiled_input    = Compile.Utils.compile_contract_input ~raise ~add_warning ~options parameter storage source_file syntax typed_prg in
       let args_michelson    = Run.evaluate_expression ~raise compiled_input.expr compiled_input.expr_ty in
       let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty } in
       let runres  = Run.run_contract ~raise ~options compile_exp.expr compile_exp.expr_ty args_michelson in
@@ -74,7 +74,7 @@ let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amo
       let sugar_param      = Compile.Of_imperative.compile_expression ~raise imperative_param in
       let core_param       = Compile.Of_sugar.compile_expression ~raise sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
-      let typed_app        = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
+      let typed_app        = Compile.Of_core.compile_expression ~raise ~add_warning ~options ~init_prog app in
       let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise typed_app aggregated_prg in
       let app_mini_c       = Compile.Of_aggregated.compile_expression ~raise app_aggregated in
       let michelson        = Compile.Of_mini_c.compile_expression ~raise ~options app_mini_c in

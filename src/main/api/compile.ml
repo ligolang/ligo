@@ -103,7 +103,7 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
         let Compiler_options.{ syntax ; _ } = options.frontend in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
@@ -134,7 +134,7 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
