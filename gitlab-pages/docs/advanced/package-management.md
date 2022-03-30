@@ -96,6 +96,52 @@ the path where dependencies are installed use the `--cache-path` flag to specify
 ligo install --cache-path /some/path
 ```
 
+### Upgrading version of a LIGO package
+
+During the lifecycle of a project, if you wish to upgrade the version of a LIGO package, 
+Just update the package version to the desired one in the `package.json`.
+
+```diff
+{
+  ...
+  "dependencies": {
+    "ligo-foo": "1.0.6",
+-   "ligo-list-helpers": "1.0.0",
++   "ligo-list-helpers": "1.0.1",
+    "ligo-test_2": "1.0.0",
+    "ligo_test_1": "1.0.0"
+  }
+}
+```
+and run the command
+```bash
+ligo install
+```
+This will fetch the updated version of LIGO package, and the compiler will use the updated
+version of the package.
+
+### Using a LIGO package via REPL
+
+If you wish to try out a LIGO package in the REPL environment, Install the LIGO package by
+following the steps above,
+
+And then fire up the LIGO REPL with the additional flag `--project-root`
+
+```
+$ ligo repl cameligo --project-root <path-to-project-root>
+Welcome to LIGO's interpreter!
+Included directives:
+  #use "file_path";;
+  #import "file_path" "module_name";;
+In  [1]: #import "ligo-list-helpers/list.mligo" "ListX";;
+Out [1]: Done.
+In  [2]: ListX.concat;;
+Out [2]: "[lambda of type: (lambda (list int) (lambda (list int) (list int))) ]"
+In  [3]: ListX.concat [1;2;3] [4;5;6];;
+Out [3]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
+In  [4]: 
+```
+
 ## Creating and publishing LIGO packages to npm
 
 Since we are going to publish the library to npm, we start by creating a npm project by running 

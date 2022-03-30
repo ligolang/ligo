@@ -10,10 +10,21 @@ module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
 module Tezos_protocol = Tezos_protocol_012_Psithaca
 module Location = Simple_utils.Location
+module ModRes = Preprocessor.ModRes
 
 open Errors
 
 type execution_trace = unit
+
+type state = {
+  tezos_context : Tezos_state.context ;
+  mod_res       : ModRes.t option ; 
+}
+
+let make_state ~raise ~(options : Compiler_options.t)  =
+  let tezos_context = Tezos_state.init_ctxt ~raise options.backend.protocol_version [] in
+  let mod_res       = Option.bind ~f:ModRes.make options.frontend.project_root in
+  { tezos_context ; mod_res }
 
 let add_warning _ = ()
 
@@ -30,7 +41,7 @@ module Command = struct
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
     | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
-
+    | Get_mod_res : unit -> ModRes.t option t
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
       -> [`Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t] t
     | State_error_to_value : Tezos_state.state_error -> LT.value t
@@ -77,10 +88,11 @@ module Command = struct
       raise:Errors.interpreter_error raise ->
       options:Compiler_options.t ->
       a t ->
-      Tezos_state.context ->
+      state ->
       execution_trace ref option ->
       (a * Tezos_state.context)
-    = fun ~raise ~options command ctxt _log ->
+    = fun ~raise ~options command state _log ->
+    let ctxt = state.tezos_context in
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
       let (k_ty, v_ty) = trace_option ~raise (Errors.generic_error bigmap_ty.location "Expected big_map type") @@
@@ -143,6 +155,8 @@ module Command = struct
       ((),ctxt)
     | Get_state () ->
       (ctxt,ctxt)
+    | Get_mod_res () -> 
+      (state.mod_res,ctxt)
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
@@ -420,26 +434,27 @@ let rec eval
     raise:Errors.interpreter_error raise ->
     options:Compiler_options.t ->  
     a t ->
-    Tezos_state.context ->
+    state ->
     execution_trace ref option ->
     a * Tezos_state.context
-  = fun ~raise ~options e ctxt log ->
+  = fun ~raise ~options e state log ->
   match e with
   | Bind (e', f) ->
-    let (v, ctxt) = eval ~raise ~options e' ctxt log in
-    eval ~raise ~options (f v) ctxt log
-  | Call command -> Command.eval ~raise ~options command ctxt log
-  | Return v -> (v, ctxt)
+    let (v, tezos_context) = eval ~raise ~options e' state log in
+    let state = { state with tezos_context } in
+    eval ~raise ~options (f v) state log
+  | Call command -> Command.eval ~raise ~options command state log
+  | Return v -> (v, state.tezos_context)
   | Fail_ligo err -> raise.raise err
   | Try_or (e', handler) ->
     try_with
-      (eval ~options e' ctxt log)
+      (eval ~options e' state log)
       (function
             `Main_interpret_target_lang_error _
           | `Main_interpret_target_lang_failwith _
           | `Main_interpret_meta_lang_eval _
           | `Main_interpret_meta_lang_failwith _ ->
-            eval ~raise ~options handler ctxt log
+            eval ~raise ~options handler state log
           | e -> raise.raise e)
 
 let fail err : 'a t = Fail_ligo err
