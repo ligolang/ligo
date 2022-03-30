@@ -374,10 +374,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
         trace_option ~raise (unbound_constructor constructor e.location) @@
           Typing_context.get_constructor_parametric constructor context
     in
-    let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_tv expr'.type_expression in
-    let table = match tv_opt with
-      | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) avs table sum_tv tv_opt
-      | None -> table in
+    let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
     let () = trace_option ~raise (not_annotated e.location) @@
       if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
     in
