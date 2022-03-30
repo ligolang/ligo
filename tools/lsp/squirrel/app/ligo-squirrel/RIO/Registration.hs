@@ -4,10 +4,13 @@ module RIO.Registration
   ) where
 
 import Control.Monad (void)
+import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
+import System.FilePath ((</>))
 
 import Extension (extGlobs)
+import RIO.Indexing (ligoProjectName)
 import RIO.Types (RIO)
 
 registerDidChangeConfiguration :: RIO ()
@@ -29,8 +32,27 @@ registerFileWatcher = do
         , J._watchDelete = True
         }
       }
-    regOpts = J.DidChangeWatchedFilesRegistrationOptions $ J.List $ map watcher extGlobs
-    reg = J.Registration "ligoFileWatcher" J.SWorkspaceDidChangeWatchedFiles regOpts
-    regParams = J.RegistrationParams $ J.List [J.SomeRegistration reg]
+    ligoFilesOpts = J.DidChangeWatchedFilesRegistrationOptions $ J.List $ map watcher extGlobs
+    ligoFilesReg = J.Registration "ligoFileWatcher" J.SWorkspaceDidChangeWatchedFiles ligoFilesOpts
+
+    projGlob = T.pack $ "**" </> ligoProjectName
+    -- XXX: We don't care about changes in the file itself for now, but if
+    -- needed in the future, _watchChange should be set to True.
+    -- See also the note in handleProjectFileChanged.
+    projWatcher = J.FileSystemWatcher
+      { J._globPattern = projGlob
+      , J._kind = Just J.WatchKind
+        { J._watchChange = False
+        , J._watchCreate = True
+        , J._watchDelete = True
+        }
+      }
+    ligoProjOpts = J.DidChangeWatchedFilesRegistrationOptions $ J.List [projWatcher]
+    ligoProjReg = J.Registration "ligoProjectWatcher" J.SWorkspaceDidChangeWatchedFiles ligoProjOpts
+
+    regParams = J.RegistrationParams $ J.List
+      [ J.SomeRegistration ligoFilesReg
+      , J.SomeRegistration ligoProjReg
+      ]
 
   void $ S.sendRequest J.SClientRegisterCapability regParams (const $ pure ())

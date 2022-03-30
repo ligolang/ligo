@@ -1,9 +1,9 @@
 module RIO
   ( module RIO.Types
   , newRioEnv
+  , initializeRio
   , run
 
-  , fetchCustomConfig
   , updateCustomConfig
   ) where
 
@@ -17,14 +17,15 @@ import Data.String.Interpolate.IsString (i)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
-import UnliftIO.MVar (newMVar, newEmptyMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.MVar (newEmptyMVar, newMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
 
-import ASTMap qualified
 import AST (Fallback)
+import ASTMap qualified
 import Config (Config (..), getConfigFromNotification)
 import Log (LogT)
 import Log qualified
 import RIO.Document qualified (load)
+import RIO.Registration qualified
 import RIO.Types (Contract (..), RIO (..), RioEnv (..), getCustomConfig)
 
 newRioEnv :: IO RioEnv
@@ -34,7 +35,15 @@ newRioEnv = do
   reOpenDocs <- newMVar HashSet.empty
   reIncludes <- newMVar G.empty
   reTempFiles <- newIO
+  reIndexOpts <- newEmptyMVar
+  reBuildGraph <- newMVar G.empty
   pure RioEnv {..}
+
+initializeRio :: RIO ()
+initializeRio = do
+  RIO.Registration.registerDidChangeConfiguration
+  void fetchCustomConfig
+  RIO.Registration.registerFileWatcher
 
 -- Fetch the configuration from the server and write it to the Config MVar
 fetchCustomConfig :: RIO (Maybe Config)

@@ -386,44 +386,39 @@ typeVariableScopedDecl tyVars = do
 
 extractScopeTree
   :: LIGO (Scope : Bool : Range : xs)
-  -> Tree' '[[]] '[Scope, Bool, Range]
-extractScopeTree ((decls :> visible :> r :> _) :< fs)
-  = fastMake (decls :> visible :> r :> Nil) (map extractScopeTree (toList fs))
+  -> Cofree [] (Scope, Bool, Range)
+extractScopeTree ((decls :> visible :> r :> _) :< fs) =
+  (decls, visible, r) :< map extractScopeTree (toList fs)
 
 -- 'Bool' in the node list denotes whether this part of a tree is a scope
 compressScopeTree
-  :: Tree' '[[]] '[Scope, Bool, Range]
-  -> [Tree' '[[]] '[Scope, Range]]
+  :: Cofree [] (Scope, Bool, Range)
+  -> [Cofree [] (Scope, Range)]
 compressScopeTree = go
   where
-    go
-      :: Tree' '[[]] '[Scope, Bool, Range]
-      -> [Tree' '[[]] '[Scope, Range]]
-    go (only -> (_ :> False :> _ :> Nil, rest)) =
+    go :: Cofree [] (Scope, Bool, Range) -> [Cofree [] (Scope, Range)]
+    go ((_, False, _) :< rest) =
       rest >>= go
 
-    go (only -> (decls :> True :> r :> Nil, rest)) =
+    go ((decls, True, r) :< rest) =
       let rest' = rest >>= go
-      in [ fastMake (decls :> r :> Nil) rest'
+      in [ (decls, r) :< rest'
          | not (null decls) || not (null rest')
          ]
 
-extractScopeForest
-  :: [Tree' '[[]] '[Scope, Range]]
-  -> ScopeForest
+extractScopeForest :: [Cofree [] (Scope, Range)] -> ScopeForest
 extractScopeForest = uncurry ScopeForest . runWriter . mapM go
   where
     go
-      :: Tree' '[[]] '[Scope, Range]
+      :: Cofree [] (Scope, Range)
       -> Writer (Map DeclRef ScopedDecl) ScopeTree
-    go (only -> (decls :> r :> Nil, ts)) = do
+    go ((decls, r) :< ts) = do
       let mkDeclRef sd = DeclRef (_sdName sd) (_sdOrigin sd)
       let extracted = Map.fromList $ map (mkDeclRef &&& id) decls
       tell extracted
-      let refs    = Map.keysSet extracted
-      let r'      = refs :> r :> Nil
+      let refs = Map.keysSet extracted
       ts' <- mapM go ts
-      pure $ fastMake r' ts'
+      pure $ (refs, r) :< ts'
 
 mkDecl
   :: (Alternative f, Monad m)

@@ -89,6 +89,7 @@ library:
     - dlist
     - fastsum
     - filepath
+    - free
     - interpolate
     - katip
     - lens
@@ -118,6 +119,7 @@ executables:
       - clock
       - containers
       - data-default
+      - filepath
       - focus
       - hashable
       - hslogger
@@ -177,6 +179,7 @@ tests:
 
     dependencies:
       - aeson
+      - algebraic-graphs
       - data-default
       - ligo-squirrel
       - lsp-test
