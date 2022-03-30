@@ -7,9 +7,9 @@ open Errors
 open Simple_utils.Trace
 
 
-val type_program     : raise:typer_error raise -> options:Compiler_options.middle_end -> ?env:Environment.t -> I.module_ -> O.program
-val type_declaration : raise:typer_error raise -> options:Compiler_options.middle_end -> ?env:Environment.t -> I.declaration -> O.declaration
-val type_expression  : raise:typer_error raise -> options:Compiler_options.middle_end -> ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
+val type_program     : raise:typer_error raise -> add_warning : _ -> options:Compiler_options.middle_end -> ?env:Environment.t -> I.module_ -> O.program
+val type_declaration : raise:typer_error raise -> add_warning : _ -> options:Compiler_options.middle_end -> ?env:Environment.t -> I.declaration -> O.declaration
+val type_expression  : raise:typer_error raise -> add_warning : _ -> options:Compiler_options.middle_end -> ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
 
 
 val untype_expression : O.expression -> I.expression

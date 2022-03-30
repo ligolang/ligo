@@ -133,34 +133,37 @@ module Typing = struct
 
   open Ast_typed.Types
 
-(*
-  for any constructor [ctor] matching a sum-type `t` in the context [ctxt], return:
-  1. the list of abstracted type variables in the constructor parameter (e.g. ['a ; 'b] for `Foo of ('a * int * 'b)`)
-  2. the type of the constructor parameter (e.g. `'a * int * 'b` for `Foo of ('a * int * 'b)`)
-  3. the type of the sum-type found in the context
-*)
-let rec get_constructor_parametric : label -> t -> (type_variable list * type_expression * type_expression) option =
-  fun ctor ctxt ->
-      let aux = fun (_t,type_) ->
-        let t_params, type_ = Ast_typed.Helpers.desctruct_type_abstraction type_ in
-        match type_.type_content with
-        | T_sum m -> (
-          match LMap.find_opt ctor m.content with
-          | Some {associated_type ; _} -> Some (t_params, associated_type , type_)
-          | None -> None
-        )
-        | _ -> None in
-      match List.find_map ~f:aux (get_types ctxt) with
-        Some _ as s -> s
-      | None ->
-        (* If the constructor isn't matched in the context of values,
-          reccursively search for in the context of all the modules in scope *)
-        let modules = get_modules ctxt in
-        List.fold_left modules ~init:None
-          ~f:(fun res (_,module_) ->
-            match res with Some _ as s -> s | None -> get_constructor_parametric ctor module_
-          )
 
+(*
+  for any constructor [ctor] that belong to a sum-type `t` in the context [ctxt] return a 4-uple list:
+  1. the declaration name for type `t`
+  2. list of abstracted type variables in the constructor parameter (e.g. ['a ; 'b] for `Foo of ('a * int * 'b)`)
+  3. type of the constructor parameter (e.g. `'a * int * 'b` for `Foo of ('a * int * 'b)`)
+  4. type of the sum-type found in the context
+*)
+  let rec get_sum: label -> t -> (type_variable * type_variable list * type_expression * type_expression) list =
+    fun ctor ctxt ->
+        let aux = fun (var,type_) ->
+          let t_params, type_ = Ast_typed.Helpers.desctruct_type_abstraction type_ in
+          match type_.type_content with
+          | T_sum m -> (
+            match LMap.find_opt ctor m.content with
+            | Some {associated_type ; _} -> Some (var,t_params, associated_type , type_)
+            | None -> None
+          )
+          | _ -> None
+        in
+        match List.filter_map ~f:aux (get_types ctxt) with
+        | [] ->
+          (* If the constructor isn't matched in the context of values,
+            reccursively search for in the context of all the modules in scope *)
+          let modules = get_modules ctxt in
+          List.fold_left modules ~init:[]
+            ~f:(fun res (_,module_) ->
+              match res with | [] -> get_sum ctor module_ | lst -> lst
+            )
+        | lst -> lst
+  
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
     let rec rec_aux e =
       let aux = fun (_,type_) ->
@@ -188,32 +191,6 @@ let rec get_constructor_parametric : label -> t -> (type_variable list * type_ex
            ) ~init:None modules
     in rec_aux e
 
-
-  let get_sum : _ label_map -> t -> rows option = fun lmap e ->
-    let rec rec_aux e =
-      let aux = fun (_,type_) ->
-        match type_.type_content with
-        | T_sum m -> Simple_utils.Option.(
-            let lst_kv  = LMap.to_kv_list_rev lmap in
-            let lst_kv' = LMap.to_kv_list_rev m.content in
-            map ~f:(fun () -> m) @@ Ast_typed.Misc.assert_list_eq (
-                                        fun (ka,va) (kb,vb) ->
-                                        let Label ka = ka in
-                                        let Label kb = kb in
-                                        let* () = Ast_typed.Misc.assert_eq ka kb in
-                                        Ast_typed.Misc.assert_type_expression_eq (va.associated_type, vb.associated_type)
-                                      ) lst_kv lst_kv'
-                     )
-        | _ -> None
-      in
-      match List.find_map ~f:aux @@ (get_types e) with
-        Some _ as s -> s
-      | None ->
-         let modules = get_modules e in
-         List.fold_left ~f:(fun res (_,module_) ->
-             match res with Some _ as s -> s | None -> rec_aux module_
-           ) ~init:None modules
-    in rec_aux e
 end
 
 module App = struct
