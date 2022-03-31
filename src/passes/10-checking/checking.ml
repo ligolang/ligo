@@ -170,7 +170,7 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
           fun (t,i) -> match t.type_content with T_abstraction x -> aux (x.type_,i+1) | _ -> (t,i)
         in
         let expected = snd @@ aux (x.type_,1) in
-        raise.raise (type_constant_wrong_number_of_arguments None expected 0 location)
+        raise.raise (type_app_wrong_arity None expected 0 location)
       | _ -> ()
     in
     let aux : I.type_expression -> O.type_expression =
@@ -186,7 +186,7 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
       | Unequal_lengths ->
         let actual = List.length arguments in
         let expected = List.length vars in
-        raise.raise (type_constant_wrong_number_of_arguments (Some type_operator) expected actual t.location)
+        raise.raise (type_app_wrong_arity (Some type_operator) expected actual t.location)
       | Ok x -> x
     in
     let res =

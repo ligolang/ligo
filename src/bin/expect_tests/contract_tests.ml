@@ -1402,7 +1402,7 @@ let%expect_test _ =
       4 | type storage is map (binding)
       5 |
 
-    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
+    Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;

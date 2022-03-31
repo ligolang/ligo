@@ -263,7 +263,7 @@ let%expect_test _ =
       7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
       8 |         Some (contract) -> contract
 
-    Type takes the wrong number of arguments, expected: 1 got: 0 |}]
+    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
