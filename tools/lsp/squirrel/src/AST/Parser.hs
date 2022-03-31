@@ -59,7 +59,7 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, [Msg])
+loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, [Message])
 loadPreprocessed src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
@@ -161,6 +161,6 @@ parseContractsWithDependenciesScopes
 parseContractsWithDependenciesScopes parser reportProgress =
   addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 
-collectAllErrors :: ContractInfo' -> [Msg]
+collectAllErrors :: ContractInfo' -> [Message]
 collectAllErrors (FindContract _ tree errs) =
-   errs <> collectTreeErrors tree
+  errs <> collectTreeErrors tree

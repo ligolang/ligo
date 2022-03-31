@@ -26,7 +26,7 @@ import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log, i)
-import Parser (Msg)
+import Parser (Message)
 import ParseTree (srcPath)
 import Progress (Progress (..), (%))
 import Range
@@ -50,7 +50,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
       pure $ FindContract src forest (msgs <> msgs')
 
 -- | Extract `ScopeForest` from LIGO scope dump.
-fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Msg])
+fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) =
   (, fromLigoErrorToMsg <$> errors <> warnings) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
   where

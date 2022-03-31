@@ -58,7 +58,7 @@ import ASTMap qualified
 import Cli (getLigoClientEnv)
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
-import Parser (Msg, emptyParsedInfo)
+import Parser (Message (..), emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
 import RIO.Indexing (getIndexDirectory, indexOptionsPath)
@@ -189,7 +189,7 @@ tryLoadWithoutScopes =
 -- The downside is that momentarily, various files will be present in memory. In
 -- the future, we can consider only keeping the line markers and building the
 -- graph from this.
-loadDirectory :: FilePath -> FilePath -> RIO (Includes Source, Map Source [Msg])
+loadDirectory :: FilePath -> FilePath -> RIO (Includes Source, Map Source [Message])
 loadDirectory root rootFileName = do
   includes <- tryReadMVar =<< asks reIncludes
   let

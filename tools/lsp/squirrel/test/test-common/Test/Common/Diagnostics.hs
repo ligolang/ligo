@@ -5,14 +5,12 @@ module Test.Common.Diagnostics
   , parseDiagnosticsDriver
   ) where
 
-import Data.Text (Text)
 import Data.Word (Word32)
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
 
 import AST.Parser (collectAllErrors, parseWithScopes)
 import AST.Scope (Fallback, FromCompiler, Standard)
-import AST.Skeleton (Error (..))
 import Log (runNoLoggingT)
 import ParseTree (pathToSrc)
 import Parser
@@ -30,8 +28,8 @@ data DiagnosticSource impl where
 
 data DiagnosticTest = DiagnosticTest
   { dtFile :: FilePath
-  , dtCompilerMsgs :: [(Range, Text)]
-  , dtFallbackMsgs :: [(Range, Text)]
+  , dtCompilerMsgs :: [Message]
+  , dtFallbackMsgs :: [Message]
   }
 
 simpleTest :: IO DiagnosticTest
@@ -40,17 +38,19 @@ simpleTest = do
   pure DiagnosticTest
     { dtFile
     , dtCompilerMsgs =
-      [ ( mkRange (3, 17) (3, 19) dtFile
-        , "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n"
-        )
-      , ( mkRange (3, 20) (3, 23) dtFile
-        , "reserved name int"
-        )
+      [ Message
+        "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n"
+        SeverityError
+        (mkRange (3, 17) (3, 19) dtFile)
+      , Message
+        "reserved name int"
+        SeverityError
+        (mkRange (3, 20) (3, 23) dtFile)
       ]
     , dtFallbackMsgs =
-      [ (mkRange (3, 17) (3, 23) dtFile, "Unexpected: :: int")
-      , (mkRange (3, 17) (3, 23) dtFile, "Unrecognized: :: int")
-      , (mkRange (3, 20) (3, 23) dtFile, "Unrecognized: int")
+      [ Message "Unexpected: :: int"   SeverityError (mkRange (3, 17) (3, 23) dtFile)
+      , Message "Unrecognized: :: int" SeverityError (mkRange (3, 17) (3, 23) dtFile)
+      , Message "Unrecognized: int"    SeverityError (mkRange (3, 20) (3, 23) dtFile)
       ]
     }
 
@@ -61,14 +61,14 @@ treeDoesNotContainNameTest = do
   pure DiagnosticTest
     { dtFile
     , dtCompilerMsgs =
-      [ (mkRange (1, 14) (1, 16) dtFile, "Syntax error #200.")
-      , (mkRange (1, 17) (1, 18) dtFile, "Syntax error #221.")
+      [ Message "Syntax error #200." SeverityError (mkRange (1, 14) (1, 16) dtFile)
+      , Message "Syntax error #221." SeverityError (mkRange (1, 17) (1, 18) dtFile)
       ]
     , dtFallbackMsgs =
-      [ (mkRange (1, 17) (1, 18) dtFile, "Unexpected: r")
-      , (mkRange (1, 17) (1, 18) dtFile, "Unexpected: r")
-      , (mkRange (1, 14) (1, 16) dtFile, "Expected to find a name, but got `42`")
-      , (mkRange (1, 14) (1, 16) dtFile, "Expected to find a name, but got `42`")
+      [ Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)
+      , Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)
+      , Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
+      , Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
       ]
     }
 
@@ -77,9 +77,6 @@ inputDir = Util.contractsDir </> "diagnostic"
 
 mkRange :: (Word32, Word32) -> (Word32, Word32) -> FilePath -> Range
 mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)
-
-simplifyError :: Msg -> (Range, Text)
-simplifyError (range, Error t _) = (range, t)
 
 -- Try to parse a file, and check that the proper error messages are generated
 parseDiagnosticsDriver
@@ -97,4 +94,4 @@ parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
       FallbackSource -> fallback
       StandardSource -> fallback <> fromCompiler
     msgs = collectAllErrors contract
-  fmap simplifyError msgs `shouldMatchList` expectedMsgs
+  msgs `shouldMatchList` expectedMsgs

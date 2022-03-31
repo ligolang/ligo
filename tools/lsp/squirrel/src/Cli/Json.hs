@@ -636,13 +636,19 @@ instance Pretty LigoError where
 ----------------------------------------------------------------------------
 
 -- | Convert ligo error to its corresponding internal representation.
-fromLigoErrorToMsg :: LigoError -> Msg
+fromLigoErrorToMsg :: LigoError -> Message
 fromLigoErrorToMsg LigoError
   { _leContent = LigoErrorContent
       { _lecMessage = err
       , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
-  } = (fromMaybe (point 0 0) at, Error (err :: Text) [])
+  , _leStatus
+  } = Message err status (fromMaybe (point 0 0) at)
+  where
+    status = case _leStatus of
+      "error"   -> SeverityError
+      "warning" -> SeverityWarning
+      _         -> SeverityError
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
