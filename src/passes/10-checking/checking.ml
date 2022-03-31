@@ -97,7 +97,7 @@ match Location.unwrap d with
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
     let av', expr = Ast_core.Combinators.get_type_abstractions expr in
     let av = av @ av' in
-    let env = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:c in
+    let env = List.fold av ~f:(fun c v -> Typing_context.add_type_var c v ()) ~init:c in
     let tv = evaluate_type ~raise env tv in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr (Some tv)) @@
@@ -105,7 +105,7 @@ match Location.unwrap d with
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
-    let type_expression = aux expr.type_expression (List.rev av) in
+    let type_expression = aux expr.type_expression av in
     let expr = { expr with type_expression } in
     let c = Typing_context.add_value c var expr.type_expression in
     return c @@ Declaration_constant { binder = { ascr = Some tv ; var ; attributes } ; expr ; attr }
@@ -632,13 +632,13 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
     let av = av @ av' in
     let pre_context = context in
-    let context = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:context in
+    let context = List.fold av ~f:(fun c v -> Typing_context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in
     let rhs = type_expression' ~raise ~add_warning ~options ~tv_opt:tv (app_context, context) rhs in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
-    let type_expression = aux rhs.type_expression (List.rev av) in
+    let type_expression = aux rhs.type_expression av in
     let rhs = { rhs with type_expression } in
     let binder  = var in
     let context = Typing_context.add_value pre_context binder type_expression in

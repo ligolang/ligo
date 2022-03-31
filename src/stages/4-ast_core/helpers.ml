@@ -33,7 +33,7 @@ let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
        destruct_for_alls (ty_binder :: type_vars) type_
-    | _ -> (type_vars, t)
+    | _ -> (List.rev type_vars, t)
   in destruct_for_alls [] t
 
 module Free_type_variables = struct
