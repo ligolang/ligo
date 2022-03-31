@@ -330,7 +330,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
         | [] -> raise.raise (unbound_constructor constructor e.location)
       )
     in
-    let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
+    let c_arg = type_expression' ~raise ~add_warning ~options ~tv_opt:c_arg_t (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
     let () = trace_option ~raise (not_annotated e.location) @@
       if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
