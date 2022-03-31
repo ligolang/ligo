@@ -41,7 +41,10 @@ simpleTest = do
     { dtFile
     , dtCompilerMsgs =
       [ ( mkRange (3, 17) (3, 19) dtFile
-        , "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n\n"
+        , "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n"
+        )
+      , ( mkRange (3, 20) (3, 23) dtFile
+        , "reserved name int"
         )
       ]
     , dtFallbackMsgs =
@@ -58,10 +61,12 @@ treeDoesNotContainNameTest = do
   pure DiagnosticTest
     { dtFile
     , dtCompilerMsgs =
-      [ (mkRange (1, 14) (1, 16) dtFile, "Syntax error #200.\n")
+      [ (mkRange (1, 14) (1, 16) dtFile, "Syntax error #200.")
+      , (mkRange (1, 17) (1, 18) dtFile, "Syntax error #221.")
       ]
     , dtFallbackMsgs =
       [ (mkRange (1, 17) (1, 18) dtFile, "Unexpected: r")
+      , (mkRange (1, 17) (1, 18) dtFile, "Unexpected: r")
       , (mkRange (1, 14) (1, 16) dtFile, "Expected to find a name, but got `42`")
       , (mkRange (1, 14) (1, 16) dtFile, "Expected to find a name, but got `42`")
       ]

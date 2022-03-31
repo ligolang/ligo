@@ -30,7 +30,7 @@ import Data.HashSet qualified as HashSet
 import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe (isJust, isNothing, maybeToList)
+import Data.Maybe (isJust, isNothing)
 import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
@@ -48,7 +48,7 @@ import Witherable (iwither)
 
 import AST
  ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
- , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrToMsg, addScopes
+ , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes
  , addShallowScopes, contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRanges)
@@ -194,7 +194,7 @@ loadDirectory root rootFileName = do
   includes <- tryReadMVar =<< asks reIncludes
   let
     lookupOrLoad src = maybe
-      (fmap maybeToList <$> loadPreprocessed src)
+      (loadPreprocessed src)
       (pure . (_cFile &&& _cMsgs) . _getContract)
       (lookupContract (srcPath src) =<< includes)
 
@@ -250,15 +250,15 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
           $ find (Map.member (_cFile $ _getContract rootContract) . G.adjacencyMap)
           $ wcc paths
         case connectedContractsE of
-          Left (src, msg) -> do
+          Left (src, msgs') -> do
             parsed <- parse src
-            Includes . G.vertex <$> insertPreprocessorRanges (maybe id addLigoErrToMsg msg parsed)
+            Includes . G.vertex <$> insertPreprocessorRanges (addLigoErrsToMsg msgs' parsed)
           Right connectedContracts -> do
             let
               parseCached src = do
                 let srcMsgs = Map.lookup src msgs
                 parsed <- parse src
-                insertPreprocessorRanges $ foldr addLigoErrToMsg parsed $ join $ maybeToList srcMsgs
+                insertPreprocessorRanges $ addLigoErrsToMsg (join $ toList srcMsgs) parsed
             Includes <$> traverseAMConcurrently parseCached connectedContracts
       -- We've cached this contract, incrementally update the inclusions graph.
       Just (Includes oldIncludes) -> do

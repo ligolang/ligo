@@ -27,7 +27,7 @@ module AST.Scope.Common
   , contractTree
   , contractMsgs
 
-  , addLigoErrToMsg
+  , addLigoErrsToMsg
 
   , cFile
   , cTree
@@ -129,8 +129,8 @@ contractMsgs (FindFilepath pc) = _cMsgs pc
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
-addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
-addLigoErrToMsg err = getContract . cMsgs %~ (err :)
+addLigoErrsToMsg :: [Msg] -> FindFilepath info -> FindFilepath info
+addLigoErrsToMsg err = getContract . cMsgs %~ (err <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
