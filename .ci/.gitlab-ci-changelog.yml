@@ -24,6 +24,8 @@ add-changelog-entry:
     - git push origin HEAD:$CI_COMMIT_REF_NAME
     - exit 1
   rules:
+    - if: ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^release/)
+      when: never
     - if: ($CI_PIPELINE_SOURCE == "merge_request_event")
       changes:
           - changelog/$CI_MERGE_REQUEST_IID
