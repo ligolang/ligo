@@ -190,6 +190,9 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
       | Ok x -> x
     in
     let res =
+      (* Note:
+        Currently, there is no way for ty_body to look like `fun 'a 'b -> forall 'a 'b . <some type>` `fun 'a 'b -> 'a * (fun 'b -> <type>)`
+        so it is fine to use `psubst_type`. If this changes, we should use `subst_type` and capture the FV in the right element of vargs *)
       let table = O.Helpers.TMap.of_list vargs in
       O.Helpers.psubst_type table ty_body 
     in
