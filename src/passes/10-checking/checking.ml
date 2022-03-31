@@ -115,63 +115,6 @@ match Location.unwrap d with
     return post_env @@ Declaration_module { module_binder; module_; module_attr = {public}}
   )
 
-and evaluate_otype ~raise (c:typing_context) (t:O.type_expression) : O.type_expression =
-  (* NOTE: this is similar to evaluate_type, but just look up for variables in environemnt
-    feels wrong, but that's to allow re-evaluate body of T_abstractions *)
-  let return tv' = make_t ~loc:t.location tv' t.type_meta in
-  match t.type_content with
-  | T_constant { language; injection; parameters } ->
-    let parameters = List.map ~f:(evaluate_otype ~raise c) parameters in
-    return (T_constant { language; injection; parameters })
-  | T_arrow {type1;type2} ->
-      let type1 = evaluate_otype ~raise c type1 in
-      let type2 = evaluate_otype ~raise c type2 in
-      return (T_arrow {type1;type2})
-  | T_sum {content ; layout} -> (
-    let rows =
-      let aux ({associated_type;michelson_annotation;decl_pos} : O.row_element) =
-        let associated_type = evaluate_otype ~raise c associated_type in
-        ({associated_type;michelson_annotation;decl_pos} : O.row_element)
-      in
-      let content = O.LMap.map aux content in
-      O.{ content ; layout }
-    in
-    return @@ T_sum rows
-  )
-  | T_record m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos}: O.row_element) =
-      let associated_type = evaluate_otype ~raise c associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : O.row_element)
-    in
-    let lmap = O.LMap.map aux m.content in
-    let record : O.rows = match Typing_context.get_record lmap c with
-    | None ->
-      let layout = m.layout in
-      {content=lmap;layout}
-    | Some (_,r) ->  r
-    in
-    return @@ T_record record
-  )
-  | T_variable name -> (
-    match Typing_context.get_type c name with
-    | Some x -> x
-    | None -> raise.raise (unbound_type_variable name t.location)
-  )
-  | T_module_accessor {module_path; element} -> (
-    let f = fun acc el -> trace_option ~raise (unbound_module_variable el t.location) (Typing_context.get_module acc el) in
-    let module_ = List.fold ~init:c ~f module_path in
-    trace_option ~raise (unbound_type_variable element t.location) (Typing_context.get_type module_ element)
-  )
-  | T_singleton x -> return (T_singleton x)
-  | T_abstraction x ->
-    let c = Typing_context.add_kind c x.ty_binder () in
-    let type_ = evaluate_otype ~raise c x.type_ in
-    return (T_abstraction {x with type_})
-  | T_for_all x ->
-    let c = Typing_context.add_type_var c x.ty_binder () in
-    let type_ = evaluate_otype ~raise c x.type_ in
-    return (T_for_all {x with type_})
-
 and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expression =
   let return tv' = make_t ~loc:t.location tv' (Some t) in
   match t.type_content with
@@ -230,15 +173,14 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
         raise.raise (type_constant_wrong_number_of_arguments None expected 0 location)
       | _ -> ()
     in
-    let rec aux : O.type_expression * I.type_variable list -> O.type_expression * I.type_variable list =
-      fun (op, lst) ->
-        match op.type_content with
-        | O.T_abstraction {ty_binder;kind=_;type_} -> (
-          aux (type_ , lst @ [ty_binder])
-        )
-        | _ -> (op, lst)
+    let aux : I.type_expression -> O.type_expression =
+      fun t ->
+        let t' = evaluate_type ~raise c t in
+        is_fully_applied t.location t' ;
+        t'
     in
-    let (ty_body,vars) = aux (operator, []) in
+    let arguments = List.map ~f:aux arguments in
+    let (vars , ty_body) = O.Helpers.desctruct_type_abstraction operator in
     let vargs =
       match List.zip vars arguments with
       | Unequal_lengths ->
@@ -247,24 +189,11 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
         raise.raise (type_constant_wrong_number_of_arguments (Some type_operator) expected actual t.location)
       | Ok x -> x
     in
-    let aux : typing_context -> (I.type_variable * I.type_expression) -> typing_context =
-      fun c (ty_binder,arg) ->
-        let arg' = evaluate_type ~raise c arg in
-        let () = is_fully_applied arg.location arg' in
-        Typing_context.add_type c ty_binder arg'
+    let res =
+      let table = O.Helpers.TMap.of_list vargs in
+      O.Helpers.psubst_type table ty_body 
     in
-    let env' = List.fold_left ~f:aux ~init:c vargs in
-    match ty_body.type_content with
-    | T_constant {language;injection;parameters} ->
-      let aux : O.type_expression -> O.type_expression =
-        fun t ->
-          let t' = evaluate_otype ~raise env' t in
-          let () = is_fully_applied t.location t' in
-          t'
-      in
-      let args = List.map ~f:aux parameters in
-      return (T_constant {language;injection;parameters=args})
-    | _ -> evaluate_otype ~raise env' ty_body
+    return res.type_content
   )
   | T_module_accessor {module_path; element} -> (
     let f = fun acc el -> trace_option ~raise (unbound_module_variable el t.location) (Typing_context.get_module acc el) in
