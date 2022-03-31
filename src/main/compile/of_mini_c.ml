@@ -22,11 +22,16 @@ let has_comment : Compiler_options.t -> meta -> bool =
   fun options { env; location = _; binder = _ } ->
   options.backend.has_env_comments && not (List.is_empty env)
 
-let compile_contract ~raise : options:Compiler_options.t -> expression -> Stacking.compiled_expression  = fun ~options e ->
+(* this function exist to satisfy 'print mini-c' .. *)
+let optimize_for_contract ~raise e : type_expression * anon_function =
   let (input_ty , _) = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
   let contract : anon_function = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_function_or_eta_expand e in
   let contract = { contract with body = Self_mini_c.all_expression ~raise contract.body} in
-  let contract = trace ~raise self_mini_c_tracer @@ Self_mini_c.contract_check contract in
+  let optimized = trace ~raise self_mini_c_tracer @@ Self_mini_c.contract_check contract in
+  input_ty, optimized
+
+let compile_contract ~raise : options:Compiler_options.t -> expression -> Stacking.compiled_expression  = fun ~options e ->
+  let (input_ty , contract) = optimize_for_contract ~raise e in
   let protocol_version = options.backend.protocol_version in
   let co_de_bruijn = Scoping.translate_closed_function contract input_ty in
   let co_de_bruijn = trace ~raise stacking_tracer @@ Stacking.Program.compile_function_body protocol_version co_de_bruijn in
