@@ -7,6 +7,10 @@ module.exports = grammar({
   externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
+  conflicts: $ => [
+    [$.variant, $.variant]
+  ],
+
   rules: {
     source_file: $ => 
       common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace_or_preprocessor)),
@@ -188,17 +192,17 @@ module.exports = grammar({
 
     fun_param: $ => seq($.Name, $.type_annotation),
 
-    sum_type: $ => prec.right(1, common.withAttrs($, seq("|", common.sepBy("|", $.variant)))),
+    sum_type: $ => prec.right(1, common.withAttrs($, seq(optional("|"), common.sepBy1("|", $.variant)))),
 
     variant: $ => common.withAttrs($, common.brackets(
       choice(
         seq('"', $.ConstrName, '"'),
-        seq('"', $.ConstrName, '"', ",", common.sepBy(",", $._type_expr))
+        seq('"', $.ConstrName, '"', ",", common.sepBy1(",", $._type_expr))
       )
     )),
 
     _core_type: $ => choice(
-      $.String,
+      // $.String,
       $.Int,
       $.wildcard,
       $.TypeName,
