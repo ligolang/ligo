@@ -35,7 +35,7 @@ let test_transfer_not_e_allowance =
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughAllowance"))
-  | Fail Other -> failwith "Transaction should fail with rejection"
+  | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_transfer_not_e_balance =
   let () = Test.reset_state 10n ([] : tez list) in
@@ -52,7 +52,7 @@ let test_transfer_not_e_balance =
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "NotEnoughBalance"))
-  | Fail Other -> failwith "Transaction should fail with rejection"
+  | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_approve =
   let () = Test.reset_state 10n ([] : tez list) in
@@ -89,7 +89,7 @@ let test_approve_unsafe =
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
   | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "UnsafeAllowanceChange"))
-  | Fail Other -> failwith "Transaction should fail with rejection"
+  | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_get_allowance =
   let dummy_contract (v, s : nat * nat) : operation list * nat = ([] : operation list), v + s in
