@@ -16,7 +16,22 @@ let untype_expression = Untyper.untype_expression
 let untype_program = Untyper.untype_program
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
-let rec type_module_expr ~raise ~init_context ~options : I.module_expr -> typing_context * O.module_expr = fun m_expr ->
+(*
+  This function operates on the return type of Context.get_sum.
+  If type match the constructor label and its argument type, warns user about ambiguous constructor 
+*)
+let warn_ambiguous_constructor ~add_warning loc (var_chosen,c_arg_t) ignored =
+  let ignored_match = List.find
+    ~f:(fun (_,_,a,_) ->
+      Option.is_some (O.Misc.assert_type_expression_eq (c_arg_t, a))
+      )
+      ignored
+  in
+  match ignored_match with
+  | Some (var_ignored,_,_,_) -> add_warning (`Checking_ambiguous_contructor (loc,var_chosen,var_ignored))
+  | None -> ()
+
+let rec type_module_expr ~raise ~add_warning ~init_context ~options : I.module_expr -> typing_context * O.module_expr = fun m_expr ->
   let return x =
     let ret = Location.wrap ~loc:m_expr.location x in
     let ctxt = Typing_context.context_of_module_expr ~outer_context:init_context ret in
@@ -27,7 +42,7 @@ let rec type_module_expr ~raise ~init_context ~options : I.module_expr -> typing
   in
   match m_expr.wrap_content with
   | I.M_struct prg ->
-    let prg = type_module ~init_context ~raise ~options prg in
+    let prg = type_module ~init_context ~raise ~add_warning ~options prg in
     return (O.M_struct prg)
   | I.M_module_path path ->
     let _ctxt : typing_context = List.fold
@@ -40,9 +55,9 @@ let rec type_module_expr ~raise ~init_context ~options : I.module_expr -> typing
     let () = is_bound init_context v in
     return (O.M_variable v)
 
-and type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
+and type_module ~raise ~add_warning ~options ~init_context (p:I.module_) : O.module_ =
   let aux (c, acc:(typing_context * O.declaration list)) (d:I.declaration) =
-    let (c, d') = type_declaration' ~raise ~options c d in
+    let (c, d') = type_declaration' ~raise ~add_warning ~options c d in
     (c, d' :: acc)
   in
   (* This context use all the declaration so you can use private declaration to type the module. It should not be returned*)
@@ -50,8 +65,8 @@ and type_module ~raise ~options ~init_context (p:I.module_) : O.module_ =
       List.fold ~f:aux ~init:(init_context, []) p in
   List.rev lst
 
-and type_declaration' : raise: typer_error raise -> options: Compiler_options.middle_end -> typing_context -> I.declaration -> typing_context * O.declaration =
-fun ~raise ~options c d ->
+and type_declaration' : raise: typer_error raise -> add_warning : _ -> options: Compiler_options.middle_end -> typing_context -> I.declaration -> typing_context * O.declaration =
+fun ~raise ~add_warning ~options c d ->
 let loc = d.location in
 let return ?(loc = loc) c (d : O.declaration_content) = c,Location.wrap ~loc d in
 match Location.unwrap d with
@@ -68,7 +83,7 @@ match Location.unwrap d with
     let c = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:c in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
-      type_expression' ~options (App_context.create None, c) expr in
+      type_expression' ~options ~add_warning (App_context.create None, c) expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
@@ -86,7 +101,7 @@ match Location.unwrap d with
     let tv = evaluate_type ~raise env tv in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr (Some tv)) @@
-      type_expression' ~options ~tv_opt:tv (App_context.create @@ Some tv, env) expr in
+      type_expression' ~options ~add_warning ~tv_opt:tv (App_context.create @@ Some tv, env) expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
@@ -95,7 +110,7 @@ match Location.unwrap d with
     let c = Typing_context.add_value c var expr.type_expression in
     return c @@ Declaration_constant { binder = { ascr = Some tv ; var ; attributes } ; expr ; attr }
   | Declaration_module { module_binder ; module_ ; module_attr = {public} } -> (
-    let module_ctxt, module_ = type_module_expr ~raise ~init_context:c ~options module_ in
+    let module_ctxt, module_ = type_module_expr ~raise ~add_warning ~init_context:c ~options module_ in
     let post_env = Typing_context.add_module c module_binder module_ctxt in
     return post_env @@ Declaration_module { module_binder; module_; module_attr = {public}}
   )
@@ -112,31 +127,16 @@ and evaluate_otype ~raise (c:typing_context) (t:O.type_expression) : O.type_expr
       let type1 = evaluate_otype ~raise c type1 in
       let type2 = evaluate_otype ~raise c type2 in
       return (T_arrow {type1;type2})
-  | T_sum m -> (
-    let lmap =
+  | T_sum {content ; layout} -> (
+    let rows =
       let aux ({associated_type;michelson_annotation;decl_pos} : O.row_element) =
         let associated_type = evaluate_otype ~raise c associated_type in
         ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in
-      O.LMap.map aux m.content
+      let content = O.LMap.map aux content in
+      O.{ content ; layout }
     in
-    let sum : O.rows  = match Typing_context.get_sum lmap c with
-      | None ->
-        let layout = m.layout in
-        {content = lmap; layout}
-      | Some r -> r
-    in
-    let ty = make_t (T_sum sum) None in
-    let () =
-      let aux k _v acc = match Typing_context.get_constructor k c with
-          | Some (_,type_) ->
-            if Ast_typed.Misc.type_expression_eq (acc,type_) then type_
-            else if I.LMap.mem (Label "M_left") m.content || I.LMap.mem (Label "M_right") m.content then type_
-            else raise.raise (redundant_constructor k t.location)
-          | None -> acc in
-      let _ = O.LMap.fold aux m.content ty in ()
-    in
-    return @@ T_sum sum
+    return @@ T_sum rows
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: O.row_element) =
@@ -180,30 +180,16 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
       let type2 = evaluate_type ~raise c type2 in
       return (T_arrow {type1;type2})
   | T_sum m -> (
-    let lmap =
+    let rows =
+      let layout = Option.value ~default:default_layout m.layout in
       let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
         let associated_type = evaluate_type ~raise c associated_type in
         ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in
-      O.LMap.map aux m.fields
+      let content = O.LMap.map aux m.fields in
+      O.{ content ; layout }
     in
-    let sum : O.rows  = match Typing_context.get_sum lmap c with
-      | None ->
-        let layout = Option.value ~default:default_layout m.layout in
-        {content = lmap; layout}
-      | Some r -> r
-    in
-    let ty = make_t (T_sum sum) None in
-    let () =
-      let aux k _v acc = match Typing_context.get_constructor k c with
-          | Some (_,type_) ->
-            if Ast_typed.Misc.type_expression_eq (acc,type_) then type_
-            else if I.LMap.mem (Label "M_left") m.fields || I.LMap.mem (Label "M_right") m.fields then type_
-            else raise.raise (redundant_constructor k t.location)
-          | None -> acc in
-      let _ = O.LMap.fold aux m.fields ty in ()
-    in
-    return @@ T_sum sum
+    return @@ T_sum rows
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
@@ -295,10 +281,10 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
     let type_ = evaluate_type ~raise c x.type_ in
     return (T_for_all {x with type_})
 
-and type_expression ~raise ~options : ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
+and type_expression ~raise ~add_warning ~options : ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
   = fun ?env ?tv_opt e ->
     let c   = Typing_context.init ?env () in
-    let res = type_expression' ~raise ~options (App_context.create tv_opt, c) ?tv_opt e in
+    let res = type_expression' ~raise ~add_warning ~options (App_context.create tv_opt, c) ?tv_opt e in
     res
 
 and infer_t_insts ~raise ~loc app_context ( (tc,t) : O.expression_content * O.type_expression )  =
@@ -314,7 +300,7 @@ and infer_t_insts ~raise ~loc app_context ( (tc,t) : O.expression_content * O.ty
     x.expression_content , x.type_expression
   | _ -> tc, t
 
-and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun (app_context, context) ?tv_opt e ->
+and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun (app_context, context) ?tv_opt e ->
   let return expr tv =
     let () =
       match tv_opt with
@@ -366,7 +352,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
       return (e_bls12_381_fr b) (t_bls12_381_fr ())
   | E_literal (Literal_chest _ | Literal_chest_key _) -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
   | E_record_accessor {record;path} ->
-      let e' = type_expression' ~raise ~options (app_context, context) record in
+      let e' = type_expression' ~raise ~add_warning ~options (app_context, context) record in
       let aux (prev:O.expression) (a:I.label) : O.expression =
           let property = a in
           let r_tv = trace_option ~raise (expected_record e.location @@ get_type prev) @@
@@ -382,7 +368,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
       return_e e
   | E_constructor {constructor = Label s as constructor ; element} when String.equal s "M_left" || String.equal s "M_right" -> (
     let t = trace_option ~raise (michelson_or_no_annotation constructor e.location) @@ tv_opt in
-    let expr' = type_expression' ~raise ~options (app_context, context) element in
+    let expr' = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     ( match t.type_content with
       | T_sum c ->
         let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c.content in
@@ -391,36 +377,70 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
       | _ -> raise.raise (michelson_or_no_annotation constructor e.location)
     )
   )
-  | E_constructor {constructor; element} ->
-      let (avs, c_tv, sum_tv) = trace_option ~raise (unbound_constructor constructor e.location) @@
-        Typing_context.get_constructor_parametric constructor context in
-      let expr' = type_expression' ~raise ~options (app_context, context) element in
-      let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_tv expr'.type_expression in
-      let table = match tv_opt with
-        | Some tv_opt -> Inference.infer_type_application ~raise ~loc:e.location ~default_error:(fun loc t t' -> assert_equal loc t' t) avs table sum_tv tv_opt
-        | None -> table in
-      let () = trace_option ~raise (not_annotated e.location) @@
-                 if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None in
-      let c_tv = Ast_typed.Helpers.psubst_type table c_tv in
-      let sum_tv = Ast_typed.Helpers.psubst_type table sum_tv in
-      let () = assert_type_expression_eq ~raise expr'.location (c_tv, expr'.type_expression) in
-      return (E_constructor {constructor; element=expr'}) sum_tv
+  | E_constructor {constructor; element} -> (
+    let destructed_tv_opt =
+      let open Simple_utils.Option in
+      let* sum_t = tv_opt in
+      let* x = O.get_sum_label_type sum_t constructor in
+      return (sum_t, x)
+    in 
+    let (avs, c_arg_t, sum_t) =
+      match destructed_tv_opt with
+      | Some (sum_t,c_tv) -> (
+        let avs , _ = O.Helpers.destruct_type_abstraction c_tv in
+        (avs,c_tv,sum_t)
+      )
+      | None -> (
+        let matching_t_sum = Context.Typing.get_sum constructor context in
+        match matching_t_sum with
+        | (v_ty,tvl,c_arg_t,sum_t) :: ignored ->
+          let () = warn_ambiguous_constructor ~add_warning e.location (v_ty,c_arg_t) ignored in
+          (tvl,c_arg_t,sum_t)
+        | [] -> raise.raise (unbound_constructor constructor e.location)
+      )
+    in
+    let c_arg = type_expression' ~raise ~add_warning ~options ~tv_opt:c_arg_t (app_context, context) element in
+    let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
+    let () = trace_option ~raise (not_annotated e.location) @@
+      if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
+    in
+    let c_t = Ast_typed.Helpers.psubst_type table c_arg_t in
+    let sum_t = Ast_typed.Helpers.psubst_type table sum_t in
+    let () = assert_type_expression_eq ~raise c_arg.location (c_t, c_arg.type_expression) in
+    return (E_constructor {constructor; element=c_arg}) sum_t
+  )
   (* Record *)
-  | E_record m ->
-      let m' = O.LMap.map (type_expression' ~raise ~options (app_context, context)) m in
-      let _,lmap = O.LMap.fold_map ~f:(
-        fun (Label k) e i ->
-          let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
-          i+1,({associated_type = get_type e ; michelson_annotation = None ; decl_pos}: O.row_element)
-        ) m' ~init:0 in
-      let record_type = match Typing_context.get_record lmap context with
-        | None -> t_record ~layout:default_layout lmap
-        | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
+  | E_record m -> (
+    let field_types_opt =
+      let open Simple_utils.Option in
+      let* rec_t = tv_opt in
+      let* x = O.get_record_fields rec_t in
+      let* x = match List.zip (List.map ~f:snd x) (O.LMap.to_list m) with
+        | Ok x -> Some x
+        | Unequal_lengths -> None
       in
-      return (E_record m') record_type
+      return x
+    in 
+    let m' = match field_types_opt with
+      | None -> O.LMap.map (type_expression' ~raise ~add_warning ~options (app_context, context)) m
+      | Some lst ->
+        let lst = List.map ~f:(fun (tv_opt, exp) -> type_expression' ~raise ~add_warning ~options ~tv_opt (app_context, context) exp) lst in
+        O.LMap.of_list (List.zip_exn (O.LMap.keys m) lst)
+    in
+    let _,lmap = O.LMap.fold_map ~f:(
+      fun (Label k) e i ->
+        let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+        i+1,({associated_type = get_type e ; michelson_annotation = None ; decl_pos}: O.row_element)
+      ) m' ~init:0 in
+    let record_type = match Typing_context.get_record lmap context with
+      | None -> t_record ~layout:default_layout lmap
+      | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
+    in
+    return (E_record m') record_type
+  )
   | E_record_update {record; path; update} ->
-    let record = type_expression' ~raise ~options (app_context, context) record in
-    let update = type_expression' ~raise ~options (app_context, context) update in
+    let record = type_expression' ~raise ~add_warning ~options (app_context, context) record in
+    let update = type_expression' ~raise ~add_warning ~options (app_context, context) update in
     let wrapped = get_type record in
     let tv =
       match wrapped.type_content with
@@ -435,11 +455,11 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
-     let (lambda,lambda_type) = type_lambda ~raise ~options ~loc:e.location ~tv_opt (app_context, context) lambda in
+     let (lambda,lambda_type) = type_lambda ~raise ~add_warning ~options ~loc:e.location ~tv_opt (app_context, context) lambda in
      return (E_lambda lambda ) lambda_type
   | I.E_type_abstraction {type_binder;result} ->
     let context = Typing_context.add_type_var context type_binder () in
-    let result  = type_expression' ~raise ~options ?tv_opt (app_context, context) result in
+    let result  = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, context) result in
     return (E_type_abstraction {type_binder;result}) result.type_expression
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD | C_FOLD) as opname ;
                 arguments=[
@@ -453,7 +473,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
       let open Stage_common.Constant in
       (* this special case is here to force annotation of the untyped lambda
          generated by pascaligo's for_collect loop *)
-      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~options (app_context, context)) (collect , init_record ) in
+      let (v_col , v_initr ) = Pair.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) (collect , init_record ) in
       let tv_col = get_type v_col   in (* this is the type of the collection  *)
       let tv_out = get_type v_initr in (* this is the output type of the lambda*)
       let input_type = match tv_col.type_content with
@@ -463,7 +483,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
           make_t_ez_record (("0",tv_out)::[("1",make_t_ez_record [("0",k);("1",v)])])
         | _ -> raise.raise @@ bad_collect_loop tv_col e.location in
       let e' = Typing_context.add_value context lname input_type in
-      let body = type_expression' ~raise ~options ?tv_opt:(Some tv_out) (app_context, e') result in
+      let body = type_expression' ~raise ~add_warning ~options ?tv_opt:(Some tv_out) (app_context, e') result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda'; v_col; v_initr] in
@@ -479,11 +499,11 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
                         location = _ ; sugar=_}) as _lambda ;
                     init_record ;
                 ]} ->
-      let v_initr = type_expression' ~raise ~options (app_context, context) init_record in
+      let v_initr = type_expression' ~raise ~add_warning ~options (app_context, context) init_record in
       let tv_out = get_type v_initr in
       let input_type  = tv_out in
       let context = Typing_context.add_value context lname input_type in
-      let body = type_expression' ~raise ~options (app_context, context) result in
+      let body = type_expression' ~raise ~add_warning ~options (app_context, context) result in
       let output_type = body.type_expression in
       let lambda' = make_e (E_lambda {binder = lname ; result=body}) (t_arrow input_type output_type ()) in
       let lst' = [lambda';v_initr] in
@@ -491,7 +511,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
       let (opname',tv) = type_constant ~raise ~options opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~options (app_context, context)) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let () = match lst' with
         | { expression_content = O.E_lambda l ; _ } :: _ ->
           let open Ast_typed.Misc in
@@ -505,7 +525,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
         type_constant ~raise ~options cons_name e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
-      let key' =  type_expression' ~raise ~options (app_context, context) key in
+      let key' =  type_expression' ~raise ~add_warning ~options (app_context, context) key in
       let tv_key = get_type key' in
       let tv = match tv_opt with
           Some tv -> tv
@@ -514,27 +534,27 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
           | C_CONS -> t_list tv_key
           | _ -> failwith "Only C_SET_ADD and C_CONS are possible because those were the two cases matched above"
       in
-      let set' =  type_expression' ~raise ~options (app_context, context) ~tv_opt:tv set in
+      let set' =  type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv set in
       let tv_set = get_type set' in
       let tv_lst = [tv_key;tv_set] in
       let (name', tv) = type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';set']}) tv
   | E_constant {cons_name=C_MAP_ADD as cst; arguments=[key;value;map]} ->
-      let key' = type_expression' ~raise ~options (app_context, context) key in
-      let val' = type_expression' ~raise ~options (app_context, context) value in
+      let key' = type_expression' ~raise ~add_warning ~options (app_context, context) key in
+      let val' = type_expression' ~raise ~add_warning ~options (app_context, context) value in
       let tv_key = get_type key' in
       let tv_val = get_type val' in
       let tv = match tv_opt with
           Some tv -> tv
         | None -> t_map_or_big_map tv_key tv_val
       in
-      let map' =  type_expression' ~raise ~options (app_context, context) ~tv_opt:tv map in
+      let map' =  type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv map in
       let tv_map = get_type map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
       let (name', tv) = type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
   | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~options (app_context, context)) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let tv_lst = List.map ~f:get_type lst' in
       let decide = function
         | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
@@ -560,7 +580,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
         type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name = C_POLYMORPHIC_SUB;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~options (app_context, context)) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let tv_lst = List.map ~f:get_type lst' in
       let decide = function
         | Environment.Protocols.Ithaca, O.{ type_expression ; _ } when is_t_mutez type_expression ->
@@ -572,7 +592,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
         type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~options (app_context, context)) arguments in
+      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let tv_lst = List.map ~f:get_type lst' in
       let (name', tv) =
         type_constant ~raise ~options cons_name e.location tv_lst tv_opt in
@@ -582,9 +602,9 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
      (* Get lambda and applications: (..((lamb arg1) arg2) ...) argk) *)
      let lamb, args = I.Helpers.destruct_applications e in
      (* Type-check all the involved subexpressions *)
-     let args = List.map ~f:(type_expression' ~raise ~options (app_context, context)) args in
+     let args = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) args in
      let args_ty = List.map ~f:(fun v -> v.type_expression) args in
-     let lamb = type_expression' ~raise ~options (App_context.push tv_opt args_ty app_context, context) lamb in
+     let lamb = type_expression' ~raise ~add_warning ~options (App_context.push tv_opt args_ty app_context, context) lamb in
      (* Arguments are checked *)
      let _ : _ Inference.TMap.t = Inference.infer_type_applications ~raise ~loc:e.location [] lamb.type_expression args_ty tv_opt in
      (* Re-build term (i.e. re-add applications) *)
@@ -593,12 +613,12 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
      return_e app
   (* Advanced *)
   | E_matching {matchee;cases} -> (
-    let matchee' = type_expression' ~raise ~options (app_context, context) matchee in
+    let matchee' = type_expression' ~raise ~add_warning ~options (app_context, context) matchee in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * typing_context)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
     in
     let eqs = List.map ~f:aux cases in
-    let aux = fun ~raise context ?tv_opt i -> type_expression' ~raise ~options (App_context.create None, context) ?tv_opt i in
+    let aux = fun ~raise context ?tv_opt i -> type_expression' ~raise ~add_warning ~options (App_context.create None, context) ?tv_opt i in
     match matchee.expression_content with
     | E_variable matcheevar ->
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
@@ -614,7 +634,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
   | E_let_in {let_binder = {var ; ascr = None ; attributes=_} ; rhs ; let_result; attr } ->
      let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
      let context = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:context in
-     let rhs = type_expression' ~raise ~options (app_context, context) rhs in
+     let rhs = type_expression' ~raise ~add_warning ~options (app_context, context) rhs in
      let binder = var in
      let rec aux t = function
        | [] -> t
@@ -622,7 +642,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
      let type_expression = aux rhs.type_expression (List.rev av) in
      let rhs = { rhs with type_expression } in
      let e' = Typing_context.add_value context binder rhs.type_expression in
-     let let_result = type_expression' ~raise ~options ?tv_opt (app_context, e') let_result in
+     let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, e') let_result in
      return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes=_} ; rhs ; let_result; attr } ->
     let av, tv = Ast_core.Helpers.destruct_for_alls tv in
@@ -631,7 +651,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     let pre_context = context in
     let context = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in
-    let rhs = type_expression' ~raise ~options ~tv_opt:tv (app_context, context) rhs in
+    let rhs = type_expression' ~raise ~add_warning ~options ~tv_opt:tv (app_context, context) rhs in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
@@ -639,24 +659,24 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     let rhs = { rhs with type_expression } in
     let binder  = var in
     let context = Typing_context.add_value pre_context binder type_expression in
-    let let_result = type_expression' ~raise ~options ?tv_opt (app_context, context) let_result in
+    let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, context) let_result in
     return (E_let_in {let_binder = binder; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; _} when Ast_core.TypeVar.is_generalizable type_binder ->
     raise.raise (wrong_generalizable e.location type_binder)
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise context rhs in
     let e' = Typing_context.add_type context type_binder rhs in
-    let let_result = type_expression' ~raise ~options (app_context, e') let_result in
+    let let_result = type_expression' ~raise ~add_warning ~options (app_context, e') let_result in
     return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
-    let rhs_ctxt,rhs = type_module_expr ~raise ~options ~init_context:context rhs in
+    let rhs_ctxt,rhs = type_module_expr ~raise ~add_warning ~options ~init_context:context rhs in
     let e' = Typing_context.add_module context module_binder rhs_ctxt in
-    let let_result = type_expression' ~raise ~options ?tv_opt (app_context, e') let_result in
+    let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, e') let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_raw_code {language;code} ->
     let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
       I.get_e_ascription code.expression_content in
-    let code = type_expression' ~raise ~options (app_context, context) code in
+    let code = type_expression' ~raise ~add_warning ~options (app_context, context) code in
     let type_expression = evaluate_type ~raise context type_expression in
     let code = {code with type_expression} in
     return (E_raw_code {language;code}) code.type_expression
@@ -666,13 +686,13 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
     let fun_type = evaluate_type ~raise context fun_type in
     let e' = Typing_context.add_value context fun_name fun_type in
     let e' = List.fold_left av ~init:e' ~f:(fun e v -> Typing_context.add_type_var e v ()) in
-    let (lambda,lambda_type) = type_lambda ~raise ~loc:e.location ~options ~tv_opt (app_context, e') lambda in
+    let (lambda,lambda_type) = type_lambda ~raise ~add_warning ~loc:e.location ~options ~tv_opt (app_context, e') lambda in
     let () = assert_type_expression_eq ~raise fun_type.location (fun_type,lambda_type) in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let tv = evaluate_type ~raise context type_annotation in
     let app_context = App_context.update_expect (Some tv) app_context in
-    let expr' = type_expression' ~raise ~options ~tv_opt:tv (app_context, context) anno_expr in
+    let expr' = type_expression' ~raise ~add_warning ~options ~tv_opt:tv (app_context, context) anno_expr in
     return_e expr'
   | E_module_accessor {module_path; element} -> (
     let f = fun acc el -> trace_option ~raise (unbound_module_variable el (I.ModuleVar.get_location el)) (Typing_context.get_module acc el) in
@@ -683,7 +703,7 @@ and type_expression' ~raise ~options : context -> ?tv_opt:O.type_expression -> I
   )
 
 
-and type_lambda ~raise ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; result } =
+and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; result } =
       let top_i_t , top_o_t = match tv_opt with
         | None -> (None,None)
         | Some tv -> (
@@ -716,7 +736,7 @@ and type_lambda ~raise ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; re
       let binder = binder.var in
       let input_type = trace_option ~raise (missing_funarg_annotation binder) input_type in
       let e' = Typing_context.add_value e binder input_type in
-      let body = type_expression' ~raise ~options ?tv_opt:output_type (ac, e') result in
+      let body = type_expression' ~raise ~add_warning ~options ?tv_opt:output_type (ac, e') result in
       let output_type = body.type_expression in
       (({binder; result=body}:O.lambda),(t_arrow input_type output_type ()))
 
@@ -725,5 +745,5 @@ and type_constant ~raise ~options (name:I.constant') (loc:Location.t) (lst:O.typ
   let tv = typer lst tv_opt in
   (name, tv)
 
-let type_program ~raise ~options ?env m = type_module ~raise ~options ~init_context:(Typing_context.init ?env ()) m
-let type_declaration ~raise ~options ?env d = snd @@ type_declaration' ~raise ~options (Typing_context.init ?env ()) d
+let type_program ~raise ~add_warning ~options ?env m = type_module ~raise ~add_warning ~options ~init_context:(Typing_context.init ?env ()) m
+let type_declaration ~raise ~add_warning ~options ?env d = snd @@ type_declaration' ~raise ~add_warning ~options (Typing_context.init ?env ()) d

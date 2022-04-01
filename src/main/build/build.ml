@@ -159,7 +159,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
          (module_, contract)
       | None -> ([], fun x -> Ligo_compile.Of_typed.compile_expression ~raise x)
     in
-    let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~options file_name syntax expression contract in
+    let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options file_name syntax expression contract in
     let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp aggregated_prg in
     let mini_c_exp      = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)

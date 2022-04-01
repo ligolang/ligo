@@ -22,11 +22,8 @@ module Typing : sig
 
   val init : ?env:Environment.t -> unit -> t
 
-  val get_constructor : Ast_typed.label -> t -> (type_expression * type_expression) option
-  val get_constructor_parametric : label -> t -> (type_variable list * type_expression * type_expression) option
-
   val get_record : type_expression row_element_mini_c label_map -> t -> (type_variable option * rows) option
-  val get_sum    : type_expression row_element_mini_c label_map -> t -> rows option
+  val get_sum    : label -> t -> (type_variable * type_variable list * type_expression * type_expression) list
 end
 
 module App : sig
