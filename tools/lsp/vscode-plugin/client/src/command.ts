@@ -1,17 +1,11 @@
 import * as vscode from 'vscode'
-import { execFile } from 'child_process'
-import { extname } from 'path';
 
 import {
   LanguageClient,
 } from 'vscode-languageclient/node'
 
-import { getLigoPath } from './updateLigo'
-
-import createRememberingInputBox from './ui'
-
-const ligoOutput = vscode.window.createOutputChannel('LIGO compiler')
-let lastContractPath;
+import * as lc from './ligoCommands'
+import * as ui from './ui'
 
 const LigoCommands = {
   StartServer: {
@@ -49,43 +43,74 @@ const LigoCommands = {
       async () => LigoCommands.RestartServer.run(client),
     ),
   },
-  CompileCode: {
+  CompileContract: {
     name: 'ligo.compileContract',
+    run: lc.executeCompileContract,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.CompileContract.name,
+      async () => LigoCommands.CompileContract.run(),
+    ),
+  },
+  CompileExpression: {
+    name: 'ligo.compileExpression',
+    run: lc.executeCompileExpression,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.CompileExpression.name,
+      async () => LigoCommands.CompileExpression.run(),
+    ),
+  },
+  DryRun: {
+    name: 'ligo.dryRun',
+    run: lc.executeDryRun,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.DryRun.name,
+      async () => LigoCommands.DryRun.run(),
+    ),
+  },
+  EvaluateFunction: {
+    name: 'ligo.evaluateFunction',
+    run: lc.executeEvaluateFunction,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.EvaluateFunction.name,
+      async () => LigoCommands.EvaluateFunction.run(),
+    ),
+  },
+  EvaluateValue: {
+    name: 'ligo.evaluateValue',
+    run: lc.executeEvaluateValue,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.EvaluateValue.name,
+      async () => LigoCommands.EvaluateValue.run(),
+    ),
+  },
+  ChooseLigoOption: {
+    name: 'ligo.chooseOption',
     run: async () => {
-      const maybeEntrypoint = await createRememberingInputBox('Entrypoint', 'Enter entrypoint to compile', 'main');
-      if (!maybeEntrypoint) {
-        return;
+      const possibleOptions = ['Compile contract', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
+      const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
+      switch (curCommand) {
+        case 'Compile contract':
+          lc.executeCompileContract();
+          break;
+        case 'Compile expression':
+          lc.executeCompileExpression();
+          break;
+        case 'Dry run':
+          lc.executeDryRun();
+          break;
+        case 'Evaluate function':
+          lc.executeEvaluateFunction();
+          break;
+        case 'Evaluate value':
+          lc.executeEvaluateValue();
+          break;
+        default:
+          console.error('Unknown command');
       }
-
-      let path = vscode.window.activeTextEditor.document.uri.fsPath;
-      const ext = extname(path);
-
-      if (ext !== '.ligo' && ext !== '.mligo' && ext !== '.religo') {
-        if (!lastContractPath) {
-          return;
-        }
-        path = lastContractPath;
-      }
-
-      const ligoPath = getLigoPath(vscode.workspace.getConfiguration());
-      lastContractPath = path;
-
-      if (ligoPath === undefined) {
-        return;
-      }
-      execFile(ligoPath, ['compile', 'contract', path, '-e', maybeEntrypoint], (error, stdout, stderr) => {
-        if (error) {
-          ligoOutput.appendLine(error.message);
-        } else {
-          ligoOutput.appendLine(stderr);
-          ligoOutput.appendLine(stdout);
-        }
-      });
-      ligoOutput.show();
     },
     register: () => vscode.commands.registerCommand(
-      LigoCommands.CompileCode.name,
-      async () => LigoCommands.CompileCode.run(),
+      LigoCommands.ChooseLigoOption.name,
+      async () => LigoCommands.ChooseLigoOption.run(),
     ),
   },
 }
@@ -93,8 +118,13 @@ const LigoCommands = {
 export default LigoCommands
 
 export function registerCommands(client: LanguageClient) {
-  LigoCommands.StartServer.register(client)
-  LigoCommands.StopServer.register(client)
-  LigoCommands.RestartServer.register(client)
-  LigoCommands.CompileCode.register()
+  LigoCommands.StartServer.register(client);
+  LigoCommands.StopServer.register(client);
+  LigoCommands.RestartServer.register(client);
+  LigoCommands.ChooseLigoOption.register();
+  LigoCommands.CompileContract.register();
+  LigoCommands.CompileExpression.register();
+  LigoCommands.DryRun.register();
+  LigoCommands.EvaluateFunction.register();
+  LigoCommands.EvaluateValue.register();
 }
