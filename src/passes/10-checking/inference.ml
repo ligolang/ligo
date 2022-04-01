@@ -99,7 +99,6 @@ let infer_type_applications ~raise ~loc ?(default_error = (fun loc t t' -> asser
    e.g. given the table `[a ↦ int; b ↦ string; c ↦ bool` it will return
    `(((∀ a . (∀ b . (∀ c . some_type))) @@ int) @@ string) @@ bool` *)
 let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
-  let bound_variables = List.rev bound_variables in
   let rec build_type_insts (forall : O.expression) = function
     | [] -> forall
     | av :: avs' ->
