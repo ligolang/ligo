@@ -379,9 +379,10 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
   )
   | E_constructor {constructor; element} -> (
     let destructed_tv_opt =
-      Option.value_map tv_opt
-        ~default:None
-        ~f:(fun sum_t -> Option.value_map (O.get_sum_label_type sum_t constructor) ~default:None ~f:(fun x -> Some (sum_t , x)))
+      let open Simple_utils.Option in
+      let* sum_t = tv_opt in
+      let* x = O.get_sum_label_type sum_t constructor in
+      return (sum_t, x)
     in 
     let (avs, c_arg_t, sum_t) =
       match destructed_tv_opt with
