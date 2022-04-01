@@ -1573,6 +1573,10 @@ let%expect_test _ =
   [%expect{| (Pair (Left (Left 42)) (Left 42)) |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "redundant_constructors_but_annotated.mligo" ] ;
+  [%expect{| (Pair {} (Left 1)) |}]
+
+let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_toplevel.mligo" ] ;
   [%expect {|
 File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:

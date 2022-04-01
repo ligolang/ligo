@@ -399,7 +399,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
         | [] -> raise.raise (unbound_constructor constructor e.location)
       )
     in
-    let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
+    let c_arg = type_expression' ~raise ~add_warning ~options ~tv_opt:c_arg_t (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
     let () = trace_option ~raise (not_annotated e.location) @@
       if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
@@ -410,18 +410,34 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     return (E_constructor {constructor; element=c_arg}) sum_t
   )
   (* Record *)
-  | E_record m ->
-      let m' = O.LMap.map (type_expression' ~raise ~add_warning ~options (app_context, context)) m in
-      let _,lmap = O.LMap.fold_map ~f:(
-        fun (Label k) e i ->
-          let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
-          i+1,({associated_type = get_type e ; michelson_annotation = None ; decl_pos}: O.row_element)
-        ) m' ~init:0 in
-      let record_type = match Typing_context.get_record lmap context with
-        | None -> t_record ~layout:default_layout lmap
-        | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
+  | E_record m -> (
+    let field_types_opt =
+      let open Simple_utils.Option in
+      let* rec_t = tv_opt in
+      let* x = O.get_record_fields rec_t in
+      let* x = match List.zip (List.map ~f:snd x) (O.LMap.to_list m) with
+        | Ok x -> Some x
+        | Unequal_lengths -> None
       in
-      return (E_record m') record_type
+      return x
+    in 
+    let m' = match field_types_opt with
+      | None -> O.LMap.map (type_expression' ~raise ~add_warning ~options (app_context, context)) m
+      | Some lst ->
+        let lst = List.map ~f:(fun (tv_opt, exp) -> type_expression' ~raise ~add_warning ~options ~tv_opt (app_context, context) exp) lst in
+        O.LMap.of_list (List.zip_exn (O.LMap.keys m) lst)
+    in
+    let _,lmap = O.LMap.fold_map ~f:(
+      fun (Label k) e i ->
+        let decl_pos = match int_of_string_opt k with Some i -> i | None -> i in
+        i+1,({associated_type = get_type e ; michelson_annotation = None ; decl_pos}: O.row_element)
+      ) m' ~init:0 in
+    let record_type = match Typing_context.get_record lmap context with
+      | None -> t_record ~layout:default_layout lmap
+      | Some (orig_var,r) -> make_t_orig_var (T_record r) None orig_var
+    in
+    return (E_record m') record_type
+  )
   | E_record_update {record; path; update} ->
     let record = type_expression' ~raise ~add_warning ~options (app_context, context) record in
     let update = type_expression' ~raise ~add_warning ~options (app_context, context) update in
