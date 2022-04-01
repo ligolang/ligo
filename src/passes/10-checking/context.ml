@@ -144,7 +144,7 @@ module Typing = struct
   let rec get_sum: label -> t -> (type_variable * type_variable list * type_expression * type_expression) list =
     fun ctor ctxt ->
         let aux = fun (var,type_) ->
-          let t_params, type_ = Ast_typed.Helpers.desctruct_type_abstraction type_ in
+          let t_params, type_ = Ast_typed.Helpers.destruct_type_abstraction type_ in
           match type_.type_content with
           | T_sum m -> (
             match LMap.find_opt ctor m.content with

@@ -36,12 +36,12 @@ let remove_empty_annotation (ann : string option) : string option =
 
 
 (* This function transforms a type `fun v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
-let desctruct_type_abstraction (t : type_expression) =
-  let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
+let destruct_type_abstraction (t : type_expression) =
+  let rec destruct_type_abstraction type_vars (t : type_expression) = match t.type_content with
     | T_abstraction { ty_binder ; type_ ; _ } ->
-       destruct_for_alls (ty_binder :: type_vars) type_
+      destruct_type_abstraction (ty_binder :: type_vars) type_
     | _ -> (type_vars, t)
-  in destruct_for_alls [] t
+  in destruct_type_abstraction [] t
 
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
 let destruct_for_alls (t : type_expression) =

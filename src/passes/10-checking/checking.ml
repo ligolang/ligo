@@ -387,7 +387,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let (avs, c_arg_t, sum_t) =
       match destructed_tv_opt with
       | Some (sum_t,c_tv) -> (
-        let avs , _ = O.Helpers.desctruct_type_abstraction c_tv in
+        let avs , _ = O.Helpers.destruct_type_abstraction c_tv in
         (avs,c_tv,sum_t)
       )
       | None -> (
