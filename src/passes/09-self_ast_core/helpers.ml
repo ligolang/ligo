@@ -47,7 +47,7 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
     let res = self res mi.let_result in
     res
   | E_recursive r -> Folds.recursive self idle init r
-  | E_assign a -> Folds.assign self init a
+  | E_assign a -> Folds.assign self idle init a
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
@@ -134,7 +134,7 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
       return @@ E_constant c
     )
   | E_assign a ->
-    let a = Maps.assign self a in
+    let a = Maps.assign self (fun a -> a) a in
     return @@ E_assign a
   | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> return e'
 
@@ -263,7 +263,7 @@ let rec fold_map_expression : type a . a fold_mapper -> a -> expression -> a * e
       (res, return @@ E_constant c)
     )
   | E_assign a ->
-    let (res,a) = Fold_maps.assign self init a in
+    let (res,a) = Fold_maps.assign self idle init a in
     (res, return @@ E_assign a)
   | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> (init, return e')
 

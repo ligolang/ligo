@@ -775,7 +775,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         region = op.region
       })
     in
-    e_assign ~loc:outer_loc (ValueVar.of_input_var ~loc value) [] e2
+    e_assign ~loc:outer_loc {var=ValueVar.of_input_var ~loc value;ascr=None;attributes={const_or_var=Some `Var}} [] e2
 
   | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region=_}, ({value = Eq; _} as op), e2) ->
     let e2 = compile_expression ~raise e2 in
@@ -1112,8 +1112,8 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
       let lst = compile_let_binding ~raise ~const attributes let_rhs lhs_type type_params binders region in
       let aux (binder,attr,type_params,rhs) expr =
         match rhs.expression_content with
-          E_assign {variable; _} ->
-            let var = {expression_content = E_variable variable; location = rhs.location} in
+          E_assign {binder={var;_}; _} ->
+            let var = {expression_content = E_variable var; location = rhs.location} in
             let e2 = e_let_in ~loc: (Location.lift region) binder attr var expr in
             e_sequence rhs e2
         | _ ->
@@ -1234,9 +1234,9 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
           (e_let_in found_case_binder [] (e_false ()) x))) in
 
     let cases = Utils.nseq_to_list s.cases in
-    let fallthrough_assign_false = e_assign fallthrough [] (e_false ()) in
-    let fallthrough_assign_true  = e_assign fallthrough [] (e_true ()) in
-    let found_case_assign_true   = e_assign found_case [] (e_true ()) in
+    let fallthrough_assign_false = e_assign fallthrough_binder [] (e_false ()) in
+    let fallthrough_assign_true  = e_assign fallthrough_binder [] (e_true ()) in
+    let found_case_assign_true   = e_assign found_case_binder  [] (e_true ()) in
 
     let not_expr     e   = e_constant (Const C_NOT)     [e   ] in
     let and_expr     a b = e_constant (Const C_AND)     [a; b] in

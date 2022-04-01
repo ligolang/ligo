@@ -218,7 +218,7 @@ and expression_content ppf (ec: expression_content) =
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_module_accessor ma -> module_access expression_variable ppf ma
-  | E_assign a -> assign expression ppf a
+  | E_assign a -> assign expression type_expression ppf a
 
 
 and option_inline ppf inline =

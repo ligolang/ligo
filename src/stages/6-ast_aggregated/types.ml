@@ -107,7 +107,7 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   (* assignation *)
-  | E_assign of expression assign
+  | E_assign of (expression,type_expression) assign
 
 and type_inst = {
     forall: expression ;

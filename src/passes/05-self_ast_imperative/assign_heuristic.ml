@@ -3,10 +3,10 @@ open Ast_imperative
 let peephole_expression : expression -> expression = fun e ->
   let return expression_content = { e with expression_content } in
   match e.expression_content with
-  | E_let_in {let_binder={var;_};rhs={expression_content=E_update {record={expression_content=E_variable v;_};path;update};_};let_result;attributes=_}
-      when ValueVar.equal var v ->
+  | E_let_in {let_binder;rhs={expression_content=E_update {record={expression_content=E_variable v;_};path;update};_};let_result;attributes=_}
+      when ValueVar.equal let_binder.var v ->
     let assign = return @@ E_assign {
-      variable = var;
+      binder = let_binder;
       access_path = path;
       expression  = update;
     } in

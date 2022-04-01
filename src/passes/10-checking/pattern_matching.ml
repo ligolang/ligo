@@ -168,7 +168,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
           let has_subst = has_subst' || has_subst in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
-        | I.E_assign assign when I.ValueVar.equal assign.variable to_subst ->
+        | I.E_assign assign when I.ValueVar.equal assign.binder.var to_subst ->
           let has_subst',expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
           let has_subst = has_subst' || has_subst in
           let assign = { assign with expression } in

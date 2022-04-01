@@ -54,7 +54,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
   | E_type_in { type_binder=_; rhs = _ ; let_result} ->
     let res = self init let_result in
     res
-  | E_assign a -> Folds.assign self init a
+  | E_assign a -> Folds.assign self (fun a _ -> a) init a
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m ->
   match m with
@@ -131,7 +131,7 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     return @@ E_constant {c with arguments=args}
   )
   | E_assign a ->
-    let a = Maps.assign self a in
+    let a = Maps.assign self (fun a -> a) a in
     return @@ E_assign a
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
@@ -218,7 +218,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     let (res,code) = self init code in
     (res, return @@ E_raw_code { language ; code }))
   | E_assign a ->
-    let (res,a) = Fold_maps.assign self init a in
+    let (res,a) = Fold_maps.assign self (fun a b -> a,b) init a in
     (res, return @@ E_assign a)
   | E_literal _ | E_variable _ as e' -> (init, return e')
 
@@ -285,7 +285,7 @@ module Free_variables :
       VarSet.union (self rhs) fv2
     | E_type_in {let_result} ->
       self let_result
-    | E_assign { variable=_; access_path=_; expression } ->
+    | E_assign { binder=_; access_path=_; expression } ->
       self expression
 
   and get_fv_cases : matching_expr -> VarSet.t = fun m ->

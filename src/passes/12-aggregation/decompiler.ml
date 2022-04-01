@@ -74,7 +74,8 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let record = decompile ~raise record in
        let update = decompile ~raise update in
        return (O.E_record_update { record ; path ; update })
-   | I.E_assign {variable;access_path;expression} ->
+   | I.E_assign {binder;access_path;expression} ->
+      let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
       let aux_ap : _ I.access -> _ O.access = function
          Access_record s -> Access_record s
       |  Access_tuple  i -> Access_tuple  i
@@ -82,7 +83,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
       in
       let access_path = List.map ~f:aux_ap access_path in
       let expression = decompile ~raise expression in
-      return @@ O.E_assign {variable;access_path;expression}
+      return @@ O.E_assign {binder;access_path;expression}
 
 and decompile_type ~raise : Ast_aggregated.type_expression -> Ast_typed.type_expression =
   fun ty ->

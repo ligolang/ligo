@@ -250,11 +250,11 @@ let%expect_test _ =
   [%expect{|
     const foo =
       lambda (toto : int) return let toto[@var] = 2 in
-                                 let ()#2 : unit = toto := 3 in toto
+                                 let ()#6 : unit = toto[@var] := 3 in toto
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
                                       let toto[@var] = 2 in
-                                      let ()#3 : unit = toto := 3 in toto |}]
+                                      let ()#11 : unit = toto[@var] := 3 in toto |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
@@ -271,7 +271,8 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
-                                      let ()#2 : unit = x := ADD(x , 1) in x in
+                                      let ()#6 : unit = x[@var] := ADD(x , 1) in
+                                      x in
                                     (bar)@(42) |}]
 
 let%expect_test _ =
@@ -288,15 +289,15 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let ()#5 : unit =
-                                      let fun_while_loop#2 =
-                                        rec (fun_while_loop#2:unit -> unit => lambda (()#3 : unit) return
+                                    let ()#9 : unit =
+                                      let fun_while_loop#10 =
+                                        rec (fun_while_loop#11:unit -> unit => lambda (()#12 : unit) return
                                          match AND(LT(i , x) , GT(b , 0)) with
-                                          | True () -> let ()#4 : unit =
-                                                         i := ADD(i , 1) in
-                                                       (fun_while_loop#2)@(unit)
+                                          | True () -> let ()#13 : unit =
+                                                         i[@var] := ADD(i , 1) in
+                                                       (fun_while_loop#11)@(unit)
                                           | False () -> unit ) in
-                                      (fun_while_loop#2)@(unit) in
+                                      (fun_while_loop#10)@(unit) in
                                     i |}]
 
 let%expect_test _ =
@@ -305,9 +306,9 @@ let%expect_test _ =
     const foo =
       lambda (_u : unit) return  match (4 , 5) with
                                   | (x[@var],y[@var]) -> {
-                                                            x := 2;
+                                                            x[@var] := 2;
                                                             {
-                                                               y := 3;
+                                                               y[@var] := 3;
                                                                ADD(x ,y)
                                                             }
                                   }
@@ -323,9 +324,9 @@ let%expect_test _ =
       rec (foo:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
                                                                  | (x[@var],y[@var]) -> {
 
-                                                                   x := 2;
+                                                                   x[@var] := 2;
                                                                    {
-                                                                      y := 3;
+                                                                      y[@var] := 3;
                                                                       C_POLYMORPHIC_ADD(x ,y)
                                                                    }
                                                                  } )[@@private]

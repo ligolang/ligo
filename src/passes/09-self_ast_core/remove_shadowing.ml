@@ -213,10 +213,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let hd  = swaper.module_ hd in
     let module_path = hd::tl in
     return @@ E_module_accessor {module_path; element}
-  | E_assign {variable;access_path;expression} ->
-    let variable = swaper.value variable in
+  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+    let var = swaper.value var in
     let expression = self expression in
-    return @@ E_assign {variable;access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
 
 and matching_cases : Scope.swapper -> _ match_case list -> _ match_case list = fun swaper mc_list ->
   let self = swap_expression swaper in
@@ -416,10 +416,10 @@ let rec expression : Scope.t -> expression -> expression = fun scope e ->
     let hd  = Scope.get_module_var scope hd in
     let module_path = hd::tl in
     return @@ E_module_accessor {module_path; element}
-  | E_assign {variable;access_path;expression} ->
-    let variable = Scope.get_value_var scope variable in
+  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+    let var = Scope.get_value_var scope var in
     let expression = self expression in
-    return @@ E_assign {variable;access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
 
 and matching_cases : Scope.t -> _ match_case list -> _ match_case list = fun scope mc_list ->
   let self ?(scope = scope) = expression scope in

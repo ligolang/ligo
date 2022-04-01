@@ -101,7 +101,7 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse, []
   | E_type_inst {forall;_} ->
      defuse_of_expr defuse forall
-  | E_assign { variable=_; access_path=_; expression } ->
+  | E_assign { binder=_; access_path=_; expression } ->
      defuse_of_expr defuse expression
 
 

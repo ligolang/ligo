@@ -133,7 +133,7 @@ let rec decompile_expression : O.expression -> I.expression =
     let set = List.map ~f:self set in
     return @@ I.E_set set
   | O.E_assign a ->
-    let a = Maps.assign self a in
+    let a = Maps.assign self self_type a in
     return @@ I.E_assign a
 
 let decompile_module : O.module_ -> I.module_ = fun m ->

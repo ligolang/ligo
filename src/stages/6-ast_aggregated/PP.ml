@@ -174,7 +174,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_assign a -> assign expression ppf a
+  | E_assign a -> assign expression type_expression ppf a
 
 and option_inline ppf inline =
   if inline then

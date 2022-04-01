@@ -274,9 +274,9 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and assign {variable=va;access_path=pa;expression=ea} {variable=vb;access_path=pb;expression=eb} =
+and assign {binder=ba;access_path=pa;expression=ea} {binder=bb;access_path=pb;expression=eb} =
   cmp3
-        expression_variable va vb
+        (binder type_expression) ba bb
         (List.compare access_path) pa pb
         expression ea eb
 

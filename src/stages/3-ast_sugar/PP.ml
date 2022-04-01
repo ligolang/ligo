@@ -67,7 +67,7 @@ and expression_content ppf (ec : expression_content) =
   | E_big_map    m -> big_map    expression ppf m
   | E_list       l -> lst        expression ppf l
   | E_set        s -> set        expression ppf s
-  | E_assign     a -> assign     expression ppf a
+  | E_assign     a -> assign     expression type_expression ppf a
 
 
 and option_type_name ppf {var;ascr;attributes=_}=

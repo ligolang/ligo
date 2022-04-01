@@ -42,7 +42,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   | E_cond c -> Folds.conditional self init c
   | E_recursive r -> Folds.recursive self (fun _ a -> a) init r
   | E_sequence s -> Folds.sequence self init s
-  | E_assign a -> Folds.assign self init a
+  | E_assign a -> Folds.assign self (fun _ a  -> a) init a
 
 type exp_mapper = expression -> expression
 type ty_exp_mapper = type_expression -> type_expression
@@ -142,7 +142,7 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
     return @@ E_tuple t'
   )
   | E_assign a ->
-    let a = Maps.assign self a in
+    let a = Maps.assign self (fun a -> a) a in
     return @@ E_assign a
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> return e'
 
@@ -298,6 +298,6 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       (res, return @@ E_sequence s)
     )
   | E_assign a ->
-    let (res,a) = Fold_maps.assign self init a in
+    let (res,a) = Fold_maps.assign self idle init a in
     (res, return @@ E_assign a)
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> (init, return e')

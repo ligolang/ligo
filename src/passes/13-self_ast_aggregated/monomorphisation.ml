@@ -272,7 +272,12 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
           let vid = Longident.of_variable (poly_name lid.variable) in
           vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
      data, Longident.to_expression vid type_
-  | E_assign _ -> failwith "Assignation is purified before" (* Todo: maybe add for commutativity *)
+  | E_assign {binder;access_path;expression} ->
+      let binder_instances, data = Data.instances_lookup_and_remove (Longident.of_variable binder.var) data in
+      let _, data = Data.instances_lookup_and_remove (Longident.of_variable binder.var) data in
+      let data = Data.instances_add (Longident.of_variable binder.var) binder_instances data in
+      let data, expression = self data expression in
+      data, return (E_assign {binder;access_path;expression})
 
 and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
   match m with

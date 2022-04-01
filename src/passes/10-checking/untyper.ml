@@ -172,7 +172,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       return @@ e_recursive fun_name fun_type lambda
   | E_module_accessor ma -> return @@ I.make_e @@ E_module_accessor ma
   | E_assign a ->
-    let a = Stage_common.Maps.assign untype_expression a in
+    let a = Stage_common.Maps.assign untype_expression untype_type_expression a in
     return @@ make_e @@ E_assign a
   | E_type_inst {forall;type_=type_inst} ->
     match forall.type_expression.type_content with
