@@ -55,6 +55,29 @@ let uno : storage = EURO.one;
 module access function call
 =========
 
+let x : int = foo(bar(baz(1)))
+
+----
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr
+      (call_expr
+        (lambda (Name))
+        (expr
+          (call_expr
+            (lambda (Name))
+            (expr
+              (call_expr
+                (lambda (Name))
+                (expr (Int))))))))))
+
+=========
+module access function call
+=========
+
 let x : int = int(List.length(x)) 
 
 ---
