@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1559'
+title: 'Testing framework: make type-checking run over aggregated program'
+type: fixed

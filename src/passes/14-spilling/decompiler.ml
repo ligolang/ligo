@@ -22,105 +22,105 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       (corner_case ~loc:__LOC__ ("unsupported language "^language))
       (String.equal language Stage_common.Backends.michelson)
     in
-    match (Ligo_string.extract injection,parameters) with
-    | (i, []) when String.equal i unit_name -> (
+    match injection,parameters with
+    | (Unit, []) -> (
         let () =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_unit v in
         return (E_literal Literal_unit)
       )
-    | (i, []) when String.equal i int_name -> (
+    | (Int, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_int v in
         return (E_literal (Literal_int n))
       )
-    | (i, []) when String.equal i nat_name -> (
+    | (Nat, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_nat v in
         return (E_literal (Literal_nat n))
       )
-    | (i, []) when String.equal i timestamp_name -> (
+    | (Timestamp, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_timestamp v in
         return (E_literal (Literal_timestamp n))
       )
-    | (i, []) when String.equal i tez_name -> (
+    | (Tez, [])  -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_mutez v in
         return (E_literal (Literal_mutez n))
       )
-    | (i, []) when String.equal i string_name -> (
+    | (String, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_string v in
         let n = Ligo_string.Standard n in
         return (E_literal (Literal_string n))
       )
-    | (i, []) when String.equal i bytes_name -> (
+    | (Bytes, [])  -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bytes n))
       )
-    | (i, []) when String.equal i bls12_381_g1_name -> (
+    | (Bls12_381_g1, [])  -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bls12_381_g1 n))
       )
-    | (i, []) when String.equal i bls12_381_g2_name -> (
+    | (Bls12_381_g2, [])  -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bls12_381_g2 n))
       )
-    | (i, []) when String.equal i bls12_381_fr_name -> (
+    | (Bls12_381_fr, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_bytes v in
         return (E_literal (Literal_bls12_381_fr n))
       )
-    | (i, []) when String.equal i address_name -> (
+    | (Address, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_address n))
       )
-    | (i, []) when String.equal i operation_name -> (
+    | (Operation, []) -> (
         let op =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_operation v in
         return (E_literal (Literal_operation op))
       )
-    |  (i, []) when String.equal i key_name -> (
+    |  (Key, []) -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key n))
       )
-    |  (i, []) when String.equal i key_hash_name -> (
+    |  (Key_hash, [])  -> (
         let n =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_string v in
         return (E_literal (Literal_key_hash n))
       )
-    | (i, []) when String.equal i chain_id_name -> (
+    | (Chain_id, []) -> (
       let n =
         trace_option ~raise (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_chain_id n))
     )
-    |  (i, []) when String.equal i signature_name -> (
+    |  (Signature, [])  -> (
       let n =
         trace_option ~raise (wrong_mini_c_value t v) @@
         get_string v in
       return (E_literal (Literal_signature n))
     )
-    | (i, [o]) when String.equal i option_name -> (
+    | (Option, [o])  -> (
         let opt =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_option v in
@@ -130,7 +130,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
             let s' = self s o in
             (e_a_some s')
       )
-    | (i, [k_ty;v_ty]) when String.equal i map_name -> (
+    | (Map, [k_ty;v_ty])  -> (
         let map =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_map v in
@@ -147,7 +147,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
         List.fold_right ~f:aux ~init map'
       )
-    | (i, [k_ty; v_ty]) when String.equal i big_map_name -> (
+    | (Big_map, [k_ty; v_ty])  -> (
         let big_map =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_big_map v in
@@ -164,8 +164,8 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         List.fold_right ~f:aux ~init big_map'
       )
-    | (i, _) when String.equal i map_or_big_map_name -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
-    | (i, [ty]) when String.equal i list_name -> (
+    | (Map_or_big_map, _)  -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
+    | (List, [ty])  -> (
         let lst =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_list v in
@@ -177,7 +177,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
         List.fold_right ~f:aux ~init lst'
       )
-    | (i, [ty]) when String.equal i set_name -> (
+    | (Set, [ty])  -> (
         let lst =
           trace_option ~raise (wrong_mini_c_value t v) @@
           get_set v in
@@ -190,7 +190,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         List.fold ~f:aux ~init lst'
       )
-    | (i, [ty]) when String.equal i ticket_name -> (
+    | (Ticket, [ty]) -> (
       let (v,amt) =
         trace_option ~raise (wrong_mini_c_value t v) @@
         get_ticket v
@@ -199,12 +199,17 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       let amt = self amt (AST.t_nat ()) in
       return (E_constant {cons_name=C_TICKET;arguments=[v;amt]})
     )
-    | (i, _) when String.equal i contract_name ->
+    | (Contract, _)  ->
       raise.raise @@ bad_decompile v
-    | (i,_) when List.exists ~f:(fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name] ->
+    | ((Michelson_pair | Michelson_or),_) ->
       raise.raise @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
-    | _ ->
-      (* let () = Format.printf "%a" Mini_c.PP.value v in *)
+    | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2     |
+        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Option           |
+        Map             | Big_map              | Set             | Bool     | Baker_hash        | Pvss_key         | 
+        Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Test_exec_result |
+        Test_exec_error | Account              | Typed_address   | Mutation | Failure           | Chest            | 
+        Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp        | 
+        Operation       | Time                 | String          | List), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.raise @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
@@ -229,7 +234,5 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
   | T_singleton _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "no value is of type singleton"
-  | T_abstraction _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"
   | T_for_all _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"

@@ -1,7 +1,7 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Test.Common.Capabilities.SignatureHelp
-  ( simpleFunctionCallDriver
+  ( TestInfo (..)
+  , caseInfos
+  , simpleFunctionCallDriver
   ) where
 
 import Control.Lens ((^.))
@@ -26,7 +26,7 @@ import Test.Common.FixedExpectations (shouldBe)
 import Test.Common.Util (ScopeTester, withoutLogger)
 
 data TestInfo = TestInfo
-  { tiContract :: String
+  { tiContract :: FilePath
   , tiCursor :: Range
   , tiFunction :: Text
   , tiLabel :: Text
@@ -208,17 +208,17 @@ caseInfos =
     }
   ]
 
-simpleFunctionCallDriver :: forall parser. ScopeTester parser => IO TestTree
-simpleFunctionCallDriver = withoutLogger \runLogger -> do
+simpleFunctionCallDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
+simpleFunctionCallDriver testCases = withoutLogger \runLogger -> do
   graph <- runLogger $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
-  pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) caseInfos
+  pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) testCases
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)
 
     makeTest graph TestInfo{..} = do
       let filepath = contractsDir </> "signature-help" </> tiContract
       let tree = contractTree $ fromJust $ lookupContract filepath graph
-      dialect <- getExt filepath
+      let Right dialect = getExt filepath
       let result = findSignature (tree ^. nestedLIGO) tiCursor
       result `shouldBe`
         Just ( SignatureInformation

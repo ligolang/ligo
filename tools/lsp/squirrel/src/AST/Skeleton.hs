@@ -27,19 +27,18 @@ module AST.Skeleton
   ) where
 
 import Control.Lens.Lens (Lens, lens)
-import Data.Functor.Classes
+import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
-import Duplo.Pretty (Pretty (..))
-import Duplo.Tree
+import Duplo.Pretty (PP (..), Pretty (..))
+import Duplo.Tree (Tree)
 
-import Product
+import Product (Product)
 
-data SomeLIGO xs where
-  SomeLIGO :: Lang -> LIGO xs -> SomeLIGO xs
+data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
 
 nestedLIGO :: Lens (SomeLIGO xs) (SomeLIGO xs') (LIGO xs) (LIGO xs')
 nestedLIGO = lens getLIGO setLIGO
@@ -53,6 +52,9 @@ setLIGO (SomeLIGO d _) = SomeLIGO d
 withNestedLIGO
   :: Functor f => SomeLIGO xs -> (LIGO xs -> f (LIGO xs')) -> f (SomeLIGO xs')
 withNestedLIGO = flip nestedLIGO
+
+instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
+  show = show . PP
 
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
@@ -116,6 +118,8 @@ data Binding it
   | BAttribute    it -- ^ (Name)
   | BInclude      it
   | BImport       it it
+  | BModuleDecl   it [it] -- ^ (Name) (Expr)
+  | BModuleAlias  it [it]   -- ^ (Name) (Name)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data TypeParams it

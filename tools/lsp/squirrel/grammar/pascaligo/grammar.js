@@ -46,6 +46,8 @@ module.exports = grammar({
         $.type_decl,
         $.const_decl,
         $.fun_decl,
+        $.module_decl,
+        $.module_alias,
         $.preprocessor,
       ),
 
@@ -85,7 +87,7 @@ module.exports = grammar({
     _variant_args: $ => seq(
       field("constructor", $.ConstrName),
       'of',
-      field("arguments", $._simple_type)
+      field("arguments", $._param_type)
     ),
 
     // Record type
@@ -195,7 +197,36 @@ module.exports = grammar({
 
     _access: $ => choice('var', 'const'),
 
-    _param_type: $ => $._simple_type,
+    _param_type: $ => choice($._simple_type, $.record_type),
+
+    /// MODULES
+
+    module_decl: $ => choice(
+      seq(
+        "module",
+        field("moduleName", $.ModuleName),
+        "is",
+        "{",
+        common.sepEndBy(optional(';'), field("declaration", $._declaration)),
+        "}"
+      ),
+      seq(
+        "module",
+        field("moduleName", $.ModuleName),
+        "is",
+        "begin",
+        common.sepEndBy(optional(';'), field("declaration", $._declaration)),
+        "end"
+      ),
+    ),
+
+
+    module_alias: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "is",
+      common.sepBy1('.', field("module", $.ModuleName))
+    ),
 
     /// STATEMENTS
 
@@ -207,11 +238,12 @@ module.exports = grammar({
 
     _open_data_decl: $ =>
       choice(
-        // TODO (LIGO-217): support module decl and module alias
         $.type_decl,
         $.const_decl,
         $.var_decl,
         $.fun_decl,
+        $.module_decl,
+        $.module_alias,
       ),
 
     var_decl: $ =>
@@ -274,7 +306,7 @@ module.exports = grammar({
         ),
         seq(
           'case',
-          $._expr,
+          field("subject", $._expr),
           'of',
           '[',
           optional('|'),

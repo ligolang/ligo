@@ -5,13 +5,11 @@ open Stage_common.Constant
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-let extract = Ligo_string.extract
-
 let rec check_no_nested_bigmap ~raise is_in_bigmap e =
   match e.type_content with
-  | T_constant {injection; _} when (String.equal (extract injection) big_map_name) && is_in_bigmap ->
+  | T_constant {injection=Big_map; _} when is_in_bigmap ->
     raise.raise @@ nested_bigmap e.location
-  | T_constant {injection; parameters=[k ; v];_} when String.equal (extract injection) big_map_name || String.equal (extract injection) map_name ->
+  | T_constant {injection=(Big_map | Map); parameters=[k ; v];_} ->
     let _ = check_no_nested_bigmap ~raise false k in
     let _ = check_no_nested_bigmap ~raise true  v in
     ()

@@ -1,6 +1,6 @@
 -- Deriving `ToGraph` creates some reduntant constraints warnings which we
 -- unforunately have no control over. Disable this warning for now.
-{-# OPTIONS_GHC -Wno-orphans -Wno-redundant-constraints #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module AST.Scope.Common
   ( MarkerInfo (..)
@@ -8,8 +8,6 @@ module AST.Scope.Common
   , FindFilepath (..)
   , HasScopeForest (..)
   , Level (..)
-  , ScopeError (..)
-  , ScopeM
   , Info'
   , ScopeForest (..)
   , ScopeInfo
@@ -20,6 +18,7 @@ module AST.Scope.Common
   , ParsedContractInfo
   , ContractInfo'
   , ContractNotFoundException (..)
+  , contractNotFoundException
   , Includes (..)
 
   , pattern FindContract
@@ -27,6 +26,8 @@ module AST.Scope.Common
   , contractFile
   , contractTree
   , contractMsgs
+
+  , addLigoErrToMsg
 
   , cFile
   , cTree
@@ -44,29 +45,29 @@ module AST.Scope.Common
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
+import Algebra.Graph.AdjacencyMap qualified as G (gmap)
 import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
 import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
-import Control.Exception.Safe
 import Control.Lens (makeLenses)
-import Control.Lens.Operators ((&))
-import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Lens.Operators ((&), (%~))
 import Control.Monad.Reader
-import Control.Monad.Trans.Except
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
+import Data.Functor.Identity (runIdentity)
 import Data.List (sortOn)
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Monoid (First (..))
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
+import UnliftIO.Exception (Exception (..), throwIO)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -76,7 +77,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  ( Ctor (..), Lang, Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
@@ -101,12 +102,14 @@ data ParsedContract info = ParsedContract
   , _cTree :: info -- ^ The payload of the contract.
   , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
   } deriving stock (Show)
+    deriving Pretty via ShowPP (ParsedContract info)
 
 -- | Wraps a 'ParsedContract', allowing it to be stored in a container where its
 -- comparison will always be on its source file.
 newtype FindFilepath info
   = FindFilepath { _getContract :: ParsedContract info }
-  deriving newtype (Show)
+  deriving stock (Show)
+  deriving newtype (Pretty)
 
 instance Eq (FindFilepath info) where
   (==) = (==) `on` contractFile
@@ -126,43 +129,24 @@ contractMsgs (FindFilepath pc) = _cMsgs pc
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
+addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
+addLigoErrToMsg err = getContract . cMsgs %~ (err :)
+
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
     :: ProgressCallback m
     -> Includes ParsedContractInfo
     -> m (Includes (FindFilepath ScopeForest))
 
-instance {-# OVERLAPPABLE #-} Pretty x => Show x where
-  show = show . pp
-
 data Level = TermLevel | TypeLevel
-  deriving stock Eq
-
-instance Pretty Level where
-  pp TermLevel = "TermLevel"
-  pp TypeLevel = "TypeLevel"
+  deriving stock (Eq, Show)
+  deriving Pretty via ShowPP Level
 
 ofLevel :: Level -> ScopedDecl -> Bool
 ofLevel level decl = case (level, _sdSpec decl) of
   (TermLevel, ValueSpec{}) -> True
   (TypeLevel, TypeSpec{}) -> True
   _ -> False
-
-data ScopeError =
-  TreeDoesNotContainName
-    Doc  -- ^ pprinted tree (used for simplifying purposes for not stacking
-         -- type parameters for `ScopeM` which brings plethora of confusion)
-    Range -- ^ location where the error has occurred
-    Text -- ^ variable name
-  deriving Show via PP ScopeError
-
-instance Pretty ScopeError where
-  pp (TreeDoesNotContainName tree range name) =
-    "Given tree does not contain " <> pp name <> ": " <> tree <> " (" <> pp range <> ")"
-
-instance Exception ScopeError
-
-type ScopeM = ExceptT ScopeError (Reader Lang)
 
 type Info' = Scope ': Maybe Level ': ParsedInfo
 
@@ -187,7 +171,7 @@ data DeclRef = DeclRef
   deriving stock (Eq, Ord)
 
 instance Pretty DeclRef where
-  pp (DeclRef n r) = pp n <.> "@" <.> pp r
+  pp (DeclRef n r) = pp n <.> "<-" <.> pp r
 
 data MergeStrategy
   = OnUnion
@@ -210,13 +194,13 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       -- These two are likely different things, so we shouldn't merge them.
       | not (lr `intersects` rr) = [l, r]
       -- Merge the scopes if they have different decls within the same range.
-      | lr == rr  = [make (mergeDecls ldecls rdecls :> rr :> Nil, descend ldeepen rdeepen)]
+      | lr == rr  = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend ldeepen rdeepen)]
       -- The left scope is more local than the right hence try to find where the
       -- right subscope is more local or equal to the left one.
-      | leq lr rr = [make (mergeDecls ldecls rdecls :> rr :> Nil, descend [l] rdeepen)]
+      | leq lr rr = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend [l] rdeepen)]
       -- The right scope is more local than the left hence try to find where the
       -- left subscope is more local or equal to the right one.
-      | otherwise = [make (mergeDecls ldecls rdecls :> lr :> Nil, descend ldeepen [r])]
+      | otherwise = [fastMake (mergeDecls ldecls rdecls :> lr :> Nil) (descend ldeepen [r])]
 
     zipWithMissing, zipWithMatched, zipWithStrategy :: Ord c => (a -> c) -> (a -> a -> b) -> (a -> b) -> [a] -> [a] -> [b]
     zipWithMissing _ _ g [] ys = g <$> ys
@@ -281,7 +265,7 @@ instance Pretty ScopeForest where
       go = sexpr "list" . map go'
       go' :: ScopeTree -> Doc
       go' (only -> (decls :> r :> Nil, list')) =
-        sexpr "scope" ([pp r] ++ map pp (Set.toList decls) ++ [go list' | not $ null list'])
+        sexpr "scope" (pp r : map pp (Set.toList decls) ++ [go list' | not $ null list'])
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
@@ -301,7 +285,10 @@ spine r (only -> (i, trees))
   | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
   | otherwise = mempty
 
-addLocalScopes :: MonadCatch m => SomeLIGO ParsedInfo -> ScopeForest -> m (SomeLIGO Info')
+addLocalScopes
+  :: SomeLIGO ParsedInfo
+  -> ScopeForest
+  -> SomeLIGO Info'
 addLocalScopes tree forest =
   let
     getPreRange xs = let PreprocessedRange r = getElem xs in r
@@ -310,32 +297,32 @@ addLocalScopes tree forest =
       let env = envAtPoint (getPreRange i) forest
       return ((env :> Nothing :> i) :< fs')
   in
-  withNestedLIGO tree $
-    descent @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
-    [ Descent \(i, Name t) -> do
+  runIdentity $ withNestedLIGO tree $
+    descent' @(Product ParsedInfo) @(Product Info') @RawLigoList @RawLigoList defaultHandler
+    [ Descent \i (Name t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Name t)
 
-    , Descent \(i, NameDecl t) -> do
+    , Descent \i (NameDecl t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, NameDecl t)
 
-    , Descent \(i, Ctor t) -> do
+    , Descent \i (Ctor t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TermLevel :> i, Ctor t)
 
-    , Descent \(i, TypeName t) -> do
+    , Descent \i (TypeName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeName t)
 
-    , Descent \(i, TypeVariableName t) -> do
+    , Descent \i (TypeVariableName t) -> do
         let env = envAtPoint (getPreRange i) forest
         return (env :> Just TypeLevel :> i, TypeVariableName t)
     ]
 
 addScopes
   :: forall impl m
-   . (HasScopeForest impl m, MonadUnliftIO m)
+   . HasScopeForest impl m
   => ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
@@ -349,10 +336,10 @@ addScopes reportProgress graph = do
     addScope (_getContract -> sf) = do
       let src = _cFile sf
       let fp = srcPath src
-      pc <- maybe (throwM $ ContractNotFoundException fp graph) pure (lookupContract fp graph)
-      FindContract src
-        <$> addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe)
-        <*> pure (_cMsgs sf)
+      pc <- maybe (contractNotFoundException fp graph) pure (lookupContract fp graph)
+      pure $ FindContract src
+        (addLocalScopes (contractTree pc) (mergeScopeForest OnIntersection (_cTree sf) universe))
+        (_cMsgs sf)
   Includes <$> traverseAMConcurrently addScope (getIncludes forestGraph)
   where
     nubRef sd = sd
@@ -376,25 +363,30 @@ type ContractInfo       = FindFilepath (SomeLIGO Info)
 type ParsedContractInfo = FindFilepath (SomeLIGO ParsedInfo)
 type ContractInfo'      = FindFilepath (SomeLIGO Info')
 
-data ContractNotFoundException where
-  ContractNotFoundException :: FilePath -> Includes (FindFilepath info) -> ContractNotFoundException
+contractNotFoundException :: MonadIO m => FilePath -> Includes (FindFilepath info) -> m a
+contractNotFoundException fp (Includes g) =
+  throwIO $ ContractNotFoundException fp $ Includes $ G.gmap contractFile g
 
-instance Pretty ContractNotFoundException where
-  pp (ContractNotFoundException cnfPath cnfGraph) =
-    "Could not find contract '" <.> pp (pack cnfPath) <.> "'.\n"
-    <.> "Searched graph:\n"
-    <.> pp (pack $ G.render $ G.export vDoc eDoc cnfGraph)
+data ContractNotFoundException = ContractNotFoundException
+  { cnfeMissingFile :: FilePath
+  , cnfeIncludedFiles :: Includes FilePath
+  } deriving stock (Show)
+
+instance Exception ContractNotFoundException where
+  displayException ContractNotFoundException {cnfeMissingFile, cnfeIncludedFiles} =
+    "Could not find contract '" <> cnfeMissingFile <> "'.\n"
+    <> "Searched graph:\n"
+    <> G.render (G.export vDoc eDoc cnfeIncludedFiles)
     where
-      vDoc x   = G.literal (contractFile x) <> "\n"
-      eDoc x y = G.literal (contractFile x) <> " -> " <> G.literal (contractFile y) <> "\n"
-
-instance Exception ContractNotFoundException
+      vDoc x   = G.literal x <> "\n"
+      eDoc x y = G.literal x <> " -> " <> G.literal y <> "\n"
 
 -- TODO: We should preferrably export it from AST.Includes, but it would create
 -- cyclic imports.
 newtype Includes info = Includes
   { getIncludes :: AdjacencyMap info
-  } deriving newtype (Graph, ToGraph)
+  } deriving stock (Show)
+    deriving newtype (Graph, ToGraph)
 
 instance (Ord info, ToJSON info) => ToJSON (Includes info) where
   toJSON includes = object

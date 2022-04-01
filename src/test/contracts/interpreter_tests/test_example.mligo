@@ -1,5 +1,3 @@
-let cut = "./contract_under_test/contract_create.mligo"
-
 #include "./contract_under_test/contract_create.mligo"
 
 let check_new_origination (src :address) : address =
@@ -41,7 +39,7 @@ let test =
       let () = assert (addr = new_account2) in
       let () = assert (Test.michelson_equal v (Test.eval 111)) in
       v
-    | Other -> (failwith "contract failed for another reason" : michelson_program)
+    | _ -> (failwith "contract failed for another reason" : michelson_program)
   )
 
 let test2 =
@@ -64,9 +62,9 @@ let test2 =
   let tz = fun (n:nat) ->
     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
   in
-  let () = assert ((Test.get_balance bsa0) = 8000tez) in
+  let () = assert ((Test.get_balance bsa0) = 7600tez) in
   let () = assert ((Test.get_balance bsa1) = 2mutez) in
   let () = assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 2n)) in
-  let () = assert ((Test.get_balance bsa2) = 4000000tez) in
-  let () = assert ((Test.get_balance bsa3) = 4000000000000mutez) in
+  let () = assert ((Test.get_balance bsa2) = 3800000tez) in
+  let () = assert ((Test.get_balance bsa3) = 3800000000000mutez) in
   ()

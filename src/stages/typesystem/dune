@@ -1,6 +1,0 @@
-(library
- (name typesystem)
- (public_name ligo.typesystem)
- (instrumentation
-  (backend bisect_ppx))
- (libraries simple-utils ast_typed mini_c))

@@ -18,42 +18,8 @@ okayIgnoreContracts :: [FilePath]
 okayIgnoreContracts = (contractsDir </>) <$> ignore
   where
     ignore =
-      [ -- LIGO-157
-        "modules.religo"
-      , "get_scope_tests/module.mligo"
-      , "uncurry_contract.mligo"
-      , "modules.mligo"
-      , "modules.ligo"
-      , "modules_env.mligo"
-      , "module_contract_simple.mligo"
-      , "module_contract_complex.mligo"
-      , "warning_duplicate.mligo"
-      , "interpreter_tests/nesting_modules.mligo"
-      , "interpreter_tests/test_imported.mligo"
-      , "interpreter_tests/test_importer.mligo" -- Also needs LIGO-204
-      , "interpreter_tests/test_module.mligo"
-      , "modules_and_free_vars/nested_modules.mligo"
-      , "modules_and_free_vars/simple.mligo"
-      , "polymorphism/modules.mligo"
-      , "polymorphism/modules.religo"
-      , "remove_unused_module.mligo"
-      , "build/module_scoping_bug.mligo"
-      , "aggregation/bug_alias.mligo"
-      , "aggregation/bug_alias2.mligo"
-      , "aggregation/bug_alias3.mligo"
-      , "aggregation/bug_alias4.mligo"
-      , "aggregation/bug_alias5.mligo"
-      , "aggregation/bug_alias6.mligo"
-      , "aggregation/bug_alias7.mligo"
-      , "aggregation/bug_alias8.mligo"
-      , "aggregation/bug_alias9.mligo"
-      , "aggregation/bug_alias10.mligo"
-      , "aggregation/bug_alias11.mligo"
-      , "aggregation/bug_alias12.mligo"
-      , "aggregation/bug_alias13.mligo"
-
-        -- LIGO-204
-      , "build/C_test.mligo"
+      [ -- LIGO-204
+        "build/C_test.mligo"
       , "build/b.mligo"
       , "build/B.mligo"
       , "build/B1.mligo"
@@ -72,11 +38,13 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "interpreter_tests/imported_modules/b.mligo"
       , "interpreter_tests/imported_modules/main.mligo"
       , "interpreter_tests/imported_modules/test.mligo"
+      , "interpreter_tests/test_importer.mligo"
       , "interpreter_tests/test_many_imports.mligo"
       , "polymorphism/use_error.mligo" -- polymorphism/* tests also depend on
       , "polymorphism/use_monad.mligo" --   LIGO-331
       , "polymorphism/use_monad_set.mligo"
       , "polymorphism/use_nelist.mligo"
+      , "view_import.mligo"
 
         -- LIGO-331
       , "polymorphism/cases_annotation1.mligo"
@@ -91,9 +59,38 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/nelist.mligo"
       , "polymorphism/set_monad.mligo"
       , "polymorphism/test.mligo"
+      , "polymorphism/modules.mligo"
+      , "polymorphism/modules.religo"
+      , "polymorphism/annotate.mligo"
+      , "polymorphism/same_vars.mligo"
 
-        -- LIGO-404
-      , "deep_pattern_matching/pm_test.religo"
+        -- LIGO-446
+      , "match.ligo"
+      , "loop.ligo"
+      , "failwith.ligo"
+      , "type_puning.ligo"
+      , "heap.ligo"
+      , "tutorials/optimisation/LargeEntrypointV2.ligo"
+      , "tutorials/optimisation/EffectfulBindingV1.ligo"
+      , "tutorials/optimisation/EffectfulBindingV2.ligo"
+      , "tutorials/optimisation/LargeEntrypointV1.ligo"
+      , "tutorials/optimisation/EffectfulBindingV3.ligo"
+      , "multisig-v2.ligo"
+      , "polymorphism/comb.ligo" -- LIGO-331
+      , "pascaligo_long_remove.ligo"
+      , "patch_long_path.ligo"
+      , "long_remove.ligo"
+      , "record.ligo"
+      , "basic_multisig/multisig.ligo"
+      , "loop14.ligo"
+      , "loop17.ligo"
+      , "multisig.ligo"
+      , "hashlock.ligo"
+      , "id.ligo"
+      , "long_assign.ligo"
+
+        -- LIGO-481
+      , "aggregation/bug_module_record.ligo"
       ]
 
 okayIgnoreDirs :: [FilePath]
@@ -102,7 +99,6 @@ okayIgnoreDirs = map (contractsDir </>) compilerTests
     compilerTests =
       [ -- TODO: Figure out which negative tests are for parsing and which are not
         "negative"
-      , "tutorials"
       ]
 
 badContractsDirs :: [FilePath]

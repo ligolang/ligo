@@ -1,0 +1,4 @@
+author: Rémi Lesenechal & Exequiel Rivas
+merge_request: '1524'
+title: 'Aggregation: fix type when accessing a record inside a module accessing'
+type: fixed

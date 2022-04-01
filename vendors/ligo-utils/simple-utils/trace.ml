@@ -55,6 +55,9 @@ let to_option f =
 let trace_assert_fail_option ~raise error = function
    None -> ()
  | Some _s -> raise.raise error
+let trace_assert_option ~raise error = function
+   None -> raise.raise error
+ | Some _s ->  ()
 
 
 let bind_map_or handler fa fb c =

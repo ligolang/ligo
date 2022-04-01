@@ -20,6 +20,7 @@ type type_content =
 and type_expression = {
   type_content : type_content;
   location : Location.t;
+  source_type : Ast_typed.type_expression option;
 }
 
 and type_base =
@@ -50,11 +51,6 @@ and type_base =
 and environment_element = expression_variable * type_expression
 
 and environment = environment_element list
-
-and environment_wrap = {
-  pre_environment : environment ;
-  post_environment : environment ;
-}
 
 and var_name = expression_variable
 and fun_name = expression_variable
@@ -129,3 +125,25 @@ and anon_function = {
   binder : expression_variable ;
   body : expression ;
 }
+
+(* backend expression metadata *)
+type binder_meta =
+  { location : Location.t;
+    name : string option;
+    source_type : Ast_typed.type_expression option;
+  }
+
+type meta =
+  { location : Location.t;
+    (* source location on any node *)
+    env : binder_meta option list;
+    (* environment descriptor on special environment Seq nodes *)
+    binder : binder_meta option;
+    (* binder descriptor on the translated type of binders (since
+       backend environments are lists of types) *)
+  }
+
+let dummy_meta : meta =
+  { location = Location.dummy ;
+    env = [] ;
+    binder = None }

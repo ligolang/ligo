@@ -23,29 +23,39 @@ type michelson_program
 <SyntaxTitle syntax="jsligo">
 type michelson_program
 </SyntaxTitle>
+
 A type for code that is compiled to Michelson.
 
 <SyntaxTitle syntax="pascaligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Other
+| Balance_too_low of record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Other
+| Balance_too_low of \u007b contract_too_low : address ; contract_balance : tez ; spend_request : tez \u007d
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_error =
   Rejected(michelson_program, address)
-| Other
+| Balance_too_low of \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d
+| Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_error =
   ["Rejected", michelson_program, address]
-| ["Other"]
+| ["Balance_too_low", \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d]
+| ["Other", string]
 </SyntaxTitle>
-A test error.
+
+A test error:
+  - The `Rejected` case means the called contract or its transitive callees (identified by the address in the second constructor argument) failed with some data (first constructor argument)
+  - The `Balance_too_low` case means a contract tried to push an operation but did not have enough balance.
+    `contract_too_low` is the address of the contract, `contract_balance` is the actual balance of the contract and `spend_request` is the amount of tez that was required for the operation
+  - The `Other` case wraps all the other possible reasons. Its argument is a string representation of the tezos_client error
 
 <SyntaxTitle syntax="pascaligo">
 type test_exec_result =
@@ -67,7 +77,10 @@ type test_exec_result =
   ["Success", nat]
 | ["Fail", test_exec_error]
 </SyntaxTitle>
-A test execution result.
+
+A test execution result:
+ - The `Success` case means the transaction went through without an issue. Its argument represent the total amount of gas consumed by the transaction
+ - The "Fail reason" case means something went wrong. Its argument encode the causes of the failure (see type `test_exec_error`)
 
 <SyntaxTitle syntax="pascaligo">
 type typed_address (param, storage)
@@ -81,6 +94,7 @@ type typed_address ('param, 'storage)
 <SyntaxTitle syntax="jsligo">
 type typed_address &lt;&apos;param, &apos;s&gt;
 </SyntaxTitle>
+
 A type for an address of a contract with parameter `'param` and storage
 `'storage`.
 
@@ -121,16 +135,16 @@ entrypoint, it needs to be annotated, entrypoint string should omit
 the prefix "%".
 
 <SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate_from_file : string -> string -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_program * int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let originate_from_file : string => string => michelson_program => tez => (address, michelson_program, int)
+let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_program, int)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate_from_file = (filepath: string, entrypoint: string, init: michelson_program, balance: tez) => [address, michelson_program, int]
+let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_program, int]
 </SyntaxTitle>
 
 Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
@@ -139,7 +153,7 @@ Originate a contract with a path to the contract file, an entrypoint, an initial
 
 ```pascaligo skip
 const originated =
-  Test.originate_from_file (testme_test, "main", init_storage, 0tez)
+  Test.originate_from_file (testme_test, "main", nil : list (string), init_storage, 0tez)
 const addr = originated.0
 const program = originated.1
 const size = originated.2
@@ -150,7 +164,7 @@ const size = originated.2
 
 ```cameligo skip
 let addr, program, size =
-  Test.originate_from_file testme_test "main" init_storage 0tez
+  Test.originate_from_file testme_test "main" ([] : string list) init_storage 0tez
 ...
 ```
 
@@ -158,14 +172,14 @@ let addr, program, size =
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, program, size) = Test.originate_from_file(testme_test,"main", init_storage, 0tez);
+let (addr, program, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, program, size] = Test.originate_from_file(testme_test,"main", init_storage, 0 as tez);
+let [addr, program, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
 ```
 
 </Syntax>
@@ -184,20 +198,6 @@ let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;
 </SyntaxTitle>
 
 Originate a contract with an entrypoint function, initial storage and initial balance.
-
-<SyntaxTitle syntax="pascaligo">
-val set_now : timestamp -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val set_now : string -> unit
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let set_now: timestamp => unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let set_now = (now: timestamp) => unit
-</SyntaxTitle>
-Set the timestamp of the predecessor block.
 
 <SyntaxTitle syntax="pascaligo">
 val set_source : address -> unit
@@ -395,8 +395,86 @@ let reset_state: (nat, list(tez)) => unit
 <SyntaxTitle syntax="jsligo">
 let reset_state = (no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
-Generate a number of random bootstrapped accounts with a default amount of 4000000 tez. The passed list can be used to overwrite the amount.
-By default, the state only has two bootstrapped accounts.
+Generate a number of random bootstrapped accounts with a default
+amount of 4000000 tez. The passed list can be used to overwrite the
+amount. By default, the state only has two bootstrapped accounts.
+
+Notice that since Ithaca, a percentage of an account's balance is
+frozen (5% in testing mode) in case the account can be taken to be a
+validator ([see
+here](https://tezos.gitlab.io/alpha/consensus.html#validator-selection-staking-balance-active-stake-and-frozen-deposits)),
+and thus `Test.get_balance` can show a different amount to the one
+being set with `Test.reset_state`.
+
+<SyntaxTitle syntax="pascaligo">
+val baker_account : (string * key) -> tez option -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val baker_account : (string * key) -> tez option -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let baker_account: ((string, key), tez option) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let baker_account = ([string, key], amount : option&lt;tez&gt;) => unit
+</SyntaxTitle>
+Adds an account `(sk, pk)` as a baker. The change is only effective after `Test.reset_state`.
+
+<SyntaxTitle syntax="pascaligo">
+val register_delegate : key_hash -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val register_delegate : key_hash -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let register_delegate: key_hash => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let register_delegate = (account : key_hash) => unit
+</SyntaxTitle>
+Registers a `key_hash` corresponding to an account as a delegate.
+
+<SyntaxTitle syntax="pascaligo">
+val register_constant : michelson_program -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val register_constant : michelson_program -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let register_constant: michelson_program => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let register_constant = (constant : michelson_program) => string
+</SyntaxTitle>
+Registers a global constant `constant`, returns its hash as a string.
+
+<SyntaxTitle syntax="pascaligo">
+val constant_to_michelson_program : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val constant_to_michelson_program : string -> michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let constant_to_michelson_program: string => michelson_program
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let constant_to_michelson_program = (constant : string) => michelson_program
+</SyntaxTitle>
+Turn a constant (as a string) into a `michelson_program`. To be used together with `Test.register_constant`.
+
+<SyntaxTitle syntax="pascaligo">
+val bake_until_n_cycle_end : nat -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val bake_until_n_cycle_end : nat -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let bake_until_n_cycle_end: nat => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let bake_until_n_cycle_end = (cycles : nat) => unit
+</SyntaxTitle>
+It bakes until a number of cycles pass, so that an account registered as delegate can effectively act as a baker.
 
 <SyntaxTitle syntax="pascaligo">
 val new_account : unit -> (string * key)
@@ -731,3 +809,36 @@ corresponding to big map identifiers. This function allows to override
 the value of a particular big map identifier. It should not be
 normally needed, except in particular circumstances such as using
 custom bootstrap contracts that initialize big maps.
+
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest : bytes => nat => (chest , chest_key)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest : bytes => nat => [chest , chest_key]
+</SyntaxTitle>
+
+Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
+Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
+
+<SyntaxTitle syntax="pascaligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let create_chest_key : chest => nat => chest_key
+</SyntaxTitle>
+
+Unlock the value and create the time-lock proof.
+Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).

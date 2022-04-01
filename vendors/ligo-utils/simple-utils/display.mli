@@ -29,3 +29,5 @@ val convert : display_format:'output display_format -> displayable -> 'output
 val to_json : displayable -> json
 
 val bind_format : 'value format -> 'error format -> ('value,'error) result format
+
+val map : 'b format -> f:('a -> 'b) -> 'a format

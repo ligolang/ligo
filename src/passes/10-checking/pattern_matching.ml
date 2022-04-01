@@ -21,14 +21,14 @@ open Errors
 type matchees = O.expression_variable list
 type pattern = I.type_expression I.pattern
 type typed_pattern = pattern * O.type_expression
-type equations = (typed_pattern list * (I.expression * Context.t)) list
-type type_fun = raise:typer_error raise -> Context.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
+type equations = (typed_pattern list * (I.expression * Context.typing_context)) list
+type type_fun = raise:typer_error raise -> Context.typing_context -> ?tv_opt:O.type_expression -> I.expression -> O.expression
 type rest = O.expression_content
 
 module PP_DEBUG = struct
   let pp_typed_pattern ppf ((p,t) : typed_pattern) = Format.fprintf ppf "(%a : %a)" (Stage_common.PP.match_pattern I.PP.type_expression) p O.PP.type_expression t
   let pp_pattern_list ppf (plist : typed_pattern list) = Format.fprintf ppf "[%a]" Simple_utils.PP_helpers.(list_sep pp_typed_pattern (tag "; ")) plist
-  let pp_eq ppf ((plist,(expr,_)):(typed_pattern list * (I.expression * Context.t))) = Format.fprintf ppf "@[%a -> %a]" pp_pattern_list plist I.PP.expression expr
+  let pp_eq ppf ((plist,(expr,_)):(typed_pattern list * (I.expression * Context.typing_context))) = Format.fprintf ppf "@[%a -> %a]" pp_pattern_list plist I.PP.expression expr
   let pp_eqs ppf (eqs:equations) = Format.fprintf ppf "@[<hv>%a@]" Simple_utils.PP_helpers.(list_sep pp_eq (tag "; ")) eqs
   let pp_partition ppf (part: equations list) = Format.fprintf ppf "@[<hv><@.%a@.>@]" Simple_utils.PP_helpers.(list_sep pp_eqs (tag "@.")) part
 end
@@ -75,13 +75,13 @@ let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.t
     | Some t -> t.associated_type
     | None -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> (
+  | O.T_constant { injection = Stage_common.Constant.Option ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Some" -> proj_t
     | Label "None" -> (O.t_unit ())
     | Label _ -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection ; parameters = [proj_t] ; language=_} when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> (
+  | O.T_constant { injection = Stage_common.Constant.List ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Cons" -> O.make_t_ez_record [("0",proj_t);("1",t)]
     | Label "Nil" -> (O.t_unit ())
@@ -119,7 +119,7 @@ let type_matchee ~raise : equations -> O.type_expression =
         if O.LMap.mem label sum_type.content then ()
         else raise.raise @@ pattern_do_not_conform_type p t
       )
-      | I.P_variant _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> ()
+      | I.P_variant _ , O.T_constant { injection = Stage_common.Constant.Option ; _ } -> ()
       | P_tuple tupl , O.T_record record_type -> (
         if (List.length tupl) <> (O.LMap.cardinal record_type.content) then
           raise.raise @@ pattern_do_not_conform_type p t
@@ -140,8 +140,8 @@ let type_matchee ~raise : equations -> O.type_expression =
         | Ok () -> ()
         | Unequal_lengths -> raise.raise @@ pattern_do_not_conform_type p t
       )
-      | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ()
-      | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ()
+      | I.P_unit , O.T_constant { injection = Stage_common.Constant.Unit ; _ } -> ()
+      | I.P_list _ , O.T_constant { injection = Stage_common.Constant.List ; _ } -> ()
       | _ -> raise.raise @@ pattern_do_not_conform_type p t
     in
     let aux : O.type_expression option -> typed_pattern -> O.type_expression option = fun t_opt (p,t) ->
@@ -168,21 +168,21 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
       fun has_subst exp ->
         let ret continue exp has_subst = (continue,has_subst,exp) in
         match exp.expression_content with
-        | I.E_variable var when I.Var.equal var to_subst ->
+        | I.E_variable var when I.ValueVar.equal var to_subst ->
           ret true { exp with expression_content = E_variable new_var } true
-        | I.E_let_in letin when I.Var.equal letin.let_binder.var to_subst ->
+        | I.E_let_in letin when I.ValueVar.equal letin.let_binder.var to_subst ->
           let has_subst',rhs = substitute_var_in_body ~raise to_subst new_var letin.rhs in
           let has_subst = has_subst' || has_subst in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
-        | I.E_lambda lamb when I.Var.equal lamb.binder.var to_subst -> ret false exp has_subst
+        | I.E_lambda lamb when I.ValueVar.equal lamb.binder.var to_subst -> ret false exp has_subst
         | I.E_matching m -> (
           let has_subst',matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
           let has_subst = has_subst' || has_subst in
           let aux : bool -> pattern -> bool =
             fun b p ->
               match p.wrap_content with
-              | P_var x when I.Var.equal x.var to_subst -> true
+              | P_var x when I.ValueVar.equal x.var to_subst -> true
               | _ -> b
           in
           let cases, has_subst = List.fold_right
@@ -201,7 +201,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
         )
         | _ -> ret true exp has_subst
     in
-    let (has_subst, res) = Self_ast_core.fold_map_expression ~raise aux false body in
+    let (has_subst, res) = Self_ast_core.fold_map_expression (aux ~raise) false body in
     (has_subst,res)
 
 let make_var_pattern : O.expression_variable -> pattern =
@@ -226,7 +226,7 @@ let rec partition : ('a -> bool) -> 'a list -> 'a list list =
 **)
 let group_equations ~raise : equations -> equations O.label_map =
   fun eqs ->
-    let aux : typed_pattern list * (I.expression * Context.t) -> equations O.label_map -> equations O.label_map =
+    let aux : typed_pattern list * (I.expression * Context.typing_context) -> equations O.label_map -> equations O.label_map =
       fun (pl , (body , env)) m ->
         let (phd,t) = List.hd_exn pl in
         let ptl = List.tl_exn pl in
@@ -293,14 +293,15 @@ and var_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_exp
     | Some shape ->
       product_rule ~raise ~err_loc ~type_f ~body_t shape ms eqs def
     | None ->
-      let aux : typed_pattern list * (I.expression * Context.t) -> (typed_pattern list * (I.expression * Context.t)) =
+       let aux : typed_pattern list * (I.expression * Context.typing_context) ->
+                 (typed_pattern list * (I.expression * Context.typing_context)) =
         fun (pl, (body,context)) ->
         match pl with
         | (phd,t)::ptl -> (
           match phd.wrap_content,t with
           | (P_var b, t) ->
             let has_subst,body' = substitute_var_in_body ~raise b.var mhd body in
-            let env' = if has_subst then Context.add_value context mhd t else Context.add_value context b.var t in
+            let env' = if has_subst then Context.Typing.add_value context mhd t else Context.Typing.add_value context b.var t in
             (ptl , (body',env'))
           | (P_unit, t) ->
             let () = assert_unit_pattern ~raise phd.location t in
@@ -331,11 +332,11 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
             | P_var x -> x.var
             | P_unit ->
               let () = assert_unit_pattern ~raise pattern.location t in
-              I.Var.fresh ~name:"unit_proj" ()
-            | _ -> I.Var.fresh ~name:"ctor_proj" ()
+              I.ValueVar.fresh ~name:"unit_proj" ()
+            | _ -> I.ValueVar.fresh ~name:"ctor_proj" ()
           )
           | _ ->
-            I.Var.fresh ~name:"ctor_proj" ()
+            I.ValueVar.fresh ~name:"ctor_proj" ()
         in
         let new_ms = proj::mtl in
         let nested = match_ ~raise ~err_loc ~type_f ~body_t new_ms eq def in
@@ -344,7 +345,7 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
     in
     let aux_m : O.label * O.type_expression -> O.matching_content_case =
       fun (constructor,t) ->
-        let proj = I.Var.fresh ~name:"ctor_proj" () in
+        let proj = I.ValueVar.fresh ~name:"ctor_proj" () in
         let body = O.make_e def t in
         { constructor ; pattern = proj ; body }
     in
@@ -387,7 +388,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
             let field_t = extract_record_type ~raise p l t in
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
             in
             (l, (v,field_t))
         in
@@ -397,7 +398,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
           fun (l,proj_pattern) ->
             let v = match proj_pattern.wrap_content with
               | P_var x -> x.var
-              | _ -> I.Var.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
             in
             let field_t = extract_record_type ~raise p l t in
             (l , (v,field_t))
@@ -405,11 +406,12 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
         List.map ~f:aux (List.zip_exn labels patterns)
       | _ -> raise.raise @@ corner_case __LOC__
     in
-    let aux : typed_pattern list * (I.expression * Context.t) -> (typed_pattern list * (I.expression * Context.t)) =
+    let aux : typed_pattern list * (I.expression * Context.typing_context) ->
+              (typed_pattern list * (I.expression * Context.typing_context)) =
       fun (pl, (body,env)) ->
       match pl with
       | (prod,t)::ptl -> (
-        let var_filler = (make_var_pattern (I.Var.fresh ~name:"_" ()) , t) in
+        let var_filler = (make_var_pattern (I.ValueVar.fresh ~name:"_" ()) , t) in
         match prod.wrap_content with
         | P_tuple ps ->
           let aux i p =
@@ -434,7 +436,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p (O.Label (string_of_int i)) t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.ValueVar.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in
@@ -444,7 +446,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
                 let field_t = extract_record_type ~raise p l t in
                 let v = match p.wrap_content with
                   | P_var _ -> p
-                  | _ -> make_var_pattern (I.Var.fresh ~loc:p.location ~name:"_" ())
+                  | _ -> make_var_pattern (I.ValueVar.fresh ~loc:p.location ~name:"_" ())
                 in
                 (v,field_t)
               in

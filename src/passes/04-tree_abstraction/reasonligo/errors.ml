@@ -17,6 +17,8 @@ type abs_error = [
   | `Concrete_reasonligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_reasonligo_recursion_on_non_function of Location.t
   | `Concrete_reasonligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
+  | `Concrete_reasonligo_expected_access_to_variable of Region.t
+
   ] [@@deriving poly_constructor { prefix = "concrete_reasonligo_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -25,6 +27,10 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Concrete_reasonligo_expected_access_to_variable reg ->
+      Format.fprintf f
+      "@[<hv>%a@.Expected access to a variable.@]"
+        Snippet.pp_lift reg
     | `Concrete_reasonligo_unknown_constant (s,loc) ->
       Format.fprintf f
       "@[<hv>%a@.Unknown constant: %s"
@@ -60,7 +66,7 @@ let error_ppformat : display_format:string display_format ->
       let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       Format.fprintf
         f
-        "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+        "@[<hv>%a@.The tuple \"%s\" does not have the expected type \"%s\". @]"
         Snippet.pp_lift region
         p
         t
@@ -76,6 +82,13 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Concrete_reasonligo_expected_access_to_variable reg ->
+    let message = `String "Expected access to a variable" in
+    let loc = Format.asprintf "%a" Location.pp_lift reg in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
   | `Concrete_reasonligo_unknown_constant (s,loc) ->
     let message = `String ("Unknow constant: " ^ s) in
     let content = `Assoc [
@@ -127,7 +140,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_reasonligo_funarg_tuple_type_mismatch (r, _, _) ->
-    let message = Format.asprintf "The tuple does not match the type." in
+    let message = Format.asprintf "The tuple does not have the expected type." in
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );

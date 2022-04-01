@@ -1,0 +1,6 @@
+---
+  title: "Fix: Using REPL without the syntax argument "
+  merge_request: "1607"
+  author: "melwyn95"
+  type: "fixed"
+

@@ -67,7 +67,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/parametric_types1.mligo", line 1, characters 20-28:
       1 | type fail_big_map = bool map
 
-    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
+    Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types2.mligo")] ;
   [%expect{|
@@ -75,7 +75,7 @@ let%expect_test _ =
       1 | type 'a foo = 'a * 'a
       2 | type bar = (int,string) foo
 
-    Type foo takes the wrong number of arguments, expected: 1 got: 2 |}]
+    Type foo is applied to a wrong number of arguments, expected: 1 got: 2 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types3.mligo")] ;
   [%expect{|
@@ -83,14 +83,14 @@ let%expect_test _ =
       1 | type ('a,'b,'c) foo = 'a * 'b * 'c
       2 | type bar = int foo
 
-    Type foo takes the wrong number of arguments, expected: 3 got: 1 |}]
+    Type foo is applied to a wrong number of arguments, expected: 3 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.mligo")] ;
   [%expect{|
     File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-15:
       1 | type x = option list
 
-    Type takes the wrong number of arguments, expected: 1 got: 0 |}]
+    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.mligo")] ;
   [%expect{|
@@ -106,7 +106,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/parametric_types1.ligo", line 1, characters 21-30:
       1 | type fail_big_map is map(bool)
 
-    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
+    Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types2.ligo")] ;
   [%expect{|
@@ -114,7 +114,7 @@ let%expect_test _ =
       1 | type foo(a) is a * a
       2 | type bar is foo(int,string)
 
-    Type foo takes the wrong number of arguments, expected: 1 got: 2 |}]
+    Type foo is applied to a wrong number of arguments, expected: 1 got: 2 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types3.ligo")] ;
   [%expect{|
@@ -122,14 +122,14 @@ let%expect_test _ =
       1 | type foo(a,b,c) is a * b * c
       2 | type bar is foo(int)
 
-    Type foo takes the wrong number of arguments, expected: 3 got: 1 |}]
+    Type foo is applied to a wrong number of arguments, expected: 3 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.ligo")] ;
   [%expect{|
     File "../../test/contracts/negative/parametric_types4.ligo", line 1, characters 15-21:
       1 | type x is list(option)
 
-    Type takes the wrong number of arguments, expected: 1 got: 0 |}]
+    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.ligo")] ;
   [%expect{|
@@ -145,7 +145,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/parametric_types1.religo", line 1, characters 20-29:
       1 | type fail_big_map = map(bool);
 
-    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
+    Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types2.religo")] ;
   [%expect{|
@@ -153,7 +153,7 @@ let%expect_test _ =
       1 | type foo('a) = ('a , 'a);
       2 | type bar = foo (int,string);
 
-    Type foo takes the wrong number of arguments, expected: 1 got: 2 |}]
+    Type foo is applied to a wrong number of arguments, expected: 1 got: 2 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types3.religo")] ;
   [%expect{|
@@ -161,14 +161,14 @@ let%expect_test _ =
       1 | type foo('a,'b,'c) = ('a , 'b , 'c);
       2 | type bar = foo(int);
 
-    Type foo takes the wrong number of arguments, expected: 3 got: 1 |}]
+    Type foo is applied to a wrong number of arguments, expected: 3 got: 1 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types4.religo")] ;
   [%expect{|
     File "../../test/contracts/negative/parametric_types4.religo", line 1, characters 14-20:
       1 | type x = list(option);
 
-    Type takes the wrong number of arguments, expected: 1 got: 0 |}]
+    Type is applied to a wrong number of arguments, expected: 1 got: 0 |}]
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "parametric_types5.religo")] ;
   [%expect{|

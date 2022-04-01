@@ -22,42 +22,29 @@ type expression_content = [%import: Types.expression_content]
 type type_content = [%import: Types.type_content]
 [@@deriving ez {
       prefixes = [
-        ("make_t" , fun ?(loc = Location.generated) type_content ->
-                  ({ type_content ; location = loc ; orig_var = None } : type_expression)) ;
+        ("make_t" , fun ?(loc = Location.generated) ?source_type type_content ->
+                  ({ type_content ; location = loc ; orig_var = None ; source_type } : type_expression)) ;
         ("get" , fun x -> x.type_content) ;
       ] ;
-      wrap_constructor = ("type_content" , (fun type_content ?loc () -> make_t ?loc type_content)) ;
+      wrap_constructor = ("type_content" , (fun type_content ?loc ?source_type () -> make_t ?loc ?source_type type_content)) ;
       wrap_get = ("type_content" , get) ;
       default_get = `Option ;
     } ]
 
 let t_constant ?loc injection parameters : type_expression =
-  t_constant ?loc {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters} ()
+  t_constant ?loc {language=Stage_common.Backends.michelson; injection  ; parameters} ()
 
 (* TODO?: X_name here should be replaced by X_injection *)
-let t__type_ ?loc () : type_expression = t_constant ?loc _type__name []
+let t__type_ ?loc () : type_expression = t_constant ?loc _type_ []
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
-let t__type_ ?loc t : type_expression = t_constant ?loc _type__name [t]
+let t__type_ ?loc t : type_expression = t_constant ?loc _type_ [t]
 [@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
 
-let t__type_ ?loc t t' : type_expression = t_constant ?loc _type__name [t; t']
+let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
 
 let t_mutez = t_tez
-
-let t_abstraction1 ?loc name kind : type_expression =
-  let ty_binder = Var.fresh ~name:"_a" () in
-  let type_ = t_constant name [t_variable ty_binder ()] in
-  t_abstraction ?loc { ty_binder ; kind ; type_ } ()
-let t_abstraction2 ?loc name kind_l kind_r : type_expression =
-  let ty_binder_l = Var.fresh ~name:"_l" () in
-  let ty_binder_r = Var.fresh ~name:"_r" () in
-  let type_ = t_constant name
-    [ t_variable ty_binder_l () ;
-      t_variable ty_binder_r () ]
-  in
-  t_abstraction ?loc { ty_binder = ty_binder_l ; kind = kind_l ; type_ = (t_abstraction ?loc { ty_binder = ty_binder_r ; kind = kind_r ; type_ } ()) } ()
 
 let t_record ?loc ~layout content  : type_expression = make_t ?loc (T_record {content;layout})
 let default_layout = L_tree
@@ -89,13 +76,13 @@ let t_bool ?loc ()       : type_expression = t_sum_ez ?loc
   [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
-let t_michelson_code ?loc () : type_expression = t_constant ?loc test_michelson_name []
+let t_michelson_code ?loc () : type_expression = t_constant ?loc Stage_common.Constant.Michelson_program []
 let t_test_exec_error ?loc () : type_expression = t_sum_ez ?loc
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
 let t_test_exec_result ?loc () : type_expression = t_sum_ez ?loc
   [ ("Success" ,t_unit ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
 
-let t_arrow param result ?loc () : type_expression = t_arrow ?loc {type1=param; type2=result} ()
+let t_arrow param result ?loc ?source_type () : type_expression = t_arrow ?loc ?source_type {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result})
 let t_chest_opening_result ?loc () : type_expression =
   t_sum_ez ?loc [
@@ -108,39 +95,39 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0 -> Some ()
   | _ -> None
 
-let get_param_inj (t:type_expression) : (string * Ligo_string.t * type_expression list) option =
+let get_param_inj (t:type_expression) : (string * Stage_common.Constant.t * type_expression list) option =
   match t.type_content with
   | T_constant {language;injection;parameters} -> Some (language,injection,parameters)
   | _ -> None
 
-let get_t_inj (t:type_expression) (v:string) : (type_expression list) option =
+let get_t_inj (t:type_expression) (v:Stage_common.Constant.t) : (type_expression list) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters} when String.equal (Ligo_string.extract injection) v -> Some parameters
+  | T_constant {language=_;injection; parameters} when Stage_common.Constant.equal injection v -> Some parameters
   | _ -> None
 
-let get_t_base_inj (t:type_expression) (v:string) : unit option =
+let get_t_base_inj (t:type_expression) (v:Stage_common.Constant.t) : unit option =
   match get_t_inj t v with
   | Some [] -> Some ()
   | _ -> None
 
-let get_t_unary_inj (t:type_expression) (v:string) : type_expression option =
+let get_t_unary_inj (t:type_expression) (v:Stage_common.Constant.t) : type_expression option =
   match get_t_inj t v with
   | Some [a] -> Some a
   | _ -> None
 
-let get_t_binary_inj (t:type_expression) (v:string) : (type_expression * type_expression) option =
+let get_t_binary_inj (t:type_expression) (v:Stage_common.Constant.t) : (type_expression * type_expression) option =
   match get_t_inj t v with
   | Some [a;b] -> Some (a,b)
   | _ -> None
 
-let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type__name
-[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "test_michelson", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
+[@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "michelson_program", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
-let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type__name
+let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
 [@@map (_type_, ("contract", "option", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
-let get_t_michelson_code (t:type_expression) : unit option = get_t_test_michelson t
+let get_t_michelson_code (t:type_expression) : unit option = get_t_michelson_program t
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
@@ -165,19 +152,19 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_name -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) typed_address_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Typed_address -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) big_map_name -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_or_big_map_name -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with
@@ -185,7 +172,7 @@ let get_t__type__exn t = match get_t__type_ t with
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 [@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
 
-let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t contract_name with
+let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Constant.Contract with
   | Some _ -> Some ()
   | _ -> None
 
@@ -196,7 +183,7 @@ let is_t_mutez t = is_t_tez t
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
-  | Some t' -> get_t_base_inj t' operation_name
+  | Some t' -> get_t_base_inj t' Stage_common.Constant.Operation
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
@@ -224,20 +211,20 @@ let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; argument
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
-[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("int", "nat", "mutez", "string", "bytes", "timestamp", "address", "signature", "key", "key_hash", "chain_id", "operation", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 let e_unit () : expression_content = E_literal (Literal_unit)
 
 let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 
 let e_bool b : expression_content =
   if b then
-    E_constructor { constructor = (Label "True") ; element = (make_e (e_unit ()) (t_unit())) }
+    E_constructor { constructor = (Label "True") ; element = (make_e (e_unit ()) (t_unit ())) }
   else
-    E_constructor { constructor = (Label "False") ; element = (make_e (e_unit ()) (t_unit())) }
+    E_constructor { constructor = (Label "False") ; element = (make_e (e_unit ()) (t_unit ())) }
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
@@ -259,7 +246,7 @@ let e_a_raw_code language code t = e_raw_code { language ; code } t
 let e_a_type_inst forall type_ u = e_type_inst { forall ; type_ } u
 
 (* Constants *)
-let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
+let e_a_some s = make_e (e_some s) (t_constant Stage_common.Constant.Option [s.type_expression])
 let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
 let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)

@@ -34,3 +34,9 @@ let test_mutation =
     None -> ()
   | Some (_, mutation) -> let () = Test.log(mutation) in
                           failwith "Some mutation also passes the tests! ^^"
+
+let test_mutation_all =
+  match Test.mutation_test_all main originate_and_test with
+    [] -> ()
+  | (_, mutation) :: _ -> let () = Test.log(mutation) in
+                          failwith "Some mutation also passes the tests! ^^"

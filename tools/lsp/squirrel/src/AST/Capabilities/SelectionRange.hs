@@ -11,14 +11,14 @@ import Duplo.Lattice (leq)
 import Duplo.Tree (spineTo)
 
 import AST.Skeleton (LIGO)
-import Product (Contains, Product, getElem)
+import Product (Contains, getElem)
 import Range (Range, fromLspPosition, getRange, toLspRange)
 
 -- | Returns a list of ranges covering the given range. The list is
 -- ordered from the most nested ranges to the least nested. The ranges
 -- correspond to AST nodes.
 findCoveringRanges
-  :: (Contains Range xs, Eq (Product xs))
+  :: Contains Range xs
   => LIGO xs -> Range -> [Range]
 findCoveringRanges tree position = map getRange coveringTrees
   where
@@ -29,7 +29,7 @@ findCoveringRanges tree position = map getRange coveringTrees
 -- See
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_selectionRange.
 findSelectionRange
-  :: (Contains Range xs, Eq (Product xs))
+  :: Contains Range xs
   => LIGO xs -> J.Position -> J.SelectionRange
 findSelectionRange tree (fromLspPosition -> startingRange)
   = findCoveringRanges tree startingRange

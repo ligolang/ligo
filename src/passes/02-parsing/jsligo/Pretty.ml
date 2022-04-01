@@ -349,7 +349,7 @@ and pp_seq {value; _} =
 
 and pp_type_expr: type_expr -> document = function
   TProd   t -> pp_cartesian t
-| TSum    t -> break 0 ^^ pp_sum_type t
+| TSum    t -> pp_sum_type t
 | TObject t -> pp_object_type t
 | TApp    t -> pp_type_app t
 | TFun    t -> pp_fun_type t
@@ -364,17 +364,29 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
   let {module_name; field; _} = value in
   group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
- and pp_cartesian (node: CST.cartesian) =
+and pp_cartesian (node: CST.cartesian) =
   let pp_type_exprs = pp_nsepseq "," pp_type_expr
   in group (
     pp_attributes node.attributes ^^ hardline ^^
     pp_brackets pp_type_exprs node.inside)
 
- and pp_sum_type (node : sum_type reg) =
+and pp_sum_type (node : sum_type reg) =
   let {variants; attributes; _} = node.value in
-  let variants = pp_nsepseq "|" pp_variant variants.value in
-  if List.is_empty attributes then variants
-  else group (pp_attributes attributes ^/^ variants)
+  let head, tail = variants.value in
+  let head = pp_variant head
+  and padding_flat =
+    if List.is_empty attributes then string "| " else empty
+  and padding_non_flat =
+    if List.is_empty attributes then string "| " else blank 2 in
+  let head =
+    if List.is_empty tail then head
+    else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head)
+  and tail = List.map ~f:snd tail
+  and app variant =
+    break 1 ^^ string "| " ^^ pp_variant variant in
+  let thread = head ^^ concat_map app tail in
+  if attributes = [] then thread
+  else group (pp_attributes attributes ^/^ thread)
 
 and pp_variant (node : variant reg) =
   let {tuple; attributes; _} = node.value in
@@ -390,9 +402,10 @@ and pp_variant_comp (node: variant_comp) =
     match params with
       None -> pp_string constr, []
     | Some (_comma, params) ->
-       pp_string constr , Utils.nsepseq_to_list params in
-  let sep = string "," ^^ break 1
-  in constr ^^ sep ^^ separate_map sep pp_type_expr params
+       pp_string constr , Utils.nsepseq_to_list params
+  in if params = [] then constr
+     else let sep = string "," ^/^ break 0
+          in group (constr ^^ sep ^^ separate_map sep pp_type_expr params)
 
 and pp_attributes = function
   [] -> empty

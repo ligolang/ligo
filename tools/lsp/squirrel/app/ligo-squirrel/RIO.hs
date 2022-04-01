@@ -39,7 +39,6 @@ import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay)
 
 import Control.Arrow
-import Control.Exception.Safe (MonadCatch, MonadThrow, catchIO)
 import Control.Lens ((??))
 import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
@@ -71,12 +70,13 @@ import UnliftIO.Directory
   ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
   , setPermissions
   )
+import UnliftIO.Exception (catchIO)
 import UnliftIO.MVar (MVar, modifyMVar, modifyMVar_, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.STM (atomically)
 
 import Witherable (iwither)
 
-import Duplo.Tree (make)
+import Duplo.Tree (fastMake)
 
 import AST hiding (cTree)
 import ASTMap (ASTMap)
@@ -115,8 +115,6 @@ newtype RIO a = RIO
     , Monad
     , MonadIO
     , MonadReader RioEnv
-    , MonadThrow
-    , MonadCatch
     , MonadUnliftIO
     , J.MonadLsp Config.Config
     )
@@ -289,7 +287,7 @@ delete uri = do
         -- Dummy
         c = FindContract
           (Path fp)
-          (SomeLIGO Caml $ make (emptyParsedInfo, Error "Impossible" []))
+          (SomeLIGO Caml $ fastMake emptyParsedInfo (Error "Impossible" []))
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 

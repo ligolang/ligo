@@ -52,7 +52,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
      let file = r # file in
      let ic = In_channel.create ~binary:true file in
      (* Decompile expression *)
-     let n_syntax     = Trace.to_stdlib_result (Decompile.Helpers.syntax_to_variant (Syntax_name "auto") (Some file)) in
+     let n_syntax     = Trace.to_stdlib_result (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file)) in
      let n_syntax     = match n_syntax with
        | Ok r -> r
        | Error _ -> failwith "Cannot detect syntax" in
@@ -243,6 +243,10 @@ module Mutator = struct
     | E_lambda { binder ; result } -> (
       let+ result, mutation = self result in
       return @@ E_lambda { binder ; result }, mutation
+    )
+    | E_type_abstraction {type_binder; result} -> (
+      let+ result, mutation = self result in
+      return @@ E_type_abstraction {type_binder;result}, mutation
     )
     | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
       let+ result, mutation = self result in

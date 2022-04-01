@@ -5,7 +5,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "expression" ; "cameligo" ; "type foo = { foo : int } in let a : foo = {foo = 1n} in a" ] ;
   [%expect {|
              Invalid type(s).
-             Expected: "record[foo -> int]", but got: "record[foo -> nat]".
+             Expected: "int", but got: "nat".
              |}]
 
 (* Record_update *)

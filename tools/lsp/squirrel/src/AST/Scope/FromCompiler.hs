@@ -7,14 +7,14 @@ module AST.Scope.FromCompiler
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Category ((>>>))
-import Control.Monad.IO.Unlift (MonadIO, MonadUnliftIO)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Function (on)
 import Data.HashMap.Strict ((!))
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Duplo.Lattice
-import Duplo.Tree (make, only)
+import Duplo.Tree (fastMake, only)
 import UnliftIO.Directory (canonicalizePath)
 import UnliftIO.MVar (modifyMVar, newMVar)
 
@@ -34,8 +34,8 @@ import Util.Graph (forAMConcurrently)
 data FromCompiler
 
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
--- scopes will use Fallback.
-instance (HasLigoClient m, Log m, MonadUnliftIO m) => HasScopeForest FromCompiler m where
+-- scopes will use Fallback. (LIGO-208)
+instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
   scopeForest reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
@@ -60,7 +60,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
       ds <- Map.fromList <$> mapM (fromLigoDecl . (decls' !)) es
       let rs = Map.keysSet ds
       r' <- normalizeRange $ fromLigoRangeOrDef r
-      pure (injectScope (make (rs :> r' :> Nil, []), ds) sf)
+      pure (injectScope (fastMake (rs :> r' :> Nil) []) ds sf)
 
     normalizeRange :: Range -> m Range
     normalizeRange = rFile canonicalizePath
@@ -79,8 +79,8 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
            )
 
     -- Find a place for a scope inside a ScopeForest.
-    injectScope :: (ScopeTree, Map DeclRef ScopedDecl) -> ScopeForest -> ScopeForest
-    injectScope (subject, ds') (ScopeForest forest ds) =
+    injectScope :: ScopeTree -> Map DeclRef ScopedDecl -> ScopeForest -> ScopeForest
+    injectScope subject ds' (ScopeForest forest ds) =
         ScopeForest (loop forest) (ds <> ds')
       where
         loop
@@ -95,4 +95,4 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
         maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
-        restart (only -> (r, trees)) = make (r, loop trees)
+        restart (only -> (r, trees)) = fastMake r (loop trees)

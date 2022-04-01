@@ -90,6 +90,8 @@ module.exports = grammar({
         $.type_decl,
         $.let_decl,
         $.preprocessor,
+        $.module_decl,
+        $.module_alias
        ),
 
     /// TYPE DECLARATIONS
@@ -200,12 +202,32 @@ module.exports = grammar({
       field("value", $._program),
     ))),
 
+    /// MODULES
+
+    module_decl: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      "{",
+      common.sepEndBy(optional(';'), field("declaration", $._declaration)),
+      "}"
+    ),
+
+    module_alias: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      common.sepBy1('.', field("module", $.ModuleName))
+    ),
+
     /// STATEMENTS
 
     _statement: $ => prec(1, choice(
       $.let_decl,
       $.type_decl,
       $._expr,
+      $.module_decl,
+      $.module_alias,
     )),
 
     /// PATTERNS
@@ -264,7 +286,7 @@ module.exports = grammar({
 
     constr_pattern: $ => prec(1, seq(
       field("constructor", $.ConstrName),
-      optional(field("arg", $._pattern)),
+      optional(field("arg", $._unannotated_pattern)),
     )),
 
     list_pattern: $ => common.brackets(
@@ -372,7 +394,7 @@ module.exports = grammar({
 
     apply: $ => prec.left(20, seq(
       field("function", $._expr),
-      common.par(common.sepBy(',', field("argument", $._program))),
+      common.par(common.sepBy(',', field("argument", $._annot_expr))),
     )),
 
     Some_call: $ => prec.right(10, seq(
@@ -394,8 +416,8 @@ module.exports = grammar({
       $.tuple,
       $.list,
       $.data_projection,
-      $.if,
-      $.switch,
+      $.if_then_else,
+      $.switch_case,
       $._record_expr,
       $.michelson_interop,
       $.paren_expr,
@@ -445,7 +467,7 @@ module.exports = grammar({
     // 'tools/lsp/squirrel/test/contracts/sexps/single_record_item.religo'.
     _accessor_chain: $ => prec.right(11, common.sepBy1('.', field("accessor", $.FieldName))),
 
-    if: $ => seq(
+    if_then_else: $ => seq(
       'if',
       field("selector", $._expr),
       field("then", $.block),
@@ -455,7 +477,7 @@ module.exports = grammar({
       ))
     ),
 
-    switch: $ => seq(
+    switch_case: $ => seq(
       'switch',
       field("subject", $._expr_term),
       common.block(seq(

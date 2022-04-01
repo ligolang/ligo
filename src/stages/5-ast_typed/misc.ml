@@ -8,8 +8,7 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let var_equal = Var.equal
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:var_equal
+  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
@@ -38,14 +37,14 @@ module Free_variables = struct
         (expression b' let_result)
         (self rhs)
     | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
+    | E_type_abstraction { type_binder=_; result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
-    | E_mod_alias { alias=_; binders=_; result} -> self result
     | E_raw_code _ -> empty
     | E_type_inst {type_=_;forall} -> self forall
     | E_recursive {fun_name;lambda;_} ->
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
-    | E_module_accessor {element;_} -> self element
+    | E_module_accessor _ -> empty
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
     let b' = union (singleton l.binder) b in
@@ -86,12 +85,10 @@ let layout_eq a b = match (a,b) with
 
 let constant_compare ia ib =
   let open Stage_common.Constant in
-  let ia' = Ligo_string.extract ia in
-  let ib' = Ligo_string.extract ib in
-  match ia',ib' with
-  | a,b when (String.equal a map_name || String.equal a map_or_big_map_name) && (String.equal b map_name || String.equal b map_or_big_map_name) -> 0
-  | a,b when (String.equal a big_map_name || String.equal a map_or_big_map_name) && (String.equal b big_map_name || String.equal b map_or_big_map_name) -> 0
-  | _ -> Ligo_string.compare ia ib
+  match ia,ib with
+  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
+  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
+  | _ -> Stage_common.Constant.compare ia ib
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
@@ -139,10 +136,12 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
-     if Var.equal x y then Some () else None
+     if TypeVar.equal x y then Some () else None
   | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when Var.equal mna mnb ->
-    assert_type_expression_eq (ea, eb)
+  | T_module_accessor {module_path=mna;element=ea}, T_module_accessor {module_path=mnb;element=eb} ->
+    let open Simple_utils.Option in
+    let* _ = if TypeVar.equal ea eb then Some () else None in
+    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) mna mnb
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
@@ -205,74 +204,22 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
   | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
   | Literal_bls12_381_fr _, _ -> None
-
-let rec assert_value_eq (a, b: (expression*expression)) : unit option =
-  let open Option in
-  match (a.expression_content, b.expression_content) with
-  | E_literal a, E_literal b ->
-      assert_literal_eq (a, b)
-  | E_constant {cons_name=ca;arguments=lsta}, E_constant {cons_name=cb;arguments=lstb} when Caml.(=) ca cb -> (
-    let* _ = assert_same_size lsta lstb in
-    List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_value_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
-  )
-  | E_constant _, E_constant _ -> None
-  | E_constant _, _ -> None
-  | E_constructor {constructor=ca;element=a}, E_constructor {constructor=cb;element=b} when Caml.(=) ca cb -> (
-    assert_value_eq (a, b)
-  )
-  | E_constructor _, E_constructor _ -> None
-  | E_constructor _, _ -> None
-  | E_record sma, E_record smb -> (
-      let aux (Label _k) a b =
-        match a, b with
-        | Some a, Some b -> assert_value_eq (a, b)
-        | _              -> None
-      in
-      let all = LMap.merge aux sma smb in
-      if    ((LMap.cardinal all) = (LMap.cardinal sma))
-         || ((LMap.cardinal all) = (LMap.cardinal smb)) then
-        Some ()
-      else None
-    )
-  | E_module_accessor {module_name=mna;element=a}, E_module_accessor {module_name=mnb;element=b} when Var.equal mna mnb -> (
-    assert_value_eq (a,b)
-  )
-  | E_record _, _
-  | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_let_in _, _) | (E_raw_code _, _) | (E_recursive _, _)
-  | (E_type_in _, _)| (E_mod_in _, _) | (E_mod_alias _,_)
-  | (E_record_accessor _, _) | (E_record_update _,_) | (E_type_inst _, _)
-  | (E_matching _, _)
-  | E_module_accessor _, _
-  -> None
-
-let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
-  let open Option in
-  match a, b with
-  | None, None -> None
-  | Some a, None -> Some a
-  | None, Some b -> Some b
-  | Some a, Some b ->
-      let* _ = assert_eq_fun (a, b) in
-      match a.type_meta, b.type_meta with
-      | _, None -> Some a
-      | _, Some _ -> Some b
+  | Literal_chest a, Literal_chest b when Bytes.equal a b -> Some ()
+  | Literal_chest _, Literal_chest _ -> None
+  | Literal_chest _, _ -> None
+  | Literal_chest_key a, Literal_chest_key b when Bytes.equal a b -> Some ()
+  | Literal_chest_key _, Literal_chest_key _ -> None
+  | Literal_chest_key _, _ -> None
 
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
-      if   (Stage_common.Var.equal name binder)
+      if   (ValueVar.equal name binder.var)
       then Some expr
       else None
     )
     | Declaration_type   _
-    | Declaration_module _
-    | Module_alias       _ -> None
+    | Declaration_module _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
-
-let equal_variables a b : bool =
-  match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> Var.equal a b
-  |  _, _ -> false

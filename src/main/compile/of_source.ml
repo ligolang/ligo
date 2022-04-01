@@ -7,11 +7,11 @@ type c_unit = Buffer.t * (file_path * module_name) list
 
 (* we should have on for filename with syntax_opt and one in case of no file *)
 let extract_meta ~raise syntax file_name : meta =
-  let syntax   = syntax_to_variant ~raise (Syntax_name syntax) (Some file_name) in
+  let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some file_name) in
   {syntax}
 
 let make_meta ~raise syntax file_name_opt : meta =
-  let syntax   = syntax_to_variant ~raise (Syntax_name syntax) file_name_opt in
+  let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) file_name_opt in
   {syntax}
 
 let make_meta_from_syntax syntax : meta =
@@ -30,4 +30,4 @@ let compile_string_without_preproc source : c_unit  =
 
 let compile_contract_input ~raise : options:Compiler_options.t -> meta:meta -> string -> string -> c_unit * c_unit =
     fun ~options ~meta parameter storage ->
-  Simple_utils.Pair.map ~f:(compile_string ~raise ~options ~meta) (parameter,storage)
+  Simple_utils.Pair.map ~f:(compile_string ~raise ~options:options.frontend ~meta) (parameter,storage)

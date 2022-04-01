@@ -16,7 +16,7 @@ let linearity_type_parameters : raise:[<Errors.self_ast_imperative_error] Trace.
         | _ -> acc
       in
       let lst = aux type_ [ty_binder] in
-      if List.contains_dup ~compare:Var.compare lst then raise.raise (non_linear_type_decl x)
+      if List.contains_dup ~compare:TypeVar.compare lst then raise.raise (non_linear_type_decl x)
     | T_for_all {ty_binder ; type_ ; _ } ->
       let aux : type_expression -> type_variable list -> type_variable list = fun ty acc ->
         match ty.type_content with
@@ -24,7 +24,7 @@ let linearity_type_parameters : raise:[<Errors.self_ast_imperative_error] Trace.
         | _ -> acc
       in
       let lst = aux type_ [ty_binder] in
-      if List.contains_dup ~compare:Var.compare lst then raise.raise (non_linear_type_decl x)
+      if List.contains_dup ~compare:TypeVar.compare lst then raise.raise (non_linear_type_decl x)
     | _ -> ()
 
 let linearity_rows : raise:[<Errors.self_ast_imperative_error] Trace.raise -> type_expression -> unit =

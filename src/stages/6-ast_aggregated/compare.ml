@@ -18,7 +18,7 @@ let cmp7 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 = match f a1 b1
 let cmp_pair f g (a1, a2) (b1, b2) = cmp2 f a1 b1 g a2 b2
 
 let compare_lmap_entry  compare (Label na, va) (Label nb, vb) = cmp2 String.compare na nb compare va vb
-let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare va vb
+let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 TypeVar.compare tva tvb compare va vb
 
 let bool a b = (Stdlib.compare : bool -> bool -> int) a b
 let label (Label a) (Label b) = String.compare a b
@@ -31,14 +31,14 @@ let label_map ~compare lma lmb =
 
 let typeVariableMap compare a b = List.compare (compare_tvmap_entry compare) a b
 
-let expression_variable = Var.compare
-let type_variable       = Var.compare
-let module_variable     = Var.compare
+let expression_variable = ValueVar.compare
+let type_variable       = TypeVar.compare
+let module_variable     = ModuleVar.compare
 
-let module_access f {module_name=mna; element=ea}
-                    {module_name=mnb; element=eb} =
+let module_access f {module_path=mna; element=ea}
+                    {module_path=mnb; element=eb} =
   cmp2
-    module_variable mna mnb
+    (List.compare module_variable) mna mnb
     f ea eb
 
 let layout_tag = function
@@ -55,8 +55,7 @@ let type_expression_tag ty_cont =
   | T_record          _ -> 4
   | T_arrow           _ -> 5
   | T_singleton       _ -> 6
-  | T_abstraction     _ -> 7
-  | T_for_all         _ -> 8
+  | T_for_all         _ -> 7
 
 let rec type_expression a b =
   type_content a.type_content b.type_content
@@ -69,16 +68,15 @@ and type_content a b =
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
   | T_singleton a , T_singleton b -> literal a b
-  | T_abstraction a , T_abstraction b -> for_all a b
   | T_for_all a , T_for_all b -> for_all a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_for_all _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
   cmp3
     String.compare la lb
-    Ligo_string.compare ia ib
+    Stage_common.Constant.compare ia ib
     (List.compare type_expression) pa pb
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
@@ -121,24 +119,24 @@ let expression_tag expr =
   | E_variable        _ -> 3
   | E_application     _ -> 4
   | E_lambda          _ -> 5
-  | E_recursive       _ -> 6
-  | E_let_in          _ -> 7
-  | E_type_in         _ -> 8
-  | E_raw_code        _ -> 9
-  | E_type_inst       _ -> 10
+  | E_type_abstraction _ -> 6
+  | E_recursive       _ -> 7
+  | E_let_in          _ -> 8
+  | E_type_in         _ -> 9
+  | E_raw_code        _ -> 10
+  | E_type_inst       _ -> 11
   (* Variant *)
-  | E_constructor     _ -> 13
-  | E_matching        _ -> 14
+  | E_constructor     _ -> 14
+  | E_matching        _ -> 15
   (* Record *)
-  | E_record          _ -> 15
-  | E_record_accessor _ -> 16
-  | E_record_update   _ -> 17
+  | E_record          _ -> 16
+  | E_record_accessor _ -> 17
+  | E_record_update   _ -> 18
 
 and declaration_tag = function
   | Declaration_constant _ -> 1
   | Declaration_type     _ -> 2
   | Declaration_module   _ -> 3
-  | Module_alias         _ -> 4
 
 let rec expression a b =
   expression_content a.expression_content b.expression_content
@@ -150,6 +148,7 @@ and expression_content a b =
   | E_variable a, E_variable b -> expression_variable a b
   | E_application a, E_application b -> application a b
   | E_lambda a, E_lambda b -> lambda a b
+  | E_type_abstraction a, E_type_abstraction b -> type_abs a b
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
   | E_type_in a, E_type_in b -> type_in a b
@@ -160,8 +159,8 @@ and expression_content a b =
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _ | E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _ | E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -178,6 +177,11 @@ and application ({lamb=la;args=a}) ({lamb=lb;args=b}) =
 and lambda ({binder=ba;result=ra}) ({binder=bb;result=rb}) =
   cmp2
     expression_variable ba bb
+    expression ra rb
+
+and type_abs ({type_binder=ba;result=ra}) ({type_binder=bb;result=rb}) =
+  cmp2
+    type_variable ba bb
     expression ra rb
 
 and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb;lambda=lb} =

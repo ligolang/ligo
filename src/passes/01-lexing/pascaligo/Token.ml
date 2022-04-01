@@ -911,7 +911,7 @@ module T =
     (* Bytes *)
 
     let mk_bytes lexeme bytes region =
-      Bytes (wrap (lexeme, `Hex bytes) region)
+      Bytes (wrap ("0x" ^ lexeme, `Hex bytes) region)
 
     (* Integers *)
 

@@ -13,7 +13,6 @@ let signature_of_string ~raise s =
 
 let wrong_mini_c_value _t _v = Errors.generic_error Location.generated "wrong_mini_c_value"
 let corner_case ~loc s = ignore loc; Errors.generic_error Location.generated @@ "corner_case: " ^ s
-let bad_decompile _ = Errors.generic_error Location.generated "bad_decompile"
 let untranspilable t v =
   let v = v |> Tezos_micheline.Micheline.map_node (fun _ -> {Tezos_micheline.Micheline_printer.comment = None}) (fun x -> x) in
   let t = t |> Tezos_micheline.Micheline.map_node (fun _ -> {Tezos_micheline.Micheline_printer.comment = None}) (fun x -> x) in
@@ -172,12 +171,14 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       in
       V_Set lst''
     )
+  | Prim (_, "chest", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
+  | Prim (_, "chest_key", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
   (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
    *     D_operation op
    *   ) *)
   | Prim (_, "lambda", [_; _], _), ((Seq (_, _)) as c) ->
       let open! Ast_aggregated in
-      let arg_binder = Var.fresh () in
+      let arg_binder = ValueVar.fresh () in
       (* These are temporal types, need to be patched later: *)
       let t_input = t_unit () in
       let t_output = t_unit () in
@@ -213,8 +214,8 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
       (corner_case ~loc:__LOC__ ("unsupported language "^language))
       (String.equal language Stage_common.Backends.michelson)
     in
-    match (Ligo_string.extract injection,parameters) with
-    | (i, [o]) when String.equal i option_name -> (
+    match injection, parameters with
+    | (Option, [o]) -> (
         let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
         match opt with
         | None -> v_none ()
@@ -222,7 +223,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
             let s' = self s o in
             v_some s'
       )
-    | (i, [k_ty;v_ty]) when String.equal i map_name -> (
+    | (Map, [k_ty;v_ty]) -> (
         let map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
         let map' =
           let aux = fun (k, v) ->
@@ -232,7 +233,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux map in
         V_Map map'
       )
-    | (i, [k_ty; v_ty]) when String.equal i big_map_name -> (
+    | (Big_map, [k_ty; v_ty]) -> (
         match get_nat v with
         | Some _ ->
            raise.raise @@ corner_case ~loc:"unspiller" "Big map id not supported"
@@ -246,23 +247,29 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux big_map in
         V_Map big_map'
       )
-    | (i, _) when String.equal i map_or_big_map_name -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
-    | (i, [ty]) when String.equal i list_name -> (
+    | (Map_or_big_map, _) -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
+    | (List, [ty]) -> (
         let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
         let lst' =
           let aux = fun e -> self e ty in
           List.map ~f:aux lst in
         V_List lst'
       )
-    | (i, [ty]) when String.equal i set_name -> (
+    | (Set, [ty]) -> (
         let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_set v in
         let lst' =
           let aux = fun e -> self e ty in
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | _ ->
-      v
+    | ((Option       | Map           | Big_map             | List                 | Set              | Bool         |
+        String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
+        Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
+        Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
+        Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
+        Bls12_381_fr | Never         | Ticket              | Test_exec_error      | Test_exec_result | Account      |
+        Time         | Typed_address | Mutation            | Chest_opening_result | Chest_key        | Chest        |
+        Failure), _) -> v
   )
   | T_sum {layout ; content} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout content in

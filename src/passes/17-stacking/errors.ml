@@ -13,7 +13,6 @@ type stacking_error = [
 ] [@@deriving poly_constructor { prefix = "stacking_" }]
 
 let stage = "stacking"
-let unstacking_stage = "unstacking_stage"
 let corner_case_msg () =
   "Sorry, we don't have a proper error message for this error. Please report \
    this use case so we can improve on this."

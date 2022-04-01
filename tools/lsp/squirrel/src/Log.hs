@@ -18,8 +18,7 @@ module Log
   , flagBasedSeverity
   ) where
 
-import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Monad.IO.Unlift (MonadIO (..), MonadUnliftIO)
 import Data.String.Interpolate.IsString (i)
 import Data.Text (pack)
 import Katip
@@ -94,7 +93,7 @@ flagBasedSeverity :: SpliceQ Severity
 flagBasedSeverity = liftSplice do
   let flagName = "LIGO_SEVERITY"
   liftIO (lookupEnv flagName) >>= maybe
-    (examineSplice [|| ErrorS ||])
+    (examineSplice [|| WarningS ||])
     (\flag -> case textToSeverity $ pack flag of
       Nothing -> fail $ "Unrecognized " <> flagName <> " flag: " <> flag
       Just severity -> examineSplice [|| severity ||])

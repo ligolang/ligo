@@ -2,6 +2,7 @@
   "name": "ligo-website",
   "version": "0.0.1",
   "scripts": {
+    "docusaurus": "docusaurus",
     "start": "docusaurus start --host 0.0.0.0 --port 3000",
     "build": "USE_SIMPLE_CSS_MINIFIER=true docusaurus build",
     "swizzle": "docusaurus swizzle",

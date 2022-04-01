@@ -38,7 +38,7 @@ let%expect_test _ =
       6 |   | (Nil , {a : a , b : b , c : c}) => 1
       7 |   | (xs  , Nil) => 2
 
-    Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
@@ -48,7 +48,7 @@ let%expect_test _ =
       5 |   | (Nil , (a,b,c)) => 1
       6 |   | (xs  , Nil) => 2
 
-    Pattern do not conform type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -58,7 +58,7 @@ let%expect_test _ =
       6 |   | None_fake    => 1
       7 |   }
 
-    Pattern do not conform type option (int) |}]
+    Pattern not of the expected type option (int) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
@@ -81,8 +81,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 18, character 8 to line 19, character 15:
-     17 |       | Nil =>
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 19, characters 8-15:
      18 |         let f = (b:int) => b + a;
      19 |         f (b+1)
      20 |       | Cons ((a,b)) => "invalid"
@@ -174,7 +173,7 @@ let%expect_test _ =
       6 |   | {one : _ , three : _} => 0
       7 |   }
 
-    Pattern do not conform type record[one -> int , two -> int] |}]
+    Pattern not of the expected type record[one -> int , two -> int] |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -185,7 +184,7 @@ let%expect_test _ =
       8 |   | Increment((n, m)) => 0
       9 |   | Reset             => 0
 
-    Pattern do not conform type ( int * int * int ) |}]
+    Pattern not of the expected type ( int * int * int ) |}]
 
 (* Positives *)
 
@@ -350,7 +349,7 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | gen#1 -> 3 |}]
+        | gen#2 -> 3 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.religo") ] ;

@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1617'
+title: 'Testing framework: new Test.register_constant and Test.constant_to_michelson_program to work with global constants'
+type: added

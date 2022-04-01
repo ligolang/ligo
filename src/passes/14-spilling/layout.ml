@@ -63,7 +63,7 @@ and record_tree = {
    record things in this file? *)
 (* ...also there must be a better way to write this, is it even
    correct, I'm not sure? *)
-let record_tree ~layout compile_type m =
+let record_tree ~layout ?source_type compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = is_tuple_lmap m in
   let lst = kv_list_of_t_record_or_tuple ~layout m in
@@ -72,7 +72,7 @@ let record_tree ~layout compile_type m =
       let node = Append_tree.of_list lst in
       let aux (a_annot, a) (b_annot, b) =
         (None, { content = Pair (a, b) ;
-                    type_ = Expression.make_t (T_tuple [(a_annot, a.type_); (b_annot, b.type_)]) })
+                    type_ = Expression.make_t ?source_type (T_tuple [(a_annot, a.type_); (b_annot, b.type_)]) })
       in
       let m' = Append_tree.fold_ne
           (fun (Label label, ({associated_type;michelson_annotation;decl_pos=_}: AST.row_element)) ->
@@ -91,7 +91,8 @@ let record_tree ~layout compile_type m =
   | L_comb ->
     {content = Field (Label "BOGUS");
         type_ = { type_content = T_base TB_unit;
-                  location = Location.generated }}
+                  location = Location.generated;
+                  source_type = None }}
 
 let t_record_to_pairs ~layout return compile_type m =
   let open AST.Helpers in
@@ -250,6 +251,7 @@ type variant_tree = [
 
 and variant_pair = variant_tree * Mini_c.type_expression
 
+(* TODO source_type propagation? *)
 let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
   match layout with
   | L_tree -> (

@@ -50,6 +50,8 @@ module.exports = grammar({
         $.type_decl,
         $.let_decl,
         $.fun_decl,
+        $.module_decl,
+        $.module_alias,
       ),
 
     /// TYPE DECLARATION
@@ -196,6 +198,24 @@ module.exports = grammar({
       "=",
       field("body", $._program),
     )),
+
+    /// MODULES
+
+    module_decl: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      "struct",
+      repeat(field("declaration", $._declaration)),
+      "end"
+    ),
+
+    module_alias: $ => seq(
+      "module",
+      field("moduleName", $.ModuleName),
+      "=",
+      common.sepBy1('.', field("module", $.ModuleName))
+    ),
 
     /// PROGRAM
 
