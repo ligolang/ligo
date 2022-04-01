@@ -5,7 +5,16 @@ open Simple_utils.Option
 
 module Tezos_protocol = Tezos_protocol_012_Psithaca
 
+
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
+let tez_to_z : Tezos_protocol.Protocol.Tez_repr.t -> Z.t = fun t ->
+  let enc = Tezos_protocol.Protocol.Tez_repr.encoding in
+  let c = Data_encoding.Binary.to_bytes_exn enc t in
+  int_of_mutez @@ Data_encoding.Binary.of_bytes_exn Tezos_protocol.Protocol.Alpha_context.Tez.encoding c
+let contract_to_contract : Tezos_protocol.Protocol.Contract_repr.t -> Tezos_protocol.Protocol.Alpha_context.Contract.t = fun t ->
+  let enc = Tezos_protocol.Protocol.Contract_repr.encoding in
+  let c = Data_encoding.Binary.to_bytes_exn enc t in
+  Data_encoding.Binary.of_bytes_exn Tezos_protocol.Protocol.Alpha_context.Contract.encoding c
 let string_of_contract t = Format.asprintf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp t
 let string_of_key_hash t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key_hash.pp t
 let string_of_key t = Format.asprintf "%a" Tezos_crypto.Signature.Public_key.pp t
