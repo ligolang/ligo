@@ -1,12 +1,11 @@
 open Errors
 open Simple_utils.Trace
 
-module I = Ast_core
 module O = Ast_typed
 
 module TMap = O.Helpers.TMap
 
-let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') table (type_matched : O.type_expression) (type_ : O.type_expression) =
+let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') dom table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
@@ -22,19 +21,22 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
     Stage_common.Constant.equal a b
   in
   match type_matched.type_content, type_.type_content with
-  | T_variable v, _ -> (
+  | T_variable v, _ when List.mem dom v ~equal:TypeVar.equal -> (
      match TMap.find_opt v table with
      | Some t -> trace_option ~raise (not_matching loc t type_) (assert_type_expression_eq (type_, t));
                  table
      | None -> TMap.add v type_ table)
+  | T_variable v, T_variable w -> (
+    Assert.assert_true ~raise (not_matching loc type_matched type_) (TypeVar.equal v w);
+    table)
   | T_arrow {type1;type2}, T_arrow {type1=type1_;type2=type2_} ->
-     let table = self table type1 type1_ in
-     let table = self table type2 type2_ in
+     let table = self dom table type1 type1_ in
+     let table = self dom table type2 type2_ in
      table
   | T_constant {language;injection;parameters}, T_constant {language=language';injection=injection';parameters=parameters'} ->
      if String.equal language language' && inj_mod_equal injection injection' && Int.equal (List.length parameters) (List.length parameters') then
        let table = List.fold_right (List.zip_exn parameters parameters') ~f:(fun (t, t') table ->
-                       self table t t') ~init:table in
+                       self dom table t t') ~init:table in
        table
      else
        raise.raise default_error
@@ -46,7 +48,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        let elements = List.zip_exn content_kv content'_kv in
        let aux ((_, {associated_type;michelson_annotation;decl_pos}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=decl_pos'})) table =
          if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
-           self table associated_type associated_type'
+           self dom table associated_type associated_type'
          else
            raise.raise default_error in
        let table = List.fold_right elements ~f:aux ~init:table in
@@ -61,7 +63,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        let elements = List.zip_exn content_kv content'_kv in
        let aux ((_, {associated_type;michelson_annotation;decl_pos}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=decl_pos'})) table =
          if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
-           self table associated_type associated_type'
+           self dom table associated_type associated_type'
          else
            raise.raise default_error in
        let table = List.fold_right elements ~f:aux ~init:table in
@@ -69,7 +71,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
      else
        raise.raise default_error
   | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table
-  | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
+  | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _),
     (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
     -> raise.raise default_error
 
@@ -82,15 +84,15 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
    `t1 -> ... -> tn -> t`, we get `t'1 -> ... > t'n -> t'`. It works
    by matching iteratively on each type: `t1` with `t'1`, ..., `tn`
    with `t'n`, and finally `t` with `t'`. *)
-let infer_type_applications ~raise ~loc ?(default_error = (fun loc t t' -> assert_equal loc t' t)) type_matched args tv_opt =
+let infer_type_applications ~raise ~loc ?(default_error = (fun loc t t' -> assert_equal loc t' t)) dom type_matched args tv_opt =
   let table, type_matched = List.fold_left args ~init:(TMap.empty, type_matched) ~f:(fun ((table, type_matched) : _ TMap.t * O.type_expression) matched ->
                   match type_matched.type_content with
                   | T_arrow { type1 ; type2 } ->
-                     infer_type_application ~raise ~loc table type1 matched, type2
+                     infer_type_application ~raise ~loc dom table type1 matched, type2
                   | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
                      table, type_matched) in
   match tv_opt with
-  | Some t -> infer_type_application ~raise ~loc ~default_error table type_matched t
+  | Some t -> infer_type_application ~raise ~loc ~default_error dom table type_matched t
   | None -> table
 
 (* This wraps a `∀ a . (∀ b . (∀ c . some_type))` with type instantiations,

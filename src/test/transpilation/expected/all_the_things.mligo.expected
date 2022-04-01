@@ -1927,7 +1927,7 @@ let reset (reset, _ : reset * storage) : return =
    finish_time = reset.finish_time}
 
 let vote (vote, store : vote * storage) : return =
-  let now = Tezos.now in
+  let my_now = Tezos.now in
   let addr = Tezos.sender in
   let store =
     match vote with

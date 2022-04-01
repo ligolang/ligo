@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1605'
+title: Fix package path finding in ModRes + support package paths in REPL & Test interpreter
+type: fixed

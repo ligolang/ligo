@@ -7,17 +7,20 @@ variables:
 stages:
   - pretooling                      # changelog
   - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
   - push                            # deploy docker images, pages, releases (tag)
-  - ide-deploy                      # deploy web IDE
+  - deploy                          # deploy web IDE, website preview
   - release                         # Manage branch matching ^release/*
 
-include: 
+include:
+  # jobs for managing process around changelog generation
+  - '/.ci/.gitlab-ci-changelog.yml'
   # jobs for building and testing LSP
   - '/tools/lsp/.gitlab-ci.yml'
   # jobs for managing process around release
-  - '/.ci/.gitlab-ci.yml'
+  - '/.ci/.gitlab-ci-release.yml'
 
 .nix:
   before_script:
@@ -31,6 +34,7 @@ changelog:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - echo $CI_WORKFLOW
@@ -63,6 +67,7 @@ docker_build:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - docker build .
@@ -85,6 +90,7 @@ docker_extract:
     - merge_requests
     - dev
     - /^.*-run-dev$/
+    - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   extends: .nix
   dependencies :
@@ -180,7 +186,7 @@ docker-push:
 
 webide-backend-build-and-push-backend:
   extends: .docker-image
-  stage: ide-deploy
+  stage: deploy
   rules:
     # Only deploy docker when from the dev branch or a merge request AND on the canonical ligolang/ligo repository
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
@@ -251,10 +257,33 @@ pages-attempt:
     - merge_requests
     - /^.*-run-dev$/
 
+deploy_website_preview:
+  stage: deploy
+  image: node:12.20.0-buster
+  tags:
+    - docker
+  dependencies:
+    - pages-attempt
+  script: 
+    - apt-get update
+    - apt-get install -y --no-install-recommends jq
+    - npm install netlify-cli
+    - npx netlify deploy --site $NETLIFY_SITE_ID_LIGOLANG --dir=./public --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json  
+    - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
+    - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
+    - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
+    - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
+    - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'  
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - gitlab-pages/**/*
+      when: on_success
+
 # This job will deploy the web-ide docker container to the test server.
 deploy-handoff-feature:
   # Handoff deployment duties to private repo.
-  stage: ide-deploy
+  stage: deploy
   variables:
     APP_NAME: "web-ide-backend"
     NEW_VERSION: "${CI_COMMIT_SHORT_SHA}"
@@ -270,7 +299,7 @@ deploy-handoff-feature:
 
 deploy-handoff:
   # Handoff deployment duties to private repo
-  stage: ide-deploy
+  stage: deploy
   variables:
     APP_NAME: "web-ide-backend"
     NEW_VERSION: "${CI_COMMIT_SHORT_SHA}"
@@ -285,7 +314,7 @@ deploy-handoff:
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.
 # After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs
 build-preview-ligo-webide-front-end:
-  stage: ide-deploy
+  stage: deploy
   image: node:12.20.0-buster
   tags:
     - docker
@@ -314,7 +343,7 @@ build-preview-ligo-webide-front-end:
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
 build-ligo-webide-front-end:
-  stage: ide-deploy
+  stage: deploy
   image: node:12.20.0-buster
   tags:
     - docker

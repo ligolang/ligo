@@ -1,10 +1,6 @@
 open Types
 
 val assert_type_expression_eq : ( type_expression * type_expression ) -> unit option
-val merge_annotation :
-  type_expression option ->
-  type_expression option ->
-  (type_expression * type_expression -> 'a option) -> type_expression option
 val type_expression_eq : ( type_expression * type_expression ) -> bool
 
 

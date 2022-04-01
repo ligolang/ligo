@@ -63,8 +63,8 @@ RUN opam exec -- bisect-ppx-report summary --per-file > coverage/coverage-summar
 
 # Generate syntax highlighting files
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
-RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode
-RUN opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode
+RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode highlighting/textmate
+RUN opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
 
 # Run doc
 RUN opam exec -- dune build @doc
