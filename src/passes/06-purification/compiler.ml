@@ -220,23 +220,22 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let collection = compile_expression ~raise ~last collection in
       let op_name =
         match collection_type with
-      | Map -> O.C_MAP_FOLD | Set -> O.C_SET_FOLD | List -> O.C_LIST_FOLD | Any -> O.C_FOLD
+      | Map -> O.C_MAP_ITER | Set -> O.C_SET_ITER | List -> O.C_LIST_ITER | Any -> O.C_ITER
       in
 
       let args    = I.ValueVar.fresh ~name:"args" () in
       let k,v = fe_binder in
-      let element_names : O.type_expression O.pattern = match v with
+      let pattern : O.type_expression O.pattern = match v with
         | Some v -> Location.wrap @@ O.P_tuple [Location.wrap @@ O.P_var {var=k;ascr=None;attributes={const_or_var=None}}; Location.wrap @@ O.P_var {var=v;ascr=None;attributes={const_or_var=None}}]
         | None -> Location.wrap @@ O.P_var {var=k;ascr=None;attributes={const_or_var=None}}
       in
 
-      let pattern = Location.wrap @@ O.P_tuple [Location.wrap @@ O.P_unit;element_names] in
       let lambda = O.e_lambda_ez (args) None @@
                   O.e_matching (O.e_variable args) [
                     {pattern;body}
                   ] in
       return @@
-        O.E_constant {cons_name=op_name;arguments=[lambda;collection;O.e_unit ()]}
+        O.E_constant {cons_name=op_name;arguments=[lambda;collection]}
 
     | I.E_while {cond;body} ->
       (* compile while*)
