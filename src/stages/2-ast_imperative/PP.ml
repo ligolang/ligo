@@ -1,4 +1,3 @@
-[@@@coverage exclude_file]
 open Types
 open Format
 open Simple_utils.PP_helpers

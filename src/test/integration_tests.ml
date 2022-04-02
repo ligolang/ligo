@@ -2253,10 +2253,12 @@ let main = test_suite "Integration (End to End)"
 
     test_w_all "lambda" lambda @
     test_w_all "lambda2" lambda2 @
-    (* t_west "fibo (mligo)" fibo_mligo ; *)
-    (* t_west "fibo2 (mligo)" fibo2_mligo ; *)
-    (* t_west "fibo3 (mligo)" fibo3_mligo ; *)
-    (* t_west "fibo4 (mligo)" fibo4_mligo ; *)
+  [
+    (* test_w "fibo (mligo)" fibo_mligo ; *)
+    (* test_w "fibo2 (mligo)" fibo2_mligo ; *)
+    (* test_w "fibo3 (mligo)" fibo3_mligo ; *)
+    (* test_w "fibo4 (mligo)" fibo4_mligo ; *)
+  ] @
 
     test_w_all "tuple" tuple @ [
     test_w "tuple type (mligo)" tuple_type_mligo ;
@@ -2400,7 +2402,7 @@ let main = test_suite "Integration (End to End)"
     test_w "tuple param destruct (mligo)" tuple_param_destruct ;
     test_w "tuple param destruct (religo)" tuple_param_destruct_religo ;
     test_w "no semicolon (religo)" no_semicolon_religo ;
-    (* test_w "loop_bugs (ligo)" loop_bugs_ligo ; *)
+    test_w "loop_bugs (ligo)" loop_bugs_ligo ;
     test_w "tuple_list (religo)" tuple_list_religo ;
     test_w "single_record_expr (religo)" single_record_expr_religo ;
     test_w "if no else (jsligo)" if_no_else_jsligo;
