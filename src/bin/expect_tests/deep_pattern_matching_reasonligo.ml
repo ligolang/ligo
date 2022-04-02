@@ -63,7 +63,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    const t = lambda (x) return 0 |}]
+    const t = lambda (x : list (int)) return 0 |}]
 
 (* wrong body type *)
 
@@ -349,7 +349,7 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | gen#7 -> 3 |}]
+        | gen#6 -> 3 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.religo") ] ;

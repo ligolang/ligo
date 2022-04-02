@@ -176,7 +176,6 @@ let main = ([action, store]: [parameter, storage]) : @return => {
 
 </Syntax>
 
-
 We can deploy it and query the storage right after, to check that the
 storage is in fact the one which we started with:
 
@@ -288,7 +287,7 @@ performs the transaction, and returns a `test_exec_result` which
 can be matched on to know whether the transaction was successful or not.
 In case of success you will get access to the gas consumed by the execution
 of the contract and in case of failure you will get access to a `test_exec_error`
-describing the error.  
+describing the error.
 There is an alternative version, called `Test.transfer_to_contract_exn`
 which performs the transaction and will only return the gas consumption,
 failing in case that there was an error.
@@ -422,7 +421,7 @@ let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
 
 type balances = map <address, tez>
 
-let balances_under = (b : balances, threshold:tez) : balances => {
+const balances_under = (b : balances, threshold:tez) : balances => {
   let f = (acc : balances, kv :[address , tez] ) : balances => {
     let [k,v] = kv ;
     if (v < threshold) { return Map.remove (k,acc) } else {return acc}
@@ -530,7 +529,6 @@ More concretely `Test.run f v` performs the following:
 The function that is being compiled is called `tester`.
 
 We also print the actual and expected sizes for good measure.
-
 
 <Syntax syntax="cameligo">
 

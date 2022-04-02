@@ -89,10 +89,6 @@ let constraint_identifier_short ppf x =
   then Format.fprintf ppf "₀"
   else Format.fprintf ppf "%s" (constraint_identifier_unicode x)
 
-let list_sep_d_par f ppf lst =
-  match lst with
-  | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
-
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with

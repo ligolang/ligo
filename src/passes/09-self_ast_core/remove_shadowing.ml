@@ -215,6 +215,7 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     return @@ E_module_accessor {module_path; element}
   | E_assign {binder={var;ascr;attributes};access_path;expression} ->
     let var = swaper.value var in
+    let ascr = Option.map ~f:self_type ascr in
     let expression = self expression in
     return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
 
@@ -418,6 +419,7 @@ let rec expression : Scope.t -> expression -> expression = fun scope e ->
     return @@ E_module_accessor {module_path; element}
   | E_assign {binder={var;ascr;attributes};access_path;expression} ->
     let var = Scope.get_value_var scope var in
+    let ascr = Option.map ~f:self_type ascr in
     let expression = self expression in
     return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
 

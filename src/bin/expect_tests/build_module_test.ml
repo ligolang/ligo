@@ -86,10 +86,10 @@ let%expect_test _ =
     const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
-      lambda (gen#24) return  match gen#24 with
-                               | ( p , s ) ->
-                               let s = ADD(ADD(p , s) ,
-                               toto) in ( LIST_EMPTY() , s ) |}]
+      lambda (gen#22 : ( int * int )) return  match gen#22 with
+                                               | ( p , s ) ->
+                                               let s = ADD(ADD(p , s) ,
+                                               toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;

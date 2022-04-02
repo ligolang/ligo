@@ -405,7 +405,7 @@ let%expect_test _ =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
-        | _#7 -> 3 |}]
+        | _#6 -> 3 |}]
 
 
 let%expect_test _ =

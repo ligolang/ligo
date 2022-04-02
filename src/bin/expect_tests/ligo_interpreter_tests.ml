@@ -263,10 +263,23 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
-  [%expect {|
-    Everything at the top-level was executed.
-    - test_set exited with value 3.
-    - test_list exited with value 3. |}]
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 265, characters 2-60
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  not yet supported case 3 match effect_binder#227 with
+    | ( r ) ->
+    r. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "func_michelson.mligo" ] ;
@@ -289,119 +302,102 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "switch_case_part_1.jsligo" ] ;
-  [%expect{|
-    Everything at the top-level was executed.
-    - test1 exited with value ().
-    - test2 exited with value ().
-    - test3 exited with value ().
-    - test4 exited with value ().
-    - test5 exited with value ().
-    - test6 exited with value ().
-    - test7 exited with value ().
-    - test8 exited with value ().
-    - test9 exited with value ().
-    - test10 exited with value ().
-    - test11 exited with value ().
-    - test12 exited with value ().
-    - test13 exited with value ().
-    - test14 exited with value ().
-    - test15 exited with value ().
-    - test16 exited with value ().
-    - test17 exited with value ().
-    - test18 exited with value (). |}]
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 304, characters 2-69
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  not yet supported case "Hello" match effect_binder#916 with
+    | ( output ) ->
+     match let fallthrough#189 : bool = True(unit) in
+  ( fallthrough#189 , unit ) with | ( effect_binder#915 , ()#193 ) ->
+   match effect_binder#915 with
+    | ( fallthrough#189 ) ->
+    let found_case#190 : bool = True(unit) in
+  ( ( fallthrough#189 , found_case#190 , output ) , unit ). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "switch_case_part_2.jsligo" ] ;
-    [%expect{|
-      Everything at the top-level was executed.
-      - test1 exited with value ().
-      - test2 exited with value ().
-      - test3 exited with value ().
-      - test4 exited with value ().
-      - test5 exited with value ().
-      - test6 exited with value ().
-      - test7 exited with value ().
-      - test8 exited with value ().
-      - test9 exited with value ().
-      - test10 exited with value ().
-      - test11 exited with value ().
-      - test12 exited with value ().
-      - test13 exited with value ().
-      - test14 exited with value ().
-      - test15 exited with value ().
-      - test16 exited with value ().
-      - test17 exited with value ().
-      - test18 exited with value ().
-      - test19 exited with value ().
-      - test20 exited with value ().
-      - test21 exited with value ().
-      - test22 exited with value ().
-      - test23 exited with value ().
-      - test24 exited with value ().
-      - test25 exited with value ().
-      - test26 exited with value ().
-      - test27 exited with value ().
-      - test28 exited with value ().
-      - test29 exited with value ().
-      - test30 exited with value ().
-      - test31 exited with value ().
-      - test32 exited with value ().
-      - test33 exited with value ().
-      - test34 exited with value ().
-      - test35 exited with value ().
-      - test36 exited with value ().
-      - test37 exited with value ().
-      - test38 exited with value ().
-      - test39 exited with value ().
-      - test40 exited with value ().
-      - test41 exited with value ().
-      - test42 exited with value ().
-      - test43 exited with value ().
-      - test44 exited with value ().
-      - test45 exited with value ().
-      - test46 exited with value ().
-      - test47 exited with value ().
-      - test48 exited with value ().
-      - test49 exited with value ().
-      - test50 exited with value ().
-      - test51 exited with value ().
-      - test52 exited with value ().
-      - test53 exited with value ().
-      - test54 exited with value (). |}]
+    [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 329, characters 2-69
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  not yet supported case "Hello" match effect_binder#3182 with
+    | ( output ) ->
+     match let fallthrough#870 : bool = True(unit) in
+  ( fallthrough#870 , unit ) with | ( effect_binder#3181 , ()#874 ) ->
+   match effect_binder#3181 with
+    | ( fallthrough#870 ) ->
+    let found_case#871 : bool = True(unit) in
+  ( ( fallthrough#870 , found_case#871 , output ) , unit ). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "switch_case_part_3.jsligo" ] ;
-    [%expect{|
-      Everything at the top-level was executed.
-      - test1 exited with value ().
-      - test2 exited with value ().
-      - test3 exited with value ().
-      - test4 exited with value ().
-      - test5 exited with value ().
-      - test6 exited with value ().
-      - test7 exited with value ().
-      - test8 exited with value ().
-      - test9 exited with value ().
-      - test10 exited with value ().
-      - test11 exited with value ().
-      - test12 exited with value ().
-      - test13 exited with value ().
-      - test14 exited with value ().
-      - test15 exited with value ().
-      - test16 exited with value ().
-      - test17 exited with value ().
-      - test18 exited with value ().
-      - test19 exited with value (). |}]
+    [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 354, characters 2-69
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  not yet supported case "Hello" match effect_binder#1181 with
+    | ( output ) ->
+     match let fallthrough#294 : bool = True(unit) in
+  ( fallthrough#294 , unit ) with | ( effect_binder#1180 , ()#298 ) ->
+   match effect_binder#1180 with
+    | ( fallthrough#294 ) ->
+    let found_case#295 : bool = True(unit) in
+  ( ( fallthrough#294 , found_case#295 , output ) , unit ). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "switch_case_if_else.jsligo" ] ;
-    [%expect{|
-      Everything at the top-level was executed.
-      - test_if_switch_break exited with value ().
-      - test_if_switch_return exited with value ().
-      - test_switch_if_break exited with value ().
-      - test_switch_if_return exited with value ().
-      - test_switch_switch_break exited with value (). |}]
+    [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 379, characters 2-70
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  An internal error ocurred. Please, contact the developers.
+  not yet supported case "zero " match effect_binder#707 with
+    | ( output ) ->
+     match let output[@var] : string = CONCAT(output , "end") in
+  ( output , unit ) with | ( effect_binder#706 , ()#186 ) ->
+   match effect_binder#706 with
+    | ( output ) ->
+    output. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_negative_big_map_id.mligo" ] ;

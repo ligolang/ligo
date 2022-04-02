@@ -76,7 +76,6 @@ let%expect_test _ =
                                       | ( _#12 , store ) ->
                                       ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) ) |xxx}]
 
-let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.religo") ; "--protocol" ; "ithaca" ] ;
   [%expect{xxx|
     const sub =
@@ -99,34 +98,19 @@ let%expect_test _ =
       ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) )[@private] |xxx}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.mligo") ] ;
-  [%expect{|
-const sub : ( tez * tez ) -> option (tez) =
-  lambda (gen#7 : ( tez * tez )) : option (tez) return  match gen#7 with
-                                                         | (store,delta) ->
-                                                         C_POLYMORPHIC_SUB
-                                                         (store ,
-                                                          delta)
-const main : ( unit * tez ) -> ( list (operation) * tez ) =
-  lambda (gen#11 : ( unit * tez )) : ( list (operation) * tez ) return
-   match gen#11 with
-    | (_#12,store) -> ( LIST_EMPTY() : list (operation) ,
-                        (Option.unopt)@((sub)@(( store , 1000000mutez ))) ) |}]
-
-let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.ligo") ] ;
   [%expect{|
 const sub : ( tez * tez ) -> option (tez) =
-  lambda (parameters#7 : ( tez * tez )) : option (tez) return  match
-                                                                parameters#7 with
+  lambda (parameters#5 : ( tez * tez )) : option (tez) return  match
+                                                                parameters#5 with
                                                                 | (store : tez,delta : tez) ->
                                                                 C_POLYMORPHIC_SUB
                                                                 (store ,
                                                                  delta)
 const main : ( unit * tez ) -> ( list (operation) * tez ) =
-  lambda (parameters#11 : ( unit * tez )) : ( list (operation) * tez ) return
-   match parameters#11 with
-    | (_#12 : unit,store : tez) -> ( LIST_EMPTY() : list (operation) ,
+  lambda (parameters#9 : ( unit * tez )) : ( list (operation) * tez ) return
+   match parameters#9 with
+    | (_#10 : unit,store : tez) -> ( LIST_EMPTY() : list (operation) ,
                                      (Option.unopt)@((sub)@(( store ,
                                                               1000000mutez ))) ) |}]
 
@@ -134,15 +118,15 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.religo") ] ;
   [%expect{|
 const sub =
-  lambda (gen#7 : ( tez * tez )) : option (tez) return  match gen#7 with
+  lambda (gen#5 : ( tez * tez )) : option (tez) return  match gen#5 with
                                                          | (store,delta) ->
                                                          C_POLYMORPHIC_SUB
                                                          (store ,
                                                           delta)
 const main =
-  lambda (gen#11 : ( unit * tez )) : ( list (operation) * tez ) return
-   match gen#11 with
-    | (_#12,store) -> ( LIST_EMPTY() : list (operation) ,
+  lambda (gen#9 : ( unit * tez )) : ( list (operation) * tez ) return
+   match gen#9 with
+    | (_#10,store) -> ( LIST_EMPTY() : list (operation) ,
                         (Option.unopt)@((sub)@(( store , 1000000mutez ))) ) |}]
 
 let%expect_test _ =
@@ -196,26 +180,26 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.mligo") ] ;
   [%expect{xxx|
 const sub =
-  lambda (gen#7) return  match gen#7 with
-                          | ( store , delta ) ->
-                          SUB(store , delta)
+  lambda (gen#5 : ( tez * tez )) return  match gen#5 with
+                                          | ( store , delta ) ->
+                                          SUB(store , delta)
 const main =
-  lambda (gen#11) return  match gen#11 with
-                           | ( _#12 , store ) ->
-                           ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
+  lambda (gen#9 : ( unit * tez )) return  match gen#9 with
+                                           | ( _#10 , store ) ->
+                                           ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
   |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.ligo") ] ;
   [%expect{xxx|
     const sub =
-      lambda (parameters#7) return  match parameters#7 with
-                                     | ( store , delta ) ->
-                                     SUB(store , delta)
+      lambda (parameters#5 : ( tez * tez )) return  match parameters#5 with
+                                                     | ( store , delta ) ->
+                                                     SUB(store , delta)
     const main =
-      lambda (parameters#11) return  match parameters#11 with
-                                      | ( _#12 , store ) ->
-                                      ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
+      lambda (parameters#9 : ( unit * tez )) return  match parameters#9 with
+                                                      | ( _#10 , store ) ->
+                                                      ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )
   |xxx}]
 
 let%expect_test _ =
@@ -246,14 +230,14 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_old.mligo") ] ;
   [%expect{|
     const sub : ( tez * tez ) -> tez =
-      lambda (gen#7 : ( tez * tez )) : tez return  match gen#7 with
+      lambda (gen#5 : ( tez * tez )) : tez return  match gen#5 with
                                                     | (store,delta) -> C_POLYMORPHIC_SUB
                                                                        (store ,
                                                                         delta)
     const main : ( unit * tez ) -> ( list (operation) * tez ) =
-      lambda (gen#11 : ( unit * tez )) : ( list (operation) * tez ) return
-       match gen#11 with
-        | (_#12,store) -> ( LIST_EMPTY() : list (operation) ,
+      lambda (gen#9 : ( unit * tez )) : ( list (operation) * tez ) return
+       match gen#9 with
+        | (_#10,store) -> ( LIST_EMPTY() : list (operation) ,
                             (sub)@(( store , 1000000mutez )) )
   |}]
 
@@ -261,15 +245,15 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_old.ligo") ] ;
   [%expect{|
     const sub : ( tez * tez ) -> tez =
-      lambda (parameters#7 : ( tez * tez )) : tez return  match parameters#7 with
+      lambda (parameters#5 : ( tez * tez )) : tez return  match parameters#5 with
                                                            | (store : tez,delta : tez) ->
                                                            C_POLYMORPHIC_SUB
                                                            (store ,
                                                             delta)
     const main : ( unit * tez ) -> ( list (operation) * tez ) =
-      lambda (parameters#11 : ( unit * tez )) : ( list (operation) * tez ) return
-       match parameters#11 with
-        | (_#12 : unit,store : tez) -> ( LIST_EMPTY() : list (operation) ,
+      lambda (parameters#9 : ( unit * tez )) : ( list (operation) * tez ) return
+       match parameters#9 with
+        | (_#10 : unit,store : tez) -> ( LIST_EMPTY() : list (operation) ,
                                          (sub)@(( store , 1000000mutez )) )
   |}]
 
@@ -277,14 +261,14 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_old.religo") ] ;
   [%expect{|
     const sub =
-      lambda (gen#7 : ( tez * tez )) : tez return  match gen#7 with
+      lambda (gen#5 : ( tez * tez )) : tez return  match gen#5 with
                                                     | (store,delta) -> C_POLYMORPHIC_SUB
                                                                        (store ,
                                                                         delta)
     const main =
-      lambda (gen#11 : ( unit * tez )) : ( list (operation) * tez ) return
-       match gen#11 with
-        | (_#12,store) -> ( LIST_EMPTY() : list (operation) ,
+      lambda (gen#9 : ( unit * tez )) : ( list (operation) * tez ) return
+       match gen#9 with
+        | (_#10,store) -> ( LIST_EMPTY() : list (operation) ,
                             (sub)@(( store , 1000000mutez )) )
  |}]
 
