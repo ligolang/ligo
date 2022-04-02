@@ -1,3 +1,4 @@
+const { sepBy1 } = require('../common.js');
 const common = require('../common.js')
 
 module.exports = grammar({
@@ -8,7 +9,9 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
 
   conflicts: $ => [
-    [$.variant, $.variant]
+    [$.variant, $.variant],
+    [$._expr_statement, $.projection],
+    [$.module_access, $.module_access]
   ],
 
   rules: {
@@ -49,7 +52,9 @@ module.exports = grammar({
       $.assignment_operator,
       $.binary_operator,
       $.unary_operator,
-      $._call_expr_level
+      $.call_expr, 
+      $._member_expr, 
+      $.match_expr
     ),
 
     assignment_operator: $ => prec.right(2, seq($._expr_statement, choice("=", "*=", "/=", "%=", "+=", "-="), $._expr_statement)),
@@ -65,8 +70,6 @@ module.exports = grammar({
     ),
 
     unary_operator: $ => prec.right(15, seq(choice("-", "!"), $._expr_statement)),
-
-    _call_expr_level: $ => prec(4, choice($.call_expr, $._member_expr, $.match_expr)),
 
     call_expr: $ => prec.right(2, seq($.lambda, common.par(common.sepBy(",", $.expr)))),
 
@@ -144,9 +147,7 @@ module.exports = grammar({
 
     michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
 
-    module_access: $ => seq($.ModuleName, ".", $.module_var),
-
-    module_var: $ => choice($.module_access, $.Name),
+    module_access: $ => seq($.ModuleName, ".", sepBy1(".", choice($.ModuleName, $.Name))),
 
     array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $._array_item))),
 
@@ -202,7 +203,6 @@ module.exports = grammar({
     )),
 
     _core_type: $ => choice(
-      // $.String,
       $.Int,
       $.wildcard,
       $.TypeName,
