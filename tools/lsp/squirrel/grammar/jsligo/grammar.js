@@ -11,7 +11,8 @@ module.exports = grammar({
   conflicts: $ => [
     [$.variant, $.variant],
     [$._expr_statement, $.projection],
-    [$.module_access, $.module_access]
+    [$.module_access, $.module_access],
+    [$.annot_expr, $.parameter]
   ],
 
   rules: {
@@ -71,11 +72,21 @@ module.exports = grammar({
 
     unary_operator: $ => prec.right(15, seq(choice("-", "!"), $._expr_statement)),
 
-    call_expr: $ => prec.right(2, seq($.lambda, common.par(common.sepBy(",", $.expr)))),
+    call_expr: $ => prec.right(2, seq($.lambda, common.par(common.sepBy(",", $._annot_expr)))),
 
     lambda: $ => prec(5, choice($.call_expr, $._member_expr)),
 
     expr: $ => choice($._expr_statement, $.object_literal),
+
+    _annot_expr: $ => choice(
+      $.annot_expr,
+      $.expr,
+    ),
+
+    annot_expr: $ => seq(
+      field("subject", $.expr),
+      $.type_annotation
+    ),
 
     match_expr: $ => seq("match", common.par(seq($._member_expr, ",", choice($._list_cases, $._ctor_cases)))),
 
@@ -124,7 +135,7 @@ module.exports = grammar({
       $.wildcard
     ),
 
-    paren_expr: $ => common.par($.expr),
+    paren_expr: $ => common.par($._annot_expr),
 
     ctor_expr: $ => seq($.ConstrName, $.ctor_args),
 
@@ -155,7 +166,7 @@ module.exports = grammar({
 
     array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $._array_item))),
 
-    _array_item: $ => choice($.expr, $.array_item_rest_expr), 
+    _array_item: $ => choice($._annot_expr, $.array_item_rest_expr), 
 
     array_item_rest_expr: $ => seq("...", $.expr),
 
@@ -169,7 +180,7 @@ module.exports = grammar({
 
     _statements: $ => common.sepEndBy1(";", $._statement),
 
-    type_annotation: $ => seq(":", $._type_expr),
+    type_annotation: $ => seq(":", field("type", $._type_expr)),
 
     parameters: $ => common.sepBy1(",", $.parameter),
 
