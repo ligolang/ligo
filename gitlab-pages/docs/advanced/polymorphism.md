@@ -1,4 +1,4 @@
----
+t ---
 id: polymorphism
 title: Polymorphism
 ---
@@ -85,8 +85,6 @@ the rest, the body of the function remains the same.
 Thanks to parametric polymorphism, we can write a single function
 declaration that works for both cases.
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=poly
@@ -120,7 +118,7 @@ types prefixed with `_` are treated as generalisable.
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let id : ((x : _a) => _a) = (x: _a) => x;
+let id : <T>((x : T) => T) = (x: T) => x;
 ```
 
 Here `_a` is a type variable which can be generalised. In general,
@@ -221,14 +219,14 @@ let rev : (list (_a) => list (_a)) = (xs : list (_a)) : list (_a) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let rev : ((xs : list<_a>) => list<_a>) = (xs : list<_a>) : list<_a> => {
-  let _rev  : ((p : [list<_a>, list<_a>]) => list<_a>) = ([xs, acc] : [list<_a>, list<_a>]) : list<_a> =>
+let rev : <T>((xs : list<T>) => list<T>) = (xs : list<T>) : list<T> => {
+  let _rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
-    ([] : list<_a>) => acc,
-    ([x,... xs] : list<_a>) => _rev([xs, list([x,...acc])])
+    ([] : list<T>) => acc,
+    ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
     ]));
 
-  return _rev([xs, (list([]) as list<_a>)]);
+  return _rev([xs, (list([]) as list<T>)]);
 };
 ```
 

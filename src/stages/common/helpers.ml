@@ -28,7 +28,7 @@ let rec fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
     | P_list lp -> (
       match lp with
       | Cons (pa,pb) -> fold_pattern f (fold_pattern f acc' pb) pa
-      | List lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp 
+      | List lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp
     )
     | P_variant (_,p) -> fold_pattern f acc' p
     | P_tuple lp -> List.fold_left ~f:(fold_pattern f) ~init:acc' lp

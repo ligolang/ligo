@@ -159,10 +159,13 @@ and attributes = attribute list
 
 and val_binding = {
   binders    : pattern;
+  type_params : type_generics option;
   lhs_type   : (colon * type_expr) option;
   eq         : equal;
   expr       : expr
 }
+
+and type_generics = (variable, comma) nsepseq chevrons reg
 
 (* Type declarations *)
 
