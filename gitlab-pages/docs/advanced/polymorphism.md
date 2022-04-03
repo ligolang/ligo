@@ -1,4 +1,4 @@
-t ---
+---
 id: polymorphism
 title: Polymorphism
 ---
@@ -108,7 +108,7 @@ Here we introduce a type variable `a` which can be generalised using
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=poly
-let id : (_a => _a) = (x : _a) => x;
+let id =  (type a, x : a) => x;
 ```
 
 Here `_a` is a type variable which can be generalised. In general,
@@ -206,13 +206,13 @@ let rev (type a) (xs : a list) : a list =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=poly
-let rev : (list (_a) => list (_a)) = (xs : list (_a)) : list (_a) =>
-  let rec rev : ((list (_a), list (_a)) => list (_a)) = ((xs, acc) : (list (_a), list (_a))) : list (_a) =>
+let rev = (type a, xs : list (a)) : list (a) =>
+  let rec rev : ((list (a), list (a)) => list (a)) = ((xs, acc) : (list (a), list (a))) : list (a) =>
     switch xs {
     | [] => acc
     | [x,... xs] => rev (xs, [x,... acc])
     };
-  rev (xs, ([] : list (_a)));
+  rev (xs, ([] : list (a)));
 ```
 
 </Syntax>

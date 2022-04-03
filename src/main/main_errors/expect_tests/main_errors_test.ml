@@ -331,7 +331,7 @@ let%expect_test "main_cit_reasonligo" =
   let pvar = PVar  {value= {variable; attributes = []}; region= default_region1} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_reasonligo_untyped_recursive_fun default_region1) ;
+  error (`Concrete_reasonligo_untyped_recursive_fun location_t) ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
