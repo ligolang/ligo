@@ -80,3 +80,15 @@ let x : int = int(List.List.List.length(x))
 
 ---
 
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (expr
+      (call_expr
+        (lambda (Name))
+        (expr
+          (call_expr
+            (lambda
+              (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
+              (expr (Name))))))))
