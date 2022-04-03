@@ -147,7 +147,11 @@ module.exports = grammar({
 
     michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
 
-    module_access: $ => seq($.ModuleName, ".", sepBy1(".", choice($.ModuleName, $.Name))),
+    module_access: $ => seq(
+      common.sepBy1('.', field("path", $.ModuleName)),
+      '.',
+      field("field", $.FieldName),
+    ),
 
     array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $._array_item))),
 

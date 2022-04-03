@@ -47,10 +47,10 @@ let uno : storage = EURO.one;
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (module_access (ModuleName) (Name)))))
+    (expr (module_access (ModuleName) (FieldName)))))
 
 =========
-module access function call
+nested function calls
 =========
 
 let x : int = foo(bar(baz(1)))
@@ -76,8 +76,7 @@ let x : int = foo(bar(baz(1)))
 module access function call
 =========
 
-let x : int = int(List.length(x)) 
+let x : int = int(List.List.List.length(x)) 
 
 ---
 
-// wrong
