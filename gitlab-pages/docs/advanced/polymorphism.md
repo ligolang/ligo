@@ -118,7 +118,7 @@ types prefixed with `_` are treated as generalisable.
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let id : <T>((x : T) => T) = (x: T) => x;
+let id : <T>((x : T) => T) = x => x;
 ```
 
 Here `_a` is a type variable which can be generalised. In general,
@@ -219,7 +219,7 @@ let rev = (type a, xs : list (a)) : list (a) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let rev : <T>((xs : list<T>) => list<T>) = (xs : list<T>) : list<T> => {
+let rev : <T>((xs : list<T>) => list<T>) = xs => {
   let _rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
     ([] : list<T>) => acc,
