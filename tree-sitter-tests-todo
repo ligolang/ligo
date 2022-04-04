@@ -6,7 +6,7 @@
 - [done] paren_expr
 - [done] add many tests
 - [done] rename productions which are same as keywords
-- [] fix module_access bug
+- [done] fix module_access bug
 
 JsLIGO tests
 

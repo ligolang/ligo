@@ -1,4 +1,4 @@
-const { sepBy1 } = require('../common.js');
+const { sepBy1 } = require('../common.js')
 const common = require('../common.js')
 
 module.exports = grammar({
@@ -17,13 +17,13 @@ module.exports = grammar({
 
   rules: {
     source_file: $ => 
-      common.sepEndBy(optional(';'), field("toplevel", $._statement_or_namespace_or_preprocessor)),
+      common.sepEndBy(optional($._semicolon), field("toplevel", $._statement_or_namespace_or_preprocessor)),
 
     _statement_or_namespace_or_preprocessor: $ => choice($._statement, $.namespace_statement, $.preprocessor),
 
     namespace_statement: $ => seq(optional("export"), "namespace", field("moduleName", $.ModuleName), 
     '{',
-      common.sepEndBy(";", $._statement_or_namespace_or_preprocessor), 
+      common.sepEndBy($._semicolon, $._statement_or_namespace_or_preprocessor), 
     '}'
     ),
 
@@ -178,7 +178,7 @@ module.exports = grammar({
 
     body: $ => prec.right(3, choice(common.block($._statements), $._expr_statement)),
 
-    _statements: $ => common.sepEndBy1(";", $._statement),
+    _statements: $ => common.sepEndBy1($._semicolon, $._statement),
 
     type_annotation: $ => seq(":", field("type", $._type_expr)),
 
@@ -370,6 +370,7 @@ module.exports = grammar({
     p_error: $ => seq('#', 'error', field("message", $._till_newline)),
     p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
+    _semicolon: $ => choice(";"),
 
     ConstrName: $ => $._NameCapital,
     ConstrNameDecl: $ => seq('"', $._NameCapital, '"'),
@@ -405,4 +406,4 @@ module.exports = grammar({
     Let_kwd: $ => "let",
     Const_kwd: $ => "const", 
   }
-});
+})
