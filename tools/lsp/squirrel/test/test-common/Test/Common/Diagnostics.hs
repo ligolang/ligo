@@ -5,6 +5,7 @@ module Test.Common.Diagnostics
   , parseDiagnosticsDriver
   ) where
 
+import Data.List (nub)
 import Data.Word (Word32)
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
@@ -66,8 +67,6 @@ treeDoesNotContainNameTest = do
       ]
     , dtFallbackMsgs =
       [ Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)
-      , Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)
-      , Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
       , Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
       ]
     }
@@ -93,5 +92,6 @@ parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
       CompilerSource -> fromCompiler
       FallbackSource -> fallback
       StandardSource -> fallback <> fromCompiler
-    msgs = collectAllErrors contract
+    -- FIXME (LIGO-507)
+    msgs = nub $ collectAllErrors contract
   msgs `shouldMatchList` expectedMsgs
