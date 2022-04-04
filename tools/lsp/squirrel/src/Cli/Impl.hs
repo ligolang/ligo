@@ -311,7 +311,6 @@ getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addCon
 -- multiple levels up allowing us from restoring from expected ligo errors.
 handleLigoError :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
 handleLigoError path stderr = Log.addNamespace "handleLigoError" do
-  -- Call ligo with `compile contract` to extract more readable error message
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
@@ -332,14 +331,16 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
       throwIO $ LigoDecodedExpectedClientFailureException (pure decodedError) [] path
 
 -- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
--- happen.
+-- happen. On a decode failure, attempts to decode as a single LIGO error
+-- instead.
 handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
 handleLigoMessages path stderr = Log.addNamespace "handleLigoErrors" do
-  -- Call ligo with `compile contract` to extract more readable error message
   case eitherDecodeStrict' @LigoMessages $ encodeUtf8 stderr of
     Left err -> do
       $(Log.err) [i|ligo errors decoding failure: #{err}|]
-      throwIO $ LigoErrorNodeParseErrorException (pack err) stderr path
+      -- It's possible it's the old format, with only one error. Try to decode
+      -- it instead:
+      handleLigoError path stderr
     Right (LigoMessages decodedErrors decodedWarnings) -> do
       $(Log.err) [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
       throwIO $ LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path

@@ -51,8 +51,9 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
-fromCompiler dialect (LigoDefinitions errors warnings decls scopes) =
-  (, fromLigoErrorToMsg <$> errors <> warnings) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
+fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
+  let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
+  (, msgs) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.

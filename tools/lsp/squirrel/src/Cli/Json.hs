@@ -96,10 +96,10 @@ data LigoMessages = LigoMessages
 data LigoDefinitions = LigoDefinitions
   { -- | Errors produced by LIGO
     -- `"errors"`
-    _ldErrors :: [LigoError]
+    _ldErrors :: Maybe [LigoError]
     -- | Warnings produced by LIGO
     -- `"warnings"`
-  , _ldWarnings :: [LigoError]
+  , _ldWarnings :: Maybe [LigoError]
     -- | All the definitions
     -- `"definitions"`
   , _ldDefinitions :: LigoDefinitionsInner
