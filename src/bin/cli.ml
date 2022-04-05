@@ -263,8 +263,8 @@ let compile_file =
 
 
 let compile_parameter =
-  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~project_root () in
+  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format 
   in
@@ -274,7 +274,7 @@ let compile_parameter =
                   Michelson expression can be passed as an argument in \
                   a transaction which calls a contract." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
 
 let compile_expression =
   let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error project_root () =
@@ -291,8 +291,8 @@ let compile_expression =
   (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> project_root )
 
 let compile_storage =
-  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
+  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.storage raw_options source_file expression amount balance sender source now display_format michelson_format 
   in
@@ -303,7 +303,7 @@ let compile_storage =
                   resulting Michelson expression can be passed as an \
                   argument in a transaction which originates a contract." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
 
 let compile_constant =
   let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root () =
