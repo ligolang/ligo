@@ -1,4 +1,3 @@
-const { sepBy1 } = require('../common.js')
 const common = require('../common.js')
 
 module.exports = grammar({
@@ -23,13 +22,13 @@ module.exports = grammar({
 
     namespace_statement: $ => seq(optional("export"), "namespace", field("moduleName", $.ModuleName), 
     '{',
-      common.sepEndBy($._semicolon, $._statement_or_namespace_or_preprocessor), 
+      common.sepEndBy($._semicolon, field("declaration", $._statement_or_namespace_or_preprocessor)), 
     '}'
     ),
 
     _statement: $ => prec.right(1, choice($._base_statement, $.if_statement)),
 
-    if_statement: $ => seq("if", common.par($.expr), $._statement),
+    if_statement: $ => seq("if", field("selector", common.par($.expr)), field("then", $._statement)),
 
     _base_statement: $ => prec(5, choice(
       $._expr_statement,
@@ -63,14 +62,14 @@ module.exports = grammar({
     type_as_annotation: $ => seq($._expr_statement, "as", $._core_type),
 
     binary_operator: $ => choice(
-      prec.left(4, seq($._expr_statement, "||", $._expr_statement)),
-      prec.left(5, seq($._expr_statement, "&&", $._expr_statement)),
-      prec.left(10, seq($._expr_statement, choice("<", "<=", ">", ">=", "==", "!="), $._expr_statement)),
-      prec.left(12, seq($._expr_statement, choice("+", "-"), $._expr_statement)),
-      prec.left(13, seq($._expr_statement, choice("*", "/", "%"), $._expr_statement))
+      prec.left(4,  seq(field("left", $._expr_statement), field("op", "||"), field("right", $._expr_statement))),
+      prec.left(5,  seq(field("left", $._expr_statement), field("op", "&&"), field("right", $._expr_statement))),
+      prec.left(10, seq(field("left", $._expr_statement), field("op", choice("<", "<=", ">", ">=", "==", "!=")), field("right", $._expr_statement))),
+      prec.left(12, seq(field("left", $._expr_statement), field("op", choice("+", "-")),      field("right", $._expr_statement))),
+      prec.left(13, seq(field("left", $._expr_statement), field("op", choice("*", "/", "%")), field("right", $._expr_statement)))
     ),
 
-    unary_operator: $ => prec.right(15, seq(choice("-", "!"), $._expr_statement)),
+    unary_operator: $ => prec.right(15, field("negate", seq(choice("-", "!")), field("arg", $._expr_statement))),
 
     call_expr: $ => prec.right(2, seq($.lambda, common.par(common.sepBy(",", $._annot_expr)))),
 
@@ -322,13 +321,13 @@ module.exports = grammar({
       $.block_statement,
     )), 
 
-    if_else_statement: $ => seq("if", common.par($.expr), $._base_statement, "else", $._statement),
+    if_else_statement: $ => seq("if", field("selector", common.par($.expr)), field("then", $._base_statement), "else", field("else", $._statement)),
 
     for_of_statement: $ => seq("for", common.par(seq($._index_kind, $.Name, "of", $._expr_statement)), $._statement),
 
     _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
     
-    while_statement: $ => seq("while", common.par($.expr), $._statement),
+    while_statement: $ => seq("while", field("breaker", common.par($.expr)), field("body", $._statement)),
 
     /// PREPROCESSOR
 
