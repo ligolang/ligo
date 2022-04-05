@@ -15,8 +15,7 @@ type typer_error = [
   | `Typer_match_missing_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_match_extra_case of Ast_core.label list * Ast_core.label list * Location.t
   | `Typer_unbound_constructor of Ast_core.label * Location.t
-  | `Typer_redundant_constructor of Ast_core.label * Location.t
-  | `Typer_type_constant_wrong_number_of_arguments of Ast_core.type_variable option * int * int * Location.t
+  | `Typer_type_app_wrong_arity of Ast_core.type_variable option * int * int * Location.t
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Location.t * Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
@@ -190,12 +189,7 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Constructor \"%a\" not found. @]"
         Snippet.pp loc
         Ast_core.PP.label c
-    | `Typer_redundant_constructor (c,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid variant.@.Constructor \"%a\" already exists as part of another variant. @]"
-        Snippet.pp loc
-        Ast_core.PP.label c
-    | `Typer_type_constant_wrong_number_of_arguments (op_opt,e,a,loc) ->
+    | `Typer_type_app_wrong_arity (op_opt,e,a,loc) ->
       let aux : Format.formatter -> Ast_core.type_variable option -> unit =
         fun ppf operator_opt ->
           match operator_opt with
@@ -203,7 +197,7 @@ let rec error_ppformat : display_format:string display_format ->
           | None -> ()
       in
       Format.fprintf f
-        "@[<hv>%a@ Type%a takes the wrong number of arguments, expected: %i got: %i@]"
+        "@[<hv>%a@ Type%a is applied to a wrong number of arguments, expected: %i got: %i@]"
         Snippet.pp loc
         aux op_opt
         e a
@@ -679,18 +673,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", `String value);
     ] in
     json_error ~stage ~content
-  | `Typer_redundant_constructor (c,loc) ->
-    let message = `String "redundant constructor" in
-    let loc = Format.asprintf "%a" Location.pp loc in
-    let value = Format.asprintf "%a" Ast_core.PP.label c in
-    let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);
-      ("value", `String value);
-    ] in
-    json_error ~stage ~content
-  | `Typer_type_constant_wrong_number_of_arguments (op, e, a, loc) ->
-    let message = `String "Wrong number of arguments for type constant" in
+  | `Typer_type_app_wrong_arity (op, e, a, loc) ->
+    let message = `String "Wrong arity in type application" in
     let loc = Format.asprintf "%a" Location.pp loc in
     let op = Ast_core.Yojson.option Ast_core.TypeVar.to_yojson op in
     let content = `Assoc [

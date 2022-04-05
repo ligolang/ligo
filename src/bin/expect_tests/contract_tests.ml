@@ -1402,7 +1402,7 @@ let%expect_test _ =
       4 | type storage is map (binding)
       5 |
 
-    Type map takes the wrong number of arguments, expected: 2 got: 1 |}]
+    Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
@@ -1569,17 +1569,12 @@ let%expect_test _ =
     ( LIST_EMPTY() , 3 ) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "redundant_constructors.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:
-      6 | type union_b =
-      7 | | Add of nat
-      8 | | Remove of nat
-      9 | | Config of nat
-     10 |
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "redundant_constructors.mligo" ] ;
+  [%expect{| (Pair (Left (Left 42)) (Left 42)) |}]
 
-    Invalid variant.
-    Constructor "Add" already exists as part of another variant. |}]
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "redundant_constructors_but_annotated.mligo" ] ;
+  [%expect{| (Pair {} (Left 1)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_toplevel.mligo" ] ;
@@ -2144,6 +2139,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
+    The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Hint: You might want to add a type annotation.
+
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
       2 |   [@layout:comb]
       3 |     B of nat
@@ -2154,7 +2152,7 @@ let%expect_test _ =
 
     Warning: layout attribute only applying to B, probably ignored.
 
-    (Left (Right 42))
+    (Left 42)
   |}]
 
 (* never test for PascaLIGO *)
@@ -2813,3 +2811,24 @@ let%expect_test _ =
   TRANSFER_TOKENS ;
   CONS ;
   PAIR } |}]
+
+(* some check about the warnings of the E_constructor cases *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo" ] ;
+  [%expect{|
+File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
+  8 | (* here we expect a warning because both A constructor have the same parameter type *)
+  9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
+
+The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
+Hint: You might want to add a type annotation.
+
+{ parameter unit ;
+  storage (or (int %a) (nat %b)) ;
+  code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
+  
+  run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
+  [%expect{|
+{ parameter unit ;
+  storage (or (nat %a) (nat %b)) ;
+  code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]

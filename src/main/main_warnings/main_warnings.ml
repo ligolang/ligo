@@ -5,6 +5,7 @@ type all =
 [
   | `Self_ast_typed_warning_unused of Location.t * string
   | `Self_ast_typed_warning_muchused of Location.t * string
+  | `Checking_ambiguous_contructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable 
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
   | `Self_ast_imperative_warning_deprecated_constant of Location.t * string * string option
   | `Main_view_ignored of Location.t
@@ -24,6 +25,11 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
+      Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+      Snippet.pp loc
+      Stage_common.PP.type_variable tv_chosen
+      Stage_common.PP.type_variable tv_possible
     | `Main_view_ignored loc ->
       Format.fprintf f "@[<hv>%a@.This view will be ignored, command line option override [@ view] annotation@.@]"
       Snippet.pp loc
@@ -60,6 +66,17 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Checking_ambiguous_contructor (loc,_,_) ->
+    (* Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous, you might want to add a type annotation. Inferred type is %a but %a was also possible@.@]" *)
+
+    let message = `String "the type of this value is ambiguous, you might want to add a type annotation" in
+    let stage   = "Main" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
   | `Main_view_ignored loc ->
     let message = `String "command line option overwrites annotated views" in
     let stage   = "Main" in

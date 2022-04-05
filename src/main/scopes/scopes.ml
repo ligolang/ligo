@@ -5,7 +5,7 @@ module Formatter = Formatter
 
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
-let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
+let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
   let make_v_def_from_core = make_v_def_from_core ~with_types  in
   let make_v_def_option_type = make_v_def_option_type ~with_types in
 
@@ -117,7 +117,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
   and module_expr ~options ~env ~scopes i (me: Ast_core.module_expr) =
     match me.wrap_content with
     | M_struct decls -> (
-      let (i,new_def_map,_,scopes,_) = declaration ~options i decls in
+      let (i,new_def_map,_,scopes,_) = declaration ~options ~add_warning i decls in
       (i,new_def_map,scopes)
     )
     | M_module_path path -> (
@@ -138,8 +138,8 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       (i,def_map,scopes)
     )
 
-  and declaration ~options i core_prg =
-    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~options ~env decl in
+  and declaration ~options ~add_warning i core_prg =
+    let compile_declaration ~raise env decl () = Checking.type_declaration ~raise ~add_warning ~options ~env decl in
     let aux = fun (i,top_def_map,inner_def_map,scopes,partials) (decl : Ast_core.declaration) ->
       let typed_prg =
         (*
@@ -180,6 +180,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
     List.fold_left ~f:aux ~init:(i, Def_map.empty, Def_map.empty, [], init) core_prg
   in
-  let (_,top_d,inner_d,s,_) = declaration ~options 0 core_prg in
+  let (_,top_d,inner_d,s,_) = declaration ~options ~add_warning 0 core_prg in
   let d = Def_map.union merge_refs top_d inner_d in
   (d,s)

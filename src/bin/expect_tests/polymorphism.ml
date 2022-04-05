@@ -110,8 +110,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "bar 5" ; "--init-file" ; (test "use_error.mligo") ] ;
-  [%expect{|
-    1 |}]
+  [%expect{| 1 |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "List.map (fun (x : int) -> x + 1) [1;2]" ; "--init-file" ; (test "map.mligo") ] ;
