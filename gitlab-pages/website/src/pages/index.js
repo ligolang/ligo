@@ -101,6 +101,12 @@ const PARTNERS = [
     pinned: true
   },
   {
+    name: 'MacStadium developer logo',
+    image: 'img/MacStadium-developerlogo.png',
+    link: 'https://www.macstadium.com/',
+    pinned: true
+  },
+  {
     name: 'TQ Tezos',
     image: 'img/tq-logo.svg',
     link: 'https://tqtezos.com/',
