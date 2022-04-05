@@ -164,7 +164,7 @@ module.exports = grammar({
       field("field", $.FieldName),
     ),
 
-    array_literal: $ => choice(seq("[", "]"), common.brackets(common.sepBy1(",", $._array_item))),
+    array_literal: $ => choice(common.brackets(common.sepBy(",", $._array_item))),
 
     _array_item: $ => choice($._annot_expr, $.array_item_rest_expr), 
 
@@ -309,7 +309,7 @@ module.exports = grammar({
     switch_statement: $ => seq("switch", common.par($.expr), common.block($._cases)),
 
     _cases: $ => choice(
-      seq(seq($.case, repeat($.case)), optional($.default_case)),
+      seq(repeat1($.case), optional($.default_case)),
       $.default_case
     ),
 
