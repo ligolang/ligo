@@ -105,9 +105,9 @@ askForIndexDirectory contractDir = do
     handleChosenOption :: IndexOptions -> RIO ()
     handleChosenOption (indexOptionsPath -> Just path) = do
       let
-        projectPath = path </> ".ligoproject"
+        projectPath = path </> ligoProjectName
         don'tCreate =
-          sendInfo [Log.i|To remember the directory, create an empty .ligoproject file in #{path}|]
+          sendInfo [Log.i|To remember the directory, create an empty #{ligoProjectName} file in #{path}|]
         doCreate = do
           liftIO $ writeFile projectPath ""
           sendInfo [Log.i|Created #{projectPath}|]

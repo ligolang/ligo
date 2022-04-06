@@ -8,6 +8,7 @@ module Test.Common.Util
   , readContractWithScopes
   , parseContractsWithDependencies
   , parseContractsWithDependenciesScopes
+  , parseDirectoryWithScopes
   , supportedExtensions
   ) where
 
@@ -20,6 +21,7 @@ import System.Directory (listDirectory)
 import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
+import System.IO.Temp (getCanonicalTemporaryDirectory)
 import UnliftIO.Exception (catch, throwIO)
 
 import AST.Includes (Includes, includesGraph, insertPreprocessorRanges)
@@ -65,7 +67,8 @@ readContract filepath = do
 readContractWithMessages :: FilePath -> IO ContractInfo
 readContractWithMessages filepath = do
   src <- pathToSrc filepath
-  runNoLoggingT $ parsePreprocessed src
+  temp <- getCanonicalTemporaryDirectory
+  runNoLoggingT $ parsePreprocessed temp src
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
@@ -75,16 +78,25 @@ readContractWithScopes filepath =
 
 parseContractsWithDependencies
   :: FilePath
+  -> FilePath
   -> IO (Includes ParsedContractInfo)
-parseContractsWithDependencies top =
+parseContractsWithDependencies temp top =
   includesGraph =<<
-    parseContracts (runNoLoggingT . parsePreprocessed) noProgress (const True) top
+    parseContracts (runNoLoggingT . parsePreprocessed temp) noProgress (const True) top
 
 parseContractsWithDependenciesScopes
   :: forall impl
    . ScopeTester impl
   => FilePath
+  -> FilePath
   -> IO (Includes ContractInfo')
-parseContractsWithDependenciesScopes =
+parseContractsWithDependenciesScopes temp =
   runNoLoggingT
-  . addScopes @impl noProgress <=< parseContractsWithDependencies
+  . addScopes @impl temp noProgress <=< parseContractsWithDependencies temp
+
+parseDirectoryWithScopes
+  :: forall impl. ScopeTester impl
+  => FilePath -> IO (Includes ContractInfo')
+parseDirectoryWithScopes dir = do
+  temp <- getCanonicalTemporaryDirectory
+  parseContractsWithDependenciesScopes @impl temp dir

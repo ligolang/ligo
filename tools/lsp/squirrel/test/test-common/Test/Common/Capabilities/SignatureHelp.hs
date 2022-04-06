@@ -21,7 +21,7 @@ import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (ScopeTester, parseContractsWithDependenciesScopes)
+import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
@@ -235,7 +235,7 @@ caseInfos =
 
 simpleFunctionCallDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
 simpleFunctionCallDriver testCases = do
-  graph <- parseContractsWithDependenciesScopes @parser (contractsDir </> "signature-help")
+  graph <- parseDirectoryWithScopes @parser (contractsDir </> "signature-help")
   pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) testCases
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)

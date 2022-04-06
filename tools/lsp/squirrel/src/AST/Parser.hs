@@ -19,6 +19,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>), takeDirectory)
+import System.IO.Temp (getCanonicalTemporaryDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
 import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
@@ -57,12 +58,12 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, [Message])
-loadPreprocessed src = do
+loadPreprocessed :: (HasLigoClient m, Log m) => FilePath -> Source -> m (Source, [Message])
+loadPreprocessed projDir src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
-      (second (const []) <$> preprocess src') `catches`
+      (second (const []) <$> preprocess projDir src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: SomeLigoException) ->
@@ -86,9 +87,9 @@ loadPreprocessed src = do
       in
       (Source (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
 
-parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
-parsePreprocessed src = do
-  (src', msgs) <- loadPreprocessed src
+parsePreprocessed :: (HasLigoClient m, Log m) => FilePath -> Source -> m ContractInfo
+parsePreprocessed projDir src = do
+  (src', msgs) <- loadPreprocessed projDir src
   addLigoErrsToMsg msgs <$> parse src'
 
 parseWithScopes
@@ -99,8 +100,10 @@ parseWithScopes
 parseWithScopes fp = runNoLoggingT do
   let
     top = takeDirectory fp
-  graph <- includesGraph =<< parseContracts parsePreprocessed noProgress (const True) top
-  scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
+  temp <- liftIO getCanonicalTemporaryDirectory
+  graph <- includesGraph =<< parseContracts (parsePreprocessed temp) noProgress (const True) top
+  let group = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
+  scoped <- addScopes @impl temp noProgress $ fromMaybe graph group
   maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
 -- | Parse the whole directory for LIGO contracts and collect the results.

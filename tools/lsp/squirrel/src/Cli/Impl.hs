@@ -18,7 +18,7 @@ module Cli.Impl
   ) where
 
 import Control.Monad
-import Control.Monad.IO.Unlift (MonadUnliftIO (..))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
 import Data.Bifunctor (bimap)
@@ -34,10 +34,10 @@ import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
 import System.IO (Handle, hFlush)
-import System.IO.Temp (withSystemTempFile)
 import System.Process
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 import UnliftIO.Exception (Exception (..), SomeException (..), catchAny, throwIO, try)
+import UnliftIO.Temporary (withTempFile)
 
 import Cli.Json
 import Cli.Types
@@ -194,15 +194,17 @@ instance LogItem Version where
 -- of the temporary file with the original one.
 usingTemporaryDir
   :: MonadUnliftIO m
-  => Source
+  => FilePath
+  -> Source
   -> (FilePath -> Handle -> m a)
   -> m (a, Text -> Text)
-usingTemporaryDir (Source fp contents) action =
-  withRunInIO \run -> withSystemTempFile (takeFileName fp) \tempFp handle -> do
-    Text.hPutStr handle contents
-    hFlush handle
+usingTemporaryDir rootDir (Source fp contents) action =
+  withTempFile rootDir (takeFileName fp) \tempFp handle -> do
+    liftIO do
+      Text.hPutStr handle contents
+      hFlush handle
     let fixMarkers = Text.replace (pack tempFp) (pack fp)
-    (, fixMarkers) <$> run (action tempFp handle)
+    (, fixMarkers) <$> action tempFp handle
 
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
@@ -237,9 +239,9 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
 --
 -- FIXME: LIGO expands preprocessor directives before pretty printing. We should
 -- find a workaround for this or report to them.
-callForFormat :: (HasLigoClient m, Log m) => Source -> m (Maybe Text)
-callForFormat source = Log.addNamespace "callForFormat" $ Log.addContext source $
-  fst <$> usingTemporaryDir source \tempFp _ ->
+callForFormat :: (HasLigoClient m, Log m) => FilePath -> Source -> m (Maybe Text)
+callForFormat projDir source = Log.addNamespace "callForFormat" $ Log.addContext source $
+  fst <$> usingTemporaryDir projDir source \tempFp _ ->
     let
       getResult = callLigo
         ["print", "pretty", tempFp]
@@ -260,11 +262,12 @@ callForFormat source = Log.addNamespace "callForFormat" $ Log.addContext source 
 -- ```
 preprocess
   :: (HasLigoClient m, Log m)
-  => Source
+  => FilePath
+  -> Source
   -> m (Source, Text)
-preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
+preprocess projDir contract = Log.addNamespace "preprocess" $ Log.addContext contract do
   $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
-  (mbOut, fixMarkers) <- usingTemporaryDir contract \tempFp _ -> do
+  (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ -> do
     try $ callLigo
       ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"]
       contract
@@ -285,11 +288,12 @@ preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
 -- | Get ligo definitions from raw contract.
 getLigoDefinitions
   :: (HasLigoClient m, Log m)
-  => Source
+  => FilePath
+  -> Source
   -> m (LigoDefinitions, Text)
-getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
+getLigoDefinitions projDir contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
-  (mbOut, fixMarkers) <- usingTemporaryDir contract \tempFp _ ->
+  (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ ->
     try $ callLigo
       ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
       contract

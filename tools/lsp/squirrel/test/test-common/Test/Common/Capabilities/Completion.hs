@@ -15,7 +15,7 @@ import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldMatchList)
-import Test.Common.Util (ScopeTester, parseContractsWithDependenciesScopes)
+import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
@@ -206,7 +206,7 @@ caseInfos =
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
 completionDriver testInfos = do
-  graph <- parseContractsWithDependenciesScopes @parser contractsDir
+  graph <- parseDirectoryWithScopes @parser contractsDir
   pure $ testGroup "Completion" $ map (makeTestCase graph) testInfos
   where
     makeTestCase graph info =

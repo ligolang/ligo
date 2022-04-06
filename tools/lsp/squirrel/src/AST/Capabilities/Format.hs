@@ -15,25 +15,21 @@ import Duplo.Tree (extract, spineTo)
 import Log (Log)
 import ParseTree (Source (..))
 import Parser (CodeSource (..))
-import Product (getElem)
+import Product (Product, getElem)
 import Range (Range (..), toLspRange)
 
-formatDocument :: (HasLigoClient m, Log m) => SomeLIGO Info' -> m (J.List J.TextEdit)
-formatDocument (SomeLIGO _lang (extract -> info)) = do
+formatImpl :: (HasLigoClient m, Log m) => FilePath -> Product Info' -> m (J.List J.TextEdit)
+formatImpl projDir info = do
   let CodeSource source = getElem info
   let r@Range{_rFile} = getElem info
-  out <- callForFormat (Source _rFile source)
+  out <- callForFormat projDir (Source _rFile source)
   return . J.List $
     maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out
 
-formatAt :: (HasLigoClient m, Log m) => Range -> SomeLIGO Info' -> m (J.List J.TextEdit)
-formatAt at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
+formatDocument :: (HasLigoClient m, Log m) => FilePath -> SomeLIGO Info' -> m (J.List J.TextEdit)
+formatDocument projDir (SomeLIGO _lang (extract -> info)) = formatImpl projDir info
+
+formatAt :: (HasLigoClient m, Log m) => FilePath -> Range -> SomeLIGO Info' -> m (J.List J.TextEdit)
+formatAt projDir at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
   [] -> return $ J.List []
-  (node:_) -> do
-    let
-      info = extract node
-      CodeSource source = getElem info
-      r@Range{_rFile} = getElem info
-    out <- callForFormat (Source _rFile source)
-    return . J.List $
-      maybe [] (\out' -> [J.TextEdit (toLspRange r) out']) out
+  node : _ -> formatImpl projDir $ extract node

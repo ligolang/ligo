@@ -24,9 +24,10 @@ import Progress (ProgressCallback)
 addShallowScopes
   :: forall parser m
    . HasScopeForest parser m
-  => ProgressCallback m
+  => FilePath
+  -> ProgressCallback m
   -> ContractInfo
   -> m ContractInfo'
-addShallowScopes reportProgress =
-  (fmap (head . G.vertexList) . addScopes @parser reportProgress . G.vertex)
+addShallowScopes projDir reportProgress =
+  (fmap (head . G.vertexList) . addScopes @parser projDir reportProgress . G.vertex)
   <=< insertPreprocessorRanges
