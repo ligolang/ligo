@@ -256,13 +256,13 @@ module.exports = grammar({
 
     type_decl: $ => seq("type", $.TypeName, optional($.type_params), "=", $._type_expr),
 
-    type_params: $ => common.chev(common.sepBy1(",", $.TypeVariableName)),
+    type_params: $ => common.chev(common.sepBy1(",", field("type_param", $.TypeVariableName))),
 
-    let_decl: $ => common.withAttrs($, seq("let", $._binding_list)),
+    let_decl: $ => common.withAttrs($, seq("let", field("binding_list", $._binding_list))),
 
-    const_decl: $ => common.withAttrs($, seq("const", $._binding_list)),
+    const_decl: $ => common.withAttrs($, seq("const", field("binding_list", $._binding_list))),
     
-    _binding_list: $ => common.sepBy1(",", $._binding_initializer),
+    _binding_list: $ => common.sepBy1(",", field("binding", $._binding_initializer)),
     
     _binding_initializer: $ => seq($._binding_pattern, optional($.type_annotation), "=", $._expr),
 
@@ -305,18 +305,18 @@ module.exports = grammar({
       $.array_pattern
     ),
 
-    array_rest_pattern: $ => seq("...", $.Name),
+    array_rest_pattern: $ => seq("...", field("name", $.Name)),
 
-    switch_statement: $ => seq("switch", common.par($._expr), common.block($._cases)),
+    switch_statement: $ => seq("switch", common.par(field("selector", $._expr)), field("cases", common.block($._cases))),
 
     _cases: $ => choice(
       seq(repeat1($.case), optional($.default_case)),
       $.default_case
     ),
 
-    case: $ => seq("case", $._expr, $._case_statements),
+    case: $ => seq("case", field("selector_value", $._expr), field("body", $._case_statements)),
 
-    default_case: $ => seq("default", $._case_statements),
+    default_case: $ => seq("default", field("body", $._case_statements)),
 
     _case_statements: $ => seq(":", choice(
       optional($._statements), 
@@ -325,7 +325,7 @@ module.exports = grammar({
 
     if_else_statement: $ => seq("if", field("selector", common.par($._expr)), field("then", $._base_statement), "else", field("else", $._statement)),
 
-    for_of_statement: $ => seq("for", common.par(seq($._index_kind, $.Name, "of", $._expr_statement)), $._statement),
+    for_of_statement: $ => seq("for", common.par(seq($._index_kind, field("key", $.Name), "of", field("collection", $._expr_statement))), field("body", $._statement)),
 
     _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
     
