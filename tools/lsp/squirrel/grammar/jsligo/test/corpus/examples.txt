@@ -40,7 +40,7 @@ let uno : storage = EURO.one;
     (TypeName)
     (module_access_t
       (ModuleName) 
-      (module_var_t (Name))))
+      (Name)))
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
