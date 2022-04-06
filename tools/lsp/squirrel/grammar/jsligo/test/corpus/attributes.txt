@@ -103,7 +103,7 @@ let decl
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (Int))))
+    (Int)))
 
 =========
 let decl twice
@@ -119,7 +119,7 @@ let decl twice
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (Int))))
+    (Int)))
 
 =========
 let expr
@@ -136,20 +136,19 @@ let bar = (b : int) : int => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr (Name))
-            (type_annotation (TypeName))))
-        (type_annotation
-          (TypeName))
-            (body
-        (let_decl (attr) (attr)
-          (var_pattern (Name))
-          (expr (Int)))
-        (return_statement
-          (expr (Name))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (Name)
+          (type_annotation (TypeName))))
+      (type_annotation
+        (TypeName))
+          (body
+      (let_decl (attr) (attr)
+        (var_pattern (Name))
+        (Int))
+      (return_statement
+        (Name))))))
 
 =========
 const expr
@@ -166,20 +165,19 @@ const bar = (b : int) : int => {
 (source_file
   (const_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr (Name))
-            (type_annotation (TypeName))))
-        (type_annotation
-          (TypeName))
-            (body
-        (const_decl (attr) (attr)
-          (var_pattern (Name))
-          (expr (Int)))
-        (return_statement
-          (expr (Name))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (Name)
+          (type_annotation (TypeName))))
+      (type_annotation
+        (TypeName))
+          (body
+      (const_decl (attr) (attr)
+        (var_pattern (Name))
+        (Int))
+      (return_statement
+        (Name))))))
 
 =========
 const decl
@@ -194,7 +192,7 @@ const decl
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (Int))))
+    (Int)))
 
 =========
 const decl twice
@@ -210,4 +208,4 @@ const decl twice
     (attr)
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (Int))))
+    (Int)))

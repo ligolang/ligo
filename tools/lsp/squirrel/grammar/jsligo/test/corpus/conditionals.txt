@@ -14,16 +14,15 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (body
-          (if_statement
-            (expr (True_kwd))
-            (block_statement
-              (return_statement
-                (expr (False_kwd)))))
-          (return_statement
-            (expr (True_kwd))))))))
+    (fun_expr
+      (body
+        (if_statement
+          (True_kwd)
+          (block_statement
+            (return_statement
+              (False_kwd))))
+        (return_statement
+          (True_kwd))))))
 
 =========
 conditional: if else
@@ -42,15 +41,14 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (body
-          (if_else_statement
-            (expr (True_kwd))
-            (block_statement
-              (return_statement (expr (False_kwd))))
-            (block_statement
-              (return_statement (expr (True_kwd))))))))))
+    (fun_expr
+      (body
+        (if_else_statement
+          (True_kwd)
+          (block_statement
+            (return_statement (False_kwd)))
+          (block_statement
+            (return_statement (True_kwd))))))))
 
 =========
 conditional: if else if else
@@ -71,19 +69,18 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (body
+    (fun_expr
+      (body
+        (if_else_statement
+          (binary_operator (Int) (Int))
+          (block_statement
+            (return_statement (False_kwd)))
           (if_else_statement
-            (expr (binary_operator (Int) (Int)))
+            (binary_operator (Int) (Int))
             (block_statement
-              (return_statement (expr (False_kwd))))
-            (if_else_statement
-              (expr (binary_operator (Int) (Int)))
-              (block_statement
-                (return_statement (expr (False_kwd))))
-              (block_statement
-                (return_statement (expr (False_kwd)))))))))))
+              (return_statement (False_kwd)))
+            (block_statement
+              (return_statement (False_kwd)))))))))
 
 =========
 conditional: switch = case + default
@@ -105,22 +102,22 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr (Name))
-            (type_annotation (TypeName))))
-        (body
-          (switch_statement
-            (expr (Name))
-            (case
-              (expr (String))
-                (block_statement
-                  (break_statement)))
-            (default_case
-              (block_statement
-                (return_statement (expr (False_kwd)))))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (Name)
+          (type_annotation (TypeName))))
+      (body
+        (switch_statement
+          (Name)
+          (case
+            (String)
+            (block_statement
+              (break_statement)))
+          (default_case
+            (block_statement
+              (return_statement 
+                (False_kwd)))))))))
 
 =========
 conditional: switch = case
@@ -139,20 +136,19 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr (Name))
-            (type_annotation (TypeName))))
-          (body
-            (switch_statement
-              (expr (Name))
-              (case 
-                (expr (String))
-                (block_statement
-                  (return_statement
-                    (expr (False_kwd)))))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (Name)
+          (type_annotation (TypeName))))
+        (body
+          (switch_statement
+            (Name)
+            (case 
+              (String)
+              (block_statement
+                (return_statement
+                  (False_kwd)))))))))
 
 =========
 conditional: switch = default
@@ -171,16 +167,15 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr (Name))
-            (type_annotation (TypeName))))
-        (body
-          (switch_statement
-            (expr (Name))
-            (default_case
-              (block_statement
-                (return_statement
-                  (expr (False_kwd)))))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (Name)
+          (type_annotation (TypeName))))
+      (body
+        (switch_statement
+          (Name)
+          (default_case
+            (block_statement
+              (return_statement
+                (False_kwd)))))))))

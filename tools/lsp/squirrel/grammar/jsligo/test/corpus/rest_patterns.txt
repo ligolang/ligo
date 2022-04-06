@@ -11,14 +11,11 @@ let larger_list: list<int> = list([5, ...my_list]);
     (var_pattern (Name))
     (type_annotation
       (type_ctor_app (TypeName) (TypeName)))
-    (expr
-      (call_expr
-        (lambda (Name))
-          (expr
-            (array_literal
-              (expr (Int))
-            (array_item_rest_expr
-              (expr (Name)))))))))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (array_literal (Int)
+        (array_item_rest_expr (Name)))))))
 
 =========
 rest-pattern: object rest
@@ -32,32 +29,25 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
-      (fun_expr
-        (parameters
-          (parameter
-            (expr
-              (array_literal
-                (expr (Name))
-                (expr (Name))))
-            (type_annotation
-              (type_tuple (TypeName) (TypeName)))))
-        (type_annotation (TypeName))
-        (body
-          (paren_expr
-            (expr
-              (object_literal
-                (property
-                  (property_spread (Name)))
-                (property
-                  (property_name (Name))
-                  (expr
-                    (binary_operator
-                      (projection (Name) (Name))
-                      (projection (Name) (Name)))))
-                (property
-                  (property_name (Name))
-                  (expr
-                    (binary_operator
-                      (projection (Name) (Name))
-                      (projection (Name) (Name)))))))))))))
+    (fun_expr
+      (parameters
+        (parameter
+          (array_literal (Name) (Name))
+          (type_annotation
+            (type_tuple (TypeName) (TypeName)))))
+      (type_annotation (TypeName))
+      (body
+        (paren_expr
+          (object_literal
+            (property
+              (property_spread (Name)))
+            (property
+              (property_name (Name))
+              (binary_operator
+                (projection (Name) (Name))
+                (projection (Name) (Name))))
+            (property
+              (property_name (Name))
+              (binary_operator
+                (projection (Name) (Name))
+                (projection (Name) (Name))))))))))

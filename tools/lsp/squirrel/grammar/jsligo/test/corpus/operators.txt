@@ -10,8 +10,7 @@ let x = 1 + 2;
   (let_decl
     (var_pattern
       (Name))
-    (expr
-      (binary_operator (Int) (Int)))))
+    (binary_operator (Int) (Int))))
 
 =========
 assignment operator
@@ -25,11 +24,10 @@ let x = () => { x += 2; return x };
 (source_file
   (let_decl
   (var_pattern (Name))
-  (expr
-    (fun_expr
-      (body
-        (assignment_operator (Name) (Int))
-        (return_statement (expr (Name))))))))
+  (fun_expr
+    (body
+      (assignment_operator (Name) (Int))
+      (return_statement (Name))))))
 
 =========
 binary operator - ||
@@ -43,8 +41,7 @@ let x = true || false;
   (let_decl
     (var_pattern
       (Name))
-    (expr
-      (binary_operator (True_kwd) (False_kwd)))))
+    (binary_operator (True_kwd) (False_kwd))))
 
 =========
 unary operator
@@ -58,5 +55,4 @@ let x = - 1;
   (let_decl
     (var_pattern
       (Name))
-    (expr
-      (unary_operator (Int)))))
+    (unary_operator (Int))))

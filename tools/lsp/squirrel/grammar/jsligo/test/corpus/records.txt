@@ -37,18 +37,16 @@ let alice : user = {
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (object_literal
-        (property
-          (property_name (Name))
-          (expr
-            (type_as_annotation (Int) (TypeName))))
-        (property
-          (property_name (Name))
-          (expr (True_kwd)))
-        (property
-          (property_name (Name))
-          (expr (String)))))))
+    (object_literal
+      (property
+        (property_name (Name))
+        (type_as_annotation (Int) (TypeName)))
+      (property
+        (property_name (Name))
+        (True_kwd))
+      (property
+        (property_name (Name))
+        (String)))))
 
 =========
 record field access
@@ -62,8 +60,7 @@ let alice_admin: bool = alice.is_admin;
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (projection (Name) (Name)))))
+    (projection (Name) (Name))))
 
 =========
 tuple type decl
@@ -90,10 +87,9 @@ let full_name: full_name = ["Alice", "Johnson"];
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (array_literal
-        (expr (String))
-        (expr (String))))))
+    (array_literal
+      (String)
+      (String))))
 
 =========
 tuple desctructuring
@@ -109,7 +105,7 @@ let [first_name, last_name]: full_name = full_name;
       (var_pattern (Name))
       (var_pattern (Name)))
     (type_annotation (TypeName))
-    (expr (Name))))
+    (Name)))
 
 =========
 tuple desctructuring function
@@ -122,17 +118,15 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
 (source_file
   (let_decl
     (var_pattern (Name))
-    (expr
       (fun_expr
-        (parameters
-          (parameter
-            (expr
-              (array_literal
-                (expr (Name))
-                (expr (wildcard))))
-            (type_annotation (TypeName))))
-        (type_annotation (TypeName))
-        (body (Name))))))
+      (parameters
+        (parameter
+          (array_literal
+            (Name)
+            (wildcard))
+          (type_annotation (TypeName))))
+      (type_annotation (TypeName))
+      (body (Name)))))
 
 =========
 tuple access elements
@@ -146,7 +140,6 @@ let first_name_component: string = full_name[0];
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (projection 
-        (Name)
-        (expr (Int))))))
+    (projection 
+      (Name)
+      (Int))))

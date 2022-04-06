@@ -1,4 +1,4 @@
-- [] Automatic Semicolon insertion + A VBAR insertion
+- [] Automatic Semicolon insertion
 - [done] detect attributes
 - [done] prec.left & prec.right for operator precedence - remove precedence levels
 - [] Add fields to nodes

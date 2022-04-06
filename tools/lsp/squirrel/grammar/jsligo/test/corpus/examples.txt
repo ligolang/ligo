@@ -25,19 +25,16 @@ let uno : storage = EURO.one;
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr 
-          (type_as_annotation (Int) (TypeName)))))
+        (type_as_annotation (Int) (TypeName))))
     (namespace_statement (ModuleName)
       (let_decl 
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr 
-          (type_as_annotation (Int) (TypeName))))
+        (type_as_annotation (Int) (TypeName)))
       (let_decl
         (var_pattern (Name))
         (type_annotation (TypeName))
-        (expr
-         (type_as_annotation (Int) (TypeName))))))
+        (type_as_annotation (Int) (TypeName)))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl 
     (TypeName)
@@ -47,7 +44,7 @@ let uno : storage = EURO.one;
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr (module_access (ModuleName) (FieldName)))))
+    (module_access (ModuleName) (FieldName))))
 
 =========
 nested function calls
@@ -61,16 +58,15 @@ let x : int = foo(bar(baz(1)))
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (call_expr
-        (lambda (Name))
-        (expr
-          (call_expr
-            (lambda (Name))
-            (expr
-              (call_expr
-                (lambda (Name))
-                (expr (Int))))))))))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (call_expr
+          (lambda (Name))
+          (arguments
+            (call_expr
+              (lambda (Name))
+              (arguments (Int)))))))))
 
 =========
 module access function call
@@ -84,11 +80,10 @@ let x : int = int(List.List.List.length(x))
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (expr
-      (call_expr
-        (lambda (Name))
-        (expr
-          (call_expr
-            (lambda
-              (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
-              (expr (Name))))))))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (call_expr
+          (lambda
+            (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
+            (arguments (Name)))))))
