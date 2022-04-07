@@ -234,7 +234,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
         f body
 
 and declaration ppf (d : declaration) =
-  Stage_common.PP.(declaration ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
+  Stage_common.PP.(declaration ~print_type:true expression type_expression e_attributes type_and_module_attr type_and_module_attr)
     ppf d
 
 and module_ ppf (m : module_) =

@@ -388,7 +388,7 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
   let main_decl =
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
-    in
+  in
   let { binder=_ ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
@@ -426,14 +426,14 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
     in
-  let { binder=_ ; expr ; attr=_ } = main_decl in
-  match get_lambda_with_type expr with
-  | Some ({binder; result=_} , (tin,return))-> (
+  let { binder ; expr ; attr=_ } = main_decl in
+  match get_t_arrow expr.type_expression with
+  | Some { type1 = tin ; type2  = return } -> (
     match get_t_tuple tin with
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder)
+    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder.var)
   )
-  | None -> raise.raise @@ bad_contract_io main_fname expr
+  | None -> raise.raise @@ bad_view_io main_fname expr
 
 
 module Free_variables :

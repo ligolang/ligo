@@ -35,12 +35,20 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 
+(* This function transforms a type `fun v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
+let destruct_type_abstraction (t : type_expression) =
+  let rec destruct_type_abstraction type_vars (t : type_expression) = match t.type_content with
+    | T_abstraction { ty_binder ; type_ ; _ } ->
+      destruct_type_abstraction (ty_binder :: type_vars) type_
+    | _ -> (List.rev type_vars, t)
+  in destruct_type_abstraction [] t
+
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
 let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
        destruct_for_alls (ty_binder :: type_vars) type_
-    | _ -> (type_vars, t)
+    | _ -> (List.rev type_vars, t)
   in destruct_for_alls [] t
 
 (* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
@@ -48,7 +56,7 @@ let destruct_arrows_n (t : type_expression) (n : int) =
   let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
     | T_arrow { type1 ; type2 } when List.length type_vars < n ->
        destruct_arrows (type1 :: type_vars) type2
-    | _ -> (type_vars, t)
+    | _ -> (List.rev type_vars, t)
   in destruct_arrows [] t
 
 (* This function takes an expression l and a list of arguments [e1; ...; en] and constructs `l e1 ... en`,

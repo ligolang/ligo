@@ -223,7 +223,7 @@ depends: [
   "x509" {= "0.16.0"}
   "yojson" {= "1.7.0"}
   "zarith" {= "1.12"}
-  "zarith_stubs_js" {= "v0.14.1"}
+  "zarith_stubs_js" {= "v0.15.0"}
 ]
 pin-depends: [
   [ "tezos-012-Psithaca-test-helpers.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_protocol/test/helpers" ]

@@ -182,9 +182,13 @@ let fake_bake tezos_context chain_id now =
                       return state.ctxt) in
   tezos_context
 
+let register_constant tezos_context constant =
+  Alpha_context.Global_constants_storage.register tezos_context constant
+
 let make_options
     ?(env = (dummy_environment ()))
     ?(tezos_context = env.tezos_context)
+    ?(constants = [])
     ?(now = Alpha_context.Script_timestamp.now env.tezos_context)
     ?(sender = (List.nth_exn env.identities 0).implicit_contract)
     ?(self = default_self)
@@ -236,6 +240,11 @@ let make_options
     |> Script_int.of_int32 |> Script_int.abs
   in
   let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
+  (* Update the Tezos context by registering the global constants *)
+  let tezos_context = List.fold_left constants ~init:tezos_context
+                        ~f:(fun ctxt cnt ->
+                          let (ctxt, _, _) = force_lwt_alpha ~msg:("bad constants "^__LOC__) @@ register_constant ctxt cnt in
+                          ctxt) in
   {
     tezos_context ;
     source = sender ;
@@ -284,9 +293,6 @@ let typecheck_contract ?(environment = dummy_environment ()) contract =
   match x with
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
-
-let register_constant tezos_context constant =
-  Alpha_context.Global_constants_storage.register tezos_context constant
 
 type 'a interpret_res =
   | Succeed of 'a

@@ -1,0 +1,13 @@
+{
+  "name": "ligo-foo",
+  "version": "1.0.6",
+  "description":
+    "An example for ligo dependency depending on another ligo dependency",
+  "scripts": {
+    "test": "ligo run test foo.test.mligo --project-root ."
+  },
+  "dependencies": {
+    "ligo-list-helpers": "1.0.0",
+    "ligo-set-helpers": "^1.0.2"
+  }
+}

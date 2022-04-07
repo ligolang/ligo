@@ -36,4 +36,4 @@ let get_scope (raw_options : Compiler_options.raw) source_file display_format ()
       let options = Compiler_options.make ~raw_options ~protocol_version () in
       let Compiler_options.{ with_types ; _ } = options.tools in
       let core_prg = Build.infer_contract ~raise ~add_warning ~options source_file in
-      Scopes.scopes ~options:options.middle_end ~with_types core_prg
+      Scopes.scopes ~add_warning ~options:options.middle_end ~with_types core_prg
