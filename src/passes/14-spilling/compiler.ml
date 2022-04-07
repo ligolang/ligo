@@ -212,6 +212,7 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_GET_TOTAL_VOTING_POWER
       | C_TEST_REGISTER_CONSTANT
       | C_TEST_CONSTANT_TO_MICHELSON
+      | C_TEST_REGISTER_FILE_CONSTANTS
     ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 

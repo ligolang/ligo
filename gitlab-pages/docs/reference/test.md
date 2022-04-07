@@ -463,6 +463,22 @@ let constant_to_michelson_program = (constant : string) => michelson_program
 Turn a constant (as a string) into a `michelson_program`. To be used together with `Test.register_constant`.
 
 <SyntaxTitle syntax="pascaligo">
+val register_file_constants : string -> list (string)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val register_file_constants : string -> string list
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let register_file_constants: string => list (string)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let register_file_constants = (filepath : string) => list&lt;string&gt;
+</SyntaxTitle>
+Registers the global constants listed in a JSON file. It takes a
+string (file path) and returns a list of strings corresponding to the
+hashes of the registered constants.
+
+<SyntaxTitle syntax="pascaligo">
 val bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
