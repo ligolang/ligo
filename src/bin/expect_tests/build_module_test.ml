@@ -83,13 +83,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
-    const toto = ADD(E.toto ,
-    C.B.A.toto)
+    const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
-    const main = lambda (gen#6) return  match gen#6 with
-                                         | ( p , s ) ->
-                                         let s = ADD(ADD(p , s) ,
-                                         toto) in ( LIST_EMPTY() , s ) |}]
+    const main =
+      lambda (gen#6) return  match gen#6 with
+                              | ( p , s ) ->
+                              let s = ADD(ADD(p , s) ,
+                              toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
@@ -199,7 +199,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run"; "interpret"; "--init-file"; contract "module_scoping_bug.mligo" ; "x"; ] ;
   [%expect {|
-    File "../../test/contracts/build/module_scoping_bug.mligo", line 24, characters 10-13:
+    File "../../test/contracts/build/module_scoping_bug.mligo", line 24, characters 10-11:
      23 |
      24 | let x = B.A.a
 

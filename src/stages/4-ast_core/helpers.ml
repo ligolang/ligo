@@ -10,11 +10,6 @@ let label_range i j =
 let is_tuple_lmap m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
-let get_pair m =
-  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
-  | _ -> None
-
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in
@@ -38,7 +33,7 @@ let destruct_for_alls (t : type_expression) =
   let rec destruct_for_alls type_vars (t : type_expression) = match t.type_content with
     | T_for_all { ty_binder ; type_ ; _ } ->
        destruct_for_alls (ty_binder :: type_vars) type_
-    | _ -> (type_vars, t)
+    | _ -> (List.rev type_vars, t)
   in destruct_for_alls [] t
 
 module Free_type_variables = struct

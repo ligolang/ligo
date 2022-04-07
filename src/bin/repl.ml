@@ -2,17 +2,41 @@ open Simple_utils.Trace
 
 (* Helpers *)
 
+module ModResHelpers = Preprocessor.ModRes.Helpers
+
 let get_declarations_core core_prg =
-     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
-     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
-     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_core.list_mod_declarations core_prg in
-     func_declarations @ type_declarations @ mod_declarations
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+     the absolute file path, and the REPL prints an absolute file path which is confusing
+     So we ignore the module declarations which which have their module_binder as some absolute path.
+     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
+  *)
+  let ignore_module_variable_which_is_absolute_path module_variable =
+    let module_variable = try Ast_core.ModuleVar.to_name_exn module_variable with _ -> "" in
+    not @@ Caml.Sys.file_exists module_variable in
+
+  let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
+  let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_core.list_type_declarations core_prg in
+  let mod_declarations  = Ligo_compile.Of_core.list_mod_declarations core_prg in
+  let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
+  func_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed typed_prg =
-     let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_typed.list_declarations typed_prg in
-     let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_typed.list_type_declarations typed_prg in
-     let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ Ligo_compile.Of_typed.list_mod_declarations typed_prg in
-     func_declarations @ type_declarations @ mod_declarations
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+     the absolute file path, and the REPL prints an absolute file path which is confusing
+     So we ignore the module declarations which which have their module_binder as some absolute path.
+     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
+  *)
+  let ignore_module_variable_which_is_absolute_path module_variable =
+    let module_variable = try Ast_typed.ModuleVar.to_name_exn module_variable with _ -> "" in
+    not @@ Caml.Sys.file_exists module_variable in
+
+  let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_typed.list_declarations typed_prg in
+  let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_typed.list_type_declarations typed_prg in
+  let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
+  let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
+  func_declarations @ type_declarations @ mod_declarations
 
 let pp_declaration ppf = function
     `Value a  -> Ast_core.PP.expression_variable ppf a
@@ -79,13 +103,13 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
                protocol : Environment.Protocols.t;
                top_level : Ast_typed.program;
                dry_run_opts : Run.options;
-               project_root : string option;
+               module_resolutions : Preprocessor.ModRes.t option;
               }
 
 let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options () in
   let options = Compiler_options.set_init_env options state.env in
-  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
+  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~add_warning ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
   let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
@@ -127,19 +151,24 @@ let try_declaration ~raise ~raw_options state s =
      raise.raise `Repl_unexpected
 
 let import_file ~raise ~raw_options state file_name module_name =
+  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
-  let module_ = Build.build_context ~raise ~add_warning ~options file_name in
+  let module_ =
+    let prg = Build.build_context ~raise ~add_warning ~options file_name in
+    Simple_utils.Location.wrap (Ast_typed.M_struct prg)
+  in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
 
-let use_file ~raise ~raw_options state s =
+let use_file ~raise ~raw_options state file_name =
+  let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.build_context ~raise ~add_warning ~options s in
+  let module' = Build.build_context ~raise ~add_warning ~options file_name in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'
@@ -204,7 +233,7 @@ let make_initial_state syntax protocol dry_run_opts project_root =
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
-    project_root = project_root;
+    module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make;
   }
 
 let rec read_input prompt delim =

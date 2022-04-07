@@ -1,140 +1,7 @@
 open Types
 
-module Free_variables = struct
 
-  type bindings = expression_variable list
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
-  let singleton : expression_variable -> bindings = fun s -> [ s ]
-  let union : bindings -> bindings -> bindings = (@)
-  let unions : bindings list -> bindings = List.concat
-  let empty : bindings = []
-
-  let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
-    let self = expression b in
-    match ec with
-    | E_lambda l -> lambda b l
-    | E_literal _ -> empty
-    | E_constant {arguments;_} -> unions @@ List.map ~f:self arguments
-    | E_variable name -> (
-        match mem b name with
-        | true -> empty
-        | false -> singleton name
-      )
-    | E_application {lamb;args} -> unions @@ List.map ~f:self [ lamb ; args ]
-    | E_constructor {element;_} -> self element
-    | E_record m -> unions @@ List.map ~f:self @@ LMap.to_list m
-    | E_record_accessor {record;_} -> self record
-    | E_record_update {record; update;_} -> union (self record) @@ self update
-    | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
-    | E_let_in { let_binder; rhs; let_result; _} ->
-      let b' = union (singleton let_binder.var) b in
-      union
-        (expression b' let_result)
-        (self rhs)
-    | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
-    | E_type_abstraction {type_binder=_;result} -> self result
-    | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
-    | E_mod_alias { alias=_; binders=_; result} -> self result
-    | E_raw_code _ -> empty
-    | E_recursive {fun_name;lambda;_} ->
-      let b' = union (singleton fun_name) b in
-      expression_content b' @@ E_lambda lambda
-    | E_module_accessor {element;_} -> self element
-    | E_ascription {anno_expr;_} -> self anno_expr
-
-  and lambda : bindings -> (_,_) lambda -> bindings = fun b l ->
-    let b' = union (singleton l.binder.var) b in
-    expression b' l.result
-
-  and expression : bindings -> expression -> bindings = fun b e ->
-    expression_content b e.expression_content
-
-  and matching_expression : bindings -> (expression, type_expression) match_case list -> bindings = fun b cases ->
-    let aux : bindings -> (expression,type_expression) match_case -> bindings = fun b {pattern ; body} ->
-      let b' =
-        Stage_common.Helpers.fold_pattern
-          (fun b x ->
-            match x.wrap_content with
-            | P_var x -> union b (singleton x.var)
-            | _ -> b
-          )
-          b
-          pattern
-      in
-      expression b' body
-    in
-    List.fold_left ~f:aux ~init:b cases
-
-end
-
-
-let assert_eq = fun a b -> if Caml.(=) a b then Some () else None
-let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None
-let rec assert_list_eq f = fun a b -> match (a,b) with
-  | [], [] -> Some ()
-  | [], _  -> None
-  | _ , [] -> None
-  | hda::tla, hdb::tlb -> Simple_utils.Option.(
-    let* () = f hda hdb in
-    assert_list_eq f tla tlb
-  )
-
-let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
-  let open Simple_utils.Option in
-  match (a.type_content, b.type_content) with
-  | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list_rev sa.fields in
-      let sb' = LMap.to_kv_list_rev sb.fields in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        let* _ = assert_eq ka kb in
-        assert_type_expression_eq (va, vb)
-      in
-      let* _ = assert_same_size sa' sb' in
-      List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
-    )
-  | T_sum _, _ -> None
-  | T_record ra, T_record rb
-       when Bool.(Helpers.is_tuple_lmap ra.fields <> Helpers.is_tuple_lmap rb.fields) -> None
-  | T_record ra, T_record rb -> (
-      let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.fields in
-      let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.fields in
-      let aux (ka, {associated_type=va;_}) (kb, {associated_type=vb;_}) =
-        let Label ka = ka in
-        let Label kb = kb in
-        let* _ = assert_eq ka kb in
-        assert_type_expression_eq (va, vb)
-      in
-      assert_list_eq aux ra' rb'
-
-    )
-  | T_record _, _ -> None
-  | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
-    let* _ = assert_type_expression_eq (type1, type1') in
-    assert_type_expression_eq (type2, type2')
-  | T_arrow _, _ -> None
-  | T_app {type_operator=ta;arguments=aa}, T_app {type_operator=tb;arguments=ab} when TypeVar.equal ta tb ->
-    assert_list_eq (fun a b -> assert_type_expression_eq (a,b)) aa ab
-  | T_app _, _ -> None
-  | T_variable _x, T_variable _y -> failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
-  | T_variable _, _ -> None
-  | T_module_accessor {module_name=mna;element=ea}, T_module_accessor {module_name=mnb;element=eb} when ModuleVar.equal mna mnb ->
-    assert_type_expression_eq (ea, eb)
-  | T_module_accessor _, _ -> None
-  | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
-  | T_singleton _ , _ -> None
-  | T_abstraction a , T_abstraction b ->
-    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (equal_kind a.kind b.kind))
-  | T_for_all a , T_for_all b ->
-    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (equal_kind a.kind b.kind))
-  | T_abstraction _ , _ -> None
-  | T_for_all _ , _ -> None
-
-and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
-
-and assert_literal_eq (a, b : literal * literal) : unit option =
+let assert_literal_eq (a, b : literal * literal) : unit option =
   match (a, b) with
   | Literal_int a, Literal_int b when Z.equal a b -> Some ()
   | Literal_int _, Literal_int _ -> None
@@ -189,6 +56,16 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
+let rec assert_list_eq f = fun a b -> match (a,b) with
+  | [], [] -> Some ()
+  | [], _  -> None
+  | _ , [] -> None
+  | hda::tla, hdb::tlb -> Simple_utils.Option.(
+    let* () = f hda hdb in
+    assert_list_eq f tla tlb
+  )
+
+
 (* TODO this was supposed to mean equality of _values_; if
    assert_value_eq (a, b) = Some (), then a and b should be values *)
 let rec assert_value_eq (a, b: (expression * expression )) : unit option =
@@ -203,8 +80,10 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_constructor (ca), E_constructor (cb) when Caml.(=) ca.constructor cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
-  | E_module_accessor {module_name=maa;element=a}, E_module_accessor {module_name=mab;element=b} when ModuleVar.equal maa mab -> (
-      assert_value_eq (a,b)
+  | E_module_accessor {module_path=maa;element=a}, E_module_accessor {module_path=mab;element=b} -> (
+    let open Simple_utils.Option in
+    let* _ = if ValueVar.equal a b then Some () else None in
+    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) maa mab
   )
   | E_record sma, E_record smb -> (
       let aux _ a b =
@@ -234,7 +113,7 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
 
   | (E_variable _, _) | (E_lambda _, _) | (E_type_abstraction _, _)
   | (E_application _, _) | (E_let_in _, _)
-  | (E_type_in _, _) | (E_mod_in _, _) | (E_mod_alias _, _)
+  | (E_type_in _, _) | (E_mod_in _, _)
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)
@@ -248,32 +127,3 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | E_record _, _
   | E_constructor _, _ ->
       None
-
-let is_value_eq (a , b) =
-  match assert_value_eq (a , b) with
-  | Some () -> true
-  | None -> false
-let rec assert_list_eq f = fun a b -> match (a,b) with
-  | [], [] -> Some ()
-  | [], _  -> None
-  | _ , [] -> None
-  | hda::tla, hdb::tlb -> Simple_utils.Option.(
-    let* () = f hda hdb in
-    assert_list_eq f tla tlb
-  )
-let merge_annotation (a:type_expression option) (b:type_expression option) assert_eq_fun : type_expression option =
-  let open Simple_utils.Option in
-  match a, b with
-  | None, None -> None
-  | Some a, None -> Some a
-  | None, Some b -> Some b
-  | Some a, Some b ->
-      let* _ = assert_eq_fun (a, b) in
-      match a.sugar, b.sugar with
-      | _, None -> Some a
-      | _, Some _ -> Some b
-
-let equal_variables a b : bool =
-  match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> ValueVar.equal a b
-  |  _, _ -> false

@@ -35,10 +35,10 @@ let expression_variable = ValueVar.compare
 let type_variable       = TypeVar.compare
 let module_variable     = ModuleVar.compare
 
-let module_access f {module_name=mna; element=ea}
-                    {module_name=mnb; element=eb} =
+let module_access f {module_path=mna; element=ea}
+                    {module_path=mnb; element=eb} =
   cmp2
-    module_variable mna mnb
+    (List.compare module_variable) mna mnb
     f ea eb
 
 let layout_tag = function
@@ -55,8 +55,7 @@ let type_expression_tag ty_cont =
   | T_record          _ -> 4
   | T_arrow           _ -> 5
   | T_singleton       _ -> 6
-  | T_abstraction     _ -> 7
-  | T_for_all         _ -> 8
+  | T_for_all         _ -> 7
 
 let rec type_expression a b =
   type_content a.type_content b.type_content
@@ -69,10 +68,9 @@ and type_content a b =
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
   | T_singleton a , T_singleton b -> literal a b
-  | T_abstraction a , T_abstraction b -> for_all a b
   | T_for_all a , T_for_all b -> for_all a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_for_all _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -139,7 +137,6 @@ and declaration_tag = function
   | Declaration_constant _ -> 1
   | Declaration_type     _ -> 2
   | Declaration_module   _ -> 3
-  | Module_alias         _ -> 4
 
 let rec expression a b =
   expression_content a.expression_content b.expression_content

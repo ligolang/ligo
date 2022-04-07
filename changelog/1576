@@ -1,0 +1,7 @@
+author: lesenechal.remi
+description: '\nThe type of `Test.test_exec_failure` has changed: a new constructor
+  `Balance_too_low` is added to assert that a contract pushed an operation but did
+  not have enough fund.'
+merge_request: '1576'
+title: 'Testing framework: More reasons for better negative tests ?'
+type: changed

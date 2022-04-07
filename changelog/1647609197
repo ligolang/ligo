@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1641'
+title: Remove T_abstraction from ast_aggregated
+type: internal

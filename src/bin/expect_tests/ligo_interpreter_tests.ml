@@ -144,11 +144,17 @@ let%expect_test _ =
   - test2 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good ["run";"test" ; test "test_example_from_file.mligo" ] ;
+  run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
   - test exited with value 111.
   - test2 exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "catch_balance_too_low.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
@@ -252,7 +258,8 @@ let%expect_test _ =
   [%expect {|
     Everything at the top-level was executed.
     - test exited with value ().
-    - test_mutation exited with value (). |}]
+    - test_mutation exited with value ().
+    - test_mutation_all exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
@@ -550,7 +557,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 5-24:
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
       4 |   else
@@ -710,3 +717,14 @@ let%expect_test _ =
       3 |   begin
 
     Embedded raw code can only have a functional type |xxx}]
+
+let pwd = Sys.getcwd ()
+let () = Sys.chdir "../../test/projects/"
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value KT1JSxHPaoZTCEFVfK5Y1xwjtB8chWFSUyTN(None). |}]
+
+let () = Sys.chdir pwd

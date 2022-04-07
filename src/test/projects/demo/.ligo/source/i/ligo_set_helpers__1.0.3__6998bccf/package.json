@@ -1,0 +1,8 @@
+{
+  "name": "ligo-set-helpers",
+  "version": "1.0.3",
+  "description": "Set helpers for LIGO",
+  "scripts": {
+    "test": "ligo run test set.test.mligo"
+  }
+}

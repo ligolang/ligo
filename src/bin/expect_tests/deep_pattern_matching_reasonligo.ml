@@ -81,8 +81,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 18, character 8 to line 19, character 15:
-     17 |       | Nil =>
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 19, characters 8-15:
      18 |         let f = (b:int) => b + a;
      19 |         f (b+1)
      20 |       | Cons ((a,b)) => "invalid"

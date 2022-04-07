@@ -3,19 +3,12 @@ module Var  = Simple_utils.Var
 open Ast_imperative
 open Stage_common
 
-let map_lmap_t f map =
-  LMap.map
-    (fun ({associated_type;_} as field : _ row_element) ->
-      let associated_type = f associated_type in
-      {field with associated_type })
-    map
-
-type ('a,'err) folder = 'a -> expression -> 'a
-let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f init e ->
+type 'a folder = 'a -> expression -> 'a
+let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
   let init = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_raw_code _ | E_skip -> init
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ -> init
   | E_list lst | E_set lst | E_constant {arguments=lst;cons_name=_} -> (
     let res = List.fold ~f:self ~init lst in
     res
@@ -25,9 +18,9 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
     res
   )
   | E_application app -> Folds.application self init app
-  | E_lambda l -> Folds.lambda self (fun _ a -> a) init l
+  | E_lambda l -> Folds.lambda self (fun a _ -> a) init l
   | E_type_abstraction ta -> Folds.type_abs self init ta
-  | E_ascription a -> Folds.ascription self (fun _ a -> a) init a
+  | E_ascription a -> Folds.ascription self (fun a _ -> a) init a
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
       let res = self init e in
@@ -39,30 +32,25 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a = fun f in
   | E_update u -> Folds.update self init u
   | E_accessor a -> Folds.accessor self init a
   | E_tuple t -> Folds.tuple self init t
-  | E_let_in  li -> Folds.let_in self (fun _ a -> a) init li
-  | E_type_in ti -> Folds.type_in self (fun _ a -> a) init ti
-  | E_mod_in  mi -> Folds.mod_in  self (fun _ a -> a) init mi
-  | E_mod_alias ma -> Folds.mod_alias self init ma
+  | E_let_in  li -> Folds.let_in self (fun a _ -> a) init li
+  | E_type_in ti -> Folds.type_in self (fun a _ -> a) init ti
+  | E_mod_in  mi -> Folds.mod_in  self (fun a _ -> a) init mi
   | E_cond       c -> Folds.conditional self init c
-  | E_recursive  r -> Folds.recursive self (fun _ a -> a) init r
-  | E_module_accessor { module_name = _ ; element } -> (
-    let res = self init element in
-    res
-  )
+  | E_recursive  r -> Folds.recursive self (fun a _ -> a) init r
   | E_sequence s -> Folds.sequence self init s
   | E_assign a -> Folds.assign self init a
   | E_for f -> Folds.for_ self init f
   | E_for_each fe -> Folds.for_each self init fe
   | E_while w -> Folds.while_loop self init w
 
-type 'err exp_mapper = expression -> expression
-type 'err ty_exp_mapper = type_expression -> type_expression
-type 'err mod_mapper = module_ -> module_
-type 'err abs_mapper =
-  | Expression of 'err exp_mapper
-  | Type_expression of 'err ty_exp_mapper
-  | Module of 'err mod_mapper
-let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e ->
+type exp_mapper = expression -> expression
+type ty_exp_mapper = type_expression -> type_expression
+type mod_mapper = module_ -> module_
+type abs_mapper =
+  | Expression of exp_mapper
+  | Type_expression of ty_exp_mapper
+  | Module of mod_mapper
+let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
   let self = map_expression f in
   let e' = f e in
   let return expression_content = { e' with expression_content } in
@@ -127,12 +115,8 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
       let ti = Maps.type_in self (fun a -> a) ti in
       return @@ E_type_in ti
     )
-  | E_mod_alias ma -> (
-      let ma = Maps.mod_alias self ma in
-      return @@ E_mod_alias ma
-    )
   | E_mod_in mi -> (
-      let mi = Maps.mod_in self (fun a -> a) mi in
+      let mi = Maps.mod_in self (fun a -> a) (fun a -> a) (fun a -> a) (fun a -> a) mi in
       return @@ E_mod_in mi
     )
   | E_lambda l -> (
@@ -170,13 +154,9 @@ let rec map_expression : 'err exp_mapper -> expression -> expression = fun f e -
   | E_while w ->
       let w = Maps.while_loop self w in
       return @@ E_while w
-  | E_module_accessor { module_name; element } -> (
-    let element = self element in
-    return @@ E_module_accessor { module_name; element }
-  )
-  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> return e'
 
-and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expression = fun f te ->
+and map_type_expression : ty_exp_mapper -> type_expression -> type_expression = fun f te ->
   let self = map_type_expression f in
   let te' = f te in
   let return type_content = { type_content; location=te.location } in
@@ -200,9 +180,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
     let arguments = List.map ~f:self arguments in
     return @@ T_app {type_operator;arguments}
   | T_variable _ -> te'
-  | T_module_accessor ma ->
-    let ma = Maps.module_access self ma in
-    return @@ T_module_accessor ma
+  | T_module_accessor _ -> te'
   | T_singleton _ -> te'
   | T_abstraction x ->
     let x = Maps.for_all self x in
@@ -211,34 +189,40 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> type_expressi
     let x = Maps.for_all self x in
     return @@ T_for_all x
 
-and map_module_ : 'err mod_mapper -> module_ -> module_ = fun f m ->
-  let m' = f m in
-  m'
+and map_module_expr : mod_mapper -> module_expr -> module_expr = fun f m ->
+  let return wrap_content = { m with wrap_content } in
+  match m.wrap_content with
+  | M_struct decls ->
+    let decls = f decls in
+    return (M_struct decls)
+  | M_module_path _ -> m
+  | M_variable _ -> m
 
-and map_module : 'err abs_mapper -> module_ -> module_ = fun m p ->
-  let aux = fun (x : declaration) ->
+and map_module : abs_mapper -> module_ -> module_ = fun m p ->
+  let aux = fun (x : declaration_content) ->
     match x,m with
-    | (Declaration_constant dc, Expression m') -> (
-        let dc = Maps.declaration_constant (map_expression m') (fun a -> a) dc in
-        (Declaration_constant dc)
+    | Declaration_constant dc, Expression m' -> (
+        let dc = Maps.declaration_constant (map_expression m') (fun a -> a) (fun a -> a) dc in
+        Declaration_constant dc
       )
-    | (Declaration_type dt, Type_expression m') -> (
-        let dt = Maps.declaration_type (map_type_expression m') dt in
-        (Declaration_type dt)
+    | Declaration_type dt, Type_expression m' -> (
+        let dt = Maps.declaration_type (map_type_expression m') (fun a -> a) dt in
+        Declaration_type dt
       )
-    | (Declaration_module dm, Module m') -> (
-        let dm = { dm with module_ = map_module_ m' dm.module_} in
-        (Declaration_module dm)
-      )
-    | (Declaration_module dm, Expression m') -> (
-        let dm = Maps.declaration_module (map_expression m') (fun a -> a) dm in
-        (Declaration_module dm)
+    | Declaration_module dm, Module m' -> (
+      let module_ = map_module_expr m' dm.module_ in
+      let dm = { dm with module_ } in
+      Declaration_module dm
+    )
+    | Declaration_module dm, Expression m' -> (
+        let dm = Maps.declaration_module (map_expression m') (fun a -> a) (fun a -> a) (fun a -> a) (fun a -> a) dm in
+        Declaration_module dm
       )
     | decl,_ -> decl
   in
   let p = match m with
-     Module m' -> map_module_ m' p
-  | _ -> p
+    | Module m' -> m' p
+    | _ -> p
   in
   List.map ~f:(Location.map aux) p
 
@@ -315,10 +299,6 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       let res,mi = Fold_maps.mod_in self idle init mi in
       (res, return @@ E_mod_in mi)
     )
-  | E_mod_alias ma -> (
-      let res,ma = Fold_maps.mod_alias self init ma in
-      (res, return @@ E_mod_alias ma)
-    )
   | E_lambda l -> (
       let res,l = Fold_maps.lambda self idle init l in
       ( res, return @@ E_lambda l)
@@ -353,15 +333,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
   | E_while w ->
       let res,w = Fold_maps.while_loop self init w in
       (res, return @@ E_while w)
-  | E_module_accessor { module_name; element } -> (
-    let (res,element) = self init element in
-    (res, return @@ E_module_accessor { module_name; element })
-  )
-  | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> (init, return e')
-
-
-let in_vars var vars =
-  List.mem ~equal:ValueVar.equal vars var
+  | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_module_accessor _ as e' -> (init, return e')
 
 let remove_from var vars =
   let f v vars = if ValueVar.equal var v then vars else v :: vars in
@@ -390,7 +362,7 @@ module Free_variables :
     match e.expression_content with
     | E_variable v ->
        VarSet.singleton v
-    | E_literal _ | E_raw_code _ | E_skip ->
+    | E_literal _ | E_raw_code _ | E_skip | E_module_accessor _ ->
        VarSet.empty
     | E_list lst ->
       unions @@ List.map ~f:self lst
@@ -432,9 +404,7 @@ module Free_variables :
     | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result
     | E_mod_in {rhs;let_result;module_binder=_} ->
-      VarSet.union (get_fv_module rhs) (self let_result)
-    | E_mod_alias {result;alias=_;binders=_} ->
-      self result
+      VarSet.union (get_fv_module_expr rhs.wrap_content) (self let_result)
     | E_lambda {binder = {var;ascr=_;attributes=_}; result;output_type=_} ->
       VarSet.remove var @@ self result
     | E_type_abstraction {type_binder=_;result} ->
@@ -460,19 +430,20 @@ module Free_variables :
       unions [self collection; VarSet.remove binder @@ VarSet.remove binder' @@ self fe_body]
     | E_while {cond; body} ->
       unions [self cond; self body]
-    | E_module_accessor {element;module_name=_} ->
-      self element
+
+  and get_fv_module_expr : module_expr_content -> VarSet.t = function
+    | M_struct prg -> get_fv_module prg
+    | M_variable _ -> VarSet.empty
+    | M_module_path _ -> VarSet.empty
 
   and get_fv_module : module_ -> VarSet.t = fun p ->
-    let aux = fun (x : declaration Location.wrap) ->
+    let aux = fun (x : declaration) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_; expr;attr=_} ->
         get_fv_expr expr
       | Declaration_module {module_binder=_;module_;module_attr=_} ->
-        get_fv_module module_
+        get_fv_module_expr module_.wrap_content
       | Declaration_type _t ->
-        VarSet.empty
-      | Module_alias _ ->
         VarSet.empty
     in
     unions @@ List.map ~f:aux p

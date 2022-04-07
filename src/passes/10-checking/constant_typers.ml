@@ -158,9 +158,9 @@ type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.type
 (* Given a ligo type, construct the corresponding typer *)
 let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~options ~loc lst tv_opt ->
   ignore options;
-  let _, lamb_type = O.Helpers.destruct_for_alls lamb_type in
+  let avs, lamb_type = O.Helpers.destruct_for_alls lamb_type in
   Simple_utils.Trace.try_with (fun ~raise ->
-      let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) lamb_type lst tv_opt in
+      let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) avs lamb_type lst tv_opt in
       let lamb_type = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
       Some tv)
@@ -172,10 +172,6 @@ let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~
         if add_tc then error := `TC arrs :: ! error else ();
         None)
 
-let typer_of_old_typer (typer : raise:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
-  fun ~error ~raise ~options ~loc lst tv_opt ->
-  ignore error; ignore options;
-  Some (typer ~raise loc lst tv_opt)
 
 let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
   fun ~error ~raise ~options ~loc lst tv_opt ->
@@ -186,10 +182,10 @@ let raise_of_errors ~raise ~loc lst = function
   | [] ->
      raise.raise @@ (corner_case "Cannot find a suitable type for expression")
   | [`TC v] ->
-     raise.raise @@ expected loc (List.rev v) lst
+     raise.raise @@ expected loc v lst
   | xs ->
      let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
-     raise.raise @@ typeclass_error loc (List.rev (List.map ~f:List.rev tc)) lst
+     raise.raise @@ typeclass_error loc (List.rev tc) lst
 
 (* Given a list of typers, make a new typer that tries them in order *)
 let rec any_of : typer list -> typer = fun typers ->
@@ -201,9 +197,6 @@ let rec any_of : typer list -> typer = fun typers ->
      | Some tv -> Some tv
      | None -> any_of typers ~error ~raise ~options ~loc lst tv_opt
 
-let per_protocol (typer_per_protocol : Ligo_proto.t -> typer) : typer  =
-  fun ~error ~raise ~options ~loc lst tv_opt ->
-  typer_per_protocol options.protocol_version ~error ~raise ~options ~loc lst tv_opt
 
 (* This prevents wraps a typer, allowing usage only in Hangzhou *)
 let constant_since_protocol ~since ~constant typer : typer = fun ~error ~raise ~options ~loc ->
@@ -241,9 +234,6 @@ module Constant_types = struct
 
   let of_types c ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
-
-  let per_protocol c f =
-    (c, per_protocol @@ fun protocol -> any_of [typer_of_ligo_type (f protocol)])
 
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
@@ -362,7 +352,7 @@ module Constant_types = struct
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
                     of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
                     of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
-                    of_type C_CONTRACT_WITH_ERROR O.(for_all "a" @@ fun a -> t_address () ^-> t_string () ^-> t_option (t_contract a));
+                    of_type C_CONTRACT_WITH_ERROR O.(for_all "a" @@ fun a -> t_address () ^-> t_string () ^-> t_contract a);
                     of_type C_CONTRACT_ENTRYPOINT_OPT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_option (t_contract a)));
                     of_type C_CONTRACT_ENTRYPOINT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_contract a));
                     of_type C_IMPLICIT_ACCOUNT O.(t_key_hash () ^-> t_contract (t_unit ()));
@@ -533,7 +523,7 @@ module Constant_types = struct
                     of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> t_option a);
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
-                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ()))));
+                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));
                     of_type C_TEST_SAVE_MUTATION O.(t_string () ^-> t_mutation () ^-> t_option (t_string ()));
                     of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
                     of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));

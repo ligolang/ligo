@@ -11,17 +11,28 @@ type err = Errors.aggregation_error raise
 *)
 
 module Data = struct
-  type scope = { exp : exp_ list ; mod_ : mod_ list }
-  and mod_ = { name: module_variable ; items : scope }
-  and exp_ = { name: expression_variable ; fresh_name : expression_variable ; item: Ast_aggregated.expression }
+
+  type scope = { exp : exp_ list ; mod_ : mod_ list ; decls : decl list }
+  and decl = Mod of mod_ | Exp of exp_
+  and mod_ = { name: module_variable ; in_scope : scope }
+  and exp_ = { name: expression_variable ; fresh_name : expression_variable ; item: Ast_aggregated.expression ; attr : Ast_aggregated.known_attributes }
+  (* Important note: path is _only_ used for naming of fresh variables, so that debuging a printed AST is easier *)
   and path = module_variable list
-  let empty = { exp = [] ; mod_ = [] }
+  module PP_DEBUG = struct
+    open Format
+    open Stage_common.PP
+    let rec pp ppf {exp ;mod_} =
+      let pp_mod_ ppf { name ; in_scope } = fprintf ppf "{ name = %a ; items = @[<v 2>@.%a@] }" module_variable name pp in_scope in
+      let pp_exp_ ppf { name ; fresh_name ; item = _ } = fprintf ppf "{ name = %a ; fresh_name = %a ; items = XX }" expression_variable name expression_variable fresh_name (*Ast_aggregated.PP.expression item*) in
+      fprintf ppf "{ exp = @[<v>%a@] ; mod_ = @[<v 2>@.%a@] }" Simple_utils.PP_helpers.(list_sep pp_exp_ (tag "@.")) exp Simple_utils.PP_helpers.(list_sep pp_mod_ (tag "@.")) mod_
+  end
+  let empty = { exp = [] ; mod_ = [] ; decls = [] }
   let resolve_path : scope -> path -> scope =
     fun scope requested_path ->
       let f : scope -> module_variable -> scope = fun acc module_variable ->
         match List.find acc.mod_ ~f:(fun x -> ModuleVar.equal x.name module_variable) with
-        | Some x -> x.items
-        | _ -> failwith "couldnt resolve"
+        | Some x -> x.in_scope
+        | _ -> failwith (Format.asprintf "couldnt find %a in: \n %a " ModuleVar.pp module_variable PP_DEBUG.pp scope)
       in
       List.fold requested_path ~init:scope ~f
   let rm_exp : scope -> I.expression_variable -> scope = fun items to_rm ->
@@ -30,11 +41,14 @@ module Data = struct
   let add_exp : scope -> exp_ -> scope =
     fun scope new_exp ->
       let exp = List.filter scope.exp ~f:(fun x -> not (ValueVar.equal x.name new_exp.name)) in
-      { scope with exp = new_exp :: exp}
-  let shadow_module : scope -> module_variable -> scope -> scope = fun scope mod_var new_items ->
+      { scope with
+        exp = new_exp :: exp ;
+        decls = Exp new_exp :: scope.decls }
+  let add_module : scope -> module_variable -> scope -> scope = fun scope mod_var new_scope ->
     let mod_ = List.filter scope.mod_ ~f:(fun x -> not (ModuleVar.equal x.name mod_var)) in
-    let mod_ = {name = mod_var ; items = new_items } :: mod_ in
-    { scope with mod_}
+    let mod_ = {name = mod_var ; in_scope = new_scope } :: mod_ in
+    let decls = Mod { name = mod_var ; in_scope = new_scope} :: scope.decls in
+    { scope with mod_ ; decls }
   let resolve_variable : scope -> expression_variable -> expression_variable =
     fun scope v ->
       match List.find scope.exp ~f:(fun x -> ValueVar.equal v x.name) with
@@ -44,76 +58,61 @@ module Data = struct
     fun scope path v ->
       let x = resolve_path scope path in
       resolve_variable x v
+
 end
 
-type irepr =
-  | New_decl of (O.expression_variable * O.expression_variable * O.expression * O.known_attributes)
-  | New_mod of module_variable * irepr list
-  | Alias of Data.scope
+let aggregate_scope : Data.scope -> leaf:O.expression -> O.expression = fun scope ~leaf ->
+  let rec f : O.expression -> Data.decl -> O.expression =
+    fun acc_exp d ->
+      match d with
+      | Exp { name = _ ; fresh_name ; item ; attr } ->
+        O.e_a_let_in fresh_name item acc_exp attr
+      | Mod { in_scope = { decls ; _ } ; _ } ->
+        List.fold_left decls ~f ~init:acc_exp
+  in
+  List.fold_left scope.decls ~f ~init:leaf
 
 let rec compile ~raise : Data.scope -> Data.path -> I.expression -> I.program -> O.expression =
   fun scope path hole module_ ->
-    let scope, decls = compile_declarations ~raise scope path module_ in
-    let init = compile_expression ~raise scope [] hole in
-    let rec flatten = fun acc x ->
-      match x with
-      | New_decl _ -> acc @ [x]
-      | New_mod (_,inner) ->
-        let inner = List.fold_left inner ~f:flatten ~init:[] in
-        acc @ inner
-      | _ -> acc
-    in
-    let lst = List.fold_left decls ~f:flatten ~init:[] in
-    List.fold_right lst ~init ~f:(
-      fun x acc ->
-        match x with
-        | New_decl (_,binder,expr,attr) -> O.e_a_let_in binder expr acc attr
-        | _ -> acc
-    )
+    let scope = compile_declarations ~raise scope path module_ in
+    let hole = compile_expression ~raise scope [] hole in
+    aggregate_scope scope ~leaf:hole
 
-and compile_declarations ~raise : Data.scope -> Data.path -> I.declaration_loc list -> Data.scope * irepr list =
+and compile_declarations ~raise : Data.scope -> Data.path -> I.module_ -> Data.scope =
   fun init_scope path lst ->
-    let f : Data.scope * irepr list -> I.declaration_loc -> Data.scope * irepr list =
-      fun (acc_scope,acc_hic) decl ->
-        let return d h = (d , acc_hic @ [h]) in
+    let f : Data.scope -> I.declaration -> Data.scope =
+      fun acc_scope decl ->
         match decl.wrap_content with
-        | I.Declaration_type _ -> (acc_scope, acc_hic)
+        | I.Declaration_type _ -> acc_scope
         | I.Declaration_constant { binder ; expr ; attr } -> (
-          let item = compile_expression ~raise acc_scope [] expr in
-          let fresh_name = fresh_name binder path in
-          let n = ({ name = binder ; fresh_name ; item } : Data.exp_) in
-          let acc_scope = Data.add_exp acc_scope n in
-          let hic = New_decl (binder,fresh_name,item,attr) in
-          return acc_scope hic
+          let exp =
+            let item = compile_expression ~raise acc_scope [] expr in
+            let fresh_name = fresh_name binder.var path in
+            ({ name = binder.var ; fresh_name ; item ; attr } : Data.exp_)
+          in
+          Data.add_exp acc_scope exp
         )
         | I.Declaration_module { module_binder ; module_ ; module_attr = _ } -> (
-          let rec merge_inner_outer : irepr list -> Data.scope = fun lst ->
-              let f : Data.scope -> irepr -> Data.scope = fun acc hic ->
-                match hic with
-                | New_decl (name,fresh_name,exp,_) ->
-                  let exp_ = ({ name ; fresh_name ; item = exp } : Data.exp_) in
-                  Data.add_exp acc exp_
-                | New_mod (name, hics) ->
-                  let items = merge_inner_outer hics in
-                  Data.shadow_module acc name items
-                | Alias items -> items
-              in
-              List.fold lst ~f ~init:Data.empty
-          in
-          let _,ireprs = compile_declarations ~raise acc_scope (path@[module_binder]) module_ in
-          let items = merge_inner_outer ireprs in
-          let acc_scope = Data.shadow_module acc_scope module_binder items in
-          let hic = New_mod (module_binder, ireprs) in
-          return acc_scope hic
-        )
-        | I.Module_alias { alias ; binders } -> (
-          let items = Data.resolve_path acc_scope (List.Ne.to_list binders) in
-          let acc_scope = Data.shadow_module acc_scope alias items in
-          let hic = Alias acc_scope in
-          return acc_scope hic
+          let rhs_glob = compile_module_expr ~raise acc_scope(path@[module_binder]) module_ in
+          Data.add_module acc_scope module_binder rhs_glob
         )
     in
-    List.fold lst ~init:(init_scope,[]) ~f
+    List.fold lst ~init:init_scope ~f
+
+and compile_module_expr ~raise : Data.scope -> Data.path -> I.module_expr -> Data.scope =
+  fun scope path mexpr ->
+    match mexpr.wrap_content with
+    | M_struct prg -> (
+      compile_declarations ~raise {scope with decls = []} path prg
+    )
+    | M_variable v -> (
+      let res = Data.resolve_path scope [v] in
+      { res with decls = [] }
+    )
+    | M_module_path path -> (
+      let res = Data.resolve_path scope (List.Ne.to_list path) in
+      { res with decls = [] }
+    )
 
 and compile_type ~raise : I.type_expression -> O.type_expression =
   fun ty ->
@@ -140,9 +139,8 @@ and compile_type ~raise : I.type_expression -> O.type_expression =
       return (T_arrow { type1 ; type2 })
     | T_module_accessor _ -> failwith "module accessor types should not end up here"
     | T_singleton x -> return (T_singleton x)
-    | T_abstraction { ty_binder ; kind ; type_ } ->
-      let type_ = self type_ in
-      return (T_abstraction { ty_binder ; kind ; type_ })
+    | T_abstraction _ ->
+      raise.raise @@ Errors.corner_case "Abstraction type uncaught"
     | T_for_all { ty_binder ; kind ; type_ } ->
       let type_ = self type_ in
       return (T_for_all { ty_binder ; kind ; type_ })
@@ -226,56 +224,17 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       let arguments = List.map ~f:self arguments in
       return @@ O.E_constant { cons_name ; arguments }
     )
-    | I.E_module_accessor { module_name; element} -> (
-      let rec aux : module_variable List.Ne.t -> (O.type_expression * O.type_expression) list -> I.expression -> _ * _ List.Ne.t * (O.type_expression * O.type_expression) list * _ option =
-        fun acc_path acc_types exp ->
-          match exp.expression_content with
-          | E_module_accessor {module_name ; element} ->
-            let acc_path = Simple_utils.List.Ne.cons module_name acc_path in
-            aux acc_path acc_types element
-          | E_type_inst { forall ; type_ } ->
-            let type_ = compile_type ~raise type_ in
-            let exp_ty = compile_type ~raise exp.type_expression in
-            aux acc_path ((type_, exp_ty) :: acc_types) forall
-          | E_variable v ->
-            v, acc_path, acc_types, None
-          | E_record_accessor _ ->
-            let rec aux' (e : I.expression) acc_path = match e.expression_content with
-              | E_variable v ->
-                v, e.type_expression, acc_path
-              | E_record_accessor { record ; path } ->
-                aux' record ((path, compile_type ~raise e.type_expression) :: acc_path)
-              | _ -> failwith "not allowed in the syntax" in
-            let v, t, path = aux' exp [] in
-            v, acc_path, acc_types, Some (t, path)
-          | _ -> failwith "not allowed in the syntax"
-      in
-      let v, path, types, record_path = aux (List.Ne.of_list [module_name]) [] element in
-      let path = List.Ne.rev path in
-      let path = List.Ne.to_list path in
-      let v = Data.resolve_variable_in_path scope path v in
-      match record_path with
-      | None ->
-        let expr = O.e_a_variable v (compile_type ~raise expr.type_expression) in
-        List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
-      | Some (t, record_path) ->
-        let expr = O.e_a_variable v (compile_type ~raise t) in
-        let expr = List.fold_right ~f:(fun (l, t) r -> O.e_a_record_accessor r l t) ~init:expr record_path in
-        List.fold_right ~f:(fun (t, u) e -> O.e_a_type_inst e t u) ~init:expr (List.rev types)
+    | I.E_module_accessor { module_path ; element} -> (
+      let v = Data.resolve_variable_in_path scope module_path element in
+      return (O.E_variable v)
     )
     | I.E_mod_in { module_binder ; rhs ; let_result } -> (
-      let local_name = ModuleVar.add_prefix "LOCAL#in" module_binder in
-      compile ~raise scope path let_result
-        [
-          Location.wrap @@ I.Declaration_module { module_binder = local_name ; module_ = rhs ; module_attr = {public = false}} ;
-          Location.wrap @@ I.Module_alias { alias = module_binder ; binders = (local_name,[]) }
-        ]
-    )
-    | I.E_mod_alias { alias ; binders ; result } -> (
-      compile ~raise scope path result
-        [
-          Location.wrap @@ I.Module_alias { alias ; binders }
-        ]
+      let data =
+        let rhs_scope = compile_module_expr ~raise scope (ModuleVar.add_prefix "LOCAL#in" module_binder :: path) rhs in
+        Data.add_module scope module_binder rhs_scope
+      in
+      let x = Data.resolve_path data [module_binder] in
+      aggregate_scope x ~leaf:(self ~data let_result)
     )
 
 and compile_cases ~raise : Data.scope -> Data.path -> I.matching_expr -> O.matching_expr =

@@ -4,10 +4,10 @@ PASS,16local_type_decl.religo,12,72,22,11,3
 PASS,1arithmetic.religo,2,23,23,15,0
 PASS,1bytes_arithmetic.religo,2,11,11,7,2
 PASS,1closure.religo,14,148,40,15,3
-PASS,1loop.religo,34,154,34,17,5
+PASS,1loop.religo,31,154,34,17,5
 PASS,1match_bis.religo,17,146,64,31,6
 PASS,1multisig.religo,29,147,31,30,6
-PASS,2big_map.religo,10,84,48,21,3
+PASS,2big_map.religo,9,84,48,21,3
 PASS,2crypto.religo,4,28,18,6,1
 PASS,2increment.religo,9,74,64,62,2
 PASS,2michelson_insertion.religo,6,37,17,8,1

@@ -22,52 +22,6 @@ let get_function_or_eta_expand ~raise e =
   | _ ->
     eta_expand e in_ty out_ty
 
-let get_function_or_eta_expand_views ~raise : expression -> anon_function * (type_expression * type_expression) list  = fun e ->
-  (*
-    < let .. = .. in > (view1, view2, view3)
-
-    |->
-
-    fun _dummy ->
-      let body' = ( < let .. = .. in > (view1, view2, view3) ) in
-      (body'.0 , body'.1 , body'.3)
-  *)
-  let err =
-    corner_case "view/views do not have the type of a function or a tuple of function"
-      (* Format.asprintf "view/views do not have the type of a function or a tuple of function : \n%a\n"
-        Mini_c.PP.type_expression ty
-    ) *)
-  in
-  match e.type_expression.type_content with
-  | T_function (in_ty,out_ty) -> (
-    (* if only one view *)
-    match e.content with
-    | E_closure f -> f , [(in_ty,out_ty)]
-    | _ -> eta_expand e in_ty out_ty , [(in_ty,out_ty)]
-  )
-  | T_tuple lst ->
-    (* if N views *)
-    let aux : _ * type_expression-> (type_expression * type_expression) =
-      fun (_,ty) -> trace_option ~raise err @@ Mini_c.get_t_function ty
-    in
-    let view_tys = List.map ~f:aux lst in
-    let arg = ValueVar.fresh ~name:"_dummy" () in
-    (* let arg_ty = Mini_c.t_tuple @@ List.map ~f:(fun (in_ty,_) -> (None, in_ty)) view_tys in *)
-    let v_prg = ValueVar.fresh () in
-    let aux : int -> (type_expression * type_expression) -> expression =
-      fun i (in_ty,out_ty) ->
-        (* let var = e_proj (e_var arg arg_ty) in_ty i i in *)
-        (* e_application (e_var v_prg e.type_expression) out_ty var *)
-        e_proj (e_var v_prg e.type_expression) (t_function in_ty out_ty) i i
-    in
-    let app_tup = Mini_c.e_tuple (List.mapi ~f:aux view_tys) (Mini_c.t_tuple (List.map ~f:(fun x -> (None,snd x)) view_tys)) in
-    let body =
-      let inline = false in
-      Mini_c.e_let_in v_prg e.type_expression inline e app_tup
-    in
-    { binder = arg ; body }, view_tys
-  | _ -> raise.raise (corner_case "heyho")
-
 (* TODO hack to specialize map_expression to identity monad *)
 let map_expression = Helpers.map_expression
 
@@ -255,11 +209,6 @@ let rec is_pure : expression -> bool = fun e ->
   | E_fold_right _
     -> false
 
-let occurs_in : expression_variable -> expression -> bool =
-  fun x e ->
-  let fvs = Free_variables.expression [] e in
-  Free_variables.mem fvs x
-
 let occurs_count : expression_variable -> expression -> int =
   fun x e ->
   let fvs = Free_variables.expression [] e in
@@ -305,9 +254,9 @@ let inline_let : bool ref -> expression -> expression =
       e
   | _ -> e
 
-let inline_lets ~raise : bool ref -> expression -> expression =
+let inline_lets : bool ref -> expression -> expression =
   fun changed ->
-  map_expression ~raise (fun ~raise:_ -> inline_let changed)
+  map_expression (inline_let changed)
 
 
 (* Let "beta" mean transforming the code:
@@ -323,7 +272,7 @@ let inline_lets ~raise : bool ref -> expression -> expression =
    - Nothing?
 *)
 
-let beta ~raise:_ : bool ref -> expression -> expression =
+let beta : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }; location = _}, e2) ->
@@ -404,11 +353,11 @@ let beta ~raise:_ : bool ref -> expression -> expression =
       ~init:body (List.zip_exn es vars)
   | _ -> e
 
-let betas ~raise : bool ref -> expression -> expression =
+let betas : bool ref -> expression -> expression =
   fun changed ->
-  map_expression ~raise (beta changed)
+  map_expression (beta changed)
 
-let eta ~raise:_ : bool ref -> expression -> expression =
+let eta : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_expression = _ ; location = _} ;
@@ -448,24 +397,24 @@ let eta ~raise:_ : bool ref -> expression -> expression =
        | _ -> e)
   | _ -> e
 
-let etas ~raise : bool ref -> expression -> expression =
+let etas : bool ref -> expression -> expression =
   fun changed ->
-  map_expression ~raise (eta changed)
+  map_expression (eta changed)
 let contract_check ~raise (init: anon_function) : anon_function=
-  let all = [Michelson_restrictions.self_in_lambdas] in
-  let all_e = List.map ~f:(Helpers.map_sub_level_expression ~raise) all in
+  let all = [Michelson_restrictions.self_in_lambdas ~raise] in
+  let all_e = List.map ~f:(Helpers.map_sub_level_expression) all in
   List.fold ~f:(|>) all_e ~init
 let rec all_expression ~raise : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets ~raise changed e in
-  let e = betas ~raise changed e in
-  let e = etas ~raise changed e in
+  let e = inline_lets changed e in
+  let e = betas changed e in
+  let e = etas changed e in
   if !changed
   then all_expression ~raise e
   else e
 
 let all_expression ~raise e =
-  let e = Uncurry.uncurry_expression ~raise e in
+  let e = Uncurry.uncurry_expression e in
   let e = all_expression ~raise e in
   e

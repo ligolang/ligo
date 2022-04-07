@@ -50,30 +50,40 @@ let old_syntax_support tokens =
   | [] -> List.rev result, Region.ghost
   in
 
-  let rec inner indent result = function
-    (End _ as end_) :: rest when indent > 0 -> 
-      inner (indent - 1) (end_ :: result) rest
-  | End e :: rest ->
+  let rec inner indent possible_matches result = function    
+    End e :: rest when List.mem possible_matches (indent - 1) ~equal:Caml.(=) ->
       let result, start = insert_lbracket 0 [] result in
       let loc = Location.lift (Region.cover start e#region) in
       (match !add_warning with 
         Some add_warning -> add_warning (Main_warnings.pascaligo_deprecated_case loc)
       | None -> ());
-      List.rev_append (ghost_RBRACKET :: result) rest
-  | (Begin _ as b) :: rest ->
-      inner (indent + 1) (b :: result) rest
+      inner (indent - 2) (List.filter ~f:(fun p -> p <> (indent -1)) possible_matches) (ghost_RBRACKET :: result) rest
+  | (End _ as end_) :: rest -> 
+      inner (indent - 1) possible_matches (end_ :: result) rest
+  | (Begin _ as b) :: rest when indent > 0 ->
+      inner (indent + 1) possible_matches (b :: result) rest
   | (Case _ as c) :: rest ->
-      inner indent (c :: result) rest
+      inner (indent + 1) ((indent + 1) :: possible_matches) (c :: result) rest
+  | (Of _ as o) :: rest when List.mem possible_matches indent ~equal:Caml.(=) ->
+    inner (indent + 1) possible_matches (o :: result) rest
+  | (LBRACKET _ as l) :: rest when List.mem possible_matches (indent - 1) ~equal:Caml.(=) ->
+    inner (indent - 2) (List.filter ~f:(fun p -> p <> (indent -1)) possible_matches) (l :: result) rest   
+  | (LBRACKET _ as l) :: rest ->
+    inner (indent + 1) possible_matches (l :: result) rest
+  | (RBRACKET _ as r) :: rest when List.mem possible_matches indent ~equal:Caml.(=) ->
+    inner (indent - 1) (List.filter ~f:(fun p -> p <> indent) possible_matches) (r :: result) rest
+  | (RBRACKET _ as r) :: rest ->
+    inner (indent - 1) possible_matches (r :: result) rest
   | (SEMI s) :: (Else _ as e ) :: rest ->
       let loc = Location.lift s#region in
       (match !add_warning with 
         Some add_warning -> add_warning (Main_warnings.pascaligo_deprecated_semi_before_else loc)
       | None -> ());
-      inner indent (e :: result) rest
-  | hd :: tl -> inner indent (hd :: result) tl
+      inner indent possible_matches (e :: result) rest
+  | hd :: tl -> inner indent possible_matches (hd :: result) tl
   | [] -> List.rev result
   in
-  inner 0 [] tokens
+  inner 0 [] [] tokens
 
 let old_syntax_support units =
   apply old_syntax_support units
@@ -90,9 +100,19 @@ let tokens_of = function
     in List.fold_left ~f:apply ~init:[] lex_units |> List.rev |> ok
 | Error _ as err -> err
 
+(* Printing tokens *)
+
+let print_token token =
+  Printf.printf "%s\n" (Token.to_string ~offsets:true `Point token)
+
+let print_tokens tokens =
+  apply (fun tokens -> List.iter ~f:print_token tokens; tokens) tokens
+
 (* Exported *)
 
 let filter units = (
+  (* print_tokens
+  @@  *)
   old_syntax_support
   @@ tokens_of 
   @@ Style.check units)

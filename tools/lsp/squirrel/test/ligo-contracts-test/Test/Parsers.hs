@@ -54,6 +54,7 @@ okayTests =
       , "polymorphism" </> "use_nelist.mligo"
       , "negative" </> "polymorphism" </> "use_error.mligo"
       , "view_import.mligo"
+      , "view_import_and_alias.mligo"
 
         -- LIGO-331
       , "polymorphism" </> "cases_annotation1.mligo"
@@ -91,6 +92,10 @@ okayTests =
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"
       , "negative" </> "error_function_arguments.religo"
       , "negative" </> "error_syntax.ligo"
+      , "negative" </> "modules_access_not_open1.ligo"
+      , "negative" </> "modules_access_not_open1.mligo"
+      , "negative" </> "modules_access_not_open2.ligo"
+      , "negative" </> "modules_access_not_open2.mligo"
       ]
     , tdIgnoreDirs = []
     }

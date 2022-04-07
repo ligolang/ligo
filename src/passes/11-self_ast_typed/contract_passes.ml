@@ -56,7 +56,7 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
       Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
     (true, dat, e)
   | _ -> (true,dat,e)
-
+    
 let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
   match e.expression_content with
   | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
@@ -75,6 +75,7 @@ let rec pp_env ppf env =
   Format.fprintf ppf "{env: %a;used_var: %a}"
     (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" ModuleVar.pp k pp_env v)) (MVarMap.to_kv_list env.env)
     (Simple_utils.PP_helpers.list_sep_d ValueVar.pp) (VVarSet.elements env.used_var)
+
 
 (* Detect and remove unesed declaration *)
 let rec merge_env {env=x1;used_var=y1} {env=x2;used_var=y2} =
@@ -143,17 +144,15 @@ and get_fv expr =
      (match MVarMap.find_opt module_binder env.env with
         Some (env') ->
          let env = {env with env = MVarMap.remove module_binder env.env} in
-         let env',rhs = get_fv_module env'[] @@ List.rev rhs in
+         let env',rhs = get_fv_module_expr env' rhs in
          return (merge_env env env') @@ E_mod_in {module_binder; rhs; let_result}
       | None ->
          env,let_result
      )
-  | E_mod_alias { alias ; binders ; result } ->
-     let env, result = self result in
-     return env @@ E_mod_alias {alias;binders;result}
-  | E_module_accessor { module_name; element } ->
-     let env,element = self element in
-     return ({env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) @@ E_module_accessor {module_name;element}
+  | E_module_accessor { module_path ; element } ->
+    let init = {env=MVarMap.empty ;used_var=VVarSet.singleton element} in
+    let env = List.fold_right module_path ~f:(fun module_name env -> {env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) ~init in
+    return env @@ E_module_accessor {module_path;element}
 and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
   match m with
   | Match_variant {cases;tv} ->
@@ -167,48 +166,54 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
      let env,body = get_fv body in
      {env with used_var=List.fold_right pattern ~f:VVarSet.remove ~init:env.used_var}, Match_record {fields;body;tv}
 
-and get_fv_module env acc = function
+and get_fv_module (env:env) acc = function
   | [] -> env, acc
   | {Location.wrap_content = Declaration_constant {binder; expr;attr}; _} as hd :: tl ->
-     let binder' = binder in
-     if VVarSet.mem binder' env.used_var then
-       let env = {env with used_var = VVarSet.remove binder' env.used_var} in
-       let env',expr = get_fv expr in
-       let env = merge_env env @@ env' in
-       get_fv_module env ({hd with wrap_content = Declaration_constant {binder;expr;attr}} :: acc) tl
-     else
-       get_fv_module env acc tl
-  | {Location.wrap_content = Declaration_module {module_binder; module_;module_attr}; _} as hd :: tl ->
-     (match MVarMap.find_opt module_binder env.env with
-        Some (env') ->
-         let env = {env with env = MVarMap.remove module_binder env.env} in
-         let new_env,module_ = get_fv_module env' [] @@ List.rev module_ in
-         let env = merge_env env new_env in
-         get_fv_module env ({hd with wrap_content=Declaration_module{module_binder;module_;module_attr}} :: acc) tl
-      | None ->
-         get_fv_module env acc tl
-     )
-  | {Location.wrap_content = Module_alias {alias = name; binders}; _} as hd :: tl ->
-     let rec push_env (name,name_lst) toto =
-       match name_lst with
-         [] -> {env=MVarMap.singleton name toto;used_var=VVarSet.empty}
-       | hd::tl -> {env=MVarMap.singleton name @@ push_env (hd,tl) toto;used_var=VVarSet.empty}
-     in
-     if MVarMap.mem name env.env then
-       let toto = MVarMap.find name env.env in
-       let env' = {env with env = MVarMap.remove name env.env} in
-       let env = merge_env env' @@ push_env binders toto in
-       get_fv_module env (hd :: acc) tl
-     else
-       get_fv_module env acc tl
+    let binder' = binder in
+    if VVarSet.mem binder'.var env.used_var then
+      let env = {env with used_var = VVarSet.remove binder'.var env.used_var} in
+      let env',expr = get_fv expr in
+      let env = merge_env env @@ env' in
+      get_fv_module env ({hd with wrap_content = Declaration_constant {binder;expr;attr}} :: acc) tl
+    else
+      get_fv_module env acc tl
+  | {Location.wrap_content = Declaration_module {module_binder; module_;module_attr}; _} as hd :: tl -> (
+    match MVarMap.find_opt module_binder env.env with
+    | Some (env') ->
+      let new_env,module_ = get_fv_module_expr env' module_ in
+      let env = {env with env = MVarMap.remove module_binder env.env} in
+      let env = merge_env env new_env in
+      get_fv_module env ({hd with wrap_content=Declaration_module{module_binder;module_;module_attr}} :: acc) tl
+    | None ->
+      get_fv_module env acc tl
+  )
   | hd :: tl ->
-     get_fv_module env (hd :: acc) tl
+    get_fv_module env (hd :: acc) tl
 
-let remove_unused ~raise : expression_variable -> program -> program = fun main_name prg ->
+and get_fv_module_expr env x =
+  match x.wrap_content with
+  | M_struct prg -> (
+    let new_env,prg = get_fv_module env [] @@ List.rev prg in
+    new_env, { x with wrap_content = M_struct prg }
+  )
+  | M_module_path path -> (
+    let rec push_env (name,name_lst) toto =
+      match name_lst with
+        [] -> {env=MVarMap.singleton name toto;used_var=VVarSet.empty}
+      | hd::tl -> {env=MVarMap.singleton name @@ push_env (hd,tl) toto;used_var=VVarSet.empty}
+    in
+    let new_env = push_env path env in
+    new_env, { x with wrap_content = M_module_path path }
+  )
+  | M_variable v ->
+    let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
+    new_env, x
+   
+let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder main_name)
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder.var contract_pass_data.main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
@@ -228,4 +233,3 @@ let remove_unused_expression : expression -> program -> expression * program = f
   let env,main_expr = get_fv expr in
   let _,module_ = get_fv_module env [] prg_decls in
   main_expr, module_
-

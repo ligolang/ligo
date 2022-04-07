@@ -9,6 +9,8 @@ include AST.Types
 module Env = Ligo_interpreter.Environment
 module Monad = Execution_monad
 
+module ModResHelpers = Preprocessor.ModRes.Helpers
+
 type interpreter_error = Errors.interpreter_error
 
 let check_value value =
@@ -709,6 +711,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
+      let>> mod_res = Get_mod_res () in
+      let source_file = ModResHelpers.resolve_file_name source_file mod_res in
       let views = List.map
                     ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
                     views
@@ -1244,20 +1248,21 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
     let ds, defs = r in
     match decl.Location.wrap_content with
     | Ast_typed.Declaration_constant { binder ; expr ; _ } ->
-       if not (ValueVar.is_generated binder) && (String.is_prefix (ValueVar.to_name_exn binder) ~prefix:"test") then
-         let expr = Ast_typed.e_a_variable binder expr.type_expression in
-         (* TODO: check that variables are unique, as they are ignored *)
-         decl :: ds, (binder, expr.type_expression) :: defs
-       else
-         decl :: ds, defs
+      let var = binder.var in
+      if not (ValueVar.is_generated var) && (Base.String.is_prefix (ValueVar.to_name_exn var) ~prefix:"test") then
+        let expr = Ast_typed.(e_a_variable var expr.type_expression) in
+        (* TODO: check that variables are unique, as they are ignored *)
+        decl :: ds, (binder, expr.type_expression) :: defs
+      else
+        decl :: ds, defs
     | _ -> decl :: ds, defs in
   let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
-  let initial_state = Tezos_state.init_ctxt ~raise options.Compiler_options.backend.protocol_version [] in
+  let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
-    let s, _ = ValueVar.internal_get_name_and_counter n in
-    LMap.add (Label s) (Ast_typed.e_a_variable n t) r in
+    let s, _ = ValueVar.internal_get_name_and_counter n.var in
+    LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
@@ -1266,7 +1271,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = ValueVar.internal_get_name_and_counter n in
+      let s, _ = ValueVar.internal_get_name_and_counter n.var in
       match LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in

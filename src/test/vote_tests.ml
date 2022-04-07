@@ -15,13 +15,6 @@ let init_storage name = e_record_ez [
     ("finish_time" , e_timestamp 1000000000) ;
   ]
 
-let reset title start_time finish_time =
-  let reset_action = e_record_ez [
-      ("title" , e_string title) ;
-      ("start_time" , e_timestamp start_time) ;
-      ("finish_time" , e_timestamp finish_time)]
-  in e_constructor "Reset" reset_action
-
 let yea = e_constructor "Vote" (e_constructor "Yea" (e_unit ()))
 
 let init_vote ~raise ~add_warning () =

@@ -8,15 +8,3 @@ let compile ~raise (m : module_) : Ast_sugar.module_ =
 
 let compile_expression ~raise (e : expression) : Ast_sugar.expression =
   trace ~raise purification_tracer @@ compile_expression ~last:true e
-
-let pretty_print formatter (m : module_) =
-  PP.module_ formatter m
-
-let list_declarations (m : module_) : expression_variable list =
-  List.fold_left
-    ~f:(fun prev el ->
-      let open Location in
-      match el.wrap_content with
-      | Declaration_constant {binder;_} -> binder.var::prev
-      | _ -> prev)
-    ~init:[] m
