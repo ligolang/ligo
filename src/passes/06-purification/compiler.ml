@@ -4,8 +4,8 @@ module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
 open Simple_utils.Trace
-open Stage_common.Maps
 module VMap = Simple_utils.Map.Make(I.ValueVar)
+module Maps = Stage_common.Maps
 
 
 let rec add_to_end (expression: O.expression) to_add =
@@ -46,7 +46,7 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _ | E_mod_in _ |  E_mod_alias _
+      | E_type_in _ | E_mod_in _
       | E_application _ | E_lambda _| E_type_abstraction _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _|E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -97,7 +97,7 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
       | E_constant _
       | E_skip
       | E_literal _ | E_variable _
-      | E_type_in _ | E_mod_in _ | E_mod_alias _
+      | E_type_in _ | E_mod_in _
       | E_application _ | E_lambda _| E_type_abstraction _| E_recursive _ | E_raw_code _
       | E_constructor _ | E_record _| E_accessor _| E_update _
       | E_ascription _  | E_sequence _ | E_tuple _
@@ -149,16 +149,16 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
   let return tc = O.make_t ~loc:te.location tc in
   match te.type_content with
     | I.T_sum { attributes ; fields } ->
-      let fields = O.LMap.(map (row_element self) (of_list fields)) in
+      let fields = O.LMap.(map (Maps.row_element self) (of_list fields)) in
       return @@ O.T_sum { attributes ; fields }
     | I.T_record { attributes ; fields } ->
-      let fields = O.LMap.(map (row_element self) (of_list fields)) in
+      let fields = O.LMap.(map (Maps.row_element self) (of_list fields)) in
       return @@ O.T_record { attributes ; fields }
     | I.T_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ O.T_tuple tuple
     | I.T_arrow arr ->
-      let arr = arrow self arr in
+      let arr = Maps.arrow self arr in
       return @@ T_arrow arr
     | I.T_variable type_variable -> return @@ T_variable type_variable
     | I.T_app {type_operator;arguments=[l;r]} when I.TypeVar.equal Stage_common.Constant.v_michelson_or type_operator ->
@@ -180,11 +180,9 @@ let rec compile_type_expression ~raise : I.type_expression -> O.type_expression 
       in
       return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
     | I.T_app c ->
-      let c = type_app self c in
+      let c = Maps.type_app self c in
       return @@ T_app c
-    | I.T_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ O.T_module_accessor ma
+    | I.T_module_accessor ma -> return @@ T_module_accessor ma
     | I.T_annoted (ty, _) -> self ty
     | I.T_singleton t -> return @@ O.T_singleton t
     | I.T_abstraction x ->
@@ -202,6 +200,7 @@ let rec compile_expression ~raise ~last : I.expression -> O.expression =
 
 and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.expression =
   fun e ->
+  let open Stage_common.Maps in
   let self = compile_expression ~raise ~last in
   let self_type = compile_type_expression ~raise in
   let return' expr = function
@@ -236,11 +235,8 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
       let ti = type_in self self_type ti in
       return @@ O.E_type_in ti
     | I.E_mod_in mi ->
-      let mi = mod_in self self_type mi in
+      let mi = mod_in self self_type (fun a -> a) (fun a -> a) (fun a -> a) mi in
       return @@ O.E_mod_in mi
-    | I.E_mod_alias ma ->
-      let ma = mod_alias self ma in
-      return @@ O.E_mod_alias ma
     | I.E_raw_code rc ->
       let rc = raw_code self rc in
       return @@ O.E_raw_code rc
@@ -281,9 +277,7 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_ascription ascr ->
       let ascr = ascription self self_type ascr in
       return @@ O.E_ascription ascr
-    | I.E_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ O.E_module_accessor ma
+    | I.E_module_accessor ma -> return @@ O.E_module_accessor ma
     | I.E_cond {condition;then_clause;else_clause} ->
       let condition    = self condition in
       let then_clause' = self then_clause in
@@ -342,7 +336,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
   let matchee = compile_expression ~raise ~last matchee in
   let env = I.ValueVar.fresh ~name:"env" () in
   let aux : (Z.t VMap.t * Z.t) ->
-    _ I.match_case ->(Z.t VMap.t * Z.t) * (_ O.match_case * _ O.match_case) =
+    _ I.match_case -> (Z.t VMap.t * Z.t) * (_ O.match_case * _ O.match_case) =
     fun (init_fv,i) {pattern ; body} ->
       let body = compile_expression ~raise ~last body in
       let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
@@ -352,7 +346,7 @@ and compile_matching ~raise ~last : I.matching -> Location.t -> O.expression opt
           | _ -> acc
       in
       let n = Stage_common.Helpers.fold_pattern get_pattern_vars [] pattern in
-      let pattern = Stage_common.Helpers.map_pattern_t (binder (compile_type_expression ~raise)) pattern in
+      let pattern = Stage_common.Helpers.map_pattern_t (Maps.binder (compile_type_expression ~raise)) pattern in
       let ((_,free_vars), body',i) = repair_mutable_variable_in_matching body n init_fv i env in
       let body' = add_to_end body' (O.e_variable env) in
       let cases_no_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
@@ -517,22 +511,5 @@ and compile_for_each ~raise ~last I.{fe_binder;collection;collection_type; fe_bo
   else
     restore_mutable_variable fold free_vars env_rec
 
-and compile_declaration ~raise : I.declaration Location.wrap -> _ =
-  fun {wrap_content=declaration;location} ->
-  let return decl = Location.wrap ~loc:location decl in
-  match declaration with
-  | I.Declaration_type dt ->
-    let dt = declaration_type (compile_type_expression ~raise) dt in
-    return @@ O.Declaration_type dt
-  | I.Declaration_constant dc ->
-    let dc = declaration_constant (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dc in
-    return @@ O.Declaration_constant dc
-  | I.Declaration_module dm ->
-    let dm = declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) dm in
-    return @@ O.Declaration_module dm
-  | I.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ O.Module_alias ma
-
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
-  module' (compile_expression ~raise ~last:true) (compile_type_expression ~raise) m
+  Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) (fun a -> a) (fun a -> a) (fun a -> a) m

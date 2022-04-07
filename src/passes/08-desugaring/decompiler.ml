@@ -5,6 +5,32 @@ module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 open Stage_common.Maps
 
+let decompile_exp_attributes : O.known_attributes -> I.attributes = fun { inline ; no_mutation ; view ; public } ->
+  let aux : string list -> (unit -> string option) -> O.attributes = fun acc is_fun ->
+    match is_fun () with
+    | Some v -> v::acc
+    | None -> acc
+  in
+  List.fold ~init:[] ~f:aux
+    [
+      (fun () -> if inline then Some "inline" else None) ;
+      (fun () -> if no_mutation then Some "no_mutation" else None) ;
+      (fun () -> if view then Some "view" else None) ;
+      (fun () -> if public then None else Some "private") ;
+    ]
+
+let decompile_type_attributes : O.type_attribute -> I.attributes = fun { public } ->
+  let aux : string list -> (unit -> string option) -> O.attributes = fun acc is_fun ->
+    match is_fun () with
+    | Some v -> v::acc
+    | None -> acc
+  in
+  List.fold ~init:[] ~f:aux
+    [
+      (fun () -> if public then None else Some "private") ;
+    ]
+let decompile_module_attributes = decompile_type_attributes
+
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->
   let self = decompile_type_expression in
@@ -44,9 +70,7 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
       | O.T_arrow arr ->
         let arr = arrow self arr in
         return @@ T_arrow arr
-      | O.T_module_accessor ma ->
-        let ma = module_access self ma in
-        return @@ T_module_accessor ma
+      | O.T_module_accessor ma -> return @@ T_module_accessor ma
       | O.T_singleton x -> return @@ I.T_singleton x
       | O.T_abstraction x ->
         let type_ = self x.type_ in
@@ -97,13 +121,15 @@ let rec decompile_expression : O.expression -> I.expression =
       let rhs = self_type rhs in
       let let_result = self let_result in
       return @@ I.E_type_in {type_binder; rhs; let_result}
-    | O.E_mod_in {module_binder;rhs;let_result} ->
-      let rhs = decompile_module rhs in
-      let let_result = self let_result in
-      return @@ I.E_mod_in {module_binder;rhs;let_result}
-    | O.E_mod_alias ma ->
-      let ma = mod_alias self ma in
-      return @@ I.E_mod_alias ma
+    | O.E_mod_in mi ->
+      let f = Stage_common.Maps.mod_in
+        decompile_expression
+        decompile_type_expression
+        decompile_exp_attributes
+        decompile_type_attributes
+        decompile_module_attributes
+      in
+      return @@ I.E_mod_in (f mi)
     | O.E_raw_code rc ->
       let rc = raw_code self rc in
       return @@ I.E_raw_code rc
@@ -143,9 +169,7 @@ let rec decompile_expression : O.expression -> I.expression =
       let anno_expr = self anno_expr in
       let type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
-    | O.E_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ E_module_accessor ma
+    | O.E_module_accessor ma -> return @@ E_module_accessor ma
 
 and decompile_lambda : _ O.lambda -> _ I.lambda =
   fun {binder=b;output_type;result}->
@@ -154,24 +178,13 @@ and decompile_lambda : _ O.lambda -> _ I.lambda =
     let result = decompile_expression result in
     I.{binder;output_type;result}
 
-and decompile_declaration : O.declaration -> I.declaration =
-  fun declaration ->
-  let return (decl: I.declaration) = decl in
-  match declaration with
-  | O.Declaration_type {type_binder; type_expr; type_attr=_} ->
-    let type_expr = decompile_type_expression type_expr in
-    return @@ I.Declaration_type {type_binder; type_expr; type_attr=[]}
-  | O.Declaration_constant {binder=b; attr={inline;no_mutation=_;public=_;view=_}; expr} ->
-    let binder = binder decompile_type_expression b in
-    let expr = decompile_expression expr in
-    let attr = if inline then ["inline"] else [] in
-    return @@ I.Declaration_constant {binder; attr; expr}
-  | O.Declaration_module {module_binder;module_;module_attr=_} ->
-    let module_ = decompile_module module_ in
-    return @@ I.Declaration_module {module_binder;module_;module_attr=[]}
-  | O.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ Module_alias ma
-
 and decompile_module : O.module_ -> I.module_ = fun m ->
-  List.map ~f:(Location.map decompile_declaration) m
+  (* List.map ~f:(Location.map decompile_declaration) m *)
+  let pass = Stage_common.Maps.declarations
+    decompile_expression
+    decompile_type_expression
+    decompile_exp_attributes
+    decompile_type_attributes
+    decompile_module_attributes
+  in
+  pass m

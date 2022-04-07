@@ -24,7 +24,7 @@ module M (Params : Params) =
       let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name in
       c_unit,meta,deps
     module AST = struct
-      type declaration = Ast_typed.declaration_loc
+      type declaration = Ast_typed.declaration
       type t = declaration list
       type environment = Environment.t
       let add_ast_to_env : t -> environment -> environment = fun ast env ->
@@ -36,13 +36,15 @@ module M (Params : Params) =
       let init_env : environment = options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_ = Location.wrap (Ast_typed.M_struct ast_typed) in
         let module_binder = Ast_typed.ModuleVar.of_input_var module_binder in
-        (Location.wrap @@ (Ast_typed.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_typed.declaration))
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true}})
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
-        let module_name = Ast_typed.ModuleVar.of_input_var module_name in
+        let module_binder = Ast_typed.ModuleVar.of_input_var module_name in
         let file_name   = Ast_typed.ModuleVar.of_input_var file_name in
-        Location.wrap @@ (Ast_typed.Module_alias {alias=module_name;binders=file_name,[]}: Ast_typed.declaration)
+        let module_ = Location.wrap (Ast_typed.M_variable file_name) in
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
@@ -57,7 +59,7 @@ module Infer (Params : Params) = struct
   include M(Params)
   module AST = struct
     include AST
-    type declaration = Ast_core.declaration Location.wrap
+    type declaration = Ast_core.declaration
     type t = declaration list
       type environment = Environment.core
       let add_ast_to_env : t -> environment -> environment = fun ast env ->
@@ -69,13 +71,15 @@ module Infer (Params : Params) = struct
       let init_env : environment = Environment.init_core @@ Checking.untype_program @@ Environment.to_program @@ options.middle_end.init_env
       let make_module_declaration : module_name -> t -> declaration =
         fun module_binder ast_typed ->
+        let module_ = Location.wrap (Ast_core.M_struct ast_typed) in
         let module_binder = Ast_core.ModuleVar.of_input_var module_binder in
-        (Location.wrap @@ (Ast_core.Declaration_module {module_binder;module_=ast_typed;module_attr={public=true}}: Ast_core.declaration))
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true}})
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
-        let module_name = Ast_core.ModuleVar.of_input_var module_name in
+        let module_binder = Ast_core.ModuleVar.of_input_var module_name in
         let file_name   = Ast_core.ModuleVar.of_input_var file_name in
-        Location.wrap @@ (Ast_core.Module_alias {alias=module_name;binders=file_name,[]}: Ast_core.declaration)
+        let module_ = Location.wrap (Ast_core.M_variable file_name) in
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true}})
   end
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -155,7 +159,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
          (module_, contract)
       | None -> ([], fun x -> Ligo_compile.Of_typed.compile_expression ~raise x)
     in
-    let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~options file_name syntax expression contract in
+    let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options file_name syntax expression contract in
     let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp aggregated_prg in
     let mini_c_exp      = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)

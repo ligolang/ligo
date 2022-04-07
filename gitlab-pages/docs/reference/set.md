@@ -175,31 +175,35 @@ let cardinal: (set: set&lt;&apos;elt&gt;) => nat
 
 Number of elements in a set.
 
+Notice: previously, `Set.size` was used for the number of elements in
+a set. `Set.size` is now marked for deprecation, and `Set.cardinal`
+should be used instead.
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=sets
-const cardinal : nat = Set.size (my_set)
+const card : nat = Set.cardinal (my_set)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=sets
-let cardinal : nat = Set.size my_set
+let card : nat = Set.cardinal my_set
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=sets
-let cardinal : nat = Set.size (my_set);
+let card : nat = Set.cardinal (my_set);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let cardinal: nat = Set.size(my_set);
+let card: nat = Set.cardinal(my_set);
 ```
 
 </Syntax>

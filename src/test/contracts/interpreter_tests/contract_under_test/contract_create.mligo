@@ -2,9 +2,6 @@ type storage = address option
 type return = operation list * storage
 type parameter = One | Two
 
-// let main_fail (action, store : parameter * storage) : return =
-//   (failwith "main fail !" : return)
-
 let main (action, store : parameter * storage) : return =
   match action with
     | One ->
@@ -26,5 +23,3 @@ let main (action, store : parameter * storage) : return =
         "un"
       in
       ([x.0], (Some x.1))
-
-type rect = { toto : int ; titi : int}

@@ -8,6 +8,21 @@ open Simple_utils.Runned_result
 
 module Errors = Main_errors
 
+let parse_constant ~raise code =
+  let open Tezos_micheline in
+  let open Tezos_micheline.Micheline in
+  let (code, errs) = Micheline_parser.tokenize code in
+  let code = (match errs with
+              | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | [] ->
+                 let (code, errs) = Micheline_parser.parse_expression ~check:false code in
+                 match errs with
+                 | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | [] -> map_node (fun _ -> ()) (fun x -> x) code
+             ) in
+  Trace.trace_alpha_tzresult ~raise Errors.unparsing_michelson_tracer @@
+    Memory_proto_alpha.node_to_canonical code
+
 type options = Memory_proto_alpha.options
 
 type dry_run_options =
@@ -20,7 +35,7 @@ type dry_run_options =
   }
 
 (* Shouldn't this be done by the cli parser ? *)
-let make_dry_run_options ~raise ?tezos_context (opts : dry_run_options) : options  =
+let make_dry_run_options ~raise ?tezos_context ?(constants = []) (opts : dry_run_options) : options  =
   let open Proto_alpha_utils.Trace in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
@@ -63,7 +78,9 @@ let make_dry_run_options ~raise ?tezos_context (opts : dry_run_options) : option
       (Some x)
     | None -> None
   in
-  make_options ?tezos_context ?now:now ~amount ~balance ?sender ?source ?parameter_ty ()
+  (* Parse constants *)
+  let constants = List.map ~f:(parse_constant ~raise) constants in
+  make_options ?tezos_context ~constants ?now:now ~amount ~balance ?sender ?source ?parameter_ty ()
 
 let ex_value_ty_to_michelson ~raise (v : ex_typed_value) : _ Michelson.t * _ Michelson.t =
   let (Ex_typed_value (ty , value)) = v in

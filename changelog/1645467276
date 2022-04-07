@@ -1,0 +1,6 @@
+author: Rémi Lesénéchal
+title: 'testing framework: change ''test_exec_error'' type. It now has a special case
+  for unsuficient balances, and case Other will return the tezos_client error (as
+  a string)'
+type: added
+merge_request: '1576'

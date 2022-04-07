@@ -15,15 +15,3 @@ let lookup : env -> expression_variable -> (value_expr * bool) option
   List.Assoc.find (expressions env) ~equal:ValueVar.equal var
 
 let empty_env = []
-
-let to_kv_list v = v
-let to_kv_list_rev v = List.rev v
-
-let filter :
-  env -> (value_expr -> bool) -> env
-    = fun env pred ->
-  let rec aux = function
-    | [] -> []
-    | Expression {name = _; item; no_mutation = _} :: xs when not (pred item) -> aux xs
-    | x :: xs -> x :: aux xs in
-  aux env

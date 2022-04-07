@@ -19,9 +19,6 @@ let compile_expression ~raise : Ast_typed.expression -> Ast_aggregated.expressio
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression x
 
-let compile_type ~raise : Ast_typed.type_expression -> Ast_aggregated.type_expression = fun e ->
-  trace ~raise aggregation_tracer @@ compile_type e
-
 let apply_to_entrypoint_contract ~raise : Ast_typed.program -> Ast_typed.expression_variable -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
@@ -73,10 +70,10 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
   )
 
 let get_views : Ast_typed.program -> (expression_variable * location) list = fun p ->
-  let f : (expression_variable * location) list -> declaration_loc -> (expression_variable * location) list =
+  let f : (expression_variable * location) list -> declaration -> (expression_variable * location) list =
     fun acc {wrap_content=decl ; location=_ } ->
       match decl with
-      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder, Ast_typed.ValueVar.get_location binder)::acc
+      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder.var, Ast_typed.ValueVar.get_location binder.var)::acc
       (* TODO: check for [@view] attributes in the AST and warn if [@view] is used anywhere other than top-level
         (e.g. warn if [@view] is used inside a module)
         Write a pass to check for known attributes (source_attributes -> known_attributes)
@@ -91,7 +88,7 @@ let list_declarations (m : Ast_typed.module_) : expression_variable list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> binder::prev
+      | Declaration_constant {binder;_} -> binder.var::prev
       | _ -> prev)
     ~init:[] m
 
@@ -110,6 +107,5 @@ let list_mod_declarations (m : Ast_typed.module_) : module_variable list =
       let open Simple_utils.Location in
       match el.wrap_content with
       | Declaration_module {module_binder;_} -> module_binder::prev
-      | Module_alias {alias;_} -> alias::prev
       | _ -> prev)
     ~init:[] m

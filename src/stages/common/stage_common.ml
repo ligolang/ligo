@@ -6,7 +6,6 @@ module Enums = Enums
 module Constant = Constant
 module PP_enums = PP_enums
 module To_yojson = To_yojson
-module Of_yojson = Of_yojson
 module Folds = Folds
 module Maps = Maps
 module Fold_maps = Fold_maps

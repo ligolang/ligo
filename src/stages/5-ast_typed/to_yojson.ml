@@ -28,7 +28,7 @@ let label_map f lmap =
 let layout = function
   | L_comb -> `List [ `String "L_comb"; `Null ]
   | L_tree -> `List [ `String "L_tree"; `Null ]
-
+let type_and_module_attr ({ public } : type_attribute) = `Assoc [ ("public", `Bool public) ]
 
 let rec type_expression {type_content=tc;type_meta;location;orig_var} =
   `Assoc [
@@ -44,7 +44,7 @@ and type_content = function
   | T_record          t -> `List [ `String "t_record"; rows t]
   | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
-  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
+  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access TypeVar.to_yojson t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
   | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
   | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
@@ -93,7 +93,6 @@ and expression_content = function
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
   | E_type_in     e -> `List [ `String "E_type_in"; type_in e ]
   | E_mod_in      e -> `List [ `String "E_mod_in"; mod_in e ]
-  | E_mod_alias   e -> `List [ `String "E_mod_alias"; mod_alias expression e ]
   | E_raw_code    e -> `List [ `String "E_raw_code"; raw_code e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor e ]
@@ -102,7 +101,7 @@ and expression_content = function
   | E_record          e -> `List [ `String "E_record"; record e ]
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
-  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
+  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access ValueVar.to_yojson e]
   | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
 
 and constant {cons_name;arguments} =
@@ -171,12 +170,8 @@ and type_in {type_binder;rhs;let_result} =
   ]
 
 
-and mod_in {module_binder;rhs;let_result} =
-  `Assoc [
-    ("module_binder", ModuleVar.to_yojson module_binder);
-    ("rhs", module' rhs);
-    ("let_result", expression let_result);
-  ]
+and mod_in x =
+  Stage_common.To_yojson.(mod_in expression type_expression known_attributes type_and_module_attr type_and_module_attr) x
 
 and raw_code {language;code} =
   `Assoc [
@@ -235,38 +230,9 @@ and matching_content_record {fields; body; tv} =
     ("record_type", type_expression tv);
   ]
 
-and declaration_type {type_binder;type_expr; type_attr} =
-  `Assoc [
-    ("type_binder", TypeVar.to_yojson type_binder);
-    ("type_expr", type_expression type_expr);
-    ("type_attr", type_attribute type_attr);
-  ]
+and declaration x =
+  Stage_common.To_yojson.(declaration expression type_expression known_attributes type_and_module_attr type_and_module_attr) x
 
-and declaration_constant {binder;expr;attr} =
-  `Assoc [
-    ("binder",ValueVar.to_yojson binder);
-    ("expr", expression expr);
-    ("attr", attribute attr);
-  ]
-
-and declaration_module {module_binder;module_; module_attr} =
-  `Assoc [
-    ("module_binder",ModuleVar.to_yojson module_binder);
-    ("module_", module' module_);
-    ("module_attr", module_attribute module_attr)
-  ]
-
-and module_alias ({alias ; binders} : module_alias) =
-  `Assoc [
-    ("alais"  , ModuleVar.to_yojson alias);
-    ("binders", list ModuleVar.to_yojson @@ List.Ne.to_list binders);
-  ]
-and declaration = function
-  | Declaration_type     dt -> `List [ `String "Declaration_type";     declaration_type dt]
-  | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
-  | Declaration_module   dm -> `List [ `String "Declaration_module";   declaration_module dm]
-  | Module_alias         ma -> `List [ `String "Module_alias";         module_alias ma]
-
-and module' m = list (Location.wrap_to_yojson declaration) m
+and module' x =
+  Stage_common.To_yojson.(declarations expression type_expression known_attributes type_and_module_attr type_and_module_attr) x
 and program p = module' p
-

@@ -13,9 +13,6 @@ let meta_lang_eval : Location.t -> Ligo_interpreter.Types.calltrace -> string ->
 let meta_lang_failwith : Location.t -> Ligo_interpreter.Types.calltrace -> Ligo_interpreter.Types.value -> interpreter_error =
   fun loc calltrace v -> `Main_interpret_meta_lang_failwith (loc,calltrace,v)
 
-let test_entry_not_found : string -> interpreter_error = fun s ->
-  `Main_interpret_test_entry_not_found s
-
 let bootstrap_not_enough : Location.t -> interpreter_error = fun l ->
   `Main_interpret_boostrap_not_enough l
 
@@ -28,6 +25,4 @@ let not_enough_initial_accounts : Location.t -> Memory_proto_alpha.Protocol.Alph
 let literal : Location.t -> Ast_typed.literal -> interpreter_error = fun s l ->
   `Main_interpret_literal (s, l)
 
-let modules_not_supported : Location.t -> interpreter_error = fun l ->
-  `Main_interpret_modules_not_supported l
 let corner_case ?(loc = Location.generated) () = generic_error loc "Corner case, please report to devs."

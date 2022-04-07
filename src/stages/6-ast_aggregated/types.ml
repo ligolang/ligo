@@ -13,7 +13,6 @@ and type_content =
   | T_record   of rows
   | T_arrow    of ty_expr arrow
   | T_singleton of literal
-  | T_abstraction of ty_expr abstraction
   | T_for_all of ty_expr abstraction
 
 and type_injection = {
@@ -32,16 +31,6 @@ and te_list = type_expression list
 and annot_option = string option
 
 and row_element = type_expression row_element_mini_c
-
-and type_map_args = {
-    k : type_expression;
-    v : type_expression;
-  }
-
-and michelson_or_args = {
-    l : type_expression;
-    r : type_expression;
-  }
 
 and type_expression = {
     type_content: type_content;
@@ -92,11 +81,6 @@ and expr = expression
 and map_kv = {
     key : expression ;
     value : expression ;
-  }
-
-and look_up = {
-    ds : expression;
-    ind : expression;
   }
 
 and expression_label_map = expression label_map

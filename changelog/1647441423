@@ -1,0 +1,4 @@
+author: er433
+merge_request: '1628'
+title: 'Testing framework: clean-up interpreter''s values internal comparator'
+type: internal

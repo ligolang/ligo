@@ -13,7 +13,6 @@ open Mini_c
 
 module SMap = Map.Make(String)
 
-let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 
 let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v -> v
@@ -341,8 +340,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   )
   | T_singleton _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
-  | T_abstraction _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "Abstraction type uncaught"
   | T_for_all _ ->
     raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
@@ -402,27 +399,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
     in
     aux expr' tree body
 
-let rec compile_literal : AST.literal -> value = fun l -> match l with
-  | Literal_int n -> D_int n
-  | Literal_nat n -> D_nat n
-  | Literal_timestamp n -> D_timestamp n
-  | Literal_mutez n -> D_mutez n
-  | Literal_bytes s -> D_bytes s
-  | Literal_string s -> D_string (Ligo_string.extract s)
-  | Literal_address s -> D_string s
-  | Literal_signature s -> D_string s
-  | Literal_key s -> D_string s
-  | Literal_key_hash s -> D_string s
-  | Literal_chain_id s -> D_string s
-  | Literal_operation op -> D_operation op
-  | Literal_unit -> D_unit
-  | Literal_bls12_381_g1 b -> D_bytes b
-  | Literal_bls12_381_g2 b -> D_bytes b
-  | Literal_bls12_381_fr b -> D_bytes b
-  | Literal_chest b -> D_bytes b
-  | Literal_chest_key b -> D_bytes b
-
-and compile_expression ~raise (ae:AST.expression) : expression =
+let rec compile_expression ~raise (ae:AST.expression) : expression =
   let tv = compile_type ~raise ae.type_expression in
   let self = compile_expression ~raise in
   let return ?(tv = tv) expr =

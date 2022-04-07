@@ -1,0 +1,6 @@
+---
+  title: "Fixed the pretty-printing of punned record fields in ReasonLIGO (issue 1344)."
+  merge_request: "1656"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

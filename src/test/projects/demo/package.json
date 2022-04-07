@@ -1,0 +1,11 @@
+{
+  "name": "demo",
+  "version": "0.1",
+  "description": "Test ligo project",
+  "dependencies": {
+    "ligo-foo": "1.0.6",
+    "ligo-list-helpers": "1.0.1",
+    "ligo-test_2": "1.0.0",
+    "ligo_test_1": "1.0.0"
+  }
+}
