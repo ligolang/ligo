@@ -968,21 +968,8 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
       let name, loc_name = w_split md.name in
       let var = mk_var ~loc:loc_name name in
       e_module_expr ~raise ~loc var md.module_expr next
-(*
-      let rhs = compile_module ~raise md.module_expr in
-      e_mod_in ~loc (mk_var ~loc:loc_name name) rhs next
- *)
     )
-(*
-  | D_ModAlias module_alias -> (
-    let ma,loc = r_split module_alias in
-    let rhs =
-      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list ma.mod_path in
-      m_path ~loc path
-    in
-    e_mod_in ~loc (compile_mod_var ma.alias) rhs next
-  )
-*)
+
 and e_module_expr ~raise ~loc var module_expr next =
   match module_expr with
     M_Body {declarations; _} ->
