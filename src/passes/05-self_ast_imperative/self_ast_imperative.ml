@@ -7,6 +7,7 @@ let all_expression_mapper ~raise ~add_warning ~js_style_no_shadowing = [
   None_variant.peephole_expression ;
   Literals.peephole_expression ~raise ;
   Expression_soundness.linearity ~raise ;
+  Expression_soundness.reserved_names_exp ~raise ;
   Deprecated_constants.warn ~add_warning ;
 ] @
   (if js_style_no_shadowing

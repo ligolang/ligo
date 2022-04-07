@@ -531,7 +531,7 @@ rule scan state = parse
         in
         if state.mode = Copy then
           let path = get_incl_dir state in
-          let external_dirs = ModRes.get_inclusion_list ~file:parent state.config#mod_res in
+          let external_dirs = ModRes.get_paths_of_dependencies ~file:parent state.config#mod_res in
           let incl_path, incl_chan =
             match find path incl_file state.config#dirs external_dirs with
               Some p -> p
@@ -561,7 +561,7 @@ rule scan state = parse
         if state.mode = Copy then
           let path = get_incl_dir state in
           let external_dirs =
-            ModRes.get_inclusion_list ~file state.config#mod_res in
+            ModRes.get_paths_of_dependencies ~file state.config#mod_res in
           let import_path =
             match find path import_file state.config#dirs external_dirs with
               Some p -> fst p

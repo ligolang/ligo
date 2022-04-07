@@ -9,12 +9,14 @@
  * manpages in `gitlab-pages/docs/manpages` directory
  */
 
+const args = process.argv.slice(2);
+
 const fs = require("fs");
 const { exec } = require("child_process");
 
 const OUT_DIR = "./gitlab-pages/docs/manpages"
 
-const LIGO = "./_build/install/default/bin/ligo"
+const LIGO = args[0] !== undefined ? args[0] : "./_build/install/default/bin/ligo"
 
 const commands = [
     "compile constant",

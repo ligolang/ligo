@@ -155,7 +155,7 @@ let rec muchuse_of_expr expr : muchuse =
   | E_module_accessor {module_path;element} ->
     let pref = Format.asprintf "%a" (Simple_utils.PP_helpers.list_sep PP.module_variable (Simple_utils.PP_helpers.tag ".")) module_path in
     let name = V.of_input_var ~loc:expr.location @@
-      pref ^ "." ^ (V.to_name_exn element) in
+      pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
     (M.add name 1 M.empty,[])
 
 and muchuse_of_lambda t {binder; result} =
@@ -211,12 +211,12 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
     let aux = fun ({wrap_content=x;location} : declaration) ->
       match x with
       | Declaration_constant {binder;expr;_} ->
-          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn binder.var) in
+          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp binder.var) in
           [(name, expr.type_expression)]
       | Declaration_module {module_binder;module_ = { wrap_content = M_struct module_ ; _ } ;module_attr=_} ->
          let recs = get_all_declarations module_binder module_ in
          let add_module_name (v, t) =
-          let name = V.of_input_var ~loc:location @@ (ModuleVar.to_name_exn module_name) ^ "." ^ (V.to_name_exn v) in
+          let name = V.of_input_var ~loc:location @@ (Format.asprintf "%a" ModuleVar.pp module_name) ^ "." ^ (Format.asprintf "%a" ValueVar.pp v) in
           (name, t) in
          recs |> List.map ~f:add_module_name
       | _ -> [] in

@@ -89,15 +89,26 @@ let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression)
   let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
   let map = LMap.of_list lst in
   t_sum ?loc ?core ~layout map
+let t_record_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
+  let lst = List.mapi ~f:(fun i (x,y) -> (Label x, ({associated_type=y;michelson_annotation=None;decl_pos=i}:row_element)) ) lst in
+  let map = LMap.of_list lst in
+  t_record ?loc ?core ~layout map
 let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
   [("True", t_unit ());("False", t_unit ())]
 
 (* types specific to LIGO test framework*)
 let t_michelson_code ?loc ?core () : type_expression = t_constant ?loc ?core Stage_common.Constant.Michelson_program []
-let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core
-  [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
+let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core [
+    "Rejected", t_pair (t_michelson_code ()) (t_address ()) ;
+    "Balance_too_low", t_record_ez [
+        "contract_too_low" , t_address () ;
+        "contract_balance" , t_mutez () ;
+        "spend_request" , t_mutez () ;
+      ];
+    "Other" , t_string ()
+  ]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
-  [ ("Success" ,t_nat ()); ("Fail", t_sum_ez [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())])]
+  [ ("Success" ,t_nat ()); ("Fail", t_test_exec_error ())]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -319,5 +330,20 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
   | None -> None
   | Some record ->
     match LMap.find_opt label record.content with
+    | None -> None
+    | Some row_element -> Some row_element.associated_type
+
+let get_record_fields (t : type_expression) : (label * type_expression) list option =
+  match get_t_record t with
+  | None -> None
+  | Some record ->
+    let lst = (LMap.to_kv_list (record.content)) in
+    Some (List.map ~f:(fun (k,x) -> k,x.associated_type) lst)
+
+let get_sum_label_type (t : type_expression) (label : label) : type_expression option =
+  match get_t_sum t with
+  | None -> None
+  | Some s ->
+    match LMap.find_opt label s.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type

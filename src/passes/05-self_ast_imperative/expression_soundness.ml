@@ -60,12 +60,14 @@ let check_reserved ~raise ~loc binder =
     raise.raise (reserved_name str loc)
   | None -> ()
 
-let reserved_names_exp ~raise : expression -> unit = fun exp ->
+let reserved_names_exp ~raise : expression -> expression = fun exp ->
   match exp.expression_content with
   | E_let_in {let_binder ; _ } ->
-    check_reserved ~raise ~loc:exp.location let_binder
+    check_reserved ~raise ~loc:exp.location let_binder ;
+    exp
   | E_lambda {binder ; _} ->
-    check_reserved ~raise ~loc:exp.location binder
+    check_reserved ~raise ~loc:exp.location binder ;
+    exp
   | E_matching { cases ; _ } ->
     let rec aux : type_expression pattern -> unit = fun p ->
       match p.wrap_content with
@@ -80,15 +82,17 @@ let reserved_names_exp ~raise : expression -> unit = fun exp ->
       | P_variant (_,p) ->
         aux p
     in
-    List.iter ~f:aux (List.map ~f:(fun (x: _ match_case) -> x.pattern) cases)
-  | _ -> ()
+    List.iter ~f:aux (List.map ~f:(fun (x: _ match_case) -> x.pattern) cases) ;
+    exp
+  | _ -> exp
 
 let reserved_names_mod ~raise : module_ -> module_ = fun m ->
   let aux  = function
     | Location.{wrap_content = Declaration_type _; _} -> ()
     | {wrap_content = Declaration_constant {binder ; expr ; _ }; location = loc } ->
       check_reserved ~raise ~loc binder ;
-      reserved_names_exp ~raise expr
+      let _ : expression = reserved_names_exp ~raise expr in
+      ()
     | {wrap_content = Declaration_module _ ; _} -> ()
   in
   List.iter ~f:aux m ;

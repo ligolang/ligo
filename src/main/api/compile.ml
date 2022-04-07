@@ -10,6 +10,17 @@ let no_comment node =
 let has_env_comments michelson_comments =
   Option.is_some (List.find michelson_comments ~f:(function `Env -> true | _ -> false))
 
+let read_file_constants ~raise file_constants =
+  match file_constants with
+  | None -> []
+  | Some fn ->
+     try
+       let buf = In_channel.read_all fn in
+       let json = Yojson.Basic.from_string buf in
+       json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
+     with Sys_error _ -> raise.Trace.raise (`Main_cannot_open_global_constants fn)
+        | Yojson.Json_error s -> raise.Trace.raise (`Main_cannot_parse_global_constants (fn, s))
+
 let contract (raw_options : Compiler_options.raw) source_file display_format michelson_code_format michelson_comments () =
     let warning_as_error = raw_options.warning_as_error in
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -30,15 +41,7 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       let views =
         Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file
       in
-      let file_constants = match file_constants with
-        | None -> []
-        | Some fn ->
-           try
-             let buf = In_channel.read_all fn in
-             let json = Yojson.Basic.from_string buf in
-             json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
-           with Sys_error _ -> raise.raise (`Main_cannot_open_global_constants fn)
-              | Yojson.Json_error s -> raise.raise (`Main_cannot_parse_global_constants (fn, s)) in
+      let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
       Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck ~constants code views
 
@@ -101,9 +104,12 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
             ~has_env_comments:false
             () in
         let Compiler_options.{ syntax ; _ } = options.frontend in
+        let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
+        let file_constants = read_file_constants ~raise file_constants in
+        let constants = constants @ file_constants in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
@@ -111,12 +117,12 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
         (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_parameter entry_point app_typed_prg typed_param in
-        let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
+        let options = Run.make_dry_run_options ~raise ~constants {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
 
 let storage (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
@@ -131,10 +137,13 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
             ~has_env_comments:false
             () in
         let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
+        let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
+        let file_constants = read_file_constants ~raise file_constants in
+        let constants = constants @ file_constants in
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
@@ -142,10 +151,10 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
          (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_storage entry_point app_typed_prg typed_param in
-        let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
+        let options = Run.make_dry_run_options ~raise ~constants {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)

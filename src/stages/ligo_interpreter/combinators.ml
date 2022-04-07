@@ -3,6 +3,12 @@ open Types
 let v_pair : value * value -> value =
   fun (a,b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1",b)])
 
+let v_record : (string * value) list -> value =
+  fun lst ->
+    if List.contains_dup ~compare:(fun (l1,_) (l2,_) -> String.compare l1 l2) lst then
+      failwith "trying to create a record value with duplicate field" ;
+    V_Record (LMap.of_list (List.map ~f:(fun (l,v) -> (Label l , v)) lst))
+
 let v_bool : bool -> value =
   fun b -> V_Ct (C_bool b)
 
