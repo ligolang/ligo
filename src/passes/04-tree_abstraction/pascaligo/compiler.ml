@@ -149,7 +149,9 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
         let lst = List.map ~f:self lst in
         t_app ~loc operator lst
       )
-      | _ -> failwith "TODO: t_app in the AST should be able to take a type expression in"
+      | T_ModPath x ->
+        raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region x.value.field))
+      | _ -> raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region type_constant))
     )
     | T_Fun { region ; value = (lhs , _ , rhs) } -> (
       let loc = Location.lift region in
@@ -1110,34 +1112,34 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
     return region ast
 
   | D_Module {value; region} ->
-      let {name; module_expr; _} = value in
-      let name, loc = w_split name in
-      let module_expr = compile_module_expr ~raise module_expr in
-      let module_binder = mk_var ~loc name in
-      let ast = AST.Declaration_module
-                  {module_binder; module_; module_attr=[]}
-      in return region ast
-
-(*     let { name; declarations ; _ } : CST.module_decl = value in
-    let name, loc = w_split name in
-    let module_ = compile_module ~raise declarations in
-    let ast = AST.Declaration_module {module_binder= mk_var ~loc name; module_; module_attr=[]} in
-    return region ast
-
-  | D_ModAlias {value; region} ->
-    let {alias; mod_path; _} : CST.module_alias = value in
-    let module_binder = compile_mod_var alias in
-    let module_ =
-      let path = List.Ne.map compile_mod_var @@ npseq_to_ne_list mod_path in
-      m_path ~loc:Location.generated path
-    in
-    let ast = AST.Declaration_module { module_binder; module_ ; module_attr = [] } in
-    return region ast
- *)
+    let CST.{name; module_expr; _} = value in
+    let module_ = compile_module_expression ~raise module_expr in
+    let module_binder = compile_mod_var name in
+    let ast = AST.Declaration_module
+                {module_binder; module_; module_attr=[]}
+    in return region ast
 
   | D_Directive _ -> []
 
-and compile_module ~raise : CST.declaration Utils.nseq -> AST.module_ =
+and compile_module_expression ~raise : CST.module_expr ->  AST.module_expr = function
+  | CST.M_Body { region ; value = { enclosing = _ ; declarations } } -> (
+    let decls = compile_declarations ~raise declarations in
+    Location.wrap ~loc:(Location.lift region) (AST.M_struct decls)
+  )
+  | CST.M_Path { region ; value = { module_path ; selector = _ ; field } } -> (
+    let path =
+      let module_path = List.Ne.map compile_mod_var (npseq_to_ne_list module_path) in
+      let field = compile_mod_var field in
+      List.Ne.append module_path (field,[])
+    in
+    Location.wrap ~loc:(Location.lift region) (AST.M_module_path path)
+  )
+  | CST.M_Var mod_name -> (
+    let v : module_variable = compile_mod_var mod_name in
+    Location.wrap ~loc:(ModuleVar.get_location v) (AST.M_variable v)
+  )
+
+and compile_declarations ~raise : CST.declaration Utils.nseq -> AST.module_ =
   fun decl ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list decl
     in List.concat lst
