@@ -4,8 +4,8 @@ module.exports = grammar({
   name: 'JsLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment, $.line_marker],
-  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, /\s/],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute],
+  extras: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, /\s/],
 
   conflicts: $ => [
     [$.variant, $.variant],
@@ -384,9 +384,7 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    attr: $ => choice(
-      /\/\*\s+@[a-zA-Z][a-zA-Z0-9_:]*\s*\*\//,
-      /\/\/\s+@[a-zA-Z][a-zA-Z0-9_:]*/),
+    attr: $ => $._js_ligo_attribute,
 
     String: $ => /\"(\\.|[^"])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,

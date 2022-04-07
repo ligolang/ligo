@@ -8,6 +8,7 @@ enum TokenType {
   OCAML_COMMENT,
   COMMENT,
   LINE_MARKER,
+  _JS_LIGO_ATTRIBUTE
 };
 
 #define TAKE_WHILE_1(predicate) \
@@ -27,6 +28,8 @@ bool tree_sitter_JsLigo_external_scanner_scan(
   while (iswspace(lexer->lookahead)) lexer->advance(lexer, true);
 
   if (lexer->lookahead == '/') {
+    bool is_attribute = false;
+
     lexer->advance(lexer, false);
 
     if (lexer->lookahead == '/') {
@@ -37,14 +40,14 @@ bool tree_sitter_JsLigo_external_scanner_scan(
 
       // If single-line comment is of the form `// @<att-name>` it is an attribute
       if (lexer->lookahead == '@') {
-        return false;
+        is_attribute = true;
       }
 
       for (;;) {
         switch (lexer->lookahead) {
         case '\n':
         case '\0':
-          lexer->result_symbol = COMMENT;
+          lexer->result_symbol = is_attribute ? _JS_LIGO_ATTRIBUTE : COMMENT;
           return true;
         default:
           lexer->advance(lexer, false);
@@ -53,13 +56,13 @@ bool tree_sitter_JsLigo_external_scanner_scan(
       }
     } else if (lexer->lookahead == '*') {
       lexer->advance(lexer, false);
-
+      
       // skip white spaces
       while (iswspace(lexer->lookahead)) lexer->advance(lexer, false);
 
       // If multi-line comment is of the form `/* @<att-name> */` it is an attribute
       if (lexer->lookahead == '@') {
-        return false;
+        is_attribute = true;
       }
 
       bool after_star = false;
@@ -78,11 +81,10 @@ bool tree_sitter_JsLigo_external_scanner_scan(
             after_star = false;
             nesting_depth--;
             if (nesting_depth == 0) {
-              lexer->result_symbol = OCAML_COMMENT;
+              lexer->result_symbol = is_attribute ? _JS_LIGO_ATTRIBUTE : OCAML_COMMENT;
               return true;
             }
             // automatic SEMI insertion
-            // automatic VBAR insertion
           } else {
             lexer->advance(lexer, false);
             after_star = false;

@@ -3,9 +3,12 @@ conditional: if
 =========
 
 let x = () => { 
-  if (true) { 
+  if (true) {
+    // comment false 
     return false 
   };
+  /* comment true 
+  */
   return true;  
 };
 
@@ -19,8 +22,10 @@ let x = () => {
         (if_statement
           (True_kwd)
           (block_statement
+            (comment)
             (return_statement
               (False_kwd))))
+        (ocaml_comment)
         (return_statement
           (True_kwd))))))
 
