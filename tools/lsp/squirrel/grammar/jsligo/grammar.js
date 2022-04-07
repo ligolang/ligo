@@ -8,9 +8,9 @@ module.exports = grammar({
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, /\s/],
 
   conflicts: $ => [
-    [$.variant, $.variant],
+    [$.variant],
+    [$.module_access],
     [$._expr_statement, $.projection],
-    [$.module_access, $.module_access],
     [$.annot_expr, $.parameter]
   ],
 
