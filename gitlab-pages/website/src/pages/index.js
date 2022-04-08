@@ -168,6 +168,11 @@ function HomePage() {
                   Install
                 </a>
               </li>
+              <li className="secondary">
+                <a href={useBaseUrl('https://academy.ligolang.org/')}>
+                  Learn on Academy
+                </a>
+              </li>
           </ul>
         </div>
         <div id="preview">
