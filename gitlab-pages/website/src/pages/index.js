@@ -158,7 +158,7 @@ function HomePage() {
                   Try Online
                 </a>
               </li>
-              <li className="secondary">
+              <li className="primary">
                 <a href="https://gitpod.io/#https://gitlab.com/ligolang/template-ligo" target="_blank">
                   Try on Gitpod
                 </a>
