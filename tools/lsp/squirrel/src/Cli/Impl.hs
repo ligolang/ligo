@@ -161,20 +161,24 @@ instance Exception LigoPreprocessFailedException where
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoImpl :: HasLigoClient m => [String] -> Maybe Source -> m (Text, Text)
-callLigoImpl args conM = do
+callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m (Text, Text)
+callLigoImpl rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
     let raw = maybe "" (unpack . srcText) conM
     let fpM = srcPath <$> conM
-    (ec, lo, le) <- readProcessWithExitCode _lceClientPath args raw
+    let
+      process = (proc _lceClientPath args)
+        { cwd = rootDir
+        }
+    (ec, lo, le) <- readCreateProcessWithExitCode process raw
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwIO $ LigoClientFailureException (pack lo) (pack le) fpM
     return (pack lo, pack le)
 
 -- | Call ligo binary and return stdin and stderr accordingly.
-callLigo :: HasLigoClient m => [String] -> Source -> m (Text, Text)
-callLigo args = callLigoImpl args . Just
+callLigo :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m (Text, Text)
+callLigo rootDir args = callLigoImpl rootDir args . Just
 
 newtype Version = Version
   { getVersion :: Text
@@ -216,7 +220,7 @@ usingTemporaryDir rootDir (Source fp contents) action =
 -- ```
 getLigoVersion :: (HasLigoClient m, Log m) => m (Maybe Version)
 getLigoVersion = Log.addNamespace "getLigoVersion" do
-  mbOut <- try $ callLigoImpl ["--version"] Nothing
+  mbOut <- try $ callLigoImpl Nothing ["--version"] Nothing
   case mbOut of
     -- We don't want to die if we failed to parse the version...
     Left (SomeException e) -> do
@@ -243,7 +247,7 @@ callForFormat :: (HasLigoClient m, Log m) => FilePath -> Source -> m (Maybe Text
 callForFormat projDir source = Log.addNamespace "callForFormat" $ Log.addContext source $
   fst <$> usingTemporaryDir projDir source \tempFp _ ->
     let
-      getResult = callLigo
+      getResult = callLigo (Just projDir)
         ["print", "pretty", tempFp]
         source
     in
@@ -268,7 +272,7 @@ preprocess
 preprocess projDir contract = Log.addNamespace "preprocess" $ Log.addContext contract do
   $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
   (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ -> do
-    try $ callLigo
+    try $ callLigo (Just projDir)
       ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"]
       contract
   case join bimap fixMarkers <$> mbOut of
@@ -294,7 +298,7 @@ getLigoDefinitions
 getLigoDefinitions projDir contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
   (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ ->
-    try $ callLigo
+    try $ callLigo (Just projDir)
       ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
       contract
   case join bimap fixMarkers <$> mbOut of

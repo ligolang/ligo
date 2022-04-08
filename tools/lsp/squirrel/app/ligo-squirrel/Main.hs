@@ -159,6 +159,7 @@ handlers = mconcat
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
 
   , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
+  , S.requestHandler (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
@@ -421,8 +422,16 @@ handleCustomMethod'BuildGraph req respond =
     Aeson.Null -> do
       buildGraphM <- tryReadMVar =<< asks reBuildGraph
       respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
-    _ ->
-      respond $ Left $ J.ResponseError J.InvalidRequest "This request expects null" Nothing
+    other -> do
+      let msg = [i|This message expects Null, but got #{other}|]
+      respond $ Left $ J.ResponseError J.InvalidRequest msg Nothing
+
+handleCustomMethod'IndexDirectory
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'IndexDirectory _req respond = do
+  indexOptsM <- tryReadMVar =<< asks reIndexOpts
+  let pathM = Indexing.indexOptionsPath =<< indexOptsM
+  respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position
