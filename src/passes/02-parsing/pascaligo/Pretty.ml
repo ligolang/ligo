@@ -280,7 +280,7 @@ and print_D_Type (node : type_decl reg) =
 and print_type_vars (node : variable tuple option) =
   match node with
     None -> empty
-  | Some tuple -> print_tuple print_ident tuple
+  | Some tuple -> string " " ^^ print_tuple print_ident tuple
 
 (* TYPE EXPRESSIONS *)
 

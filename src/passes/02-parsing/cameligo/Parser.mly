@@ -376,14 +376,14 @@ attributes:
     match $1 with None -> [] | Some list -> list }
 
 let_binding:
-  var_pattern type_parameters parameters let_lhs_type "=" expr {
+  var_pattern type_parameters parameters let_rhs_type "=" expr {
     let binders = Utils.nseq_cons (PVar $1) $3 in
-    {binders; type_params=$2; lhs_type=$4; eq=$5; let_rhs=$6}
+    {binders; type_params=$2; rhs_type=$4; eq=$5; let_rhs=$6}
   }
-| irrefutable type_parameters let_lhs_type "=" expr {
-    {binders=$1,[]; type_params=$2; lhs_type=$3; eq=$4; let_rhs=$5} }
+| irrefutable type_parameters let_rhs_type "=" expr {
+    {binders=$1,[]; type_params=$2; rhs_type=$3; eq=$4; let_rhs=$5} }
 
-%inline let_lhs_type:
+%inline let_rhs_type:
   ioption(type_annotation(type_expr)) { $1 }
 
 (* The %inline solves a shift/reduce conflict: *)
@@ -693,7 +693,7 @@ fun_expr(right_expr):
     let stop   = expr_to_region $7 in
     let region = cover kwd_fun#region stop in
     let value  = {kwd_fun; type_params=$3; binders=$4;
-                  lhs_type=$5; arrow=$6; body=$7; attributes=$1}
+                  rhs_type=$5; arrow=$6; body=$7; attributes=$1}
     in EFun {region; value} }
 
 %inline ret_type:

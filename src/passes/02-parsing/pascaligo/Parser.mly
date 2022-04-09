@@ -410,7 +410,6 @@ declaration:
 | const_decl   { D_Const    $1 }
 | fun_decl     { D_Fun      $1 }
 | module_decl  { D_Module   $1 }
-(*| module_alias { D_ModAlias $1 }*)
 | attr_decl    { D_Attr     $1 }
 
 (* Attributed declaration *)
@@ -716,18 +715,6 @@ verb_module_expr:
 
 declarations:
   nseq(declaration ";"? { terminate_decl $2 $1}) { $1 }
-
-(* Module aliases *)
-
-(*
-module_alias:
-  "module" module_name "is" nsepseq(module_name,".") {
-    let stop   = nsepseq_to_region (fun x -> x#region) $4 in
-    let region = cover $1#region stop in
-    let value  = {kwd_module=$1; alias=$2; kwd_is=$3;
-                  mod_path=$4; terminator=None}
-    in {region; value} }
-*)
 
 (* STATEMENTS *)
 
