@@ -965,28 +965,13 @@ and compile_data_declaration ~raise : ?attr:CST.attribute list -> next:AST.expre
     let name = compile_type_var td.name in
     e_type_in ~loc name rhs next
   )
-  | D_Module module_decl -> (
-      let md, loc = r_split module_decl in
-      let name, loc_name = w_split md.name in
-      let var = mk_var ~loc:loc_name name in
-      e_module_expr ~raise ~loc var md.module_expr next
-    )
-
-and e_module_expr ~raise ~loc var module_expr next =
-  match module_expr with
-    M_Body {declarations; _} ->
-      e_mod_in ~loc var (compile_module ~raise declarations) next
-  | M_Path m_path ->
-      let path, loc = r_split m_path in
-      let nseq = Utils.nsepseq_foldr
-                   Utils.nseq_cons
-                   path.module_path
-                   (path.field, []) in
-      let mapped x = let x, loc = w_split x in mk_var ~loc x
-      in e_mod_alias ~loc var (Utils.nseq_map mapped nseq) next
-  | M_Var module_name ->
-      let name, name_loc = w_split module_name in
-      e_mod_alias ~loc var (mk_var ~loc:name_loc name, []) next
+  | D_Module {value; region} -> (
+    let loc = Location.lift region in
+    let CST.{name; module_expr; _} = value in
+    let module_ = compile_module_expression ~raise module_expr in
+    let module_binder = compile_mod_var name in
+    e_mod_in ~loc module_binder module_ next
+  )
 
 and compile_statement ~raise : ?next:AST.expression -> CST.statement -> AST.expression option =
   fun ?next statement ->

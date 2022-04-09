@@ -82,15 +82,17 @@ and pp_attributes = function
 | attrs -> separate_map (break 0) pp_attribute attrs
 
 and pp_let_binding (binding : let_binding) =
-  let {type_params; binders; lhs_type; let_rhs; _} = binding in
+  let {type_params; binders; rhs_type; let_rhs; _} = binding in
   let head, tail = binders in
   let thread = pp_type_params (pp_pattern head) type_params in
   let thread =
-    thread ^^ string " " ^^
-    group (nest 2 (separate_map (break 1) pp_pattern tail)) in
+    if List.is_empty tail then thread
+    else
+      thread ^^ (*string " " ^^*)
+      group (nest 2 (break 1 ^^ separate_map (break 1) pp_pattern tail)) in
   let lhs =
     thread ^^
-    match lhs_type with
+    match rhs_type with
             None -> empty
     | Some (_,e) -> group (break 1 ^^ string ": " ^^ pp_type_expr e)
   in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
@@ -160,7 +162,7 @@ and pp_ptuple {value; _} =
      then pp_pattern head
      else pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail)
 
-and pp_precord fields = pp_ne_injection pp_field_pattern fields
+and pp_precord fields = group (pp_ne_injection pp_field_pattern fields)
 
 and pp_field_pattern {value; _} =
   let {field_name; pattern; _} = value in
@@ -351,7 +353,7 @@ and pp_ne_injection :
       match Option.map ~f:pp_compound compound with
         None -> elements
       | Some ((opening, _), (closing, _)) ->
-         string opening ^^ nest 1 elements ^^ string closing in
+          string opening ^^ align elements ^^ string closing in
     let inj = if List.is_empty attributes then inj
               else pp_attributes attributes ^/^ inj
     in inj
@@ -376,8 +378,8 @@ and pp_projection {value; _} =
 and pp_module_access :
   type a.(a -> document) -> a module_access reg -> document =
   fun f {value; _} ->
-  let {module_name; field; _} = value in
-  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
+    let {module_name; field; _} = value in
+    group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_selection = function
   FieldName v   -> string v.value
@@ -461,13 +463,13 @@ and pp_mod_alias {value; _} =
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =
-  let {binders; lhs_type; body; _} = value in
+  let {binders; rhs_type; body; _} = value in
   let binders = pp_nseq pp_pattern binders
   and annot   =
-    match lhs_type with
+    match rhs_type with
       None -> empty
     | Some (_,e) ->
-        group (break 1 ^^ string ": "
+        group (break 1 ^^ string ":"
                ^^ nest 2 (break 1 ^^ pp_type_expr e))
   in group (string "fun " ^^ nest 4 binders ^^ annot
      ^^ string " ->" ^^ nest 2 (break 1 ^^ pp_expr body))

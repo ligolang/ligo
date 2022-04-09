@@ -45,11 +45,6 @@ type kwd_true   = lexeme wrap
 type kwd_type   = lexeme wrap
 type kwd_module    = lexeme wrap
 
-(* Data constructors *)
-
-type c_None  = lexeme wrap
-type c_Some  = lexeme wrap
-
 (* Symbols *)
 
 type arrow    = lexeme wrap  (* "=>"  *)
