@@ -82,7 +82,7 @@ module Mutator (M : Monad) = struct
                                  d = (fun x -> return x); }
 
   let mutate_module_ ?n (mod_ : Cst.Pascaligo.t) =
-    let rndmod_ = map_module mutate_mapper mod_.decl in
+    let rndmod_ = map_declarations mutate_mapper mod_.decl in
     let (x,ds) = get_one ?n rndmod_ in
     (x, {mod_ with decl = ds})
 end

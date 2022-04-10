@@ -47,7 +47,7 @@ module Ne = struct
   let unzip ((hd, tl): _ t) =
     let (a, b) = hd and (la, lb) = List.unzip tl in
     (a, la), (b, lb)
-  let of_list lst = List.hd_exn lst, List.tl_exn lst
+  let of_list lst = List.hd_exn lst, List.tl_exn lst (* TODO: Remove *)
   let to_list (hd, tl : _ t) = hd :: tl
   let singleton hd : 'a t = hd , []
   let hd : 'a t -> 'a = fst

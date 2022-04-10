@@ -999,6 +999,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> s = Constant_to_Michelson (loc, calltrace, m) in
       return @@ V_Michelson (Untyped_code s)
     | ( C_TEST_CONSTANT_TO_MICHELSON , _ ) -> fail @@ error_type
+    | ( C_TEST_REGISTER_FILE_CONSTANTS , [ V_Ct (C_string path) ] ) ->
+      let>> v = Register_file_constants (loc, calltrace, path) in
+      return @@ v
+    | ( C_TEST_REGISTER_FILE_CONSTANTS , _ ) -> fail @@ error_type
     | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."

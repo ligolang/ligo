@@ -1,0 +1,5 @@
+author: Christian Rinderknecht
+title: 'Factored out a new syntactic category in the CST and beyond: module expressions.
+  This will ease future developments on modules'
+type: internal
+merge_request: '1589'
