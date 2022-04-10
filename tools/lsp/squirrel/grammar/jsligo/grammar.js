@@ -57,7 +57,11 @@ module.exports = grammar({
       $.match_expr
     ),
 
-    assignment_operator: $ => prec.right(2, seq(field("lhs", $._expr_statement), choice("=", "*=", "/=", "%=", "+=", "-="), field("rhs", $._expr_statement))),
+    assignment_operator: $ => prec.right(2, 
+      seq(field("lhs", $._expr_statement), 
+      field("op", choice("=", "*=", "/=", "%=", "+=", "-=")), 
+      field("rhs", $._expr_statement))
+    ),
 
     type_as_annotation: $ => seq(field("subject", $._expr_statement), "as", field("type", $._core_type)),
 
