@@ -73,7 +73,7 @@ module.exports = grammar({
       prec.left(13, seq(field("left", $._expr_statement), field("op", choice("*", "/", "%")), field("right", $._expr_statement)))
     ),
 
-    unary_operator: $ => prec.right(15, field("negate", seq(choice("-", "!"), field("arg", $._expr_statement)))),
+    unary_operator: $ => prec.right(15, seq(field("negate", choice("-", "!")), field("arg", $._expr_statement))),
 
     call_expr: $ => prec.right(2, seq(field("f", $.lambda), $.arguments)),
 
