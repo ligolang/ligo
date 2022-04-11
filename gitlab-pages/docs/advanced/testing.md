@@ -24,13 +24,13 @@ the third one was already explained
 
 ### Testing with `ligo run test`
 
-The sub-command `ligo run test` can be used to test a contract using LIGO.
+The command `ligo run test` can be used to test a contract using LIGO.
 
 > ⚠️ Please keep in mind that this command is still BETA, and that
 > there are features that are work in progress and are subject to
 > change. No real test procedure should rely on this command alone.
 
-When running the `run test` sub-command, LIGO code has access to an
+When running the `ligo run test` command, LIGO code has access to an
 additional `Test` module. This module provides ways of originating
 contracts and executing transactions, as well as additional helper
 functions that allow to control different parameters of the Tezos
