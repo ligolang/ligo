@@ -158,7 +158,7 @@ function HomePage() {
                   Try Online
                 </a>
               </li>
-              <li className="secondary">
+              <li className="primary">
                 <a href="https://gitpod.io/#https://gitlab.com/ligolang/template-ligo" target="_blank">
                   Try on Gitpod
                 </a>
@@ -166,6 +166,11 @@ function HomePage() {
               <li className="secondary">
                 <a href={useBaseUrl('/docs/intro/installation')}>
                   Install
+                </a>
+              </li>
+              <li className="secondary">
+                <a href={useBaseUrl('https://academy.ligolang.org/')}>
+                  Learn on Academy
                 </a>
               </li>
           </ul>
