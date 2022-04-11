@@ -475,10 +475,9 @@ let closure_example = (i: int): int => {
 </Syntax>
 
 
+## Recursive function
 
 <Syntax syntax="pascaligo">
-
-## Recursive function
 
 LIGO functions are not recursive by default and the user needs to
 specify that the function is recursive.
@@ -500,8 +499,6 @@ recursive function fibo (const n : int; const n_1 : int; const n_0 : int) : int 
 </Syntax>
 <Syntax syntax="cameligo">
 
-## Recursive function
-
 LIGO functions are not recursive by default, the user need to specify
 that the function is recursive.
 
@@ -521,8 +518,6 @@ let rec fibo (n, n_1, n_0 : int * int * int) : int =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-## Recursive function
-
 LIGO functions are not recursive by default, the user need to specify
 that the function is recursive.
 
@@ -538,5 +533,29 @@ let rec sum = ((n, acc) : (int, int)): int =>
 
 let rec fibo = ((n, n_1, n_0) : (int, int, int)): int =>
     if (n < 2) { n_1; } else { fibo ((n-1, n_1 + n_0, n_1)); };
+```
+</Syntax>
+<Syntax syntax="jsligo">
+
+At the moment, recursive function are limited to one, e.g., a tuple,
+parameter and recursion is limited to __tail recursion__, that is, the
+recursive call should be the last expression of the function.
+
+```jsligo group=d
+let sum = ([n, acc] : [int, int]): int => {
+  if (n < 1) { 
+    return acc; 
+  } else { 
+    return sum ([n-1, acc + n]); 
+  };
+};
+
+let fibo = ([n, n_1, n_0] : [int, int, int]): int => {
+  if (n < 2) {
+    return  n_1; 
+  } else { 
+    return fibo ([n-1, n_1 + n_0, n_1]); 
+  };
+};
 ```
 </Syntax>

@@ -84,7 +84,7 @@ const FEATURES = [
     image: 'img/syntax-agnostic.svg',
     title: 'Polyglot',
     content:
-      'Code in your language. Write PascaLIGO, CameLIGO, ReasonLIGO or add your own syntax.'
+      'Code in your language. Write PascaLIGO, CameLIGO, ReasonLIGO, JsLIGO or add your own syntax.'
   },
   {
     image: 'img/easy-integration.svg',

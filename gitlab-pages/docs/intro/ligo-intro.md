@@ -45,8 +45,10 @@ LIGO currently offers three syntaxes:
     syntax that allows you to write in a functional style.
 
   - **ReasonLIGO**, a [ReasonML](https://reasonml.github.io/) inspired syntax
-    that builds on the strong points of OCaml. It aims to be familiar to those
-    coming from JavaScript.
+    that builds on the strong points of OCaml.
+  
+  - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to be familiar 
+    to those coming from TypeScript/JavaScript.
 
 Let's define some LIGO contract in the three flavours above. Do
 not worry if it is a little confusing at first; we will explain all

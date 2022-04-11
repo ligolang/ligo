@@ -8,36 +8,35 @@ import Link from '@docusaurus/Link';
 
 ## Testing LIGO code
 
-The LIGO command-line interpreter provides sub-commands to
-directly test your LIGO code. The three main sub-commands we currently
+The LIGO command-line interpreter provides commands to
+directly test your LIGO code. The three main commands we currently
 support are:
 
-* `test`
+* `ligo run test`
 
-* `interpret`
+* `ligo run interpret`
 
-* `dry-run`
+* `ligo run dry-run`
 
 We will show how to use the first two, while an example on how to use
 the third one was already explained
 [here](first-contract.md#dry-running-a-contract).
 
-### Testing with `test`
+### Testing with `ligo run test`
 
-The sub-command `test` can be used to test a contract using LIGO.
+The command `ligo run test` can be used to test a contract using LIGO.
 
-> ⚠️ Please keep in mind that this sub-command is still BETA, and that
+> ⚠️ Please keep in mind that this command is still BETA, and that
 > there are features that are work in progress and are subject to
-> change. No real test procedure should rely on this sub-command
-> alone.
+> change. No real test procedure should rely on this command alone.
 
-When running the `test` sub-command, LIGO code has access to an
+When running the `ligo run test` command, LIGO code has access to an
 additional `Test` module. This module provides ways of originating
 contracts and executing transactions, as well as additional helper
 functions that allow to control different parameters of the Tezos
 testing library.
 
-> Note:  the LIGO interpreter uses the [same library that Tezos internally uses for testing](https://gitlab.com/tezos/tezos/-/tree/master/src/proto_alpha/lib_protocol/test/helpers).
+> Note: The LIGO interpreter uses the [same library that Tezos internally uses for testing](https://gitlab.com/tezos/tezos/-/tree/master/src/proto_alpha/lib_protocol/test/helpers).
 
 The function `Test.originate` allows to deploy a contract in the
 testing environment. It takes a contract, which is represented as a
@@ -671,9 +670,9 @@ You can now execute the test:
 
 </Syntax>
 
-### Testing with `interpret`
+### Testing with `ligo run interpret`
 
-The sub-command `interpret` allows to interpret an expression in a
+The command `ligo run interpret` allows to interpret an expression in a
 context initialised by a source file. The interpretation is done using
 Michelson's interpreter.
 
