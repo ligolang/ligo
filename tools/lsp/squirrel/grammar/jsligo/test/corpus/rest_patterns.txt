@@ -30,17 +30,15 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (array_literal (Name) (Name))
-          (type_annotation
-            (type_tuple (TypeName) (TypeName)))))
+      (parameter
+        (array_literal (Name) (Name))
+        (type_annotation
+          (type_tuple (TypeName) (TypeName))))
       (type_annotation (TypeName))
       (body
         (paren_expr
           (object_literal
-            (property
-              (property_spread (Name)))
+            (property (Name))
             (property
               (property_name (Name))
               (binary_operator

@@ -11,11 +11,10 @@ let michelson_add = (n: [nat, nat]): nat =>
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (Name)
-          (type_annotation
-            (type_tuple (TypeName) (TypeName)))))
+      (parameter
+        (Name)
+        (type_annotation
+          (type_tuple (TypeName) (TypeName))))
       (type_annotation (TypeName))
       (body
         (call_expr

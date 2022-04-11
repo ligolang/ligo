@@ -14,11 +14,10 @@ let weird_length = (v : list<int>) : int =>
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (Name)
-          (type_annotation
-            (type_ctor_app (TypeName) (TypeName)))))
+      (parameter
+        (Name)
+        (type_annotation
+          (type_ctor_app (TypeName) (TypeName))))
       (type_annotation (TypeName))
       (body
         (match_expr
@@ -60,10 +59,9 @@ let int_of_color = (c : color) : int =>
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (Name)
-          (type_annotation (TypeName))))
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
       (type_annotation (TypeName))
       (body
         (match_expr

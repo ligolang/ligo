@@ -137,10 +137,9 @@ let bar = (b : int) : int => {
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (Name)
-          (type_annotation (TypeName))))
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
       (type_annotation
         (TypeName))
           (body
@@ -166,10 +165,9 @@ const bar = (b : int) : int => {
   (const_decl
     (var_pattern (Name))
     (fun_expr
-      (parameters
-        (parameter
-          (Name)
-          (type_annotation (TypeName))))
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
       (type_annotation
         (TypeName))
           (body

@@ -119,12 +119,11 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
   (let_decl
     (var_pattern (Name))
       (fun_expr
-      (parameters
         (parameter
           (array_literal
             (Name)
             (wildcard))
-          (type_annotation (TypeName))))
+          (type_annotation (TypeName)))
       (type_annotation (TypeName))
       (body (Name)))))
 

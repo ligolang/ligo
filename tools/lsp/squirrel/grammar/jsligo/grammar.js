@@ -178,8 +178,8 @@ module.exports = grammar({
     array_item_rest_expr: $ => seq("...", field("expr", $._expr)),
 
     fun_expr: $ => choice(
-      seq(common.par($.parameters), field("type", optional($.type_annotation)), "=>", field("body", $.body)),
-      seq("(", ")", field("type", optional($.type_annotation)), "=>", field("body", $.body)),
+      seq(common.par($._parameters), optional(field("type", $.type_annotation)), "=>", field("body", $.body)),
+      seq("(", ")", optional(field("type", $.type_annotation)), "=>", field("body", $.body)),
       seq(field("argument", $.Name), "=>", field("body", $.body))
     ),
 
@@ -189,7 +189,7 @@ module.exports = grammar({
 
     type_annotation: $ => seq(":", field("type", $._type_expr)),
 
-    parameters: $ => common.sepBy1(",", field("argument", $.parameter)),
+    _parameters: $ => common.sepBy1(",", field("argument", $.parameter)),
 
     parameter: $ => seq(field("expr", $._expr), field("type", $.type_annotation)),
 
@@ -199,9 +199,9 @@ module.exports = grammar({
 
     object_literal: $ => common.block(common.sepBy(",", $.property)),
 
-    property: $ => choice($.Name, seq(field("property_name", $.property_name), ":", field("expr", $._expr)), $.property_spread),
+    property: $ => choice($.Name, seq(field("property_name", $.property_name), ":", field("expr", $._expr)), $._property_spread),
 
-    property_spread: $ => seq("...", field("expr", $._expr_statement)), 
+    _property_spread: $ => seq("...", field("spread_expr", $._expr_statement)), 
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
