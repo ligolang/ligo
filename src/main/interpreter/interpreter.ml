@@ -122,14 +122,6 @@ let rec apply_comparison :
     return @@ v_bool (not b)
   | (comp, [(V_Ct _ as v1); (V_Ct _ as v2)]) ->
       compare_constants comp v1 v2 loc calltrace
-  | (comp, [V_Ligo (a1, b1); V_Ligo (a2, b2)]) ->
-      let* x =
-        match comp with
-        | C_EQ  -> return String.(a1 = a2 && b1 = b2)
-        | C_NEQ -> return String.(a1 = a2 && b1 = b2)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
-      in
-      return @@ v_bool x
   | (comp, [V_List   _ as xs; V_List   _ as ys])
   | (comp, [V_Set    _ as xs; V_Set    _ as ys])
   | (comp, [V_Map    _ as xs; V_Map    _ as ys])
@@ -1090,9 +1082,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo body (term.location :: calltrace) f_env''
-          | V_Ligo (_, code) ->
-            let>> ctxt = Get_state () in
-            return @@ Michelson_backend.parse_and_run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
             let>> ctxt = Get_state () in
             return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
@@ -1235,9 +1224,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
-      | E_literal (Literal_string x) when is_t_arrow (get_type term) ->
-        let exp_as_string = Ligo_string.extract x in
-        return @@ V_Ligo (language , exp_as_string)
       | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
 

@@ -284,8 +284,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | ((Michelson_or    | Option   | Chest_opening_result | Sapling_transaction |
         Test_exec_error | Ticket   | Michelson_program    | Sapling_state       |
         Contract        | Map      | Big_map              | Typed_address       |
-        Michelson_pair  | Set      | Test_exec_result     | Account             | 
-        Time            | Mutation | Failure              | List), []) 
+        Michelson_pair  | Set      | Test_exec_result     | Mutation            |
+        List), []) 
         -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
@@ -299,8 +299,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
       Never        | Chest_key | Test_exec_result     |
-      Account      | Time      | Typed_address        |
-      Mutation     | Bytes     | Failure              |
+      Typed_address| Mutation  | Bytes                |
       List), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum { content = m ; layout } -> (
