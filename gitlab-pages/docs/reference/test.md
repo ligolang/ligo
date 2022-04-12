@@ -793,6 +793,21 @@ returns an optional string indicating the filename where the mutation
 was saved, or `None` if there was an error.
 
 <SyntaxTitle syntax="pascaligo">
+val random&lt;a&gt; : unit -> a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val random : unit -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let random : unit => 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let random : (u: unit) => 'a
+</SyntaxTitle>
+
+This function creates a random value for a chosen type.
+
+<SyntaxTitle syntax="pascaligo">
 val cast_address &lt;param, storage&gt; : address -> typed_address (param, storage)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
