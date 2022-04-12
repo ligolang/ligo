@@ -2842,3 +2842,22 @@ Hint: You might want to add a type annotation.
 { parameter unit ;
   storage (or (nat %a) (nat %b)) ;
   code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
+
+(* check compiling many (more than 10) views *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "views_many.ligo" ] ;
+  [%expect{|
+{ parameter unit ;
+  storage nat ;
+  code { CDR ; NIL operation ; PAIR } ;
+  view "view_11" unit int { CDR ; PUSH int 11 ; ADD } ;
+  view "view_10" unit int { CDR ; PUSH int 10 ; ADD } ;
+  view "view_9" unit int { CDR ; PUSH int 9 ; ADD } ;
+  view "view_8" unit int { CDR ; PUSH int 8 ; ADD } ;
+  view "view_7" unit int { CDR ; PUSH int 7 ; ADD } ;
+  view "view_6" unit int { CDR ; PUSH int 6 ; ADD } ;
+  view "view_5" unit int { CDR ; PUSH int 5 ; ADD } ;
+  view "view_4" unit int { CDR ; PUSH int 4 ; ADD } ;
+  view "view_3" unit int { CDR ; PUSH int 3 ; ADD } ;
+  view "view_2" unit int { CDR ; PUSH int 2 ; ADD } ;
+  view "view_1" unit int { CDR ; PUSH int 1 ; ADD } } |}]

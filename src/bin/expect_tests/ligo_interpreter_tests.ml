@@ -692,6 +692,19 @@ let%expect_test _ =
     95000000000mutez
     16n |}]
 
+
+let%expect_test _ =
+  run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
+     16 |       | None -> ()
+     17 |       | Some x -> assert false
+     18 | end
+
+    Failed assertion
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 29, characters 2-25 |}]
+
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 

@@ -49,7 +49,9 @@ let kv_list_of_record_or_tuple ~layout record_t_content record =
   match layout with
   | L_tree -> List.map ~f:snd exps
   | L_comb -> (
-    let types = LMap.to_kv_list record_t_content in
+    let types = if (is_tuple_lmap record)
+                then tuple_of_record record_t_content
+                else LMap.to_kv_list record_t_content in
     let te = List.map ~f:(fun ((label_t,t),(label_e,e)) ->
       assert (Compare.label label_t label_e = 0) ; (*TODO TEST*)
       (t,e)) (List.zip_exn types exps) in
