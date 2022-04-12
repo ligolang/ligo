@@ -4,7 +4,7 @@ module.exports = grammar({
   name: 'JsLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, $.automatic_semicolon],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, /\s/],
 
   conflicts: $ => [
