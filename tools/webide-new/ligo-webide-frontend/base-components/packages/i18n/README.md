@@ -1,1 +1,0 @@
-# `@obsidians/i18n`

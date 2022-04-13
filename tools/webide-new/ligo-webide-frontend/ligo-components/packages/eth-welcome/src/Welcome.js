@@ -10,7 +10,6 @@ import { ListItemDocker, ListItemDockerImage } from '@obsidians/docker'
 
 import { instanceChannel } from '@obsidians/eth-network'
 import compiler from '@obsidians/eth-compiler'
-import { t } from '@obsidians/i18n'
 import platform from '@obsidians/platform'
 import checkDependencies from './checkDependencies'
 import PropTypes from 'prop-types'
@@ -123,7 +122,7 @@ export default class Welcome extends PureComponent {
       <div className='d-flex h-100 overflow-auto'>
         <div className='jumbotron jumbotron-fluid'>
           <div className='container'>
-            <h4 className='display-4'>{t('welcome.welcome', { projectName: process.env.PROJECT_NAME })}</h4>
+            <h4 className='display-4'>{`Welcome to ${process.env.PROJECT_NAME}`}</h4>
             { this.props.enableTutorial ? this.tutorialBar() : null }
             <div className='my-3' />
 
@@ -153,7 +152,7 @@ export default class Welcome extends PureComponent {
               style={{ width: 'fit-content' }}
               onClick={this.props.onGetStarted}
             >
-              {this.state.ready ? t('welcome.start') : t('welcome.skip')}
+              {this.state.ready ? "Get Started" : "Skip"}
             </Button>
           </div>
         </div>

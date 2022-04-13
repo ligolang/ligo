@@ -17,7 +17,6 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/i18n": "^0.3.0",
     "lodash": "^4.17.20",
     "react-dnd": "^14.0.4",
     "react-dnd-html5-backend": "^14.0.2",
