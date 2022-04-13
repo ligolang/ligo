@@ -1,0 +1,205 @@
+{
+  "name": "black-ide",
+  "description": "Graphic IDE for Ethereum smart contract development",
+  "version": "0.14.8",
+  "author": {
+    "name": "Phil Li",
+    "email": "phil.li@obsidians.io",
+    "url": "https://obsidians.io"
+  },
+  "license": "GPL-3.0",
+  "private": true,
+  "homepage": "./",
+  "main": "build/main/index.js",
+  "engines": {
+    "node": "16"
+  },
+  "scripts": {
+    "install": "electron-rebuild",
+    "dev:local": "REACT_APP_IPC_SERVER_URL=http://localhost:7001 react-app-rewired start",
+    "dev:react": "react-app-rewired start",
+    "build:react": "react-app-rewired build",
+    "build:web": "PUBLIC_URL=/ CDN=true yarn build:react",
+    "dev:main": "webpack --config webpack.main.config.js && electron ./dev/index.js",
+    "build:main": "cross-env NODE_ENV=production webpack --config webpack.main.prod.config.js",
+    "prepare:main": "electron-rebuild && electron-builder install-app-deps",
+    "dev": "concurrently \"yarn dev:react\" \"wait-on http://localhost:3000 && yarn dev:main\"",
+    "build": "yarn build:react && yarn build:main",
+    "dist": "yarn build && electron-builder -c.extraMetadata.main=build/main/index.js",
+    "lint": "tslint '{src,test,mocks}/**/*.{ts,tsx}' --project ./tsconfig.json",
+    "test": "jest '(\\/test\\/(?!e2e/)).*'",
+    "pretest:e2e": "yarn build",
+    "test:e2e": "jest '(\\/test\\/e2e/).*'",
+    "pack": "yarn build && electron-builder --dir",
+    "eject": "react-scripts eject",
+    "prepare": "husky install",
+    "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json"
+  },
+  "dependencies": {
+    "crypto-browserify": "^3.12.0",
+    "fs-extra": "^9.1.0",
+    "keytar": "7.7.0",
+    "monaco-ace-tokenizer": "^0.2.1",
+    "node-pty": "0.10.0",
+    "prettier": "^2.5.0",
+    "prettier-plugin-solidity": "1.0.0-beta.10",
+    "socket.io-client": "^2.4.0",
+    "solhint": "ObsidianLabs/solhint#obsidians",
+    "solium": "ObsidianLabs/Ethlint",
+    "solparse-exp-jb": "ObsidianLabs/solparse",
+    "strip-ansi": "^6.0.0",
+    "trash": "^7.0.0"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.16.3",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-syntax-jsx": "^7.16.7",
+    "@babel/polyfill": "^7.6.0",
+    "@babel/preset-typescript": "^7.6.0",
+    "@commitlint/cli": "^16.0.2",
+    "@commitlint/config-conventional": "^16.0.0",
+    "@fortawesome/fontawesome-pro": "^5.12.0",
+    "@hot-loader/react-dom": "^16.9.0",
+    "@types/jest": "24.0.15",
+    "@types/node": "12.6.3",
+    "@types/react": "16.8.23",
+    "@types/react-dom": "16.8.4",
+    "aws-sdk": "^2.830.0",
+    "babel-plugin-import": "^1.12.0",
+    "bootstrap": "^4.6.0",
+    "bundle-stats-webpack-plugin": "^3.2.4",
+    "concurrently": "^4.1.2",
+    "copy-webpack-plugin": "^5.1.1",
+    "cross-env": "^5.2.0",
+    "customize-cra": "^1.0.0",
+    "default-shell": "^1.0.1",
+    "dotenv": "^8.0.0",
+    "electron": "^16.0.2",
+    "electron-builder": "^22.14.5",
+    "electron-is-dev": "^2.0.0",
+    "electron-rebuild": "^3.2.5",
+    "electron-updater": "^4.6.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-react-app": "^6.0.0",
+    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.27.1",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "husky": "^7.0.4",
+    "immutable": "^4.0.0-rc.12",
+    "import-sort-cli": "^6.0.0",
+    "import-sort-parser-babylon": "^6.0.0",
+    "jsbi": "^3.1.1",
+    "lint-staged": "^12.1.7",
+    "loadjs": "^4.2.0",
+    "lodash": "^4.17.14",
+    "moment": "^2.29.1",
+    "monaco-editor": "^0.20.0",
+    "monaco-editor-webpack-plugin": "^1.9.0",
+    "native-ext-loader": "^2.3.0",
+    "node-fetch": "^2.6.1",
+    "node-sass": "npm:sass",
+    "react": "^17.0.1",
+    "react-app-rewired": "^2.1.8",
+    "react-dom": "^17.0.1",
+    "react-router": "^5.2.0",
+    "react-router-cache-route": "^1.11.0",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "4.0.3",
+    "shell-path": "^2.1.0",
+    "source-map-loader": "^0.2.4",
+    "stylelint": "^14.2.0",
+    "stylelint-config-recommended": "^6.0.0",
+    "stylelint-config-standard": "^24.0.0",
+    "typescript": "3.7.2",
+    "wait-on": "^3.3.0",
+    "webpack-bundle-analyzer": "^4.5.0",
+    "webpack-cli": "^3.3.9",
+    "webpack-merge": "^4.2.2"
+  },
+  "resolutions": {
+    "@solidity-parser/parser": "^0.12.1",
+    "node-abi": "3.5.0",
+    "node-sass": "npm:sass",
+    "sass-loader": "10.2.0",
+    "react-highlight": "^0.13.0",
+    "prettier": "2.5.0",
+    "react-error-overlay": "6.0.9"
+  },
+  "workspaces": [
+    "../electron-components/packages/*",
+    "../eth-components/packages/*",
+    "../bsc-components/packages/*"
+  ],
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not ie <= 11",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "productName": "Black IDE",
+    "artifactName": "Black-IDE-${version}.${ext}",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://www.obsidians.io"
+      }
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "mac": {
+      "appId": "com.obsidians.ethereumstudio",
+      "category": "developer-tools",
+      "target": {
+        "target": "default",
+        "arch": [
+          "x64"
+        ]
+      }
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 160,
+          "y": 220
+        },
+        {
+          "x": 380,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "icon": "./assets/icon.icns",
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Development"
+    },
+    "extends": null
+  }
+}
