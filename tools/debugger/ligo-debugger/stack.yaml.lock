@@ -248,6 +248,20 @@ packages:
       sha256: 91d6f851595aed111288502134412c617e6a3ecae48f4281ca313daabf80adc9
   original:
     hackage: OddWord-1.0.2.0
+- completed:
+    hackage: nyan-interpolation-core-0.9@sha256:9d7591ca9183fbc142a3aba24b3ff505263aced0b2a36ae2ff143eb6408a9b3b,5552
+    pantry-tree:
+      size: 1571
+      sha256: 5762c5e6a55a64b6912178fa083b3c8b7a19cf25be5b7889108416b1eb8e6edb
+  original:
+    hackage: nyan-interpolation-core-0.9
+- completed:
+    hackage: nyan-interpolation-0.9@sha256:8cf238be4c04746e4e9eabb34001c990c23e5837a19eb8652c584e57e92ecb41,3797
+    pantry-tree:
+      size: 661
+      sha256: 1ba3d0b9c1dd65cd6c8a3e10dc31261c70366d5822281176b84617b6c7b7bbc1
+  original:
+    hackage: nyan-interpolation-0.9
 snapshots:
 - completed:
     size: 587546

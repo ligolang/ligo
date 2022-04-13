@@ -49,3 +49,5 @@ extra-deps:
 - NaCl-0.0.5.0
 - libsodium-1.0.18.2
 - OddWord-1.0.2.0
+- nyan-interpolation-core-0.9
+- nyan-interpolation-0.9

@@ -2,13 +2,15 @@ module Language.LIGO.Debugger.Handlers
   ( LIGO
   ) where
 
+import Debug qualified
+
 import Control.Concurrent.STM (writeTChan)
 import Control.Monad.Except (MonadError (..))
 import Data.IntMap qualified as IntMap
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Text.IO.Utf8 qualified as Utf8
-import Fmt (fmt, pretty, (+|), (|+))
+import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), SourceLocation (..), SourceMapper (..), SourceType (..),
@@ -29,6 +31,7 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.Directory (doesFileExist)
 import System.FilePath (takeFileName, (<.>), (</>))
+import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.Michelson (dummyMapper)
 import Language.LIGO.Debugger.Types
@@ -56,7 +59,7 @@ instance HasSpecificMessages LIGO where
       Right st -> do
         lift $ lift do
           logMessage "Launching contract with arguments\n"
-          logMessage $ show argumentsLigoLaunchRequest <> "\n"
+          logMessage $ Debug.show argumentsLigoLaunchRequest <> "\n"
         put (Just st)
         pushMessage $ DAPResponse $ LaunchResponse DAP.defaultLaunchResponse
           { DAP.successLaunchResponse = True
@@ -95,7 +98,7 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
         , successLigoInitializeLoggerResponse = True
         }
       pure $ Right ()
-  logMessage $ fmt $ "Initializing logger for " +| file |+ " finished: " +| (show result :: String) |+ ""
+  logMessage [int||Initializing logger for #{file} finished: #s{result}|]
 
 initDummyDebuggerSession
   :: (String -> RIO LIGO ())
@@ -116,7 +119,7 @@ initDummyDebuggerSession logger LigoLaunchRequestArguments {..} = do
   uContract <- liftIO (Utf8.readFile program) <&> parseExpandContract src >>=
     either (throwError . DAP.mkErrorMessage "Could not parse contract" . pretty) pure
 
-  forM_ (U.contractCode uContract) $ lift . logger . show
+  forM_ (U.contractCode uContract) $ lift . logger . pretty
 
   uParam <- P.parseExpandValue src (toText paramT) &
     either (throwError . DAP.mkErrorMessage "Could not parse parameter" . pretty) pure
@@ -140,7 +143,7 @@ initDummyDebuggerSession logger LigoLaunchRequestArguments {..} = do
     -- TODO
     let indexedContract = T.mapContractCode (annotateInstrWith $ map InstrNo $ IntMap.keys $ _smLocs dummyMapper) contract
 
-    lift $ logger $ show $ cCode indexedContract
+    lift $ logger $ pretty $ cCode indexedContract
 
     epcRes <- T.mkEntrypointCall entrypoint (cParamNotes contract) &
       maybe (throwError $ DAP.mkErrorMessage "Entrypoint not found" $ pretty entrypoint) pure

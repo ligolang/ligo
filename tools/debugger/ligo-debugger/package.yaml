@@ -30,6 +30,7 @@ default-extensions:
   - MultiWayIf
   - NamedFieldPuns
   - OverloadedStrings
+  - PackageImports
   - QuantifiedConstraints
   - QuasiQuotes
   - PatternSynonyms
@@ -64,16 +65,23 @@ ghc-options:
 library:
   dependencies:
     - aeson
+    - bytestring
     - containers
     - directory
     - data-default
     - filepath
     - fmt
+    - lens
     - morley
     - morley-debugger
+    - morley-prelude
     - mtl
+    - nyan-interpolation
+    - process
+    - scientific
     - stm
     - text
+    - unliftio
     - vector
     - with-utf8
 
@@ -103,3 +111,28 @@ executables:
       - -eventlog
       - -rtsopts
       - '"-with-rtsopts=-N -A64m -AL256m"'
+
+tests:
+  ligo-debugger-test:
+    main: Main.hs
+
+    dependencies:
+      - filepath
+      - fmt
+      - ligo-debugger
+      - morley
+      - morley-debugger
+      - tasty
+      - HUnit
+      - tasty-hunit-compat
+
+    source-dirs:
+      - test
+
+    ghc-options:
+      - -threaded
+      - -eventlog
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'
+
+    build-tools: tasty-discover:tasty-discover
