@@ -1,0 +1,64 @@
+{
+  "name": "@obsidians/eth-node",
+  "version": "0.3.0",
+  "description": "Ethereum node",
+  "author": "Phil <qft.gtr@gmail.com>",
+  "license": "GPL-3.0",
+  "source": "src/index.js",
+  "main": "main/index.js",
+  "browser": "dist/index.es.js",
+  "files": [
+    "dist",
+    "main"
+  ],
+  "scripts": {
+    "start": "rollup -c -w",
+    "build": "rollup -c",
+    "prepare": "yarn build"
+  },
+  "dependencies": {
+    "@obsidians/eth-network": "^0.3.0",
+    "@obsidians/notification": "^0.3.0",
+    "@obsidians/terminal": "^0.3.0",
+    "@obsidians/ui-components": "^0.3.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-external-helpers": "^7.7.4",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/plugin-proposal-function-bind": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.13.8",
+    "@babel/preset-env": "^7.7.5",
+    "@babel/preset-react": "^7.7.4",
+    "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-url": "^4.0.2",
+    "@svgr/rollup": "^5.2.0",
+    "babel-eslint": "^10.1.0",
+    "cross-env": "^6.0.3",
+    "rollup": "^2.37.1",
+    "rollup-plugin-peer-deps-external": "^2.2.2",
+    "rollup-plugin-postcss": "^2.3.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "react-router-cache-route": "*"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

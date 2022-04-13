@@ -1,0 +1,41 @@
+name: Danger CI
+on:
+  pull_request:
+
+env:
+  share_components: electron-components
+  owner: ObsidianLabs
+
+jobs:
+  run-danger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ${{ env.share_components }}
+        uses: actions/checkout@master
+        with:
+          repository: ${{ env.owner }}/${{ env.share_components }}
+          path: ./${{ env.share_components }}
+      
+      - name: Checkout Self
+        uses: actions/checkout@master
+        with:
+          path: ./eth-components
+        
+      - name: Use Node.js 16
+        uses: actions/setup-node@master
+        with:
+          node-version: 16
+
+      - name: Install ${{ env.share_components }} deps
+        working-directory: ./${{ env.share_components }}
+        run: yarn
+              
+      - name: Install Self deps
+        working-directory: ./eth-components
+        run: yarn
+        
+      - name: Run Danger CI
+        working-directory: ./eth-components
+        run: yarn danger ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
