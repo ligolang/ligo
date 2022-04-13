@@ -448,6 +448,10 @@ let register_constant = (constant : michelson_program) => string
 </SyntaxTitle>
 Registers a global constant `constant`, returns its hash as a string.
 
+See the [documentation for global
+constants](../advanced/global-constants#global-constants-in-the-testing-framework)
+for an example of usage.
+
 <SyntaxTitle syntax="pascaligo">
 val constant_to_michelson_program : string -> michelson_program
 </SyntaxTitle>

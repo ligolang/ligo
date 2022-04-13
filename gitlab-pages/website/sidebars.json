@@ -29,7 +29,8 @@
       "advanced/inline",
       "advanced/interop",
       "advanced/embedded-michelson",
-      "advanced/package-management"
+      "advanced/package-management",
+      "advanced/global-constants"
     ],
     "Reference": [
       "api/cli-commands",
