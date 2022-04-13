@@ -87,3 +87,38 @@ let x : int = int(List.List.List.length(x))
           (lambda
             (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
             (arguments (Name)))))))
+
+=========
+automatic semicolon insertion
+=========
+
+namespace EURO {
+    export type t = nat;
+}
+
+import US_DOLLAR = EURO
+
+type storage = EURO.t
+let uno : storage = EURO.one
+
+let foo = () : int => 1
+
+---
+
+(source_file
+  (namespace_statement (ModuleName) 
+    (export_statement
+      (type_decl (TypeName) (TypeName))))
+  (import_statement (ModuleName) (ModuleName))
+  (type_decl
+    (TypeName)
+    (module_access_t (ModuleName) (Name)))
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (module_access (ModuleName) (FieldName)))
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (type_annotation (TypeName))
+      (body (Int)))))

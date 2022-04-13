@@ -49,8 +49,6 @@ static bool scan_automatic_semicolon(TSLexer *lexer, const bool *valid_symbols){
 
   skip(lexer);
 
-  // if (!scan_whitespace_and_comments(lexer)) return false;
-
   switch (lexer->lookahead) {
   case ',':
   case '.':
@@ -68,20 +66,6 @@ static bool scan_automatic_semicolon(TSLexer *lexer, const bool *valid_symbols){
   case ':':
     return false;
 
-  case '{':
-    return false;
-    // if (valid_symbols[FUNCTION_SIGNATURE_AUTOMATIC_SEMICOLON]) return false;
-    break;
-
-    // Don't insert a semicolon before a '[' or '(', unless we're parsing
-    // a type. Detect whether we're parsing a type or an expression using
-    // the validity of a binary operator token.
-  case '(':
-  case '[':
-    return false;
-    // if (valid_symbols[BINARY_OPERATORS]) return false;
-    break;
-
     // Insert a semicolon before `--` and `++`, but not before binary `+` or `-`.
   case '+':
     skip(lexer);
@@ -95,23 +79,6 @@ static bool scan_automatic_semicolon(TSLexer *lexer, const bool *valid_symbols){
     skip(lexer);
     return lexer->lookahead != '=';
 
-    // Don't insert a semicolon before `in` or `instanceof`, but do insert one
-    // before an identifier.
-  // case 'i':
-  //   skip(lexer);
-
-  //   if (lexer->lookahead != 'n') return true;
-  //   skip(lexer);
-
-  //   if (!iswalpha(lexer->lookahead)) return false;
-
-  //   for (unsigned i = 0; i < 8; i++) {
-  //     if (lexer->lookahead != "stanceof"[i]) return true;
-  //     skip(lexer);
-  //   }
-
-  //   if (!iswalpha(lexer->lookahead)) return false;
-  //   break;
   }
 
   return true;

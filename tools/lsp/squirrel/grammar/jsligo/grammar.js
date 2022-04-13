@@ -20,11 +20,13 @@ module.exports = grammar({
 
     _statement_or_namespace_or_preprocessor: $ => choice($._statement, $.namespace_statement, $.preprocessor),
 
-    namespace_statement: $ => seq(optional("export"), "namespace", field("moduleName", $.ModuleName), 
-    '{',
+    namespace_statement: $ => prec.left(2, seq(
+      optional("export"), "namespace", field("moduleName", $.ModuleName), 
+      '{',
       common.sepEndBy($._semicolon, field("declaration", $._statement_or_namespace_or_preprocessor)), 
-    '}'
-    ),
+      '}',
+      optional($._automatic_semicolon)
+    )),
 
     _statement: $ => prec.right(1, field("statement", choice($._base_statement, $.if_statement))),
 
@@ -178,12 +180,23 @@ module.exports = grammar({
     array_item_rest_expr: $ => seq("...", field("expr", $._expr)),
 
     fun_expr: $ => choice(
-      seq(common.par($._parameters), optional(field("type", $.type_annotation)), "=>", field("body", $.body)),
-      seq("(", ")", optional(field("type", $.type_annotation)), "=>", field("body", $.body)),
-      seq(field("argument", $.Name), "=>", field("body", $.body))
+      seq(
+        common.par($._parameters), 
+        optional(field("type", $.type_annotation)), "=>", 
+        field("body", $.body), 
+      ),
+      seq(
+        "(", ")", 
+        optional(field("type", $.type_annotation)), "=>", 
+        field("body", $.body), 
+      ),
+      seq(
+        field("argument", $.Name), "=>", 
+        field("body", $.body), 
+      )
     ),
 
-    body: $ => prec.right(3, choice(common.block($._statements), $._expr_statement)),
+    body: $ => prec.right(3, choice(seq("{", $._statements, "}", optional($._automatic_semicolon)), $._expr_statement)),
 
     _statements: $ => common.sepEndBy1($._semicolon, $._statement),
 
@@ -195,7 +208,7 @@ module.exports = grammar({
 
     return_statement: $ => prec.left(2, seq("return", field("expr", optional($._expr)))),
 
-    block_statement: $ => common.block($._statements),
+    block_statement: $ => prec.left(2, seq("{", $._statements, "}", optional($._automatic_semicolon))),
 
     object_literal: $ => common.block(common.sepBy(",", $.property)),
 
