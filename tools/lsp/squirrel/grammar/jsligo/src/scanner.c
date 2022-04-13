@@ -147,7 +147,6 @@ bool tree_sitter_JsLigo_external_scanner_scan(
               lexer->result_symbol = is_attribute ? JS_LIGO_ATTRIBUTE : OCAML_COMMENT;
               return true;
             }
-            // automatic SEMI insertion
           } else {
             lexer->advance(lexer, false);
             after_star = false;
