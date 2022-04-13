@@ -1,9 +1,9 @@
 
 ### SYNOPSIS
-ligo compile parameter SOURCE_FILE PARAMETER_EXPRESSION
+ligo run dry-run SOURCE_FILE PARAMETER_EXPRESSION STORAGE_EXPRESSION
 
 ### DESCRIPTION
-This sub-command compiles a parameter for a given contract to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract.
+This sub-command runs a LIGO contract on a given storage and parameter. The context is initialized from a source file where the contract is implemented. The interpretation is done using Michelson's interpreter.
 
 ### FLAGS
 **--amount INT**
@@ -12,26 +12,14 @@ the tezos amount the Michelson interpreter will use for the transaction.
 **--balance INT**
 the balance the Michelson interpreter will use for the contract balance.
 
-**--constants CONSTANTS**
-A list of global constants that will be assumed in the context, separated by ',' (alias: -c)
-
 **--display-format FORMAT**
 the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)
-
-**--file-constants FILE_CONSTANTS**
-A file with a JSON list of strings with Michelson code. Those Michelson values will be registered as global constants in the context.
-
-**--michelson-format CODE_FORMAT**
-format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'.
 
 **--no-warn**
 disable warning messages
 
 **--now TIMESTAMP**
 the NOW value the Michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
-
-**--output-file FILENAME**
-if used, prints the output into the specified file instead of stdout (alias: -o)
 
 **--project-root PATH**
 The path to root of the project.
