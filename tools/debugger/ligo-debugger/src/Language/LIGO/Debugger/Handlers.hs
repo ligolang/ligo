@@ -24,7 +24,7 @@ import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime (parseExpandContract)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.TypeCheck (typeCheckContract, typeVerifyParameter, typeVerifyStorage)
-import Morley.Michelson.Typed (Contract (..), SomeContract (..))
+import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.Directory (doesFileExist)
