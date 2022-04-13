@@ -12,28 +12,28 @@
   "homepage": "./",
   "main": "build/main/index.js",
   "engines": {
-    "node": "16"
+    "node": ">=16"
   },
   "scripts": {
-    "install": "electron-rebuild",
     "dev:local": "REACT_APP_IPC_SERVER_URL=http://localhost:7001 react-app-rewired start",
     "dev:react": "react-app-rewired start",
     "build:react": "react-app-rewired build",
     "build:web": "PUBLIC_URL=/ CDN=true yarn build:react",
-    "dev:main": "webpack --config webpack.main.config.js && electron ./dev/index.js",
     "build:main": "cross-env NODE_ENV=production webpack --config webpack.main.prod.config.js",
-    "prepare:main": "electron-rebuild && electron-builder install-app-deps",
     "dev": "concurrently \"yarn dev:react\" \"wait-on http://localhost:3000 && yarn dev:main\"",
     "build": "yarn build:react && yarn build:main",
-    "dist": "yarn build && electron-builder -c.extraMetadata.main=build/main/index.js",
     "lint": "tslint '{src,test,mocks}/**/*.{ts,tsx}' --project ./tsconfig.json",
     "test": "jest '(\\/test\\/(?!e2e/)).*'",
     "pretest:e2e": "yarn build",
     "test:e2e": "jest '(\\/test\\/e2e/).*'",
-    "pack": "yarn build && electron-builder --dir",
     "eject": "react-scripts eject",
-    "prepare": "husky install",
-    "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json"
+    "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json",
+    "_install": "electron-rebuild",
+    "_dev:main": "webpack --config webpack.main.config.js && electron ./dev/index.js",
+    "_prepare:main": "electron-rebuild && electron-builder install-app-deps",
+    "_dist": "yarn build && electron-builder -c.extraMetadata.main=build/main/index.js",
+    "_pack": "yarn build && electron-builder --dir",
+    "_prepare": "husky install"
   },
   "dependencies": {
     "crypto-browserify": "^3.12.0",
@@ -59,7 +59,7 @@
     "@babel/preset-typescript": "^7.6.0",
     "@commitlint/cli": "^16.0.2",
     "@commitlint/config-conventional": "^16.0.0",
-    "@fortawesome/fontawesome-pro": "^5.12.0",
+    "@fortawesome/fontawesome-free": "^5.12.0",
     "@hot-loader/react-dom": "^16.9.0",
     "@types/jest": "24.0.15",
     "@types/node": "12.6.3",
@@ -130,9 +130,8 @@
     "react-error-overlay": "6.0.9"
   },
   "workspaces": [
-    "../electron-components/packages/*",
-    "../eth-components/packages/*",
-    "../bsc-components/packages/*"
+    "../base-components/packages/*",
+    "../ligo-components/packages/*"
   ],
   "browserslist": {
     "production": [

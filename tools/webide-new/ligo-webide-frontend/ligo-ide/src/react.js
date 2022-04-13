@@ -20,7 +20,7 @@ if (!process.env.CDN) {
   import('./scss/fonts/open_sans/open_sans.css')
   import('./scss/fonts/hack/hack.css')
   import('./scss/fonts/fira/fira_code.css')
-  import('@fortawesome/fontawesome-pro/js/all')
+  import('@fortawesome/fontawesome-free/js/all')
 }
 
 document.title = process.env.PROJECT_NAME

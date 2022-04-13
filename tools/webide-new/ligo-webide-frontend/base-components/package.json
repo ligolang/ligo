@@ -3,11 +3,11 @@
   "license": "GPL-3.0",
   "private": true,
   "engines": {
-    "node": "16"
+    "node": ">=16"
   },
   "scripts": {
-    "postinstall": "electron-rebuild",
-    "build": "node init.js"
+    "build": "node init.js",
+    "_postinstall": "electron-rebuild"
   },
   "dependencies": {
     "keytar": "7.7.0",
