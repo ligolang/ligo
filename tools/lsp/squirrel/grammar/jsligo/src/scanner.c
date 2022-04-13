@@ -8,7 +8,7 @@ enum TokenType {
   OCAML_COMMENT,
   COMMENT,
   LINE_MARKER,
-  _JS_LIGO_ATTRIBUTE,
+  JS_LIGO_ATTRIBUTE,
   AUTOMATIC_SEMICOLON
 };
 
@@ -24,6 +24,7 @@ void tree_sitter_JsLigo_external_scanner_deserialize(void *p, const char *b, uns
 
 static void skip(TSLexer *lexer) { lexer->advance(lexer, true); }
 
+// Reference: https://github.com/tree-sitter/tree-sitter-typescript/blob/master/common/scanner.h#L72-L160
 static bool scan_automatic_semicolon(TSLexer *lexer, const bool *valid_symbols){
   lexer->result_symbol = AUTOMATIC_SEMICOLON;
   lexer->mark_end(lexer);
@@ -142,7 +143,7 @@ bool tree_sitter_JsLigo_external_scanner_scan(
         switch (lexer->lookahead) {
         case '\n':
         case '\0':
-          lexer->result_symbol = is_attribute ? _JS_LIGO_ATTRIBUTE : COMMENT;
+          lexer->result_symbol = is_attribute ? JS_LIGO_ATTRIBUTE : COMMENT;
           return true;
         default:
           lexer->advance(lexer, false);
@@ -176,7 +177,7 @@ bool tree_sitter_JsLigo_external_scanner_scan(
             after_star = false;
             nesting_depth--;
             if (nesting_depth == 0) {
-              lexer->result_symbol = is_attribute ? _JS_LIGO_ATTRIBUTE : OCAML_COMMENT;
+              lexer->result_symbol = is_attribute ? JS_LIGO_ATTRIBUTE : OCAML_COMMENT;
               return true;
             }
             // automatic SEMI insertion
@@ -215,7 +216,9 @@ bool tree_sitter_JsLigo_external_scanner_scan(
     lexer->advance(lexer, false);
     lexer->result_symbol = LINE_MARKER;
     return true;
+  } else if (valid_symbols[AUTOMATIC_SEMICOLON]) {
+    return scan_automatic_semicolon(lexer, valid_symbols);
   }
 
-  return scan_automatic_semicolon(lexer, valid_symbols);
+  return false;
 }

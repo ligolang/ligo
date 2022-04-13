@@ -4,7 +4,7 @@ module.exports = grammar({
   name: 'JsLigo',
 
   word: $ => $.Keyword,
-  externals: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, $.automatic_semicolon],
+  externals: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, $._automatic_semicolon],
   extras: $ => [$.ocaml_comment, $.comment, $.line_marker, $._js_ligo_attribute, /\s/],
 
   conflicts: $ => [
@@ -375,7 +375,7 @@ module.exports = grammar({
     p_error: $ => seq('#', 'error', field("message", $._till_newline)),
     p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
-    _semicolon: $ => choice(";"),
+    _semicolon: $ => choice(";", $._automatic_semicolon),
 
     ConstrName: $ => $._NameCapital,
     ConstrNameDecl: $ => seq('"', $._NameCapital, '"'),
