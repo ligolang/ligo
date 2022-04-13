@@ -1,0 +1,6 @@
+author: er433
+description: Recursive functions with multiple parameters were handled incorrectly
+  in the testing framework. This change fixes the situation.
+merge_request: '1688'
+title: 'Testing framework: fix recursive functions with multiple parameters'
+type: fixed
