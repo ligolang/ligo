@@ -23,6 +23,14 @@ modelSessionManager.registerModeDetector(filePath => {
       return 'settings'
     } else if (base.endsWith('.sol')) {
       return 'solidity'
+    } else if (base.endsWith('.religo')) {
+      return 'javascript'
+    } else if (base.endsWith('.ligo')) {
+      return 'pascaligo'
+    } else if (base.endsWith('.mligo')) {
+      return 'cameligo'
+    } else if (base.endsWith('.jsligo')) {
+      return 'javascript'
     } else {
       return defaultModeDetector(filePath)
     }

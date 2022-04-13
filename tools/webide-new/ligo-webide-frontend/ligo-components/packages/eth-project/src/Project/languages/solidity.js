@@ -9,6 +9,10 @@ import premiumEditor from '@obsidians/premium-editor'
 import SolidityHighlightRules from './SolidityHighlightRules'
 
 export default function () {
+  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    noSemanticValidation: true,
+    noSyntaxValidation: true
+  }); // TODO use it only for ligo code
   monaco.languages.register({ id: 'solidity' })
   monaco.languages.setLanguageConfiguration('solidity', {
     comments: {
