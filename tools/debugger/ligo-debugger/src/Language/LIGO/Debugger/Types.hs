@@ -69,4 +69,3 @@ jsonfyMany
   [ ''LigoLaunchRequest
   , ''LigoLaunchRequestArguments
   ]
-

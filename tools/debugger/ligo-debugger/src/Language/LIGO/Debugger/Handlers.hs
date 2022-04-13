@@ -8,20 +8,17 @@ import Data.IntMap qualified as IntMap
 import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Text.IO.Utf8 qualified as Utf8
-import Fmt (fmt, pretty, (|+), (+|))
+import Fmt (fmt, pretty, (+|), (|+))
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
-  ( DebugSource (..), DebuggerState (..), SourceLocation (..), SourceMapper (..), SourceType (..)
-  , mkTapeL
-  )
+  (DebugSource (..), DebuggerState (..), SourceLocation (..), SourceMapper (..), SourceType (..),
+  mkTapeL)
 import Morley.Debugger.Core.Snapshots
-  ( InterpretHistory (..), InstrNo (..), annotateInstrWith, collectInterpretSnapshots
-  )
+  (InstrNo (..), InterpretHistory (..), annotateInstrWith, collectInterpretSnapshots)
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
-  ( DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..)
-  , RIO, RioContext (..), pushMessage
-  )
+  (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
+  RIO, RioContext (..), pushMessage)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime (parseExpandContract)

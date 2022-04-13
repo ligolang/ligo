@@ -7,14 +7,14 @@ module Language.LIGO.Debugger.Michelson
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
 import Data.Default (def)
-import qualified Data.IntMap as IntMap
-import qualified Data.Set as Set
-import qualified Data.Text as Text
+import Data.IntMap qualified as IntMap
+import Data.Set qualified as Set
+import Data.Text qualified as Text
 import Morley.Debugger.Core.Navigate (SourceLocation (..), SourceMapper (..), SourceType (..))
 import Morley.Debugger.Core.Snapshots (InstrNo (..), annotateInstrWith)
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
-import Morley.Micheline.Expression (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..),
-                                    michelsonPrimitive)
+import Morley.Micheline.Expression
+  (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
 import Morley.Michelson.ErrorPos (srcPos)
 import Morley.Michelson.TypeCheck (TCError, mapSomeContract, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed (SomeContract (..))
