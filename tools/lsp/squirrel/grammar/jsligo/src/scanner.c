@@ -119,7 +119,7 @@ bool tree_sitter_JsLigo_external_scanner_scan(
       }
     } else if (lexer->lookahead == '*') {
       lexer->advance(lexer, false);
-      
+
       // skip white spaces
       while (iswspace(lexer->lookahead)) lexer->advance(lexer, false);
 

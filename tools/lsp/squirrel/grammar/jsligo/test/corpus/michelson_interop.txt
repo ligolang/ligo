@@ -22,7 +22,7 @@ let michelson_add = (n: [nat, nat]): nat =>
             (michelson_interop
               (michelson_code)
               (fun_type
-                (fun_param 
+                (fun_param
                   (Name)
                   (type_annotation
                     (type_tuple (TypeName) (TypeName))))

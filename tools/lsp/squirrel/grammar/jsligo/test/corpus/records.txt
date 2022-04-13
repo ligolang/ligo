@@ -139,6 +139,6 @@ let first_name_component: string = full_name[0];
   (let_decl
     (var_pattern (Name))
     (type_annotation (TypeName))
-    (projection 
+    (projection
       (Name)
       (Int))))

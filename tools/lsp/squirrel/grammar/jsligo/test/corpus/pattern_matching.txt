@@ -68,7 +68,7 @@ let int_of_color = (c : color) : int =>
           (Name)
           (ctor_case
             (ConstrName)
-            (ctor_param 
+            (ctor_param
               (Name)
               (type_annotation (type_tuple (TypeName) (TypeName) (TypeName))))
             (body
