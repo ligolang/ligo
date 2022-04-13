@@ -18,7 +18,7 @@ export default function AccountBalance ({ account, tokens, history }) {
     <TableCard title='Account' tableScroll>
       <TableCardRow
         name='Balance'
-        icon='far fa-wallet'
+        icon='fas fa-wallet'
         badge={`${new Intl.NumberFormat().format(account.balance)} ${networkManager.symbol}`}
         badgeColor='success'
       />
@@ -26,7 +26,7 @@ export default function AccountBalance ({ account, tokens, history }) {
         Boolean(erc20Tokens?.length) &&
         <TableCardRow
           name='Tokens'
-          icon='far fa-coins'
+          icon='fas fa-coins'
           right={
             <UncontrolledDropdown>
               <DropdownToggle caret className='badge badge-pill d-flex align-items-center' color='info'>

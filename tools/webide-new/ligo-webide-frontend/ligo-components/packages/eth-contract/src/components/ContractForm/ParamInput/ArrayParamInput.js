@@ -16,7 +16,7 @@ const optionItemFromValue = (item, type, index) => {
       value: `item-${index}`,
       item,
       type,
-      label: <span key={`item-${index}`}><i className='fas fa-brackets-curly mr-1' />Object</span>
+      label: <span key={`item-${index}`}><i className='fas fa-code mr-1' />Object</span>
     }
   }
 
@@ -110,7 +110,7 @@ export default class ArrayParamInput extends PureComponent {
     return <>
       <MultiSelect
         size={size}
-        prepend={<span key='icon-array-param'><i className='fas fa-brackets' /></span>}
+        prepend={<span key='icon-array-param'><i className='fas fa-code' /></span>}
         append={<span key='icon-array-add'><i className='fas fa-plus' /></span>}
         onClick={this.enterNewItem}
         value={this.state.values}

@@ -10,10 +10,10 @@ export default ({ txHash, data, status, ts }) => {
   let iconClassName = 'fas fa-check-circle text-success mr-1'
   let statusComponent = null
   if (status === 'PUSHING') {
-    iconClassName = 'fas fa-spinner-third fa-spin mr-1'
+    iconClassName = 'fas fa-circle-notch fa-spin mr-1'
     statusComponent = <Badge color='warning' className='ml-1'>PUSHING</Badge>
   } else if (status === 'MINED') {
-    iconClassName = 'fad fa-spinner-third fa-spin mr-1'
+    iconClassName = 'fas fa-circle-notch fa-spin mr-1'
     statusComponent = <Badge color='warning' className='ml-1'>MINED</Badge>
   } else if (status === 'EXECUTED') {
     iconClassName = 'fas fa-circle-notch fa-spin mr-1'
@@ -33,7 +33,7 @@ export default ({ txHash, data, status, ts }) => {
           {statusComponent}
         </span>
         <span className='small text-alpha-50'>
-          <i className='far fa-clock mx-1' />
+          <i className='fas fa-clock mx-1' />
           {moment.unix(ts).format('MM/DD HH:mm:ss')}
         </span>
       </div>

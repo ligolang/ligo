@@ -81,7 +81,7 @@ class UserProfile extends PureComponent {
         key={`user-profile-login-${provider}`}
         onClick={() => Auth.login(this.props.history, provider)}
       >
-        <i key='sign-in-${provider}' className='fas fa-sign-in mr-2' />{providers.length > 1 ? `Login ${provider}` : 'Login'}
+        <i key='sign-in-${provider}' className='fas fa-sign-in-alt mr-2' />{providers.length > 1 ? `Login ${provider}` : 'Login'}
       </Button>
     ))
   }

@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import classnames from 'classnames'
 
 import {
-  Input,
+  Input
 } from 'reactstrap'
 import ToolbarButton from '../buttons/ToolbarButton'
 import { utils } from '@obsidians/sdk'
@@ -10,7 +10,7 @@ export default class NavigationBar extends PureComponent {
   constructor(props) {
     super(props)
     this.state = {
-      value: utils.isValidAddressReturn(props.tab.value),
+      value: utils.isValidAddressReturn(props.tab.value)
     }
     this.input = React.createRef()
   }
@@ -44,7 +44,7 @@ export default class NavigationBar extends PureComponent {
       return {
         start: input.selectionStart,
         end: input.selectionEnd,
-        direction: input.selectionDirection,
+        direction: input.selectionDirection
       }
     }
     return null
@@ -104,7 +104,7 @@ export default class NavigationBar extends PureComponent {
     const selection = {
       start: event.target.selectionStart,
       end: event.target.selectionEnd,
-      direction: event.target.selectionDirection,
+      direction: event.target.selectionDirection
     }
     this.selectionCache = selection
   }
@@ -126,7 +126,7 @@ export default class NavigationBar extends PureComponent {
           onClick={() => this.props.onToggleStar(this.state.value.toLowerCase(), false)}
         >
           <i className='fas fa-star hover-hide' />
-          <i className='far fa-star hover-show' />
+          <i className='fas fa-star hover-show' />
         </div>
       )
     } else {
@@ -136,7 +136,7 @@ export default class NavigationBar extends PureComponent {
           className='btn btn-sm text-secondary hover-block'
           onClick={() => this.props.onToggleStar(this.state.value.toLowerCase(), true)}
         >
-          <i className='far fa-star hover-hide' />
+          <i className='fas fa-star hover-hide' />
           <i className='fas fa-star hover-show' />
         </div>
       )
@@ -159,7 +159,7 @@ export default class NavigationBar extends PureComponent {
           className={classnames('d-flex flex-1 align-items-center navbar-input-wrapper ml-1', children ? 'mr-1' : 'mr-2')}
         >
           <div key={`address-icon-${this.state.value ? '' : 'none'}`} className='btn btn-sm text-secondary pr-1'>
-            <i className={this.state.value ? 'fas fa-map-marker-alt' : 'far fa-map-marker'} />
+            <i className={this.state.value ? 'fas fa-map-marker-alt' : 'fas fa-map-marker'} />
           </div>
           <Input
             innerRef={this.input}

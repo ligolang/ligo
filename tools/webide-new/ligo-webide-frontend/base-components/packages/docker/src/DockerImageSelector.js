@@ -4,7 +4,7 @@ import {
   UncontrolledButtonDropdown,
   DropdownToggle,
   DropdownMenu,
-  DropdownItem,
+  DropdownItem
 } from '@obsidians/ui-components'
 
 import platform from '@obsidians/platform'
@@ -17,7 +17,7 @@ export default class DockerImageSelector extends PureComponent {
 
     this.state = {
       loading: true,
-      versions: [],
+      versions: []
     }
 
     this.modal = React.createRef()
@@ -72,9 +72,9 @@ export default class DockerImageSelector extends PureComponent {
     }
     return <>
       <DropdownItem divider />
-        <DropdownItem onClick={this.openManager}>
-          <i className='fas fa-cog mr-1' />
-          {this.props.modalTitle}...
+      <DropdownItem onClick={this.openManager}>
+        <i className='fas fa-cog mr-1' />
+        {this.props.modalTitle}...
         </DropdownItem>
     </>
   }
@@ -83,14 +83,14 @@ export default class DockerImageSelector extends PureComponent {
     let {
       noManager,
       HeaderDockerItems,
-      children,
+      children
     } = this.props
 
     if (!HeaderDockerItems) {
       if (platform.isDesktop && !noManager) {
-        HeaderDockerItems = <><i className='far fa-desktop mr-2' />Installed</>
+        HeaderDockerItems = <><i className='fas fa-desktop mr-2' />Installed</>
       } else {
-        HeaderDockerItems = <><i className='fas fa-code-merge mr-1' />Versions</>
+        HeaderDockerItems = <><i className='fas fa-code-branch mr-1' />Versions</>
       }
     }
 

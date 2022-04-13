@@ -151,7 +151,6 @@ jobs:
           build_script: ${{ env.project_build_script }}
           working-directory: ./studio
           enable_auth: ${{ env.enable_auth }}
-          fontawesome_token: ${{ secrets.fontawesome_token }}
           mac_certs: ${{ secrets.certs }}
           mac_certs_password: ${{ secrets.certs_password }}
           windows_certs: ${{ secrets.certs }}

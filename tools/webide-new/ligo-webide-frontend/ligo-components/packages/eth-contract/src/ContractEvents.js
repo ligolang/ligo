@@ -132,7 +132,7 @@ class ContractEvents extends PureComponent {
     return <>
       <UncontrolledButtonDropdown size='sm'>
         <DropdownToggle color='primary' caret className='rounded-0 border-0 px-2 border-right-1'>
-          <i className='far fa-calendar-alt' />
+          <i className='fas fa-calendar-alt' />
           <code className='ml-2 mr-1'><b>{selectedEvent.name}</b></code>
         </DropdownToggle>
         <DropdownMenu>

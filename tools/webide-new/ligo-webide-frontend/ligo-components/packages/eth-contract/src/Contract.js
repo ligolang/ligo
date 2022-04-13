@@ -122,7 +122,7 @@ class Contract extends TabbedExplorer {
         } else if (tokenInfo) {
           const icon = tokenInfo.icon
             ? <img src={tokenInfo.icon} className='token-icon-xs mr-1' />
-            : <i className='fas fa-coin text-muted mr-1' />
+            : <i className='fas fa-coins text-muted mr-1' />
           tabText = (
             <div key={`token-${address}`} className='d-flex flex-row align-items-center'>
               {icon}

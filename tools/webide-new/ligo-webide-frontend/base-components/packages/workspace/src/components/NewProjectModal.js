@@ -118,8 +118,8 @@ export default class NewProjectModal extends PureComponent {
           <ButtonOptions
             className='mb-3'
             options={[
-              { key: 'local', text: 'Local', icon: 'far fa-desktop mr-1' },
-              { key: 'cloud', text: 'Cloud', icon: 'far fa-cloud mr-1' },
+              { key: 'local', text: 'Local', icon: 'fas fa-desktop mr-1' },
+              { key: 'cloud', text: 'Cloud', icon: 'fas fa-cloud mr-1' },
             ]}
             selected={this.state.remote ? 'cloud' : 'local'}
             onSelect={key => this.setState({ remote: key === 'cloud' })}

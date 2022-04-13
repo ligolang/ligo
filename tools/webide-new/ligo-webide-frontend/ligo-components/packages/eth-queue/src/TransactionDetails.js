@@ -50,7 +50,7 @@ class TransactionDetails extends PureComponent {
           />
           <TableCardRow
             name='Status'
-            icon='fad fa-spinner-third'
+            icon='fas fa-circle-notch'
             badge={status === 'FAILED-TIMEOUT' ? 'TIMEOUT' : status}
             badgeColor={status.startsWith('FAILED') ? 'danger' : status === 'CONFIRMED' ? 'success' : 'warning'}
           />
@@ -77,7 +77,7 @@ class TransactionDetails extends PureComponent {
             functionName &&
             <TableCardRow
               name='Function'
-              icon='fas fa-function'
+              icon='fas fa-calculator'
               badge={functionName}
             />
           }
@@ -101,7 +101,7 @@ class TransactionDetails extends PureComponent {
             confirmed &&
             <TableCardRow
               name='Result'
-              icon='fas fa-sign-out'
+              icon='fas fa-sign-out-alt'
               badge={confirmed}
             />
           }

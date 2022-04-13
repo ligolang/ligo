@@ -13,7 +13,7 @@ export default function ({ tx, owner }) {
         <Address addr={tx.from} showTooltip={false}/>
       </div>
       <div className='mx-3 text-muted'>
-        <i className='fas fa-arrow-alt-right' />
+        <i className='fas fa-long-arrow-alt-right' />
       </div>
       <div className='flex-1 overflow-hidden'>
         {

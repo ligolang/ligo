@@ -26,9 +26,9 @@ const renderSwitcherIcon = ({ loading, expanded, data }) => {
   }
 
   return expanded ? (
-    <span key='switch-expanded'><span className='far fa-chevron-down fa-fw' /></span>
+    <span key='switch-expanded'><span className='fas fa-chevron-down fa-fw' /></span>
   ) : (
-    <span key='switch-close'><span className='far fa-chevron-right fa-fw' /></span>
+    <span key='switch-close'><span className='fas fa-chevron-right fa-fw' /></span>
   )
 }
 

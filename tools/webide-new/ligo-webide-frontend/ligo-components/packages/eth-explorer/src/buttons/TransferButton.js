@@ -176,7 +176,7 @@ export default class TransferButton extends PureComponent {
       <ToolbarButton
         id='navbar-transfer'
         size='md'
-        icon='fas fa-repeat'
+        icon='fas fa-redo'
         loading={loading}
         tooltip='Transfer'
         onClick={this.openModal}

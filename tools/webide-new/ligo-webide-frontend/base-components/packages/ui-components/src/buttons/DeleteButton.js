@@ -53,7 +53,7 @@ export default class DeleteButton extends PureComponent {
     const {
       color = 'danger',
       textConfirm = 'Click again to delete',
-      icon = 'far fa-trash-alt',
+      icon = 'fas fa-trash-alt',
       className = '',
     } = this.props
 

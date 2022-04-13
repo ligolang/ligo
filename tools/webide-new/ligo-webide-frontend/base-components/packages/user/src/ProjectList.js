@@ -68,7 +68,7 @@ export default class ProjectList extends PureComponent {
           key={`open-in-browser-${project.id}`}
           color='transparent'
           className='text-muted'
-          icon='fas fa-external-link'
+          icon='fas fa-external-link-alt'
           tooltip='Open in Browser'
           onClick={() => fileOps.current.openLink(`${process.env.PROJECT_WEB_URL}/${project.path}`)}
         />

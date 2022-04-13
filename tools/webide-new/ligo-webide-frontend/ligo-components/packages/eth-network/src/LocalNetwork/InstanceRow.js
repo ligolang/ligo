@@ -47,7 +47,7 @@ export default class InstanceRow extends PureComponent {
   renderVersionBtn = version => {
     return (
       <div className='btn btn-sm btn-secondary'>
-        <i className='fas fa-code-merge mr-1' />
+        <i className='fas fa-code-branch mr-1' />
         <b>{version}</b>
       </div>
     )

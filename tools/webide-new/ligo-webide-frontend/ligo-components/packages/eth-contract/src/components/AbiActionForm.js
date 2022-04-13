@@ -72,7 +72,7 @@ export default class AbiActionForm extends PureComponent {
       inModal,
       smDropdown,
       selectorHeader = 'actions',
-      selectorIcon = 'fas fa-function',
+      selectorIcon = 'fas fa-calculator',
       actions,
     } = this.props
     return (

@@ -10,7 +10,7 @@ export default class ContractViews extends AbiActionForm {
     toolbarId: 'contract-execute-view',
     FormSection: AbiActionForm.MarginlessFormSection,
     selectorHeader: 'view functions',
-    selectorIcon: 'far fa-eye',
+    selectorIcon: 'fas fa-eye',
     noGasOptions: true,
     showResult: true,
   }

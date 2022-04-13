@@ -5,7 +5,7 @@ import {
   UncontrolledButtonDropdown,
   DropdownToggle,
   DropdownMenu,
-  DropdownItem,
+  DropdownItem
 } from '@obsidians/ui-components'
 
 import BaseQueueManager from './BaseQueueManager'
@@ -15,7 +15,7 @@ export default class QueueButton extends PureComponent {
     super(props)
     this.state = {
       data: null,
-      tx: {},
+      tx: {}
     }
     BaseQueueManager.button = this
 
@@ -59,13 +59,13 @@ export default class QueueButton extends PureComponent {
     // txsItems.push(<DropdownItem divider />)
     txsItems.unshift(
       <DropdownItem header key='header-txs'>
-        <i className='far fa-history mr-1' />Recent Transactions
+        <i className='fas fa-history mr-1' />Recent Transactions
       </DropdownItem>
     )
 
     const allTransactions = (
       <DropdownItem onClick={this.openAllTransactionsModal}>
-        <div className='d-inline-block w-3'><i className='fal fa-clipboard-list-check' /></div>
+        <div className='d-inline-block w-3'><i className='fas fa-clipboard-check' /></div>
         All Transactions...
       </DropdownItem>
     )
@@ -108,8 +108,7 @@ export default class QueueButton extends PureComponent {
       <Modal
         ref={this.allTxsModal}
         title='All Transactions'
-      >
-      </Modal>
+       />
     </>
   }
 }

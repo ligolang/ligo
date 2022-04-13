@@ -50,8 +50,8 @@ export default class Header extends PureComponent {
       navbarItem(projects, selectedProject, username)
     ]
 
-    const contractIcon = isSelected => isSelected ? 'fas fa-file-invoice' : 'far fa-file'
-    const addressIcon = isSelected => isSelected ? 'fas fa-map-marker-alt' : 'far fa-map-marker'
+    const contractIcon = isSelected => isSelected ? 'fas fa-file-invoice' : 'fas fa-file'
+    const addressIcon = isSelected => isSelected ? 'fas fa-map-marker-alt' : 'fas fa-map-marker'
 
     let dropdownKeypairs = this.state.keypairs.map(k => {
       const address = k.address
@@ -143,7 +143,7 @@ export default class Header extends PureComponent {
       route: 'account',
       title: 'Explorer',
       icon: 'fas fa-map-marker-alt',
-      noneIcon: 'fas fa-map-marker-times',
+      noneIcon: 'fas fa-map-marker',
       selected: { id: selectedAccount, name: accountName },
       dropdown: [...dropdownKeypairs, ...dropdownBrowserAccounts, ...dropdownStarred],
       onClickItem: selected => headerActions.selectAccount(network.id, selected),

@@ -12,7 +12,7 @@ export default class ContractActions extends AbiActionForm {
     toolbarId: 'contract-execute-write',
     FormSection: AbiActionForm.MarginlessFormSection,
     selectorHeader: 'write functions',
-    selectorIcon: 'fas fa-function',
+    selectorIcon: 'fas fa-calculator',
     signerSelector: true,
     showResult: true,
   }

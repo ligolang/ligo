@@ -74,7 +74,7 @@ class User extends Component {
         linkToOtherPlatformItem = [
           <DropdownItem key='divider2' divider />,
           <DropdownItem key='project-web-url' onClick={() => fileOps.current.openLink(PROJECT_WEB_URL)}>
-            <i className='fad fa-browser w-3 mr-2' />{PROJECT_NAME} Web
+            <i className='fas fa-columns w-3 mr-2' />{PROJECT_NAME} Web
           </DropdownItem>
         ]
       }
@@ -94,7 +94,7 @@ class User extends Component {
       )
       linkToOtherPlatformItem.push(
         <DropdownItem key='report-issue' onClick={() => fileOps.current.openLink(`${PROJECT_GITHUB_REPO}/issues/new`)}>
-          <i className='fad fa-question-circle w-3 mr-2' />Report an Issue
+          <i className='fas fa-question-circle w-3 mr-2' />Report an Issue
         </DropdownItem>
       )
       enableHelpPage && linkToOtherPlatformItem.push(
@@ -123,7 +123,7 @@ class User extends Component {
         ...linkToOtherPlatformItem,
         <DropdownItem key='divider' divider />,
         <DropdownItem key='sign-out' onClick={() => Auth.logout(this.props.history)}>
-          <i className='fas fa-sign-out w-3 mr-2' />Log out
+          <i className='fas fa-sign-out-alt w-3 mr-2' />Log out
         </DropdownItem>
       ]
     } else {
@@ -156,7 +156,7 @@ class User extends Component {
         key={`login-${provider}`}
         onClick={() => Auth.login(this.props.history, provider)}
       >
-        <i className='fas fa-sign-in w-3 mr-2' />{ providers.length > 1 ? `Login ${provider}` : 'Login' }
+        <i className='fas fa-sign-in-alt w-3 mr-2' />{ providers.length > 1 ? `Login ${provider}` : 'Login' }
       </DropdownItem>
     ))
   }

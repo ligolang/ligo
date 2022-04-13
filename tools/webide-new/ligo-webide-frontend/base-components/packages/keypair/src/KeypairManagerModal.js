@@ -7,7 +7,7 @@ import {
   Badge,
   IconButton,
   DeleteButton,
-  UncontrolledTooltip,
+  UncontrolledTooltip
 } from '@obsidians/ui-components'
 
 import notification from '@obsidians/notification'
@@ -29,7 +29,7 @@ export default class KeypairManagerModal extends PureComponent {
     keypairText: 'Keypair',
     RevealSecretModal,
     CreateKeypairModal,
-    ImportKeypairModal,
+    ImportKeypairModal
   }
 
   constructor (props) {
@@ -46,7 +46,7 @@ export default class KeypairManagerModal extends PureComponent {
       loading: false,
       keypairs: [],
       keypairFilter: null,
-      showPrivateKeys: false,
+      showPrivateKeys: false
     }
   }
 
@@ -64,7 +64,7 @@ export default class KeypairManagerModal extends PureComponent {
     })
   }
 
-  componentWillUnmount(){
+  componentWillUnmount() {
     this.listenKeypairChange && this.listenKeypairChange()
   }
 
@@ -190,11 +190,11 @@ export default class KeypairManagerModal extends PureComponent {
             <span className='text-truncate'>
               {keypair.name ? keypair.name : <span className='text-muted'>(None)</span>}
             </span>
-              <UncontrolledTooltip
-                  target={`tooltip-${validAddress}`}
+            <UncontrolledTooltip
+              target={`tooltip-${validAddress}`}
               >
-                <p>{keypair.name}</p>
-              </UncontrolledTooltip>
+              <p>{keypair.name}</p>
+            </UncontrolledTooltip>
             {
               !this.props.modifyNameDisabled &&
               <IconButton
@@ -213,7 +213,7 @@ export default class KeypairManagerModal extends PureComponent {
             <DeleteButton
               color='primary'
               className='ml-1 hover-show'
-              icon='far fa-eye'
+              icon='fas fa-eye'
               textConfirm={`Click again to reveal ${this.props.secretName.toLowerCase()}`}
               onConfirm={() => this.revealSecret(keypair)}
             />
@@ -223,7 +223,7 @@ export default class KeypairManagerModal extends PureComponent {
           <Badge pill color='success' className='ml-1'>{keypair.balance} {networkManager?.symbol}</Badge>
         </td>
         <td align='right'>
-        {
+          {
           !this.props.deletionDisabled &&
           <DeleteButton
             className='hover-show'
@@ -246,7 +246,7 @@ export default class KeypairManagerModal extends PureComponent {
       textActions,
       RevealSecretModal,
       CreateKeypairModal,
-      ImportKeypairModal,
+      ImportKeypairModal
     } = this.props
 
     let warningComponent = null
@@ -282,7 +282,7 @@ export default class KeypairManagerModal extends PureComponent {
               <th style={{ width: '25%' }}>{head[0]}</th>
               <th style={{ width: '58%' }}>{head[1]}</th>
               <th style={{ width: '12%' }}>{head[2]}</th>
-              <th></th>
+              <th />
             </tr>
           )}
         >

@@ -16,7 +16,7 @@ function TerminalInputIcon (props) {
 
   return (
     <div key='xterm-icon-executed' className='xterm-form-icon'>
-      <i className='far fa-greater-than' />
+      <i className='fas fa-greater-than' />
     </div>
   )
 }

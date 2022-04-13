@@ -12,13 +12,13 @@ export default function AccountInfo ({ account, tokenInfo }) {
     tokenInfoRows = <>
       <TableCardRow
         name='ERC20 Token'
-        icon='far fa-coin'
+        icon='fas fa-coins'
         badgeColor='primary'
         badge={`${tokenInfo.name} (${tokenInfo.symbol})`}
       />
       <TableCardRow
         name='Total Supply'
-        icon='far fa-box-alt'
+        icon='fas fa-box'
         badge={new Intl.NumberFormat().format(tokenInfo.totalSupply / 10 ** tokenInfo.decimals)}
       />
     </>

@@ -127,7 +127,7 @@ export default class NodeTerminal extends PureComponent {
         initialSelected='node'
         initialTabs={initialTabs}
         onSelectTab={tab => this.setState({ activeTab: tab.key })}
-        ToolButtons={[{ icon: 'far fa-trash-alt', tooltip: 'Clear', onClick: this.clearTerminal }]}
+        ToolButtons={[{ icon: 'fas fa-trash-alt', tooltip: 'Clear', onClick: this.clearTerminal }]}
       >
         <TabContent className='h-100 w-100' activeTab={activeTab}>
           <TabPane className='h-100 w-100' tabId='node'>

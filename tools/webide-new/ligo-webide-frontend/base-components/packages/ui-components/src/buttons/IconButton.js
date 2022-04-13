@@ -3,19 +3,19 @@ import classnames from 'classnames'
 
 import {
   Button,
-  UncontrolledTooltip,
+  UncontrolledTooltip
 } from 'reactstrap'
 
 export default function IconButton (props) {
   const {
     color,
     id,
-    icon = 'far fa-trash-alt',
+    icon = 'fas fa-trash-alt',
     tooltip,
     tooltipPlacement = 'top',
     className,
     onClick,
-    children = null,
+    children = null
   } = props
 
   const [iconId] = useState(id || `icon-button-${Math.floor(Math.random() * 10000)}`)

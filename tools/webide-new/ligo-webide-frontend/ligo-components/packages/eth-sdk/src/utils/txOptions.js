@@ -22,7 +22,7 @@ export default {
       name: 'maxFeePerGas',
       className: 'col-4',
       label: 'Max Fee',
-      icon: 'fas fa-sack-dollar',
+      icon: 'fas fa-dollar-sign',
       placeholder: 'max fee per gas',
       default: ''
     }

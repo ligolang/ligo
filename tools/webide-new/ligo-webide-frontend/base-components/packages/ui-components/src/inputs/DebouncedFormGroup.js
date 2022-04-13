@@ -21,7 +21,7 @@ function LabelTooltip (props) {
   const id = useMemo(() => `tooltip-input-${Math.floor(Math.random() * 10000)}`, [])
   return <>
     <span id={id} key={id} className={classnames(props.size === 'sm' ? 'small ml-1' : 'ml-2', 'text-muted')} >
-      <i className={'far fa-info-circle'} />
+      <i className={'fas fa-info-circle'} />
     </span>
     <UncontrolledTooltip target={id}>{props.tooltip}</UncontrolledTooltip>
   </>
@@ -63,13 +63,13 @@ function DebouncedFormGroup (props, ref) {
   return (
     <FormGroup className={classnames(size === 'sm' && 'mb-2', formGroupClassName)}>
       <Label className={classnames(size === 'sm' && 'mb-1 small')}>{label}
-      {importFromFile && <Button
-        color='secondary'
-        size='sm'
-        className='ml-2'
-        onClick={onChooseFile}
+        {importFromFile && <Button
+          color='secondary'
+          size='sm'
+          className='ml-2'
+          onClick={onChooseFile}
       >Import from file {typeof importFromFile === 'string' && `(${importFromFile})`}
-      </Button>}
+        </Button>}
       </Label>
       <LabelTooltip tooltip={props.tooltip} size={size} />
       {
@@ -88,7 +88,7 @@ function DebouncedFormGroup (props, ref) {
       {
         inputType === 'text' &&
         <div className={onTextClick ? 'cursor-pointer' : ''}>
-          <pre onClick={onTextClick} className="break-word">
+          <pre onClick={onTextClick} className='break-word'>
             {placeholder}
           </pre>
         </div>
@@ -98,5 +98,5 @@ function DebouncedFormGroup (props, ref) {
 }
 
 DebouncedFormGroup.propTypes = {
-  label: PropTypes.node,
+  label: PropTypes.node
 }
