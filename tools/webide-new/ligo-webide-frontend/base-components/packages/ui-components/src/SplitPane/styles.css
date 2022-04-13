@@ -1,0 +1,55 @@
+.Pane {
+  overflow: hidden;
+}
+
+.Resizer {
+  background: var(--color-border);
+  z-index: 1;
+  box-sizing: border-box;
+  background-clip: padding-box;
+}
+
+.Resizer.horizontal {
+  width: 100%;
+  height: 1px;
+}
+.Resizer.horizontal::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 11px;
+  margin: -5px 0;
+  background-color: transparent;
+  opacity: 0;
+  cursor: row-resize;
+  transition: opacity 1s ease;
+}
+.Resizer.horizontal:hover::before {
+  background-color: var(--color-border);
+  opacity: 0.3;
+}
+
+.Resizer.vertical {
+  height: 100%;
+  width: 1px;
+}
+.Resizer.vertical::before {
+  content: '';
+  position: absolute;
+  height: 100%;
+  width: 11px;
+  margin: 0 -5px;
+  background-color: transparent;
+  opacity: 0;
+  cursor: col-resize;
+  transition: opacity 1s ease;
+}
+.Resizer.vertical:hover::before {
+  background-color: var(--color-border);
+  opacity: 0.3;
+}
+
+.Resizer.disabled::before {
+  display: none;
+  cursor: not-allowed;
+}

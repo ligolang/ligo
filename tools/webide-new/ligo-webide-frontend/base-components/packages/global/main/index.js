@@ -1,0 +1,1 @@
+exports.AutoUpdate = require('./AutoUpdate')

@@ -1,0 +1,222 @@
+.tree-wrap {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.rc-tree {
+  margin: 0;
+  border: 1px solid transparent;
+}
+
+.rc-tree .rc-tree-treenode {
+  margin: 0;
+  line-height: 20px;
+  white-space: nowrap;
+  list-style: none;
+  outline: 0;
+  cursor: pointer;
+  position: relative;
+  padding: 2px 6px;
+  border: 1px solid #24272c;
+  font-size: 14px;
+}
+
+.rc-tree .rc-tree-treenode.drop-target {
+  background-color: #636cb4;
+}
+
+.rc-tree .rc-tree-treenode.drop-target ~ .rc-tree-treenode {
+  border-left: none;
+}
+
+.rc-tree .rc-tree-treenode ul {
+  margin: 0;
+  padding: 0 0 0 18px;
+}
+
+.rc-tree .rc-tree-treenode:hover {
+  background-color: #3c3f46;
+  border: 1px solid transparent;
+}
+.rc-tree .rc-tree-treenode.rc-tree-treenode-selected {
+  background-color: #3c3f46;
+  border: 1px solid #636cb4;
+}
+
+.rc-tree .rc-tree-treenode .rc-tree-node-content-wrapper {
+  position: relative;
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+  vertical-align: top;
+  cursor: pointer;
+  flex-grow: 1;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-tree .rc-tree-treenode span.rc-tree-switcher.rc-tree-icon__customize, .rc-tree .rc-tree-treenode span.rc-tree-checkbox.rc-tree-icon__customize, .rc-tree .rc-tree-treenode span.rc-tree-iconEle.rc-tree-icon__customize {
+  background-image: none;
+}
+.rc-tree .rc-tree-treenode span.rc-tree-switcher {
+  display: inline-block;
+  width: 21.5px;
+  margin-right: 0;
+}
+
+.rc-tree .rc-tree-treenode span.rc-tree-switcher.rc-tree-switcher-noop {
+  cursor: auto;
+  flex-shrink: 0;
+  width: 0;
+}
+
+.rc-tree .rc-tree-treenode span.rc-tree-switcher .svg-inline--fa {
+  transition: all 0.3s ease-in;
+  -webkit-transition: all 0.3s ease-in;
+  -moz-transition: all 0.3s ease-in;
+  -ms-transition: all 0.3s ease-in;
+  -o-transition: all 0.3s ease-in;
+}
+
+.rc-tree .rc-tree-treenode span.rc-tree-switcher.rc-tree-switcher_close {
+  background-position: -75px -56px;
+}
+
+.rc-tree:not(.rc-tree-show-line) .rc-tree-treenode .rc-tree-switcher-noop {
+  background: none;
+}
+
+.file-tree-drop-indicator {
+  position: absolute;
+  z-index: 1;
+  height: 2px;
+  background-color: #636cb4;
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.file-tree-drop-indicator::after {
+  position: absolute;
+  top: -3px;
+  left: -6px;
+  width: 8px;
+  height: 8px;
+  background-color: #636cb4;
+  border: 2px solid #636cb4;
+  border-radius: 50%;
+  content: '';
+}
+
+.rc-tree-child-tree {
+  display: none;
+}
+
+.rc-tree-child-tree-open {
+  display: block;
+}
+
+.rc-tree-icon__customize {
+  vertical-align: top;
+}
+.rc-tree-title {
+  display: inline-block;
+  color: #d1d5da;
+  flex-grow: 1;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rc-tree-indent {
+  display: inline-block;
+  height: 0;
+  vertical-align: bottom;
+}
+.rc-tree-indent-unit {
+  display: inline-block;
+  width: 16px;
+}
+.rc-tree-draggable-icon {
+  display: inline-flex;
+  justify-content: center;
+  width: 16px;
+}
+
+.animation .rc-tree-treenode {
+  display: flex;
+}
+.animation .rc-tree-treenode .rc-tree-indent {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+.animation .rc-tree-treenode .rc-tree-indent .rc-tree-indent-unit {
+  position: relative;
+  height: 100%;
+}
+
+.animation .rc-tree-treenode .rc-tree-indent .rc-tree-indent-unit-end::before {
+  display: none;
+}
+
+.rc-tree-child-tree {
+  display: block;
+}
+
+.node-motion {
+  transition: all .3s;
+  overflow-y: hidden;
+}
+
+#root .react-contexify {
+  max-height: 398px;
+  overflow: auto;
+  background: #1e2024;
+  min-width: auto;
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  z-index: 9999;
+}
+
+#root .react-contexify__item__content {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.2rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+#root .react-contexify__separator{
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+#root .react-contexify__item:not(.react-contexify__item--disabled):focus>.react-contexify__item__content,
+
+#root .react-contexify__item:not(.react-contexify__item--disabled):hover>.react-contexify__item__content {
+  background-color: #40444f;
+}
+
+.status-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 20px;
+  text-overflow: ellipsis;
+}
+
+.status-title__title {
+  margin: 0;
+}
+
+.status-title__count {
+  font-size: 12px;
+}
+
+.status-title__circleBadge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%
+}

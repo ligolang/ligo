@@ -1,0 +1,49 @@
+:root {
+  --color-white: white;
+  --color-black: black;
+  
+  --color-text: #212529;
+  --color-link: blue;
+  --color-text-muted: gray;
+
+  --color-border: gray;
+
+  --color-bg: white;
+  --color-bg2: whitesmoke;
+  --color-bg-invalid: lightgray;
+  --color-hover: aliceblue;
+
+  --color-primary: #0069d9;
+  --color-secondary: #6c757d;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
+}
+
+.link {
+  cursor: pointer;
+  color: var(--color-link) !important;
+  &:hover {
+    color: var(--color-link) !important;
+    text-decoration: underline !important;
+  }
+}
+
+.bg {
+  background-color: var(--color-bg) !important;
+}
+
+.bg2 {
+  background-color: var(--color-bg2) !important;
+}
+
+.bg-invalid {
+  background-color: var(--color-bg-invalid) !important;
+}
+
+.bg-hover {
+  background-color: var(--color-hover) !important;
+}
