@@ -10,6 +10,7 @@
       "-c",
       "#{os == 'windows' ? 'patch -p1 < 0002-Disable-global-invocations-of-Unix-APIs.patch' : 'true' }"
     ],
+
     [
       "bash",
       "-c",
