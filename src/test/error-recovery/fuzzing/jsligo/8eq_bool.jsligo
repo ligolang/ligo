@@ -1,0 +1,11 @@
+
+
+ let main = ( [ a , b ] : [ bool , bool ] ) fuzzing_verbatim : int => {
+ if ( a == b ) { return 999 ; } else { return 1 ; } ;
+ } ;
+
+/*
+Mutation chance is 8
+
+Add fuzzing_verbatim in line 3
+*/

@@ -8,8 +8,7 @@ let decompile_value ~raise (output_type:Ast_aggregated.type_expression) (ty, val
   let mini_c     = trace ~raise main_decompile_michelson @@ Stacking.Decompiler.decompile_value ty value in
   let aggregated =  trace ~raise main_decompile_mini_c    @@ Spilling.decompile mini_c output_type in
   let typed      =  trace ~raise main_decompile_aggregated @@ Aggregation.decompile aggregated in
-  let inferred   = Checking.untype_expression typed in
-  let core       = Inference.Untyper.untype_expression inferred in
+  let core       = Checking.untype_expression typed in
   core
 
 (* this function is used by - today dry-run - when the application of a contract to its arguments

@@ -12,12 +12,13 @@ let map_lmap_t f map =
     map
 
 type ('a,'err) folder = raise:'err raise -> 'a -> expression -> 'a
+
 let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression ~raise f in
   let idle = fun acc _ -> acc in
   let init = f ~raise init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_raw_code _ -> init
+  | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ -> init
   | E_constant c -> Folds.constant self init c
   | E_application app -> Folds.application self init app
   | E_lambda l -> Folds.lambda self idle init l
@@ -26,7 +27,7 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
   | E_constructor c -> Folds.constructor self init c
   | E_matching {matchee=e; cases} -> (
     let res = self init e in
-    let aux acc ({body ; _ }: _ Ast_sugar.match_case) = self acc body in
+    let aux acc ({body ; _ }: _ match_case) = self acc body in
     let res = List.fold ~f:aux ~init:res cases in
     res
   )
@@ -42,24 +43,29 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
     let res = self init let_result in 
     res
   | E_mod_in  mi ->
-    let res = List.fold ~f:(fun acc (x: declaration Location.wrap) -> match x.wrap_content with
-      | Declaration_constant dc -> self acc dc.expr
-      | _ ->  acc) ~init mi.rhs
-    in
+    let res = fold_expression_in_module_expr self init mi.rhs in
     let res = self res mi.let_result in
-     res
-  | E_mod_alias ma -> Folds.mod_alias self init ma
-  | E_recursive r -> Folds.recursive self idle init r
-  | E_module_accessor { module_name = _ ; element } -> (
-    let res = self init element in
     res
-  )
+  | E_recursive r -> Folds.recursive self idle init r
+
+and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
+  match x.wrap_content with
+  | M_struct decls ->
+    List.fold
+      ~f:( fun acc (x: declaration) ->
+        match x.wrap_content with
+        | Declaration_constant x -> self acc x.expr
+        | Declaration_module x -> fold_expression_in_module_expr self acc x.module_
+        | Declaration_type _ ->  acc
+      )
+      ~init:acc
+      decls
+  | M_module_path _
+  | M_variable _ -> acc
 
 type 'err exp_mapper = raise:'err raise -> expression -> expression
 type 'err ty_exp_mapper = raise:'err raise -> type_expression -> type_expression
-type 'err abs_mapper =
-  | Expression of 'err exp_mapper
-  | Type_expression of 'err ty_exp_mapper
+
 let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fun f e ->
   let self = map_expression ~raise f in
   let e' = f ~raise e in
@@ -108,18 +114,9 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
       return @@ E_type_in { type_binder ; rhs; let_result }
     )
   | E_mod_in  mi ->
-    let rhs = List.map ~f:(fun (x: declaration Location.wrap) -> match x.wrap_content with
-      | Declaration_constant dc ->
-        let expr = self dc.expr in
-        let dc : declaration = Declaration_constant {dc with expr } in
-        {x with wrap_content=dc}
-      | _ -> x) mi.rhs
-    in
+    let rhs = map_expression_in_module_expr self mi.rhs in
     let let_result = self mi.let_result in
     return @@ E_mod_in {mi with rhs;let_result}
-  | E_mod_alias ma ->
-    let ma = Maps.mod_alias self ma in
-    return @@ E_mod_alias ma
   | E_lambda l -> (
       let l = Maps.lambda self (fun a -> a) l in
       return @@ E_lambda l
@@ -135,11 +132,31 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
       let c = Maps.constant self c in
       return @@ E_constant c
     )
-  | E_module_accessor { module_name; element } -> (
-    let element = self element in
-    return @@ E_module_accessor { module_name; element }
-  )
-  | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
+  | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> return e'
+
+and map_expression_in_declarations : (expression -> expression) -> module_ -> module_ = fun self xs ->
+  List.map
+    ~f:( fun (x: declaration) ->
+      let return wrap_content = { x with wrap_content } in
+      match x.wrap_content with
+      | Declaration_constant x ->
+        let expr = self x.expr in
+        return (Declaration_constant { x with expr })
+      | Declaration_module x ->
+        let module_ = map_expression_in_module_expr self x.module_ in
+        return (Declaration_module { x with module_ })
+      | Declaration_type _ -> x
+    )
+    xs
+
+and map_expression_in_module_expr : (expression -> expression) -> module_expr -> module_expr = fun self x ->
+  let return wrap_content = { x with wrap_content } in
+  match x.wrap_content with
+  | M_struct decls ->
+    let decls = map_expression_in_declarations self decls in
+    return (M_struct decls)
+  | M_module_path _
+  | M_variable _ -> x
 
 and map_type_expression ~raise : 'err ty_exp_mapper -> type_expression -> type_expression =
     fun f te ->
@@ -160,9 +177,7 @@ and map_type_expression ~raise : 'err ty_exp_mapper -> type_expression -> type_e
     let a' = Maps.type_app self a in
     return @@ T_app a'
   | T_variable _ -> te'
-  | T_module_accessor ma ->
-    let ma = Maps.module_access self ma in
-    return @@ T_module_accessor ma
+  | T_module_accessor _ -> te'
   | T_singleton _ -> te'
   | T_abstraction x ->
     let x = Maps.for_all self x in
@@ -171,28 +186,13 @@ and map_type_expression ~raise : 'err ty_exp_mapper -> type_expression -> type_e
     let x = Maps.for_all self x in
     return (T_for_all x)
 
-and map_module ~raise : 'err abs_mapper -> module_ -> module_ = fun m p ->
-  let aux = fun (x : declaration) ->
-    let return (x:declaration) = x in
-    match x,m with
-    | (Declaration_type dt, Type_expression m') -> (
-        let type_expr = map_type_expression ~raise m' dt.type_expr in
-        return @@ (Declaration_type {dt with type_expr})
-      )
-    | (Declaration_constant decl_cst, Expression m') -> (
-        let expr = map_expression ~raise m' decl_cst.expr in
-        return @@ (Declaration_constant {decl_cst with expr})
-      )
-    | decl,_ -> decl
-  (* | Declaration_type of (type_variable * type_expression) *)
-  in
-  List.map ~f:(Location.map aux) p
 
-type ('a , 'err) fold_mapper = raise:'err raise -> 'a -> expression -> bool * 'a * expression
-let rec fold_map_expression ~raise : ('a , 'err) fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
-  let self = fold_map_expression ~raise f in
+
+type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
+let rec fold_map_expression : type a . a fold_mapper -> a -> expression -> a * expression = fun f a e ->
+  let self = fold_map_expression f in
   let idle acc a =  (acc,a) in
-  let (continue, init,e') = f ~raise a e in
+  let (continue, init,e') = f a e in
   if (not continue) then (init,e')
   else
   let return expression_content = { e' with expression_content } in
@@ -244,18 +244,9 @@ let rec fold_map_expression ~raise : ('a , 'err) fold_mapper -> 'a -> expression
       (res, return @@ E_type_in {type_binder; rhs; let_result})
     )
   | E_mod_in  mi ->
-    let res,rhs = List.fold_map ~f:(fun acc (x: declaration Location.wrap) -> match x.wrap_content with
-      | Declaration_constant dc ->
-        let res,expr = self acc dc.expr in
-        let dc : declaration = Declaration_constant {dc with expr } in
-         (res,{x with wrap_content=dc})
-      | _ ->  (acc,x)) ~init mi.rhs
-    in
+    let res,rhs = fold_map_expression_in_module_expr self init mi.rhs in
     let res,let_result = self res mi.let_result in
     (res, return @@ E_mod_in {mi with rhs;let_result})
-  | E_mod_alias ma ->
-    let res,ma = Fold_maps.mod_alias self init ma in
-    ( res, return @@ E_mod_alias ma)
   | E_lambda l -> (
       let res,l = Fold_maps.lambda self idle init l in
       ( res, return @@ E_lambda l)
@@ -267,8 +258,28 @@ let rec fold_map_expression ~raise : ('a , 'err) fold_mapper -> 'a -> expression
       let res,c = Fold_maps.constant self init c in
       (res, return @@ E_constant c)
     )
-  | E_module_accessor { module_name; element } -> (
-    let (res,element) = self init element in
-    (res, return @@ E_module_accessor { module_name; element })
-  )
-  | E_literal _ | E_variable _ | E_raw_code _ as e' -> (init, return e')
+  | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> (init, return e')
+
+and fold_map_expression_in_module_expr : type a . (a -> expression -> a * expression) -> a -> module_expr -> a * module_expr = fun self acc x ->
+  let return r wrap_content = (r, { x with wrap_content }) in
+  match x.wrap_content with
+  | M_struct decls ->
+    let res,decls = List.fold_map
+      ~f:( fun acc (x: declaration) ->
+        let return r wrap_content = (r, { x with wrap_content }) in
+        match x.wrap_content with
+        | Declaration_constant x ->
+          let res,expr = self acc x.expr in
+          return res (Declaration_constant { x with expr })
+        | Declaration_module x ->
+          let res,module_ = fold_map_expression_in_module_expr self acc x.module_ in
+          return res (Declaration_module { x with module_ })
+        | Declaration_type _ -> (acc,x)
+      )
+      ~init:acc
+      decls
+    in
+    return res (M_struct decls)
+  | M_module_path _ as x -> return acc x
+  | M_variable _ as x ->
+    return acc x

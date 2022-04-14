@@ -12,11 +12,6 @@ let arith_bin_op_ctor =
   let mod_ op = E_Mod op in
   [add;sub;mult;div;mod_]
 
-let bool_bin_op_ctor =
-  let and_ op = E_And op in
-  let or_ op = E_Or op in
-  [and_;or_]
-
 let comp_bin_op_ctor =
   let lt op = E_Lt op in
   let leq op = E_Leq op in
@@ -86,15 +81,8 @@ module Mutator (M : Monad) = struct
                                  s = (fun x -> return x);
                                  d = (fun x -> return x); }
 
-  let mutate_expression_list ?n (expr : Cst.Pascaligo.expr) =
-    get_list ?n @@ map_expression mutate_mapper expr
-
-  let mutate_expression ?n (expr: Cst.Pascaligo.expr) =
-    let rndexpr = map_expression mutate_mapper expr in
-    get_one ?n rndexpr
-
   let mutate_module_ ?n (mod_ : Cst.Pascaligo.t) =
-    let rndmod_ = map_module mutate_mapper mod_.decl in
+    let rndmod_ = map_declarations mutate_mapper mod_.decl in
     let (x,ds) = get_one ?n rndmod_ in
     (x, {mod_ with decl = ds})
 end

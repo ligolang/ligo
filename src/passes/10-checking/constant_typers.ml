@@ -30,781 +30,6 @@ open H
   Various helpers are defined bellow.
 *)
 
-
-let none ~raise loc = typer_0 ~raise loc "NONE" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> trace_option ~raise (expected_option loc t) @@ assert_t_option t; t
-
-let set_empty ~raise loc = typer_0 ~raise loc "SET_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> trace_option ~raise (expected_set loc t) @@ assert_t_set t ; t
-
-let set_update ~raise loc = typer_3 ~raise loc "SET_UPDATE" @@ fun elt flag set ->
-  let elt' = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = trace_option ~raise (expected_bool loc flag) @@ assert_t_bool flag in
-  let () = assert_eq_1 ~raise ~loc elt elt' in
-  set
-
-let sub ~raise loc = typer_2 ~raise loc "SUB" @@ fun a b ->
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_int ()) || eq_1 a (t_nat ()))
-  && (eq_1 b (t_int ()) || eq_1 b (t_nat ()))
-  then t_int () else
-  if (eq_2 (a , b) (t_timestamp ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ()))
-  then t_timestamp () else
-  if (eq_2 (a , b) (t_mutez ()))
-  then t_mutez () else
-    raise.raise (bad_substraction loc)
-
-let some ~raise loc = typer_1 ~raise loc "SOME" @@ fun a -> t_option a
-
-let map_remove ~raise loc : typer = typer_2 ~raise loc "MAP_REMOVE" @@ fun k m ->
-  let (src , _) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  m
-
-let map_empty ~raise loc = typer_0 ~raise loc "MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let (src, dst) = trace_option ~raise (expected_map loc t) @@ get_t_map t in
-    t_map src dst
-
-let big_map_empty ~raise loc = typer_0 ~raise loc "BIG_MAP_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let (src, dst) = trace_option ~raise (expected_big_map loc t) @@ get_t_big_map t in
-    t_big_map src dst
-
-let map_add ~raise loc : typer = typer_3 loc ~raise "MAP_ADD" @@ fun k v m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  m
-
-let map_update ~raise loc : typer = typer_3 ~raise loc "MAP_UPDATE" @@ fun k v m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let v' = trace_option ~raise (expected_option loc v) @@ get_t_option v in
-  let () = assert_eq_1 ~raise ~loc dst v' in
-  m
-
-let map_mem ~raise loc : typer = typer_2 ~raise loc "MAP_MEM" @@ fun k m ->
-  let (src , _) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  t_bool ()
-
-let map_find ~raise loc : typer = typer_2 ~raise loc "MAP_FIND" @@ fun k m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  dst
-
-let map_find_opt ~raise loc : typer = typer_2 ~raise loc "MAP_FIND_OPT" @@ fun k m ->
-  let (src , dst) = trace_option ~raise (expected_big_map loc m) @@
-      Option.bind_eager_or (get_t_map m) (get_t_big_map m) in
-  let () = assert_eq_1 ~raise ~loc src k in
-  t_option dst
-
-let map_iter ~raise loc : typer = typer_2 ~raise loc "MAP_ITER" @@ fun f m ->
-  let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let kv = t_pair k v in
-  let unit = t_unit () in
-  let () = assert_eq_1 ~raise ~loc arg kv in
-  let () = assert_eq_1 ~raise ~loc res unit in
-  t_unit ()
-
-let map_map ~raise loc : typer = typer_2 ~raise loc "MAP_MAP" @@ fun f m ->
-  let (k, v) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let kv = t_pair k v in
-  let () = assert_eq_1 ~raise ~loc arg kv in
-  t_map k res
-
-let map_get_and_update ~raise loc : typer = typer_3 ~raise loc "MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let v = trace_option ~raise (expected_option loc opt_v) @@ get_t_option opt_v in
-  let (src , dst) = trace_option ~raise (expected_map loc m) @@ get_t_map m in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  t_pair opt_v m
-
-let big_map_get_and_update ~raise loc : typer = typer_3 ~raise loc "BIG_MAP_GET_AND_UPDATE" @@ fun k opt_v m ->
-  let v = trace_option ~raise (expected_option loc opt_v) @@ get_t_option opt_v in
-  let (src , dst) = trace_option ~raise (expected_map loc m) @@ get_t_big_map m in
-  let () = assert_eq_1 ~raise ~loc src k in
-  let () = assert_eq_1 ~raise ~loc dst v in
-  t_pair opt_v m
-
-let size ~raise loc = typer_1 ~raise loc "SIZE" @@ fun t ->
-  let () =
-    Assert.assert_true ~raise (wrong_size loc t) @@
-    (is_t_map t || is_t_list t || is_t_string t || is_t_bytes t || is_t_set t ) in
-  t_nat ()
-
-let slice ~raise loc = typer_3 ~raise loc "SLICE" @@ fun i j s ->
-  let t_nat = t_nat () in
-  let () = assert_eq_1 ~raise ~loc i t_nat in
-  let () = assert_eq_1 ~raise ~loc j t_nat in
-  if eq_1 s (t_string ())
-  then t_string ()
-  else if eq_1 s (t_bytes ())
-  then t_bytes ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat;t_nat;t_string()] ;
-        [t_nat;t_nat;t_bytes()] ;
-      ]
-      [i ; j ; s]
-
-let failwith_ ~raise loc = typer_1_opt ~raise loc "failwith" @@ fun t opt ->
-  let _ =
-    if eq_1 t (t_string ())
-    then ()
-    else if eq_1 t (t_nat ())
-    then ()
-    else if eq_1 t (t_int ())
-    then ()
-    else
-      raise.raise @@ typeclass_error loc
-        [
-          [t_string()] ;
-          [t_nat()] ;
-          [t_int()] ;
-        ]
-        [t] in
-  let default = t_unit () in
-  Simple_utils.Option.value ~default opt
-
-let int ~raise loc : typer = typer_1 ~raise loc "INT" @@ fun t ->
-  if (eq_1 t (t_nat ()) || eq_1 t (t_bls12_381_fr ()))
-  then (t_int ()) else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_bls12_381_fr()] ;
-                [t_nat ()] ;
-              ]
-              [t]
-
-let bytes_pack ~raise loc : typer = typer_1 ~raise loc "PACK" @@ fun _t ->
-  t_bytes ()
-
-let bytes_unpack ~raise loc = typer_1_opt ~raise loc "UNPACK" @@ fun input tv_opt ->
-  let () = trace_option ~raise (expected_bytes loc input) @@ assert_t_bytes input in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let t = trace_option ~raise (expected_option loc t) @@ get_t_option t in
-    t_option t
-
-let hash256 ~raise loc = typer_1 ~raise loc "SHA256" @@ fun t ->
-  let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
-  t_bytes ()
-
-let hash512 ~raise loc = typer_1 ~raise loc "SHA512" @@ fun t ->
-  let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
-  t_bytes ()
-
-let blake2b ~raise loc = typer_1 ~raise loc "BLAKE2b" @@ fun t ->
-  let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
-  t_bytes ()
-
-let sha3 ~raise loc = typer_1 ~raise loc "SHA3" @@ fun t ->
-  let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
-  t_bytes ()
-
-let keccak ~raise loc = typer_1 ~raise loc "KECCAK" @@ fun t ->
-  let () = trace_option ~raise (expected_bytes loc t) @@ assert_t_bytes t in
-  t_bytes ()
-
-let hash_key ~raise loc = typer_1 ~raise loc "HASH_KEY" @@ fun t ->
-  let () = trace_option ~raise (expected_key loc t) @@ assert_t_key t in
-  t_key_hash ()
-
-let check_signature ~raise loc = typer_3 ~raise loc "CHECK_SIGNATURE" @@ fun k s b ->
-  let () = trace_option ~raise (expected_key loc k) @@ assert_t_key k in
-  let () = trace_option ~raise (expected_signature loc s) @@ assert_t_signature s in
-  let () = trace_option ~raise (expected_bytes loc b) @@ assert_t_bytes b in
-  t_bool ()
-
-let sender ~raise loc = constant' ~raise loc "SENDER" @@ t_address ()
-
-let source ~raise loc = constant' ~raise loc "SOURCE" @@ t_address ()
-
-let unit ~raise loc = constant' ~raise loc "UNIT" @@ t_unit ()
-
-let never ~raise loc = typer_1_opt ~raise loc "NEVER" @@ fun nev tv_opt ->
-  let () = assert_eq_1 ~raise ~loc nev (t_never ()) in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
-
-let amount ~raise loc = constant' ~raise loc "AMOUNT" @@ t_mutez ()
-
-let balance ~raise loc = constant' ~raise loc "BALANCE" @@ t_mutez ()
-
-let chain_id ~raise loc = constant' ~raise loc "CHAIN_ID" @@ t_chain_id ()
-
-let level ~raise loc = constant' ~raise loc "LEVEL" @@ t_nat ()
-
-let total_voting_power ~raise loc = constant' ~raise loc "TOTAL_VOTING_POWER" @@ t_nat ()
-
-let voting_power ~raise loc = typer_1 ~raise loc "VOTING_POWER" @@ fun t ->
-  let () = trace_option ~raise (expected_key_hash loc t) @@ assert_t_key_hash t in
-  t_nat ()
-
-let address ~raise loc = typer_1 ~raise loc "ADDRESS" @@ fun c ->
-  let () = trace_option ~raise (expected_contract loc c) @@ assert_t_contract c in
-  t_address ()
-
-let self_address ~raise loc = typer_0 ~raise loc "SELF_ADDRESS" @@ fun _ ->
-  t_address ()
-
-let self ~raise loc = typer_1_opt ~raise loc "SELF" @@ fun entrypoint_as_string tv_opt ->
-  let () = trace_option ~raise (expected_string loc entrypoint_as_string) @@ assert_t_string entrypoint_as_string in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
-
-let implicit_account ~raise loc = typer_1 ~raise loc "IMPLICIT_ACCOUNT" @@ fun key_hash ->
-  let () = trace_option ~raise (expected_key_hash loc key_hash) @@ assert_t_key_hash key_hash in
-  t_contract (t_unit () )
-
-let now ~raise loc = constant' ~raise loc "NOW" @@ t_timestamp ()
-let ctrue ~raise loc = constant' ~raise loc "TRUE" @@ t_bool ()
-let cfalse ~raise loc = constant' ~raise loc "FALSE" @@ t_bool ()
-
-let transaction ~raise loc = typer_3 ~raise loc "CALL" @@ fun param amount contract ->
-  let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let contract_param = trace_option ~raise (expected_contract loc contract) @@ get_t_contract contract in
-  let () = assert_eq_1 ~raise ~loc param contract_param in
-  t_operation ()
-
-let create_contract ~raise loc = typer_4 ~raise loc "CREATE_CONTRACT" @@ fun f kh_opt amount init_storage  ->
-  let { type1 = args ; type2 = ret } = trace_option ~raise (expected_function loc f) @@ get_t_arrow f in
-  let (_,s) = trace_option ~raise (expected_pair loc args) @@ get_t_pair args in
-  let (oplist,s') = trace_option ~raise (expected_pair loc ret) @@ get_t_pair ret in
-  let () = trace_option ~raise (expected_mutez loc amount) @@ assert_t_mutez amount in
-  let (delegate) = trace_option ~raise (expected_option loc kh_opt) @@ get_t_option kh_opt in
-  let () = assert_eq_1 ~raise ~loc s s' in
-  let () = assert_eq_1 ~raise ~loc s init_storage in
-  let () = trace_option ~raise (expected_op_list loc oplist) @@ assert_t_list_operation oplist in
-  let () = trace_option ~raise (expected_key_hash loc delegate) @@ assert_t_key_hash delegate in
-  t_pair (t_operation ()) (t_address ())
-
-let get_contract ~raise loc = typer_1_opt ~raise loc "CONTRACT" @@ fun addr_tv tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
-let get_contract_with_error ~raise loc = typer_2_opt ~raise loc "CONTRACT" @@ fun addr_tv err_str tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  let () = trace_option ~raise (expected_string loc err_str) @@ get_t_string err_str in
-  t_contract tv'
-
-let get_contract_opt ~raise loc = typer_1_opt ~raise loc "CONTRACT OPT" @@ fun addr_tv tv_opt ->
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_option (t_contract tv')
-
-let get_entrypoint ~raise loc = typer_2_opt ~raise loc "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
-  let t_string = t_string () in
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
-let get_entrypoint_opt ~raise loc = typer_2_opt ~raise loc "CONTRACT_ENTRYPOINT_OPT" @@ fun entry_tv addr_tv tv_opt ->
-  let t_string = t_string () in
-  let t_addr = t_address () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let () = assert_eq_1 ~raise ~loc addr_tv t_addr in
-  let tv = trace_option ~raise (contract_not_annotated loc) tv_opt in
-  let tv = trace_option ~raise (expected_option loc tv) @@ get_t_option tv in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_option (t_contract tv' )
-
-let set_delegate ~raise loc = typer_1 ~raise loc "SET_DELEGATE" @@ fun delegate_opt ->
-  let kh_opt = (t_option (t_key_hash ()) ) in
-  let () = assert_eq_1 ~raise ~loc delegate_opt kh_opt in
-  t_operation ()
-
-let abs ~raise loc = typer_1 ~raise loc "ABS" @@ fun t ->
-  let () = trace_option ~raise (expected_int loc t) @@ assert_t_int t in
-  t_nat ()
-
-let is_nat ~raise loc = typer_1 ~raise loc "ISNAT" @@ fun t ->
-  let () = trace_option ~raise (expected_int loc t) @@ assert_t_int t in
-  t_option (t_nat ())
-
-let neg ~raise loc = typer_1 ~raise loc "NEG" @@ fun t ->
-  if eq_1 t (t_int ())
-  then (t_int ()) else
-  if eq_1 t (t_nat ())
-  then (t_int ()) else
-  if eq_1 t (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_1 t (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_1 t (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_1 t (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_int()] ;
-                [t_nat()] ;
-                [t_bls12_381_g1()] ;
-                [t_bls12_381_g2()] ;
-                [t_bls12_381_fr()] ;
-              ]
-              [t]
-
-let unopt ~raise loc = typer_1 ~raise loc "UNOPT" @@ fun a ->
-  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
-  a
-
-let unopt_with_error ~raise loc = typer_2 ~raise loc "UNOPT_WITH_ERROR" @@ fun a b ->
-  let a  = trace_option ~raise (expected_option loc a) @@ get_t_option a in
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_string b in
-  a
-
-let assertion ~raise loc = typer_1 ~raise loc "ASSERT" @@ fun a ->
-  let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
-  t_unit ()
-
-let assertion_with_error ~raise loc = typer_2 ~raise loc "ASSERT_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_bool loc a) @@ assert_t_bool a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
-let assert_some ~raise loc = typer_1 ~raise loc "ASSERT_SOME" @@ fun a ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  t_unit ()
-
-let assert_some_with_error ~raise loc = typer_2 ~raise loc "ASSERT_SOME_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
-let assert_none ~raise loc = typer_1 ~raise loc "ASSERT_NONE" @@ fun a ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  t_unit ()
-
-let assert_none_with_error ~raise loc = typer_2 ~raise loc "ASSERT_NONE_WITH_ERROR" @@ fun a b ->
-  let () = trace_option ~raise (expected_option loc a) @@ assert_t_option a in
-  let () = trace_option ~raise (expected_string loc b) @@ assert_t_string b in
-  t_unit ()
-
-let times ~raise loc = typer_2 ~raise loc "TIMES" @@ fun a b ->
-  if (eq_1 a (t_bls12_381_g1 ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_g1 ()) else
-  if (eq_1 a (t_bls12_381_g2 ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_g2 ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_int ()) && eq_1 b (t_bls12_381_fr ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_nat ()))
-  then (t_bls12_381_fr ()) else
-  if (eq_1 a (t_bls12_381_fr ()) && eq_1 b (t_int ()))
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-    raise.raise @@ typeclass_error loc
-              [
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_bls12_381_fr()] ;
-                [t_int();t_bls12_381_fr()] ;
-                [t_bls12_381_fr();t_nat()] ;
-                [t_bls12_381_fr();t_int()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_nat();t_mutez()] ;
-                [t_mutez();t_nat()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-              ]
-              [a; b]
-
-let ediv ~raise loc = typer_2 ~raise loc "EDIV" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_option (t_pair (t_nat ()) (t_nat ()) ) else
-  if eq_2 (a , b) (t_int ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
-  then t_option (t_pair (t_int ()) (t_nat ()) ) else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_option (t_pair (t_nat ()) (t_mutez ()) ) else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_option (t_pair (t_mutez ()) (t_mutez ()) ) else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let div ~raise loc = typer_2 ~raise loc "DIV" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_1 a (t_int ()) && eq_1 b (t_nat ())
-  then t_int () else
-  if eq_1 a (t_nat ()) && eq_1 b (t_int ())
-  then t_int () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_mutez () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_nat () else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let mod_ ~raise loc = typer_2 ~raise loc "MOD" @@ fun a b ->
-  if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
-  then t_nat () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
-  then t_mutez () else
-  if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
-  then t_mutez () else
-    raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-        [t_nat();t_int()] ;
-        [t_int();t_nat()] ;
-        [t_int();t_int()] ;
-        [t_mutez();t_nat()] ;
-        [t_mutez();t_mutez()] ;
-      ]
-      [a; b]
-
-let add ~raise loc = typer_2 ~raise loc "ADD" @@ fun a b ->
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_2 (a , b) (t_mutez ())
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
-  then t_timestamp () else
-    raise.raise @@ typeclass_error loc
-              [ 
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_mutez()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_timestamp();t_int()] ;
-                [t_int();t_timestamp()] ;
-              ]
-              [a; b]
-
-let polymorphic_add ~raise loc = typer_2 ~raise loc "POLYMORPHIC_ADD" @@ fun a b ->
-  if eq_2 (a , b) (t_string ())
-  then t_string () else
-  if eq_2 (a , b) (t_bls12_381_g1 ())
-  then (t_bls12_381_g1 ()) else
-  if eq_2 (a , b) (t_bls12_381_g2 ())
-  then (t_bls12_381_g2 ()) else
-  if eq_2 (a , b) (t_bls12_381_fr ())
-  then (t_bls12_381_fr ()) else
-  if eq_2 (a , b) (t_nat ())
-  then t_nat () else
-  if eq_2 (a , b) (t_int ())
-  then t_int () else
-  if eq_2 (a , b) (t_mutez ())
-  then t_mutez () else
-  if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_int () else
-  if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
-  then t_timestamp () else
-    raise.raise @@ typeclass_error loc
-              [ 
-                [t_string();t_string()] ;
-                [t_bls12_381_g1();t_bls12_381_g1()] ;
-                [t_bls12_381_g2();t_bls12_381_g2()] ;
-                [t_bls12_381_fr();t_bls12_381_fr()] ;
-                [t_nat();t_nat()] ;
-                [t_int();t_int()] ;
-                [t_mutez();t_mutez()] ;
-                [t_nat();t_int()] ;
-                [t_int();t_nat()] ;
-                [t_timestamp();t_int()] ;
-                [t_int();t_timestamp()] ;
-              ]
-              [a; b]
-
-let set_mem ~raise loc = typer_2 ~raise loc "SET_MEM" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  t_bool ()
-
-let set_add ~raise loc = typer_2 ~raise loc "SET_ADD" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  set
-
-let set_remove ~raise loc = typer_2 ~raise loc "SET_REMOVE" @@ fun elt set ->
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc elt key in
-  set
-
-let set_iter ~raise loc = typer_2 ~raise loc "SET_ITER" @@ fun body set ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
-  let key = trace_option ~raise (expected_set loc set) @@ get_t_set set in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_unit ())
-
-let list_empty ~raise loc = typer_0 ~raise loc "LIST_EMPTY" @@ fun tv_opt ->
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t ->
-    let () = trace_option ~raise (expected_list loc t) @@ assert_t_list t in
-    t
-
-let list_iter ~raise loc = typer_2 ~raise loc "LIST_ITER" @@ fun body lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc res (t_unit ()) in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_unit ())
-
-let list_map ~raise loc = typer_2 ~raise loc "LIST_MAP" @@ fun body lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key arg in
-  (t_list res )
-
-let fold ~raise loc = typer_3 ~raise loc "FOLD" @@ fun body container init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc container) @@ Option.map_pair_or (get_t_list,get_t_set) container in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-let list_fold ~raise loc = typer_3 ~raise loc "LIST_FOLD" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_fold_left ~raise loc = typer_3 ~raise loc "LIST_FOLD_LEFT" @@ fun body init lst ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_fold_right ~raise loc = typer_3 ~raise loc "LIST_FOLD_RIGHT" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let list_head_opt ~raise loc = typer_1 ~raise loc "LIST_HEAD_OPT" @@ fun lst ->
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  t_option ~loc key
-
-let list_tail_opt ~raise loc = typer_1 ~raise loc "LIST_TAIL_OPT" @@ fun lst ->
-  let key = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  t_option ~loc @@ t_list ~loc key
-
-let set_fold ~raise loc = typer_3 ~raise loc "SET_FOLD" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let set_fold_desc ~raise loc = typer_3 ~raise loc "SET_FOLD_DESC" @@ fun body lst init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (cur , prec) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let key = trace_option ~raise (expected_set loc lst) @@ get_t_set lst in
-  let () = assert_eq_1 ~raise ~loc key cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-let map_fold ~raise loc = typer_3 ~raise loc "MAP_FOLD" @@ fun body map init ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let (prec , cur) = trace_option ~raise (expected_pair loc arg) @@ get_t_pair arg in
-  let (key , value) = trace_option ~raise (expected_map loc map) @@ get_t_map map in
-  let kv = t_pair key value in
-  let () = assert_eq_1 ~raise ~loc kv cur in
-  let () = assert_eq_1 ~raise ~loc prec res in
-  let () = assert_eq_1 ~raise ~loc res init in
-  res
-
-(** FOLD_WHILE is a fold operation that takes an initial value of a certain type
-    and then iterates on it until a condition is reached. The auxillary function
-    that does the fold returns either boolean true or boolean false to indicate
-    whether the fold should continue or not. Necessarily then the initial value
-    must match the input parameter of the auxillary function, and the auxillary
-    should return type (bool * input) *)
-let fold_while ~raise loc = typer_2 ~raise loc "FOLD_WHILE" @@ fun body init ->
-  let { type1 = arg ; type2 = result } = trace_option ~raise (expected_function loc body) @@ get_t_arrow body in
-  let () = assert_eq_1 ~raise ~loc arg init in
-  let () = assert_eq_1 ~raise ~loc (t_pair (t_bool ()) init) result
-  in init
-
-(* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
-let continue ~raise loc = typer_1 ~raise loc "CONTINUE" @@ fun arg ->
-  t_pair (t_bool ()) arg
-
-let stop ~raise loc = typer_1 ~raise loc "STOP" @@ fun arg ->
-  (t_pair (t_bool ()) arg)
-
-let not_ ~raise loc = typer_1 ~raise loc "NOT" @@ fun elt ->
-  if eq_1 elt (t_bool ())
-  then t_bool ()
-  else if eq_1 elt (t_nat ()) || eq_1 elt (t_int ())
-  then t_int ()
-  else raise.raise @@ wrong_not loc elt
-
-let or_ ~raise loc = typer_2 ~raise loc "OR" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let xor ~raise loc = typer_2 ~raise loc "XOR" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let and_ ~raise loc = typer_2 ~raise loc "AND" @@ fun a b ->
-  if eq_2 (a , b) (t_bool ())
-  then t_bool ()
-  else if eq_2 (a , b) (t_nat ()) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_bool();t_bool()] ;
-        [t_nat();t_nat()] ;
-        [t_int();t_nat()] ;
-      ]
-      [a; b]
-
-let lsl_ ~raise loc = typer_2 ~raise loc "LSL" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let lsr_ ~raise loc = typer_2 ~raise loc "LSR" @@ fun a b ->
-  if eq_2 (a , b) (t_nat ())
-  then t_nat ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_nat();t_nat()] ;
-      ]
-      [a; b]
-
-let concat ~raise loc = typer_2 ~raise loc "CONCAT" @@ fun a b ->
-  if eq_2 (a , b) (t_string ())
-  then t_string ()
-  else if eq_2 (a , b) (t_bytes ())
-  then t_bytes ()
-  else raise.raise @@ typeclass_error loc
-      [
-        [t_string();t_string()] ;
-        [t_bytes();t_bytes()] ;
-      ]
-      [a; b]
-
-let cons ~raise loc = typer_2 ~raise loc "CONS" @@ fun hd tl ->
-  let elt = trace_option ~raise (expected_list loc tl) @@ get_t_list tl in
-  let () = assert_eq_1 ~raise ~loc hd elt in
-  tl
-
 let simple_comparator ~raise : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
   let () =
     Assert.assert_true ~raise (uncomparable_types loc a b) @@
@@ -836,7 +61,7 @@ let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
   let aux a b : type_expression =
-    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
+    comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -850,7 +75,7 @@ and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
   let aux a b : type_expression =
-    comparator ~raise ~test loc s [a.associated_type;b.associated_type] None
+    comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
   let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
   t_bool ()
@@ -863,7 +88,7 @@ and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> 
     trace_option ~raise (comparator_composed loc a_lst) @@
     get_t_list a_lst in
   let b = trace_option ~raise (expected_option loc b_lst) @@ get_t_list b_lst in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
 and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_set b_set ->
   let () =
@@ -873,7 +98,7 @@ and set_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_set) @@
     get_t_set a_set in
   let b = trace_option ~raise (expected_option loc b_set) @@ get_t_set b_set in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
 and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
   let () =
@@ -883,8 +108,8 @@ and map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_map b_map in
-  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
-  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_map b_map ->
@@ -895,8 +120,8 @@ and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s 
     trace_option ~raise (comparator_composed loc a_map) @@
     get_t_big_map a_map in
   let (b_key, b_value) = trace_option ~raise (expected_option loc b_map) @@ get_t_big_map b_map in
-  let _ = comparator ~raise ~test loc s [a_key;b_key] None in
-  let _ = comparator ~raise ~test loc s [a_value;b_value] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_key;b_key] None in
+  let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
 and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
@@ -907,472 +132,444 @@ and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -
     trace_option ~raise (comparator_composed loc a_opt) @@
     get_t_option a_opt in
   let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~raise ~test loc s [a;b] None
+  comparator ~cmp:s ~raise ~test loc [a;b] None
 
-and comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
+and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc cmp @@ fun a b ->
   if test
   then
-    bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc s [a;b] None;
-                                           set_comparator ~test loc s [a;b] None;
-                                           map_comparator ~test loc s [a;b] None;
-                                           simple_comparator loc s [a;b] None;
-                                           option_comparator ~test loc s [a;b] None;
-                                           record_comparator ~test loc s [a;b] None;
-                                           sum_comparator ~test loc s [a;b] None;
-                                           big_map_comparator ~test loc s [a;b] None]
+    bind_exists ~raise @@ List.Ne.of_list [list_comparator ~test loc cmp [a;b] None;
+                                           set_comparator ~test loc cmp [a;b] None;
+                                           map_comparator ~test loc cmp [a;b] None;
+                                           simple_comparator loc cmp [a;b] None;
+                                           option_comparator ~test loc cmp [a;b] None;
+                                           record_comparator ~test loc cmp [a;b] None;
+                                           sum_comparator ~test loc cmp [a;b] None;
+                                           big_map_comparator ~test loc cmp [a;b] None]
   else
-    bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc s [a;b] None;
-                                           option_comparator ~test loc s [a;b] None;
-                                           record_comparator ~test loc s [a;b] None;
-                                           sum_comparator ~test loc s [a;b] None]
+    bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc cmp [a;b] None;
+                                           option_comparator ~test loc cmp [a;b] None;
+                                           record_comparator ~test loc cmp [a;b] None;
+                                           sum_comparator ~test loc cmp [a;b] None]
 
-let ticket ~raise loc = typer_2 ~raise loc "TICKET" @@ fun dat amt ->
-  let () = assert_eq_1 ~raise ~loc amt (t_nat ()) in
-  t_ticket dat
+module O = Ast_typed
 
-let read_ticket ~raise loc = typer_1 ~raise loc "READ_TICKET" @@ fun ticket ->
-  let payload = trace_option ~raise (expected_ticket loc ticket) @@ get_t_ticket ticket in
-  t_pair (t_pair (t_address ()) (t_pair payload (t_nat ()))) ticket
+type typer = error:[`TC of O.type_expression list] list ref -> raise:Errors.typer_error raise -> options:Compiler_options.middle_end -> loc:Location.t -> O.type_expression list -> O.type_expression option -> O.type_expression option
 
-let split_ticket ~raise loc = typer_2 ~raise loc "SPLIT_TICKET" @@ fun ticket amts ->
-  let t_nat = t_nat () in
-  let (a,b) = trace_option ~raise (expected_pair loc amts) @@ get_t_pair amts in
-  let () = assert_eq_1 ~raise ~loc a t_nat in
-  let () = assert_eq_1 ~raise ~loc b t_nat in
-  let _ = trace_option ~raise (expected_ticket loc ticket) @@ get_t_ticket ticket in
-  t_option (t_pair ticket ticket)
+(* Given a ligo type, construct the corresponding typer *)
+let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~options ~loc lst tv_opt ->
+  ignore options;
+  let avs, lamb_type = O.Helpers.destruct_for_alls lamb_type in
+  Simple_utils.Trace.try_with (fun ~raise ->
+      let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) avs lamb_type lst tv_opt in
+      let lamb_type = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
+      let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
+      Some tv)
+    (function
+     | `Outer_error (loc, t', t) ->
+        if fail then raise.raise (assert_equal loc t' t) else None
+     | _ ->
+        let arrs, _ = O.Helpers.destruct_arrows_n lamb_type (List.length lst) in
+        if add_tc then error := `TC arrs :: ! error else ();
+        None)
 
-let join_ticket ~raise loc = typer_1 ~raise loc "JOIN_TICKET" @@ fun ticks ->
-  let (ticka,tickb) = trace_option ~raise (expected_pair loc ticks) @@ get_t_pair ticks in
-  let data = trace_option ~raise (expected_ticket loc ticka) @@ get_t_ticket ticka in
-  let datb = trace_option ~raise (expected_ticket loc tickb) @@ get_t_ticket tickb in
-  let () = assert_eq_1 ~raise ~loc data datb in
-  t_option ticka
 
-let pairing_check ~raise loc = typer_1 ~raise loc "PAIRING_CHECK" @@ fun lst ->
-  let p = trace_option ~raise (expected_list loc lst) @@ get_t_list lst in
-  let (g1,g2) = trace_option ~raise (expected_list loc p) @@ get_t_pair p in
-  let () = assert_eq_1 ~raise ~loc g1 (t_bls12_381_g1 ()) in (*TODO expected_tbls .. ? *)
-  let () = assert_eq_1 ~raise ~loc g2 (t_bls12_381_g2 ()) in
-  (t_bool ())
+let typer_of_comparator (typer : raise:_ -> test:_ -> _ -> O.type_expression list -> O.type_expression option -> O.type_expression) : typer =
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  ignore error;
+  Some (typer ~raise ~test:options.test loc lst tv_opt)
 
-let sapling_verify_update ~raise loc = typer_2 ~raise loc "SAPLING_VERIFY_UPDATE" @@ fun tr state ->
-  let singleton_tr = trace_option ~raise (expected_sapling_transaction loc tr) @@ get_t_sapling_transaction tr in
-  let singleton_state = trace_option ~raise (expected_sapling_state loc state) @@ get_t_sapling_state state in
-  let () = assert_eq_1 ~raise ~loc singleton_tr singleton_state in
-  (t_option (t_pair (t_int ()) state))
+let raise_of_errors ~raise ~loc lst = function
+  | [] ->
+     raise.raise @@ (corner_case "Cannot find a suitable type for expression")
+  | [`TC v] ->
+     raise.raise @@ expected loc v lst
+  | xs ->
+     let tc = List.filter_map ~f:(function `TC v -> Some v) xs in
+     raise.raise @@ typeclass_error loc (List.rev tc) lst
 
-let sapling_empty_state ~raise loc = typer_0 ~raise loc "SAPLING_EMPTY_STATE" @@ fun tv_opt ->
-  trace_option ~raise (not_annotated loc) @@ tv_opt
+(* Given a list of typers, make a new typer that tries them in order *)
+let rec any_of : typer list -> typer = fun typers ->
+  fun ~error ~raise ~options ~loc lst tv_opt ->
+  match typers with
+  | [] -> raise_of_errors ~raise ~loc lst (! error)
+  | typer :: typers ->
+     match typer ~error ~raise ~options ~loc lst tv_opt with
+     | Some tv -> Some tv
+     | None -> any_of typers ~error ~raise ~options ~loc lst tv_opt
 
-let open_chest ~raise loc = typer_3 ~raise loc "OPEN_CHEST" @@ fun key chest n ->
-  let () = assert_eq_1 ~raise ~loc key (t_chest_key ()) in
-  let () = assert_eq_1 ~raise ~loc chest (t_chest ()) in
-  let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
-  t_chest_opening_result ()
 
-let test_originate ~raise loc = typer_3 ~raise loc "TEST_ORIGINATE" @@ fun main storage balance ->
-  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
-  let param_ty,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
-  let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc storage storage_ty in
-  (t_triplet (t_typed_address param_ty storage_ty) (t_michelson_code ()) (t_int ()))
+(* This prevents wraps a typer, allowing usage only in Hangzhou *)
+let constant_since_protocol ~since ~constant typer : typer = fun ~error ~raise ~options ~loc ->
+  if (Environment.Protocols.compare options.protocol_version since) >= 0 then
+    typer ~error ~raise ~options ~loc
+  else
+    raise.raise (constant_since_protocol loc constant since)
 
-let test_state_reset ~raise loc = typer_2 ~raise loc "TEST_STATE_RESET" @@ fun n amts ->
-  let amt = trace_option ~raise (expected_list loc amts) @@ get_t_list amts in
-  let () = trace_option ~raise (expected_mutez loc amt) @@ get_t_mutez amt in
-  let () = trace_option ~raise (expected_nat loc n) @@ get_t_nat n in
-  (t_unit ())
 
-let test_bootstrap_contract ~raise loc = typer_3 ~raise loc "TEST_BOOTSTRAP_CONTRACT" @@ fun balance main storage ->
-  let { type1 = in_ty ; type2 = _ } = trace_option ~raise (expected_function loc main) @@ get_t_arrow main in
-  let _,storage_ty = trace_option ~raise (expected_pair loc in_ty) @@ get_t_pair in_ty in
-  let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc storage storage_ty in
-  (t_unit ())
+module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+type t = typer CTMap.t
 
-let test_nth_bootstrap_contract ~raise loc = typer_1 ~raise loc "TEST_NTH_BOOTSTRAP_CONTRACT" @@ fun n ->
-  let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
-  (t_address ())
+module Constant_types = struct
 
-let test_set_now ~raise loc = typer_1 ~raise loc "TEST_SET_NOW" @@ fun time ->
-  let () = assert_eq_1 ~raise ~loc time (t_timestamp ()) in
-  (t_unit ())
+  let a_var = O.TypeVar.of_input_var "'a"
+  let b_var = O.TypeVar.of_input_var "'b"
+  let c_var = O.TypeVar.of_input_var "'c"
 
-let test_set_source ~raise loc = typer_1 ~raise loc "TEST_SET" @@ fun s ->
-  let () = assert_eq_1 ~raise ~loc s (t_address ()) in
-  (t_unit ())
+  (* Helpers *)
+  let for_all binder f =
+    let binder = O.TypeVar.of_input_var ("'" ^ binder) in
+    t_for_all binder Type (f (t_variable binder ()))
 
-let test_get_nth ~raise loc = typer_1 ~raise loc "TEST_GET_NTH" @@ fun n ->
-  let () = trace_option ~raise (expected_int loc n) @@ assert_t_int n in
-  (t_address ())
+  let (^->) arg ret = t_arrow arg ret ()
 
-let test_external_call_to_contract_exn ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN" @@ fun addr p amt  ->
-  let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p contract_ty in
-  (t_nat ())
+  let of_type c t =
+    c, any_of [typer_of_ligo_type t]
 
-let test_external_call_to_contract ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_CONTRACT" @@ fun addr p amt  ->
-  let contract_ty = trace_option ~raise (expected_contract loc addr) @@ get_t_contract addr in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p contract_ty in
-  (t_test_exec_result ())
+  let of_type_since ~since ~constant c t =
+    let _, t = of_type c t in
+    c, constant_since_protocol ~since ~constant @@ t
 
-let test_external_call_to_address_exn ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN" @@ fun addr p amt  ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
-  (t_nat ())
+  let typer_of_type_no_tc t =
+    typer_of_ligo_type ~add_tc:false ~fail:false t
 
-let test_external_call_to_address ~raise loc = typer_3 ~raise loc "TEST_EXTERNAL_CALL_TO_ADDRESS" @@ fun addr p amt  ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  let () = assert_eq_1 ~raise ~loc amt (t_mutez ()) in
-  let () = assert_eq_1 ~raise ~loc p (t_michelson_code ()) in
-  (t_test_exec_result ())
+  let of_types c ts =
+    (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
 
-let test_get_storage ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE" @@ fun c ->
-  let (_, storage_ty) = trace_option ~raise (expected_typed_address loc c) @@ get_t_typed_address c in
-  storage_ty
+  let tbl : t = CTMap.of_list [
+                    (* LOOPS *)
+                    of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> t_sum_ez [("left", a) ; ("right", b)]) ^-> a ^-> b);
+                    of_type C_LEFT O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_type C_LOOP_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_type C_LOOP_STOP O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_types C_FOLD [
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_list b ^-> a ^-> a);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_set b ^-> a ^-> a);
+                      ];
+                    (* MAP *)
+                    of_type C_MAP_EMPTY O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_map a b);
+                    of_type C_BIG_MAP_EMPTY O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_big_map a b);
+                    of_types C_MAP_ADD [
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> b ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> b ^-> t_big_map a b ^-> t_big_map a b);
+                      ];
+                    of_types C_MAP_REMOVE [
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_big_map a b);
+                      ];
+                    of_types C_MAP_UPDATE [
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_map a b ^-> t_map a b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_big_map a b ^-> t_big_map a b);
+                      ];
+                    of_type C_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_map a b ^-> t_pair (t_option b) (t_map a b));
+                    of_type C_BIG_MAP_GET_AND_UPDATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_option b ^-> t_big_map a b ^-> t_pair (t_option b) (t_big_map a b));
+                    of_types C_MAP_FIND_OPT [
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_option b);
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_option b);
+                      ];
+                    of_types C_MAP_FIND [
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> b));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> b));
+                      ];
+                    of_types C_MAP_MEM [
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_map a b ^-> t_bool ()));
+                        O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> a ^-> t_big_map a b ^-> t_bool ()));
+                      ];
+                    of_type C_MAP_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_pair a b ^-> c) ^-> t_map a b ^-> t_map a c);
+                    of_type C_MAP_ITER O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_unit ()) ^-> t_map a b ^-> t_unit ());
+                    of_type C_MAP_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_pair c (t_pair a b) ^-> c) ^-> t_map a b ^-> c ^-> c);
+                    (* LIST *)
+                    of_type C_LIST_EMPTY O.(for_all "a" @@ fun a -> t_list a);
+                    of_type C_CONS O.(for_all "a" @@ fun a -> a ^-> t_list a ^-> t_list a);
+                    of_type C_LIST_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_list a ^-> t_list b);
+                    of_type C_LIST_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_list a ^-> t_unit ());
+                    of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_list a ^-> b ^-> b);
+                    of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> b ^-> t_list a ^-> b);
+                    of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_list a ^-> b ^-> b);
+                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option a);
+                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option (t_list a));
+                    (* SET *)
+                    of_type C_SET_EMPTY O.(for_all "a" @@ fun a -> t_set a);
+                    of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
+                    of_type C_SET_MEM O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_bool ());
+                    of_type C_SET_ADD O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
+                    of_type C_SET_REMOVE O.(for_all "a" @@ fun a -> a ^-> t_set a ^-> t_set a);
+                    of_type C_SET_UPDATE O.(for_all "a" @@ fun a -> a ^-> t_bool () ^-> t_set a ^-> t_set a);
+                    of_type C_SET_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_set a ^-> t_unit ());
+                    of_type C_SET_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_set a ^-> b ^-> b);
+                    of_type C_SET_FOLD_DESC O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_set a ^-> b ^-> b);
+                    of_types C_SIZE [
+                        O.(for_all "a" @@ fun a -> t_list a ^-> t_nat ());
+                        O.(t_bytes () ^-> t_nat ());
+                        O.(t_string () ^-> t_nat ());
+                        O.(for_all "a" @@ fun a -> t_set a ^-> t_nat ());
+                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_map a b ^-> t_nat ())
+                      ];
+                    of_types C_CONCAT [
+                        O.(t_string () ^-> t_string () ^-> t_string ());
+                        O.(t_bytes () ^-> t_bytes () ^-> t_bytes ());
+                      ];
+                    of_types C_SLICE [
+                        O.(t_nat () ^-> t_nat () ^-> t_string () ^-> t_string ());
+                        O.(t_nat () ^-> t_nat () ^-> t_bytes () ^-> t_bytes ());
+                      ];
+                    of_type C_BYTES_PACK O.(for_all "a" @@ fun a -> a ^-> t_bytes ());
+                    of_type C_BYTES_UNPACK O.(for_all "a" @@ fun a -> t_bytes () ^-> t_option a);
+                    (* CRYPTO *)
+                    of_type C_SHA256 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_SHA512 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_SHA3 O.(t_bytes () ^-> t_bytes ());
+                    of_type C_KECCAK O.(t_bytes () ^-> t_bytes ());
+                    of_type C_BLAKE2b O.(t_bytes () ^-> t_bytes ());
+                    of_type C_HASH_KEY O.(t_key () ^-> t_key_hash ());
+                    of_type C_CHECK_SIGNATURE O.(t_key () ^-> t_signature () ^-> t_bytes () ^-> t_bool ());
+                    (* OPTION *)
+                    of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
+                    of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
+                    of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);
+                    of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
+                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Option.map"
+                      C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
+                    (* GLOBAL *)
+                    of_type C_ASSERTION O.(t_bool () ^-> t_unit ());
+                    of_type C_ASSERTION_WITH_ERROR O.(t_bool () ^-> t_string () ^-> t_unit ());
+                    of_type C_ASSERT_SOME O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
+                    of_type C_ASSERT_SOME_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
+                    of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
+                    of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
+                    (C_FAILWITH, any_of [
+                                     typer_of_type_no_tc @@ O.(t_string () ^-> t_unit ());
+                                     typer_of_type_no_tc @@ O.(t_nat () ^-> t_unit ());
+                                     typer_of_type_no_tc @@ O.(t_int () ^-> t_unit ());
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_string () ^-> a);
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_nat () ^-> a);
+                                     typer_of_ligo_type O.(for_all "a" @@ fun a -> t_int () ^-> a);
+                    ]);
+                    of_type C_AMOUNT O.(t_mutez ());
+                    of_type C_BALANCE O.(t_mutez ());
+                    of_type C_LEVEL O.(t_nat ());
+                    of_type C_SENDER O.(t_address ());
+                    of_type C_SOURCE O.(t_address ());
+                    of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
+                    of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
+                    of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
+                    of_type C_CONTRACT_WITH_ERROR O.(for_all "a" @@ fun a -> t_address () ^-> t_string () ^-> t_contract a);
+                    of_type C_CONTRACT_ENTRYPOINT_OPT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_option (t_contract a)));
+                    of_type C_CONTRACT_ENTRYPOINT O.(for_all "a" @@ fun a -> (t_string () ^-> t_address () ^-> t_contract a));
+                    of_type C_IMPLICIT_ACCOUNT O.(t_key_hash () ^-> t_contract (t_unit ()));
+                    of_type C_SET_DELEGATE O.(t_option (t_key_hash ()) ^-> t_operation ());
+                    of_type C_SELF O.(for_all "a" @@ fun a -> (t_string () ^-> t_contract a));
+                    of_type C_SELF_ADDRESS O.(t_address ());
+                    of_type C_TOTAL_VOTING_POWER O.(t_nat ());
+                    of_type C_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
+                    of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
+                    of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_option (t_key_hash ()) ^-> t_mutez () ^-> b ^-> t_pair (t_operation ()) (t_address ()));
+                    of_type C_NOW O.(t_timestamp ());
+                    of_type C_CHAIN_ID O.(t_chain_id ());
+                    of_types C_INT [
+                        O.(t_nat () ^-> t_int ());
+                        O.(t_bls12_381_fr () ^-> t_int ());
+                      ];
+                    of_type C_UNIT O.(t_unit ());
+                    of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
+                    of_type C_TRUE O.(t_bool ());
+                    of_type C_FALSE O.(t_bool ());
+                    of_type C_IS_NAT O.(t_int () ^-> t_option (t_nat ()));
+                    of_type C_PAIRING_CHECK O.(t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ())) ^-> t_bool ());
+                    of_type C_OPEN_CHEST O.(t_chest_key () ^-> t_chest () ^-> t_nat () ^-> t_chest_opening_result ());
+                    of_type C_VIEW O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_string () ^-> a ^-> t_address () ^-> t_option b);
+                    (* TICKET *)
+                    of_type C_TICKET O.(for_all "a" @@ fun a -> a ^-> t_nat () ^-> t_ticket a);
+                    of_type C_READ_TICKET O.(for_all "a" @@ fun a -> t_ticket a ^-> t_pair (t_pair (t_address ()) (t_pair a (t_nat ()))) (t_ticket a));
+                    of_type C_SPLIT_TICKET O.(for_all "a" @@ fun a -> t_ticket a ^-> t_pair (t_nat ()) (t_nat ()) ^-> t_option (t_pair (t_ticket a) (t_ticket a)));
+                    of_type C_JOIN_TICKET O.(for_all "a" @@ fun a -> t_pair (t_ticket a) (t_ticket a) ^-> t_option (t_ticket a));
+                    (* MATH *)
+                    of_types C_POLYMORPHIC_ADD [
+                        O.(t_string () ^-> t_string () ^-> t_string ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
+                      ];
+                    of_types C_POLYMORPHIC_SUB [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_int ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
+                      ];
+                    of_types C_ADD [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
+                      ];
+                    of_types C_MUL [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_int () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_bls12_381_fr () ^-> t_nat () ^-> t_bls12_381_fr ());
+                        O.(t_bls12_381_fr () ^-> t_int () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_mutez () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                      ];
+                    of_types C_SUB [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_fr () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_int ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                      ];
+                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Operator.sub_mutez"
+                      C_SUB_MUTEZ O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
+                    of_types C_EDIV [
+                        O.(t_nat () ^-> t_nat () ^-> t_option (t_pair (t_nat ()) (t_nat ())));
+                        O.(t_int () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_nat () ^-> t_int () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_int () ^-> t_nat () ^-> t_option (t_pair (t_int ()) (t_nat ())));
+                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_pair (t_nat ()) (t_mutez ())));
+                        O.(t_mutez () ^-> t_nat () ^-> t_option (t_pair (t_mutez ()) (t_mutez ())));
+                      ];
+                    of_types C_DIV [
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_nat ());
+                      ];
+                    of_types C_MOD [
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_nat () ^-> t_int () ^-> t_nat ());
+                        O.(t_int () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_int () ^-> t_nat ());
+                        O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
+                      ];
+                    of_type C_ABS O.(t_int () ^-> t_nat ());
+                    of_types C_NEG [
+                        O.(t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int ());
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                      ];
+                    (* LOGIC *)
+                    of_types C_NOT [
+                        O.(t_bool () ^-> t_bool ());
+                        O.(t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int ());
+                      ];
+                    of_types C_OR [
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                      ];
+                    of_types C_AND [
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                        O.(t_int () ^-> t_nat () ^-> t_nat ());
+                      ];
+                    of_types C_XOR [
+                        O.(t_bool () ^-> t_bool () ^-> t_bool ());
+                        O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                      ];
+                    of_type C_LSL O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                    of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                    (* TEST *)
+                    of_type C_TEST_ORIGINATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_triplet (t_typed_address a b) (t_michelson_code ()) (t_int ()));
+                    of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
+                    of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
+                    of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
+                    of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
+                    of_type C_TEST_GET_STORAGE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> b);
+                    of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
+                    of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
+                    of_type C_TEST_MICHELSON_EQUAL O.(t_michelson_code () ^-> t_michelson_code () ^-> t_bool ());
+                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_address ());
+                    of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
+                    of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
+                    of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
+                    of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());
+                    of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
+                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> a);
+                    of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
+                    of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
+                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));
+                    of_type C_TEST_SAVE_MUTATION O.(t_string () ^-> t_mutation () ^-> t_option (t_string ()));
+                    of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
+                    of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));
+                    of_type C_TEST_RUN O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> a ^-> t_michelson_code ());
+                    of_type C_TEST_EVAL O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
+                    of_type C_TEST_COMPILE_META_VALUE O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
+                    of_type C_TEST_DECOMPILE O.(for_all "a" @@ fun a -> t_michelson_code () ^-> a);
+                    of_type C_TEST_TO_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> t_contract a ^-> t_typed_address a b));
+                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_test_exec_result ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_nat ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_int ());
+                    of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_int () ^-> t_big_map a b ^-> t_unit ());
+                    of_type C_TEST_BAKER_ACCOUNT O.(t_pair (t_string ()) (t_key ()) ^-> t_option (t_mutez ()) ^-> t_unit ());
+                    of_type C_TEST_REGISTER_DELEGATE O.(t_key_hash () ^-> t_unit ());
+                    of_type C_TEST_BAKE_UNTIL_N_CYCLE_END O.(t_nat () ^-> t_unit ());
+                    of_type C_TEST_TO_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> t_contract a);
+                    of_type C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
+                    of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
+                    of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
+                    of_type C_TEST_ORIGINATE_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()));
+                    of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
+                    of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
+                    of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
+                    of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
+                    (* SAPLING *)
+                    of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
+                    of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));
+                    (* CUSTOM *)
+                    (* COMPARATOR *)
+                    (C_EQ, typer_of_comparator (comparator ~cmp:"EQ"));
+                    (C_NEQ, typer_of_comparator (comparator ~cmp:"NEQ"));
+                    (C_LT, typer_of_comparator (comparator ~cmp:"LT"));
+                    (C_GT, typer_of_comparator (comparator ~cmp:"GT"));
+                    (C_LE, typer_of_comparator (comparator ~cmp:"LE"));
+                    (C_GE, typer_of_comparator (comparator ~cmp:"GE"));
+                  ]
+end
 
-let test_get_storage_of_address ~raise loc = typer_1 ~raise loc "TEST_GET_STORAGE_OF_ADDRESS" @@ fun addr ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  (t_michelson_code ())
-
-let test_get_balance ~raise loc = typer_1 ~raise loc "TEST_GET_BALANCE" @@ fun addr ->
-  let () = assert_eq_1 ~raise ~loc addr (t_address ()) in
-  (t_mutez ())
-
-let test_michelson_equal ~raise loc = typer_2 ~raise loc "TEST_ASSERT_EQUAL" @@ fun x y ->
-  let () = trace_option ~raise (expected_michelson_code loc x) @@ assert_t_michelson_code x in
-  let () = trace_option ~raise (expected_michelson_code loc y) @@ assert_t_michelson_code y in
-  (t_bool ())
-
-let test_log ~raise loc = typer_1 ~raise loc "TEST_LOG" @@ fun _ -> t_unit ()
-
-let test_last_originations ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun u ->
-  let () = trace_option ~raise (expected_unit loc u) @@ assert_t_unit u in
-  (t_map (t_address ()) (t_list (t_address ())))
-
-let test_compile_meta_value ~raise loc = typer_1 ~raise loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
-  (t_michelson_code ())
-
-let test_mutate_value ~raise loc = typer_2 ~raise loc "TEST_MUTATE_VALUE" @@ fun n expr ->
-  let () = assert_eq_1 ~raise ~loc n (t_nat ()) in
-  (t_option (t_pair expr (t_mutation ())))
-
-let test_mutation_test ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST" @@ fun expr tester ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_option (t_pair res (t_mutation ())))
-
-let test_mutation_test_all ~raise loc = typer_2 ~raise loc "TEST_MUTATION_TEST_ALL" @@ fun expr tester ->
-  let { type1 = arg ; type2 = res } = trace_option ~raise (expected_function loc tester) @@ get_t_arrow tester in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_list (t_pair res (t_mutation ())))
-
-let test_save_mutation ~raise loc = typer_2 ~raise loc "TEST_SAVE_MUTATION" @@ fun dir mutation ->
-  let () = assert_eq_1 ~raise ~loc mutation (t_mutation ()) in
-  let () = assert_eq_1 ~raise ~loc dir (t_string ()) in
-  (t_option (t_string ()))
-
-let test_run ~raise loc = typer_2 ~raise loc "TEST_RUN" @@ fun lambda expr ->
-  let { type1 = arg ; type2 = _ } = trace_option ~raise (expected_function loc lambda) @@ get_t_arrow lambda in
-  let () = assert_eq_1 ~raise ~loc arg expr in
-  (t_michelson_code ())
-
-let test_eval ~raise loc = typer_1 ~raise loc "TEST_EVAL" @@ fun _ ->
-  (t_michelson_code ())
-
-let test_decompile ~raise loc = typer_1_opt ~raise loc "TEST_DECOMPILE" @@ fun mich tv_opt ->
-  let () = trace_option ~raise (expected_michelson_code loc mich) @@ get_t_michelson_code mich in
-  match tv_opt with
-  | None -> raise.raise (not_annotated loc)
-  | Some t -> t
-
-let test_to_contract ~raise loc = typer_1 ~raise loc "TEST_TO_CONTRACT" @@ fun t ->
-  let param_ty, _ = trace_option ~raise (expected_typed_address loc t) @@
-                       get_t_typed_address t in
-  let param_ty = Option.value (Ast_typed.Helpers.get_entrypoint "default" param_ty) ~default:param_ty in
-  (t_contract param_ty)
-
-let test_nth_bootstrap_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_NTH_BOOTSTRAP_TYPED_ADDRESS" @@ fun nat tv_opt ->
-  let () = trace_option ~raise (expected_nat loc nat) @@ get_t_nat nat in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv_parameter, tv_storage = trace_option ~raise (expected_option loc tv) @@ get_t_typed_address tv in
-  (t_typed_address tv_parameter tv_storage)
-
-let test_to_entrypoint ~raise loc = typer_2_opt ~raise loc "TEST_TO_ENTRYPOINT" @@ fun entry_tv contract_tv tv_opt ->
-  let t_string = t_string () in
-  let () = assert_eq_1 ~raise ~loc entry_tv t_string in
-  let _ = trace_option ~raise (expected_contract loc contract_tv) @@
-             get_t_typed_address contract_tv in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let tv' = trace_option ~raise (expected_contract loc tv) @@ get_t_contract tv in
-  t_contract tv'
-
-let test_to_typed_address ~raise loc = typer_1_opt ~raise loc "TEST_TO_TYPED_ADDRESS" @@ fun contract_tv tv_opt ->
-  let parameter_ty = trace_option ~raise (expected_contract loc contract_tv) @@
-             get_t_contract contract_tv in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  let (parameter_ty', storage_ty) = trace_option ~raise (expected_contract loc tv) @@ get_t_typed_address tv in
-  let () = assert_eq_1 ~raise ~loc parameter_ty parameter_ty' in
-  t_typed_address parameter_ty storage_ty
-
-let test_random ~raise loc = typer_1_opt ~raise loc "TEST_RANDOM" @@ fun unit tv_opt ->
-  let () = assert_eq_1 ~raise ~loc unit (t_unit ()) in
-  let tv = trace_option ~raise (not_annotated loc) tv_opt in
-  tv
-
-let test_set_big_map ~raise loc = typer_2 ~raise loc "TEST_SET_BIG_MAP" @@ fun id bm ->
-  let () = assert_eq_1 ~raise ~loc id (t_int ()) in
-  let _ = trace_option ~raise (expected_big_map loc bm) @@ get_t_big_map bm in
-  t_unit ()
-
-let test_originate_from_file ~protocol_version ~raise loc =
-  match (protocol_version : Ligo_proto.t) with
-  | Edo ->
-    typer_4 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint storage balance ->
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
-  | Hangzhou ->
-    typer_5 ~raise loc "TEST_ORIGINATE_FROM_FILE" @@ fun source_file entrypoint views storage balance ->
-      let tlist = trace_option ~raise (expected_list loc views) @@ get_t_list views in
-      let () = trace_option ~raise (expected_string loc tlist) @@ assert_t_string tlist in
-      let () = trace_option ~raise (expected_string loc source_file) @@ assert_t_string source_file in
-      let () = trace_option ~raise (expected_string loc entrypoint) @@ assert_t_string entrypoint in
-      let () = trace_option ~raise (expected_michelson_code loc storage) @@ assert_t_michelson_code storage in
-      let () = assert_eq_1 ~raise ~loc balance (t_mutez ()) in
-      (t_triplet (t_address ()) (t_michelson_code ()) (t_int ()))
-
-let test_compile_contract ~raise loc = typer_1 ~raise loc "TEST_COMPILE_CONTRACT" @@ fun _ ->
-  (t_michelson_code ())
-
-let test_cast_address ~raise loc = typer_1_opt ~raise loc "TEST_CAST_ADDRESS" @@ fun addr tv_opt ->
-  let cast_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  let (pty,sty) = trace_option ~raise (expected_typed_address loc cast_t) @@ get_t_typed_address cast_t in
-  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
-  t_typed_address pty sty
-
-let test_add_account ~raise loc = typer_2 ~raise loc "TEST_ADD_ACCOUNT" @@ fun sk pk ->
-  let _ = trace_option ~raise (expected_string loc pk) @@ get_t_string sk in
-  let _ = trace_option ~raise (expected_key loc pk) @@ get_t_key pk in
-  (t_unit ())
-
-let test_new_account ~raise loc = typer_1 ~raise loc "TEST_NEW_ACCOUNT" @@ fun u ->
-  let _ = trace_option ~raise (expected_unit loc u) @@ get_t_unit u in
-  (t_pair (t_string ()) (t_key ()))
-
-let test_get_voting_power ~raise loc = typer_1 ~raise loc "C_TEST_GET_VOTING_POWER" @@ fun u ->
-  let _ = trace_option ~raise (expected_string loc u) @@ get_t_key_hash u in
-  t_nat ()
-
-let test_get_total_voting_power ~raise loc = typer_0 ~raise loc "C_TEST_GET_TOTAL_VOTING_POWER" @@ fun _ ->
-  t_nat ()
-
-let test_create_chest ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST" @@ fun payload time ->
-  let () = trace_option ~raise (expected_bytes loc payload) @@ get_t_bytes payload in
-  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
-  t_pair (t_chest ()) (t_chest_key ())
-
-let test_create_chest_key ~raise loc = typer_2 ~raise loc "TEST_CREATE_CHEST_KEY" @@ fun chest time ->
-  let () = assert_eq_1 ~raise ~loc (t_chest ()) chest in
-  let () = trace_option ~raise (expected_nat loc time) @@ get_t_nat time in
-  (t_chest_key ())
-
-let view ~raise loc = typer_3_opt ~raise loc "TEST_VIEW" @@ fun name _arg addr tv_opt ->
-  let () = trace_option ~raise (expected_string loc name) @@ get_t_string name in
-  let () = trace_option ~raise (expected_address loc addr) @@ get_t_address addr in
-  let view_ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  let _ : type_expression = trace_option ~raise (expected_option loc view_ret_t) @@ get_t_option view_ret_t in
-  view_ret_t
-
-let test_global_constant ~raise loc = typer_1_opt ~raise loc "TEST_GLOBAL_CONSTANT" @@ fun hash_str tv_opt ->
-  let () = trace_option ~raise (expected_string loc hash_str) @@ get_t_string hash_str in
-  let ret_t = trace_option ~raise (not_annotated loc) @@ tv_opt in
-  ret_t
-
-let rec constant_typers ~raise ~test ~protocol_version loc c : typer = match c with
-  | C_INT                 -> int ~raise loc ;
-  | C_UNIT                -> unit ~raise loc ;
-  | C_NEVER               -> never ~raise loc ;
-  | C_NOW                 -> now ~raise loc ;
-  | C_TRUE                -> ctrue ~raise loc ;
-  | C_FALSE               -> cfalse ~raise loc ;
-  | C_IS_NAT              -> is_nat ~raise loc ;
-  | C_SOME                -> some ~raise loc ;
-  | C_NONE                -> none ~raise loc ;
-  | C_UNOPT               -> unopt ~raise loc ;
-  | C_UNOPT_WITH_ERROR    -> unopt_with_error ~raise loc ;
-  | C_ASSERTION           -> assertion ~raise loc ;
-  | C_ASSERTION_WITH_ERROR-> assertion_with_error ~raise loc ;
-  | C_ASSERT_SOME         -> assert_some ~raise loc ;
-  | C_ASSERT_SOME_WITH_ERROR -> assert_some_with_error ~raise loc ;
-  | C_ASSERT_NONE         -> assert_none ~raise loc ;
-  | C_ASSERT_NONE_WITH_ERROR -> assert_none_with_error ~raise loc ;
-  | C_FAILWITH            -> failwith_ ~raise loc ;
-    (* LOOPS *)
-  | C_FOLD_WHILE          -> fold_while ~raise loc ;
-  | C_FOLD_CONTINUE       -> continue ~raise loc ;
-  | C_FOLD_STOP           -> stop ~raise loc ;
-  | C_FOLD                -> fold ~raise loc ;
-   (* MATH *)
-  | C_NEG                 -> neg ~raise loc ;
-  | C_ABS                 -> abs ~raise loc ;
-  | C_ADD                 -> add ~raise loc ;
-  | C_SUB                 -> sub ~raise loc ;
-  | C_MUL                 -> times ~raise loc ;
-  | C_EDIV                -> ediv ~raise loc ;
-  | C_DIV                 -> div ~raise loc ;
-  | C_MOD                 -> mod_ ~raise loc ;
-    (* LOGIC *)
-  | C_NOT                 -> not_ ~raise loc ;
-  | C_AND                 -> and_ ~raise loc ;
-  | C_OR                  -> or_ ~raise loc ;
-  | C_XOR                 -> xor ~raise loc ;
-  | C_LSL                 -> lsl_ ~raise loc;
-  | C_LSR                 -> lsr_ ~raise loc;
-    (* COMPARATOR *)
-  | C_EQ                  -> comparator ~raise ~test loc "EQ" ;
-  | C_NEQ                 -> comparator ~raise ~test loc "NEQ" ;
-  | C_LT                  -> comparator ~raise ~test loc "LT" ;
-  | C_GT                  -> comparator ~raise ~test loc "GT" ;
-  | C_LE                  -> comparator ~raise ~test loc "LE" ;
-  | C_GE                  -> comparator ~raise ~test loc "GE" ;
-    (* BYTES / STRING *)
-  | C_SIZE                -> size ~raise loc ;
-  | C_CONCAT              -> concat ~raise loc ;
-  | C_SLICE               -> slice ~raise loc ;
-  | C_BYTES_PACK          -> bytes_pack ~raise loc ;
-  | C_BYTES_UNPACK        -> bytes_unpack ~raise loc ;
-    (* SET  *)
-  | C_SET_EMPTY           -> set_empty ~raise loc;
-  | C_SET_ADD             -> set_add ~raise loc ;
-  | C_SET_REMOVE          -> set_remove ~raise loc ;
-  | C_SET_ITER            -> set_iter ~raise loc ;
-  | C_SET_FOLD            -> set_fold ~raise loc ;
-  | C_SET_FOLD_DESC       -> set_fold_desc ~raise loc ;
-  | C_SET_MEM             -> set_mem ~raise loc ;
-  | C_SET_UPDATE          -> set_update ~raise loc;
-  (* LIST *)
-  | C_CONS                -> cons ~raise loc ;
-  | C_LIST_EMPTY          -> list_empty ~raise loc;
-  | C_LIST_ITER           -> list_iter ~raise loc ;
-  | C_LIST_MAP            -> list_map ~raise loc ;
-  | C_LIST_FOLD           -> list_fold ~raise loc ;
-  | C_LIST_FOLD_LEFT      -> list_fold_left ~raise loc ;
-  | C_LIST_FOLD_RIGHT     -> list_fold_right ~raise loc ;
-  | C_LIST_HEAD_OPT       -> list_head_opt ~raise loc;
-  | C_LIST_TAIL_OPT       -> list_tail_opt ~raise loc;
-    (* MAP *)
-  | C_MAP_EMPTY           -> map_empty ~raise loc;
-  | C_BIG_MAP_EMPTY       -> big_map_empty ~raise loc;
-  | C_MAP_ADD             -> map_add ~raise loc ;
-  | C_MAP_REMOVE          -> map_remove ~raise loc ;
-  | C_MAP_UPDATE          -> map_update ~raise loc ;
-  | C_MAP_ITER            -> map_iter ~raise loc ;
-  | C_MAP_MAP             -> map_map ~raise loc ;
-  | C_MAP_FOLD            -> map_fold ~raise loc ;
-  | C_MAP_MEM             -> map_mem ~raise loc ;
-  | C_MAP_FIND            -> map_find ~raise loc ;
-  | C_MAP_FIND_OPT        -> map_find_opt ~raise loc ;
-  | C_MAP_GET_AND_UPDATE -> map_get_and_update ~raise loc ;
-  (* BIG MAP *)
-  | C_BIG_MAP_GET_AND_UPDATE -> big_map_get_and_update ~raise loc;
-  (* CRYPTO *)
-  | C_SHA256              -> hash256 ~raise loc ;
-  | C_SHA512              -> hash512 ~raise loc ;
-  | C_BLAKE2b             -> blake2b ~raise loc ;
-  | C_HASH_KEY            -> hash_key ~raise loc ;
-  | C_CHECK_SIGNATURE     -> check_signature ~raise loc ;
-  | C_CHAIN_ID            -> chain_id ~raise loc;
-  (* BLOCKCHAIN *)
-  | C_CONTRACT            -> get_contract ~raise loc ;
-  | C_CONTRACT_WITH_ERROR -> get_contract_with_error ~raise loc ;
-  | C_CONTRACT_OPT        -> get_contract_opt ~raise loc ;
-  | C_CONTRACT_ENTRYPOINT -> get_entrypoint ~raise loc ;
-  | C_CONTRACT_ENTRYPOINT_OPT -> get_entrypoint_opt ~raise loc ;
-  | C_AMOUNT              -> amount ~raise loc ;
-  | C_BALANCE             -> balance ~raise loc ;
-  | C_CALL                -> transaction ~raise loc ;
-  | C_SENDER              -> sender ~raise loc ;
-  | C_SOURCE              -> source ~raise loc ;
-  | C_ADDRESS             -> address ~raise loc ;
-  | C_SELF                -> self ~raise loc ;
-  | C_SELF_ADDRESS        -> self_address ~raise loc ;
-  | C_IMPLICIT_ACCOUNT    -> implicit_account ~raise loc ;
-  | C_SET_DELEGATE        -> set_delegate ~raise loc ;
-  | C_CREATE_CONTRACT     -> create_contract ~raise loc ;
-  | C_SHA3              -> sha3 ~raise loc ;
-  | C_KECCAK            -> keccak ~raise loc ;
-  | C_LEVEL             -> level ~raise loc ;
-  | C_VOTING_POWER      -> voting_power ~raise loc ;
-  | C_TOTAL_VOTING_POWER -> total_voting_power ~raise loc ;
-  | C_TICKET -> ticket ~raise loc ;
-  | C_READ_TICKET -> read_ticket ~raise loc ;
-  | C_SPLIT_TICKET -> split_ticket ~raise loc ;
-  | C_JOIN_TICKET -> join_ticket ~raise loc ;
-  | C_PAIRING_CHECK -> pairing_check ~raise loc ;
-  | C_SAPLING_VERIFY_UPDATE -> sapling_verify_update ~raise loc ;
-  | C_SAPLING_EMPTY_STATE -> sapling_empty_state ~raise loc ;
-  | C_OPEN_CHEST -> open_chest ~raise loc ;
-  | C_VIEW -> view ~raise loc ;
-  (* TEST *)
-  | C_TEST_ORIGINATE -> test_originate ~raise loc ;
-  | C_TEST_SET_NOW -> test_set_now ~raise loc ;
-  | C_TEST_SET_SOURCE -> test_set_source ~raise loc ;
-  | C_TEST_SET_BAKER -> test_set_source ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> test_external_call_to_contract ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> test_external_call_to_contract_exn ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> test_external_call_to_address ~raise loc ;
-  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> test_external_call_to_address_exn ~raise loc ;
-  | C_TEST_GET_STORAGE -> test_get_storage ~raise loc ;
-  | C_TEST_GET_STORAGE_OF_ADDRESS -> test_get_storage_of_address ~raise loc ;
-  | C_TEST_GET_BALANCE -> test_get_balance ~raise loc ;
-  | C_TEST_MICHELSON_EQUAL -> test_michelson_equal ~raise loc ;
-  | C_TEST_GET_NTH_BS -> test_get_nth ~raise loc ;
-  | C_TEST_LOG -> test_log ~raise loc ;
-  | C_TEST_STATE_RESET -> test_state_reset ~raise loc ;
-  | C_TEST_BOOTSTRAP_CONTRACT -> test_bootstrap_contract ~raise loc ;
-  | C_TEST_NTH_BOOTSTRAP_CONTRACT -> test_nth_bootstrap_contract ~raise loc ;
-  | C_TEST_LAST_ORIGINATIONS -> test_last_originations ~raise loc ;
-  | C_TEST_COMPILE_META_VALUE -> test_compile_meta_value ~raise loc ;
-  | C_TEST_MUTATE_VALUE -> test_mutate_value ~raise loc ;
-  | C_TEST_MUTATION_TEST -> test_mutation_test ~raise loc ;
-  | C_TEST_MUTATION_TEST_ALL -> test_mutation_test_all ~raise loc ;
-  | C_TEST_RUN -> test_run ~raise loc ;
-  | C_TEST_EVAL -> test_eval ~raise loc ;
-  | C_TEST_COMPILE_CONTRACT -> test_compile_contract ~raise loc ;
-  | C_TEST_DECOMPILE -> test_decompile ~raise loc ;
-  | C_TEST_TO_CONTRACT -> test_to_contract ~raise loc ;
-  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> test_nth_bootstrap_typed_address ~raise loc ;
-  | C_TEST_TO_ENTRYPOINT -> test_to_entrypoint ~raise loc ;
-  | C_TEST_TO_TYPED_ADDRESS -> test_to_typed_address ~raise loc ;
-  | C_TEST_RANDOM -> test_random ~raise loc ;
-  | C_TEST_SET_BIG_MAP -> test_set_big_map ~raise loc ;
-  | C_TEST_ORIGINATE_FROM_FILE -> test_originate_from_file ~protocol_version ~raise loc ;
-  | C_TEST_SAVE_MUTATION -> test_save_mutation ~raise loc ;
-  | C_TEST_CAST_ADDRESS -> test_cast_address ~raise loc;
-  | C_TEST_CREATE_CHEST -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest ~raise loc
-  | C_TEST_CREATE_CHEST_KEY -> only_supported_hangzhou ~raise ~protocol_version c @@ test_create_chest_key ~raise loc
-  | C_TEST_ADD_ACCOUNT -> test_add_account ~raise loc;
-  | C_TEST_NEW_ACCOUNT -> test_new_account ~raise loc;
-  | C_TEST_GET_VOTING_POWER -> test_get_voting_power ~raise loc;
-  | C_TEST_GET_TOTAL_VOTING_POWER -> test_get_total_voting_power ~raise loc;
-  | C_GLOBAL_CONSTANT -> only_supported_hangzhou ~raise ~protocol_version c @@ test_global_constant ~raise loc
-  (* JsLIGO *)
-  | C_POLYMORPHIC_ADD  -> polymorphic_add ~raise loc ;
-  | _ as cst -> raise.raise (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)
-
-and only_supported_hangzhou = fun ~raise ~protocol_version c default  ->
-  match protocol_version with
-  | Ligo_proto.Hangzhou -> default
-  | Ligo_proto.Edo ->
-    raise.raise @@ corner_case (
-      Format.asprintf "Unsupported constant %a in protocol %s"
-        PP.constant' c
-        (Ligo_proto.variant_to_string protocol_version)
-    )
+let constant_typers ~raise ~options loc c =
+  match CTMap.find_opt c Constant_types.tbl with
+  | Some typer ->
+     fun lst tv_opt ->
+     let error = ref [] in
+     (match typer ~error ~raise ~options ~loc lst tv_opt with
+      | Some tv -> tv
+      | None -> raise.raise (corner_case @@ Format.asprintf "Cannot type constant %a" PP.constant' c))
+  | _ ->
+     raise.raise (corner_case @@ Format.asprintf "Typer not implemented for constant %a" PP.constant' c)

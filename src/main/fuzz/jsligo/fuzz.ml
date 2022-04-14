@@ -67,13 +67,6 @@ module Mutator (M : Monad) = struct
                                  t = (fun x -> return x);
                                  d = (fun x -> return x); }
 
-  let mutate_expression_list ?n (expr : Cst.Jsligo.expr) =
-    get_list ?n @@ map_expression mutate_mapper expr
-
-  let mutate_expression ?n (expr: Cst.Jsligo.expr) =
-    let rndexpr = map_expression mutate_mapper expr in
-    get_one ?n rndexpr
-
   let mutate_module_ ?n (mod_ : Cst.Jsligo.t) =
     let rndmod_ = map_module mutate_mapper mod_ in
     get_one ?n rndmod_

@@ -104,9 +104,6 @@ and decompile_type ~raise : Ast_aggregated.type_expression -> Ast_typed.type_exp
      return (O.T_arrow { type1 ; type2 })
   | T_singleton l ->
      return (O.T_singleton l)
-  | T_abstraction { ty_binder ; kind ; type_ } ->
-     let type_ = decompile_type ~raise type_ in
-     return (O.T_abstraction { ty_binder ; kind ; type_ })
   | T_for_all { ty_binder ; kind ; type_ } ->
      let type_ = decompile_type ~raise type_ in
      return (O.T_for_all { ty_binder ; kind ; type_ })

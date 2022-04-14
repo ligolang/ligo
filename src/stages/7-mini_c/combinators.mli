@@ -9,7 +9,10 @@ module Expression : sig
   (*
   val is_toplevel : t -> bool 
 *)
-  val make_t   : ?loc:Location.t -> type_content -> type_expression
+  val make_t :
+    ?loc:Location.t ->
+    ?source_type : Ast_typed.type_expression ->
+    type_content -> type_expression
   val make     : ?loc:Location.t -> t' -> type_expression -> t
   val make_tpl : ?loc:Location.t -> t' * type_expression -> t
 
@@ -79,8 +82,6 @@ val ez_e_return : Expression.t -> Expression.t
 *)
 val d_unit : value
 
-val environment_wrap : environment -> environment -> environment_wrap
-val id_environment_wrap : environment -> environment_wrap
 val e_var : ?loc:Location.t -> var_name -> type_expression -> expression
 val ec_pair : expression -> expression -> expression_content
 val e_application : ?loc:Location.t -> expression -> type_expression -> expression -> expression

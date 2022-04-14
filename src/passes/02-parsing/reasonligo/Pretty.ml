@@ -334,7 +334,11 @@ and pp_record_expr ne_inj = pp_ne_injection pp_field_assign ne_inj
 
 and pp_field_assign {value; _} =
   let {field_name; field_expr; _} = value in
-  prefix 2 1 (pp_ident field_name ^^ string ":") (pp_expr field_expr)
+  match field_expr with
+    EVar field_name' when field_name = field_name' ->
+      pp_ident field_name
+  | _ ->
+      prefix 2 1 (pp_ident field_name ^^ string ":") (pp_expr field_expr)
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -346,7 +350,7 @@ and pp_ne_injection :
         None -> elements
       | Some (opening, closing) ->
           string opening ^^ nest 2 (break 0 ^^ elements)
-          ^^ break 1 ^^ string closing in
+          ^^ string closing in
     let inj = if List.is_empty attributes then inj
               else break 0 ^^ pp_attributes attributes ^/^ inj
     in inj

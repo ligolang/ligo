@@ -9,11 +9,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
    also maintained.
 *)
 
-module V = struct
-  type t = expression_variable
-  let compare x y = Var.compare x y
-end
-
+module V = ValueVar
 module M = Simple_utils.Map.Make(V)
 
 (* A map recording if a variable is being used * a list of unused variables. *)
@@ -43,8 +39,8 @@ let replace_opt k x m =
   Option.value_map ~default:(M.remove k m) ~f:(fun x -> M.add k x m) x
 
 let add_if_not_generated ?forbidden x xs b =
-  let sv = Format.asprintf "%a" Var.pp x in
-  if not b && not (Var.is_generated x)
+  let sv = Format.asprintf "%a" V.pp x in
+  if not b && not (V.is_generated x)
      && Char.(<>) (String.get sv 0) '_'
      && Option.value_map ~default:true ~f:(String.(<>) sv) forbidden
   then x::xs else xs
@@ -101,8 +97,6 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse let_result
   | E_mod_in {let_result;_} ->
      defuse_of_expr defuse let_result
-  | E_mod_alias {result;_} ->
-     defuse_of_expr defuse result
   | E_module_accessor _ ->
      defuse, []
   | E_type_inst {forall;_} ->
@@ -132,25 +126,30 @@ and defuse_of_record defuse {body;fields;_} =
   (defuse, unused)
 
 let rec unused_map_module ~add_warning : module_ -> module_ = function m ->
-  let self = unused_map_module ~add_warning in
   let update_annotations annots =
     List.iter ~f:add_warning annots in
-  let aux = fun (x : declaration Location.wrap) ->
+  let aux = fun (x : declaration) ->
     match Location.unwrap x with
     | Declaration_constant {expr ; _} -> (
       let defuse,_ = defuse_neutral in
       let _,unused = defuse_of_expr defuse expr in
       let warn_var v =
         `Self_ast_typed_warning_unused
-          (Var.get_location v, Format.asprintf "%a" Var.pp v) in
+          (V.get_location v, Format.asprintf "%a" V.pp v) in
       let () = update_annotations @@ List.map ~f:warn_var unused in
       ()
     )
     | Declaration_type _ -> ()
     | Declaration_module {module_; module_binder=_;module_attr=_} ->
-      let _ = self module_ in
+      let _ = unused_map_module_expr ~add_warning module_ in
       ()
-    | Module_alias _ -> ()
   in
   let () = List.iter ~f:aux m in
   m
+
+and unused_map_module_expr ~add_warning : module_expr -> module_expr = function m ->
+  let return wrap_content = { m with wrap_content } in
+  match Location.unwrap m with
+  | M_struct x -> return @@ M_struct (unused_map_module ~add_warning x)
+  | M_variable _ -> m
+  | M_module_path _ -> m

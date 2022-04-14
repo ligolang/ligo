@@ -12,7 +12,7 @@ type t = {
 
 (*
   a temporary solution, as we currently don't have a way to target these 
-  regexp enginges via one regexp.
+  regexp engines via one regexp.
 *)
 and regexp = {
   emacs:    string;
@@ -23,16 +23,17 @@ and regexp = {
 and language_features = {
   operators: string list; (* currently only used by EMacs, but ideally also for all the other editors *)
   string_delimiters: regexp list; (* used by all editors *)
-  comments: language_features_comments; (* used by all editors *)
+  comments: regexp language_features_comments; (* used by all editors *)
+  comments_insertion: string language_features_comments; (* used by VS Code for now, but Emacs may use it as well *)
   brackets: (string * string) list; (* currently not used *)
   auto_closing_pairs: (string * string) list; (* used by VS Code *)
   surrounding_pairs: (string * string) list; (* used by VS Code *)
   syntax_table: (string * string) list; (* for Emacs *)
 }
 
-and language_features_comments = {
-  line_comment:  regexp;
-  block_comment: (regexp * regexp)
+and 'gen_type language_features_comments = {
+  line_comment:  'gen_type;
+  block_comment: ('gen_type * 'gen_type)
 }
 
 (* Shared syntax highlighting names for all editors. *)

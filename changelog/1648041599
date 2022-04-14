@@ -1,0 +1,6 @@
+---
+  title: "Added pretty-printing of type parameters to CameLIGO."
+  merge_request: "1653"
+  author: "Christian Rinderknecht"
+  type: "fixed"
+

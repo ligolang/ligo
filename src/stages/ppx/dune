@@ -1,0 +1,23 @@
+(library
+ (name ppx_only_interpreter_tags)
+ (kind ppx_deriver)
+ (modules ppx_only_interpreter_tags)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries core ppxlib))
+
+(library
+ (name ppx_print_constant)
+ (kind ppx_deriver)
+ (modules ppx_print_constant)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries core simple-utils ppxlib))
+
+(library
+ (name ppx_map)
+ (kind ppx_rewriter)
+ (modules ppx_map)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries base simple-utils ppxlib))

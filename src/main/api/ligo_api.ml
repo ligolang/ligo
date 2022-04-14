@@ -8,8 +8,6 @@ let dump_changelog display_format () =
     format_result ~display_format format (fun _ -> []) (fun ~raise:_ -> value)
 
 
-
-
 module Compile = Compile
 module Transpile = Transpile
 module Run = Run

@@ -1,0 +1,5 @@
+author: Rémi Lesénéchal
+title: 'Testing framework: fix decompilation of chest and chest_key values: Test.get_storage
+  will not perform correctly on those types'
+type: fixed
+merge_request: '1568'

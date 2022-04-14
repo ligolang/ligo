@@ -106,7 +106,6 @@ and print_declaration = function
 | D_Directive _ -> None
 | D_Fun       d -> Some (print_D_Fun d)
 | D_Module    d -> Some (print_D_Module d)
-| D_ModAlias  d -> Some (print_D_ModAlias d)
 | D_Type      d -> Some (print_D_Type d)
 
 (* Attributed declaration *)
@@ -244,22 +243,28 @@ and print_variable (node : variable) = print_ident node
 (* Module declaration (structure) *)
 
 and print_D_Module (node : module_decl reg) =
-  let node         = node.value in
-  let name         = print_ident node.name
-  and declarations = print_declarations node.declarations
-  in
-  let declarations = nest 2 (break 1 ^^ declarations)
-  in string "module " ^^ name ^^ string " is {"
-     ^^ group declarations ^^ string "}"
+  let node        = node.value in
+  let name        = print_ident node.name
+  and module_expr = print_module_expr node.module_expr
+  in group (string "module " ^^ name ^^ string " is "
+            ^^ module_expr)
 
-(* Declaration of module alias *)
+and print_module_expr (node : module_expr) =
+  match node with
+    M_Body e -> print_M_Body e
+  | M_Path e -> print_M_Path e
+  | M_Var  e -> print_M_Var  e
 
-and print_D_ModAlias (node : module_alias reg) =
-  let node     = node.value in
-  let alias    = print_ident node.alias
-  and mod_path = print_nsepseq print_ident node.mod_path
-  in string "module " ^^ alias ^^ string " is"
-     ^/^ group (nest 2 (break 1 ^^ mod_path))
+and print_M_Body (node : module_body reg) =
+  let node = node.value in
+  let decls = print_declarations node.declarations in
+  group (string "{"
+         ^^ nest 2 (break 0 ^^ decls) ^^ hardline ^^ string "}")
+
+and print_M_Path (node : module_name module_path reg) =
+  print_module_path print_ident node
+
+and print_M_Var (node : module_name) = print_ident node
 
 (* Type declaration *)
 
@@ -270,12 +275,12 @@ and print_D_Type (node : type_decl reg) =
   and type_expr = print_type_expr node.type_expr
   in
   let type_expr = nest 2 (break 1 ^^ type_expr)
-  in string "type " ^^ name ^^ params ^^ string " is" ^^ group type_expr
+  in group (string "type " ^^ name ^^ params ^^ string " is" ^^ type_expr)
 
 and print_type_vars (node : variable tuple option) =
   match node with
     None -> empty
-  | Some tuple -> print_tuple print_ident tuple
+  | Some tuple -> string " " ^^ print_tuple print_ident tuple
 
 (* TYPE EXPRESSIONS *)
 
@@ -429,9 +434,9 @@ and print_field_decl (node : field_decl reg) =
 
 and print_compound : 'a.('a -> document) -> 'a compound reg -> document =
   fun print node ->
-    let node       = node.value in
-    let kind       = node.kind
-    and elements   = node.elements
+    let node     = node.value in
+    let kind     = node.kind
+    and elements = node.elements
     in
     let sep      = string ";" ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in

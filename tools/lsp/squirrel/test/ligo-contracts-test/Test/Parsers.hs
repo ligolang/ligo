@@ -44,6 +44,7 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/use_monad.mligo" --   LIGO-331
       , "polymorphism/use_monad_set.mligo"
       , "polymorphism/use_nelist.mligo"
+      , "view_import.mligo"
 
         -- LIGO-331
       , "polymorphism/cases_annotation1.mligo"
@@ -60,6 +61,8 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "polymorphism/test.mligo"
       , "polymorphism/modules.mligo"
       , "polymorphism/modules.religo"
+      , "polymorphism/annotate.mligo"
+      , "polymorphism/same_vars.mligo"
 
         -- LIGO-446
       , "match.ligo"
@@ -86,8 +89,8 @@ okayIgnoreContracts = (contractsDir </>) <$> ignore
       , "id.ligo"
       , "long_assign.ligo"
 
-        -- LIGO-432
-      , "tutorials/inter-contract-calls/CreateAndCall.religo"
+        -- LIGO-481
+      , "aggregation/bug_module_record.ligo"
       ]
 
 okayIgnoreDirs :: [FilePath]

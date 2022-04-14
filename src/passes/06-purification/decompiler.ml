@@ -4,7 +4,7 @@ module Location = Simple_utils.Location
 module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
-open Stage_common.Maps
+module Maps = Stage_common.Maps
 
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->
@@ -13,24 +13,22 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
   match te.type_content with
     | O.T_variable type_variable -> return @@ T_variable type_variable
     | O.T_app tc ->
-      let tc = type_app self tc in
+      let tc = Maps.type_app self tc in
       return @@ I.T_app tc
     | O.T_sum {fields ; attributes} ->
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let fields = List.map ~f:(fun (k,v) -> (k,row_element self v)) (O.LMap.to_kv_list fields) in
+      let fields = List.map ~f:(fun (k,v) -> (k,Maps.row_element self v)) (O.LMap.to_kv_list fields) in
       return @@ I.T_sum { fields ; attributes }
     | O.T_record {fields ; attributes} ->
-      let fields = List.map ~f:(fun (k,v) -> (k,row_element self v)) (O.LMap.to_kv_list fields) in
+      let fields = List.map ~f:(fun (k,v) -> (k,Maps.row_element self v)) (O.LMap.to_kv_list fields) in
       return @@ I.T_record { fields ; attributes }
     | O.T_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ I.T_tuple tuple
     | O.T_arrow arr ->
-      let arr = arrow self arr in
+      let arr = Maps.arrow self arr in
       return @@ T_arrow arr
-    | O.T_module_accessor ma ->
-      let ma = module_access self ma in
-      return @@ I.T_module_accessor ma
+    | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
     | O.T_singleton x ->
       return @@ I.T_singleton x
     | O.T_abstraction x ->
@@ -53,16 +51,16 @@ let rec decompile_expression : O.expression -> I.expression =
     let arguments = List.map ~f:decompile_expression arguments in
     return @@ I.E_constant {cons_name;arguments}
   | O.E_application app ->
-    let app = application self app in
+    let app = Maps.application self app in
     return @@ I.E_application app
   | O.E_lambda lamb ->
-    let lamb = lambda self self_type lamb in
+    let lamb = Maps.lambda self self_type lamb in
     return @@ I.E_lambda lamb
   | O.E_type_abstraction ta ->
-    let ta = type_abs self ta in
+    let ta = Maps.type_abs self ta in
     return @@ I.E_type_abstraction ta
   | O.E_recursive recs ->
-    let recs = recursive self self_type recs in
+    let recs = Maps.recursive self self_type recs in
     return @@ I.E_recursive recs
   | O.E_let_in {let_binder;attributes;rhs;let_result;mut=_} ->
     let {var;ascr;attributes=var_attributes} : _ O.binder = let_binder in
@@ -71,14 +69,11 @@ let rec decompile_expression : O.expression -> I.expression =
     let let_result = decompile_expression let_result in
     return @@ I.E_let_in {let_binder={var;ascr;attributes=var_attributes};attributes;rhs;let_result}
   | O.E_type_in ti ->
-    let ti = type_in self self_type ti in
+    let ti = Maps.type_in self self_type ti in
     return @@ I.E_type_in ti
   | O.E_mod_in mi ->
-    let mi = mod_in self self_type mi in
+    let mi = Maps.mod_in self self_type (fun a -> a) (fun a -> a) (fun a -> a) mi in
     return @@ I.E_mod_in mi
-  | O.E_mod_alias ma ->
-    let ma = mod_alias self ma in
-    return @@ I.E_mod_alias ma
   | O.E_raw_code {language;code} ->
     let code  = self code in
     return @@ I.E_raw_code {language;code}
@@ -91,34 +86,32 @@ let rec decompile_expression : O.expression -> I.expression =
       (O.expression, O.type_expression) O.match_case -> (I.expression, I.type_expression) I.match_case =
         fun {pattern ; body} ->
           let body = self body in
-          let pattern = Stage_common.Helpers.map_pattern_t (binder self_type) pattern in
+          let pattern = Stage_common.Helpers.map_pattern_t (Maps.binder self_type) pattern in
           I.{pattern ; body}
     in
     let cases = List.map ~f:aux cases in
     return @@ I.E_matching {matchee ; cases}
   | O.E_record recd ->
-    let recd = record self recd in
+    let recd = Maps.record self recd in
     return @@ I.E_record (I.LMap.to_kv_list recd)
   | O.E_accessor acc ->
-    let acc = accessor self acc in
+    let acc = Maps.accessor self acc in
     return @@ I.E_accessor acc
   | O.E_update up ->
-    let up = update self up in
+    let up = Maps.update self up in
     return @@ I.E_update up
   | O.E_tuple tuple ->
     let tuple = List.map ~f:self tuple in
     return @@ I.E_tuple tuple
   | O.E_ascription ascr ->
-    let ascr = ascription self self_type ascr in
+    let ascr = Maps.ascription self self_type ascr in
     return @@ I.E_ascription ascr
-  | O.E_module_accessor ma ->
-    let ma = module_access self ma in
-    return @@ I.E_module_accessor ma
+  | O.E_module_accessor ma -> return @@ I.E_module_accessor ma
   | O.E_cond cond ->
-    let cond = conditional self cond in
+    let cond = Maps.conditional self cond in
     return @@ I.E_cond cond
   | O.E_sequence seq ->
-    let seq = sequence self seq in
+    let seq = Maps.sequence self seq in
     return @@ I.E_sequence seq
   | O.E_skip -> return @@ I.E_skip
   | O.E_map map ->
@@ -140,22 +133,5 @@ let rec decompile_expression : O.expression -> I.expression =
     let set = List.map ~f:self set in
     return @@ I.E_set set
 
-let decompile_declaration : O.declaration Location.wrap -> _ = fun {wrap_content=declaration;location} ->
-  let return decl = Location.wrap ~loc:location decl in
-  match declaration with
-  | O.Declaration_type dt ->
-    let dt = declaration_type decompile_type_expression dt in
-    return @@ I.Declaration_type dt
-  | O.Declaration_constant dc ->
-    let dc = declaration_constant decompile_expression decompile_type_expression dc in
-    return @@ I.Declaration_constant dc
-  | O.Declaration_module dm ->
-    let dm = declaration_module decompile_expression decompile_type_expression dm in
-    return @@ I.Declaration_module dm
-  | O.Module_alias ma ->
-    let ma = module_alias ma in
-    return @@ I.Module_alias ma
-
-
 let decompile_module : O.module_ -> I.module_ = fun m ->
-  module' decompile_expression decompile_type_expression m
+  Maps.declarations decompile_expression decompile_type_expression (fun a -> a) (fun a -> a) (fun a -> a) m

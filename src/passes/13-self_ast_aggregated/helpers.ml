@@ -67,22 +67,6 @@ and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m 
   | Match_record {fields = _; body; tv = _} ->
     fold_expression f init body
 
-type ty_mapper = type_expression -> unit
-let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
-  let self = iter_type_expression f in
-  let () = f t in
-  match t.type_content with
-  | T_variable _ -> ()
-  | T_constant x -> List.iter ~f:self x.parameters
-  | T_sum x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
-  | T_record x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
-  | T_arrow x ->
-    let () = self x.type1 in
-    self x.type2
-  | T_singleton _ -> ()
-  | T_abstraction x -> self x.type_
-  | T_for_all x -> self x.type_
-
 type 'err mapper = expression -> expression
 let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
   let self = map_expression f in
@@ -245,31 +229,14 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
       let (init, body) = fold_map_expression f init body in
       (init, Match_record { fields ; body ; tv })
 
-let get_pattern ?(pred = fun _ -> true) pattern =
-  Stage_common.Helpers.fold_pattern (fun vars p ->
-      match p.wrap_content with
-      | P_var {var;attributes} when pred attributes ->
-         var :: vars
-      | _ -> vars) [] pattern
-
 module Free_variables :
   sig
     val expression : expression -> (module_variable list * expression_variable list)
   end
   = struct
-  module Var = struct
-    type t = expression_variable
-    let compare e e' = Ast_aggregated.Var.compare e e'
-  end
 
-  module VarSet = Caml.Set.Make(Var)
-
-  module ModVar = struct
-    type t = module_variable
-    let compare e e' = compare_module_variable e e'
-  end
-
-  module ModVarSet = Caml.Set.Make(ModVar)
+  module VarSet = Caml.Set.Make(ValueVar)
+  module ModVarSet = Caml.Set.Make(ModuleVar)
   type moduleEnv' = {modVarSet : ModVarSet.t; moduleEnv: moduleEnv; varSet: VarSet.t}
   and moduleEnv = moduleEnv' SMap.t
 

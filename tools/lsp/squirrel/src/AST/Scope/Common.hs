@@ -27,6 +27,8 @@ module AST.Scope.Common
   , contractTree
   , contractMsgs
 
+  , addLigoErrToMsg
+
   , cFile
   , cTree
   , cMsgs
@@ -50,7 +52,7 @@ import Algebra.Graph.ToGraph (ToGraph)
 import Algebra.Graph.ToGraph qualified as G
 import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
-import Control.Lens.Operators ((&))
+import Control.Lens.Operators ((&), (%~))
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.DList (DList, snoc)
@@ -126,6 +128,9 @@ contractMsgs (FindFilepath pc) = _cMsgs pc
 
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
+
+addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
+addLigoErrToMsg err = getContract . cMsgs %~ (err :)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest

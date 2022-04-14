@@ -155,12 +155,6 @@ module Make
       if List.length messages > 0 then
         exit 1
 
-    let config =
-      object
-        method offsets = Preprocessor_CLI.offsets
-        method mode    = Lexer_CLI.mode
-      end
-
     module Preproc = PreprocMainGen.Make (Preprocessor_CLI)
 
     let parse () =

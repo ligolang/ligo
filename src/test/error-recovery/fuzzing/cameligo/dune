@@ -1,0 +1,11 @@
+(rule
+ (alias runtest)
+ (deps
+  (:script ../../test.sh)
+  (glob_files *.mligo)
+  (glob_files original/*.mligo)
+  (:parser ../../../../passes/02-parsing/cameligo/ParserMain.exe))
+ (action
+  (progn
+   (run %{script} *.mligo %{parser})
+   (diff? results.csv.expected results.csv))))

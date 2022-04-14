@@ -54,14 +54,8 @@ type kwd_then      = lexeme wrap
 type kwd_true      = lexeme wrap
 type kwd_type      = lexeme wrap
 type kwd_with      = lexeme wrap
-type kwd_let_entry = lexeme wrap
 type kwd_module    = lexeme wrap
 type kwd_struct    = lexeme wrap
-
-(* Data constructors *)
-
-type c_None  = lexeme wrap
-type c_Some  = lexeme wrap
 
 (* Symbols *)
 
@@ -166,7 +160,7 @@ and let_decl =
 and let_binding = {
   type_params : type_params par reg option;
   binders     : pattern nseq;
-  lhs_type    : (colon * type_expr) option;
+  rhs_type    : (colon * type_expr) option;
   eq          : equal;
   let_rhs     : expr
 }
@@ -473,7 +467,7 @@ and fun_expr = {
   kwd_fun     : kwd_fun;
   type_params : type_params par reg option;
   binders     : pattern nseq;
-  lhs_type    : (colon * type_expr) option;
+  rhs_type    : (colon * type_expr) option;
   arrow       : arrow;
   body        : expr;
   attributes  : attributes
