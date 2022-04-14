@@ -1,15 +1,11 @@
 (rule
- (target results.csv)
+ (alias runtest)
  (deps
   (:script ../../test.sh)
   (glob_files *.ligo)
   (glob_files original/*.ligo)
   (:parser ../../../../passes/02-parsing/pascaligo/ParserMain.exe))
  (action
-  (run %{script} *.ligo %{parser})))
-
-(rule
- (alias runtest)
- (deps results.csv)
- (action
-  (diff results.csv.expected results.csv)))
+  (progn
+   (run %{script} *.ligo %{parser})
+   (diff? results.csv.expected results.csv))))
