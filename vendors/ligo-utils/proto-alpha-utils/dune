@@ -5,7 +5,7 @@
     tezos-error-monad
     tezos-stdlib-unix
     tezos-protocol-012-Psithaca
-    tezos-protocol-012-Psithaca-parameters
+    Psithaca-parameters
     tezos-client-012-Psithaca
     tezos-memory-proto-alpha
     data-encoding
