@@ -1,0 +1,144 @@
+=========
+record type decl
+=========
+
+type user = {
+  id       : nat,
+  is_admin : bool,
+  name     : string
+};
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+      (object_type
+        (field_decl
+          (FieldName) (type_annotation (TypeName)))
+        (field_decl
+          (FieldName) (type_annotation (TypeName)))
+        (field_decl
+          (FieldName) (type_annotation (TypeName))))))
+
+=========
+record value decl
+=========
+
+let alice : user = {
+  id       : 1 as nat,
+  is_admin : true,
+  name     : "Alice"
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (object_literal
+      (property
+        (property_name (Name))
+        (type_as_annotation (Int) (TypeName)))
+      (property
+        (property_name (Name))
+        (True_kwd))
+      (property
+        (property_name (Name))
+        (String)))))
+
+=========
+record field access
+=========
+
+let alice_admin: bool = alice.is_admin;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (projection (Name) (Name))))
+
+=========
+tuple type decl
+=========
+
+type full_name = [string, string]
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (type_tuple (TypeName) (TypeName))))
+
+=========
+tuple value decl
+=========
+
+let full_name: full_name = ["Alice", "Johnson"];
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (array_literal
+      (String)
+      (String))))
+
+=========
+tuple desctructuring
+=========
+
+let [first_name, last_name]: full_name = full_name;
+
+---
+
+(source_file
+  (let_decl
+    (array_pattern
+      (var_pattern (Name))
+      (var_pattern (Name)))
+    (type_annotation (TypeName))
+    (Name)))
+
+=========
+tuple desctructuring function
+=========
+
+let first_name_fun = ([first_name, _]: full_name):string => first_name;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+      (fun_expr
+        (parameter
+          (array_literal
+            (Name)
+            (wildcard))
+          (type_annotation (TypeName)))
+      (type_annotation (TypeName))
+      (body (Name)))))
+
+=========
+tuple access elements
+=========
+
+let first_name_component: string = full_name[0];
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (projection
+      (Name)
+      (Int))))

@@ -9,6 +9,7 @@ module.exports = common = {
   par: x => seq('(', x, ')'),
   brackets: x => seq('[', x, ']'),
   block: x => seq('{', x, '}'),
+  chev: x => seq('<', x, '>'),
 
   withAttrs: ($, x) => seq(field("attributes", repeat($.attr)), x)
 }
