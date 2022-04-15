@@ -1579,6 +1579,30 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_toplevel.mligo" ] ;
   [%expect {|
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, characters 10-11:
+  4 |   let toto : operation * address = Tezos.create_contract
+  5 |     (fun (p, s : nat * string) -> (([] : operation list), store))
+  6 |     (None: key_hash option)
+:
+Warning: unused variable "p".
+Hint: replace it by "_p" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, characters 13-14:
+  4 |   let toto : operation * address = Tezos.create_contract
+  5 |     (fun (p, s : nat * string) -> (([] : operation list), store))
+  6 |     (None: key_hash option)
+:
+Warning: unused variable "s".
+Hint: replace it by "_s" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 3, characters 10-16:
+  2 |
+  3 | let main (action, store : string * string) : return =
+  4 |   let toto : operation * address = Tezos.create_contract
+:
+Warning: unused variable "action".
+Hint: replace it by "_action" to prevent this warning.
+
 File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:
   3 | let main (action, store : string * string) : return =
   4 |   let toto : operation * address = Tezos.create_contract
@@ -1588,10 +1612,38 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Free variable 'store' is not allowed in CREATE_CONTRACT lambda |}] ;
+Free variable usage is not allowed in call to Tezos.create_contract:
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 3, characters 18-23:
+  2 |
+  3 | let main (action, store : string * string) : return =
+  4 |   let toto : operation * address = Tezos.create_contract |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_var.mligo" ] ;
   [%expect {|
+File "../../test/contracts/negative/create_contract_var.mligo", line 7, characters 10-11:
+  6 |   let toto : operation * address = Tezos.create_contract
+  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+  8 |     (None: key_hash option)
+:
+Warning: unused variable "p".
+Hint: replace it by "_p" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_var.mligo", line 7, characters 13-14:
+  6 |   let toto : operation * address = Tezos.create_contract
+  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+  8 |     (None: key_hash option)
+:
+Warning: unused variable "s".
+Hint: replace it by "_s" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_var.mligo", line 5, characters 10-16:
+  4 |
+  5 | let main (action, store : string * string) : return =
+  6 |   let toto : operation * address = Tezos.create_contract
+:
+Warning: unused variable "action".
+Hint: replace it by "_action" to prevent this warning.
+
 File "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5:
   5 | let main (action, store : string * string) : return =
   6 |   let toto : operation * address = Tezos.create_contract
@@ -1601,7 +1653,52 @@ File "../../test/contracts/negative/create_contract_var.mligo", line 6, characte
  10 |     1
  11 |   in
 
-Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
+Free variable usage is not allowed in call to Tezos.create_contract:
+File "../../test/contracts/negative/create_contract_var.mligo", line 3, characters 4-5:
+  2 |
+  3 | let a : int = 2
+  4 | |}] ;
+
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_modfv.mligo" ] ;
+  [%expect {|
+File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
+  7 |   let toto : operation * address = Tezos.create_contract
+  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+  9 |     (None: key_hash option)
+:
+Warning: unused variable "p".
+Hint: replace it by "_p" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 13-14:
+  7 |   let toto : operation * address = Tezos.create_contract
+  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+  9 |     (None: key_hash option)
+:
+Warning: unused variable "s".
+Hint: replace it by "_s" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_modfv.mligo", line 3, characters 10-16:
+  2 |
+  3 | let main (action, store : string * string) : return =
+  4 |   module Foo = struct
+:
+Warning: unused variable "action".
+Hint: replace it by "_action" to prevent this warning.
+
+File "../../test/contracts/negative/create_contract_modfv.mligo", line 7, character 35 to line 11, character 8:
+  6 |   end in
+  7 |   let toto : operation * address = Tezos.create_contract
+  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+  9 |     (None: key_hash option)
+ 10 |     300tz
+ 11 |     "un"
+ 12 |   in
+
+Free variable usage is not allowed in call to Tezos.create_contract:
+File "../../test/contracts/negative/create_contract_modfv.mligo", line 5, characters 8-13:
+  4 |   module Foo = struct
+  5 |     let store = store
+  6 |   end in |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect {|

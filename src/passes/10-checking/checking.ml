@@ -442,20 +442,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let tv_lst = List.map ~f:get_type lst' in
       let (opname',tv) = type_constant ~raise ~options opname e.location tv_lst tv_opt in
       return (E_constant {cons_name=opname';arguments=lst'}) tv
-  | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
-      let () = match lst' with
-        | { expression_content = O.E_lambda l ; _ } :: _ ->
-          let open Ast_typed.Misc in
-          let fvs = Free_variables.lambda [] l in
-          if Int.equal (List.length fvs) 0 then ()
-          else raise.raise @@ fvs_in_create_contract_lambda e (List.hd_exn fvs)
-        | _ -> raise.raise @@ create_contract_lambda S.C_CREATE_CONTRACT e
-      in
-      let tv_lst = List.map ~f:get_type lst' in
-      let (name', tv) =
-        type_constant ~raise ~options cons_name e.location tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name=C_SET_ADD|C_CONS as cst;arguments=[key;set]} ->
       let key' =  type_expression' ~raise ~add_warning ~options (app_context, context) key in
       let tv_key = get_type key' in
