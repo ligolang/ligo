@@ -21,7 +21,7 @@ module.exports = grammar({
     _statement_or_namespace_or_preprocessor: $ => choice($._statement, $.namespace_statement, $.preprocessor),
 
     namespace_statement: $ => prec.left(2, seq(
-      optional("export"), "namespace", field("moduleName", $.ModuleName),
+      optional(field("export", 'export')), 'namespace', field("moduleName", $.ModuleName),
       '{',
       common.sepEndBy($._semicolon, field("declaration", $._statement_or_namespace_or_preprocessor)),
       '}',
@@ -30,7 +30,7 @@ module.exports = grammar({
 
     _statement: $ => prec.right(1, field("statement", choice($._base_statement, $.if_statement))),
 
-    if_statement: $ => seq("if", field("selector", common.par($._expr)), field("then", $._statement)),
+    if_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._statement)),
 
     _base_statement: $ => prec(5, choice(
       $._expr_statement,
@@ -46,7 +46,7 @@ module.exports = grammar({
       $.break_statement
     )),
 
-    break_statement: $ => "break",
+    break_statement: $ => 'break',
 
     _expr_statement: $ => choice(
       $.fun_expr,
@@ -61,25 +61,25 @@ module.exports = grammar({
 
     assignment_operator: $ => prec.right(2,
       seq(field("lhs", $._expr_statement),
-      field("op", choice("=", "*=", "/=", "%=", "+=", "-=")),
+      field("op", choice('=', '*=', '/=', '%=', '+=', '-=')),
       field("rhs", $._expr_statement))
     ),
 
-    type_as_annotation: $ => seq(field("subject", $._expr_statement), "as", field("type", $._core_type)),
+    type_as_annotation: $ => seq(field("subject", $._expr_statement), 'as', field("type", $._core_type)),
 
     binary_operator: $ => choice(
-      prec.left(4,  seq(field("left", $._expr_statement), field("op", "||"), field("right", $._expr_statement))),
-      prec.left(5,  seq(field("left", $._expr_statement), field("op", "&&"), field("right", $._expr_statement))),
-      prec.left(10, seq(field("left", $._expr_statement), field("op", choice("<", "<=", ">", ">=", "==", "!=")), field("right", $._expr_statement))),
-      prec.left(12, seq(field("left", $._expr_statement), field("op", choice("+", "-")),      field("right", $._expr_statement))),
-      prec.left(13, seq(field("left", $._expr_statement), field("op", choice("*", "/", "%")), field("right", $._expr_statement)))
+      prec.left(4,  seq(field("left", $._expr_statement), field("op", '||'), field("right", $._expr_statement))),
+      prec.left(5,  seq(field("left", $._expr_statement), field("op", '&&'), field("right", $._expr_statement))),
+      prec.left(10, seq(field("left", $._expr_statement), field("op", choice('<', '<=', '>', '>=', '==', '!=')), field("right", $._expr_statement))),
+      prec.left(12, seq(field("left", $._expr_statement), field("op", choice('+', '-')),      field("right", $._expr_statement))),
+      prec.left(13, seq(field("left", $._expr_statement), field("op", choice('*', '/', '%')), field("right", $._expr_statement)))
     ),
 
-    unary_operator: $ => prec.right(15, seq(field("negate", choice("-", "!")), field("arg", $._expr_statement))),
+    unary_operator: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
 
     call_expr: $ => prec.right(2, seq(field("f", $.lambda), $.arguments)),
 
-    arguments: $ => common.par(common.sepBy(",", field("argument", $._annot_expr))),
+    arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
 
     lambda: $ => prec(5, choice($.call_expr, $._member_expr)),
 
@@ -95,12 +95,12 @@ module.exports = grammar({
       $.type_annotation
     ),
 
-    match_expr: $ => seq("match", common.par(seq(field("subject", $._member_expr), ",", field("alt", choice($._list_cases, $._ctor_cases))))),
+    match_expr: $ => seq('match', common.par(seq(field("subject", $._member_expr), ',', field("alt", choice($._list_cases, $._ctor_cases))))),
 
-    _list_cases: $ => seq("list",
+    _list_cases: $ => seq('list',
       common.par(
         common.brackets(
-          common.sepBy1(",",
+          common.sepBy1(',',
             $.list_case
           )
         )
@@ -109,12 +109,12 @@ module.exports = grammar({
 
     list_case: $ => seq(
       field("pattern", common.par(seq($.array_literal, optional($.type_annotation)))),
-      "=>",
+      '=>',
       field("body", $.body)
     ),
 
     _ctor_cases: $ => common.block(
-      common.sepBy1(",",
+      common.sepBy1(',',
         $.ctor_case
       )
     ),
@@ -123,9 +123,9 @@ module.exports = grammar({
 
     ctor_case: $ => seq(
       field("pattern", $.ConstrName),
-      ":",
-      common.par(common.sepBy(",", $.ctor_param)),
-      "=>",
+      ':',
+      common.par(common.sepBy(',', $.ctor_param)),
+      '=>',
       field("body", $.body)
     ),
 
@@ -148,21 +148,21 @@ module.exports = grammar({
 
     ctor_expr: $ => seq(field("ctor", $.ConstrName), field("args", $.ctor_args)),
 
-    ctor_args: $ => common.par(common.sepBy(",", $._expr)),
+    ctor_args: $ => common.par(common.sepBy(',', $._expr)),
 
     projection: $ => choice(
       seq($._member_expr, common.brackets($._expr)),
-      seq($._member_expr, ".", $.Name)
+      seq($._member_expr, '.', $.Name)
     ),
 
     michelson_interop: $ => seq(
-      "(Michelson",
+      '(Michelson',
         seq(
           field("code", $.michelson_code),
-          "as",
+          'as',
           field("type", $._core_type),
         ),
-      ")"
+      ')'
     ),
 
     michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
@@ -173,48 +173,48 @@ module.exports = grammar({
       field("field", $.FieldName),
     ),
 
-    array_literal: $ => choice(common.brackets(common.sepBy(",", field("element", $._array_item)))),
+    array_literal: $ => choice(common.brackets(common.sepBy(',', field("element", $._array_item)))),
 
     _array_item: $ => choice($._annot_expr, $.array_item_rest_expr),
 
-    array_item_rest_expr: $ => seq("...", field("expr", $._expr)),
+    array_item_rest_expr: $ => seq('...', field("expr", $._expr)),
 
     fun_expr: $ => choice(
       seq(
         common.par($._parameters),
-        optional(field("type", $.type_annotation)), "=>",
+        optional(field("type", $.type_annotation)), '=>',
         field("body", $.body),
       ),
       seq(
-        "(", ")",
-        optional(field("type", $.type_annotation)), "=>",
+        '(', ')',
+        optional(field("type", $.type_annotation)), '=>',
         field("body", $.body),
       ),
       seq(
-        field("argument", $.Name), "=>",
+        field("argument", $.Name), '=>',
         field("body", $.body),
       )
     ),
 
-    body: $ => prec.right(3, choice(seq("{", $._statements, "}", optional($._automatic_semicolon)), $._expr_statement)),
+    body: $ => prec.right(3, choice(seq('{', $._statements, '}', optional($._automatic_semicolon)), $._expr_statement)),
 
     _statements: $ => common.sepEndBy1($._semicolon, $._statement),
 
-    type_annotation: $ => seq(":", field("type", $._type_expr)),
+    type_annotation: $ => seq(':', field("type", $._type_expr)),
 
-    _parameters: $ => common.sepBy1(",", field("argument", $.parameter)),
+    _parameters: $ => common.sepBy1(',', field("argument", $.parameter)),
 
     parameter: $ => seq(field("expr", $._expr), field("type", $.type_annotation)),
 
-    return_statement: $ => prec.left(2, seq("return", field("expr", optional($._expr)))),
+    return_statement: $ => prec.left(2, seq('return', field("expr", optional($._expr)))),
 
-    block_statement: $ => prec.left(2, seq("{", $._statements, "}", optional($._automatic_semicolon))),
+    block_statement: $ => prec.left(2, seq('{', $._statements, '}', optional($._automatic_semicolon))),
 
-    object_literal: $ => common.block(common.sepBy(",", $.property)),
+    object_literal: $ => common.block(common.sepBy(',', $.property)),
 
-    property: $ => choice($.Name, seq(field("property_name", $.property_name), ":", field("expr", $._expr)), $._property_spread),
+    property: $ => choice($.Name, seq(field("property_name", $.property_name), ':', field("expr", $._expr)), $._property_spread),
 
-    _property_spread: $ => seq("...", field("spread_expr", $._expr_statement)),
+    _property_spread: $ => seq('...', field("spread_expr", $._expr_statement)),
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
@@ -224,16 +224,16 @@ module.exports = grammar({
       $._core_type
     ),
 
-    fun_type: $ => seq(field("param_types", common.par(common.sepBy(",", $.fun_param))), "=>", field("return_type", $._type_expr)),
+    fun_type: $ => seq(field("param_types", common.par(common.sepBy(',', $.fun_param))), '=>', field("return_type", $._type_expr)),
 
     fun_param: $ => seq(field("param_name", $.Name), $.type_annotation),
 
-    sum_type: $ => prec.right(1, common.withAttrs($, seq(optional("|"), common.sepBy1("|", field("variant", $.variant))))),
+    sum_type: $ => prec.right(1, common.withAttrs($, seq(optional('|'), common.sepBy1('|', field("variant", $.variant))))),
 
     variant: $ => common.withAttrs($, common.brackets(
       choice(
         seq('"', field("constructor", $.ConstrName), '"'),
-        seq('"', field("constructor", $.ConstrName), '"', ",", field("arguments", common.sepBy1(",", $._type_expr)))
+        seq('"', field("constructor", $.ConstrName), '"', ',', field("arguments", common.sepBy1(',', $._type_expr)))
       )
     )),
 
@@ -248,22 +248,22 @@ module.exports = grammar({
       common.par($._type_expr)
     ),
 
-    module_access_t: $ => seq(common.sepBy1(".", field("path", $.ModuleName)), ".", field("type", $.Name)),
+    module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.Name)),
 
-    object_type: $ => common.withAttrs($, common.block(common.sepEndBy(",", $.field_decl))),
+    object_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', $.field_decl))),
 
     field_decl: $ => common.withAttrs($, choice(
       field("field", $.FieldName),
       seq(field("field", $.FieldName), field("type", $.type_annotation))
     )),
 
-    type_ctor_app: $ => prec(3, seq(field("type", $.TypeName), common.chev(common.sepBy1(",", field("argument", $._type_expr))))),
+    type_ctor_app: $ => prec(3, seq(field("type", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
 
-    type_tuple: $ => common.brackets(common.sepBy1(",", field("type_element", $._type_expr))),
+    type_tuple: $ => common.brackets(common.sepBy1(',', field("type_element", $._type_expr))),
 
-    import_statement: $ => seq("import", field("alias_name", $.ModuleName), "=", common.sepBy1(".", field("module_path", $.ModuleName))),
+    import_statement: $ => seq('import', field("alias_name", $.ModuleName), '=', common.sepBy1('.', field("module_path", $.ModuleName))),
 
-    export_statement: $ => seq("export", $._declaration_statement),
+    export_statement: $ => seq(field("export", 'export'), $._declaration_statement),
 
     _declaration_statement: $ => choice(
       $.let_decl,
@@ -271,17 +271,17 @@ module.exports = grammar({
       $.type_decl
     ),
 
-    type_decl: $ => seq("type", $.TypeName, optional($.type_params), "=", $._type_expr),
+    type_decl: $ => seq("type", $.TypeName, optional($.type_params), '=', $._type_expr),
 
-    type_params: $ => common.chev(common.sepBy1(",", field("type_param", $.TypeVariableName))),
+    type_params: $ => common.chev(common.sepBy1(',', field("type_param", $.TypeVariableName))),
 
-    let_decl: $ => common.withAttrs($, seq("let", field("binding_list", $._binding_list))),
+    let_decl: $ => common.withAttrs($, seq('let', field("binding_list", $._binding_list))),
 
-    const_decl: $ => common.withAttrs($, seq("const", field("binding_list", $._binding_list))),
+    const_decl: $ => common.withAttrs($, seq('const', field("binding_list", $._binding_list))),
 
-    _binding_list: $ => common.sepBy1(",", field("binding", $._binding_initializer)),
+    _binding_list: $ => common.sepBy1(',', field("binding", $._binding_initializer)),
 
-    _binding_initializer: $ => seq($._binding_pattern, optional($.type_annotation), "=", $._expr),
+    _binding_initializer: $ => seq($._binding_pattern, optional($.type_annotation), '=', $._expr),
 
     _binding_pattern: $ => choice(
       $.var_pattern,
@@ -296,24 +296,24 @@ module.exports = grammar({
 
     property_patterns: $ => choice(
       $.property_pattern,
-      seq($.property_patterns, ",", $.property_pattern),
-      seq($.property_patterns, ",", $.object_rest_pattern)
+      seq($.property_patterns, ',', $.property_pattern),
+      seq($.property_patterns, ',', $.object_rest_pattern)
     ),
 
     property_pattern: $ => choice(
-      seq($.Name, "=", $._expr),
-      seq($.Name, ":", $._binding_initializer),
+      seq($.Name, '=', $._expr),
+      seq($.Name, ':', $._binding_initializer),
       $.var_pattern,
     ),
 
-    object_rest_pattern: $ => seq("...", $.Name),
+    object_rest_pattern: $ => seq('...', $.Name),
 
     array_pattern: $ => common.brackets($._array_item_patterns),
 
     _array_item_patterns: $ => choice(
       $._array_item_pattern,
-      seq($._array_item_patterns, ",", $._array_item_pattern),
-      seq($._array_item_patterns, ",", $.array_rest_pattern)
+      seq($._array_item_patterns, ',', $._array_item_pattern),
+      seq($._array_item_patterns, ',', $.array_rest_pattern)
     ),
 
     _array_item_pattern: $ => choice(
@@ -322,31 +322,31 @@ module.exports = grammar({
       $.array_pattern
     ),
 
-    array_rest_pattern: $ => seq("...", field("name", $.Name)),
+    array_rest_pattern: $ => seq('...', field("name", $.Name)),
 
-    switch_statement: $ => seq("switch", common.par(field("selector", $._expr)), field("cases", common.block($._cases))),
+    switch_statement: $ => seq('switch', common.par(field("selector", $._expr)), field("cases", common.block($._cases))),
 
     _cases: $ => choice(
       seq(repeat1($.case), optional($.default_case)),
       $.default_case
     ),
 
-    case: $ => seq("case", field("selector_value", $._expr), field("body", $._case_statements)),
+    case: $ => seq('case', field("selector_value", $._expr), field("body", $._case_statements)),
 
-    default_case: $ => seq("default", field("body", $._case_statements)),
+    default_case: $ => seq('default', field("body", $._case_statements)),
 
-    _case_statements: $ => seq(":", choice(
+    _case_statements: $ => seq(':', choice(
       optional($._statements),
       $.block_statement,
     )),
 
-    if_else_statement: $ => seq("if", field("selector", common.par($._expr)), field("then", $._base_statement), "else", field("else", $._statement)),
+    if_else_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), 'else', field("else", $._statement)),
 
-    for_of_statement: $ => seq("for", common.par(seq($._index_kind, field("key", $.Name), "of", field("collection", $._expr_statement))), field("body", $._statement)),
+    for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), field("body", $._statement)),
 
     _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
 
-    while_statement: $ => seq("while", field("breaker", common.par($._expr)), field("body", $._statement)),
+    while_statement: $ => seq('while', field("breaker", common.par($._expr)), field("body", $._statement)),
 
     /// PREPROCESSOR
 
@@ -388,7 +388,7 @@ module.exports = grammar({
     p_error: $ => seq('#', 'error', field("message", $._till_newline)),
     p_define: $ => seq('#', choice('define', 'undef'), field("definition", $._till_newline)),
 
-    _semicolon: $ => choice(";", $._automatic_semicolon),
+    _semicolon: $ => choice(';', $._automatic_semicolon),
 
     ConstrName: $ => $._NameCapital,
     ConstrNameDecl: $ => seq('"', $._NameCapital, '"'),
@@ -417,7 +417,7 @@ module.exports = grammar({
     False_kwd: $ => 'false',
     True_kwd: $ => 'true',
     wildcard: $ => '_',
-    Let_kwd: $ => "let",
-    Const_kwd: $ => "const",
+    Let_kwd: $ => 'let',
+    Const_kwd: $ => 'const',
   }
 })
