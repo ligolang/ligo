@@ -394,7 +394,7 @@ and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
 and make_subst_ast_env_exp ~raise env expr =
   let open Ligo_interpreter.Types in
   let get_fv expr =
-   snd @@ Self_ast_aggregated.Helpers.Free_variables.expression expr in
+   Self_ast_aggregated.Helpers.Free_variables.expression expr in
   let rec aux (fv) acc = function
     | [] -> acc
     | Expression { name; item ; no_mutation } :: tl ->
