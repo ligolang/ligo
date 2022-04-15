@@ -111,7 +111,7 @@ Here we introduce a type variable `a` which can be generalised using
 let id =  (type a, x : a) => x;
 ```
 
-Here `_a` is a type variable which can be generalised. In general,
+Here, `a` is a type variable which can be generalised. In general,
 types prefixed with `_` are treated as generalisable.
 
 </Syntax>
