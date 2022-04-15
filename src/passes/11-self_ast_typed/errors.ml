@@ -142,7 +142,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let message = `String "Invalid view argument" in
     let content = `Assoc [
       ("message", message);
-      ("loc", Location.to_yojson loc);
+      ("location", Location.to_yojson loc);
       ("main_name", Ast_typed.ValueVar.to_yojson main_name);
       ("view_name", Ast_typed.ValueVar.to_yojson view_name);
       ]
@@ -152,7 +152,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let message = `String "Invalid view argument" in
     let content = `Assoc [
       ("message", message);
-      ("loc", Location.to_yojson loc);
+      ("location", Location.to_yojson loc);
       ]
     in
     json_error ~stage ~content
@@ -160,7 +160,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let message = `String "pattern matching anomaly" in
     let content = `Assoc [
       ("message", message);
-      ("loc", Location.to_yojson loc);
+      ("location", Location.to_yojson loc);
       ]
     in
     json_error ~stage ~content

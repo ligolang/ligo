@@ -20,15 +20,17 @@ type file_path = string
    comes originally from a string, and [expression] assumes that is
    contents is an expression and comes from a string. *)
 
-val from_file   : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> CST.t
-val from_string : raise:Errors.t Trace.raise -> Buffer.t -> CST.t
-val expression  : raise:Errors.t Trace.raise -> Buffer.t -> CST.expr
+type 'a parser = raise:Errors.t Trace.raise -> Buffer.t -> 'a
+
+val from_file   : (file_path -> CST.t) parser
+val from_string : CST.t parser
+val expression  : CST.expr parser
 
 (* Aliases *)
 
-val parse_file       : raise:Errors.t Trace.raise -> Buffer.t -> file_path -> CST.t
-val parse_string     : raise:Errors.t Trace.raise -> Buffer.t -> CST.t
-val parse_expression : raise:Errors.t Trace.raise -> Buffer.t -> CST.expr
+val parse_file       : (file_path -> CST.t) parser
+val parse_string     : CST.t parser
+val parse_expression : CST.expr parser
 
 (* Pretty-printing *)
 

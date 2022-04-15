@@ -32,11 +32,11 @@ PASS,missing_with_kw_in_block_expr.ligo,0,0,0,0,0
 PASS,typo_in_case_kw.ligo,4,42,30,11,5
 PASS,typo_in_function_kw.ligo,7,55,27,13,2
 PASS,typo_in_with_kw_in_record_update.ligo,2,31,11,4,1
-PASS,unfinished_code00.ligo,5,26,10,3,0
+PASS,unfinished_code00.ligo,8,68,14,8,2
 PASS,unfinished_code01.ligo,2,2,2,2,0
 PASS,unfinished_code02.ligo,2,11,9,7,0
 PASS,unfinished_code03.ligo,3,8,6,4,0
-PASS,unfinished_code04.ligo,10,52,34,21,0
+PASS,unfinished_code04.ligo,4,30,28,21,0
 PASS,unfinished_code05.ligo,4,8,8,5,0
 PASS,unfinished_code06.ligo,2,8,8,5,0
 PASS,unfinished_code07.ligo,2,2,2,2,0

@@ -146,45 +146,42 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_pascaligo_untyped_recursive_fun loc ->
     let message = `String "Untyped recursive functions are not supported yet" in
-    let loc = Format.asprintf "%a" Location.pp loc in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_pascaligo_unsupported_pattern_type pl ->
-    let loc = Format.asprintf "%a"
-      Location.pp_lift @@ Raw.pattern_to_region pl in
+    let loc = Location.lift @@ Raw.pattern_to_region pl in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_pascaligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
+    let loc = Location.lift (Raw.type_expr_to_region te) in
     let content = `Assoc [
       ("message", message );
-      ("location", `String loc);] in
+      ("location", Location.to_yojson loc);] in
     json_error ~stage ~content
   | `Concrete_pascaligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument must be a string singleton" in
-    let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
+    let loc = Location.lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
       ("name"   , `String name );
-      ("location", `String loc); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Concrete_pascaligo_michelson_type_wrong_arity (loc,name) ->
     let message = Format.asprintf "%s does not have the right number of argument" name in
-    let loc = Format.asprintf "%a" Location.pp loc in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content
   | `Concrete_pascaligo_block_start_with_attribute block ->
     let message = Format.asprintf "Attributes have to follow the declaration it is attached" in
-    let loc = Format.asprintf "%a" Location.pp_lift block.region in
+    let loc = Location.lift block.region in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); ] in
+      ("location", Location.to_yojson loc); ] in
     json_error ~stage ~content

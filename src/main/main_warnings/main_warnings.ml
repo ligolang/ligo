@@ -80,7 +80,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Main_view_ignored loc ->
     let message = `String "command line option overwrites annotated views" in
     let stage   = "Main" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
@@ -108,7 +108,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
      let message = `String "unused variable" in
      let stage   = "self_ast_typed" in
      let description = `String s in
-     let loc = `String (Format.asprintf "%a" Location.pp loc) in
+     let loc = Location.to_yojson loc in
      let content = `Assoc [
                        ("message", message);
                        ("location", loc);
@@ -119,7 +119,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
      let message = `String "much used variable" in
      let stage   = "self_ast_typed" in
      let description = `String s in
-     let loc = `String (Format.asprintf "%a" Location.pp loc) in
+     let loc = Location.to_yojson loc in
      let content = `Assoc [
                        ("message", message);
                        ("location", loc);
@@ -129,7 +129,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Self_ast_imperative_warning_layout (loc, s) ->
     let message = `String (Format.asprintf "Layout attribute on constructor %a" Ast_imperative.PP.label s) in
      let stage   = "self_ast_imperative" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
