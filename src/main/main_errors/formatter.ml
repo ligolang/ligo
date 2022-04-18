@@ -241,20 +241,22 @@ let rec error_ppformat : display_format:string display_format ->
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
 
-let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
-  let json_error ~stage ~content =
-    `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
+let json_error ~stage ?message ?child ?(extra_content=[]) () =
+  let append_opt ~f xs opt = Option.fold opt ~init:xs ~f:(fun xs x -> f x :: xs) in
+  let content = extra_content in
+  let content = append_opt content message  ~f:(fun msg -> ("message", `String msg)) in
+  let content = append_opt content child ~f:(fun err -> ("children", err))
   in
+  `Assoc [
+    ("status",  `String "error") ;
+    ("stage",   `String stage)   ;
+    ("content", `Assoc content)  ]
+
+
+let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   match a with
   | `Test_err_tracer (name,err) ->
-    let content = `Assoc [
-      ("message", `String name);
-      ("children", error_jsonformat err);
-      ] in
-    json_error ~stage:"test_tracer" ~content
+    json_error ~stage:"test_tracer" ~message:name ~child:(error_jsonformat err) ()
 
   | `Test_run_tracer _
   | `Test_expect_tracer _
@@ -270,53 +272,45 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   -> `Null
 
   (* Top-level errors *)
-  | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(BuildSystem.Errors.error_jsonformat e)
+  | `Build_error_tracer e -> json_error ~stage:"build system" ~child:(BuildSystem.Errors.error_jsonformat e) ()
   | `Main_invalid_generator_name _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad generator name")
+    json_error ~stage:"command line interpreter" ~message:"bad generator name" ()
   | `Main_invalid_syntax_name _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")
+    json_error ~stage:"command line interpreter" ~message:"bad syntax name" ()
   | `Main_invalid_dialect_name _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad dialect name")
+    json_error ~stage:"command line interpreter" ~message:"bad dialect name" ()
   | `Main_invalid_protocol_version _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad protocol version")
+    json_error ~stage:"command line interpreter" ~message:"bad protocol version" ()
   | `Main_invalid_typer_switch _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad typer switch")
+    json_error ~stage:"command line interpreter" ~message:"bad typer switch" ()
   | `Main_invalid_extension _ ->
-    json_error ~stage:"command line interpreter" ~content:(`String "bad file extension")
+    json_error ~stage:"command line interpreter" ~message:"bad file extension" ()
 
   | `Main_unparse_tracer _ ->
-    let content = `Assoc [("message", `String "could not unparse michelson type")] in
-    json_error ~stage:"michelson contract build" ~content
+    json_error ~stage:"michelson contract build" ~message:"could not unparse michelson type" ()
 
   | `Main_typecheck_contract_tracer (c,_) ->
     let code = Format.asprintf "%a" Tezos_utils.Michelson.pp c in
-    let content = `Assoc [
-      ("message", `String "Could not typecheck michelson code") ;
-      ("code",    `String code) ; ] in
-    json_error ~stage:"michelson contract build" ~content
+    let extra_content = [("code", `String code)] in
+    json_error ~stage:"michelson contract build" ~message:"Could not typecheck michelson code" ~extra_content ()
 
   | `Main_could_not_serialize _errs ->
-    let content = `Assoc [("message", `String "Could not serialize michelson code")] in
-    json_error ~stage:"michelson serialization" ~content
+    json_error ~stage:"michelson serialization" ~message:"Could not serialize michelson code" ()
 
   | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
-    let content = `Assoc [
-      ("message", `String "Passed parameter does not match the contract type");
-      ("children", error_jsonformat err);
-      ] in
-    json_error ~stage:"contract argument typechecking" ~content
+    json_error ~stage:"contract argument typechecking"
+        ~message:"Passed parameter does not match the contract type"
+        ~child:(error_jsonformat err) ()
 
   | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_storage, err) ->
-    let content = `Assoc [
-      ("message", `String "Passed storage does not match the contract type");
-      ("children", error_jsonformat err);
-      ] in
-    json_error ~stage:"contract argument typechecking" ~content
+    json_error ~stage:"contract argument typechecking"
+        ~message:"Passed storage does not match the contract type"
+        ~child:(error_jsonformat err) ()
 
   | `Main_unknown_failwith_type ->
-    json_error ~stage:"michelson execution" ~content:(`String "unknown failwith type")
+    json_error ~stage:"michelson execution" ~message:"unknown failwith type" ()
   | `Main_unknown ->
-    json_error ~stage:"michelson execution" ~content:(`String "unknown error")
+    json_error ~stage:"michelson execution" ~message:"unknown error" ()
 
   | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
     let value = match fw with
@@ -324,61 +318,55 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
       | Failwith_string s -> `Assoc [("value", `String s) ; ("type", `String "int")]
       | Failwith_bytes b -> `Assoc [("value", `String (Bytes.to_string b)) ; ("type", `String "bytes")]
     in
-    let content = `Assoc [("failwith", value)] in
-    json_error ~stage:"michelson execution" ~content
+    let extra_content = [("failwith", value)] in
+    json_error ~stage:"michelson execution" ~extra_content ()
 
   | `Main_invalid_amount a ->
-    let message = `String "invalid amount" in
-    let value = `String a in
-    let content = `Assoc [("message", message) ; ("value", value)] in
-    json_error ~stage:"parsing command line parameters" ~content
+    let message = "invalid amount" in
+    let extra_content = [("value", `String a)] in
+    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
   | `Main_invalid_balance a ->
-    let message = `String "invalid balance" in
-    let value = `String a in
-    let content = `Assoc [("message", message) ; ("value", value)] in
-    json_error ~stage:"parsing command line parameters" ~content
+    let message = "invalid balance" in
+    let extra_content = [("value", `String a)] in
+    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
   | `Main_invalid_source a ->
-    let message = `String "invalid source" in
-    let value = `String a in
-    let content = `Assoc [("message", message) ; ("value", value)] in
-    json_error ~stage:"parsing command line parameters" ~content
+    let message = "invalid source" in
+    let extra_content = [("value", `String a)] in
+    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
   | `Main_invalid_sender a ->
-    let message = `String "invalid sender" in
-    let value = `String a in
-    let content = `Assoc [("message", message) ; ("value", value)] in
-    json_error ~stage:"parsing command line parameters" ~content
+    let message = "invalid sender" in
+    let extra_content = [("value", `String a)] in
+    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
   | `Main_invalid_timestamp t ->
-    let message = `String "invalid timestamp notation" in
-    let value = `String t in
-    let content = `Assoc [("message", message) ; ("value", value)] in
-    json_error ~stage:"parsing command line parameters" ~content
+    let message = "invalid timestamp notation" in
+    let extra_content = [("value", `String t)] in
+    json_error ~stage:"parsing command line parameters" ~message ~extra_content ()
   | `Main_cannot_open_global_constants _ ->
-    json_error ~stage:"global constants parsing" ~content:(`String "cannot open global constants file")
+    json_error ~stage:"global constants parsing" ~message:"cannot open global constants file" ()
   | `Main_cannot_parse_global_constants _ ->
-    json_error ~stage:"global constants parsing" ~content:(`String "cannot parse global constants file")
-
+    json_error ~stage:"global constants parsing" ~message:"cannot parse global constants file" ()
 
   | `Unparsing_michelson_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error unparsing michelson result")
+    json_error ~stage:"michelson execution" ~message:"error unparsing michelson result" ()
 
   | `Parsing_payload_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error parsing message")
+    json_error ~stage:"michelson execution" ~message:"error parsing message" ()
 
   | `Packing_payload_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error packing message")
+    json_error ~stage:"michelson execution" ~message:"error packing message" ()
 
   | `Parsing_input_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error parsing input")
+    json_error ~stage:"michelson execution" ~message:"error parsing input" ()
 
   | `Parsing_code_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error parsing program code")
+    json_error ~stage:"michelson execution" ~message:"error parsing program code" ()
 
   | `Error_of_execution_tracer _ ->
-    json_error ~stage:"michelson execution" ~content:(`String "error of execution")
+    json_error ~stage:"michelson execution" ~message:"error of execution" ()
 
-  | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~content:(`String "given entrypoint is not a function")
-  | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~content:(`String "given view is not a function")
-  | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~content:(`String "Missing entrypoint")
+  | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~message:"given entrypoint is not a function" ()
+  | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~message:"given view is not a function" ()
+  | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~message:"Missing entrypoint" ()
 
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
   | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
@@ -418,9 +406,8 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
 
   | `Repl_unexpected ->
-     let message = `String "unexpected error" in
-     let content = `Assoc [("message", message)] in
-     json_error ~stage:"evaluating expression" ~content
+     let message = "unexpected error" in
+     json_error ~stage:"evaluating expression" ~message ()
 
 let error_format : _ Simple_utils.Display.format = {
   pp = error_ppformat;

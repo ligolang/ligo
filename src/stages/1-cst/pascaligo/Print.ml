@@ -119,7 +119,7 @@ and print_declaration state = function
 | D_Directive d -> print_D_Directive state d
 | D_Fun       d -> print_D_Fun       state d
 | D_Module    d -> print_D_Module    state d
-| D_ModAlias  d -> print_D_ModAlias  state d
+(*| D_ModAlias  d -> print_D_ModAlias  state d*)
 | D_Type      d -> print_D_Type      state d
 
 (* Attributed declaration *)
@@ -190,6 +190,9 @@ and print_variable state (node : variable) =
       Tree.mk_child      Tree.print_literal node;
       Tree.mk_child_list print_attributes   node#attributes]
     in Tree.print state "<attributed variable>" children
+
+and print_mod_path state (node : (module_name, dot) nsepseq) =
+  print_nsepseq state "<path>" Tree.print_literal node
 *)
 
 and print_ret_type state (_, type_expr) =
@@ -204,23 +207,27 @@ and print_D_Module state (node : module_decl reg) =
   let node = node.value in
   let children = [
     Tree.mk_child Tree.print_literal node.name;
-    Tree.mk_child print_declarations node.declarations]
+    Tree.mk_child print_module_expr node.module_expr]
   in Tree.print state "D_Module" children
 
+and print_module_expr state (node : module_expr) =
+  match node with
+    M_Body e -> print_M_Body state e
+  | M_Path e -> print_M_Path state e
+  | M_Var  e -> print_M_Var  state e
+
+and print_M_Body state (node : module_body reg) =
+  let decl = node.value.declarations in
+  Tree.print_unary state "M_Body" print_declarations decl
+
+and print_M_Path state (node : module_name module_path reg) =
+  print_module_path Tree.print_literal "M_Path" state node
+
+and print_M_Var state (node : module_name) =
+  Tree.print_unary state "M_Var" Tree.print_literal node
+
 and print_declarations state (node : declarations) =
-  print_nseq state "<structure>" print_declaration node
-
-(* Module aliases declarations *)
-
-and print_D_ModAlias state (node : module_alias reg) =
-  let node = node.value in
-  let children = [
-    Tree.mk_child Tree.print_literal node.alias;
-    Tree.mk_child print_mod_path     node.mod_path]
-  in Tree.print state "D_ModAlias" children
-
-and print_mod_path state (node : (module_name, dot) nsepseq) =
-  print_nsepseq state "<path>" Tree.print_literal node
+  print_nseq state "<declarations>" print_declaration node
 
 (* Type declarations *)
 

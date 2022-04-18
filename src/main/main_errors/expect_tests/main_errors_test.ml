@@ -401,7 +401,6 @@ let%expect_test "typer" =
       orig_var = None ;
       location= File default_location }
   in
-  let ast_core_constant = C_INT in
   let expression_content = E_literal Literal_unit in
   let expression =
     {expression_content; location= location_t; type_expression}
@@ -501,22 +500,6 @@ let%expect_test "typer" =
 
   Missing type annotation.
   'foo' needs to be annotated with a type.|}] ;
-  error
-    (`Typer_fvs_in_create_contract_lambda
-      (ast_core_expression, expression_variable)) ;
-  [%expect
-    {|
-  File "a dummy file name", line 20, character 5:
-
-  Free variable 'bar' is not allowed in CREATE_CONTRACT lambda|}] ;
-  error
-    (`Typer_create_contract_lambda (ast_core_constant, ast_core_expression)) ;
-  [%expect
-    {|
-  File "a dummy file name", line 20, character 5:
-
-  Invalid usage of Tezos.create_contract.
-  The first argument must be an inline function.|}] ;
   error
     (`Typer_should_be_a_function_type (type_expression, ast_core_expression)) ;
   [%expect

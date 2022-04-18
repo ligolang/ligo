@@ -1,0 +1,102 @@
+=========
+loops: for-of loop
+=========
+
+let sum_list = (l: list<int>): int => {
+  let total : int = 0;
+  for (const i of l) {
+    total = total + i
+  };
+  return total
+}
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+          (Name)
+          (type_annotation
+            (type_ctor_app (TypeName) (TypeName))))
+      (type_annotation (TypeName))
+      (body
+        (let_decl
+          (var_pattern (Name))
+          (type_annotation (TypeName))
+          (Int))
+        (for_of_statement
+          (Const_kwd)
+          (Name)
+          (Name)
+          (block_statement
+            (assignment_operator
+              (Name)
+              (binary_operator (Name) (Name)))))
+        (return_statement (Name))))))
+
+=========
+loops: while loop
+=========
+
+let gcd = (x: nat, y: nat): nat => {
+  let [x,y] = [x,y];
+  if (x < y) {
+    const z: nat = x;
+    x = y; y = z;
+  };
+  let r: nat = 0 as nat;
+  while (y != (0 as nat)) {
+    r = x % y;
+    x = y;
+    y = r;
+  };
+  return x;
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (type_annotation (TypeName))
+      (body
+        (let_decl
+          (array_pattern
+            (var_pattern (Name))
+            (var_pattern (Name)))
+          (array_literal
+            (Name)
+            (Name)))
+        (if_statement
+          (binary_operator (Name) (Name))
+          (block_statement
+            (const_decl
+              (var_pattern (Name))
+              (type_annotation (TypeName))
+              (Name))
+            (assignment_operator (Name) (Name))
+            (assignment_operator (Name) (Name))))
+        (let_decl
+          (var_pattern (Name))
+          (type_annotation (TypeName))
+          (type_as_annotation (Int) (TypeName)))
+        (while_statement
+          (binary_operator
+            (Name)
+            (paren_expr
+              (type_as_annotation (Int) (TypeName))))
+          (block_statement
+            (assignment_operator (Name) (binary_operator (Name) (Name)))
+            (assignment_operator (Name) (Name))
+            (assignment_operator (Name) (Name))))
+        (return_statement
+          (Name))))))

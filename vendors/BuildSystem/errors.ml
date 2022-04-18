@@ -36,7 +36,7 @@ let rec error_jsonformat : t -> Yojson.Safe.t = fun a ->
   | `Build_corner_case (loc,msg) ->
     let content = `Assoc [
       ("message", `String msg) ;
-      ("loc", `String loc) ]
+      ("location", `String loc) ]
     in
     json_error ~stage:"build system" ~content
 

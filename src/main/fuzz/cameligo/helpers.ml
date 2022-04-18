@@ -231,11 +231,11 @@ module Fold_helpers(M : Monad) = struct
        return @@ EPar {value;region}
     | ELetIn   {value;region} ->
        let {kwd_let=_;kwd_rec=_;binding;kwd_in=_;body;attributes=_} = value in
-       let {binders;type_params;lhs_type;eq;let_rhs} = binding in
+       let {binders;type_params;rhs_type;eq;let_rhs} = binding in
        let* let_rhs = self let_rhs in
-       let* lhs_type = bind_map_option (fun (a,b) ->
-                           let* b = self_type b in ok (a,b)) lhs_type in
-       let binding = {binders;type_params;lhs_type;eq;let_rhs} in
+       let* rhs_type = bind_map_option (fun (a,b) ->
+                           let* b = self_type b in ok (a,b)) rhs_type in
+       let binding = {binders;type_params;rhs_type;eq;let_rhs} in
        let* body = self body in
        let value = {value with binding;body} in
        return @@ ELetIn {value;region}
@@ -262,11 +262,11 @@ module Fold_helpers(M : Monad) = struct
        let value = {mod_alias;kwd_in;body} in
        return @@ EModAlias {value;region}
     | EFun     {value;region} ->
-       let {kwd_fun=_; binders=_; lhs_type; arrow=_; body; type_params=_;attributes=_} = value in
+       let {kwd_fun=_; binders=_; rhs_type; arrow=_; body; type_params=_;attributes=_} = value in
        let* body = self body in
-       let* lhs_type = bind_map_option (fun (a,b) ->
-                           let* b = self_type b in ok (a,b)) lhs_type in
-       let value = {value with body;lhs_type} in
+       let* rhs_type = bind_map_option (fun (a,b) ->
+                           let* b = self_type b in ok (a,b)) rhs_type in
+       let value = {value with body;rhs_type} in
        return @@ EFun {value;region}
     | ESeq     {value;region} ->
        let* elements = bind_map_pseq self value.elements in
@@ -297,11 +297,11 @@ module Fold_helpers(M : Monad) = struct
     match d with
       Let {value;region} ->
        let (kwd_let,kwd_rec,let_binding,attr) = value in
-       let {binders;type_params;lhs_type;eq;let_rhs} = let_binding in
+       let {binders;type_params;rhs_type;eq;let_rhs} = let_binding in
        let* let_rhs = self_expr let_rhs in
-       let* lhs_type = bind_map_option (fun (a,b) ->
-                           let* b = self_type b in ok (a,b)) lhs_type in
-       let let_binding = {binders;type_params;lhs_type;eq;let_rhs} in
+       let* rhs_type = bind_map_option (fun (a,b) ->
+                           let* b = self_type b in ok (a,b)) rhs_type in
+       let let_binding = {binders;type_params;rhs_type;eq;let_rhs} in
        let value = (kwd_let,kwd_rec,let_binding,attr) in
        return @@ Let {value;region}
     | TypeDecl {value;region} ->

@@ -37,11 +37,8 @@ type t =
   | Michelson_program
   | Test_exec_error
   | Test_exec_result
-  | Account
-  | Time
   | Typed_address
   | Mutation
-  | Failure
   | Chest
   | Chest_key
   | Chest_opening_result
@@ -84,11 +81,8 @@ let to_string = function
   | Michelson_program    -> "michelson_program"
   | Test_exec_error      -> "test_exec_error"
   | Test_exec_result     -> "test_exec_result"
-  | Account              -> "account"
-  | Time                 -> "time"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
-  | Failure              -> "failure"
   | Chest                -> "chest"
   | Chest_key            -> "chest_key"
   | Chest_opening_result -> "chest_opening_result"
@@ -130,11 +124,8 @@ let to_string = function
   | "michelson_program"    -> Michelson_program
   | "test_exec_error"      -> Test_exec_error
   | "test_exec_result"     -> Test_exec_result
-  | "account"              -> Account
-  | "time"                 -> Time
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
-  | "failure"              -> Failure
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
@@ -176,11 +167,8 @@ let ticket               = Ticket
 let michelson_program    = Michelson_program
 let test_exec_error      = Test_exec_error
 let test_exec_result     = Test_exec_result
-let account              = Account
-let time                 = Time
 let typed_address        = Typed_address
 let mutation             = Mutation
-let failure              = Failure
 let chest                = Chest
 let chest_key            = Chest_key
 let chest_opening_result = Chest_opening_result
@@ -221,11 +209,8 @@ let v_ticket               : type_variable = TypeVar.of_input_var (to_string Tic
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
 let v_test_exec_error      : type_variable = TypeVar.of_input_var (to_string Test_exec_error)
 let v_test_exec_result     : type_variable = TypeVar.of_input_var (to_string Test_exec_result)
-let v_account              : type_variable = TypeVar.of_input_var (to_string Account)
-let v_time                 : type_variable = TypeVar.of_input_var (to_string Time)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
-let v_failure              : type_variable = TypeVar.of_input_var (to_string Failure)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)

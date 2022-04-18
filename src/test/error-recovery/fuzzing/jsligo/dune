@@ -1,15 +1,11 @@
 (rule
- (target results.csv)
+ (alias runtest)
  (deps
   (:script ../../test.sh)
   (glob_files *.jsligo)
   (glob_files original/*.jsligo)
   (:parser ../../../../passes/02-parsing/jsligo/ParserMain.exe))
  (action
-  (run %{script} *.jsligo %{parser})))
-
-(rule
- (alias runtest)
- (deps results.csv)
- (action
-  (diff results.csv.expected results.csv)))
+  (progn
+   (run %{script} *.jsligo %{parser})
+   (diff? results.csv.expected results.csv))))

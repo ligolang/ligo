@@ -318,8 +318,8 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     in
     return_expr @@ CST.ECall (wrap (lamb,args))
   | E_lambda lambda ->
-    let (binders,_lhs_type,_block_with,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {kwd_fun=Token.ghost_fun;binders;lhs_type=None;arrow=Token.ghost_arrow;body;type_params=None;attributes=[]} in
+    let (binders,_rhs_type,_block_with,body) = decompile_lambda lambda in
+    let fun_expr : CST.fun_expr = {kwd_fun=Token.ghost_fun;binders;rhs_type=None;arrow=Token.ghost_arrow;body;type_params=None;attributes=[]} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_type_abstraction _ -> failwith "corner case : annonymous type abstraction"
   | E_recursive _ ->
@@ -328,11 +328,11 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     let var_attributes = var_attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
     let var : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
-    let type_params, lhs_type = Option.value_map ascr ~default:(None, None)
-                                           ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
-                                                        type_params, Some (prefix_colon lhs_type)) in
+    let type_params, rhs_type = Option.value_map ascr ~default:(None, None)
+                                           ~f:(fun t -> let type_params, rhs_type = decompile_type_params t in
+                                                        type_params, Some (prefix_colon rhs_type)) in
     let let_rhs = decompile_expression rhs in
-    let binding : CST.let_binding = {binders;type_params;lhs_type;eq=Token.ghost_eq;let_rhs} in
+    let binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
     let body = decompile_expression let_result in
     let attributes = Shared_helpers.decompile_attributes attributes in
     let lin : CST.let_in = {kwd_let=Token.ghost_let;kwd_rec=None;binding;kwd_in=Token.ghost_in;body;attributes} in
@@ -642,23 +642,23 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
     let var_attributes = binder.attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
     let var = CST.PVar (wrap ({variable = decompile_variable binder.var; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (var,[]) in
-    let type_params, lhs_type = Option.value_map binder.ascr ~default:(None, None)
-                                           ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
-                                                        type_params, Some (prefix_colon lhs_type)) in
+    let type_params, rhs_type = Option.value_map binder.ascr ~default:(None, None)
+                                           ~f:(fun t -> let type_params, rhs_type = decompile_type_params t in
+                                                        type_params, Some (prefix_colon rhs_type)) in
     match expr.expression_content with
       E_lambda lambda ->
       let let_rhs = decompile_expression (AST.make_e (AST.E_lambda lambda)) in
-      let let_binding : CST.let_binding = {binders;type_params;lhs_type;eq=Token.ghost_eq;let_rhs} in
+      let let_binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
       let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
     | E_recursive {lambda; _} ->
       let let_rhs = decompile_expression (AST.make_e (AST.E_lambda lambda)) in
-      let let_binding : CST.let_binding = {binders;type_params;lhs_type;eq=Token.ghost_eq;let_rhs} in
+      let let_binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
       let let_decl : CST.let_decl = (Token.ghost_let,Some Token.ghost_rec,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
     | _ ->
       let let_rhs = decompile_expression expr in
-      let let_binding : CST.let_binding = {binders;type_params;lhs_type;eq=Token.ghost_eq;let_rhs} in
+      let let_binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
       let let_decl : CST.let_decl = (Token.ghost_let,None,let_binding,attributes) in
       CST.Let (wrap @@ let_decl)
   )

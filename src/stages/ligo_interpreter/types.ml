@@ -66,7 +66,6 @@ and value =
   | V_Set of value list
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
-  | V_Ligo of (string * string)
   | V_Mutation of mutation
   | V_Func_val of func_val
 

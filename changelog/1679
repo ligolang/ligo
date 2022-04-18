@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1679'
+title: Upgrade `tezos-ligo` submodule to v12.2
+type: internal
