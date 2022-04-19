@@ -1,0 +1,6 @@
+author: er433
+description: The sub-command `compile expression` now supports `--constant` and `--file-constants`
+  for using global constants.
+merge_request: '1693'
+title: Global constants support in compile expression and additional support in parameter/storage
+type: added

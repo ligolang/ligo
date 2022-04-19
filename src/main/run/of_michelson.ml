@@ -225,9 +225,10 @@ let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson
   let top_level = Script_ir_translator.Lambda
   and ty_stack_before = Script_typed_ir.Bot_t
   and ty_stack_after = Script_typed_ir.Item_t (exp_type', Bot_t, None) in
+  let tezos_context = match options with None -> None | Some o -> Some (o.Memory_proto_alpha.tezos_context) in
   let descr =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
-    Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
+    Memory_proto_alpha.parse_michelson_fail ?tezos_context ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@
