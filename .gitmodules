@@ -1,5 +1,5 @@
 [submodule "vendors/tezos-ligo"]
 	path = vendors/tezos-ligo
-	url = https://gitlab.com/prometheansacrifice/tezos.git
+	url = https://gitlab.com/prometheansacrifice/tezos2.git
 	branch = prometheansacrifice/v12.0-ligo-windows-compat
 
