@@ -277,8 +277,8 @@ let compile_parameter =
   (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root () in
+  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format 
     in
@@ -288,7 +288,7 @@ let compile_expression =
                    expression to a Michelson expression and then \
                    interpreting it using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> project_root )
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root () =

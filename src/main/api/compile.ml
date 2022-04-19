@@ -60,13 +60,17 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
       in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
+      let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
+      let file_constants = read_file_constants ~raise file_constants in
+      let constants = constants @ file_constants in
       let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
       no_comment @@
       if without_run then
         Run.clean_expression compiled_exp.expr
       else
-        Run.evaluate_expression ~raise compiled_exp.expr compiled_exp.expr_ty
+        let options = Run.make_dry_run_options ~raise ~constants { now = None ; amount = "0" ; balance = "0" ; sender = None ;  source = None ; parameter_ty = None } in
+        Run.evaluate_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty
 
 let constant (raw_options : Compiler_options.raw) constants init_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
@@ -122,7 +126,7 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_parameter entry_point app_typed_prg typed_param in
-        let options = Run.make_dry_run_options ~raise ~constants {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
+        let options = Run.make_dry_run_options ~raise ~constants { now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
 
 let storage (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
@@ -156,5 +160,5 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_storage entry_point app_typed_prg typed_param in
-        let options = Run.make_dry_run_options ~raise ~constants {now ; amount ; balance ; sender;  source ; parameter_ty = None } in
+        let options = Run.make_dry_run_options ~raise ~constants { now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
