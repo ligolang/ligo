@@ -635,7 +635,7 @@ binding_type:
   {($1, $3),$2}
 
 type_generics:
-  chevrons(nsepseq(ctor,",")) { $1 }
+  chevrons(nsepseq(type_name,",")) { $1 }
 
 binding_pattern:
   var_pattern    { PVar $1 }

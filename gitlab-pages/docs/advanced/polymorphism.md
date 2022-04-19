@@ -121,7 +121,7 @@ types prefixed with `_` are treated as generalisable.
 let id : <T>((x : T) => T) = x => x;
 ```
 
-Here `_a` is a type variable which can be generalised. In general,
+Here `T` is a type variable which can be generalised. In general,
 types prefixed with `_` are treated as generalisable.
 
 </Syntax>
@@ -220,13 +220,13 @@ let rev = (type a, xs : list (a)) : list (a) =>
 
 ```jsligo group=poly
 let rev : <T>((xs : list<T>) => list<T>) = xs => {
-  let _rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
+  let rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
     ([] : list<T>) => acc,
-    ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
+    ([x,... xs] : list<T>) => rev([xs, list([x,...acc])])
     ]));
 
-  return _rev([xs, (list([]) as list<T>)]);
+  return rev([xs, (list([]) as list<T>)]);
 };
 ```
 

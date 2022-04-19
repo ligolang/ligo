@@ -3087,3 +3087,28 @@ contract: Const Ident COLON LT UIdent GT While
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Const Ident COLON LT Ident ZWSP
+##
+## Ends in an error in state: 291.
+##
+## nsepseq(type_name,COMMA) -> Ident . [ GT ]
+## nsepseq(type_name,COMMA) -> Ident . COMMA nsepseq(type_name,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Const Ident COLON LT Ident COMMA ZWSP
+##
+## Ends in an error in state: 292.
+##
+## nsepseq(type_name,COMMA) -> Ident COMMA . nsepseq(type_name,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## Ident COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
