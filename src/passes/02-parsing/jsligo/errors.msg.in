@@ -3043,7 +3043,7 @@ contract: Const Ident COLON LT UIdent COMMA ZWSP
 ##
 
 Ill-formed generic type.
-At this point, a generic type is expected. 
+At this point, a generic type is expected.
 
 contract: Const Ident COLON LT UIdent ZWSP
 ##
@@ -3073,3 +3073,17 @@ contract: Const Ident COLON LT UIdent GT ZWSP ZWSP
 
 Ill-formed type annotation.
 At this point, if the type generics are complete, a type expression is expected.
+
+
+contract: Const Ident COLON LT UIdent GT While
+##
+## Ends in an error in state: 293.
+##
+## chevrons(nsepseq(ctor,COMMA)) -> LT nsepseq(ctor,COMMA) GT . [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+## chevrons(nsepseq(ctor,COMMA)) -> LT nsepseq(ctor,COMMA) GT . ZWSP [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## LT nsepseq(ctor,COMMA) GT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
