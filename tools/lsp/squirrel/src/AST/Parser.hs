@@ -11,7 +11,6 @@ module AST.Parser
   ) where
 
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
-import Data.Bifunctor (second)
 import Data.Foldable (toList)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
@@ -63,7 +62,7 @@ loadPreprocessed projDir src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
-      (second (const []) <$> preprocess projDir src') `catches`
+      ((, []) <$> preprocess projDir src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: SomeLigoException) ->

@@ -45,7 +45,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
     forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msgs) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
-      (defs, _) <- getLigoDefinitions projDir src
+      defs <- getLigoDefinitions projDir src
       (forest, msgs') <- fromCompiler dialect defs
       pure $ FindContract src forest (msgs <> msgs')
 

@@ -21,7 +21,6 @@ import Control.Monad
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
-import Data.Bifunctor (bimap)
 import Data.Foldable (asum, toList)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
@@ -161,7 +160,7 @@ instance Exception LigoPreprocessFailedException where
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m (Text, Text)
+callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
 callLigoImpl rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
@@ -174,10 +173,10 @@ callLigoImpl rootDir args conM = do
     (ec, lo, le) <- readCreateProcessWithExitCode process raw
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       throwIO $ LigoClientFailureException (pack lo) (pack le) fpM
-    return (pack lo, pack le)
+    pure $ pack lo
 
 -- | Call ligo binary and return stdin and stderr accordingly.
-callLigo :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m (Text, Text)
+callLigo :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m Text
 callLigo rootDir args = callLigoImpl rootDir args . Just
 
 newtype Version = Version
@@ -226,9 +225,7 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
     Left (SomeException e) -> do
       $(Log.err) [i|Couldn't get LIGO version with: #{e}|]
       pure Nothing
-    Right (output, e) -> do
-      unless (Text.null e) $
-        $(Log.warning) [i|LIGO produced an error with the output: #{e}|]
+    Right output ->
       pure $ Just $ Version $ Text.strip output
 
 -- | Call LIGO's pretty printer on some contract.
@@ -251,7 +248,7 @@ callForFormat projDir source = Log.addNamespace "callForFormat" $ Log.addContext
         ["print", "pretty", tempFp]
         source
     in
-    (Just . fst <$> getResult) `catchAny` \err -> do
+    (Just <$> getResult) `catchAny` \err -> do
       $(Log.err) [i|Could not format document with error: #{err}|]
       pure Nothing
 
@@ -268,20 +265,20 @@ preprocess
   :: (HasLigoClient m, Log m)
   => FilePath
   -> Source
-  -> m (Source, Text)
+  -> m Source
 preprocess projDir contract = Log.addNamespace "preprocess" $ Log.addContext contract do
   $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
   (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ -> do
     try $ callLigo (Just projDir)
       ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"]
       contract
-  case join bimap fixMarkers <$> mbOut of
-    Right (output, errs) ->
+  case fixMarkers <$> mbOut of
+    Right output ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
         Left err -> do
           $(Log.err) [i|Unable to preprocess contract with: #{err}|]
           throwIO $ LigoPreprocessFailedException (pack err) fp
-        Right newContract -> pure (Source fp newContract, errs)
+        Right newContract -> pure $ Source fp newContract
     Left LigoClientFailureException {cfeStderr} ->
       handleLigoError fp (fixMarkers cfeStderr)
   where
@@ -294,20 +291,20 @@ getLigoDefinitions
   :: (HasLigoClient m, Log m)
   => FilePath
   -> Source
-  -> m (LigoDefinitions, Text)
+  -> m LigoDefinitions
 getLigoDefinitions projDir contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
   (mbOut, fixMarkers) <- usingTemporaryDir projDir contract \tempFp _ ->
     try $ callLigo (Just projDir)
       ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
       contract
-  case join bimap fixMarkers <$> mbOut of
-    Right (output, errs) ->
+  case fixMarkers <$> mbOut of
+    Right output ->
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
           $(Log.err) [i|Unable to parse ligo definitions with: #{err}|]
           throwIO $ LigoDefinitionParseErrorException (pack err) output fp
-        Right definitions -> return (definitions, errs)
+        Right definitions -> pure definitions
     Left LigoClientFailureException {cfeStderr} ->
       handleLigoMessages fp (fixMarkers cfeStderr)
   where
