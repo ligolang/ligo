@@ -78,9 +78,6 @@ okayTests =
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"
 
-        -- LIGO-481
-      , "aggregation" </> "bug_module_record.ligo"
-
         -- LIGO-477
       , "negative" </> "missing_funarg_annotation.religo"
 
