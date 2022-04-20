@@ -84,9 +84,6 @@ okayTests =
         -- LIGO-477
       , "negative" </> "missing_funarg_annotation.religo"
 
-        -- LIGO-478
-      , "negative" </> "bad_michelson_insertion_3.ligo"
-
         -- LIGO fails to parse these:
       , "match.ligo"
       , "negative" </> "vars_consts" </> "capture_var_params.mligo"

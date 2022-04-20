@@ -245,11 +245,11 @@ recognise (SomeRawTree dialect rawTree)
         "variant" -> Variant <$> field "constructor" <*> fieldOpt "arguments"
         _         -> fallthrough
 
-  -- MichelsonCode
+  -- Verbatim
   , Descent do
       boilerplate' \case
-        ("michelson_code", code) -> return $ MichelsonCode code
-        _                        -> fallthrough
+        ("Verbatim", code) -> pure $ MichelsonCode code
+        _                  -> fallthrough
 
     -- TField
   , Descent do
