@@ -53,7 +53,7 @@ module Tezos_eq = struct
     fun tz n ->
       let open Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp in
       let t = of_zint tz in
-      add_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
+      sub_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
 
   let mutez_add : Z.t -> Z.t -> Z.t option = fun x y ->
     let open Memory_proto_alpha.Protocol.Alpha_context.Tez in
