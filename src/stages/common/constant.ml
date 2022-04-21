@@ -15,7 +15,6 @@ type t =
   | Key_hash
   | Timestamp
   | Chain_id
-  | Option
   | List
   | Map
   | Big_map
@@ -59,7 +58,6 @@ let to_string = function
   | Key_hash             -> "key_hash"
   | Timestamp            -> "timestamp"
   | Chain_id             -> "chain_id"
-  | Option               -> "option"
   | List                 -> "list"
   | Map                  -> "map"
   | Big_map              -> "big_map"
@@ -102,7 +100,6 @@ let to_string = function
   | "key_hash"             -> Key_hash
   | "timestamp"            -> Timestamp
   | "chain_id"             -> Chain_id
-  | "option"               -> Option
   | "list"                 -> List
   | "map"                  -> Map
   | "big_map"              -> Big_map
@@ -145,7 +142,6 @@ let key                  = Key
 let key_hash             = Key_hash
 let timestamp            = Timestamp
 let chain_id             = Chain_id
-let option               = Option
 let list                 = List
 let map                  = Map
 let big_map              = Big_map
@@ -187,7 +183,7 @@ let v_key                  : type_variable = TypeVar.of_input_var (to_string Key
 let v_key_hash             : type_variable = TypeVar.of_input_var (to_string Key_hash)
 let v_timestamp            : type_variable = TypeVar.of_input_var (to_string Timestamp)
 let v_chain_id             : type_variable = TypeVar.of_input_var (to_string Chain_id)
-let v_option               : type_variable = TypeVar.of_input_var (to_string Option)
+let v_option               : type_variable = TypeVar.of_input_var ("option")
 let v_list                 : type_variable = TypeVar.of_input_var (to_string List)
 let v_map                  : type_variable = TypeVar.of_input_var (to_string Map)
 let v_big_map              : type_variable = TypeVar.of_input_var (to_string Big_map)

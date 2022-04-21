@@ -370,8 +370,8 @@ module Tree_abstraction = struct
         | C_CONCAT -> "String.concat" *)
 
     (* Not parsed *)
-    | C_SOME -> "Some"
-    | C_NONE -> "None"
+    (* | C_SOME -> "Some" *)
+    (* | C_NONE -> "None" *)
 
     (* Testing module *)
 

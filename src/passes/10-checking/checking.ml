@@ -324,18 +324,14 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       )
       | None -> (
         let matching_t_sum = Context.Typing.get_sum constructor context in
-        match matching_t_sum with
-        | (v_ty,tvl,c_arg_t,sum_t) :: ignored ->
+        (match matching_t_sum with
+        | (v_ty,tvl,c_arg_t,sum_t) :: ignored  ->
           let () = warn_ambiguous_constructor ~add_warning e.location (v_ty,c_arg_t) ignored in
           (tvl,c_arg_t,sum_t)
-        | [] -> raise.raise (unbound_constructor constructor e.location)
-      )
+        | [] -> raise.raise (unbound_constructor constructor e.location)))
     in
-    let c_arg = type_expression' ~raise ~add_warning ~options ~tv_opt:c_arg_t (app_context, context) element in
+    let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
-    let () = trace_option ~raise (not_annotated e.location) @@
-      if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
-    in
     let c_t = Ast_typed.Helpers.psubst_type table c_arg_t in
     let sum_t = Ast_typed.Helpers.psubst_type table sum_t in
     let () = assert_type_expression_eq ~raise c_arg.location (c_t, c_arg.type_expression) in

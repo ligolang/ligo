@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1696'
+title: Represent `option` as `T_sum`
+type: internal

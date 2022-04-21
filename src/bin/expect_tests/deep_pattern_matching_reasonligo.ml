@@ -53,10 +53,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.religo", line 6, characters 4-13:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.religo", line 5, characters 4-16:
+      4 |   switch(x) {
       5 |   | Some_fake(x) => x
       6 |   | None_fake    => 1
-      7 |   }
 
     Pattern not of the expected type option (int) |}]
 

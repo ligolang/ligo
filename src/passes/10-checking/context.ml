@@ -153,7 +153,7 @@ module Typing = struct
           )
           | _ -> None
         in
-        match List.filter_map ~f:aux (get_types ctxt) with
+        let matching_t_sum = match List.filter_map ~f:aux (get_types ctxt) with
         | [] ->
           (* If the constructor isn't matched in the context of values,
             reccursively search for in the context of all the modules in scope *)
@@ -163,6 +163,11 @@ module Typing = struct
               match res with | [] -> get_sum ctor module_ | lst -> lst
             )
         | lst -> lst
+        in
+        let general_type_opt = List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum in
+        match general_type_opt with
+          Some general_type -> [general_type]
+        | None -> matching_t_sum
   
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
     let rec rec_aux e =

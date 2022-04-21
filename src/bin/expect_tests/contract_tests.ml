@@ -2703,7 +2703,7 @@ let%expect_test _ =
                                                                                      gen#2 with
                                                                                      | ( _#4 , _#3 ) ->
                                                                                      ( LIST_EMPTY() , unit ) ,
-                       NONE() , 0mutez , unit)
+                       None(unit) , 0mutez , unit)
                      const foo =
                        let gen#11 = (c)@(unit) in  match gen#11 with
                                                     | ( _a , _b ) ->
