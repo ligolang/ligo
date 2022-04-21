@@ -4,7 +4,6 @@ let all_expression_mapper ~raise ~add_warning ~js_style_no_shadowing = [
   Vars.capture_expression ~raise ;
   Consts.assign_expression ~raise ;
   Tezos_type_annotation.peephole_expression ~raise ;
-  None_variant.peephole_expression ;
   Literals.peephole_expression ~raise ;
   Expression_soundness.linearity ~raise ;
   Expression_soundness.reserved_names_exp ~raise ;

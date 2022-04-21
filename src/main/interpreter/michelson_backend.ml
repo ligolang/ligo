@@ -283,15 +283,6 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
                  (get_t_bls12_381_fr ty) in
      let x = bytes_of_bls12_381_fr b in
      e_a_bls12_381_fr x
-  | V_Construct (ctor, arg) when is_t_option ty ->
-     let ty' = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected option but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_option ty in
-     if String.equal ctor "Some" then
-       let arg = val_to_ast ~raise ~loc arg ty' in
-       e_a_some arg
-     else if String.equal ctor "None" then
-       e_a_none ty'
-     else
-       raise.raise @@ Errors.generic_error loc "Expected either None or Some"
   | V_Construct (ctor, arg) when is_t_sum ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_sum_opt ty in
      let {associated_type=ty';michelson_annotation=_;decl_pos=_} = LMap.find (Label ctor) map_ty.content in

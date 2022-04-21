@@ -124,16 +124,6 @@ and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s 
   let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
-and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
-  let () =
-    Assert.assert_true ~raise (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
-  in
-  let a =
-    trace_option ~raise (comparator_composed loc a_opt) @@
-    get_t_option a_opt in
-  let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~cmp:s ~raise ~test loc [a;b] None
-
 and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc cmp @@ fun a b ->
   if test
   then
@@ -141,13 +131,11 @@ and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~rai
                                            set_comparator ~test loc cmp [a;b] None;
                                            map_comparator ~test loc cmp [a;b] None;
                                            simple_comparator loc cmp [a;b] None;
-                                           option_comparator ~test loc cmp [a;b] None;
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None;
                                            big_map_comparator ~test loc cmp [a;b] None]
   else
     bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc cmp [a;b] None;
-                                           option_comparator ~test loc cmp [a;b] None;
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None]
 

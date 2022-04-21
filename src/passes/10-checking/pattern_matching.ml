@@ -75,12 +75,6 @@ let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.t
     | Some t -> t.associated_type
     | None -> raise.raise @@ pattern_do_not_conform_type p t
   )
-  | O.T_constant { injection = Stage_common.Constant.Option ; parameters = [proj_t] ; language=_} -> (
-    match label with
-    | Label "Some" -> proj_t
-    | Label "None" -> (O.t_unit ())
-    | Label _ -> raise.raise @@ pattern_do_not_conform_type p t
-  )
   | O.T_constant { injection = Stage_common.Constant.List ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Cons" -> O.make_t_ez_record [("0",proj_t);("1",t)]
@@ -119,7 +113,6 @@ let type_matchee ~raise : equations -> O.type_expression =
         if O.LMap.mem label sum_type.content then ()
         else raise.raise @@ pattern_do_not_conform_type p t
       )
-      | I.P_variant _ , O.T_constant { injection = Stage_common.Constant.Option ; _ } -> ()
       | P_tuple tupl , O.T_record record_type -> (
         if (List.length tupl) <> (O.LMap.cardinal record_type.content) then
           raise.raise @@ pattern_do_not_conform_type p t
@@ -351,18 +344,16 @@ and ctor_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type_ex
     in
     let grouped_eqs =
       match O.get_t_sum matchee_t with
+      | Some _ when Option.is_some (O.get_t_option matchee_t) ->
+        List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Some"; Label "None"]
       | Some rows ->
         let eq_opt_map = O.LMap.mapi (fun label _ -> O.LMap.find_opt label eq_map) rows.content in
         O.LMap.to_kv_list @@ eq_opt_map
       | None -> (
         (* REMITODO: parametric types in env ? *)
-        match O.get_t_option matchee_t with
-        | Some _ -> List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Some"; Label "None"]
-        | None -> (
-          match O.get_t_list matchee_t with
-          | Some _ -> List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Cons"; Label "Nil"]
-          | None -> raise.raise @@ corner_case __LOC__ (* should be caught when typing the matchee *)
-        )
+        match O.get_t_list matchee_t with
+        | Some _ -> List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Cons"; Label "Nil"]
+        | None -> raise.raise @@ corner_case __LOC__ (* should be caught when typing the matchee *)
       )
     in
     let present = List.filter_map ~f:(fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in

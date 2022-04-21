@@ -48,19 +48,13 @@ let extract_variable_types :
               in
               return (List.map ~f:aux cases)
             | None -> (
-              match Ast_typed.get_t_option matchee.type_expression with
-                | Some proj_t ->
-                  let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Some") cases in
-                  return [(x.pattern,proj_t)]
-                | None -> (
-                  match Ast_typed.get_t_list matchee.type_expression with
-                  | Some list_proj ->
-                    let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
-                    let t = Ast_typed.t_pair list_proj matchee.type_expression in
-                    return [(x.pattern,t)]
-                  | None -> failwith "matched value in the Match_variant: wrong type"
-                )
-              )
+              match Ast_typed.get_t_list matchee.type_expression with
+              | Some list_proj ->
+                let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
+                let t = Ast_typed.t_pair list_proj matchee.type_expression in
+                return [(x.pattern,t)]
+              | None -> failwith "matched value in the Match_variant: wrong type"
+            )
         )
         | Match_record { fields ; _ }  ->
           return (Ast_typed.LMap.to_list fields)

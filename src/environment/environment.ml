@@ -42,7 +42,7 @@ let basic_types : (type_variable * type_expression) list = [
     (v_int    , t_int                   ()) ;
     (v_nat    , t_nat                   ()) ;
     (v_unit   , t_unit                  ()) ;
-    (v_option , t_abstraction1 Option star) ;
+    (v_option , t_option_abst           ()) ;
   ]
 
 let michelson_base : (type_variable * type_expression) list = [
@@ -69,7 +69,7 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_baker_operation    , t_constant     Baker_operation       []) ;
     (v_bls12_381_g1       , t_bls12_381_g1                       ()) ;
     (v_bls12_381_g2       , t_bls12_381_g2                       ()) ;
-    (v_bls12_381_fr       ,  t_bls12_381_fr                      ()) ;
+    (v_bls12_381_fr       , t_bls12_381_fr                       ()) ;
     (v_never              , t_never                              ()) ;
     (v_ticket             , t_abstraction1 Ticket              star) ;
 ]

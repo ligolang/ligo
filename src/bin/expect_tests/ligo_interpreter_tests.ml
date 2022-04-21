@@ -742,7 +742,7 @@ let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value KT1JSxHPaoZTCEFVfK5Y1xwjtB8chWFSUyTN(None). |}]
 

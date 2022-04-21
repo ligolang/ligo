@@ -118,11 +118,16 @@ and type_injection ppf {language;injection;parameters} =
   (* fprintf ppf "[%s {| %s %a |}]" language (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters *)
   ignore language;
   fprintf ppf "%s%a" (Stage_common.Constant.to_string injection) (list_sep_d_par type_expression) parameters
-
+and bool ppf : unit = fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+and option ppf (te : type_expression) : unit =
+  let t = Combinators.get_t_option te in
+  (match t with
+    Some t -> fprintf ppf "option (%a)" type_expression t
+  | None   -> fprintf ppf "option ('a)")
 and type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
-  if Option.is_some (Combinators.get_t_bool te) then
-    fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+  if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else 
+  if Option.is_some (Combinators.get_t_option te) then option ppf te
   else
     fprintf ppf "%a" type_content te.type_content
 
@@ -153,10 +158,10 @@ and type_expression_orig ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   match te.orig_var with
   | None ->
-     if Option.is_some (Combinators.get_t_bool te) then
-       fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
-     else
-       fprintf ppf "%a" type_content_orig te.type_content
+    if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else 
+    if Option.is_some (Combinators.get_t_option te) then option ppf te
+    else
+      fprintf ppf "%a" type_content_orig te.type_content
   | Some v ->
      Ast_core.(PP.type_expression ppf (t_variable v ()))
 
