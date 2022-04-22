@@ -1,4 +1,0 @@
-author: er433
-merge_request: '1532'
-title: 'Michelson optimization: factor out common last actions in conditionals'
-type: internal
