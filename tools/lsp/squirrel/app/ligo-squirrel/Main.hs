@@ -394,7 +394,11 @@ handlePrepareRenameRequest req respond = do
     respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
 
 handleDidChangeConfiguration :: S.Handler RIO 'J.WorkspaceDidChangeConfiguration
-handleDidChangeConfiguration _ = pure ()
+handleDidChangeConfiguration notif = do
+  let value = notif ^. J.params . J.settings
+   in case value of
+        Aeson.Null -> RIO.fetchConfig
+        _ -> RIO.setConfigFromJSON value
 
 handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do

@@ -11,25 +11,25 @@ packages:
     git: https://github.com/haskell/lsp.git
     pantry-tree:
       size: 4160
-      sha256: c55434db143608452d0522b65ca91d8525e0e12f28ca513e017e726c3973af92
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+      sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp-types
     git: https://github.com/haskell/lsp.git
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
     subdir: lsp
     name: lsp
     version: 1.5.0.0
     git: https://github.com/haskell/lsp.git
     pantry-tree:
-      size: 1550
-      sha256: 9f2b0986cb94e8dca0487f3c16b1745b8df6d3ff6eedf1c49a37c2c4587a08ba
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+      size: 1551
+      sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp
     git: https://github.com/haskell/lsp.git
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
     subdir: lsp-test
     name: lsp-test
@@ -37,12 +37,12 @@ packages:
     git: https://github.com/haskell/lsp.git
     pantry-tree:
       size: 2061
-      sha256: 8b58e65ecda92cb89f75354151e25bdbb8c70fe1c86810e25fa09b7c1482a47b
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+      sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp-test
     git: https://github.com/haskell/lsp.git
-    commit: 6ab6f398ec2d5a73653e4d1da11cbdad3c260db3
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
     subdir: tree-sitter
     name: tree-sitter
