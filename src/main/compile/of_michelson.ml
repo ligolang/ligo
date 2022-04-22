@@ -73,7 +73,7 @@ let build_contract ~raise ~options :
         if enable_typed_opt then
           let typer_oracle c =
             let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
-                           Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract c in
+                           Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c in
             map in
           Self_michelson.optimize_with_types ~raise ~typer_oracle options.Compiler_options.protocol_version contract
         else

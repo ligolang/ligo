@@ -298,10 +298,10 @@ let typecheck_contract ?(environment = dummy_environment ()) contract =
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
 
-let typecheck_map_contract contract =
+let typecheck_map_contract ?(environment = dummy_environment ()) contract =
   let contract' = Tezos_micheline.Micheline.strip_locations contract in
   let legacy = false in
-  Script_ir_translator.typecheck_code ~show_types:true ~legacy (dummy_environment ()).tezos_context contract' >>= fun x ->
+  Script_ir_translator.typecheck_code ~show_types:true ~legacy environment.tezos_context contract' >>= fun x ->
   match x with
   | Ok (map, _) -> return @@ (map, contract)
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
