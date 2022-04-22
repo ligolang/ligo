@@ -38,11 +38,11 @@ let%expect_test _ =
 
     Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
 
-    1175 bytes |}] ;
+    1171 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
-    579 bytes |}] ;
+    567 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
@@ -88,11 +88,11 @@ let%expect_test _ =
 
     Warning: constant map_get is being deprecated soon. Consider using Map.find_opt instead.
 
-    1565 bytes |}] ;
+    1531 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
-    430 bytes |}] ;
+    420 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
@@ -398,8 +398,7 @@ Warning: constant sender is being deprecated soon. Consider using Tezos.sender i
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 NIL operation ;
-                 PAIR }
+                 NIL operation }
                { SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -485,8 +484,7 @@ Warning: constant sender is being deprecated soon. Consider using Tezos.sender i
                  PAIR ;
                  NIL operation ;
                  DIG 2 ;
-                 CONS ;
-                 PAIR } }
+                 CONS } }
            { SWAP ;
              DUP ;
              DUG 2 ;
@@ -523,8 +521,8 @@ Warning: constant sender is being deprecated soon. Consider using Tezos.sender i
              CAR ;
              PAIR ;
              PAIR ;
-             NIL operation ;
-             PAIR } } } |} ]
+             NIL operation } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
@@ -597,14 +595,8 @@ let%expect_test _ =
                               CHECK_SIGNATURE ;
                               IF { PUSH nat 1 ; DIG 2 ; ADD }
                                  { PUSH string "Invalid signature" ; FAILWITH } }
-                            { DIG 2 ; DROP 2 ; SWAP } ;
-                         SWAP ;
-                         PAIR }
-                       { DROP ; PAIR } ;
-                     DUP ;
-                     CAR ;
-                     SWAP ;
-                     CDR ;
+                            { DIG 2 ; DROP 2 ; SWAP } }
+                       { DROP ; SWAP } ;
                      PAIR } ;
               SWAP ;
               DROP ;
@@ -692,7 +684,7 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
   code { UNPAIR ;
          IF_LEFT
            { IF_LEFT
-               { DROP ; NIL operation ; PAIR }
+               { DROP ; NIL operation }
                { SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -756,9 +748,7 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                      EMPTY_SET address ;
                      PUSH bool True ;
                      SENDER ;
-                     UPDATE ;
-                     SWAP ;
-                     PAIR }
+                     UPDATE }
                    { DUP ;
                      SENDER ;
                      MEM ;
@@ -794,13 +784,7 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                      SWAP ;
                      PUSH bool True ;
                      SENDER ;
-                     UPDATE ;
-                     SWAP ;
-                     PAIR } ;
-                 DUP ;
-                 CAR ;
-                 SWAP ;
-                 CDR ;
+                     UPDATE } ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -928,8 +912,7 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                                   PAIR }
                                 { DIG 2 ; DROP 2 } } ;
                       DIG 2 ;
-                      DROP ;
-                      PAIR }
+                      DROP }
                     { DIG 3 ;
                       DROP ;
                       NIL operation ;
@@ -954,13 +937,8 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                       CAR ;
                       CAR ;
                       PAIR ;
-                      PAIR ;
                       PAIR } ;
-                 DUP ;
-                 CAR ;
-                 SWAP ;
-                 CDR ;
-                 PAIR } }
+                 SWAP } }
            { PACK ;
              SWAP ;
              DUP ;
@@ -1040,9 +1018,7 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                       PAIR ;
                       DIG 2 ;
                       CAR ;
-                      CAR ;
-                      PAIR ;
-                      PAIR }
+                      CAR }
                     { DUP ;
                       CDR ;
                       SWAP ;
@@ -1064,11 +1040,11 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                       PAIR ;
                       DIG 2 ;
                       CAR ;
-                      CAR ;
-                      PAIR ;
-                      PAIR } } ;
-             NIL operation ;
-             PAIR } } } |} ]
+                      CAR } ;
+                 PAIR ;
+                 PAIR } ;
+             NIL operation } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "vote.mligo" ] ;
@@ -1100,9 +1076,6 @@ let%expect_test _ =
              CAR ;
              CAR ;
              PAIR ;
-             PAIR ;
-             PAIR ;
-             NIL operation ;
              PAIR }
            { SENDER ;
              SWAP ;
@@ -1126,7 +1099,6 @@ let%expect_test _ =
                  CAR ;
                  CAR ;
                  PAIR ;
-                 PAIR ;
                  PAIR }
                { DROP ;
                  PUSH nat 1 ;
@@ -1139,8 +1111,8 @@ let%expect_test _ =
                  CAR ;
                  PAIR ;
                  DIG 2 ;
-                 CAR ;
-                 PAIR } ;
+                 CAR } ;
+             PAIR ;
              DUP ;
              CDR ;
              CDR ;
@@ -1155,10 +1127,10 @@ let%expect_test _ =
              UPDATE ;
              PAIR ;
              SWAP ;
-             CAR ;
-             PAIR ;
-             NIL operation ;
-             PAIR } } } |}]
+             CAR } ;
+         PAIR ;
+         NIL operation ;
+         PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
@@ -1278,8 +1250,7 @@ Hint: replace it by "_ticket" to prevent this warning.
              COMPARE ;
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-             NIL operation ;
-             PAIR }
+             NIL operation }
            { SWAP ;
              DUP ;
              DUG 2 ;
@@ -1298,8 +1269,8 @@ Hint: replace it by "_ticket" to prevent this warning.
              SWAP ;
              NIL operation ;
              DIG 2 ;
-             CONS ;
-             PAIR } } } |} ]
+             CONS } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
     run_ligo_good [ "compile" ; "contract" ; contract "implicit.mligo" ] ;
@@ -2932,6 +2903,53 @@ let%expect_test _ =
          PAIR ;
          NIL operation ;
          PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main2" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main4" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main2" ] ;
+  [%expect{|
+    { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ] ;
+  [%expect{|
+    { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main4" ] ;
+  [%expect{|
+    { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
 
 (* check get contract with error typing *)
 let%expect_test _ =

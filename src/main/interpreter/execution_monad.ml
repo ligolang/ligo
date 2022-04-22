@@ -253,7 +253,7 @@ module Command = struct
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let contract_code =
-        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
+        Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views ~options:options.backend in
       let size =
         let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
         LT.V_Ct (C_int (Z.of_int s))

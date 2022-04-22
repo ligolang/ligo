@@ -24,7 +24,7 @@ let dummy : Stacking.meta =
     binder = None }
 
 (* should preserve locations, currently wipes them *)
-let build_contract ~raise :
+let build_contract ~raise ~options :
   ?disable_typecheck:bool ->
   ?constants:string list ->
   Stacking.compiled_expression ->
@@ -69,7 +69,14 @@ let build_contract ~raise :
         (* Type-check *)
         let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
           Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract' in
-        contract
+        if options.Compiler_options.enable_typed_opt then
+          let typer_oracle c =
+            let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
+                           Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c in
+            map in
+          Self_michelson.optimize_with_types ~raise ~typer_oracle options.Compiler_options.protocol_version contract
+        else
+          contract
 
 let measure ~raise = fun m ->
   Trace.trace_tzresult_lwt ~raise (main_could_not_serialize) @@
