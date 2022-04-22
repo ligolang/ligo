@@ -8,13 +8,33 @@ let warning_with f =
   f add_warning get_warnings
 
 (* Errors *)
-type 't raise = { raise : 'a . 't -> 'a }
+type 't raise = { raise : 'a . 't -> 'a;
+                 log_error : 't -> unit;
+                 get_errors : unit -> 't list;
+                 fast_fail : bool }
 
-let try_with (type t) f catch =
+let try_with' ?(fast_fail = true) (type t) f catch =
+  let recoverable_errors  = ref [] in
   let exception Local of t in
-  let raise : t raise = {raise = fun x -> Stdlib.raise (Local x)} in
+  let raise : t raise =
+    if not fast_fail then
+    { raise      = (fun x -> Stdlib.raise (Local x));
+      log_error  = (fun x -> recoverable_errors := x :: !recoverable_errors);
+      get_errors = (fun () -> !recoverable_errors);
+      fast_fail  = false;
+    }
+    else
+    { raise      = (fun x -> Stdlib.raise (Local x));
+      log_error  = (fun x -> Stdlib.raise (Local x));
+      get_errors = (fun () -> !recoverable_errors);
+      fast_fail  = true;
+    }
+  in
   try (f ~raise)
-  with Local x -> catch x
+  with Local x -> catch ~raise x
+
+let try_with ?(fast_fail = true) (type t) f catch =
+  try_with' ~fast_fail f (fun ~raise:_ -> catch)
 
 let to_stdlib_result : (raise:'error raise -> 'value) -> ('value, 'error) Stdlib.result =
   fun f ->
@@ -22,13 +42,35 @@ let to_stdlib_result : (raise:'error raise -> 'value) -> ('value, 'error) Stdlib
     (fun ~raise -> Ok (f ~raise))
     (fun e -> Error (e))
 
+let extract_all_errors : (raise:'error raise -> 'value) -> 'error list * 'value option =
+  fun f ->
+  try_with'
+    (fun ~raise -> let v = f ~raise
+                   in (raise.get_errors (), Some v))
+    (fun ~raise e -> (e :: raise.get_errors (), None))
+
+let move_errors raise1 raise2 tracer =
+  List.iter (raise1.get_errors ()) ~f:(fun e -> raise2.log_error (tracer e))
 
 let trace ~raise tracer f =
-    try_with f @@ fun a -> raise.raise @@ tracer a
+  let parent_raise = raise in
+  let try_body ~raise =
+    let value = f ~raise
+    in move_errors raise parent_raise tracer;
+       value
+  in
+  let catch_body ~raise err =
+    move_errors raise parent_raise tracer;
+    parent_raise.raise @@ tracer err
+  in try_with' ~fast_fail:parent_raise.fast_fail try_body catch_body
 
 let trace_option ~raise error = function
   None -> raise.raise error
 | Some s -> s
+
+let validate_option ~raise ~err ~default = function
+      None -> raise.log_error err; default
+    | Some s -> s
 
 (* Erase the current error stack, and replace it by the given
    error. It's useful when using [Assert] and you want to discard its
@@ -74,6 +116,13 @@ let bind_or ~raise a b =
 
 let rec bind_exists ~raise = function | (x, []) -> x ~raise
                                       | (x, y :: ys) -> bind_or ~raise x (bind_exists (y, ys))
+
+(* Dummy raise instance for debug and workarounds.
+   Don't use it in production! *)
+let raise_failwith str = { raise      = (fun _ -> failwith str);
+                           log_error  = (fun _ -> failwith str);
+                           get_errors = (fun () -> []);
+                           fast_fail  = true; }
 
 (* Assertion module.
    TODO: Would make sense to move it outside Trace. *)

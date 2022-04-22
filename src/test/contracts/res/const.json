@@ -1,0 +1,6 @@
+[
+"{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }",
+"{ PUSH int 2 ;\n PUSH int 3 ;\n DIG 2 ;\n MUL ;\n ADD }",
+"{ UNPAIR ;\n  PUSH int 3 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }",
+"{ UNPAIR ;\n  PUSH int 4 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
+]

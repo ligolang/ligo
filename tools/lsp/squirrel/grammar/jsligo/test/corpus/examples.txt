@@ -1,0 +1,124 @@
+=========
+modules
+=========
+
+namespace EURO {
+    export type t = nat;
+    export let one : t = 1 as nat;
+    export namespace CONST {
+        let zero : t = 0 as nat;
+        let one : t = 1 as nat;
+    };
+};
+
+import US_DOLLAR = EURO;
+
+type storage = EURO.t;
+let uno : storage = EURO.one;
+
+---
+(source_file
+  (namespace_statement (ModuleName)
+    (export_statement
+      (type_decl (TypeName) (TypeName)))
+    (export_statement
+      (let_decl
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (type_as_annotation (Int) (TypeName))))
+    (namespace_statement (ModuleName)
+      (let_decl
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (type_as_annotation (Int) (TypeName)))
+      (let_decl
+        (var_pattern (Name))
+        (type_annotation (TypeName))
+        (type_as_annotation (Int) (TypeName)))))
+  (import_statement (ModuleName) (ModuleName))
+  (type_decl
+    (TypeName)
+    (module_access_t
+      (ModuleName)
+      (Name)))
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (module_access (ModuleName) (FieldName))))
+
+=========
+nested function calls
+=========
+
+let x : int = foo(bar(baz(1)))
+
+----
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (call_expr
+          (lambda (Name))
+          (arguments
+            (call_expr
+              (lambda (Name))
+              (arguments (Int)))))))))
+
+=========
+module access function call
+=========
+
+let x : int = int(List.List.List.length(x))
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (call_expr
+          (lambda
+            (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
+            (arguments (Name)))))))
+
+=========
+automatic semicolon insertion
+=========
+
+namespace EURO {
+    export type t = nat;
+}
+
+import US_DOLLAR = EURO
+
+type storage = EURO.t
+let uno : storage = EURO.one
+
+let foo = () : int => 1
+
+---
+
+(source_file
+  (namespace_statement (ModuleName)
+    (export_statement
+      (type_decl (TypeName) (TypeName))))
+  (import_statement (ModuleName) (ModuleName))
+  (type_decl
+    (TypeName)
+    (module_access_t (ModuleName) (Name)))
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (module_access (ModuleName) (FieldName)))
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (type_annotation (TypeName))
+      (body (Int)))))

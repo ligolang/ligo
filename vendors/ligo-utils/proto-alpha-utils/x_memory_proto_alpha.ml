@@ -55,7 +55,7 @@ let ty_eq (type a b)
   ok Eq
 
 (* should not need lwt *)
-let prims_of_strings michelson =
+let canonical_of_strings michelson =
   let (michelson, errs) =
     Tezos_client_012_Psithaca.Michelson_v1_macros.expand_rec michelson in
   match errs with
@@ -65,9 +65,11 @@ let prims_of_strings michelson =
   Lwt.return
     (alpha_wrap
        (Michelson_v1_primitives.prims_of_strings
-          (Tezos_micheline.Micheline.strip_locations michelson))) >>=? fun michelson ->
-  return (Tezos_micheline.Micheline.root michelson)
+          (Tezos_micheline.Micheline.strip_locations michelson)))
 
+let prims_of_strings michelson =
+  canonical_of_strings michelson >>=? fun michelson ->
+  return (Tezos_micheline.Micheline.root michelson)
 
 let lazy_expr expr =
     let open Alpha_context in
@@ -80,11 +82,13 @@ let parse_michelson_fail (type aft aftr)
     (bef:('a, 'b) Script_typed_ir.stack_ty) (aft:(aft, aftr) Script_typed_ir.stack_ty)
     : (('a, 'b, aft, aftr) descr, error trace) result Lwt.t
   =
-  prims_of_strings michelson >>=? fun michelson ->
+  canonical_of_strings michelson >>=? fun michelson ->
+  (Alpha_context.Global_constants_storage.expand tezos_context michelson >>=? fun (tezos_context, michelson) ->
+  let michelson = Tezos_micheline.Micheline.root michelson in
   parse_instr
     ?type_logger
     top_level tezos_context
-    michelson bef ~legacy:false >>=?? fun (j, _) ->
+    michelson bef ~legacy:false) >>=?? fun (j, _) ->
   match j with
   | Typed descr -> (
       Lwt.return (

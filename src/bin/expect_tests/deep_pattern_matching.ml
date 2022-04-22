@@ -86,7 +86,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 6, characters 4-13:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 5, characters 4-15:
+      4 |   match x with
       5 |   | Some_fake x -> x
       6 |   | None_fake -> 1
 
@@ -710,13 +711,13 @@ let%expect_test _ =
                           | Nil unit_proj#178 ->
                             0
     type recordi = record[a -> option (list (int)) , b -> list (int)]
-    const none_a = record[a -> NONE() , b -> CONS(42 , LIST_EMPTY())]
+    const none_a = record[a -> None(unit) , b -> CONS(42 , LIST_EMPTY())]
     const some_a =
-      record[a -> SOME(CONS(1 , CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))))) , b -> CONS(42 , LIST_EMPTY())]
+      record[a -> Some(CONS(1 , CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))))) , b -> CONS(42 , LIST_EMPTY())]
     const a_empty_b_not =
-      record[a -> SOME(LIST_EMPTY()) , b -> CONS(111 , LIST_EMPTY())]
+      record[a -> Some(LIST_EMPTY()) , b -> CONS(111 , LIST_EMPTY())]
     const b_empty_a_not =
-      record[a -> SOME(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
+      record[a -> Some(CONS(222 , LIST_EMPTY())) , b -> LIST_EMPTY()]
     const t13 =
       lambda (x) return lambda (y) return let gen#179 = ( x , y ) in  match
                                                                        gen#179 with

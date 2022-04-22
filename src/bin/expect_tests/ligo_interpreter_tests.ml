@@ -512,6 +512,12 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value 116. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_timestamp.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_sub exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -742,7 +748,7 @@ let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value KT1KVKQa2z9Mw3QgNK3Gr8mqsTsFH19TKzqy(None). |}]
 

@@ -1,0 +1,30 @@
+=========
+michelson interop
+=========
+
+let michelson_add = (n: [nat, nat]): nat =>
+  (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation
+          (type_tuple (TypeName) (TypeName))))
+      (type_annotation (TypeName))
+      (body
+        (call_expr
+          (lambda
+            (michelson_interop
+              (michelson_code)
+              (fun_type
+                (fun_param
+                  (Name)
+                  (type_annotation
+                    (type_tuple (TypeName) (TypeName))))
+                (TypeName))))
+          (arguments (Name)))))))

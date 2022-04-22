@@ -16,6 +16,11 @@ In order to build Ligo, you may need to install:
   - `libffi` - foreign function interface library
   - `libgmp` - arbitrary size integer library
 
+For tests:
+
+- `pip3` - Python package manager for Python CLI utilities
+- `jsonschema` - Python CLI utility to JSON validation
+
 ## Ubuntu
 
 
@@ -31,6 +36,13 @@ In order to build Ligo, you may need to install:
    [opam](https://opam.ocaml.org/doc/Install.html) and
    [rustup](https://www.rust-lang.org/tools/install) install
    instructions.
+
+   Also for tests run:
+
+   ```sh
+   apt install -y python3-pip
+   pip3 install jsonschema
+   ```
 
 2. Then you may want to initialize `opam`:
 

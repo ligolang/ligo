@@ -1139,10 +1139,15 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         arguments in
       apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
-    | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "True" ->
+    | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
-    | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "False" ->
+    | E_constructor { constructor = Label "False"; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool false)
+    | E_constructor { constructor = Label "Some" ; element } ->
+      let* v = eval_ligo element (term.location :: calltrace) env in
+      return @@ v_some v
+    | E_constructor { constructor = Label "None" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
+      return @@ v_none ()
     | E_constructor { constructor = Label c ; element } ->
       let* v' = eval_ligo element calltrace env in
       return @@ V_Construct (c,v')
@@ -1256,8 +1261,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
-  let expr = Self_ast_aggregated.expression_mono expr in
-  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_uncurry expr in
+  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:true expr in
   let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->

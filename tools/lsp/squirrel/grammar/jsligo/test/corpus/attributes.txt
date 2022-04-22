@@ -1,0 +1,209 @@
+=========
+constr
+=========
+
+type foo = /* @boom */ ["True"] | ["False"]
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+      (sum_type
+        (variant
+          (attr)
+          (ConstrName))
+        (variant
+          (ConstrName)))))
+
+=========
+sum
+=========
+
+type foo = /* @boom */ | ["True"] | ["False"]
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+      (sum_type
+        (attr)
+        (variant (ConstrName))
+        (variant (ConstrName)))))
+
+=========
+constr with bar
+=========
+
+type foo = | /* @boom */ ["True"] | ["False"]
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+      (sum_type
+        (variant
+          (attr)
+          (ConstrName))
+        (variant
+          (ConstrName)))))
+
+=========
+record
+=========
+
+type person = /* @layout:comb */ {
+  name: string,
+}
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+    (object_type
+      (attr)
+      (field_decl
+        (FieldName)
+        (type_annotation
+          (TypeName))))))
+
+=========
+field twice
+=========
+
+type person = {
+  /* @foo *//* @bar */ name: string,
+}
+
+----
+
+(source_file
+  (type_decl
+    (TypeName)
+    (object_type
+      (field_decl
+        (attr)
+        (attr)
+        (FieldName)
+        (type_annotation (TypeName))))))
+
+=========
+let decl
+=========
+
+/* @annot */ let x : int = 1;
+
+---
+
+(source_file
+  (let_decl
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (Int)))
+
+=========
+let decl twice
+=========
+
+/* @annot1 *//* @annot2 */ let x : int = 1;
+
+---
+
+(source_file
+  (let_decl
+    (attr)
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (Int)))
+
+=========
+let expr
+=========
+
+let bar = (b : int) : int => {
+  /* @foo *//* @bar */
+  let test = 2;
+  return test;
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (type_annotation
+        (TypeName))
+          (body
+      (let_decl (attr) (attr)
+        (var_pattern (Name))
+        (Int))
+      (return_statement
+        (Name))))))
+
+=========
+const expr
+=========
+
+const bar = (b : int) : int => {
+  /* @foo *//* @bar */
+  const test = 2;
+  return test;
+};
+
+---
+
+(source_file
+  (const_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (type_annotation
+        (TypeName))
+          (body
+      (const_decl (attr) (attr)
+        (var_pattern (Name))
+        (Int))
+      (return_statement
+        (Name))))))
+
+=========
+const decl
+=========
+
+/* @annot */ const x : int = 1;
+
+---
+
+(source_file
+  (const_decl
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (Int)))
+
+=========
+const decl twice
+=========
+
+/* @annot1 *//* @annot2 */ const x : int = 1;
+
+---
+
+(source_file
+  (const_decl
+    (attr)
+    (attr)
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (Int)))
