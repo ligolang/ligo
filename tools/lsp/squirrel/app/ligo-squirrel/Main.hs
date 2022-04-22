@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Colog.Core qualified as Colog
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
@@ -13,11 +14,13 @@ import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import Prettyprinter qualified as PP
 import System.Exit
-import System.Log qualified as L
+import System.IO (stdin, stdout)
 import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
@@ -53,8 +56,7 @@ mainLoop =
         , S.options = lspOptions
         }
 
-    S.setupLogger Nothing [] L.EMERGENCY
-    S.runServer serverDefinition
+    S.runServerWithHandles mempty lspLogger stdin stdout serverDefinition
   where
     syncOptions :: J.TextDocumentSyncOptions
     syncOptions = J.TextDocumentSyncOptions
@@ -121,6 +123,11 @@ mainLoop =
           if Set.member (J.SomeClientMethod _method) _cDisabledFeatures
             then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
             else handler msg resp
+
+    lspLogger :: Colog.LogAction (S.LspM Config) (Colog.WithSeverity S.LspServerLog)
+    lspLogger =
+      Colog.filterBySeverity Colog.Error Colog.getSeverity
+      $ Colog.cmap (fmap (T.pack . show . PP.pretty)) L.logToLogMessage
 
 handlers :: S.Handlers RIO
 handlers = mconcat
