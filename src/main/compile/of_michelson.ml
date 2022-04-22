@@ -30,7 +30,6 @@ let build_contract ~raise ~options :
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
     fun ?(disable_typecheck= false) ?(constants = []) compiled views ->
-      let enable_typed_opt = options.Compiler_options.enable_typed_opt in
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -70,7 +69,7 @@ let build_contract ~raise ~options :
         (* Type-check *)
         let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
           Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract' in
-        if enable_typed_opt then
+        if options.Compiler_options.enable_typed_opt then
           let typer_oracle c =
             let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
                            Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c in
