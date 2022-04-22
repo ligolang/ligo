@@ -24,8 +24,9 @@ include:
 
 .submodule-clone:
   before_script:
-    - git submodule sync
-    - git submodule update --init --recursive
+    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
+    - git submodule sync --recursive
+    - git submodule update --init --recursive --remote
 .nix:
   extends: .submodule-clone
   before_script:
