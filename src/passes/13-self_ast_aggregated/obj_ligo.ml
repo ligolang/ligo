@@ -33,11 +33,8 @@ let check_obj_ligo ~raise (t : AST.expression) =
     | _ -> () in
   let traverser_types loc expr = match expr.AST.type_content with
     | T_constant { injection = Stage_common.Constant.Michelson_program ; _ }
-    | T_constant { injection = Stage_common.Constant.Account           ; _ }
-    | T_constant { injection = Stage_common.Constant.Time              ; _ }
     | T_constant { injection = Stage_common.Constant.Typed_address     ; _ }
     | T_constant { injection = Stage_common.Constant.Mutation          ; _ }
-    | T_constant { injection = Stage_common.Constant.Failure           ; _ } 
         -> raise.raise @@ Errors.expected_obj_ligo loc
     | _ -> () in
   let folder_types () (expr : AST.expression) =

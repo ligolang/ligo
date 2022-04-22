@@ -1,0 +1,58 @@
+=========
+binary operator
+=========
+
+let x = 1 + 2;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (binary_operator (Int) (Int))))
+
+=========
+assignment operator
+=========
+
+
+let x = () => { x += 2; return x };
+
+---
+
+(source_file
+  (let_decl
+  (var_pattern (Name))
+  (fun_expr
+    (body
+      (assignment_operator (Name) (Int))
+      (return_statement (Name))))))
+
+=========
+binary operator - ||
+=========
+
+let x = true || false;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (binary_operator (True_kwd) (False_kwd))))
+
+=========
+unary operator
+=========
+
+let x = - 1;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (Name))
+    (unary_operator (Int))))

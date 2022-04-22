@@ -211,6 +211,7 @@ const siteConfig = {
           label: 'Tutorials',
           position: 'left'
         },
+        { href: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
         { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog', position: 'left' },
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },

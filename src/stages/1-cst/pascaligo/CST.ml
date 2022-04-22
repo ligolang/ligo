@@ -165,7 +165,6 @@ and declaration =
 | D_Directive of Directive.t
 | D_Fun       of fun_decl     reg
 | D_Module    of module_decl  reg
-| D_ModAlias  of module_alias reg
 | D_Type      of type_decl    reg
 
 (* Constant declaration *)
@@ -206,25 +205,24 @@ and fun_decl = {
   terminator    : semi option
 }
 
-(* Module declaration (structures) *)
+(* Module declaration *)
 
 and module_decl = {
   kwd_module   : kwd_module;
   name         : module_name;
   kwd_is       : kwd_is;
-  enclosing    : block_enclosing;
-  declarations : declarations;
+  module_expr  : module_expr;
   terminator   : semi option
 }
 
-(* Declaration of module alias *)
+and module_expr =
+  M_Body of module_body reg
+| M_Path of module_name module_path reg
+| M_Var  of module_name
 
-and module_alias = {
-  kwd_module : kwd_module;
-  alias      : module_name;
-  kwd_is     : kwd_is;
-  mod_path   : (module_name, dot) nsepseq;
-  terminator : semi option
+and module_body = {
+  enclosing    : block_enclosing;
+  declarations : declarations
 }
 
 (* Type declaration *)
@@ -771,6 +769,11 @@ let rec expr_to_region = function
 | E_Var       t
 | E_Verbatim  t -> t#region
 
+and module_expr_to_region = function
+  M_Body {region; _}
+| M_Path {region; _} -> region
+| M_Var e -> e#region
+
 and typed_expr_to_region x = x.Region.region
 
 and record_expr_to_region x = x.Region.region
@@ -816,8 +819,7 @@ let rec pattern_to_region = function
 | P_Record  {region; _} -> region
 | P_String  t -> t#region
 | P_Tuple   {region; _}
-| P_Typed   {region; _}
-  -> region
+| P_Typed   {region; _} -> region
 | P_Var     t
 | P_Verbatim t -> t#region
 
@@ -826,7 +828,6 @@ let rec declaration_to_region = function
 | D_Const    {region; _}
 | D_Fun      {region; _}
 | D_Module   {region; _}
-| D_ModAlias {region; _}
 | D_Type     {region; _} -> region
 | D_Directive d -> Directive.to_region d
 
@@ -835,9 +836,9 @@ let selection_to_region = function
 | Component w -> w#region
 
 let field_lens_to_region = function
-  | Lens_Id x   -> x#region
-  | Lens_Add x  -> x#region
-  | Lens_Sub x  -> x#region
-  | Lens_Mult x -> x#region
-  | Lens_Div x  -> x#region
-  | Lens_Fun x  -> x#region
+  Lens_Id x   -> x#region
+| Lens_Add x  -> x#region
+| Lens_Sub x  -> x#region
+| Lens_Mult x -> x#region
+| Lens_Div x  -> x#region
+| Lens_Fun x  -> x#region

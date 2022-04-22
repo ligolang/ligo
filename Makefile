@@ -19,7 +19,7 @@ build-deps:
 	eval $$(opam config env)
 # NEW-PROTOCOL-TEMPORARY
 	git submodule sync --recursive
-	git submodule update --init --recursive
+	git submodule update --init --recursive --remote
 # NEW-PROTOCOL-TEMPORARY
 #	Install OCaml build dependencies for Ligo
 	scripts/install_vendors_deps.sh

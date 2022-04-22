@@ -33,9 +33,9 @@ function commit (const p : bytes; var s: storage) : return is
 
 function reveal (const p: reveal; var s: storage) : return is
   begin
-    const foo = // TODO
     if not s.unused
     then failwith("This contract has already been used.");
+    const foo = // TODO
     var commit : commit := record [date = (0: timestamp); salted_hash = ("": bytes)];
     case Big_map.find_opt(sender, s.commits) of [
     | Some (c) -> commit := c

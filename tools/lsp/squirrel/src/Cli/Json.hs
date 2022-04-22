@@ -6,6 +6,7 @@
 module Cli.Json
   ( LigoError (..)
   , LigoErrorContent (..)
+  , LigoMessages (..)
   , LigoScope (..)
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
@@ -36,6 +37,7 @@ import Data.Foldable (asum, toList)
 import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
+import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
@@ -80,11 +82,27 @@ data LigoErrorContent = LigoErrorContent
   }
   deriving stock (Eq, Generic, Show)
 
+-- | The output for 'ligo info get-scope' may return with a list of errors and a
+-- list of warnings.
+data LigoMessages = LigoMessages
+  { -- | `"errors"`
+    _lmErrors :: NonEmpty LigoError
+    -- | `"warnings"`
+  , _lmWarnings :: [LigoError]
+  }
+  deriving stock (Eq, Generic, Show)
+
 -- | Whole successfull ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
-  { -- | All the definitions
+  { -- | Errors produced by LIGO
+    -- `"errors"`
+    _ldErrors :: Maybe [LigoError]
+    -- | Warnings produced by LIGO
+    -- `"warnings"`
+  , _ldWarnings :: Maybe [LigoError]
+    -- | All the definitions
     -- `"definitions"`
-    _ldDefinitions :: LigoDefinitionsInner
+  , _ldDefinitions :: LigoDefinitionsInner
     -- | Scopes
     -- `"scopes"`
   , _ldScopes :: [LigoScope]
@@ -309,6 +327,9 @@ instance FromJSON LigoError where
 
 instance ToJSON LigoError where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance FromJSON LigoMessages where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoErrorContent where
   parseJSON = asum . (parsers ??)
@@ -615,13 +636,19 @@ instance Pretty LigoError where
 ----------------------------------------------------------------------------
 
 -- | Convert ligo error to its corresponding internal representation.
-fromLigoErrorToMsg :: LigoError -> Msg
+fromLigoErrorToMsg :: LigoError -> Message
 fromLigoErrorToMsg LigoError
   { _leContent = LigoErrorContent
       { _lecMessage = err
       , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
-  } = (fromMaybe (point 0 0) at, Error (err :: Text) [])
+  , _leStatus
+  } = Message err status (fromMaybe (point 0 0) at)
+  where
+    status = case _leStatus of
+      "error"   -> SeverityError
+      "warning" -> SeverityWarning
+      _         -> SeverityError
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
@@ -631,7 +658,7 @@ prepareField :: Int -> String -> String
 prepareField dropAmount = Prelude.drop (dropAmount + 2) . concatMap process
   where
     process c
-      | isUpper c = "_" <> [toLower c]
+      | isUpper c = ['_', toLower c]
       | otherwise = [c]
 
 -- | Splits an array onto chunks of n elements, throws error otherwise.

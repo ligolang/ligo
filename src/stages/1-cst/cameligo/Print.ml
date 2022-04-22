@@ -199,9 +199,9 @@ and print_declaration state = function
     print_node state string
 
 and print_let_binding state node attr =
-  let {binders; type_params; lhs_type; let_rhs; _} = node in
+  let {binders; type_params; rhs_type; let_rhs; _} = node in
   let arity =
-    match type_params, lhs_type with
+    match type_params, rhs_type with
       None,   None   -> 2
     | Some _, None
     | None,   Some _ -> 3
@@ -220,7 +220,7 @@ and print_let_binding state node attr =
     print_node    state "<binders>";
     print_binders state binders; rank+1 in
   let rank =
-    match lhs_type with
+    match rhs_type with
       None -> rank
     | Some (_, type_expr) ->
         let state = state#pad arity rank in
@@ -482,14 +482,14 @@ and print_module_access :
     f (state#pad 2 1) ma.field
 
 and print_fun_expr state node =
-  let {binders; lhs_type; body; _} = node in
-  let arity = if Option.is_none lhs_type then 2 else 3 in
+  let {binders; rhs_type; body; _} = node in
+  let arity = if Option.is_none rhs_type then 2 else 3 in
   let () =
     let state = state#pad arity 0 in
     print_node state "<parameters>";
     print_binders state binders in
   let () =
-    match lhs_type with
+    match rhs_type with
       None -> ()
     | Some (_, type_expr) ->
        let state = state#pad arity 1 in
@@ -514,8 +514,8 @@ and print_code_inj state rc =
 
 and print_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in
-  let {binders; lhs_type; let_rhs; _} = binding in
-  let arity = if Option.is_none lhs_type then 3 else 4 in
+  let {binders; rhs_type; let_rhs; _} = binding in
+  let arity = if Option.is_none rhs_type then 3 else 4 in
   let arity = if Option.is_none kwd_rec then arity else arity+1 in
   let arity = if List.is_empty attributes then arity else arity+1 in
   let rank =
@@ -529,7 +529,7 @@ and print_let_in state node =
     print_node state "<binders>";
     print_binders state binders; rank in
   let rank =
-    match lhs_type with
+    match rhs_type with
       None -> rank
     | Some (_, type_expr) ->
        let state = state#pad arity (rank+1) in

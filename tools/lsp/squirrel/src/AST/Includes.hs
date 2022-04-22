@@ -14,7 +14,6 @@ module AST.Includes
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Control.Arrow (first)
 import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
 import Control.Monad (forM, join, when)
 import Control.Monad.IO.Class (MonadIO)
@@ -46,7 +45,7 @@ import AST.Scope.Fallback (loopM, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
 import Parser
-  ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
+  ( Info, LineMarker (..), LineMarkerType (..), Message (..), ParsedInfo, emptyParsedInfo
   , parseLineMarkerText
   )
 import ParseTree (Source (..))
@@ -194,7 +193,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
   let
     -- We still want RawContract to start at line 1:
     ligo' = bool (modElem (startLine +~ 1) info :< tree) (info :< tree) (IntMap.null markerInfos)
-    msgs' = fmap (first (adjustRange markerInfos)) msgs
+    msgs' = map (\msg -> msg {mRange = adjustRange markerInfos (mRange msg)}) msgs
   pure (FindContract file (SomeLIGO dialect ligo') msgs', edges)
   where
     pwd :: FilePath

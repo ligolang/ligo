@@ -21,8 +21,6 @@ type typer_error = [
   | `Typer_constant_declaration_tracer of Location.t * Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
   | `Typer_match_error of Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
-  | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
-  | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
   | `Typer_should_be_a_function_type of Ast_typed.type_expression * Ast_core.expression
   | `Typer_bad_record_access of Ast_typed.label * Ast_typed.expression * Location.t
   | `Typer_expression_tracer of Ast_core.expression * typer_error
@@ -223,15 +221,6 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@.Missing type annotation.@.'%s' needs to be annotated with a type.@]"
         Snippet.pp exp.location
         case
-    | `Typer_fvs_in_create_contract_lambda (e,fvar) ->
-      Format.fprintf f
-        "@[<hv>%a@.Free variable '%a' is not allowed in CREATE_CONTRACT lambda@]"
-        Snippet.pp e.location
-        Ast_typed.PP.expression_variable fvar
-    | `Typer_create_contract_lambda (_cst,e) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
-        Snippet.pp e.location
     | `Typer_should_be_a_function_type (actual,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\". @]"
@@ -752,28 +741,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("location", loc);
       ("expression", exp);
       ("case", `String case);
-    ] in
-    json_error ~stage ~content
-  | `Typer_fvs_in_create_contract_lambda (e,fvar) ->
-    let message = `String "Free variables are not allowed in CREATE_CONTRACT lambdas" in
-    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let expression = `String (Format.asprintf "%a" Ast_core.PP.expression e) in
-    let variable = `String (Format.asprintf "%a" Ast_typed.PP.expression_variable fvar) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-      ("expression", expression);
-      ("variable", variable);
-    ] in
-    json_error ~stage ~content
-  | `Typer_create_contract_lambda (cst,e) ->
-    let message = `String (Format.asprintf "First argument of %a must be inlined using a lambda" Ast_core.PP.constant' cst) in
-    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let expression = `String (Format.asprintf "%a" Ast_core.PP.expression e) in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-      ("expression", expression);
     ] in
     json_error ~stage ~content
   | `Typer_should_be_a_function_type (actual,e) ->

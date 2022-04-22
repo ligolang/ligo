@@ -46,8 +46,6 @@ let rec is_dup (t : type_expression) =
     Sapling_transaction |
     Sapling_state       |
     (* Test primitives are dup *)
-    Account             |
-    Failure             |
     Typed_address       |
     Mutation
   ); _} ->
@@ -77,7 +75,7 @@ let rec is_dup (t : type_expression) =
     Option         | Map              | Big_map              | List            | 
     Map_or_big_map | Set              | Michelson_program    | Michelson_or    | 
     Michelson_pair | Test_exec_error  |  Pvss_key            | Baker_operation | 
-    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash | Time);_ }  -> false 
+    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash);_ }  -> false 
   | T_singleton _
   | T_module_accessor _ -> false
 

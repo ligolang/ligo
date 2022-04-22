@@ -106,6 +106,7 @@ docker_extract:
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
   after_script:
     - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
@@ -114,6 +115,22 @@ docker_extract:
       - ligo.deb
       - coverage
       - doc
+      - highlighting
+
+check-generated-highlighting:
+  stage: tooling
+  dependencies:
+    - docker_extract
+  script:
+    - scripts/diff_dir.sh highlighting/emacs tools/emacs
+    - scripts/diff_dir.sh highlighting/vim tools/vim/ligo/start/ligo/syntax
+    - scripts/diff_dir.sh highlighting/vscode tools/lsp/vscode-plugin/syntaxes
+    - scripts/diff_dir.sh highlighting/textmate tools/ligo-syntax-highlighting/textmate
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - tools/ligo-syntax-highlighting/**/*
+      when: always
 
 xrefcheck:
   stage: tooling

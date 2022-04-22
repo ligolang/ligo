@@ -28,5 +28,9 @@ let toplevel : ?warning_as_error:bool -> display_format:ex_display_format -> dis
 let format_result : ?warning_as_error:bool -> display_format:ex_display_format -> 'value format -> (unit -> Main_warnings.all list) -> (raise:Main_errors.all Trace.raise -> 'value) -> _ =
   fun ?(warning_as_error=false) ~display_format value_format warns value ->
     let format = bind_format value_format Main_errors.Formatter.error_format in
-    let value = Trace.to_stdlib_result value in
+    let value =
+        Trace.try_with
+            (fun ~raise -> Ok (value ~raise))
+            (fun e -> Error (e))
+    in
     toplevel ~warning_as_error ~display_format (Displayable {value ; format}) warns value

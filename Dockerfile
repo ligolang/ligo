@@ -7,7 +7,8 @@ RUN apk update && apk upgrade && apk --no-cache add \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
   libffi-dev \
-  cargo
+  cargo py3-pip
+RUN pip3 install jsonschema
 
 WORKDIR /ligo
 # install opam:

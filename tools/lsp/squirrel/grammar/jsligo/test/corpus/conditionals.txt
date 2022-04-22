@@ -1,0 +1,183 @@
+=========
+conditional: if
+=========
+
+let x = () => {
+  if (true) {
+    // comment false
+    return false
+  };
+  /* comment true
+  */
+  return true;
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (body
+        (if_statement
+          (True_kwd)
+          (block_statement
+            (comment)
+            (return_statement
+              (False_kwd))))
+        (ocaml_comment)
+        (return_statement
+          (True_kwd))))))
+
+=========
+conditional: if else
+=========
+
+let x = () => {
+  if (true) {
+    return false
+  } else {
+    return true;
+  }
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (body
+        (if_else_statement
+          (True_kwd)
+          (block_statement
+            (return_statement (False_kwd)))
+          (block_statement
+            (return_statement (True_kwd))))))))
+
+=========
+conditional: if else if else
+=========
+
+let x = () => {
+  if (1 == 2) {
+    return false
+  } else if (2 == 3) {
+    return false;
+  } else {
+    return false;
+  }
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (body
+        (if_else_statement
+          (binary_operator (Int) (Int))
+          (block_statement
+            (return_statement (False_kwd)))
+          (if_else_statement
+            (binary_operator (Int) (Int))
+            (block_statement
+              (return_statement (False_kwd)))
+            (block_statement
+              (return_statement (False_kwd)))))))))
+
+=========
+conditional: switch = case + default
+=========
+
+let x = (x : string) => {
+  switch (x) {
+    case "true": {
+      break;
+    };
+    default: {
+      return false;
+    };
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (body
+        (switch_statement
+          (Name)
+          (case
+            (String)
+            (block_statement
+              (break_statement)))
+          (default_case
+            (block_statement
+              (return_statement
+                (False_kwd)))))))))
+
+=========
+conditional: switch = case
+=========
+
+let x = (x : string) => {
+  switch (x) {
+    case "true": {
+      return false;
+    };
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (body
+        (switch_statement
+          (Name)
+          (case
+            (String)
+            (block_statement
+              (return_statement
+                (False_kwd)))))))))
+
+=========
+conditional: switch = default
+=========
+
+let x = (x : string) => {
+  switch (x) {
+    default: {
+      return false;
+    };
+  };
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (Name)
+        (type_annotation (TypeName)))
+      (body
+        (switch_statement
+          (Name)
+          (default_case
+            (block_statement
+              (return_statement
+                (False_kwd)))))))))

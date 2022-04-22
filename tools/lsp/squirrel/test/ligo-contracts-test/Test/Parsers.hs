@@ -74,6 +74,7 @@ okayTests =
       , "polymorphism" </> "modules.religo"
       , "polymorphism" </> "annotate.mligo"
       , "polymorphism" </> "same_vars.mligo"
+      , "negative" </> "interpreter_tests" </> "test_random.mligo"
       , "negative" </> "polymorphism" </> "cases_annotation.mligo"
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"

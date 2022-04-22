@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Parser
-  ( Msg
+  ( Severity (..)
+  , Message (..)
   , ParserM
   , LineMarkerType (..)
   , LineMarker (..)
@@ -65,7 +66,7 @@ data ParserEnv = ParserEnv
   -- ^ Type of the node being parsed. Stored for better error messages.
   }
 
-runParserM :: MonadIO m => ParserM a -> m (a, [Msg])
+runParserM :: MonadIO m => ParserM a -> m (a, [Message])
 runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
   where
     initEnv = ParserEnv
@@ -74,11 +75,27 @@ runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], 
       , peNodeRange = point 0 0
       }
 
-type Msg = (Range, Error ())
-type ParserM = RWST ParserEnv [Msg] ([Text], [Text]) IO
+data Severity
+  = SeverityError
+  | SeverityWarning
+  deriving stock (Eq, Ord, Show)
 
-collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect . getLIGO
+-- | Represents some diagnostic (error, warning, etc) that may be contained
+-- together with some node.
+--
+-- Note that this is different from @Error@, which is a node by itself, and not
+-- something extra that is associated with some node.
+data Message = Message
+  { mMessage :: Text
+  , mSeverity :: Severity
+  , mRange :: Range
+  } deriving stock (Eq, Ord, Show)
+
+type ParserM = RWST ParserEnv [Message] ([Text], [Text]) IO
+
+collectTreeErrors :: Contains Range info => SomeLIGO info -> [Message]
+collectTreeErrors =
+  map (\(info, Error msg _) -> Message msg SeverityError (getRange info)) . collect . getLIGO
 
 -- | The flag of some line marker.
 --
@@ -161,13 +178,13 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
 
-allErrors :: [RawTree] -> [Msg]
+allErrors :: [RawTree] -> [Message]
 allErrors = mapMaybe extractUnnamedError
   where
-    extractUnnamedError :: RawTree -> Maybe Msg
+    extractUnnamedError :: RawTree -> Maybe Message
     extractUnnamedError tree = case only tree of
-      ((r, ""), ParseTree "ERROR" children _)
-        -> Just (r, void (Error ("Unexpected: " <> getBody tree) children))
+      ((r, ""), ParseTree "ERROR" _ _)
+        -> Just (Message ("Unexpected: " <> getBody tree) SeverityError r)
       _ -> Nothing
 
 getBody :: RawTree -> Text

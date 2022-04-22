@@ -324,8 +324,6 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      make_ast_map~raise ~loc key_ty value_ty kv
   | V_Map _ ->
      raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
-  | V_Ligo _ ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: ligo"
   | V_Michelson (Contract _) ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
   | V_Michelson (Untyped_code _) ->
@@ -396,7 +394,7 @@ and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
 and make_subst_ast_env_exp ~raise env expr =
   let open Ligo_interpreter.Types in
   let get_fv expr =
-   snd @@ Self_ast_aggregated.Helpers.Free_variables.expression expr in
+   Self_ast_aggregated.Helpers.Free_variables.expression expr in
   let rec aux (fv) acc = function
     | [] -> acc
     | Expression { name; item ; no_mutation } :: tl ->

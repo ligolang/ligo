@@ -1,0 +1,429 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "A schema of get-scope output",
+  "$defs": {
+    "error": {
+      "type": "object",
+      "properties": {
+        "status": { "const": "error" },
+        "stage":  { "type": "string" },
+        "content": {
+          "type": "object",
+          "properties": {
+            "children": { "$ref": "#/$defs/error" },
+            "message": { "type": "string" },
+            "location": { "$ref": "#/$defs/location" }
+          }
+        }
+      },
+      "required": ["status", "stage", "content"]
+    },
+    "warning": {
+      "type": "object",
+      "status": { "const": "warning" },
+      "content": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "location": { "$ref": "#/$defs/location" },
+          "variable": { "type": "string" },
+          "required": ["message", "location"]
+        }
+      },
+      "required": ["status", "stage", "content"]
+    },
+    "pos": {
+      "type": "object",
+      "properties": {
+        "point_num": { "type": "number" },
+        "point_bol": { "type": "number" },
+        "byte": {
+          "type": "object",
+          "properties": {
+            "pos_fname": { "type": "string" },
+            "pos_lnum":  { "type": "number" },
+            "pos_bol":   { "type": "number" },
+            "pos_cnum":  { "type": "number" }
+          },
+          "required": ["pos_fname", "pos_lnum", "pos_bol", "pos_cnum"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["point_num", "point_bol", "byte"],
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "array",
+      "anyOf": [
+        {
+          "prefixItems": [
+            { "const": "File" },
+            { "type": "object",
+              "properties" : {
+                "start": { "$ref": "#/$defs/pos" },
+                "stop":  { "$ref": "#/$defs/pos" }
+              },
+              "required": ["start", "stop"],
+              "additionalProperties": false
+            }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        {
+          "prefixItems": [
+            { "const": "Virtual" },
+            { "type":  "string" }
+          ],
+          "minItems": 2, "maxItems": 2
+        }
+      ]
+    },
+    "ligo_string_literal": {
+      "type": "array",
+      "anyOf": [
+        { "prefixItems": [{ "const": "Standard" }, { "type": "string" }],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Verbatim" }, { "type": "string" }],
+          "minItems": 2, "maxItems": 2
+        }
+      ]
+    },
+    "literal": {
+      "type": "array",
+      "anyOf": [
+        { "prefixItems": [{ "const": "Literal_unit" }],
+          "minItems": 1, "maxItems": 1
+        },
+        { "prefixItems": [{ "const": "Literal_int" }, { "type": "number"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_nat" }, { "type": "number"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_timestamp" }, { "type": "number"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_mutez" },     { "type": "number"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_string" },    { "$ref": "#/$defs/ligo_string_literal"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_bytes" },     { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_address" },   { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_signature" }, { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_key" },       { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_key_hash" },  { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_chain_id" },  { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_bls12_381_g1" }, { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_bls12_381_g2" }, { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [{ "const": "Literal_bls12_381_fr" }, { "type": "string"}],
+          "minItems": 2, "maxItems": 2
+        }
+      ]
+    },
+    "type_variable": {
+      "type": "object",
+      "properties": {
+        "name":    { "type": "string" },
+        "counter": { "type" : "number" }
+      },
+      "required": ["name"]
+    },
+    "row_type_expression": {
+      "type": "object",
+      "properties": {
+        "associated_type": { "$ref": "#/$defs/type_expression" },
+        "decl_pos": { "type": "number" },
+        "michelson_annotation": {
+          "type": "array",
+          "anyOf": [
+            { "prefixItems": [{ "const": "None" }, { "const": null}],
+              "minItems": 2, "maxItems": 2
+            },
+            { "prefixItems": [{ "const": "Some" }, { "type": "string" }],
+              "minItems": 2, "maxItems": 2
+            }
+          ]
+        }
+      }
+    },
+    "table_type_expression": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/row_type_expression" }
+          }
+        },
+        "layout":  {
+          "type": "array",
+          "anyOf": [
+            { "prefixItems": [{ "const": "None" }, { "const": null}],
+              "minItems": 2, "maxItems": 2
+            },
+            { "prefixItems": [
+              { "const": "Some" },
+              { "type": "array",
+                "anyOf": [
+                  { "prefixItems": [{ "const": "L_comb" }, { "const": null }],
+                    "minItems": 2, "maxItems": 2
+                  },
+                  { "prefixItems": [{ "const": "L_tree" }, { "const": null }],
+                    "minItems": 2, "maxItems": 2
+                  }
+                ]
+              }],
+              "minItems": 2, "maxItems": 2
+            }
+          ]
+        }
+      },
+      "required": ["content", "layout"]
+    },
+    "for_all_type": {
+      "type": "object",
+      "properties": {
+        "ty_binder" : {
+          "type": "object",
+          "properties": {
+            "wrap_content": { "$ref": "#/$defs/type_variable" },
+            "location":     { "$ref": "#/$defs/location" }
+          },
+          "required": ["wrap_content", "location"],
+          "additionalProperties": false
+        },
+        "type_": { "$ref": "#/$defs/type_expression" }
+      },
+      "required": ["ty_binder", "type_"],
+      "additionalProperties": false
+    },
+    "type_content": {
+      "type": "array",
+      "anyOf": [
+        { "prefixItems": [
+            { "const": "t_variable" },
+            { "$ref":  "#/$defs/type_variable" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_sum" },
+            { "$ref": "#/$defs/table_type_expression" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_record" },
+            { "$ref": "#/$defs/table_type_expression" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_arrow" },
+            { "type": "object",
+              "properties": {
+                "type1": { "$ref": "#/$defs/type_expression" },
+                "type2": { "$ref": "#/$defs/type_expression" }
+              },
+              "required": ["type1", "type2"],
+              "additionalProperties": false
+            }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_app" },
+            { "type": "object",
+              "properties": {
+                "type_operator": { "$ref": "#/$defs/type_variable" },
+                "arguments": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/type_expression" }
+                }
+              },
+              "required": ["type_operator", "arguments"],
+              "additionalProperties": false
+            }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_module_accessor" },
+            { "type": "object",
+              "properties": {
+                "module_name": { "$ref": "#/$defs/type_variable" },
+                "element":     { "$ref": "#/$defs/type_expression" }
+              },
+              "required": ["module_name", "element"],
+              "additionalProperties": false
+            }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_singleton" },
+            { "$ref": "#/$defs/literal" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_abstraction" },
+            { "$ref": "#/$defs/for_all_type" }
+          ],
+          "minItems": 2, "maxItems": 2
+        },
+        { "prefixItems": [
+            { "const": "t_for_all" },
+            { "$ref": "#/$defs/for_all_type" }
+          ],
+          "minItems": 2, "maxItems": 2
+        }
+      ]
+    },
+    "type_expression": {
+      "type": "object",
+      "properties": {
+        "type_content": { "$ref": "#/$defs/type_content" },
+        "sugar": {
+          "type": "array",
+          "anyOf": [
+            { "prefixItems": [{ "const": "None" }, { "const": null }],
+              "minItems": 2, "maxItems": 2
+            },
+            { "prefixItems": [
+                { "const": "Some" },
+                { "type": "object",
+                  "properties": {
+                    "type_content": { "$ref": "#/$defs/type_content" },
+                    "location":     { "$ref": "#/$defs/location" }
+                  }
+                }
+              ],
+              "minItems": 2, "maxItems": 2
+            }
+          ]
+        },
+        "location": { "$ref": "#/$defs/location" }
+      },
+      "required": ["type_content", "sugar", "location"],
+      "additionalProperties": false
+    },
+    "definition": {
+      "type": "object",
+      "properties": {
+        "name":  { "type": "string" },
+        "range": { "$ref": "#/$defs/location" },
+        "body_range": { "$ref": "#/$defs/location" },
+        "t": {
+          "type": "object",
+          "anyOf": [
+            { "properties": {
+                "core": { "$ref": "#/$defs/type_expression" }
+              },
+              "additionalProperties": false
+            },
+            { "properties": {
+                "resolved": { "$ref": "#/$defs/type_expression" }
+              },
+              "additionalProperties": false
+            },
+            { "properties": {
+                "unresolved": { "const": null }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/location" }
+        },
+        "content": {
+          "anyOf": [
+            { "$ref": "#/$defs/type_expr" },
+            { "$ref": "#/$defs/definition" },
+            {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          ]
+        }
+      },
+      "required": ["name", "range", "body_range", "t"],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "errors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/error" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning" }
+    },
+    "definitions": {
+      "type": "object",
+      "properties": {
+        "variables": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/definition" }
+          }
+        },
+        "types": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/definition" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "$ref": "#/$defs/location"
+          },
+          "expression_environment": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "type_environment": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["range", "expression_environment", "type_environment"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["errors", "warnings"]
+}

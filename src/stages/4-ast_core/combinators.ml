@@ -37,7 +37,7 @@ let t_for_all ?loc ?sugar ty_binder kind type_ =
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc ?sugar () : type_expression = t_constant ?loc ?sugar _type_ []
-[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "failure", "pvss_key", "baker_hash", "chest_key", "chest"))]
+[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
 let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type_ [t]
 [@@map (_type_, ("option", "list", "set", "contract", "ticket"))]

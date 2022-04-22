@@ -42,4 +42,12 @@ let%expect_test _ =
   File "../../test/contracts/negative/modules_access_not_open2.jsligo", line 1, characters 12-13:
     1 | let x = A.B.(x + y)
   Ill-formed selection of a value in a module.
-  At this point, the qualified name of a value is expected. |}]
+  At this point, the qualified name of a value is expected. |}];
+
+  run_ligo_bad ["print" ; "ast-imperative"  ; bad_test "module_parametric_type_access.ligo" ] ;
+  [%expect {|
+  File "../../test/contracts/negative/module_parametric_type_access.ligo", line 5, characters 16-19:
+    4 |
+    5 | type fii is Foo.foo (int)
+
+  Expected a declaration name |}];

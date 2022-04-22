@@ -45,10 +45,9 @@ let error_jsonformat : error -> Yojson.Safe.t =
          ("content", content)] in
     match error with
       `Preprocessing_generic Region.{region; value} ->
-         let loc =
-           Format.asprintf "%a" Location.pp_lift @@ region in
+         let loc = Location.to_yojson @@ Location.lift region in
          let content =
            `Assoc [
               ("message",  `String value);
-              ("location", `String loc)]
+              ("location",  loc)]
          in json_error ~stage ~content

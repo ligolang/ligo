@@ -144,7 +144,6 @@ let rec terminate_decl terminator = function
 | D_Directive d -> D_Directive d
 | D_Fun       d -> D_Fun      {d with value = {d.value with terminator}}
 | D_Module    d -> D_Module   {d with value = {d.value with terminator}}
-| D_ModAlias  d -> D_ModAlias {d with value = {d.value with terminator}}
 | D_Type      d -> D_Type     {d with value = {d.value with terminator}}
 
 (* Hooking attributes, if any *)
@@ -210,6 +209,9 @@ let get_attributes (node : CST.pattern) =
   algorithm will be in production in the near future, enabling that
   work to be carried out in a reasonable amount of time. *)
 
+%on_error_reduce module_path(module_name)
+%on_error_reduce module_expr
+%on_error_reduce selected
 %on_error_reduce nseq(brackets(expr))
 %on_error_reduce patch_instr(expr)
 %on_error_reduce remove_instr(expr)
@@ -237,16 +239,13 @@ let get_attributes (node : CST.pattern) =
 %on_error_reduce nsepseq(field_pattern,SEMI)
 %on_error_reduce field_pattern
 %on_error_reduce core_expr
-%on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce ctor_app_expr
 %on_error_reduce nseq(__anonymous_0(field_decl,SEMI))
 %on_error_reduce nseq(__anonymous_0(field_path_assignment,SEMI))
 %on_error_reduce nseq(__anonymous_0(binding,SEMI))
-(*%on_error_reduce nseq(__anonymous_0(core_pattern,SEMI))*)
 %on_error_reduce nseq(__anonymous_0(pattern,SEMI))
 %on_error_reduce nseq(__anonymous_0(statement,SEMI))
 %on_error_reduce nsepseq(case_clause(expr),VBAR)
-(*%on_error_reduce nsepseq(core_pattern,SEMI)*)
 %on_error_reduce nsepseq(pattern,SEMI)
 %on_error_reduce pattern
 %on_error_reduce nsepseq(case_clause(test_clause(instruction)),VBAR)
@@ -411,7 +410,6 @@ declaration:
 | const_decl   { D_Const    $1 }
 | fun_decl     { D_Fun      $1 }
 | module_decl  { D_Module   $1 }
-| module_alias { D_ModAlias $1 }
 | attr_decl    { D_Attr     $1 }
 
 (* Attributed declaration *)
@@ -681,40 +679,42 @@ parameter:
 
 (* Module declaration *)
 
-(* The first rule [module_decl] is the terse version, whereas the the
+(* The first rule [module_decl] is the terse version, whereas the
    second is the verbose one. *)
 
 module_decl:
-  terse_module_decl | verb_module_decl { $1 }
-
-terse_module_decl:
-  "module" module_name "is" "block"? "{" declarations "}" {
-    let enclosing = Braces ($4,$5,$7) in
-    let region    = cover $1#region $7#region
-    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
-                     declarations=$6; terminator=None}
+  "module" module_name "is" module_expr {
+    let region = cover $1#region (module_expr_to_region $4) in
+    let value  = {kwd_module=$1; name=$2; kwd_is=$3;
+                  module_expr=$4; terminator=None}
     in {region; value} }
 
-verb_module_decl:
-  "module" module_name "is" "begin" declarations "end" {
-    let enclosing = BeginEnd ($4,$6) in
-    let region    = cover $1#region $6#region
-    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
-                     declarations=$5; terminator=None}
+module_expr:
+  terse_module_expr
+| verb_module_expr         { M_Body $1 }
+| module_name              { M_Var  $1 }
+| module_path(module_name) {
+    M_Path (mk_mod_path $1 (fun x -> x#region)) }
+
+terse_module_expr:
+  option("block") "{" declarations "}" {
+    let enclosing = Braces ($1,$2,$4) in
+    let start  = match $1 with
+                   None -> $2#region
+                 | Some kwd_block -> kwd_block#region in
+    let region = cover start $4#region in
+    let value  = {enclosing; declarations=$3}
+    in {region; value} }
+
+verb_module_expr:
+  "begin" declarations "end" {
+    let enclosing = BeginEnd ($1,$3) in
+    let region    = cover $1#region $3#region in
+    let value     = {enclosing; declarations=$2}
     in {region; value} }
 
 declarations:
   nseq(declaration ";"? { terminate_decl $2 $1}) { $1 }
-
-(* Module aliases *)
-
-module_alias:
-  "module" module_name "is" nsepseq(module_name,".") {
-    let stop   = nsepseq_to_region (fun x -> x#region) $4 in
-    let region = cover $1#region stop in
-    let value  = {kwd_module=$1; alias=$2; kwd_is=$3;
-                  mod_path=$4; terminator=None}
-    in {region; value} }
 
 (* STATEMENTS *)
 
@@ -1247,7 +1247,7 @@ map_lookup:
       * a single variable: "a" or "@0" or "@let" etc.
       * a single variable in a nested module: "A.B.a"
       * nested fields and compoments from a variable: "a.0.1.b"
-      * same withing a nested module: "A.B.a.0.1.b"
+      * same within a nested module: "A.B.a.0.1.b"
       * nested fields and components from an expression: "(e).a.0.1.b"
  *)
 
@@ -1257,7 +1257,8 @@ path_expr:
 
 selected:
   field_path                      { $1 }
-| "remove" | "map" | "or" | "and" { E_Var $1 }
+| ctor                            { E_Ctor $1 }
+| "remove" | "map" | "or" | "and" { E_Var  $1 }
 
 field_path:
   record_or_tuple "." nsepseq(selection,".") {

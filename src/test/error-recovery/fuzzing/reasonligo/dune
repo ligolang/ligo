@@ -1,15 +1,11 @@
 (rule
- (target results.csv)
+ (alias runtest)
  (deps
   (:script ../../test.sh)
   (glob_files *.religo)
   (glob_files original/*.religo)
   (:parser ../../../../passes/02-parsing/reasonligo/ParserMain.exe))
  (action
-  (run %{script} *.religo %{parser})))
-
-(rule
- (alias runtest)
- (deps results.csv)
- (action
-  (diff results.csv.expected results.csv)))
+  (progn
+   (run %{script} *.religo %{parser})
+   (diff? results.csv.expected results.csv))))

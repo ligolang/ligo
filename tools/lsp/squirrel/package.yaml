@@ -70,6 +70,7 @@ library:
     - grammar/pascaligo/src
     - grammar/reasonligo/src
     - grammar/camligo/src
+    - grammar/jsligo/src
 
   c-sources:
     - grammar/pascaligo/src/parser.c
@@ -78,6 +79,8 @@ library:
     - grammar/reasonligo/src/scanner.c
     - grammar/camligo/src/parser.c
     - grammar/camligo/src/scanner.c
+    - grammar/jsligo/src/parser.c
+    - grammar/jsligo/src/scanner.c
 
   dependencies:
     - aeson
