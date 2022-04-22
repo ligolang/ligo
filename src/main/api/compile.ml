@@ -121,8 +121,7 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
           (* fails if the given entry point is not a valid contract *)
-          let enable_typed_opt    = options.backend.enable_typed_opt in
-          Ligo_compile.Of_michelson.build_contract ~raise ~options:options.backend ~constants ~enable_typed_opt michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~options:options.backend ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
@@ -156,8 +155,7 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
           (* fails if the given entry point is not a valid contract *)
-          let enable_typed_opt    = options.backend.enable_typed_opt in
-          Ligo_compile.Of_michelson.build_contract ~raise ~options:options.backend ~constants ~enable_typed_opt michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~options:options.backend ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in

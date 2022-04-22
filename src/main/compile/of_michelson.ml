@@ -27,10 +27,10 @@ let dummy : Stacking.meta =
 let build_contract ~raise ~options :
   ?disable_typecheck:bool ->
   ?constants:string list ->
-  ?enable_typed_opt:bool ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ?(disable_typecheck= false) ?(constants = []) ?(enable_typed_opt = false) compiled views ->
+    fun ?(disable_typecheck= false) ?(constants = []) compiled views ->
+      let enable_typed_opt = options.Compiler_options.enable_typed_opt in
       let views =
         List.map
           ~f:(fun (name, view) ->

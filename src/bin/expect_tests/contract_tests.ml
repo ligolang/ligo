@@ -2909,7 +2909,7 @@ let%expect_test _ =
   [%expect{|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ; "--enable-michelson-typed-opt" ] ;
