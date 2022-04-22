@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DerivingVia, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | Module that handles ligo binary execution.
 module Cli.Impl
@@ -35,7 +35,7 @@ import System.FilePath (takeDirectory, takeFileName)
 import System.IO (Handle, hFlush)
 import System.Process
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
-import UnliftIO.Exception (Exception (..), SomeException (..), catchAny, throwIO, try)
+import UnliftIO.Exception (Exception (..), SomeException (..), throwIO, try)
 import UnliftIO.Temporary (withTempFile)
 
 import Cli.Json
@@ -79,6 +79,12 @@ data LigoPreprocessFailedException = LigoPreprocessFailedException
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
+data LigoFormatFailedException = LigoFormatFailedException
+  { ffeMessage :: Text -- ^ Successfully decoded ligo error
+  , ffeFile :: FilePath -- ^ File that caused the error
+  } deriving anyclass (LigoException)
+    deriving stock (Show)
+
 ----------------------------------------------------------------------------
 -- Errors that may fail due to changes in ligo compiler
 
@@ -114,6 +120,7 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
       , SomeLigoException <$> fromException @LigoUnexpectedCrashException              e
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
+      , SomeLigoException <$> fromException @LigoFormatFailedException                 e
       ]
 
 instance Exception LigoClientFailureException where
@@ -155,6 +162,11 @@ instance Exception LigoPreprocessFailedException where
   displayException LigoPreprocessFailedException {pfeMessage, pfeFile} =
     "LIGO failed to preprocess contract with\n:" <> unpack pfeMessage
     <> "\nCaused by: " <> pfeFile
+
+instance Exception LigoFormatFailedException where
+  displayException LigoFormatFailedException {ffeMessage, ffeFile} =
+    "LIGO failed to format contract with\n:" <> unpack ffeMessage
+    <> "\nCaused by: " <> ffeFile
 
 ----------------------------------------------------------------------------
 -- Execution
@@ -235,22 +247,29 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
 -- call the pretty printer even if it's an unsaved LSP buffer.
 --
 -- ```
--- ligo print pretty ${temp_file_name}
+-- ligo print pretty ${temp_file_name} --format json
 -- ```
 --
--- FIXME: LIGO expands preprocessor directives before pretty printing. We should
--- find a workaround for this or report to them.
-callForFormat :: (HasLigoClient m, Log m) => FilePath -> Source -> m (Maybe Text)
-callForFormat projDir source = Log.addNamespace "callForFormat" $ Log.addContext source $
-  fst <$> usingTemporaryDir projDir source \tempFp _ ->
-    let
-      getResult = callLigo (Just projDir)
-        ["print", "pretty", tempFp]
-        source
-    in
-    (Just <$> getResult) `catchAny` \err -> do
-      $(Log.err) [i|Could not format document with error: #{err}|]
-      pure Nothing
+-- FIXME: LIGO expands preprocessor directives before pretty printing.
+-- See: https://gitlab.com/ligolang/ligo/-/issues/1374
+callForFormat :: (HasLigoClient m, Log m) => FilePath -> Source -> m Text
+callForFormat projDir source = Log.addNamespace "callForFormat" $ Log.addContext source do
+  (mbOut, fixMarkers) <- usingTemporaryDir projDir source \tempFp _ ->
+    try $ callLigo (Just projDir)
+      ["print", "pretty", tempFp, "--format", "json"]
+      source
+  case fixMarkers <$> mbOut of
+    Right output ->
+      case eitherDecodeStrict' @Text $ encodeUtf8 output of
+        Left err -> do
+          $(Log.err) [i|Could not format document with error: #{err}|]
+          throwIO $ LigoFormatFailedException (pack err) fp
+        Right formatted -> pure formatted
+    Left LigoClientFailureException {cfeStderr} ->
+      handleLigoError fp (fixMarkers cfeStderr)
+  where
+    fp :: FilePath
+    fp = srcPath source
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
 --
