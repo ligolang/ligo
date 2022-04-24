@@ -18,7 +18,7 @@ import AST.Parser (collectAllErrors)
 import Config (Config (..))
 import Log qualified
 import Range (Range (..), toLspRange)
-import RIO.Types (RIO, getCustomConfig)
+import RIO.Types (RIO)
 
 source :: Maybe J.DiagnosticSource
 source = Just "ligo-lsp"
@@ -26,7 +26,7 @@ source = Just "ligo-lsp"
 diagnostic :: J.TextDocumentVersion -> [(J.NormalizedUri, [J.Diagnostic])] -> RIO ()
 diagnostic ver = Log.addNamespace "diagnostic" . traverse_ \(nuri, diags) -> do
   let diags' = D.partitionBySource diags
-  maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
+  maxDiagnostics <- _cMaxNumberOfProblems <$> S.getConfig
   S.publishDiagnostics maxDiagnostics nuri ver diags'
 
 collectErrors :: ContractInfo' -> J.TextDocumentVersion -> RIO ()
@@ -44,7 +44,7 @@ collectErrors contract version = do
 
 clearDiagnostics :: Foldable f => f J.NormalizedUri -> RIO ()
 clearDiagnostics uris = do
-  maxDiagnostics <- _cMaxNumberOfProblems <$> getCustomConfig
+  maxDiagnostics <- _cMaxNumberOfProblems <$> S.getConfig
   for_ uris \nuri ->
     S.publishDiagnostics maxDiagnostics nuri Nothing (Map.singleton source mempty)
 
