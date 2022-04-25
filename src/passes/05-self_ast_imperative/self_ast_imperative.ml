@@ -19,11 +19,12 @@ let all_type_expression_mapper ~raise ~add_warning =
     Type_soundness.predefined_names ~raise ;
     Type_soundness.linearity ~raise ;
     Layout_check.layout_type_expression ~add_warning ;
+    Deprecated_polymorphic_variables.warn ~add_warning ;
   ]
 
 let all_module_mapper ~raise ~js_style_no_shadowing =
   [ Expression_soundness.reserved_names_mod ~raise ]
-  @ 
+  @
     if js_style_no_shadowing then [ No_shadowing.peephole_module ~raise ] else []
 
 let all_module ~raise ~js_style_no_shadowing =
