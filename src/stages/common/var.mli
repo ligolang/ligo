@@ -28,14 +28,14 @@ end
 module ValueVar : sig
    include VAR
    val internal_get_name_and_counter : t -> (string * int)
-   val add_prefix : string -> t -> t
-   val is_name          : t -> string -> bool
+   val add_prefix                    : string -> t -> t
+   val is_name                       : t -> string -> bool
 end
 
 module TypeVar : sig
    include VAR
-   val is_generalizable : t -> bool
    val is_name          : t -> string -> bool
+   val is_generalizable : t -> bool
 end
 
 module ModuleVar : sig

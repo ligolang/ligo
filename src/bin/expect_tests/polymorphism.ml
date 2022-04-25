@@ -163,16 +163,7 @@ let%expect_test _ =
     File "./annotate2.mligo", line 1, characters 11-13:
       1 | let f (x : _a) = x
 
-    Can't infer the type of this value, please add a type annotation. |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (test "generalizable_type.mligo") ] ;
-  [%expect{|
-    File "./generalizable_type.mligo", line 1, characters 0-25:
-      1 | type _foo = | Foo of unit
-      2 |
-
-    Invalid type name: _foo is a generalizable variable |}]
+    Type "_a" not found. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (test "constants.mligo") ] ;

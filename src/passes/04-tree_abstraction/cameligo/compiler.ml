@@ -492,7 +492,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let pattern = conv ~raise pattern in
         let match_case = { pattern ; body } in
         e_matching ~loc matchee [match_case]
-    | pattern, args -> (* functoin *)
+    | pattern, args -> (* function *)
     let let_binder, fun_ = compile_parameter ~raise pattern in
     let binders = List.map ~f:(compile_parameter ~raise) args in
     (* collect type annotation for let function declaration *)

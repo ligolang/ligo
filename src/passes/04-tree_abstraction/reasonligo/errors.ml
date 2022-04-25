@@ -10,7 +10,7 @@ let stage = "abstracter"
 
 type abs_error = [
   | `Concrete_reasonligo_unknown_constant of string * Location.t
-  | `Concrete_reasonligo_untyped_recursive_fun of Region.t
+  | `Concrete_reasonligo_untyped_recursive_fun of Location.t
   | `Concrete_reasonligo_unsupported_pattern_type of Raw.pattern
   | `Concrete_reasonligo_unsupported_string_singleton of Raw.type_expr
   | `Concrete_reasonligo_michelson_type_wrong of Location.t * string
@@ -35,10 +35,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
       "@[<hv>%a@.Unknown constant: %s"
         Snippet.pp loc s
-    | `Concrete_reasonligo_untyped_recursive_fun reg ->
+    | `Concrete_reasonligo_untyped_recursive_fun loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
-        Snippet.pp_lift reg
+        Snippet.pp loc
     | `Concrete_reasonligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@.Invalid pattern matching.\
@@ -96,9 +96,8 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
-  | `Concrete_reasonligo_untyped_recursive_fun reg ->
+  | `Concrete_reasonligo_untyped_recursive_fun loc ->
     let message = `String "Untyped recursive functions are not supported yet" in
-    let loc = Location.lift reg in
     let content = `Assoc [
       ("message", message );
       ("location", Location.to_yojson loc);] in

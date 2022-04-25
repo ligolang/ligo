@@ -621,13 +621,21 @@ binding_list:
   nsepseq(binding_initializer,",") { $1 }
 
 binding_initializer:
-  binding_pattern ioption(type_annotation) "=" expr {
+  binding_pattern ioption(binding_type) "=" expr {
     let eq = $3 in
     let start  = pattern_to_region $1
     and stop   = expr_to_region $4 in
+    let lhs_type,type_params = match $2 with None -> None,None | Some (a,b) -> Some a,b in
     let region = cover start stop
-    and value  = {binders=$1; lhs_type=$2; eq; expr=$4}
+    and value  = {binders=$1;type_params; lhs_type; eq; expr=$4}
     in {region; value} }
+
+binding_type:
+  ":" ioption(type_generics) type_expr
+  {($1, $3),$2}
+
+type_generics:
+  chevrons(nsepseq(type_name,",")) { $1 }
 
 binding_pattern:
   var_pattern    { PVar $1 }
