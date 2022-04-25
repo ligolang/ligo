@@ -84,6 +84,8 @@ module Command = struct
     | Register_constant : Location.t * Ligo_interpreter.Types.calltrace * LT.mcode -> string t
     | Constant_to_Michelson : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.mcode t
     | Register_file_constants : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.value t
+    | Push_context : unit -> unit t
+    | Pop_context : unit -> unit t
 
   let eval
     : type a.
@@ -458,6 +460,17 @@ module Command = struct
       let (hashes, ctxt) = Tezos_state.register_file_constants ~raise ~loc ~calltrace ~source:ctxt.internals.source fn ctxt in
       let hashes = LT.V_List (List.map ~f:(fun s -> LT.(V_Ct (C_string s))) hashes) in
       (hashes, ctxt)
+    )
+    | Push_context () -> (
+      Tezos_state.contexts := ctxt ::  ! Tezos_state.contexts ;
+      ((), ctxt)
+    )
+    | Pop_context () -> (
+      match ! Tezos_state.contexts with
+      | [] -> ((), ctxt)
+      | ctxt :: ctxts ->
+         Tezos_state.contexts := ctxts ;
+         ((), ctxt)
     )
 end
 
