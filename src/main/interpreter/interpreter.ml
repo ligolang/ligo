@@ -1225,12 +1225,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body calltrace env'
-        (* catch matching anything with a tuple of size 1 *)
-      | Match_record {fields ; body ; tv = _} , value when
-        List.equal String.equal (List.map ~f:(fun (Label a) -> a) @@ LMap.keys fields) ["0"] ->
-        let {var;ascr;attributes=_} = LMap.find (Label "0") fields in
-        let env' = Env.extend env var (Option.value_exn ascr,value) in
-        eval_ligo body calltrace env'
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" AST.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
