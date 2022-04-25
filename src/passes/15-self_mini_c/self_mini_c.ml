@@ -168,6 +168,8 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_REGISTER_CONSTANT
   | C_TEST_CONSTANT_TO_MICHELSON
   | C_TEST_REGISTER_FILE_CONSTANTS
+  | C_TEST_PUSH_CONTEXT
+  | C_TEST_POP_CONTEXT
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

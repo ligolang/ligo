@@ -975,6 +975,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
+    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
@@ -995,7 +996,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> v = Register_file_constants (loc, calltrace, path) in
       return @@ v
     | ( C_TEST_REGISTER_FILE_CONSTANTS , _ ) -> fail @@ error_type
-    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
+    | ( C_TEST_PUSH_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Push_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_PUSH_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_POP_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Pop_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SOURCE | C_SENDER | C_AMOUNT | C_BALANCE | C_NOW | C_LEVEL | C_SELF |

@@ -220,6 +220,8 @@ module Tree_abstraction = struct
     | "Test.register_constant" -> some_const C_TEST_REGISTER_CONSTANT
     | "Test.constant_to_michelson_program" -> some_const C_TEST_CONSTANT_TO_MICHELSON
     | "Test.register_file_constants" -> some_const C_TEST_REGISTER_FILE_CONSTANTS
+    | "Test.save_context" -> some_const C_TEST_PUSH_CONTEXT
+    | "Test.restore_context" -> some_const C_TEST_POP_CONTEXT
 
     (* Operator module *)
 
@@ -420,6 +422,8 @@ module Tree_abstraction = struct
     | C_TEST_REGISTER_CONSTANT -> "Test.register_constant"
     | C_TEST_CONSTANT_TO_MICHELSON -> "Test.constant_to_michelson_program"
     | C_TEST_REGISTER_FILE_CONSTANTS -> "Test.register_file_constants"
+    | C_TEST_PUSH_CONTEXT -> "Test.save_context"
+    | C_TEST_POP_CONTEXT -> "Test.restore_context"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 

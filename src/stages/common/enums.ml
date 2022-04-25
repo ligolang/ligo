@@ -238,6 +238,8 @@ type constant' =
   | C_TEST_REGISTER_CONSTANT [@only_interpreter]
   | C_TEST_CONSTANT_TO_MICHELSON [@only_interpreter]
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
+  | C_TEST_PUSH_CONTEXT [@only_interpreter]
+  | C_TEST_POP_CONTEXT [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK

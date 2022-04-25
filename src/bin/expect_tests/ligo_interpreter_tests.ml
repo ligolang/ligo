@@ -518,6 +518,23 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_sub exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_context.mligo" ] ;
+  [%expect {|
+    "test_contract:"
+    0
+    10
+    5
+    0
+    0
+    "test_move:"
+    3800000000000mutez
+    3800100000000mutez
+    3800000000000mutez
+    Everything at the top-level was executed.
+    - test_contract exited with value ().
+    - test_move exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
