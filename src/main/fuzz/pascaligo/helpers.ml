@@ -423,7 +423,7 @@ module Fold_helpers(M : Monad) = struct
     fun f d ->
     let self_expr = map_expression f in
     let self_type = map_type_expression f in
-    let self_module = map_module f in
+    let self_module = map_module_expr f in
     let return = ok in
     let* d = f.d d in
     match d with
@@ -454,14 +454,22 @@ module Fold_helpers(M : Monad) = struct
        let value = {value with type_expr} in
        return @@ D_Type {value;region}
     | D_Module {value;region} ->
-      let* declarations = self_module value.declarations in
-      let value = {value with declarations} in
-       return @@ D_Module {value;region}
-    | D_ModAlias _ | D_Directive _ -> return d
+      let* module_expr = self_module value.module_expr in
+      let value = {value with module_expr} in
+       return @@ D_Module {value ;region}
+    | D_Directive _ -> return d
 
-  and map_module : mapper -> declarations -> declarations monad =
+  and map_module_expr : mapper -> module_expr -> module_expr monad =
+    fun f me ->
+      match me with
+      | M_Body { region ; value = { enclosing ; declarations }} ->
+        let* declarations = map_declarations f @@ declarations in
+        ok (M_Body { region ; value = { enclosing ; declarations }})
+      | M_Var _ | M_Path _  -> ok me
+  
+  and map_declarations : mapper -> declarations -> declarations monad =
     fun f decl ->
     let self = map_declaration f in
     bind_map_ne_list self @@ decl
-
+  
 end

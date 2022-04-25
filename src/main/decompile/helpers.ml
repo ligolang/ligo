@@ -1,6 +1,6 @@
 let specialise_and_print_pascaligo dialect m =
   let ast = Self_ast_imperative.decompile_imperative m in
-  let cst = Tree_abstraction.Pascaligo.decompile_module ?dialect ast in
+  let cst = Tree_abstraction.Pascaligo.decompile_declarations ?dialect ast in
   let source = Parsing.Pascaligo.pretty_print Parsing.Pascaligo.CST.{decl=cst ; eof = Lexing_pascaligo.Token.ghost_eof}
   in source
 

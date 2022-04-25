@@ -49,7 +49,7 @@ let parse_and_abstract_pascaligo ~raise buffer file_path =
     Parsing.Pascaligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_module raw.decl
+    Tree_abstraction.Pascaligo.compile_declarations raw.decl
   in imperative
 
 let parse_and_abstract_expression_pascaligo ~raise buffer =
@@ -166,7 +166,7 @@ let parse_and_abstract_string_pascaligo ~raise buffer =
     Parsing.Pascaligo.parse_string buffer in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_module raw.decl
+    Tree_abstraction.Pascaligo.compile_declarations raw.decl
   in imperative
 
 let parse_and_abstract_string_cameligo ~raise buffer =

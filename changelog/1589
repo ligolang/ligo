@@ -1,0 +1,7 @@
+---
+  title: "Created the CST and AST nodes for module expressions."
+  merge_request: "1589"
+  author: "Christian Rinderknecht & Remi Lesenechal"
+  type: "internal"
+  description: ""
+

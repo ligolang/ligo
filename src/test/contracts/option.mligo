@@ -9,3 +9,6 @@ let assign (m : int) : foobar =
    let _coco = Some (m) in
    let coco = (None : foobar) in
    coco
+
+let j = ()
+let x : int option = None j

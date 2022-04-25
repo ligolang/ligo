@@ -133,8 +133,10 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         | None ->
           let expr = Compile.Of_typed.compile_expression_in_context ~raise (Ast_typed.e_a_unit ()) aggregated in
           let mini_c = Compile.Of_aggregated.compile_expression ~raise expr in
+          let mini_c = Self_mini_c.all_expression ~raise mini_c in
           Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
           let expr = Compile.Of_typed.apply_to_entrypoint ~raise typed entry_point in
-          let o = Compile.Of_aggregated.compile_expression ~raise expr in
-          Mini_c.Formatter.Optimized o
+          let mini_c = Compile.Of_aggregated.compile_expression ~raise expr in
+          let _,o = Compile.Of_mini_c.optimize_for_contract ~raise mini_c in
+          Mini_c.Formatter.Optimized o.body

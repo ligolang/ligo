@@ -46,15 +46,12 @@ let rec is_dup (t : type_expression) =
     Sapling_transaction |
     Sapling_state       |
     (* Test primitives are dup *)
-    Account             |
-    Failure             |
     Typed_address       |
     Mutation
   ); _} ->
      true
   | T_constant {injection=
-    (Option  | 
-     List    | 
+    (List    | 
      Set    ); parameters = [t]; _} ->
       is_dup t
   | T_constant {injection=Contract;_} ->
@@ -74,10 +71,10 @@ let rec is_dup (t : type_expression) =
   | T_abstraction {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_constant { injection=(
-    Option         | Map              | Big_map              | List            | 
+                     Map              | Big_map              | List            | 
     Map_or_big_map | Set              | Michelson_program    | Michelson_or    | 
     Michelson_pair | Test_exec_error  |  Pvss_key            | Baker_operation | 
-    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash | Time);_ }  -> false 
+    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash);_ }  -> false 
   | T_singleton _
   | T_module_accessor _ -> false
 
@@ -169,18 +166,7 @@ and muchuse_of_variant {cases;tv} =
   match get_t_sum tv with
   | None -> begin
       match get_t_list tv with
-      | None -> begin
-          match get_t_option tv with
-          | None ->
-              muchuse_neutral (* not an option? *)
-          | Some tv' ->
-             let get_c_body (case : Ast_typed.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-             let c_body_lst = Ast_typed.LMap.of_list (List.map ~f:get_c_body cases) in
-             let get_case c =  Ast_typed.LMap.find (Label c) c_body_lst in
-             let match_none,_ = get_case "None" in
-             let match_some,v = get_case "Some" in
-             muchuse_max (muchuse_of_binder v tv' (muchuse_of_expr match_some)) (muchuse_of_expr match_none)
-        end
+      | None -> muchuse_neutral
       | Some tv' ->
          let get_c_body (case : Ast_typed.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
          let c_body_lst = Ast_typed.LMap.of_list (List.map ~f:get_c_body cases) in

@@ -22,6 +22,7 @@ add-changelog-entry:
     - git add changelog/*
     - git commit -m "[Bot] add changelog entry"
     - git push origin HEAD:$CI_COMMIT_REF_NAME
+    - echo "Changelog has been pushed which cause a new pipeline triggering, to preserve resources this one will be exited with code 1."
     - exit 1
   rules:
     - if: ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^release/)

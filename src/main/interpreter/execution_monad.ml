@@ -83,6 +83,7 @@ module Command = struct
     | Bake_until_n_cycle_end : Location.t * Ligo_interpreter.Types.calltrace *  Z.t -> LT.value t
     | Register_constant : Location.t * Ligo_interpreter.Types.calltrace * LT.mcode -> string t
     | Constant_to_Michelson : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.mcode t
+    | Register_file_constants : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.value t
 
   let eval
     : type a.
@@ -452,6 +453,11 @@ module Command = struct
     | Constant_to_Michelson (loc, calltrace, code) -> (
       let code = Tezos_state.parse_constant ~raise ~loc ~calltrace code in
       (code, ctxt)
+    )
+    | Register_file_constants (loc, calltrace, fn) -> (
+      let (hashes, ctxt) = Tezos_state.register_file_constants ~raise ~loc ~calltrace ~source:ctxt.internals.source fn ctxt in
+      let hashes = LT.V_List (List.map ~f:(fun s -> LT.(V_Ct (C_string s))) hashes) in
+      (hashes, ctxt)
     )
 end
 

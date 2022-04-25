@@ -5,8 +5,8 @@ module Compiler   = Compiler
 module Decompiler = Decompiler
 module Errors = Errors
 
-let compile_module      = Compiler.compile_module
-let compile_expression   = Compiler.compile_expression ~attr:[]
+let compile_declarations = Compiler.compile_declarations
+let compile_expression = Compiler.compile_expression ~attr:[]
 
-let decompile_module    = Decompiler.decompile_module
+let decompile_declarations = Decompiler.decompile_declarations
 let decompile_expression = Decompiler.decompile_expression

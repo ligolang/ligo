@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1691'
+title: 'Fix: move Tezos.create_contract check of free variables to aggregated'
+type: fixed

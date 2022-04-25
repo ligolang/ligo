@@ -417,24 +417,24 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EFun func ->
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
-    let ({binders; lhs_type; body;kwd_fun=_;type_params=_;arrow=_; attributes=_} : CST.fun_expr) = func in
+    let ({binders; rhs_type; body;kwd_fun=_;type_params=_;arrow=_; attributes=_} : CST.fun_expr) = func in
     let () = check_annotation ~raise (fst binders) in
     let () = List.iter ~f:(check_annotation ~raise) (snd binders) in
-    let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
+    let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
     let (binder,fun_),lst = List.Ne.map (compile_parameter ~raise) binders in
     let body = self body in
     let rec aux lst =
       match lst with
-        [] -> body,lhs_type
+        [] -> body, rhs_type
       | (binder,fun_):: lst ->
-        let expr,lhs_type = aux lst in
+        let expr, rhs_type = aux lst in
         let expr = fun_ expr in
-        e_lambda ~loc binder lhs_type expr,
-        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (binder.ascr,lhs_type)
+        e_lambda ~loc binder rhs_type expr,
+        Option.map ~f:(Utils.uncurry @@ t_arrow ~loc) @@ Option.bind_pair (binder.ascr, rhs_type)
     in
-    let expr,lhs_type = aux lst in
+    let expr, rhs_type = aux lst in
     let expr = fun_ expr  in
-    return @@ e_lambda ~loc binder lhs_type expr
+    return @@ e_lambda ~loc binder rhs_type expr
   | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
     let args_o = Option.map ~f:(compile_tuple_expression <@ List.Ne.singleton) args_o in
@@ -480,12 +480,12 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let ({kwd_let=_;kwd_rec;binding;kwd_in=_;body;attributes;} : CST.let_in) = li in
     let let_attr = compile_attributes attributes in
     let body = self body in
-    let {type_params;binders;lhs_type;eq=_;let_rhs} : CST.let_binding = binding in
+    let {type_params; binders; rhs_type; eq=_; let_rhs} : CST.let_binding = binding in
     let let_rhs = compile_expression ~raise let_rhs in
-    let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
+    let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
     (match binders with
       pattern, [] when pattern_is_matching pattern -> (* matchin *)
-        let matchee = match lhs_type with
+        let matchee = match rhs_type with
           | Some t -> (e_annotation let_rhs t)
           | None -> let_rhs
         in
@@ -496,13 +496,13 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let let_binder, fun_ = compile_parameter ~raise pattern in
     let binders = List.map ~f:(compile_parameter ~raise) args in
     (* collect type annotation for let function declaration *)
-    let let_rhs, lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
+    let let_rhs, rhs_type = List.fold_right ~init:(let_rhs, rhs_type) ~f:(fun (b,fun_) (e,a) ->
       e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
-    let let_binder   = {let_binder with ascr = lhs_type} in
+    let let_binder   = {let_binder with ascr = rhs_type} in
     (* This handle the recursion *)
     let let_rhs = match kwd_rec with
       Some reg ->
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
+        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
         let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
         let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
         e_recursive ~loc:(Location.lift reg#region) let_binder.var fun_type lambda
@@ -777,7 +777,7 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
 
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     let attr = compile_attributes attributes in
-    let {type_params;binders;lhs_type;eq=_;let_rhs} : CST.let_binding = let_binding in
+    let {type_params; binders; rhs_type; eq=_; let_rhs} : CST.let_binding = let_binding in
     let (pattern, args) = binders in
     match (unepar pattern,args) with
     | CST.PTuple tuple, [] ->
@@ -809,17 +809,17 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
       return region @@ List.map ~f:aux lst
     | _,_ ->
       let let_rhs = compile_expression ~raise let_rhs in
-      let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
+      let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
       let binder,_fun_ = compile_parameter ~raise pattern in
       let binders = List.map ~f:(compile_parameter ~raise) args in
       (* collect type annotation for let function declaration *)
-      let let_rhs,lhs_type = List.fold_right ~init:(let_rhs,lhs_type) ~f:(fun (b,fun_) (e,a) ->
+      let let_rhs,rhs_type = List.fold_right ~init:(let_rhs,rhs_type) ~f:(fun (b,fun_) (e,a) ->
         e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
-      let binder   = {binder with ascr = lhs_type} in
+      let binder   = {binder with ascr = rhs_type} in
       (* This handle the recursion *)
       let let_rhs = match kwd_rec with
         Some reg ->
-          let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ lhs_type in
+          let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
           let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
           let lambda = trace_option ~raise (recursion_on_non_function @@ Location.lift region) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
           e_recursive ~loc:(Location.lift reg#region) binder.var fun_type lambda

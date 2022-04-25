@@ -55,7 +55,7 @@ let ty_eq (type a b)
   ok Eq
 
 (* should not need lwt *)
-let prims_of_strings michelson =
+let canonical_of_strings michelson =
   let (michelson, errs) =
     Tezos_client_012_Psithaca.Michelson_v1_macros.expand_rec michelson in
   match errs with
@@ -65,9 +65,11 @@ let prims_of_strings michelson =
   Lwt.return
     (alpha_wrap
        (Michelson_v1_primitives.prims_of_strings
-          (Tezos_micheline.Micheline.strip_locations michelson))) >>=? fun michelson ->
-  return (Tezos_micheline.Micheline.root michelson)
+          (Tezos_micheline.Micheline.strip_locations michelson)))
 
+let prims_of_strings michelson =
+  canonical_of_strings michelson >>=? fun michelson ->
+  return (Tezos_micheline.Micheline.root michelson)
 
 let lazy_expr expr =
     let open Alpha_context in
@@ -80,11 +82,13 @@ let parse_michelson_fail (type aft aftr)
     (bef:('a, 'b) Script_typed_ir.stack_ty) (aft:(aft, aftr) Script_typed_ir.stack_ty)
     : (('a, 'b, aft, aftr) descr, error trace) result Lwt.t
   =
-  prims_of_strings michelson >>=? fun michelson ->
+  canonical_of_strings michelson >>=? fun michelson ->
+  (Alpha_context.Global_constants_storage.expand tezos_context michelson >>=? fun (tezos_context, michelson) ->
+  let michelson = Tezos_micheline.Micheline.root michelson in
   parse_instr
     ?type_logger
     top_level tezos_context
-    michelson bef ~legacy:false >>=?? fun (j, _) ->
+    michelson bef ~legacy:false) >>=?? fun (j, _) ->
   match j with
   | Typed descr -> (
       Lwt.return (
@@ -182,9 +186,13 @@ let fake_bake tezos_context chain_id now =
                       return state.ctxt) in
   tezos_context
 
+let register_constant tezos_context constant =
+  Alpha_context.Global_constants_storage.register tezos_context constant
+
 let make_options
     ?(env = (dummy_environment ()))
     ?(tezos_context = env.tezos_context)
+    ?(constants = [])
     ?(now = Alpha_context.Script_timestamp.now env.tezos_context)
     ?(sender = (List.nth_exn env.identities 0).implicit_contract)
     ?(self = default_self)
@@ -236,6 +244,11 @@ let make_options
     |> Script_int.of_int32 |> Script_int.abs
   in
   let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
+  (* Update the Tezos context by registering the global constants *)
+  let tezos_context = List.fold_left constants ~init:tezos_context
+                        ~f:(fun ctxt cnt ->
+                          let (ctxt, _, _) = force_lwt_alpha ~msg:("bad constants "^__LOC__) @@ register_constant ctxt cnt in
+                          ctxt) in
   {
     tezos_context ;
     source = sender ;
@@ -284,9 +297,6 @@ let typecheck_contract ?(environment = dummy_environment ()) contract =
   match x with
   | Ok _ -> return @@ contract
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
-
-let register_constant tezos_context constant =
-  Alpha_context.Global_constants_storage.register tezos_context constant
 
 type 'a interpret_res =
   | Succeed of 'a

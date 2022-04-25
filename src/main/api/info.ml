@@ -30,7 +30,7 @@ let list_declarations (raw_options : Compiler_options.raw) source_file display_f
 
 let get_scope (raw_options : Compiler_options.raw) source_file display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
-    format_result ~display_format Scopes.Formatter.scope_format get_warnings @@
+    Scopes.Api_helper.format_result ~display_format get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
       let options = Compiler_options.make ~raw_options ~protocol_version () in

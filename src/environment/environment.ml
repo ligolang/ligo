@@ -42,7 +42,7 @@ let basic_types : (type_variable * type_expression) list = [
     (v_int    , t_int                   ()) ;
     (v_nat    , t_nat                   ()) ;
     (v_unit   , t_unit                  ()) ;
-    (v_option , t_abstraction1 Option star) ;
+    (v_option , t_option_abst           ()) ;
   ]
 
 let michelson_base : (type_variable * type_expression) list = [
@@ -69,7 +69,7 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_baker_operation    , t_constant     Baker_operation       []) ;
     (v_bls12_381_g1       , t_bls12_381_g1                       ()) ;
     (v_bls12_381_g2       , t_bls12_381_g2                       ()) ;
-    (v_bls12_381_fr       ,  t_bls12_381_fr                      ()) ;
+    (v_bls12_381_fr       , t_bls12_381_fr                       ()) ;
     (v_never              , t_never                              ()) ;
     (v_ticket             , t_abstraction1 Ticket              star) ;
 ]
@@ -88,11 +88,8 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_test_michelson   , t_constant Michelson_program        []) ;
     (v_test_exec_error  , t_test_exec_error                   ()) ;
     (v_test_exec_result , t_test_exec_result                  ()) ;
-    (v_account          , t_constant Account                  []) ;
     (v_typed_address    , t_abstraction2 Typed_address star star) ;
-    (v_time             , t_constant Time                     []) ;
     (v_mutation         , t_constant Mutation                 []) ;
-    (v_failure          , t_constant Failure                  []) ;
   ]
 
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true}})

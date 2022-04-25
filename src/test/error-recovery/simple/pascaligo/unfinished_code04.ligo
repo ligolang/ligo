@@ -42,7 +42,7 @@ function reveal (const p: reveal; var s: storage) : return is
     ];
     if Tezos.now < commit.date
     then failwith("It has not been 24 hours since your commit yet.");
-    const salted : bytes = // TODO
+    const salted : bytes = ; // TODO
     if salted =/= commit.salted_hash
     then failwith("This reveal does not match your commitment.");
     if s.hashed = Crypto.sha256(p.hashable)

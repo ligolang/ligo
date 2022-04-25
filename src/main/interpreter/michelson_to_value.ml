@@ -215,14 +215,6 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
       (String.equal language Stage_common.Backends.michelson)
     in
     match injection, parameters with
-    | (Option, [o]) -> (
-        let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
-        match opt with
-        | None -> v_none ()
-        | Some s ->
-            let s' = self s o in
-            v_some s'
-      )
     | (Map, [k_ty;v_ty]) -> (
         let map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
         let map' =
@@ -262,15 +254,15 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | ((Option       | Map           | Big_map             | List                 | Set              | Bool         |
+    | ((               Map           | Big_map             | List                 | Set              | Bool         |
         String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
         Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
-        Bls12_381_fr | Never         | Ticket              | Test_exec_error      | Test_exec_result | Account      |
-        Time         | Typed_address | Mutation            | Chest_opening_result | Chest_key        | Chest        |
-        Failure), _) -> v
+        Bls12_381_fr | Never         | Ticket              | Test_exec_error      | Test_exec_result | Chest        |
+        Chest_key    | Typed_address | Mutation            | Chest_opening_result), _) -> v
   )
+  | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> v
   | T_sum {layout ; content} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout content in
       let (Label constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in

@@ -154,7 +154,7 @@ let get_storage ~raise ~loc ~calltrace ctxt addr =
           ~timestamp:(get_timestamp ctxt)
           ctxt.raw.context
     in
-    fst @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ 
+    fst @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel alpha_context ~legacy:false x
   in
   let storage_type = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations storage_type)) in
@@ -346,15 +346,14 @@ type add_operation_outcome =
 let get_last_operation_result (incr : Tezos_alpha_test_helpers.Incremental.t) =
   match Tezos_alpha_test_helpers.Incremental.rev_tickets incr with
   | [] -> failwith "Tried to get last operation result in empty block"
-  | hd :: [] -> hd
-  | _ -> failwith "Tried to get last operation result but the ticket list has more than one element"
+  | hd :: _ -> hd
 
 let get_single_tx_result (x : Tezos_raw_protocol.Apply_results.packed_operation_metadata) =
   match x with
   | Operation_metadata ({contents = Single_result y} : _ Tezos_raw_protocol.Apply_results.operation_metadata)  -> (
     match y with
     | Manager_operation_result { operation_result = Applied (
-          Transaction_result { consumed_gas ; _ } 
+          Transaction_result { consumed_gas ; _ }
         | Origination_result { consumed_gas ; _ }
         | Delegation_result { consumed_gas ; _ }
         | Register_global_constant_result { consumed_gas ; _ } )
@@ -373,27 +372,27 @@ let get_consumed_gas x =
   | Some x -> Z.((fp_to_z x) / (of_int 1000))
   | None -> Z.zero
 
-let bake_op : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tezos_op -> add_operation_outcome =
+let bake_ops : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> (Tezos_alpha_test_helpers.Incremental.t -> tezos_op) list -> add_operation_outcome =
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
     let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
     (* First check if baker is going to be successfully selected *)
-    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@
-              Block.(get_next_baker ~policy:(By_account baker) ctxt.raw) in
+    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:(By_account baker) ctxt.raw) in
     let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
                  Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw in
-    let incr = Incremental.add_operation incr operation in
-    match Lwt_main.run @@ incr with
+    let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
+    match List.fold_result ~f:aux ~init:incr operation with
     | Ok incr ->
-      let consum = get_consumed_gas (get_last_operation_result incr) in
-      let op_data = get_last_operation_result incr in
-      let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-        Incremental.finalize_block incr
-      in
-      let transduced = upd_transduced_data ~raise ctxt op_data in
-      Success ({ ctxt with raw ; transduced }, consum)
-    | Error errs ->
-      Fail errs
+       let last_operation = get_last_operation_result incr in
+       let consum = get_consumed_gas last_operation in
+       let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
+                   Incremental.finalize_block incr in
+       let transduced = upd_transduced_data ~raise ctxt last_operation in
+       Success ({ ctxt with raw ; transduced }, consum)
+    | Error errs -> Fail errs
+
+let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tezos_op -> add_operation_outcome =
+  fun ~raise ~loc ~calltrace ctxt op -> bake_ops ~raise ~loc ~calltrace ctxt [fun _ -> op]
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
   let open Tezos_alpha_test_helpers in
@@ -417,9 +416,36 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   let hash = Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
   let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
-  | Success (ctxt,_) ->
-    (hash, ctxt)
+  | Success (ctxt,_) -> (hash, ctxt)
   | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
+
+let read_file_constants ~raise fn =
+  try
+    let buf = In_channel.read_all fn in
+    let json = Yojson.Basic.from_string buf in
+    json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
+  with Sys_error _ -> raise.Trace.raise (`Main_cannot_open_global_constants fn)
+     | Yojson.Json_error s -> raise.Trace.raise (`Main_cannot_parse_global_constants (fn, s))
+
+let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
+  let open Tezos_alpha_test_helpers in
+  let string_to_constant constant =
+    let constant = parse_constant ~raise ~loc ~calltrace constant in
+    ligo_to_canonical ~raise ~loc ~calltrace constant in
+  let constant_to_hash constant =
+    let hash = Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@ Tezos_protocol.Protocol.Script_repr.force_bytes constant in
+    let hash = Tezos_protocol.Protocol.Script_expr_hash.hash_bytes [hash] in
+    Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
+  let constants = read_file_constants ~raise fn in
+  let constants = List.map ~f:string_to_constant constants in
+  let hashes = List.map ~f:constant_to_hash constants in
+  let aux constant ctxt =
+    let op = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value:constant in
+    match bake_op ~raise ~loc ~calltrace ctxt op with
+    | Success (ctxt,_) -> ctxt
+    | Fail errs -> raise.raise (target_lang_error loc calltrace errs) in
+  let ctxt = List.fold_right ~f:aux ~init:ctxt constants in
+  (hashes, ctxt)
 
 let add_account ~raise ~loc sk pk pkh : unit =
   let open Tezos_alpha_test_helpers in

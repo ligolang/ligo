@@ -1,0 +1,51 @@
+=========
+rest-pattern: array / list rest
+=========
+
+let larger_list: list<int> = list([5, ...my_list]);
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation
+      (type_ctor_app (TypeName) (TypeName)))
+    (call_expr
+      (lambda (Name))
+      (arguments
+        (array_literal (Int)
+        (array_item_rest_expr (Name)))))))
+
+=========
+rest-pattern: object rest
+=========
+
+let xy_translate = ([p, vec]: [point, vector]): point =>
+  ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (fun_expr
+      (parameter
+        (array_literal (Name) (Name))
+        (type_annotation
+          (type_tuple (TypeName) (TypeName))))
+      (type_annotation (TypeName))
+      (body
+        (paren_expr
+          (object_literal
+            (property (Name))
+            (property
+              (property_name (Name))
+              (binary_operator
+                (projection (Name) (Name))
+                (projection (Name) (Name))))
+            (property
+              (property_name (Name))
+              (binary_operator
+                (projection (Name) (Name))
+                (projection (Name) (Name))))))))))

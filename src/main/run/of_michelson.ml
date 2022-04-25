@@ -8,6 +8,21 @@ open Simple_utils.Runned_result
 
 module Errors = Main_errors
 
+let parse_constant ~raise code =
+  let open Tezos_micheline in
+  let open Tezos_micheline.Micheline in
+  let (code, errs) = Micheline_parser.tokenize code in
+  let code = (match errs with
+              | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | [] ->
+                 let (code, errs) = Micheline_parser.parse_expression ~check:false code in
+                 match errs with
+                 | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | [] -> map_node (fun _ -> ()) (fun x -> x) code
+             ) in
+  Trace.trace_alpha_tzresult ~raise Errors.unparsing_michelson_tracer @@
+    Memory_proto_alpha.node_to_canonical code
+
 type options = Memory_proto_alpha.options
 
 type dry_run_options =
@@ -20,7 +35,7 @@ type dry_run_options =
   }
 
 (* Shouldn't this be done by the cli parser ? *)
-let make_dry_run_options ~raise ?tezos_context (opts : dry_run_options) : options  =
+let make_dry_run_options ~raise ?tezos_context ?(constants = []) (opts : dry_run_options) : options  =
   let open Proto_alpha_utils.Trace in
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
@@ -63,7 +78,9 @@ let make_dry_run_options ~raise ?tezos_context (opts : dry_run_options) : option
       (Some x)
     | None -> None
   in
-  make_options ?tezos_context ?now:now ~amount ~balance ?sender ?source ?parameter_ty ()
+  (* Parse constants *)
+  let constants = List.map ~f:(parse_constant ~raise) constants in
+  make_options ?tezos_context ~constants ?now:now ~amount ~balance ?sender ?source ?parameter_ty ()
 
 let ex_value_ty_to_michelson ~raise (v : ex_typed_value) : _ Michelson.t * _ Michelson.t =
   let (Ex_typed_value (ty , value)) = v in
@@ -208,9 +225,10 @@ let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson
   let top_level = Script_ir_translator.Lambda
   and ty_stack_before = Script_typed_ir.Bot_t
   and ty_stack_after = Script_typed_ir.Item_t (exp_type', Bot_t, None) in
+  let tezos_context = match options with None -> None | Some o -> Some (o.Memory_proto_alpha.tezos_context) in
   let descr =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
-    Memory_proto_alpha.parse_michelson_fail ~top_level exp ty_stack_before ty_stack_after in
+    Memory_proto_alpha.parse_michelson_fail ?tezos_context ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@

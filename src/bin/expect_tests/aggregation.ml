@@ -195,4 +195,4 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "bug_module_record.ligo" ] ;
   [%expect {|
-    let v = PAIR(L(1) , L("b")) in let #A#y#2 = v in let tm = #A#y#2 in L(unit) |}]
+    L(unit) |}]

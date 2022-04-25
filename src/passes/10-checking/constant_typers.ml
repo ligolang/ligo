@@ -124,16 +124,6 @@ and big_map_comparator ~raise ~test : Location.t -> string -> typer = fun loc s 
   let _ = comparator ~cmp:s ~raise ~test loc [a_value;b_value] None in
   t_bool ()
 
-and option_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_opt b_opt ->
-  let () =
-    Assert.assert_true ~raise (uncomparable_types loc a_opt b_opt) @@ eq_1 a_opt b_opt
-  in
-  let a =
-    trace_option ~raise (comparator_composed loc a_opt) @@
-    get_t_option a_opt in
-  let b = trace_option ~raise (expected_option loc b_opt) @@ get_t_option b_opt in
-  comparator ~cmp:s ~raise ~test loc [a;b] None
-
 and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~raise loc cmp @@ fun a b ->
   if test
   then
@@ -141,13 +131,11 @@ and comparator ~cmp ~raise ~test : Location.t -> typer = fun loc -> typer_2 ~rai
                                            set_comparator ~test loc cmp [a;b] None;
                                            map_comparator ~test loc cmp [a;b] None;
                                            simple_comparator loc cmp [a;b] None;
-                                           option_comparator ~test loc cmp [a;b] None;
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None;
                                            big_map_comparator ~test loc cmp [a;b] None]
   else
     bind_exists ~raise @@ List.Ne.of_list [simple_comparator loc cmp [a;b] None;
-                                           option_comparator ~test loc cmp [a;b] None;
                                            record_comparator ~test loc cmp [a;b] None;
                                            sum_comparator ~test loc cmp [a;b] None]
 
@@ -520,7 +508,7 @@ module Constant_types = struct
                     of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
-                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> t_option a);
+                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> a);
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));
@@ -547,6 +535,7 @@ module Constant_types = struct
                     of_type C_TEST_ORIGINATE_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()));
                     of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
+                    of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
                     of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
