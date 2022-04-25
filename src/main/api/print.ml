@@ -122,7 +122,7 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
-      let typed = Build.merge_and_type_contract ~raise ~add_warning ~options source_file in
+      let typed = Build.merge_and_type_libraries ~raise ~add_warning ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       match optimize with
         | None ->
