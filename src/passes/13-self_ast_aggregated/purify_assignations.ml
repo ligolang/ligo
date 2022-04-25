@@ -125,8 +125,7 @@ module Effect = struct
         let t_list = ((i,e_variable ev t),(i,t)) :: t_list in
         i+1,t_list
     ) ev_list (0,[]) in
-    match ev_list with [(_,ev),(_,_)] -> ev
-    | _ -> let tuple,tuple_type = List.unzip ev_list in
+    let tuple,tuple_type = List.unzip ev_list in
     e_record (LMap.of_list @@ List.map ~f:(fun (i,e) -> Label (string_of_int i),e) tuple)
       @@ t_record ~layout:L_tree @@ LMap.of_list @@ List.map ~f:(fun (i,t) ->
        Label (string_of_int i),
