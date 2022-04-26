@@ -169,6 +169,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
         | I.E_lambda lamb when I.ValueVar.equal lamb.binder.var to_subst -> ret false exp has_subst
+        | I.E_recursive r when I.ValueVar.equal r.fun_name to_subst -> ret false exp has_subst
         | I.E_matching m -> (
           let has_subst',matchee = substitute_var_in_body ~raise to_subst new_var m.matchee in
           let has_subst = has_subst' || has_subst in
@@ -192,7 +193,10 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
           in
           ret false { exp with expression_content = I.E_matching {matchee ; cases}} has_subst
         )
-        | _ -> ret true exp has_subst
+        | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
+           E_type_abstraction _|E_recursive _|E_let_in _|E_type_in _ | E_mod_in _ |
+           E_raw_code _ | E_constructor _ | E_record _ | E_record_accessor _ |
+           E_record_update _ | E_ascription _ | E_module_accessor _ ) -> ret true exp has_subst
     in
     let (has_subst, res) = Self_ast_core.fold_map_expression (aux ~raise) false body in
     (has_subst,res)
