@@ -36,7 +36,7 @@ import Data.Maybe (fromJust, isJust, mapMaybe)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Word (Word32)
+import Language.LSP.Types qualified as J
 import Text.Read (readMaybe)
 
 import Duplo.Pretty
@@ -116,11 +116,11 @@ data LineMarkerType
 data LineMarker = LineMarker
   { lmFile :: FilePath  -- ^ The file that was included.
   , lmFlag :: LineMarkerType  -- ^ The "parsed" flag of the line marker.
-  , lmLine :: Word32  -- ^ The line number that should be used after the inclusion.
+  , lmLine :: J.UInt  -- ^ The line number that should be used after the inclusion.
   , lmLoc  :: Range  -- ^ The location in the preprocessed file where the line marker was added.
   } deriving stock (Eq, Show)
 
-parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, Word32)
+parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, J.UInt)
 parseLineMarkerText marker = do
   "#" : lineStr : fileText : flags <- Just $ Text.words marker
   line <- readMaybe $ Text.unpack lineStr

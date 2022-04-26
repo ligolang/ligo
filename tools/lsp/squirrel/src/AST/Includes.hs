@@ -30,8 +30,8 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Word (Word32)
 import Duplo.Tree (Cofree ((:<)), fastMake)
+import Language.LSP.Types qualified as J
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
@@ -219,7 +219,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
         prev = IntMap.lookupLE (range ^. startLine . to fromIntegral) markers
         range = getRange i
 
-    adjustSide :: Lens' Range (Word32, Word32, Word32)
+    adjustSide :: Lens' Range (J.UInt, J.UInt, J.UInt)
                -> IntMap MarkerInfo
                -> Range
                -> Range

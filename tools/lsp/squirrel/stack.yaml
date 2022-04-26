@@ -10,7 +10,7 @@ packages:
 
 extra-deps:
 - git: https://github.com/haskell/lsp.git
-  commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+  commit: 4a8f16fe7ceea273f46ec7420e6fa4fc5528091e
   subdirs:
     - lsp-types
     - lsp

@@ -41,8 +41,8 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
-import Data.Word (Word32)
 import GHC.Generics
+import Language.LSP.Types qualified as J
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
@@ -298,8 +298,8 @@ data LigoRange
 -- ```
 data LigoRangeInner = LigoRangeInner
   { _lriByte :: LigoByte
-  , _lriPointNum :: Word32
-  , _lriPointBol :: Word32
+  , _lriPointNum :: J.UInt
+  , _lriPointBol :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
 
@@ -309,9 +309,9 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
-  , _lbPosLnum :: Word32
-  , _lbPosBol :: Word32
-  , _lbPosCnum :: Word32
+  , _lbPosLnum :: J.UInt
+  , _lbPosBol :: J.UInt
+  , _lbPosCnum :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
 
@@ -584,7 +584,7 @@ parseLigoRangeString = flip withText safeExtract
           }
         }
 
-    parseRange :: [String] -> Either String (FilePath, Word32, Word32, Word32)
+    parseRange :: [String] -> Either String (FilePath, J.UInt, J.UInt, J.UInt)
     parseRange = \case
         [_, file, line, colStart, colStop] -> do
           let fp = file
