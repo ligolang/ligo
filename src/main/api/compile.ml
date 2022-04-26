@@ -38,12 +38,10 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views ; constants ; file_constants ; _ } = options.backend in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
       let code,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
-      let views =
-        Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file
-      in
+      let views = Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file in
       let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
-      Ligo_compile.Of_michelson.build_contract ~raise ~disable_typecheck ~constants code views
+      Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version:options.middle_end.protocol_version ~disable_typecheck ~constants code views
 
 let expression (raw_options : Compiler_options.raw) expression init_file display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
@@ -121,7 +119,7 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
         (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise ~constants michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
@@ -155,7 +153,7 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
          (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise ~constants michelson [] in
+          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version ~constants michelson [] in
         let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in

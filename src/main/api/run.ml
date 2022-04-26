@@ -29,7 +29,7 @@ let dry_run (raw_options : Compiler_options.raw) source_file parameter storage a
       let compile_exp = Compile.Of_mini_c.compile_contract ~raise ~options mini_c_prg in
       let parameter_ty =
         (* fails if the given entry point is not a valid contract *)
-        let _contract : Mini_c.meta Tezos_utils.Michelson.michelson = Compile.Of_michelson.build_contract ~raise compile_exp [] in
+        let _contract : Mini_c.meta Tezos_utils.Michelson.michelson = Compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version compile_exp [] in
         Option.map ~f:fst @@ Self_michelson.fetch_contract_ty_inputs compile_exp.expr_ty
       in
       let compiled_input    = Compile.Utils.compile_contract_input ~raise ~add_warning ~options parameter storage source_file syntax typed_prg in

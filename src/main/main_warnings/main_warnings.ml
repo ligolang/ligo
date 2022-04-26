@@ -12,6 +12,7 @@ type all =
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
+  | `Michelson_typecheck_failed_with_different_protocol of Environment.Protocols.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -26,19 +27,26 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Michelson_typecheck_failed_with_different_protocol user_proto ->
+      let open Environment.Protocols in
+      Format.fprintf f
+        "@[<hv>Warning: You compiled your contract with a protocol different from the one we internally use for typechecking the produced Michelson contract.
+         @ you compiled with %s and we internally use the next protocol (%s) @.@]"
+         (variant_to_string user_proto)
+         (variant_to_string in_use)
     | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
-      Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
       Stage_common.PP.type_variable tv_chosen
       Stage_common.PP.type_variable tv_possible
     | `Main_view_ignored loc ->
-      Format.fprintf f "@[<hv>%a@.This view will be ignored, command line option override [@ view] annotation@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: This view will be ignored, command line option override [@ view] annotation@.@]"
       Snippet.pp loc
     | `Pascaligo_deprecated_case loc ->
-      Format.fprintf f "@[<hv>%a@.Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
       Snippet.pp loc
     | `Pascaligo_deprecated_semi_before_else loc ->
-      Format.fprintf f "@[<hv>%a@.Deprecated semicolon `;` before the `else` keyword. Please remove the semicolon.@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: Deprecated semicolon `;` before the `else` keyword. Please remove the semicolon.@.@]"
       Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
         Format.fprintf f
@@ -71,9 +79,17 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Michelson_typecheck_failed_with_different_protocol user_proto ->
+    let open Environment.Protocols in
+    let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in
+    let stage   = "Main" in
+    let content = `Assoc [
+                      ("message", message);
+                      ("used", `String (variant_to_string in_use));
+                      ("compiled_for", `String (variant_to_string user_proto))
+                    ] in
+    json_warning ~stage ~content
   | `Checking_ambiguous_contructor (loc,_,_) ->
-    (* Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous, you might want to add a type annotation. Inferred type is %a but %a was also possible@.@]" *)
-
     let message = `String "the type of this value is ambiguous, you might want to add a type annotation" in
     let stage   = "Main" in
     let loc = Location.to_yojson loc in
