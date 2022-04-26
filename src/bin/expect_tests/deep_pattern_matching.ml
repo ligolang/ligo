@@ -5,7 +5,18 @@ let good_test s = (test "")^"/deep_pattern_matching/"^s
 
 (* Negatives *)
 
-(* wrong fields on record pattern *)
+(* testing that subtitution is stoping on resursive definitions *)
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail17.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail17.mligo", line 15, characters 39-43:
+     14 |     (* testing that subtitution is stoping on resursive definitions *)
+     15 |     let rec a (b : int) : int =let x = fo a in b + 1 in
+     16 |     (a 1) + (fo b)
+
+    Invalid type(s).
+    Expected: "optioni", but got: "int -> int". |}]
+
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail16.mligo") ] ;
