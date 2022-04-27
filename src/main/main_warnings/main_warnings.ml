@@ -30,8 +30,7 @@ let pp : display_format:string display_format ->
     | `Michelson_typecheck_failed_with_different_protocol user_proto ->
       let open Environment.Protocols in
       Format.fprintf f
-        "@[<hv>Warning: You compiled your contract with a protocol different from the one we internally use for typechecking the produced Michelson contract.
-         @ you compiled with %s and we internally use the next protocol (%s) @.@]"
+        "@[<hv>Warning: You compiled your contract with a different protocol (%s) from the one we internally use for typechecking the produced Michelson contract (%s)@.@]"
          (variant_to_string user_proto)
          (variant_to_string in_use)
     | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
