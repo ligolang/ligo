@@ -133,18 +133,16 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
     return @@ T_sum rows
   )
   | T_record m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
-      let associated_type = evaluate_type ~raise c associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : O.row_element)
-    in
-    let lmap = O.LMap.map aux m.fields in
-    let record : O.rows = match Typing_context.get_record lmap c with
-    | None ->
+    let rows =
       let layout = Option.value ~default:default_layout m.layout in
-      {content=lmap;layout}
-    | Some (_,r) ->  r
+      let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
+        let associated_type = evaluate_type ~raise c associated_type in
+        ({associated_type;michelson_annotation;decl_pos} : O.row_element)
+      in
+      let content = O.LMap.map aux m.fields in
+      O.{ content ; layout }
     in
-    return @@ T_record record
+    return @@ T_record rows
   )
   | T_variable name -> (
     match Typing_context.get_type c name with
