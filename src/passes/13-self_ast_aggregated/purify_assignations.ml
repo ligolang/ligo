@@ -33,14 +33,19 @@ open Ast_aggregated
     3. An anonymous functions doesn't contains effect
     This hypotheis holds as long as we don't have partial evaluation in Pascaligo nor mutable variables in
     cameligo (OCaml `ref`)
+  The solutin is :
   - Inspect rhs to detect purity.
   - If rhs is pure, do nothing.
   - If rhs is not pure, there is two cases
-      a. let variable definition, create (Smin) containing only the var that are writen and make the rhs return a pair (Smin, result), the let var = rhs in e is place
-      by a match rhs' with (Smin, var) -> e
-      b. let function definition, we need also (Sread) the list of mutable variable that are read in the body of the function.
-      Modify the body of the function to match on (Sread) and return (Smin, result). Modify the signature to add
-      (Sread) as parameter. Modify all call to the to add the (Sread) parameter and match on (Smin, result) -> result after application.
+      a. We have a `let variable definition` :
+        - create (Swrite) containing only the var that are write
+        - make the rhs return a pair (Swrite, original result)
+        - replace the `let var = rhs in e` by a `match rhs' with (Swrite, var) -> e`
+      b. We have a `let function definition` :
+        - create (Swrite) and also (Sread) the list of mutable variable that are read in the body of the function.
+        - modify the body of the function to match on (Sread) and return (Swrite, result).
+        - modify the signature to add (Sread) as parameter.
+        - modify all call to the function to add the (Sread) parameter and match on `(Swrite, result)` after application.
       (this really on point hyp 1. and 2.)
 
 
