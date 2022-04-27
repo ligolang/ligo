@@ -4,8 +4,8 @@ open Ast_aggregated
   A Ligo program contains multiple scopes. The main "global" scope, contains everyting
   that have been declared previously.
   Then every rhs, function body (= rhs), matching branches (kind of rhs also) define their own
-  subscope. Wihch means every scope modification (i.e. variable assignations) we be contained inside
-  the rhs and will desapear when parsing the rhs is done, as it doesn't affect the global scope.
+  subscope. Which means every scope modification (i.e. variable assignations) will be contained inside
+  the rhs and will disappear after processing the rhs, as it doesn't affect the global scope.
 
   The assignation effect propagate variable modification outside of the local scope, going up the scope
   until it reaches the scope where the variable was defined.
@@ -30,7 +30,7 @@ open Ast_aggregated
     1. With our current front-end state, we have either purely functional code or purely imperative dialect.
        ie. we can't have `List.map` on a funtion that is not pure (and this won't work)
     2. An impure function can't be partially applied
-    3. An annonymous functions doesn't contains effect
+    3. An anonymous functions doesn't contains effect
     This hypotheis holds as long as we don't have partial evaluation in Pascaligo nor mutable variables in
     cameligo (OCaml `ref`)
   - Inspect rhs to detect purity.
