@@ -250,11 +250,11 @@ let%expect_test _ =
   [%expect{|
     const foo =
       lambda (toto : int) return let toto[@var] = 2 in
-                                 let ()#6 : unit = toto[@var] := 3 in toto
+                                 let ()#2 : unit = toto[@var] := 3 in toto
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
                                       let toto[@var] = 2 in
-                                      let ()#11 : unit = toto[@var] := 3 in toto |}]
+                                      let ()#3 : unit = toto[@var] := 3 in toto |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
@@ -271,7 +271,7 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
-                                      let ()#6 : unit = x[@var] := ADD(x , 1) in
+                                      let ()#2 : unit = x[@var] := ADD(x , 1) in
                                       x in
                                     (bar)@(42) |}]
 
@@ -289,15 +289,15 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let ()#9 : unit =
-                                      let fun_while_loop#10 =
-                                        rec (fun_while_loop#11:unit -> unit => lambda (()#12 : unit) return
+                                    let ()#5 : unit =
+                                      let fun_while_loop#2 =
+                                        rec (fun_while_loop#2:unit -> unit => lambda (()#3 : unit) return
                                          match AND(LT(i , x) , GT(b , 0)) with
-                                          | True () -> let ()#13 : unit =
+                                          | True () -> let ()#4 : unit =
                                                          i[@var] := ADD(i , 1) in
-                                                       (fun_while_loop#11)@(unit)
+                                                       (fun_while_loop#2)@(unit)
                                           | False () -> unit ) in
-                                      (fun_while_loop#10)@(unit) in
+                                      (fun_while_loop#2)@(unit) in
                                     i |}]
 
 let%expect_test _ =

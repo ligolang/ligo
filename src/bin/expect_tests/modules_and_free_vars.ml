@@ -17,13 +17,13 @@ type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
 const main =
-  lambda (gen#9 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
-   match gen#9 with
-    | ( action , _#11 ) ->
+  lambda (gen#2 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
+   match gen#2 with
+    | ( action , _#3 ) ->
     ( LIST_EMPTY() ,  match action with
-                       | Decrement unit_proj#14 ->
+                       | Decrement unit_proj#5 ->
                          amt
-                       | Increment unit_proj#15 ->
+                       | Increment unit_proj#6 ->
                          bal ) |}]
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "nested_modules.mligo" ] ;
@@ -44,13 +44,13 @@ type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
 const main =
-  lambda (gen#9 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
-   match gen#9 with
-    | ( action , _#11 ) ->
+  lambda (gen#2 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
+   match gen#2 with
+    | ( action , _#3 ) ->
     ( LIST_EMPTY() ,  match action with
-                       | Decrement unit_proj#14 ->
+                       | Decrement unit_proj#5 ->
                          amt
-                       | Increment unit_proj#15 ->
+                       | Increment unit_proj#6 ->
                          bal ) |}]
 
 let%expect_test _ =
@@ -78,11 +78,11 @@ type parameter = sum[Decrement -> unit , Increment -> unit]
 type storage = tez
 type return = ( list (operation) * tez )
 const main =
-  lambda (gen#14 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
-   match gen#14 with
-    | ( action , _#16 ) ->
+  lambda (gen#2 : ( sum[Decrement -> unit , Increment -> unit] * tez )) return
+   match gen#2 with
+    | ( action , _#3 ) ->
     ( LIST_EMPTY() ,  match action with
-                       | Decrement unit_proj#19 ->
+                       | Decrement unit_proj#5 ->
                          1000000mutez
-                       | Increment unit_proj#20 ->
+                       | Increment unit_proj#6 ->
                          used ) |}]

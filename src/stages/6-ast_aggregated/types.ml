@@ -78,11 +78,6 @@ and expression = {
 
 and expr = expression
 
-and map_kv = {
-    key : expression ;
-    value : expression ;
-  }
-
 and expression_label_map = expression label_map
 and expression_list = expression list
 

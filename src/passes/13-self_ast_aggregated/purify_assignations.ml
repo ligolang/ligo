@@ -568,6 +568,7 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
 
 
 let expression e =
+  let e = Deduplicate_binders.expression e in
   (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in
   (* Format.printf "test: %a\n%!" Effect.pp effect; *)

@@ -86,24 +86,24 @@ let%expect_test _ =
     const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
-      lambda (gen#22 : ( int * int )) return  match gen#22 with
-                                               | ( p , s ) ->
-                                               let s = ADD(ADD(p , s) ,
-                                               toto) in ( LIST_EMPTY() , s ) |}]
+      lambda (gen#5 : ( int * int )) return  match gen#5 with
+                                              | ( p , s ) ->
+                                              let s = ADD(ADD(p , s) ,
+                                              toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let #../../test/contracts/build/A.mligo#toto#177 = L(1) in
-let #../../test/contracts/build/B.mligo#titi#326 =
-  ADD(#../../test/contracts/build/A.mligo#toto#177 , L(42)) in
-let #../../test/contracts/build/C.mligo#tata#771 =
-  ADD(#../../test/contracts/build/A.mligo#toto#177 ,
-      #../../test/contracts/build/B.mligo#titi#326) in
+let #../../test/contracts/build/A.mligo#toto#1407 = L(1) in
+let #../../test/contracts/build/B.mligo#titi#1784 =
+  ADD(#../../test/contracts/build/A.mligo#toto#1407 , L(42)) in
+let #../../test/contracts/build/C.mligo#tata#2917 =
+  ADD(#../../test/contracts/build/A.mligo#toto#1407 ,
+      #../../test/contracts/build/B.mligo#titi#1784) in
 let x =
-  ADD(ADD(L(3) , #../../test/contracts/build/A.mligo#toto#177) ,
-      #../../test/contracts/build/B.mligo#titi#326) in
-let toto = ADD(L(10) , #../../test/contracts/build/A.mligo#toto#177) in
+  ADD(ADD(L(3) , #../../test/contracts/build/A.mligo#toto#1407) ,
+      #../../test/contracts/build/B.mligo#titi#1784) in
+let toto = ADD(L(10) , #../../test/contracts/build/A.mligo#toto#1407) in
 L(unit) |}]
 
 let%expect_test _ =
