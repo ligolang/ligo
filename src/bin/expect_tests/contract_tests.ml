@@ -1165,7 +1165,7 @@ let%expect_test _ =
   [%expect {|
 { parameter
     (or (ticket %receive unit)
-        (pair %send (nat %amount) (contract %destination (ticket unit)) (address %ticketer))) ;
+        (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
   storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
   code { PUSH mutez 0 ;
          AMOUNT ;
@@ -1215,7 +1215,7 @@ let%expect_test _ =
                  CDR ;
                  CDR ;
                  DUP 4 ;
-                 CAR ;
+                 GET 3 ;
                  DUP ;
                  DIG 2 ;
                  SUB ;
@@ -1235,7 +1235,7 @@ let%expect_test _ =
                      GET_AND_UPDATE ;
                      DROP ;
                      DIG 2 ;
-                     GET 3 ;
+                     CAR ;
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
@@ -1260,7 +1260,7 @@ Hint: replace it by "_ticket" to prevent this warning.
 
 { parameter
     (or (ticket %burn unit)
-        (pair %mint (nat %amount) (contract %destination (ticket unit)))) ;
+        (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
   storage address ;
   code { PUSH mutez 0 ;
          AMOUNT ;
@@ -1288,10 +1288,10 @@ Hint: replace it by "_ticket" to prevent this warning.
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              DUP ;
-             CDR ;
+             CAR ;
              PUSH mutez 0 ;
              DIG 2 ;
-             CAR ;
+             CDR ;
              UNIT ;
              TICKET ;
              TRANSFER_TOKENS ;
@@ -2158,9 +2158,9 @@ let%expect_test _ =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    { parameter (pair (int %w) (int %x) (int %y) (int %z)) ;
+    { parameter (pair (int %x) (int %y) (int %z) (int %w)) ;
       storage int ;
-      code { CAR ; UNPAIR 4 ; DUG 3 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
+      code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 (* warning unused variables example *)
 let%expect_test _ =
@@ -2490,7 +2490,7 @@ let%expect_test _ =
   [%expect {|
 { parameter
     (or (ticket %receive unit)
-        (pair %send (nat %amount) (contract %destination (ticket unit)) (address %ticketer))) ;
+        (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
   storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
   code { PUSH mutez 0 ;
          AMOUNT ;
@@ -2540,7 +2540,7 @@ let%expect_test _ =
                  CDR ;
                  CDR ;
                  DUP 4 ;
-                 CAR ;
+                 GET 3 ;
                  DUP ;
                  DIG 2 ;
                  SUB ;
@@ -2560,7 +2560,7 @@ let%expect_test _ =
                      GET_AND_UPDATE ;
                      DROP ;
                      DIG 2 ;
-                     GET 3 ;
+                     CAR ;
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;

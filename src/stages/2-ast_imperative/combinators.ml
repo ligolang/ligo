@@ -55,7 +55,6 @@ let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
 let t_record_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
-  let fields = List.sort ~compare:(fun (name,_,_) (name',_,_) -> String.compare name name') fields in
   let fields = List.mapi ~f:aux fields in
   t_record ?loc {fields; attributes=attr}
 let t_record_ez ?loc ?attr lst =
