@@ -341,5 +341,5 @@ let compile_main ~raise ~add_warning f () =
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : _ Tezos_utils.Michelson.michelson =
     (* fails if the given entry point is not a valid contract *)
-    Ligo_compile.Of_michelson.build_contract ~raise michelson_prg [] in
+    Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version:Environment.Protocols.in_use michelson_prg [] in
   ()
