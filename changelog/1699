@@ -1,0 +1,6 @@
+author: melwyn95
+description: 1. Fix bug in test interpreter related handling of option values\n2.
+  Improve typing of records when type annotation is not provided
+merge_request: '1699'
+title: Fix `option` handling in michelson_to_value
+type: fixed
