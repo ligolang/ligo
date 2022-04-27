@@ -362,7 +362,7 @@ let get_record_fields (t : type_expression) : (label * type_expression) list opt
   match get_t_record t with
   | None -> None
   | Some record ->
-    let lst = (LMap.to_kv_list (record.content)) in
+    let lst = LMap.to_kv_list record.content in
     Some (List.map ~f:(fun (k,x) -> k,x.associated_type) lst)
 
 let get_sum_label_type (t : type_expression) (label : label) : type_expression option =

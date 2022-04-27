@@ -31,18 +31,6 @@ let warn_ambiguous_constructor ~add_warning loc (var_chosen,c_arg_t) ignored =
   | Some (var_ignored,_,_,_) -> add_warning (`Checking_ambiguous_contructor (loc,var_chosen,var_ignored))
   | None -> ()
 
-let rec find_nested_record_types (t : O.type_expression) = 
-  match t.type_content with
-  | T_variable _ -> []
-  | T_constant {parameters;_} -> List.fold_left parameters ~init:[] ~f:(fun acc p -> acc @ find_nested_record_types p)
-  | T_sum {content;_} -> O.LMap.fold (fun _ (row : O.row_element) acc -> acc @ find_nested_record_types row.associated_type) content []
-  | T_record {content;_} -> O.LMap.fold (fun _ (row : O.row_element) acc -> acc @ find_nested_record_types row.associated_type) content [(O.TypeVar.fresh (),t)]
-  | T_arrow {type1;type2} -> find_nested_record_types type1 @ find_nested_record_types type2
-  | T_module_accessor _ -> []
-  | T_singleton _ -> []
-  | T_abstraction {type_;_} -> find_nested_record_types type_
-  | T_for_all {type_;_} -> find_nested_record_types type_
-
 let rec type_module_expr ~raise ~add_warning ~init_context ~options : I.module_expr -> typing_context * O.module_expr = fun m_expr ->
   let return x =
     let ret = Location.wrap ~loc:m_expr.location x in
@@ -85,10 +73,6 @@ match Location.unwrap d with
   | Declaration_type {type_binder ; type_expr; type_attr={public} } -> (
     let tv = evaluate_type ~raise c type_expr in
     let tv = {tv with orig_var = Some type_binder} in
-    (* `find_nested_record_types nested` will find nested record types, by adding these record types to the
-       typing context will help when we do `Typing_context.get_record` when no type annotation is provided *)
-    let nested_records = find_nested_record_types tv in
-    let c = List.fold_left nested_records ~init:c ~f:(fun c (binder,t) -> Typing_context.add_type c binder t) in
     let env' = Typing_context.add_type c type_binder tv in
     return env' @@ Declaration_type { type_binder ; type_expr = tv; type_attr={public} }
   )
@@ -149,18 +133,16 @@ and evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_expre
     return @@ T_sum rows
   )
   | T_record m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
-      let associated_type = evaluate_type ~raise c associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : O.row_element)
-    in
-    let lmap = O.LMap.map aux m.fields in
-    let record : O.rows = match Typing_context.get_record lmap c with
-    | None ->
+    let rows =
       let layout = Option.value ~default:default_layout m.layout in
-      {content=lmap;layout}
-    | Some (_,r) ->  r
+      let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
+        let associated_type = evaluate_type ~raise c associated_type in
+        ({associated_type;michelson_annotation;decl_pos} : O.row_element)
+      in
+      let content = O.LMap.map aux m.fields in
+      O.{ content ; layout }
     in
-    return @@ T_record record
+    return @@ T_record rows
   )
   | T_variable name -> (
     match Typing_context.get_type c name with
