@@ -119,6 +119,64 @@ let apply_table_expr table (e : AST.expression) =
                   | _ -> return e.expression_content) () e in
   e
 
+let rec subst_external_type et t (u : AST.type_expression) =
+  let self = subst_external_type in
+  match u.type_content with
+  | T_arrow {type1;type2} ->
+     let type1 = self et t type1 in
+     let type2 = self et t type2 in
+     { u with type_content = T_arrow {type1;type2} }
+  | T_for_all {ty_binder;kind;type_} ->
+     let type_ = self et t type_ in
+     { u with type_content = T_for_all {ty_binder;kind;type_} }
+  | T_constant { injection = External _ ; parameters = _ ; _ } when AST.Helpers.type_expression_eq (et, u) ->
+     t
+  | T_constant {language;injection;parameters} ->
+     let parameters = List.map ~f:(self et t) parameters in
+     { u with type_content = T_constant {language;injection;parameters} }
+  | T_sum {content; layout} ->
+     let content = AST.(LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self et t associated_type; michelson_annotation;decl_pos}) content) in
+     { u with type_content = T_sum {content; layout} }
+  | T_record {content; layout} ->
+     let content = AST.(LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
+                       {associated_type = self et t associated_type; michelson_annotation;decl_pos}) content) in
+     { u with type_content = T_record {content; layout} }
+  | _ -> u
+
+
+let subst_external_term et t (e : AST.expression) =
+  let (), e = fold_map_expression (fun () e ->
+                  let e = { e with type_expression = subst_external_type et t e.type_expression } in
+                  let return expression_content = (true, (), { e with expression_content }) in
+                  match e.expression_content with
+                  | E_type_inst { forall ; type_ } ->
+                     return @@ E_type_inst { forall ; type_ = subst_external_type et t type_ }
+                  | E_recursive { fun_name ; fun_type ; lambda } ->
+                     let fun_type =  subst_external_type et t fun_type in
+                     return @@ E_recursive { fun_name ; fun_type ; lambda }
+                  | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
+                     return @@ E_matching { matchee ; cases = Match_variant { cases ; tv =  subst_external_type et t tv } }
+                  | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
+                     let fields = AST.LMap.map (fun (casev, caset) -> (casev,  subst_external_type et t caset)) fields in
+                     return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = subst_external_type et t tv } }
+                  | _ -> return e.expression_content) () e in
+  e
+
+(* A term might have remaining external typer usages around. If the
+   type we are monomorphising is of the form
+     `t1 -> t2 -> ... -> _ external_type`
+   then we will replaced `_ external_type` from the value `u` we get
+   from the `typed` argument, which is of the form
+     `u1 -> u2 -> ... -> u` *)
+let evaluate_external_typer typed rhs =
+  let l, external_type = AST.Helpers.destruct_arrows rhs.AST.type_expression in
+  match external_type.type_content with
+  | T_constant { injection = External _ ; parameters = _ ; _ } ->
+     let _, external_type_for = AST.Helpers.destruct_arrows_n typed (List.length l) in
+     subst_external_term external_type external_type_for rhs
+  | _ -> rhs
+
 let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.expression = fun data expr ->
   let self = mono_polymorphic_expression in
   let return ec = { expr with expression_content = ec } in
@@ -162,6 +220,8 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
            | _ -> rhs, data in
          let rhs = apply_table_expr table rhs in
          let data, rhs = self data rhs in
+         let rhs = evaluate_external_typer typed rhs in
+         let rhs = { rhs with type_expression = typed } in
          (AST.e_a_let_in let_binder rhs let_result attr, data) in
        let data, let_result = self data let_result in
        let instances, data = Data.instances_lookup_and_remove (Longident.of_variable let_binder) data in

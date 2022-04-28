@@ -254,6 +254,7 @@ module Command = struct
     | Compile_contract_from_file (source_file, entry_point, views) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
+      let options = Compiler_options.set_test_flag options false in
       let contract_code =
         Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
       let size =

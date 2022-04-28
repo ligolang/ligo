@@ -44,12 +44,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
-  [%expect{|
+  [%expect{xxx|
     const test_foo =
       lambda (x) return  match x with
                           | Fail _#3 ->
                             "" | Success _#2 ->
-                                 ""[@private] |}]
+                                 ""[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;

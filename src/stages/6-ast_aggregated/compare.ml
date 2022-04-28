@@ -13,6 +13,7 @@ let cmp4 f a1 b1 g a2 b2 h a3 b3 i a4 b4 = match f a1 b1 with 0 -> (match g a2 b
 let cmp5 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> j a5 b5 | c -> c) | c -> c) | c -> c) | c -> c
 let cmp6 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> k a6 b6 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 let cmp8 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 m a8 b8 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> (match k a6 b6 with 0 -> (match l a7 b7 with 0 -> m a8 b8 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
+let cmp9 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 m a8 b8 n a9 b9 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> (match k a6 b6 with 0 -> (match l a7 b7 with 0 -> (match m a8 b8 with 0 -> n a9 b9 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 let cmp7 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 k a6 b6 l a7 b7 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> (match j a5 b5 with 0 -> (match k a6 b6 with 0 -> l a7 b7 | c -> c) | c -> c) | c -> c) | c -> c) | c -> c) | c -> c
 
 let cmp_pair f g (a1, a2) (b1, b2) = cmp2 f a1 b1 g a2 b2
@@ -190,8 +191,8 @@ and recursive ({fun_name=fna;fun_type=fta;lambda=la}) {fun_name=fnb;fun_type=ftb
     type_expression     fta ftb
     lambda               la  lb
 
-and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma;view=va;public=pua }} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb;view=vb;public=pub}} =
-  cmp7
+and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nma;view=va;public=pua;thunk=ta;hidden=ha}} {let_binder=bb;rhs=rb;let_result=lb;attr = { inline=ab;no_mutation=nmb;view=vb;public=pub;thunk=tb;hidden=hb}} =
+  cmp9
     expression_variable ba bb
     expression ra rb
     expression la lb
@@ -199,6 +200,8 @@ and let_in {let_binder=ba;rhs=ra;let_result=la;attr = { inline=aa;no_mutation=nm
     bool  nma nmb
     bool  va vb
     bool  pua pub
+    bool  ta tb
+    bool  ha hb
 
 and type_in {type_binder=ba;rhs=ra;let_result=la} {type_binder=bb;rhs=rb;let_result=lb} =
   cmp3

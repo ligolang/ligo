@@ -47,7 +47,9 @@ let rec is_dup (t : type_expression) =
     Sapling_state       |
     (* Test primitives are dup *)
     Typed_address       |
-    Mutation
+    Mutation            |
+    (* Externals are dup *)
+    External _
   ); _} ->
      true
   | T_constant {injection=

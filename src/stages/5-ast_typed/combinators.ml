@@ -44,6 +44,11 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
 
+let t_ext_failwith ?loc ?core t : type_expression = t_constant ?loc ?core (External "failwith") [t]
+let t_ext_int ?loc ?core t : type_expression = t_constant ?loc ?core (External "int") [t]
+let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "ediv") [t; t']
+let t_ext_u_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "u_ediv") [t; t']
+
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
 
@@ -83,6 +88,10 @@ let t_triplet ?loc ?core a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
+
+let t_tuple ?loc ?core xs : type_expression =
+  ez_t_record ?loc ?core @@
+    List.mapi ~f:(fun i t -> (Label (string_of_int i),{associated_type=t;michelson_annotation=None ; decl_pos = i})) xs
 
 let t_sum ?loc ?core ~layout content : type_expression = t_sum ?loc { content ; layout } ?type_meta:core ()
 let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =

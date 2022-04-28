@@ -12,6 +12,7 @@ type all =
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
+  | `Jsligo_deprecated_failwith_no_return of Location.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -62,6 +63,9 @@ let pp : display_format:string display_format ->
         Format.fprintf f
           "@[<hv>%a@ Warning: %a is not recognize as a polymorphic variable anymore. If you want to make a polymorphic function, please consult the online documentation @.@]"
           Snippet.pp loc Stage_common.Types.TypeVar.pp name
+    | `Jsligo_deprecated_failwith_no_return loc ->
+      Format.fprintf f "@[<hv>%a@.Deprecated `failwith` without `return`: `failwith` is just a function.@.Please add an explicit `return` before `failwith` if you meant the built-in `failwith`.@.For now, compilation proceeds adding such `return` automatically.@.@]"
+      Snippet.pp loc
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
   let json_warning ~stage ~content =
@@ -157,6 +161,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("message", message);
       ("location", loc);
     ] in
+    json_warning ~stage ~content
+  | `Jsligo_deprecated_failwith_no_return loc ->
+    let message = `String "deprecated use of failwith without return" in
+    let stage   = "lexer" in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
     json_warning ~stage ~content
 
 let format = {pp;to_json}

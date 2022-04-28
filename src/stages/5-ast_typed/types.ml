@@ -70,7 +70,7 @@ and matching_expr =
   | Match_variant of matching_content_variant
   | Match_record of matching_content_record
 
-and type_attribute = { public : bool }
+and type_attribute = { public : bool ; hidden : bool }
 and module_attribute = type_attribute
 
 and program              = module_

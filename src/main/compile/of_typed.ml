@@ -88,7 +88,7 @@ let list_declarations (m : Ast_typed.module_) : expression_variable list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> binder.var::prev
+      | Declaration_constant {binder;attr;_} when attr.public -> binder.var::prev
       | _ -> prev)
     ~init:[] m
 
@@ -106,6 +106,6 @@ let list_mod_declarations (m : Ast_typed.module_) : module_variable list =
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_module {module_binder;_} -> module_binder::prev
+      | Declaration_module {module_binder;module_attr;_} when module_attr.public -> module_binder::prev
       | _ -> prev)
     ~init:[] m

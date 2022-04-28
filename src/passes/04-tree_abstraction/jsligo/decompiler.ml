@@ -183,6 +183,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_variable _
   | E_literal _
   | E_constant _
+  | E_module_accessor _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"

@@ -6,6 +6,11 @@ module PP_helpers = Simple_utils.PP_helpers
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
   fun ~display_format f a ->
+  let is_dummy_location loc =
+    Location.is_dummy_or_generated loc ||
+      match Location.get_file loc with
+      | Some r -> String.equal r#file ""
+      | None -> true in
   match display_format with
   | Human_readable | Dev -> (
     match a with
@@ -184,10 +189,17 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
     | `Main_interpret_target_lang_error (loc, calltrace, errs) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
-        Snippet.pp loc
-        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
-        (PP_helpers.list_sep_d Location.pp) calltrace
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
+           Snippet.pp loc
+           (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+           (PP_helpers.list_sep_d Location.pp) calltrace
+       else
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@.%a@]"
+           Snippet.pp loc
+           (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+           Snippet.pp (List.hd_exn calltrace)
+           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
         Snippet.pp loc
@@ -208,19 +220,33 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         reason
     | `Main_interpret_meta_lang_eval (loc,calltrace,reason) ->
-      Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@]"
-        Snippet.pp loc
-        reason
-        (PP_helpers.list_sep_d Location.pp) calltrace
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+        Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@]"
+          Snippet.pp loc
+          reason
+          (PP_helpers.list_sep_d Location.pp) calltrace
+      else
+        Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@.%a@]"
+          Snippet.pp loc
+          reason
+          Snippet.pp (List.hd_exn calltrace)
+          (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_meta_lang_failwith (loc,[],value) ->
       Format.fprintf f "@[<hv>%a@.Test failed with %a@]"
         Snippet.pp loc
         Ligo_interpreter.PP.pp_value value
     | `Main_interpret_meta_lang_failwith (loc,calltrace,value) ->
-      Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@]"
-        Snippet.pp loc
-        Ligo_interpreter.PP.pp_value value
-        (PP_helpers.list_sep_d Location.pp) calltrace
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+        Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value value
+          (PP_helpers.list_sep_d Location.pp) calltrace
+      else
+        Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value value
+           Snippet.pp (List.hd_exn calltrace)
+           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_generic (loc,desc) ->
       Format.fprintf f "@[<hv>%a@.%s@]"
         Snippet.pp loc

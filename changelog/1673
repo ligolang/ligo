@@ -1,0 +1,6 @@
+author: er433
+description: '## Breaking changes\n\n- Less lenient on the usage of `Map` and `Big_map`
+  functions (e.g. `Map.update` will only work on `map`s and not on `big_map`s as before)'
+merge_request: '1673'
+title: 'Value environment: standard library using `%external`'
+type: internal
