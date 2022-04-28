@@ -16,11 +16,9 @@ extra-deps:
     - lsp
     - lsp-test
 
-- git: https://github.com/serokell/haskell-tree-sitter.git
-  commit: 27c33c98b00f8961c8619de2e3771a1932501ada
-  subdirs:
-    - tree-sitter
-  # nix-sha256: 18axg1qnwgyljczq5chw7m2rsbplq3ny3pl770xi0102l1x1gj8a
+- git: https://github.com/serokell/tree-sitter.git
+  commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+  # nix-sha256: 02ahzy1y38pa4mdm2cfwp8b4alsh29xdil3zd8km6w3lfmywqyw2
 - git: https://github.com/co-log/co-log-core.git
   commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
   # nix-sha256: 04hr72vrcyz02gxqlrbizbscjz0ykqgxk42kl4ccvzj864han6b3
