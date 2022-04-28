@@ -12,7 +12,7 @@ type all =
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
-  | `Michelson_typecheck_failed_with_different_protocol of Environment.Protocols.t
+  | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -27,12 +27,17 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Michelson_typecheck_failed_with_different_protocol user_proto ->
+    | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) -> (
       let open Environment.Protocols in
       Format.fprintf f
-        "@[<hv>Warning: You compiled your contract with a different protocol (%s) from the one we internally use for typechecking the produced Michelson contract (%s)@.@]"
-         (variant_to_string user_proto)
-         (variant_to_string in_use)
+        "@[<hv>Warning: Error(s) occurred while type checking the produced michelson contract:@.%a@. 
+        Note: You compiled your contract with protocol %s although we internally use protocol %s to typecheck the produced Michelson contract 
+        so you might want to ignore this error if related to a breaking change in protocol %s@.@]"
+          (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+          (variant_to_string user_proto)
+          (variant_to_string in_use)
+          (variant_to_string in_use)
+    )
     | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
       Format.fprintf f "@[<hv>%a@ Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
@@ -78,7 +83,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Michelson_typecheck_failed_with_different_protocol user_proto ->
+  | `Michelson_typecheck_failed_with_different_protocol (user_proto,_) ->
     let open Environment.Protocols in
     let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in
     let stage   = "Main" in

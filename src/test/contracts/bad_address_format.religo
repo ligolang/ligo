@@ -1,2 +1,2 @@
-let main = (parameter : int, storage : address) =>
+let main = (_ : int, _ : address) =>
   ([] : list (operation), "KT1badaddr" : address);

@@ -70,7 +70,7 @@ let build_contract ~raise ~add_warning :
         (* Type-check *)
         let () =
           if Environment.Protocols.(not @@ equal protocol_version in_use) then
-            Trace.warn_on_tzresult_lwt ~add_warning (`Michelson_typecheck_failed_with_different_protocol protocol_version) @@
+            Trace.warn_on_tzresult_lwt ~add_warning (fun errs -> `Michelson_typecheck_failed_with_different_protocol (protocol_version, errs)) @@
               Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
           else
             let _ : (_,_) Micheline.Micheline.node =
