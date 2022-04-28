@@ -7,9 +7,9 @@ module Protocols = Protocols
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t = module_
 let pp ppf m = PP.module_ ppf @@ m
-let add_module : ?public:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t = fun ?public module_binder module_ env ->
+let add_module : ?public:unit -> ?hidden:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
   let module_ = Location.wrap @@ Ast_core.M_struct module_ in
-  let new_d = Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public}} in
+  let new_d = Location.wrap @@ Declaration_module {module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
   new_d :: env
 
 let add_declaration decl env = decl :: env
@@ -19,10 +19,10 @@ let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
 
 (* Artefact for build system *)
 type core = Ast_core.module_
-let add_core_module ?public : Ast_core.module_variable -> Ast_core.module_ -> core -> core =
+let add_core_module ?public ?hidden : Ast_core.module_variable -> Ast_core.module_ -> core -> core =
   fun module_binder module_ env ->
     let module_ = Location.wrap @@ Ast_core.M_struct module_ in
-    let new_d = Location.wrap @@ Ast_core.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public}} in
+    let new_d = Location.wrap @@ Ast_core.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
     new_d :: env
 
 let to_program env = List.rev env
@@ -72,6 +72,10 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_bls12_381_fr       , t_bls12_381_fr                       ()) ;
     (v_never              , t_never                              ()) ;
     (v_ticket             , t_abstraction1 Ticket              star) ;
+    (v_external_failwith  , t_abstraction1 (External "failwith")      star) ;
+    (v_external_int       , t_abstraction1 (External "int")           star) ;
+    (v_external_ediv      , t_abstraction2 (External "ediv")     star star) ;
+    (v_external_u_ediv    , t_abstraction2 (External "u_ediv")     star star) ;
 ]
 
 let hangzhou_extra : (type_variable * type_expression) list = [
@@ -92,7 +96,7 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_mutation         , t_constant Mutation                 []) ;
   ]
 
-let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true}})
+let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}})
 
 let default : Protocols.t -> t = function
   | Protocols.Ithaca -> of_list_type hangzhou_types

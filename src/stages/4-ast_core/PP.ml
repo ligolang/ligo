@@ -60,9 +60,10 @@ let rec constraint_identifier_unicode (ci : Int64.t) =
   in
   if Int64.equal ci 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
 
-let t_attributes ppf ({ public } : type_attribute) =
-  fprintf ppf "%a"
+let t_attributes ppf ({ public ; hidden } : type_attribute) =
+  fprintf ppf "%a%a"
     option_public public
+    option_hidden hidden
 let m_attributes ppf x = t_attributes ppf x
 
 let constraint_identifier_short ppf x =

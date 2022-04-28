@@ -28,7 +28,7 @@ let label_map f lmap =
 let layout = function
   | L_comb -> `List [ `String "L_comb"; `Null ]
   | L_tree -> `List [ `String "L_tree"; `Null ]
-let type_and_module_attr ({ public } : type_attribute) = `Assoc [ ("public", `Bool public) ]
+let type_and_module_attr ({ public ; hidden } : type_attribute) = `Assoc [ ("public", `Bool public) ; ("hidden", `Bool hidden) ]
 
 let rec type_expression {type_content=tc;type_meta;location;orig_var} =
   `Assoc [
@@ -135,22 +135,26 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and attribute {inline;no_mutation;public;view} =
+and attribute {inline;no_mutation;public;view;thunk;hidden} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
     ("view", `Bool view);
     ("public", `Bool public);
+    ("thunk", `Bool thunk);
+    ("hidden", `Bool hidden);
   ]
 
-and type_attribute ({public}: type_attribute) =
+and type_attribute ({public ; hidden}: type_attribute) =
   `Assoc [
-    ("public", `Bool public)
+    ("public", `Bool public) ;
+    ("hidden", `Bool hidden)
   ]
 
-and module_attribute ({public}: module_attribute) =
+and module_attribute ({public ; hidden}: module_attribute) =
   `Assoc [
-    ("public", `Bool public)
+    ("public", `Bool public) ;
+    ("hidden", `Bool hidden)
   ]
 
 

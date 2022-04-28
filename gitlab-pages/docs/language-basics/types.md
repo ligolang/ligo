@@ -354,7 +354,7 @@ type return_ = [list<operation>, storage];
 let back = ([param, store] : [unit, storage]) : return_ => {
   let no_op : list<operation> = list([]);
   if (Tezos.now > store.deadline) {
-    failwith ("Deadline passed.") as return_; // Annotation
+    return failwith ("Deadline passed.") as return_; // Annotation
   }
   else {
     return match(Map.find_opt (sender, store.backers), {

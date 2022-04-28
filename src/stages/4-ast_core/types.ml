@@ -8,7 +8,7 @@ type sugar_expression_option = Ast_sugar.expression option
 
 type string_option = string option
 
-type type_attribute = { public: bool }
+type type_attribute = { public: bool ; hidden : bool }
 and module_attribute = type_attribute
 
 and module_              = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declarations'

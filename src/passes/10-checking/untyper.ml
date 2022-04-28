@@ -174,9 +174,12 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
   | E_type_inst {forall;type_=type_inst} ->
     match forall.type_expression.type_content with
     | T_for_all {ty_binder;type_;kind=_} ->
-        let type_ = Ast_typed.Helpers.subst_type ty_binder type_inst type_ in
-        let forall = { forall with type_expression = type_ } in
-        untype_expression forall
+      let type_ = Ast_typed.Helpers.subst_type ty_binder type_inst type_ in
+      let forall = { forall with type_expression = type_ } in
+      untype_expression forall
+    | T_arrow _ ->
+      (* This case is used for external typers *)
+      untype_expression forall
     | _ ->
       failwith "Impossible case: cannot untype a type instance of a non polymorphic type"
 
@@ -201,15 +204,15 @@ and untype_declaration_constant : (O.expression -> I.expression) -> O.declaratio
     I.{binder;attr;expr;}
 
 and untype_declaration_type : O.declaration_type -> I.declaration_type =
-  fun O.{type_binder; type_expr; type_attr={public}} ->
+  fun O.{type_binder; type_expr; type_attr={public;hidden}} ->
     let type_expr = untype_type_expression type_expr in
-    let type_attr = (I.{public}: I.type_attribute) in
+    let type_attr = (I.{public;hidden}: I.type_attribute) in
     I.{type_binder; type_expr; type_attr}
 
 and untype_declaration_module : O.declaration_module -> I.declaration_module =
-  fun O.{module_binder; module_; module_attr={public}} ->
+  fun O.{module_binder; module_; module_attr={public;hidden}} ->
     let module_ = untype_module_expr module_ in
-    let module_attr = (I.{public}: I.module_attribute) in
+    let module_attr = (I.{public;hidden}: I.module_attribute) in
     I.{module_binder; module_ ; module_attr}
       
 and untype_declaration =

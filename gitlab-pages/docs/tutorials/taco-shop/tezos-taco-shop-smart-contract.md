@@ -654,7 +654,7 @@ let buy_taco3 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
   if (Tezos.amount != current_purchase_price) {
-    failwith ("Sorry, the taco you are trying to purchase has a different price") as return_
+    return failwith ("Sorry, the taco you are trying to purchase has a different price") as return_
   } else {
     /* Update the storage decreasing the stock by 1n */
     let taco_shop_storage = Map.update (

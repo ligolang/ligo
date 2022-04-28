@@ -1100,7 +1100,11 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_}} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
+      let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
+      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
+    )
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
     )

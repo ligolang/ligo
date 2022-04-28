@@ -156,9 +156,11 @@ and expression_content ppf (ec: expression_content) =
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; thunk = _ ; hidden = false } } ->
       fprintf ppf "@[<h>let %a = %a%a%a in@.%a@]" expression_variable let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
+  | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true} } ->
+      fprintf ppf "@[<h>%a@]" expression let_result
   | E_type_in   {type_binder; rhs; let_result} ->
       fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
         type_variable type_binder

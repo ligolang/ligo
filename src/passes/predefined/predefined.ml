@@ -41,188 +41,33 @@ module Tree_abstraction = struct
   *)
   let pseudo_modules x =
     match x with
-    | "Tezos.voting_power"       -> some_const C_VOTING_POWER
-    | "Tezos.total_voting_power" -> some_const C_TOTAL_VOTING_POWER
-    | "Tezos.chain_id"           -> some_const C_CHAIN_ID
-    | "Tezos.balance"            -> some_const C_BALANCE
-    | "Tezos.now"                -> some_const C_NOW
-    | "Tezos.amount"             -> some_const C_AMOUNT
-    | "Tezos.sender"             -> some_const C_SENDER
-    | "Tezos.address"            -> some_const C_ADDRESS
     | "Tezos.self"               -> some_const C_SELF
-    | "Tezos.self_address"       -> some_const C_SELF_ADDRESS
-    | "Tezos.implicit_account"   -> some_const C_IMPLICIT_ACCOUNT
-    | "Tezos.source"             -> some_const C_SOURCE
-    | "Tezos.failwith"           -> some_const C_FAILWITH
     | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
-    | "Tezos.transaction"        -> some_const C_CALL
-    | "Tezos.set_delegate"       -> some_const C_SET_DELEGATE
-    | "Tezos.get_contract_with_error" -> some_const C_CONTRACT_WITH_ERROR
-    | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
-    | "Tezos.level"              -> some_const C_LEVEL
-    | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
-    | "Tezos.never"              -> some_const C_NEVER
-    | "Tezos.open_chest"         -> some_const C_OPEN_CHEST
-    | "Tezos.call_view"          -> some_const C_VIEW
-    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
     | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
 
-    (* Tickets *)
-    | "Tezos.create_ticket" -> some_const C_TICKET
-    | "Tezos.join_tickets" -> some_const C_JOIN_TICKET
-    | "Tezos.split_ticket" -> some_const C_SPLIT_TICKET
-    | "Tezos.read_ticket" -> some_const C_READ_TICKET
-
-    (* Crypto module *)
-
-    | "Crypto.check"    -> some_const C_CHECK_SIGNATURE
-    | "Crypto.hash_key" -> some_const C_HASH_KEY
-    | "Crypto.blake2b"  -> some_const C_BLAKE2b
-    | "Crypto.sha256"   -> some_const C_SHA256
-    | "Crypto.sha512"   -> some_const C_SHA512
-    | "Crypto.sha3"     -> some_const C_SHA3
-    | "Crypto.keccak"   -> some_const C_KECCAK
-
-    (* Bytes module *)
-
-    | "Bytes.pack"   -> some_const C_BYTES_PACK
-    | "Bytes.unpack" -> some_const C_BYTES_UNPACK
-    | "Bytes.length" -> some_const C_SIZE
-    | "Bytes.concat" -> some_const C_CONCAT
-    | "Bytes.sub"    -> some_const C_SLICE
-
     (* Options module *)
-
-    | "Option.unopt"            -> some_const C_UNOPT
-    | "Option.unopt_with_error" -> some_const C_UNOPT_WITH_ERROR
     | "Option.map"              -> some_const C_OPTION_MAP
 
-    (* List module *)
-
-    | "List.length"   -> some_const C_SIZE
-    | "List.size"     -> some_const C_SIZE
-    | "List.iter"     -> some_const C_LIST_ITER
-    | "List.map"      -> some_const C_LIST_MAP
-    | "List.fold"     -> some_const C_LIST_FOLD
-    | "List.fold_left"  -> some_const C_LIST_FOLD_LEFT
-    | "List.fold_right" -> some_const C_LIST_FOLD_RIGHT
-    | "List.head_opt" -> some_const C_LIST_HEAD_OPT
-    | "List.tail_opt" -> some_const C_LIST_TAIL_OPT
-
     (* Set module *)
-
-    | "Set.empty"      -> some_const C_SET_EMPTY
     | "Set.literal"    -> some_const C_SET_LITERAL
-    | "Set.cardinal"   -> some_const C_SIZE
-    | "Set.mem"        -> some_const C_SET_MEM
-    | "Set.add"        -> some_const C_SET_ADD
-    | "Set.remove"     -> some_const C_SET_REMOVE
-    | "Set.iter"       -> some_const C_SET_ITER
-    | "Set.fold"       -> some_const C_SET_FOLD
-    | "Set.fold_asc"   -> some_const C_SET_FOLD
-    | "Set.fold_desc"  -> some_const C_SET_FOLD_DESC
-    | "Set.update"     -> some_const C_SET_UPDATE
 
     (* Map module *)
-
-    | "Map.find_opt" -> some_const C_MAP_FIND_OPT
-    | "Map.update"   -> some_const C_MAP_UPDATE
-    | "Map.iter"     -> some_const C_MAP_ITER
-    | "Map.map"      -> some_const C_MAP_MAP
-    | "Map.fold"     -> some_const C_MAP_FOLD
-    | "Map.mem"      -> some_const C_MAP_MEM
-    | "Map.size"     -> some_const C_SIZE
-    | "Map.add"      -> some_const C_MAP_ADD
-    | "Map.remove"   -> some_const C_MAP_REMOVE
-    | "Map.empty"    -> some_const C_MAP_EMPTY
     | "Map.literal"  -> some_const C_MAP_LITERAL
-    (* Edo linear operator *)
-    | "Map.get_and_update" -> some_const C_MAP_GET_AND_UPDATE
 
     (* Big_map module *)
-
-    | "Big_map.find"     -> some_const C_MAP_FIND
-    | "Big_map.find_opt" -> some_const C_MAP_FIND_OPT
-    | "Big_map.update"   -> some_const C_MAP_UPDATE
     | "Big_map.literal"  -> some_const C_BIG_MAP_LITERAL
-    | "Big_map.empty"    -> some_const C_BIG_MAP_EMPTY
-    | "Big_map.mem"      -> some_const C_MAP_MEM
-    | "Big_map.remove"   -> some_const C_MAP_REMOVE
-    | "Big_map.add"      -> some_const C_MAP_ADD
-    (* Edo linear operator *)
-    | "Big_map.get_and_update" -> some_const C_BIG_MAP_GET_AND_UPDATE
 
     (* Bitwise module *)
-
     | "Bitwise.or"          -> some_const C_OR
     | "Bitwise.and"         -> some_const C_AND
-    | "Bitwise.xor"         -> some_const C_XOR
-    | "Bitwise.shift_left"  -> some_const C_LSL
-    | "Bitwise.shift_right" -> some_const C_LSR
 
     (* String module *)
-
-    | "String.length"   -> some_const C_SIZE
     | "String.size"     -> some_deprecated x C_SIZE  (* Deprecated *)
     | "String.slice"    -> some_deprecated x C_SLICE (* Deprecated *)
-    | "String.sub"      -> some_const C_SLICE
-    | "String.concat"   -> some_const C_CONCAT
-
-    (* Testing module *)
-
-    | "Test.originate" -> some_const C_TEST_ORIGINATE
-    | "Test.originate_from_file" -> some_const C_TEST_ORIGINATE_FROM_FILE
-    | "Test.set_source" -> some_const C_TEST_SET_SOURCE
-    | "Test.set_baker" -> some_const C_TEST_SET_BAKER
-    | "Test.transfer_to_contract" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT
-    | "Test.transfer_to_contract_exn" -> some_const C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
-    | "Test.transfer" -> some_const C_TEST_EXTERNAL_CALL_TO_ADDRESS
-    | "Test.transfer_exn" -> some_const C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-    | "Test.get_storage" -> some_const C_TEST_GET_STORAGE
-    | "Test.get_storage_of_address" -> some_const C_TEST_GET_STORAGE_OF_ADDRESS
-    | "Test.get_balance" -> some_const C_TEST_GET_BALANCE
-    | "Test.michelson_equal" -> some_const C_TEST_MICHELSON_EQUAL
-    | "Test.log" -> some_const C_TEST_LOG
-    | "Test.reset_state" -> some_const C_TEST_STATE_RESET
-    | "Test.bootstrap_contract" -> some_const C_TEST_BOOTSTRAP_CONTRACT
-    | "Test.nth_bootstrap_contract" -> some_const C_TEST_NTH_BOOTSTRAP_CONTRACT
-    | "Test.nth_bootstrap_account" -> some_const C_TEST_GET_NTH_BS
-    | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
-    | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
-    | "Test.mutate_value" -> some_const C_TEST_MUTATE_VALUE
-    | "Test.mutation_test" -> some_const C_TEST_MUTATION_TEST
-    | "Test.mutation_test_all" -> some_const C_TEST_MUTATION_TEST_ALL
-    | "Test.save_mutation" -> some_const C_TEST_SAVE_MUTATION
-    | "Test.run" -> some_const C_TEST_RUN
-    | "Test.eval" -> some_const C_TEST_EVAL
-    | "Test.compile_contract" -> some_const C_TEST_COMPILE_CONTRACT
-    | "Test.decompile" -> some_const C_TEST_DECOMPILE
-    | "Test.to_contract" -> some_const C_TEST_TO_CONTRACT
-    | "Test.nth_bootstrap_typed_address" -> some_const C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
-    | "Test.to_entrypoint" -> some_const C_TEST_TO_ENTRYPOINT
-    | "Test.to_typed_address" -> some_const C_TEST_TO_TYPED_ADDRESS
-    | "Test.random" -> some_const C_TEST_RANDOM
-    | "Test.set_big_map" -> some_const C_TEST_SET_BIG_MAP
-    | "Test.cast_address" -> some_const C_TEST_CAST_ADDRESS
-    | "Test.create_chest" -> some_const C_TEST_CREATE_CHEST
-    | "Test.create_chest_key" -> some_const C_TEST_CREATE_CHEST_KEY
-    | "Test.add_account" -> some_const C_TEST_ADD_ACCOUNT
-    | "Test.new_account" -> some_const C_TEST_NEW_ACCOUNT
-    | "Test.baker_account" -> some_const C_TEST_BAKER_ACCOUNT
-    | "Test.register_delegate" -> some_const C_TEST_REGISTER_DELEGATE
-    | "Test.bake_until_n_cycle_end" -> some_const C_TEST_BAKE_UNTIL_N_CYCLE_END
-    | "Test.get_voting_power" -> some_const C_TEST_GET_VOTING_POWER
-    | "Test.get_total_voting_power" -> some_const C_TEST_GET_TOTAL_VOTING_POWER
-    | "Test.register_constant" -> some_const C_TEST_REGISTER_CONSTANT
-    | "Test.constant_to_michelson_program" -> some_const C_TEST_CONSTANT_TO_MICHELSON
-    | "Test.register_file_constants" -> some_const C_TEST_REGISTER_FILE_CONSTANTS
-    | "Test.save_context" -> some_const C_TEST_PUSH_CONTEXT
-    | "Test.restore_context" -> some_const C_TEST_POP_CONTEXT
-
     (* Operator module *)
 
     | "Operator.neg"   -> some_const C_NEG
@@ -292,138 +137,29 @@ module Tree_abstraction = struct
     | C_CONS -> "Operator.cons"
     | C_NEQ  -> "Operator.neq"
 
-    (* Crypto module *)
-
-    | C_CHECK_SIGNATURE -> "Crypto.check"
-    | C_HASH_KEY        -> "Crypto.hash_key"
-    | C_BLAKE2b         -> "Crypto.blake2b"
-    | C_SHA256          -> "Crypto.sha256"
-    | C_SHA512          -> "Crypto.sha512"
-    | C_SHA3            -> "Crypto.sha3"
-    | C_KECCAK          -> "Crypto.keccak"
-
-    (* Bytes module *)
-
-    | C_BYTES_PACK   -> "Bytes.pack"
-    | C_BYTES_UNPACK -> "Bytes.unpack"
-    | C_SIZE         -> "Bytes.length"
-    | C_CONCAT       -> "Bytes.concat"
-    | C_SLICE        -> "Bytes.sub"
-
-    (* List module *)
-
-    (*  | C_SIZE      -> "List.size" *)
-    | C_LIST_ITER -> "List.iter"
-    | C_LIST_MAP  -> "List.map"
-    | C_LIST_FOLD -> "List.fold"
-    | C_LIST_FOLD_LEFT -> "List.fold_left"
-    | C_LIST_FOLD_RIGHT -> "List.fold_right"
-
     (* Set module *)
 
-    | C_SET_EMPTY      -> "Set.empty"
     | C_SET_LITERAL    -> "Set.literal"
-    (* | C_SIZE        -> "Set.cardinal"*)
-    | C_SET_MEM        -> "Set.mem"
-    | C_SET_ADD        -> "Set.add"
-    | C_SET_REMOVE     -> "Set.remove"
-    | C_SET_ITER       -> "Set.iter"
-    | C_SET_FOLD       -> "Set.fold"
-    | C_SET_FOLD_DESC -> "Set.fold_right"
-    | C_SET_UPDATE     -> "Set.update"
 
     (* Map module *)
 
-    | C_MAP_FIND_OPT -> "Map.find_opt"
-    | C_MAP_UPDATE   -> "Map.update"
-    | C_MAP_ITER     -> "Map.iter"
-    | C_MAP_MAP      -> "Map.map"
-    | C_MAP_FOLD     -> "Map.fold"
-    | C_MAP_MEM      -> "Map.mem"
-    (*  | C_SIZE         -> "Map.size" *)
+    | C_MAP_LITERAL  -> "Map.literal"
     | C_MAP_ADD      -> "Map.add"
     | C_MAP_REMOVE   -> "Map.remove"
-    | C_MAP_EMPTY    -> "Map.empty"
-    | C_MAP_LITERAL  -> "Map.literal"
 
     (* Big_map module *)
 
-    | C_MAP_FIND        -> "Big_map.find"
-    (*  | C_MAP_FIND_OPT    -> "Big_map.find_opt"
-        | C_MAP_UPDATE      -> "Big_map.update" *)
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
-    | C_BIG_MAP_EMPTY   -> "Big_map.empty"
-    (*  | C_MAP_MEM         -> "Big_map.mem"
-        | C_MAP_REMOVE      -> "Big_map.remove"
-        | C_MAP_ADD         -> "Big_map.add" *)
 
     (* Bitwise module *)
 
-    (* | C_OR  -> "Bitwise.or" (* will never trigger *)
-     * | C_AND -> "Bitwise.and" *)
     | C_XOR -> "Bitwise.xor"
     | C_LSL -> "Bitwise.shift_left"
     | C_LSR -> "Bitwise.shift_right"
 
-    (* String module *)
-
-    (*  | C_SIZE   -> "String.length" (* will never trigger, rename size *)
-        | C_SLICE  -> "String.sub"
-        | C_CONCAT -> "String.concat" *)
-
     (* Not parsed *)
     (* | C_SOME -> "Some" *)
     (* | C_NONE -> "None" *)
-
-    (* Testing module *)
-
-    | C_TEST_ORIGINATE -> "Test.originate"
-    | C_TEST_ORIGINATE_FROM_FILE -> "Test.originate_from_file"
-    | C_TEST_SET_SOURCE -> "Test.set_source"
-    | C_TEST_SET_BAKER -> "Test.set_baker"
-    | C_TEST_EXTERNAL_CALL_TO_CONTRACT -> "Test.transfer_to_contract"
-    | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN -> "Test.transfer_to_contract_exn"
-    | C_TEST_EXTERNAL_CALL_TO_ADDRESS -> "Test.transfer"
-    | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN -> "Test.transfer_exn"
-    | C_TEST_GET_STORAGE -> "Test.get_storage"
-    | C_TEST_GET_STORAGE_OF_ADDRESS -> "Test.get_storage_of_address"
-    | C_TEST_GET_BALANCE -> "Test.get_balance"
-    | C_TEST_MICHELSON_EQUAL -> "Test.michelson_equal"
-    | C_TEST_LOG -> "Test.log"
-    | C_TEST_STATE_RESET -> "Test.reset_state"
-    | C_TEST_BOOTSTRAP_CONTRACT -> "Test.bootstrap_contract"
-    | C_TEST_NTH_BOOTSTRAP_CONTRACT -> "Test.nth_bootstrap_contract"
-    | C_TEST_GET_NTH_BS -> "Test.nth_bootstrap_account"
-    | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
-    | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
-    | C_TEST_MUTATE_VALUE -> "Test.mutate_value"
-    | C_TEST_MUTATION_TEST -> "Test.mutation_test"
-    | C_TEST_MUTATION_TEST_ALL -> "Test.mutation_test_all"
-    | C_TEST_SAVE_MUTATION -> "Test.save_mutation"
-    | C_TEST_RUN -> "Test.run"
-    | C_TEST_EVAL -> "Test.eval"
-    | C_TEST_COMPILE_CONTRACT -> "Test.compile_contract"
-    | C_TEST_DECOMPILE -> "Test.decompile"
-    | C_TEST_TO_CONTRACT -> "Test.to_contract"
-    | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS -> "Test.nth_bootstrap_typed_address"
-    | C_TEST_TO_ENTRYPOINT -> "Test.to_entrypoint"
-    | C_TEST_TO_TYPED_ADDRESS -> "Test.to_typed_address"
-    | C_TEST_RANDOM -> "Test.random"
-    | C_TEST_SET_BIG_MAP -> "Test.set_big_map"
-    | C_TEST_CAST_ADDRESS -> "Test.cast_address"
-    | C_TEST_CREATE_CHEST -> "Test.create_chest"
-    | C_TEST_ADD_ACCOUNT -> "Test.add_account"
-    | C_TEST_NEW_ACCOUNT -> "Test.new_account"
-    | C_TEST_BAKER_ACCOUNT -> "Test.baker_account"
-    | C_TEST_REGISTER_DELEGATE -> "Test.register_delegate"
-    | C_TEST_BAKE_UNTIL_N_CYCLE_END -> "Test.bake_until_n_cycle_end"
-    | C_TEST_GET_VOTING_POWER -> "Test.get_voting_power"
-    | C_TEST_GET_TOTAL_VOTING_POWER -> "Test.get_total_voting_power"
-    | C_TEST_REGISTER_CONSTANT -> "Test.register_constant"
-    | C_TEST_CONSTANT_TO_MICHELSON -> "Test.constant_to_michelson_program"
-    | C_TEST_REGISTER_FILE_CONSTANTS -> "Test.register_file_constants"
-    | C_TEST_PUSH_CONTEXT -> "Test.save_context"
-    | C_TEST_POP_CONTEXT -> "Test.restore_context"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
@@ -443,7 +179,6 @@ module Tree_abstraction = struct
       | "self_address"           -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
       | "implicit_account"       -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
       | "source"                 -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "failwith"               -> some_const      C_FAILWITH
       | "transaction"            -> some_deprecated C_CALL                    (* Deprecated *)
       | "set_delegate"           -> some_deprecated C_SET_DELEGATE            (* Deprecated *)
       | "get_contract"           -> some_deprecated C_CONTRACT                (* Deprecated *)
@@ -452,11 +187,6 @@ module Tree_abstraction = struct
       | "get_entrypoint_opt"     -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
 
       | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-      | "is_nat"           -> some_const C_IS_NAT
-      | "int"              -> some_const C_INT
-      | "abs"              -> some_const C_ABS
-      | "ediv"             -> some_const C_EDIV
-      | "unit"             -> some_const C_UNIT
 
       | "cons"             -> some_deprecated C_CONS (* Deprecated *)
 
@@ -524,12 +254,6 @@ module Tree_abstraction = struct
 
       (* Others *)
 
-      | "assert"                 -> some_const C_ASSERTION
-      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
-      | "assert_some"            -> some_const C_ASSERT_SOME
-      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
-      | "assert_none"            -> some_const C_ASSERT_NONE
-      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
       | "size"                   -> some_deprecated C_SIZE (* Deprecated *)
 
       | _ as c                   -> pseudo_modules c
@@ -579,7 +303,6 @@ module Tree_abstraction = struct
       | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
       | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
       | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-      | "failwith"                   -> some_const C_FAILWITH
 
       | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
       | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
@@ -589,11 +312,6 @@ module Tree_abstraction = struct
       | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
 
       | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-      | "is_nat"           -> some_const C_IS_NAT
-      | "int"              -> some_const C_INT
-      | "abs"              -> some_const C_ABS
-      | "ediv"             -> some_const C_EDIV
-      | "unit"             -> some_const C_UNIT
 
       (* Bytes module *)
 
@@ -613,15 +331,6 @@ module Tree_abstraction = struct
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
 
       (* Others *)
-
-      | "assert"                 -> some_const C_ASSERTION
-      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
-      | "assert_some"            -> some_const C_ASSERT_SOME
-      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
-      | "assert_none"            -> some_const C_ASSERT_NONE
-      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
-      | "true"         -> some_const C_TRUE
-      | "false"        -> some_const C_FALSE
 
       | _ as c -> pseudo_modules c
 
@@ -672,7 +381,6 @@ module Tree_abstraction = struct
       | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
       | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
       | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-      | "failwith"                   -> some_const C_FAILWITH
 
       | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
       | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
@@ -682,11 +390,6 @@ module Tree_abstraction = struct
       | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
 
       | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-      | "is_nat"           -> some_const C_IS_NAT
-      | "int"              -> some_const C_INT
-      | "abs"              -> some_const C_ABS
-      | "ediv"             -> some_const C_EDIV
-      | "unit"             -> some_const C_UNIT
 
       (* Bytes module *)
 
@@ -706,15 +409,6 @@ module Tree_abstraction = struct
       | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
 
       (* Others *)
-
-      | "assert"                 -> some_const C_ASSERTION
-      | "assert_with_error"      -> some_const C_ASSERTION_WITH_ERROR
-      | "assert_some"            -> some_const C_ASSERT_SOME
-      | "assert_some_with_error" -> some_const C_ASSERT_SOME_WITH_ERROR
-      | "assert_none"            -> some_const C_ASSERT_NONE
-      | "assert_none_with_error" -> some_const C_ASSERT_NONE_WITH_ERROR
-      | "true"         -> some_const C_TRUE
-      | "false"        -> some_const C_FALSE
 
       | _ as c -> pseudo_modules c
 

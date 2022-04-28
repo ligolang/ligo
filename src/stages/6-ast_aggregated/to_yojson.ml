@@ -126,12 +126,14 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and attribute {inline;no_mutation;public;view} =
+and attribute {inline;no_mutation;public;view;thunk;hidden} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
     ("view", `Bool view);
     ("public", `Bool public);
+    ("thunk", `Bool thunk);
+    ("hidden", `Bool hidden);
   ]
 
 and type_attribute ({public}: type_attribute) =
