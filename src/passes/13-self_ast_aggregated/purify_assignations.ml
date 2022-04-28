@@ -124,14 +124,16 @@ module Effect = struct
     PP.(list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "%a => %a" ValueVar.pp a pp_global b) ) (ValueVarMap.to_kv_list t.env)
     pp_global t.global
 
-  let make_tuple (ev_list : type_expression ValueVarMap.t) =
+  let make_tuple (ev_list : type_expression ValueVarMap.t) : expression =
     let _,ev_list = ValueVarMap.fold (
       fun ev t (i,t_list) ->
         let t_list = ((i,e_variable ev t),(i,t)) :: t_list in
         i+1,t_list
     ) ev_list (0,[]) in
     let tuple,tuple_type = List.unzip ev_list in
-    e_record (LMap.of_list @@ List.map ~f:(fun (i,e) -> Label (string_of_int i),e) tuple)
+    (* For function with no read effect *)
+    match tuple with [] -> e_a_unit ()
+    | _ -> e_record (LMap.of_list @@ List.map ~f:(fun (i,e) -> Label (string_of_int i),e) tuple)
       @@ t_record ~layout:L_tree @@ LMap.of_list @@ List.map ~f:(fun (i,t) ->
        Label (string_of_int i),
        {associated_type=t ; michelson_annotation=None ; decl_pos = 0})tuple_type

@@ -105,7 +105,7 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let typed = Build.type_contract ~raise ~add_warning ~options source_file in
+      let typed = Build.merge_and_type_libraries ~raise ~add_warning ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
