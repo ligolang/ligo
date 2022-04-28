@@ -47,3 +47,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "n" ; "--init-file" ; (test "option.mligo") ] ;
   [%expect{| None |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; (test "option_record.mligo") ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]

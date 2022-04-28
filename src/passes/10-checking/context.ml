@@ -170,11 +170,11 @@ module Typing = struct
         | None -> matching_t_sum
   
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
+    let lst_kv  = LMap.to_kv_list_rev lmap in
     let rec rec_aux e =
       let aux = fun (_,type_) ->
         match type_.type_content with
         | T_record m -> Simple_utils.Option.(
-            let lst_kv  = LMap.to_kv_list_rev lmap in
             let lst_kv' = LMap.to_kv_list_rev m.content in
             let m = map ~f:(fun () -> m) @@ Ast_typed.Misc.assert_list_eq
                                               ( fun (ka,va) (kb,vb) ->

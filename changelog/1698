@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: Fix a bug related to recursive function definitions in pattern matching
+merge_request: '1698'
+title: fixing a bug in pattern_matching.ml substitution
+type: fixed
