@@ -97,7 +97,7 @@ export class CompilerManager {
     }
     CompilerManager.terminal.writeCmdToTerminal("ligo compile contract " + projectManager.mainFilePath)
 
-    const request = new Request("http://localhost:8080/compile",
+    const request = new Request("/api/compile",
            { method: "POST"
            , headers:
                { 'Accept': 'application/json'
