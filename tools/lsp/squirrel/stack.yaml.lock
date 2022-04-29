@@ -57,12 +57,27 @@ packages:
     git: https://github.com/serokell/haskell-tree-sitter.git
     commit: 27c33c98b00f8961c8619de2e3771a1932501ada
 - completed:
-    hackage: co-log-core-0.3.1.0@sha256:9794bdedd1391decd0e22bdfe2b11abcb42e6cff7a4531e1f8882890828f4e63,3816
+    name: co-log-core
+    version: 0.3.1.0
+    git: https://github.com/co-log/co-log-core.git
     pantry-tree:
-      size: 584
-      sha256: d4cc089c40c5052ee02f91eafa567e0a239908aabc561dfa6080ba3bfc8c25bd
+      size: 872
+      sha256: 52ef0d55fb2b4c86357369f48f6dcdef81e80a161917befc9ce15129d8eaec20
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
   original:
-    hackage: co-log-core-0.3.1.0
+    git: https://github.com/co-log/co-log-core.git
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+- completed:
+    name: text-rope
+    version: '0.2'
+    git: https://github.com/Bodigrim/text-rope
+    pantry-tree:
+      size: 1431
+      sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+  original:
+    git: https://github.com/Bodigrim/text-rope
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
 - completed:
     hackage: fastsum-0.1.1.1@sha256:ddb41e30396cc091845596130fb441150118086c6f227c0bd5ce30dadf9dad56,2398
     pantry-tree:
@@ -98,13 +113,6 @@ packages:
       sha256: c882dca2a96b98d02b0d21875b651edb11ac67d90e736c0de7a92c410a19eb7f
   original:
     hackage: primitive-unlifted-0.1.3.0
-- completed:
-    hackage: text-rope-0.1@sha256:0654bbff798a5b32d63de75bdfce3ea9a7b9abf1e3325c620878af9d48061e33,1953
-    pantry-tree:
-      size: 1045
-      sha256: b8830d832f2aac5aa5e1ba99f058732ab212e8ae90c7e7bfb6d158848a73398b
-  original:
-    hackage: text-rope-0.1
 - completed:
     name: duplo
     version: 0.0.0
