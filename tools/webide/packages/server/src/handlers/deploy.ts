@@ -15,8 +15,16 @@ interface DeployBody {
   network: string;
 }
 
-const Tezos = (network: string) =>
-  new TezosToolkit(`https://${network}.api.tez.ie`);
+const Tezos = (network: string) => {
+  switch (network) {
+    case "mainnet":
+      return new TezosToolkit(`https://mainnet.api.tez.ie`);
+    case "ithacanet":   
+      return new TezosToolkit(`https://ithacanet.ecadinfra.com`);
+    default : 
+      return new TezosToolkit("empty");
+  }
+}
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
