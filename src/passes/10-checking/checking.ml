@@ -600,7 +600,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let let_result = type_expression' ~raise ~add_warning ~options ?tv_opt (app_context, e') let_result in
     return (E_mod_in {module_binder; rhs; let_result}) let_result.type_expression
   | E_raw_code {language;code} ->
-    let (code,type_expression) = trace_option ~raise (expected_ascription code) @@
+    let (code,type_expression) = trace_option ~raise (not_annotated code.location) @@
       I.get_e_ascription code.expression_content in
     let code = type_expression' ~raise ~add_warning ~options (app_context, context) code in
     let type_expression = evaluate_type ~raise context type_expression in
