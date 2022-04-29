@@ -55,9 +55,9 @@ let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
 
 ```jsligo
 // @inline
-let fst = (p: [nat, nat]): nat => p[0];
+const fst = (p: [nat, nat]): nat => p[0];
 
-let main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
+const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
     [list([]) as list<operation>, [fst([p[0], p[1]]), fst([s[1], s[0]])]];
 ```
 

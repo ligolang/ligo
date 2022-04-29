@@ -866,6 +866,10 @@ let loop4 ~raise ~add_warning () : unit =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid ~raise program "while_sum" make_input make_expected in
+  let () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (if n = 0 then 0 else 1) in
+    expect_eq_n_pos_mid ~raise program "while_record" make_input make_expected in
   ()
 
 let loop5 ~raise ~add_warning () : unit =

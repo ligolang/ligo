@@ -244,9 +244,13 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
       ) in
       effect
   (* Record *)
-  | E_record _ -> Effect.empty
-  | E_record_accessor _ -> Effect.empty
-  | E_record_update   _ -> Effect.empty
+  | E_record map ->
+    Effect.concat @@ List.map ~f:(fun e -> self e) @@ LMap.to_list map
+  | E_record_accessor {record;path=_} -> self record
+  | E_record_update {record;path=_;update} ->
+    let effect = self record in
+    let effect = Effect.add effect @@ self update in
+    effect
   | E_assign {binder;access_path=_;expression} ->
     let effect = self expression in
     return @@ Effect.add_effect effect binder.var (Option.value_exn binder.ascr)
