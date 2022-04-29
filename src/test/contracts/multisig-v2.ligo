@@ -54,7 +54,7 @@ function send (const param : send_pt; var s : storage) : return is
 
     var new_store : addr_set := set [];
 
-    case map_get (packed_msg, s.message_store) of [
+    case Map.find_opt (packed_msg, s.message_store) of [
       Some (voters) ->
         block {
           (* The message is already stored.
@@ -63,14 +63,14 @@ function send (const param : send_pt; var s : storage) : return is
           if Set.mem (Tezos.sender, voters)
           then skip
           else s.proposal_counters[Tezos.sender] :=
-                 get_force (Tezos.sender, s.proposal_counters) + 1n;
+                 Map.find (Tezos.sender, s.proposal_counters) + 1n;
                  new_store := Set.add (Tezos.sender,voters)
         }
     | None ->
         block {
           // the message has never been received before
-          s.proposal_counters[sender] :=
-             get_force (Tezos.sender, s.proposal_counters) + 1n;
+          s.proposal_counters[Tezos.sender] :=
+             Map.find (Tezos.sender, s.proposal_counters) + 1n;
              new_store := set [Tezos.sender]
         }
     ];
@@ -78,7 +78,7 @@ function send (const param : send_pt; var s : storage) : return is
     // check sender counters against the maximum number of proposal
 
     var sender_proposal_counter : nat :=
-      get_force (Tezos.sender, s.proposal_counters);
+      Map.find (Tezos.sender, s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
     then failwith ("Maximum number of proposal reached")
@@ -118,7 +118,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
 
           if Set.cardinal (voters) =/= Set.cardinal (new_set)
           then s.proposal_counters[Tezos.sender] :=
-                 abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
+                 abs (Map.find (Tezos.sender, s.proposal_counters) - 1n)
           else skip;
 
           (* If the message is left without any associated addresses,
