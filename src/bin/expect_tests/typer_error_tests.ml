@@ -196,16 +196,13 @@ let%expect_test _ =
 
     Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
 
-    File "../../test/contracts/negative/id.mligo", line 45, characters 4-51:
+    File "../../test/contracts/negative/id.mligo", line 45, characters 4-18:
      44 |   let updated_identities: (id, id_details) big_map =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
-    Invalid arguments.
-    Expected an argument of type ('a, option ('b), map ('a ,
-    'b)) or ('a, option ('b), big_map ('a ,
-    'b)), but got an argument of type int, record[controller -> address , owner -> address , profile -> bytes], big_map (int ,
-    record[controller -> address , owner -> address , profile -> bytes]). |}]
+    Invalid type(s).
+    Expected: "option (v)", but got: "id_details". |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -229,7 +226,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-46:
+    File "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-27:
       1 |
       2 | const bad : unit = failwith((nil : list(int)))
 

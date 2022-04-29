@@ -36,12 +36,14 @@ let attributes attr =
   let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
-let known_attributes { inline ; no_mutation ; view ; public } =
+let known_attributes { inline ; no_mutation ; view ; public ; thunk ; hidden } =
   `Assoc [
     ("inline", `Bool inline) ;
     ("no_mutation", `Bool no_mutation) ;
     ("view", `Bool view) ;
     ("public", `Bool public) ;
+    ("thunk", `Bool thunk) ;
+    ("hidden", `Bool hidden) ;
   ]
 
 let for_all type_expression {ty_binder ; kind = _ ; type_ } =

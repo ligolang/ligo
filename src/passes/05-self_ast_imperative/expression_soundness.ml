@@ -43,14 +43,13 @@ let linearity ~(raise:[<Errors.self_ast_imperative_error] Trace.raise) m = (fun 
 
 let reserved_names = (* Part of names in that list would be caught by some syntaxes *)
   List.map ~f:ValueVar.of_input_var
-  [ "get_force" ; "transaction"; "get_entrypoint"; "int"; "is_nat"; "amount"; "balance"; "now";
-    "unit"; "source"; "sender"; "failwith"; "bitwise_or"; "bitwise_and"; "bitwise_xor"; "string_concat"; "string_slice"; "crypto_check"; "crypto_hash_key";
+  [ "get_force" ; "get_entrypoint";
+    "bitwise_or"; "bitwise_and"; "bitwise_xor"; "string_concat"; "string_slice"; "crypto_check"; "crypto_hash_key";
     "bytes_concat"; "bytes_slice"; "bytes_pack"; "bytes_unpack"; "set_empty"; "set_mem"; "set_add"; "set_remove"; "set_iter"; "set_fold"; "list_iter";
     "list_fold"; "list_fold_left"; "list_fold_right"; "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem";
-    "sha_256"; "sha_512"; "blake2b"; "address"; "self_address"; "implicit_account"; "set_delegate"; "true"; "false";
-    "assert"; "black2b"; "continue";  "gas"; "hash"; "hash_key"; "pack"; "sha256"; "sha512"; "stop"; "time"; "unpack";
+    "continue";  "gas"; "hash"; "stop"; "time";
     "continue"; "debugger"; "do";
-    "get_chain_id"; "abs";
+    "get_chain_id";
   ]
 let check_reserved ~raise ~loc binder =
   match List.find ~f:(fun reserved -> ValueVar.equal binder.var reserved) reserved_names with

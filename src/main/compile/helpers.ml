@@ -124,7 +124,9 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
         parse_and_abstract_pascaligo
     | CameLIGO    -> parse_and_abstract_cameligo
     | ReasonLIGO  -> parse_and_abstract_reasonligo
-    | JsLIGO      -> parse_and_abstract_jsligo in
+    | JsLIGO      ->
+        Tree_abstraction.Jsligo.add_warning := Some add_warning;
+        parse_and_abstract_jsligo in
   let abstracted =
     parse_and_abstract ~raise buffer file_path in
   let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in

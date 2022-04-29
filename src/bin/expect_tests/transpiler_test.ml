@@ -238,12 +238,10 @@ let%expect_test _ =
                with
                  Some card -> card
                | None () ->
-                   ((failwith ("transfer_single: No card."))
-                    : card) in
+                   (failwith "transfer_single: No card." : card) in
              begin
                if (card.card_owner <> Tezos.sender)
-               then
-                 (failwith ("This card doesn't belong to you"))
+               then failwith "This card doesn't belong to you"
                else ();
                let card =
                  {card with
@@ -266,11 +264,10 @@ let%expect_test _ =
                with
                  Some card -> card
                | None () ->
-                   ((failwith ("sell_single: No card.")) : card) in
+                   (failwith "sell_single: No card." : card) in
              begin
                if (card.card_owner <> Tezos.sender)
-               then
-                 (failwith ("This card doesn't belong to you"))
+               then failwith "This card doesn't belong to you"
                else ();
                let [@var] card_pattern : card_pattern =
                  match Map.find_opt
@@ -279,13 +276,11 @@ let%expect_test _ =
                  with
                    Some pattern -> pattern
                  | None () ->
-                     ((failwith
-                         ("sell_single: No card pattern."))
+                     (failwith "sell_single: No card pattern."
                       : card_pattern) in
                let card_pattern =
                  {card_pattern with
-                   {quantity =
-                      (abs ((card_pattern.quantity - 1n)))}} in
+                   {quantity = abs (card_pattern.quantity - 1n)}} in
                let [@var] card_patterns : card_patterns =
                  s.card_patterns in
                let card_patterns =
@@ -302,15 +297,15 @@ let%expect_test _ =
                  (card_pattern.coefficient
                   * card_pattern.quantity) in
                let receiver : unit contract =
-                 match ((Tezos.get_contract_opt (Tezos.sender))
+                 match (Tezos.get_contract_opt Tezos.sender
                         : unit contract option)
                  with
                    Some contract -> contract
                  | None () ->
-                     ((failwith ("sell_single: No contract."))
+                     (failwith "sell_single: No contract."
                       : unit contract) in
                let op : operation =
-                 (Tezos.transaction (unit) (price) (receiver)) in
+                 Tezos.transaction unit price receiver in
                let operations : operation list = [op] in
                operations, s
              end)
@@ -326,14 +321,14 @@ let%expect_test _ =
                with
                  Some pattern -> pattern
                | None () ->
-                   ((failwith ("buy_single: No card pattern."))
+                   (failwith "buy_single: No card pattern."
                     : card_pattern) in
              let price : tez =
                (card_pattern.coefficient
                 * (card_pattern.quantity + 1n)) in
              begin
                if (price > Tezos.amount)
-               then (failwith ("Not enough money"))
+               then failwith "Not enough money"
                else ();
                let card_pattern =
                  {card_pattern with
@@ -411,12 +406,11 @@ let transfer_single
            Map.find_opt(action.card_to_transfer, cards) {
            | Some card => card
            | None() =>
-               ((failwith(("transfer_single: No card.")))
-                 : card)
+               (failwith("transfer_single: No card.") : card)
            };
          {
            if(((card.card_owner) != (Tezos.sender))) {
-             (failwith(("This card doesn't belong to you")))
+             failwith("This card doesn't belong to you")
            } else {
 
              ()
@@ -442,11 +436,11 @@ let sell_single: (action_sell_single, storage) => return =
            switch Map.find_opt(action.card_to_sell, s.cards) {
            | Some card => card
            | None() =>
-               ((failwith(("sell_single: No card."))) : card)
+               (failwith("sell_single: No card.") : card)
            };
          {
            if(((card.card_owner) != (Tezos.sender))) {
-             (failwith(("This card doesn't belong to you")))
+             failwith("This card doesn't belong to you")
            } else {
 
              ()
@@ -456,15 +450,14 @@ let sell_single: (action_sell_single, storage) => return =
              Map.find_opt(card.card_pattern, s.card_patterns) {
              | Some pattern => pattern
              | None() =>
-                 ((
-                    failwith(("sell_single: No card pattern.")))
+                 (failwith("sell_single: No card pattern.")
                    : card_pattern)
              };
            let card_pattern =
              {...card_pattern,
                {
                  quantity:
-                   (abs((((card_pattern.quantity) - (1n)))))}};
+                   abs(((card_pattern.quantity) - (1n)))}};
            let [@var] card_patterns: card_patterns =
              s.card_patterns;
            let card_patterns =
@@ -481,15 +474,15 @@ let sell_single: (action_sell_single, storage) => return =
              ((card_pattern.coefficient) * (card_pattern.
                  quantity));
            let receiver: contract(unit) =
-             switch ((Tezos.get_contract_opt((Tezos.sender)))
+             switch (Tezos.get_contract_opt(Tezos.sender)
                : option(contract(unit))) {
              | Some contract => contract
              | None() =>
-                 ((failwith(("sell_single: No contract.")))
+                 (failwith("sell_single: No contract.")
                    : contract(unit))
              };
            let op: operation =
-             (Tezos.transaction((unit), (price), (receiver)));
+             Tezos.transaction(unit, price, receiver);
            let operations: list(operation) = [op];
            operations, s
          }
@@ -504,7 +497,7 @@ let buy_single: (action_buy_single, storage) => return =
            Map.find_opt(action.card_to_buy, s.card_patterns) {
            | Some pattern => pattern
            | None() =>
-               ((failwith(("buy_single: No card pattern.")))
+               (failwith("buy_single: No card pattern.")
                  : card_pattern)
            };
          let price: tez =
@@ -512,7 +505,7 @@ let buy_single: (action_buy_single, storage) => return =
                  quantity) + (1n))));
          {
            if(((price) > (Tezos.amount))) {
-             (failwith(("Not enough money")))
+             failwith("Not enough money")
            } else {
 
              ()
@@ -628,8 +621,7 @@ let%expect_test _ =
                      (Map.add (1) ("one") (nee.nesty.mymap))}}}} in
          match Map.find_opt 1 nee.nesty.mymap with
            Some s -> s
-         | None () ->
-             ((failwith ("Should not happen.")) : string)) |}];
+         | None () -> (failwith "Should not happen." : string)) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect{|
     type pii = (int, int);
@@ -666,8 +658,7 @@ let%expect_test _ =
                        (Map.add((1), ("one"), (nee.nesty.mymap)))}}}};
          switch Map.find_opt(1, nee.nesty.mymap) {
          | Some s => s
-         | None() =>
-             ((failwith(("Should not happen."))) : string)
+         | None() => (failwith("Should not happen.") : string)
          }); |}]
 
 (*
@@ -918,9 +909,9 @@ let main : parameter * storage -> return =
          begin
            match p with
              Zero n ->
-               if (n > 0n) then (failwith ("fail")) else ()
+               if (n > 0n) then failwith "fail" else ()
            | Pos n ->
-               if (n = 0n) then (failwith ("fail")) else ();
+               if (n = 0n) then failwith "fail" else ();
            ([] : operation list), s
          end)
 
@@ -940,7 +931,7 @@ let foobar : int -> int =
              let i = 20 in
              let gen__env11 = {gen__env11 with {0 = i}} in
              begin
-               (failwith ("who knows"));
+               failwith "who knows";
                let i = 30 in
                let gen__env11 = {gen__env11 with {0 = i}} in
                begin
@@ -962,19 +953,19 @@ let foobar : int -> int =
        else
          begin
            match p with
-             Zero gen___5 -> (failwith (42n))
+             Zero gen___5 -> failwith 42n
            | Pos gen___6 -> ();
            gen__env13
          end in
      let i = gen__env13.0 in
      match p with
        Zero gen___3 -> i
-     | Pos gen___4 -> ((failwith ("waaaa")) : int))
+     | Pos gen___4 -> (failwith "waaaa" : int))
 
 let failer : int -> int =
   (fun p : int ->
      begin
-       if (p = 1) then (failwith (42)) else ();
+       if (p = 1) then failwith 42 else ();
        p
      end) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
@@ -993,14 +984,14 @@ let main: (parameter, storage) => return =
            switch  p {
            | Zero n =>
                if(((n) > (0n))) {
-                 (failwith(("fail")))
+                 failwith("fail")
                } else {
 
                  ()
                  }
            | Pos n =>
                if(((n) == (0n))) {
-                 (failwith(("fail")))
+                 failwith("fail")
                } else {
 
                  ()
@@ -1026,7 +1017,7 @@ let foobar: int => int =
              let i = 20;
              let gen__env11 = {...gen__env11, {0: i}};
              {
-               (failwith(("who knows")));
+               failwith("who knows");
                let i = 30;
                let gen__env11 = {...gen__env11, {0: i}};
                {
@@ -1051,7 +1042,7 @@ let foobar: int => int =
 
          {
            switch  p {
-           | Zero gen___5 => (failwith((42n)))
+           | Zero gen___5 => failwith(42n)
            | Pos gen___6 => ()
            };
            gen__env13
@@ -1060,13 +1051,13 @@ let foobar: int => int =
      let i = gen__env13[0];
      switch  p {
      | Zero gen___3 => i
-     | Pos gen___4 => ((failwith(("waaaa"))) : int)
+     | Pos gen___4 => (failwith("waaaa") : int)
      });
 
 let failer: int => int =
   ((p: int): int => {
      if(((p) == (1))) {
-       (failwith((42)))
+       failwith(42)
      } else {
 
        ()

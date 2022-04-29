@@ -90,10 +90,10 @@ module Typing = struct
         | Declaration_constant {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
            else acc
-        | Declaration_type {type_binder;type_expr;type_attr={public}} ->
+        | Declaration_type {type_binder;type_expr;type_attr={public;_}} ->
            if public then add_type acc type_binder type_expr
            else acc
-        | Declaration_module {module_binder;module_;module_attr={public}} ->
+        | Declaration_module {module_binder;module_;module_attr={public;_}} ->
            if public then
              let context = context_of_module_expr ~outer_context:(union acc outer_context) module_ in
              add_module acc module_binder context

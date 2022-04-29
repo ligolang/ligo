@@ -158,7 +158,7 @@ let import_file ~raise ~raw_options state file_name module_name =
     let prg = Build.build_context ~raise ~add_warning ~options file_name in
     Simple_utils.Location.wrap (Ast_typed.M_struct prg)
   in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)
@@ -271,6 +271,9 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
     begin
       print_endline welcome_msg;
       let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
+      let options = Compiler_options.make ~raw_options () in
+      let top_level = Build.Stdlib.typed ~options state.syntax in
+      let state = { state with top_level } in
       let state = match init_file with
         | None -> state
         | Some file_name -> let c = use_file state ~raw_options file_name in

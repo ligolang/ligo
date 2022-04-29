@@ -1410,7 +1410,7 @@ is called `Map.remove` and is used as follows:
 
 ```cameligo group=big_maps
 let updated_map : register =
-  Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
+  Big_map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
 </Syntax>
@@ -1421,7 +1421,7 @@ is called `Map.remove` and is used as follows:
 
 ```reasonligo group=big_maps
 let updated_map : register =
-  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
+  Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
 </Syntax>
@@ -1432,7 +1432,7 @@ is called `Map.remove` and is used as follows:
 
 ```jsligo group=big_maps
 let updated_map_: register =
-  Map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
+  Big_map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
 </Syntax>

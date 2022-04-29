@@ -8,6 +8,7 @@ let all_expression_mapper ~raise ~add_warning ~js_style_no_shadowing = [
   Expression_soundness.linearity ~raise ;
   Expression_soundness.reserved_names_exp ~raise ;
   Deprecated_constants.warn ~add_warning ;
+  External.replace ;
 ] @
   (if js_style_no_shadowing
   then [ No_shadowing.peephole_expression ~raise ]

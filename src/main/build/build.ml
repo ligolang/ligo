@@ -1,7 +1,9 @@
-
 open Simple_utils
 open Trace
 open Main_errors
+
+module Stdlib = Stdlib
+module Testlib = Testlib
 
 module type Params = sig
   val raise : all raise
@@ -38,17 +40,20 @@ module M (Params : Params) =
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_typed.M_struct ast_typed) in
         let module_binder = Ast_typed.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true}})
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
         let module_binder = Ast_typed.ModuleVar.of_input_var module_name in
         let file_name   = Ast_typed.ModuleVar.of_input_var file_name in
         let module_ = Location.wrap (Ast_typed.M_variable file_name) in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true}})
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
       let options = Compiler_options.set_init_env options env in
+      let stdlib = Stdlib.typed ~options meta.syntax in
+      let testlib = Testlib.typed ~options meta.syntax in
+      let options = Compiler_options.set_init_env options (Environment.append testlib (Environment.append stdlib env)) in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
       let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
       ast_typed
@@ -73,18 +78,21 @@ module Infer (Params : Params) = struct
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_core.M_struct ast_typed) in
         let module_binder = Ast_core.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true}})
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
       let make_module_alias : module_name -> file_name -> declaration =
         fun module_name file_name ->
         let module_binder = Ast_core.ModuleVar.of_input_var module_name in
         let file_name   = Ast_core.ModuleVar.of_input_var file_name in
         let module_ = Location.wrap (Ast_core.M_variable file_name) in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true}})
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
   end
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
     fun _ file_name meta c_unit ->
-    Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name
+    let stdlib =  Stdlib.core ~options meta.syntax in
+    let testlib = Testlib.core ~options meta.syntax in
+    let module_ = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
+    stdlib @ testlib @ module_
 
 end
 
@@ -157,7 +165,12 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
          let module_ = build_context ~raise ~add_warning ~options init_file in
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
-      | None -> ([], fun x -> Ligo_compile.Of_typed.compile_expression ~raise x)
+      | None ->
+         let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
+         let stdlib   = Stdlib.typed ~options syntax in
+         let testlib  = Testlib.typed ~options syntax in
+         let contract = Ligo_compile.Of_typed.compile_program ~raise (stdlib @ testlib) in
+         (stdlib @ testlib, contract)
     in
     let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options file_name syntax expression contract in
     let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp aggregated_prg in
@@ -199,14 +212,14 @@ let build_views ~raise ~add_warning :
     let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options (Ligo_compile.Of_core.View (views,main_name)) source_file in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise contract views in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-    let mini_c = Self_mini_c.all_expression ~raise mini_c in
+    let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression mini_c in
     let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
                        Mini_c.get_t_tuple mini_c.type_expression in
     let aux i view =
       let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
                      List.nth mini_c_tys i in
       let idx = Mini_c.e_proj mini_c idx_ty i (List.length views) in
-      let idx = Self_mini_c.all_expression ~raise idx in
+      let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression idx in
       (view, idx) in
     let views = List.mapi ~f:aux views in
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in

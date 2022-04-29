@@ -287,9 +287,9 @@ let%expect_test _ =
   [%expect{|
     Scopes:
     [ a#0 e#3 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 20-30
-    [ a#0 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 5-32
     [ a#0 c#1 d#2 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-44
     [ a#0 c#1 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 22-44
+    [ a#0 ] File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 32
     [ ] File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 0-9
 
     Variable definitions:

@@ -15,6 +15,14 @@
  (libraries core simple-utils ppxlib))
 
 (library
+ (name ppx_read_constant)
+ (kind ppx_deriver)
+ (modules ppx_read_constant)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries core simple-utils ppxlib))
+
+(library
  (name ppx_map)
  (kind ppx_rewriter)
  (modules ppx_map)

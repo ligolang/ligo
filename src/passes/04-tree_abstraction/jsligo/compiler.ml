@@ -9,6 +9,8 @@ module Token = Lexing_jsligo.Token
 
 open AST
 
+let add_warning: (Main_warnings.all -> unit) option ref  = ref None
+
 type nested_match_repr = (*TODO  , move that in AST. (see !909) *)
   | PatternVar of AST.ty_expr binder
   | TupleVar of AST.ty_expr binder * nested_match_repr list
@@ -575,7 +577,7 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let args_o = Option.map ~f:(compile_tuple_expression ~raise <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
-  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when List.mem ~equal:Caml.(=) build_ins module_name.value -> (
+  | ECall ({value=(EModA {value={module_name;field;selector=_};region=_},args);region} as call) when List.mem ~equal:Caml.(=) build_ins module_name.value -> (
     let args,args_loc = arguments_to_expr_nseq args in
     let loc = Location.lift region in
     let fun_name = match field with
@@ -593,7 +595,10 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let args = List.map ~f:self @@ nseq_to_list args in
       return @@ e_constant ~loc:(Location.cover loc args_loc) const args
     | None ->
-      raise.raise @@ unknown_constant var loc
+      let ((func, args), loc) = r_split call in
+      let func = self func in
+      let args = compile_arguments ~raise args in
+      return @@ e_application ~loc func args
   )
   | ECall call ->
     let ((func, args), loc) = r_split call in
@@ -655,6 +660,15 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EModA ma -> (
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
+    let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
+      match exp with
+      | EVar v ->
+         let accessed_el = compile_variable v in
+         return @@ e_module_accessor ~loc acc accessed_el
+      | EModA ma ->
+         aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
+      | _ -> raise.raise (expected_a_variable (CST.expr_to_region ma.field))
+    in
     (*TODO: move to proper module*)
     if List.mem ~equal:String.equal build_ins module_name then
       let fun_name = match ma.field with
@@ -669,17 +683,8 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let var = module_name ^ "." ^ fun_name in
       match constants var with
         Some const -> return @@ e_constant ~loc const []
-      | None -> return @@ e_variable_ez ~loc var
+      | None -> aux [ModuleVar.of_input_var ma.module_name.value] ma.field
     else
-      let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
-        match exp with
-        | EVar v ->
-          let accessed_el = compile_variable v in
-          return @@ e_module_accessor ~loc acc accessed_el
-        | EModA ma ->
-          aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-        | _ -> raise.raise (expected_a_variable (CST.expr_to_region ma.field))
-      in
       aux [ModuleVar.of_input_var ma.module_name.value] ma.field
   )
   | EFun func ->
@@ -997,6 +1002,8 @@ and is_failwith_call = function
   {expression_content = E_constant {cons_name;_}; _} -> String.equal "failwith" @@ constant_to_string cons_name
 | {expression_content = E_ascription {anno_expr; _}; _} ->
   is_failwith_call anno_expr
+| {expression_content = E_application {lamb = { expression_content = E_variable v ; _ }; _}; _} ->
+  ValueVar.equal v (ValueVar.of_input_var "failwith")
 | _ ->
   false
 
@@ -1157,7 +1164,11 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
     let else_clause = Option.map ~f:(fun (_, s) -> self ~wrap:false s) cond.ifnot in
     let compile_clause = function
       Binding e -> expr, (e @@ e_unit ())
-    | Expr e when is_failwith_call e -> return, e
+    | Expr e when is_failwith_call e ->
+      (match !add_warning with
+        Some add_warning -> add_warning (`Jsligo_deprecated_failwith_no_return e.location)
+      | None -> ());
+      return, e
     | Expr e -> expr, (e_sequence e (e_unit ()))
     | Break b -> return, (e_sequence b (e_unit ()))
     | Return r -> return, r

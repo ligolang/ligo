@@ -116,8 +116,9 @@ let wrap_ref file f =
 
 (* Common functions used in tests *)
 
-let type_file ~raise ?(st = "auto") f entry options =
-  Ligo_compile.Utils.type_file ~raise ~options f st entry
+let type_file ~raise ~add_warning ?(st = "auto") f entry options =
+  ignore st;
+  snd @@ Build.build_typed ~raise ~add_warning ~options entry f
 
 let get_program ~raise ~add_warning ?(st = "auto") f entry =
   wrap_ref f (fun s ->

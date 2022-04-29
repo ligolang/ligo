@@ -214,7 +214,7 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ }} -> (
+    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; thunk = _ ; hidden = _ }} -> (
       if   (ValueVar.equal name binder.var)
       then Some expr
       else None
