@@ -2,6 +2,7 @@ let lib (s : Syntax_types.t) =
   match s with
   | PascaLIGO _ | ReasonLIGO | JsLIGO ->"
 module Tezos = struct
+  [@hidden] [@inline] let get_contract (type a) (a : address) : (a contract) = [%external \"CONTRACT\"] a
   [@hidden] [@inline] let get_contract_opt (type a) (a : address) : (a contract) option = [%external \"CONTRACT_OPT\"] a
   [@hidden] [@inline] let get_contract_with_error (type a) ((a, s) : address * string) : a contract = [%external \"CONTRACT_WITH_ERROR\"] a s
   (* [@hidden] [@inline] let get_entrypoint_opt (type a) ((s, a) : string * address) : (a contract) option = [%external \"CONTRACT_ENTRYPOINT_OPT\"] s a *)
@@ -57,6 +58,7 @@ module Map = struct
   [@hidden] [@inline] let update (type k v) ((k, v, m) : k * v option * (k, v) map) : (k, v) map = [%external \"MAP_UPDATE\"] k v m
   [@hidden] [@inline] let get_and_update (type k v) ((k, v, m) : k * v option * (k, v) map) : v option * (k, v) map = [%external \"MAP_GET_AND_UPDATE\"] k v m
   [@hidden] [@inline] let find_opt (type k v) ((k, m) : k * (k, v) map) : v option = [%external \"MAP_FIND_OPT\"] k m
+  [@hidden] [@inline] let find (type k v) ((k, m) : k * (k, v) map) : v = [%external \"MAP_FIND\"] k m
   [@hidden] [@inline] let iter (type k v) ((f, m) : (k * v -> unit) * (k, v) map) : unit = [%external \"MAP_ITER\"] f m
   [@hidden] [@inline] let map (type k v w) ((f, m) : (k * v -> w) * (k, v) map) : (k, w) map = [%external \"MAP_MAP\"] f m
   [@hidden] [@inline] let fold (type k v c) ((f, m, i) : (c * (k * v) -> c) * (k, v) map * c) : c = [%external \"MAP_FOLD\"] f m i
@@ -83,6 +85,7 @@ module List = struct
   [@hidden] [@inline] let fold (type a b) ((f, xs, i) : (b * a -> b) * a list * b) : b = [%external \"LIST_FOLD\"] f xs i
   [@hidden] [@inline] let fold_left (type a b) ((f, i, xs) : (b * a -> b) * b * a list) : b = [%external \"LIST_FOLD_LEFT\"] f i xs
   [@hidden] [@inline] let fold_right (type a b) ((f, xs, i) : (a * b -> b) * a list * b) : b = [%external \"LIST_FOLD_RIGHT\"] f xs i
+  [@hidden] [@inline] let cons (type a) ((x, xs) : a * a list) : a list = [%external \"CONS\"] x xs
 end
 module String = struct
   [@hidden] [@inline] let concat ((b1, b2) : string * string) : string = [%external \"CONCAT\"] b1 b2
@@ -127,6 +130,7 @@ end
 "
   | CameLIGO -> "
 module Tezos = struct
+  [@hidden] [@inline] let get_contract (type a) (a : address) : (a contract) = [%external \"CONTRACT\"] a
   [@hidden] [@inline] let get_contract_opt (type a) (a : address) : (a contract) option = [%external \"CONTRACT_OPT\"] a
   [@hidden] [@inline] let get_contract_with_error (type a) (a : address) (s : string) : a contract = [%external \"CONTRACT_WITH_ERROR\"] a s
   (* [@hidden] [@inline] let get_entrypoint_opt (type a) (s : string) (a : address) : (a contract) option = [%external \"CONTRACT_ENTRYPOINT_OPT\"] s a *)
@@ -181,6 +185,7 @@ module Map = struct
   [@hidden] [@inline] let remove (type k v) (k : k) (m : (k, v) map) : (k, v) map = [%external \"MAP_REMOVE\"] k m
   [@hidden] [@inline] let update (type k v) (k : k) (v : v option) (m : (k, v) map) : (k, v) map = [%external \"MAP_UPDATE\"] k v m
   [@hidden] [@inline] let get_and_update (type k v) (k : k) (v : v option) (m : (k, v) map) : v option * (k, v) map = [%external \"MAP_GET_AND_UPDATE\"] k v m
+  [@hidden] [@inline] let find (type k v) (k : k) (m : (k, v) map) : v = [%external \"MAP_FIND\"] k m
   [@hidden] [@inline] let find_opt (type k v) (k : k) (m : (k, v) map) : v option = [%external \"MAP_FIND_OPT\"] k m
   [@hidden] [@inline] let iter (type k v) (f : k * v -> unit) (m : (k, v) map) : unit = [%external \"MAP_ITER\"] f m
   [@hidden] [@inline] let map (type k v w) (f : k * v -> w) (m : (k, v) map) : (k, w) map = [%external \"MAP_MAP\"] f m
@@ -208,6 +213,7 @@ module List = struct
   [@hidden] [@inline] let fold (type a b) (f : b * a -> b) (xs : a list) (i : b) : b = [%external \"LIST_FOLD\"] f xs i
   [@hidden] [@inline] let fold_left (type a b) (f : b * a -> b) (i : b) (xs : a list) : b = [%external \"LIST_FOLD_LEFT\"] f i xs
   [@hidden] [@inline] let fold_right (type a b) (f : a * b -> b) (xs : a list) (i : b) : b = [%external \"LIST_FOLD_RIGHT\"] f xs i
+  [@hidden] [@inline] let cons (type a) (x : a) (xs : a list) : a list = [%external \"CONS\"] x xs
 end
 module String = struct
   [@hidden] [@inline] let concat (b1 : string) (b2 : string) : string = [%external \"CONCAT\"] b1 b2
