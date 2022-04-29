@@ -6,9 +6,9 @@ module Test.Common.Diagnostics
   ) where
 
 import Data.List (nub)
-import Data.Word (Word32)
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
+import Language.LSP.Types qualified as J
 
 import AST.Parser (collectAllErrors, parseWithScopes)
 import AST.Scope (Fallback, FromCompiler, Standard)
@@ -74,7 +74,7 @@ treeDoesNotContainNameTest = do
 inputDir :: FilePath
 inputDir = Util.contractsDir </> "diagnostic"
 
-mkRange :: (Word32, Word32) -> (Word32, Word32) -> FilePath -> Range
+mkRange :: (J.UInt, J.UInt) -> (J.UInt, J.UInt) -> FilePath -> Range
 mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)
 
 -- Try to parse a file, and check that the proper error messages are generated

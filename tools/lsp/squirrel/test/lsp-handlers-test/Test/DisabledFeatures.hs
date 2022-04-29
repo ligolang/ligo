@@ -1,21 +1,23 @@
 {-# LANGUAGE OverloadedLists #-}
 module Test.DisabledFeatures
   ( unit_can't_hover_when_disabled
+  , unit_can't_hover_after_disabling
   ) where
 
+import Data.Aeson (toJSON)
 import Data.Default (def)
 import GHC.Exts (fromList)
-import Language.LSP.Test (SessionException (..), getHover)
+import Language.LSP.Test (SessionException (..), getHover, sendNotification)
 import Language.LSP.Types
   ( ErrorCode (..), LspId (..), Position (..), ResponseError (..)
-  , SomeClientMethod (..), SomeLspId (..), SMethod (..)
+  , SomeClientMethod (..), SomeLspId (..), SMethod (..), DidChangeConfigurationParams (DidChangeConfigurationParams)
   )
 
 import Test.HUnit (Assertion)
 
 import Test.Common.Capabilities.Hover (contractsDir)
 import Test.Common.FixedExpectations (shouldThrow)
-import Test.Common.LSP (openLigoDoc, runHandlersTestWithConfig)
+import Test.Common.LSP (openLigoDoc, runHandlersTest, runHandlersTestWithConfig)
 
 import Config (Config (..))
 
@@ -27,11 +29,24 @@ unit_can't_hover_when_disabled = do
   hover <- runHandlersTestWithConfig config contractsDir do
     doc <- openLigoDoc "eq_bool.ligo"
     getHover doc (Position 3 11)
-  seq hover (pure ())
-    `shouldThrow` \(UnexpectedResponseError
+  seq hover (pure ()) `shouldThrow` expectedError
+
+-- Ensure that we can disable hover by updating the configuration, even after startup.
+unit_can't_hover_after_disabling :: Assertion
+unit_can't_hover_after_disabling = do
+  let config = def {_cDisabledFeatures = fromList [SomeClientMethod STextDocumentHover]}
+  hover <- runHandlersTest contractsDir $ do
+    doc <- openLigoDoc "eq_bool.ligo"
+    sendNotification SWorkspaceDidChangeConfiguration (DidChangeConfigurationParams (toJSON config))
+    getHover doc (Position 3 11)
+  seq hover (pure ()) `shouldThrow` expectedError
+
+expectedError :: SessionException -> Bool
+expectedError = (==)
+  $ UnexpectedResponseError
       (SomeLspId (IdInt 1))
       ResponseError
         { _code = RequestCancelled
         , _message = "Cannot handle STextDocumentHover: disabled by user."
         , _xdata = Nothing
-        }) -> True
+        }

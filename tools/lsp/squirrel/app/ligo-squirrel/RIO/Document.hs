@@ -155,7 +155,8 @@ preload normFp = Log.addNamespace "preload" do
       let nFin = J.toNormalizedFilePath fin
       atomically (StmMap.lookup nFin tempMap) >>= \case
         Nothing -> do
-          tempFile <- maybe (pure fin) createTemp =<< S.persistVirtualFile uri
+          tempFile <-
+            maybe (pure fin) createTemp =<< S.persistVirtualFile mempty uri
           let nTempFile = J.toNormalizedFilePath tempFile
           tempFile <$ atomically (StmMap.insert nTempFile nFin tempMap)
         Just nTempFile -> pure $ J.fromNormalizedFilePath nTempFile
@@ -317,7 +318,7 @@ load uri = Log.addNamespace "load" do
 
       revRoot <- if revUri == uri
         then pure root
-        else V.vfsTempDir <$> S.getVirtualFiles
+        else V._vfsTempDir <$> S.getVirtualFiles
 
       rawGraph <- getInclusionsGraph revRoot revNormFp
 
