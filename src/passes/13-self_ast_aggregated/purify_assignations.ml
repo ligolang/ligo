@@ -158,13 +158,10 @@ module Effect = struct
             i+1,map
         ) effects (0,[]) in
         let effects' = LMap.of_list @@ List.map ~f:(fun (i,(var,ty)) -> Label (string_of_int i),{var;ascr=Some ty;attributes={const_or_var=None}}) map in
-        let effects_type = t_record ~layout:L_tree @@ LMap.of_list @@ List.map ~f:(fun (i,(_,t)) ->
-        Label (string_of_int i),
-        {associated_type=t ; michelson_annotation=None ; decl_pos = 0}) map in
-        effects',effects_type, make_tuple effects
+        effects', make_tuple effects
       in
       let empty_to_none f a = if ValueVarMap.is_empty a then None else Some (f a)  in
-      empty_to_none aux effects, Option.map ~f:(make_tuple) read
+      empty_to_none aux effects, Option.map ~f:aux read
 
   let rm_var (ev : expression_variable) (t : t) =
     let read = match t.global.read with None -> None
@@ -310,19 +307,19 @@ let morph_function_type (read_effect_type : type_expression option) (effect_type
     None -> add_to_retun_type effect_type fun_type
   | Some (read_effect_type) -> t_arrow read_effect_type (add_to_retun_type effect_type fun_type) ()
 
-let add_parameter read_effect effects effects_type rhs =
+let add_parameter read_effect read_effects effects_type rhs =
   (* Format.printf "add_parameters to rhs: %a" PP.expression rhs; *)
   match rhs.expression_content with
     E_lambda _ ->
       let var = ValueVar.fresh ~name:"effect_binder" () in
       let binder = {var;ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
-      let result = add_to_the_top_of_function_body var effects effects_type rhs in
+      let result = add_to_the_top_of_function_body var read_effects read_effect.type_expression rhs in
       let lambda_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) rhs.type_expression in
       e_lambda {binder;result} lambda_type
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
       let var = ValueVar.fresh ~name:"effect_binder" () in
       let binder_eff = {var;ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
-      let result = add_to_the_top_of_function_body var effects effects_type result in
+      let result = add_to_the_top_of_function_body var read_effects read_effect.type_expression result in
       let result = e_lambda {binder;result} rhs.type_expression in
       let fun_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) fun_type in
       e_recursive {fun_name;fun_type;lambda={binder=binder_eff;result}} fun_type
@@ -351,10 +348,10 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
   | E_variable variable ->
       (match Effect.get_effect_var effect variable with
         returned_effect,None ->
-          let type_ = morph_function_type None (Option.map ~f:(fun (_,x,_) -> x) returned_effect) e.type_expression in
+          let type_ = morph_function_type None (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
           return returned_effect type_ @@ E_variable variable
-      | returned_effect,Some (read_effects) ->
-          let type_ = morph_function_type (Some read_effects.type_expression) (Option.map ~f:(fun (_,x,_) -> x) returned_effect) e.type_expression in
+      | returned_effect,Some (_,read_effects) ->
+          let type_ = morph_function_type (Some read_effects.type_expression) (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
           let e     = e_variable variable type_ in
           let {type1=_;type2} = get_t_arrow_exn type_ in
           return returned_effect type2 @@ E_application {lamb=e;args=read_effects})
@@ -433,7 +430,8 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
       | _ ->
       let ret_effect,e = morph_function_application effect e in
       (match ret_effect with None -> return_1 ?returned_effect @@ e
-      | Some (effects,effect_type,ret_effect) -> (
+      | Some (effects,ret_effect) -> (
+        let effect_type = ret_effect.type_expression in
         match returned_effect with
           (* optimize when ret_effect = returned_effect *)
           Some (returned_effect) when Compare.expression returned_effect ret_effect = 0 -> return_1 @@ e
@@ -472,7 +470,8 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
           return @@ E_let_in {let_binder;rhs;let_result;attr}
 
       (* assignation in rhs and rhs is evaluated *)
-      | Some (effects,effect_type,returned_effect'),None ->
+      | Some (effects,returned_effect'),None ->
+          let effect_type = returned_effect'.type_expression in
           let let_result = self ?returned_effect let_result in
           let rhs = self ~returned_effect:returned_effect' rhs in
           let effect_binder = ValueVar.fresh ~name:"effect_binder" () in
@@ -483,10 +482,10 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
             Match_record {fields=LMap.of_list [(Label "0",({var=effect_binder;ascr=Some effect_type;attributes={const_or_var=None}}));(Label "1",({var=let_binder.var;ascr=Some rhs.type_expression;attributes={const_or_var=None}}))];body=let_result;tv}
         }
       (* rhs is not evaluated (function definition) and contains assignation *)
-      | Some (effects,effect_type,returned_effect'),Some (read_effect) ->
+      | Some (_,returned_effect'),Some (read_effects,read_effect) ->
         let let_result = self ?returned_effect let_result in
         let rhs = self ~returned_effect:returned_effect' rhs in
-        let rhs = add_parameter read_effect effects effect_type rhs in
+        let rhs = add_parameter read_effect read_effects returned_effect'.type_expression rhs in
         return @@ E_let_in {let_binder;rhs;let_result;attr}
       )
   | E_type_in {type_binder;rhs;let_result} ->
