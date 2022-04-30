@@ -12,41 +12,53 @@ let%expect_test _ =
   [%expect{| 1175 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
-  [%expect.unreachable] ;
+  [%expect{| 583 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
-  [%expect.unreachable] ;
+  [%expect{| 1639 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
-  [%expect.unreachable] ;
+  [%expect{| 430 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
-  [%expect.unreachable] ;
+  [%expect{| (Left (Left 1)) |}] ;
 
   run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
-  [%expect.unreachable] ;
+  [%expect{| (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
-  [%expect.unreachable] ;
+  [%expect{|
+    Invalid command line argument.
+    The provided storage does not have the correct type for the contract.
+    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
+    123 |
+    124 | function main (const action : parameter; const s : storage) : return is
+    125 |   case action of [
+    126 |     Buy_single (bs)      -> buy_single (bs, s)
+    127 |   | Sell_single (as)     -> sell_single (as, s)
+    128 |   | Transfer_single (at) -> transfer_single (at, s)
+    129 |   ]
+
+    Invalid type(s).
+    Expected: "storage", but got: "parameter". |}] ;
 
   run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
-  [%expect.unreachable] ;
+  [%expect{|
+    Invalid command line argument.
+    The provided parameter does not have the correct type for the given entrypoint.
+    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
+    123 |
+    124 | function main (const action : parameter; const s : storage) : return is
+    125 |   case action of [
+    126 |     Buy_single (bs)      -> buy_single (bs, s)
+    127 |   | Sell_single (as)     -> sell_single (as, s)
+    128 |   | Transfer_single (at) -> transfer_single (at, s)
+    129 |   ]
+
+    Invalid type(s).
+    Expected: "parameter", but got: "storage". |}] ;
 
   ()
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Contract_tests.(fun) in file "src/bin/expect_tests/contract_tests.ml", line 14, characters 2-74
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  Hypothesis 3 don't hold. |}]
 
 let%expect_test _  =
   run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
@@ -294,21 +306,102 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
-  [%expect.unreachable ]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Contract_tests.(fun) in file "src/bin/expect_tests/contract_tests.ml", line 296, characters 2-69
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  Hypothesis 3 don't hold. |}]
+  [%expect{|
+    { parameter
+        (pair (pair (nat %counter) (lambda %message unit (list operation)))
+              (list %signatures (pair key_hash signature))) ;
+      storage
+        (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
+      code { UNPAIR ;
+             DUP ;
+             CAR ;
+             CDR ;
+             DUP 3 ;
+             CAR ;
+             CDR ;
+             DUP 3 ;
+             CAR ;
+             CAR ;
+             COMPARE ;
+             NEQ ;
+             IF { SWAP ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
+                { CHAIN_ID ;
+                  DUP 4 ;
+                  CDR ;
+                  CAR ;
+                  PAIR ;
+                  DUP 3 ;
+                  CAR ;
+                  CAR ;
+                  DUP 3 ;
+                  PAIR ;
+                  PAIR ;
+                  UNIT ;
+                  PUSH nat 0 ;
+                  DUP 6 ;
+                  CAR ;
+                  CAR ;
+                  PAIR ;
+                  PAIR ;
+                  DIG 3 ;
+                  CDR ;
+                  ITER { SWAP ;
+                         CAR ;
+                         UNPAIR ;
+                         DUP ;
+                         IF_CONS
+                           { DIG 2 ;
+                             DROP ;
+                             DUP ;
+                             HASH_KEY ;
+                             DUP 5 ;
+                             CAR ;
+                             COMPARE ;
+                             EQ ;
+                             IF { DUP 5 ;
+                                  PACK ;
+                                  DIG 4 ;
+                                  CDR ;
+                                  DIG 2 ;
+                                  CHECK_SIGNATURE ;
+                                  IF { PUSH nat 1 ; DIG 2 ; ADD ; UNIT ; SWAP ; DIG 2 ; PAIR ; PAIR }
+                                     { PUSH string "Invalid signature" ; FAILWITH } }
+                                { DIG 3 ; DROP 2 ; UNIT ; DUG 2 ; PAIR ; PAIR } }
+                           { DIG 2 ; DROP ; UNIT ; DUG 2 ; PAIR ; PAIR } } ;
+                  SWAP ;
+                  DROP ;
+                  CAR ;
+                  CDR ;
+                  DUP 3 ;
+                  CDR ;
+                  CDR ;
+                  SWAP ;
+                  COMPARE ;
+                  LT ;
+                  IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
+                     { SWAP ;
+                       DUP ;
+                       DUG 2 ;
+                       CDR ;
+                       PUSH nat 1 ;
+                       DUP 4 ;
+                       CAR ;
+                       CDR ;
+                       ADD ;
+                       DIG 3 ;
+                       CAR ;
+                       CAR ;
+                       PAIR ;
+                       PAIR ;
+                       UNIT ;
+                       SWAP ;
+                       PAIR } } ;
+             CAR ;
+             UNIT ;
+             DIG 2 ;
+             SWAP ;
+             EXEC ;
+             PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig-v2.ligo" ] ;

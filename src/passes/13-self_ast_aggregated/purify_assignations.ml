@@ -355,13 +355,16 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
           let e     = e_variable variable type_ in
           let {type1=_;type2} = get_t_arrow_exn type_ in
           return returned_effect type2 @@ E_application {lamb=e;args=read_effects})
+  | E_type_inst {forall;type_} ->
+      let returned_effect,forall = self forall in
+      return returned_effect forall.type_expression @@ E_type_inst {forall;type_}
   | E_application {lamb;args} ->
       let returned_effect,lamb = self lamb in
       let {type1=_;type2} = get_t_arrow_exn lamb.type_expression in
       return returned_effect type2 @@ E_application {lamb;args}
   | _ -> failwith "Hypothesis 3 don't hold"
 let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: expression) : expression =
-  (* Format.printf "Morph_expression %a with effect : %a\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect;*)
+  (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect; *)
   let return_1 ?returned_effect e =
     match returned_effect with None -> e
     | Some (ret_eff) -> e_a_pair ret_eff e  in
