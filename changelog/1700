@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: contract failing to typecheck against protocol N while user did not use `--protocol N` will now only generate a warning
+merge_request: '1700'
+title: Better michelson typing error
+type: changed
