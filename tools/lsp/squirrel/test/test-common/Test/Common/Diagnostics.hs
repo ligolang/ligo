@@ -12,8 +12,6 @@ import Language.LSP.Types qualified as J
 
 import AST.Parser (collectAllErrors, parseWithScopes)
 import AST.Scope (Fallback, FromCompiler, Standard)
-import Log (runNoLoggingT)
-import ParseTree (pathToSrc)
 import Parser
 import Range
 
@@ -81,8 +79,7 @@ parseDiagnosticsDriver
   -> DiagnosticTest
   -> Assertion
 parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
-  src <- pathToSrc file
-  contract <- runNoLoggingT $ parseWithScopes @impl src
+  contract <- parseWithScopes @impl file
   let
     expectedMsgs = case source of
       CompilerSource -> fromCompiler

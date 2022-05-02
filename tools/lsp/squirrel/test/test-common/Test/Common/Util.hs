@@ -6,9 +6,12 @@ module Test.Common.Util
   , readContract
   , readContractWithMessages
   , readContractWithScopes
+  , parseContractsWithDependencies
+  , parseContractsWithDependenciesScopes
   , supportedExtensions
   ) where
 
+import Control.Monad ((<=<))
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
@@ -19,15 +22,18 @@ import System.FilePath ((</>))
 import System.IO.Error (isDoesNotExistError)
 import UnliftIO.Exception (catch, throwIO)
 
-import AST.Includes (insertPreprocessorRanges)
-import AST.Parser (parsePreprocessed, parseWithScopes)
-import AST.Scope.Common (ContractInfo, HasScopeForest, Info', contractTree)
+import AST.Includes (Includes, includesGraph, insertPreprocessorRanges)
+import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
+import AST.Scope.Common
+  ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
+  , addScopes, contractTree
+  )
 import AST.Skeleton (SomeLIGO)
-
 import Extension (supportedExtensions)
 import Log (NoLoggingT (..))
 import Parser (ParsedInfo)
 import ParseTree (pathToSrc)
+import Progress (noProgress)
 
 type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
 
@@ -64,6 +70,21 @@ readContractWithMessages filepath = do
 readContractWithScopes
   :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath = do
-  src <- pathToSrc filepath
-  contractTree <$> runNoLoggingT (parseWithScopes @parser src)
+readContractWithScopes filepath =
+  contractTree <$> parseWithScopes @parser filepath
+
+parseContractsWithDependencies
+  :: FilePath
+  -> IO (Includes ParsedContractInfo)
+parseContractsWithDependencies top =
+  includesGraph =<<
+    parseContracts (runNoLoggingT . parsePreprocessed) noProgress (const True) top
+
+parseContractsWithDependenciesScopes
+  :: forall impl
+   . ScopeTester impl
+  => FilePath
+  -> IO (Includes ContractInfo')
+parseContractsWithDependenciesScopes =
+  runNoLoggingT
+  . addScopes @impl noProgress <=< parseContractsWithDependencies

@@ -7,12 +7,9 @@ module AST.Parser
   , parseWithScopes
   , parseContracts
   , scanContracts
-  , parseContractsWithDependencies
-  , parseContractsWithDependenciesScopes
   , collectAllErrors
   ) where
 
-import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
 import Data.Foldable (toList)
@@ -20,7 +17,7 @@ import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
-import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
@@ -33,15 +30,14 @@ import AST.Parser.Reasonligo qualified as Reason
 import AST.Parser.Jsligo qualified as Js
 import AST.Scope
   ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , ParsedContractInfo, addLigoErrsToMsg, addScopes, contractNotFoundException
-  , lookupContract
+  , addLigoErrsToMsg, addScopes, contractNotFoundException, lookupContract
   )
 import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
   , SomeLigoException (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
-import Log (Log, i)
+import Log (Log, NoLoggingT (..), i)
 import Log qualified
 import ParseTree (Source (..), pathToSrc, toParseTree)
 import Parser
@@ -97,12 +93,13 @@ parsePreprocessed src = do
 
 parseWithScopes
   :: forall impl m
-   . (HasScopeForest impl m, Log m)
-  => Source
+   . (HasScopeForest impl (NoLoggingT m), MonadIO m)
+  => FilePath
   -> m ContractInfo'
-parseWithScopes src = do
-  let fp = srcPath src
-  graph <- parseContractsWithDependencies parsePreprocessed noProgress (takeDirectory fp)
+parseWithScopes fp = runNoLoggingT do
+  let
+    top = takeDirectory fp
+  graph <- includesGraph =<< parseContracts parsePreprocessed noProgress (const True) top
   scoped <- addScopes @impl noProgress $ fromMaybe graph $ find (isJust . lookupContract fp) (Includes <$> wcc (getIncludes graph))
   maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)
 
@@ -112,10 +109,11 @@ parseContracts
   :: MonadUnliftIO m
   => ParserCallback m contract
   -> ProgressCallback m
+  -> (FilePath -> Bool)
   -> FilePath
   -> m [contract]
-parseContracts parser reportProgress top = do
-  input <- scanContracts top
+parseContracts parser reportProgress predicate top = do
+  input <- scanContracts predicate top
   let
     numContracts = length input
     mkMsg contract = [i|Parsing #{contract}|]
@@ -128,40 +126,24 @@ parseContracts parser reportProgress top = do
 
 -- | Scan the whole directory for LIGO contracts.
 -- This ignores every other file which is not a contract.
-scanContracts :: MonadIO m => FilePath -> m [FilePath]
-scanContracts = liftIO . scanContractsImpl []
+scanContracts :: MonadIO m => (FilePath -> Bool) -> FilePath -> m [FilePath]
+scanContracts predicate = liftIO . scanContractsImpl [] predicate
 
-scanContractsImpl :: [FilePath] -> FilePath -> IO [FilePath]
-scanContractsImpl seen top = do
-  let exclude p = p /= "." && p /= ".."
-  ds <- getDirectoryContents top
-  flip foldMap (filter exclude ds) \d -> do
-    let p = top </> d
-    exists <- doesDirectoryExist p
-    if exists
-      then scanContractsImpl seen p
-      else if isLigoFile p
-        then pure $ p : seen
+scanContractsImpl :: [FilePath] -> (FilePath -> Bool) -> FilePath -> IO [FilePath]
+scanContractsImpl seen predicate top
+  | predicate top = do
+    ds <- listDirectory top
+    flip foldMap ds \d -> do
+      let p = top </> d
+      if predicate p
+        then do
+          exists <- doesDirectoryExist p
+          if
+            | exists -> scanContractsImpl seen predicate p
+            | isLigoFile p -> pure $ p : seen
+            | otherwise -> pure seen
         else pure seen
-
-parseContractsWithDependencies
-  :: MonadUnliftIO m
-  => ParserCallback m ContractInfo
-  -> ProgressCallback m
-  -> FilePath
-  -> m (Includes ParsedContractInfo)
-parseContractsWithDependencies parser reportProgress =
-  includesGraph <=< parseContracts parser reportProgress
-
-parseContractsWithDependenciesScopes
-  :: forall impl m
-   . HasScopeForest impl m
-  => ParserCallback m ContractInfo
-  -> ProgressCallback m
-  -> FilePath
-  -> m (Includes ContractInfo')
-parseContractsWithDependenciesScopes parser reportProgress =
-  addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
+  | otherwise = pure seen
 
 collectAllErrors :: ContractInfo' -> [Message]
 collectAllErrors (FindContract _ tree errs) =

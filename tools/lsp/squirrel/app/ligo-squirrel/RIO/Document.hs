@@ -218,6 +218,7 @@ loadDirectory root rootFileName = do
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+        (const True)
         root
       (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
 
