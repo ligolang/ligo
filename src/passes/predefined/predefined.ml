@@ -149,7 +149,6 @@ module Tree_abstraction = struct
 
   let constants x = pseudo_modules x
   let constant_to_string = function
-      | Deprecated {name;_} -> name
       | Const x -> pseudo_module_to_string x
 end
 
