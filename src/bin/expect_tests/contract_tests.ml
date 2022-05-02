@@ -2512,8 +2512,6 @@ let%expect_test _ =
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
-    let poly_#Test#failwith_3998 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_3997 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3996 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3995 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3994 = fun v -> (FAILWITH(v))[@inline] in
@@ -2524,63 +2522,65 @@ let%expect_test _ =
     let poly_#Test#failwith_3989 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3988 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3987 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_3986 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_3985 = fun v -> (FAILWITH(v))[@inline] in
     let #Test#originate_from_file#90 =
       fun _fn ->
       (fun _e ->
        (fun _v ->
-        (fun _s -> (fun _t -> ((poly_#Test#failwith_3998)@(L("TEST MODE")))))))[@inline] in
+        (fun _s -> (fun _t -> ((poly_#Test#failwith_3996)@(L("TEST MODE")))))))[@inline] in
     let #Test#set_source#92 =
-      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#set_baker#93 =
-      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#transfer#94 =
       fun _a ->
-      (fun _s -> (fun _t -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))))[@inline] in
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))))[@inline] in
     let #Test#transfer_exn#95 =
       fun _a ->
-      (fun _s -> (fun _t -> ((poly_#Test#failwith_3995)@(L("TEST MODE")))))[@inline] in
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_3993)@(L("TEST MODE")))))[@inline] in
     let #Test#get_storage_of_address#99 =
-      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#get_balance#100 =
-      fun _a -> ((poly_#Test#failwith_3997)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_3995)@(L("TEST MODE")))[@inline] in
     let #Test#michelson_equal#101 =
-      fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_3996)@(L("TEST MODE"))))[@inline] in
+      fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_3994)@(L("TEST MODE"))))[@inline] in
     let #Test#reset_state#103 =
-      fun _n -> (fun _l -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
+      fun _n -> (fun _l -> ((poly_#Test#failwith_3985)@(L("TEST MODE"))))[@inline] in
     let #Test#get_voting_power#104 =
-      fun _kh -> ((poly_#Test#failwith_3995)@(L("TEST MODE")))[@inline] in
+      fun _kh -> ((poly_#Test#failwith_3993)@(L("TEST MODE")))[@inline] in
     let #Test#get_total_voting_power#105 =
-      (poly_#Test#failwith_3995)@(L("TEST MODE"))[@inline] in
+      (poly_#Test#failwith_3993)@(L("TEST MODE"))[@inline] in
     let #Test#nth_bootstrap_contract#107 =
-      fun _i -> ((poly_#Test#failwith_3994)@(L("TEST MODE")))[@inline] in
+      fun _i -> ((poly_#Test#failwith_3992)@(L("TEST MODE")))[@inline] in
     let #Test#nth_bootstrap_account#108 =
-      fun _i -> ((poly_#Test#failwith_3994)@(L("TEST MODE")))[@inline] in
+      fun _i -> ((poly_#Test#failwith_3992)@(L("TEST MODE")))[@inline] in
     let #Test#last_originations#110 =
-      fun _u -> ((poly_#Test#failwith_3993)@(L("TEST MODE")))[@inline] in
-    let #Test#save_mutation#113 =
-      fun _s -> (fun _m -> ((poly_#Test#failwith_3992)@(L("TEST MODE"))))[@inline] in
-    let #Test#add_account#120 =
-      fun _s -> (fun _k -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
-    let #Test#new_account#121 =
       fun _u -> ((poly_#Test#failwith_3991)@(L("TEST MODE")))[@inline] in
+    let #Test#save_mutation#113 =
+      fun _s -> (fun _m -> ((poly_#Test#failwith_3990)@(L("TEST MODE"))))[@inline] in
+    let #Test#add_account#120 =
+      fun _s -> (fun _k -> ((poly_#Test#failwith_3985)@(L("TEST MODE"))))[@inline] in
+    let #Test#new_account#121 =
+      fun _u -> ((poly_#Test#failwith_3989)@(L("TEST MODE")))[@inline] in
     let #Test#baker_account#122 =
-      fun _p -> (fun _o -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
+      fun _p -> (fun _o -> ((poly_#Test#failwith_3985)@(L("TEST MODE"))))[@inline] in
     let #Test#bake_until_n_cycle_end#123 =
-      fun _n -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _n -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#register_delegate#124 =
-      fun _kh -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _kh -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#register_constant#125 =
-      fun _m -> ((poly_#Test#failwith_3990)@(L("TEST MODE")))[@inline] in
+      fun _m -> ((poly_#Test#failwith_3988)@(L("TEST MODE")))[@inline] in
     let #Test#create_chest#130 =
-      fun _b -> (fun _n -> ((poly_#Test#failwith_3989)@(L("TEST MODE"))))[@inline] in
+      fun _b -> (fun _n -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
     let #Test#create_chest_key#131 =
-      fun _c -> (fun _n -> ((poly_#Test#failwith_3988)@(L("TEST MODE"))))[@inline] in
+      fun _c -> (fun _n -> ((poly_#Test#failwith_3986)@(L("TEST MODE"))))[@inline] in
     let #Test#constant_to_michelson_program#132 =
-      fun _s -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+      fun _s -> ((poly_#Test#failwith_3985)@(L("TEST MODE")))[@inline] in
     let #Test#restore_context#133 =
-      fun _u -> ((poly_#Test#failwith_3987)@(L("TEST_POP_CONTEXT")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_3985)@(L("TEST_POP_CONTEXT")))[@inline] in
     let #Test#save_context#134 =
-      fun _u -> ((poly_#Test#failwith_3987)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_3985)@(L("TEST_PUSH_CONTEXT")))[@inline] in
     let #Foo#x#135 = L(54) in let #Foo#y#136 = #Foo#x#135 in L(unit) |}]
 
 let%expect_test _ =

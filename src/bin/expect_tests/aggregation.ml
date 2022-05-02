@@ -268,8 +268,6 @@ let%expect_test _ =
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
-    let poly_#Test#failwith_5237 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_5236 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_5235 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_5234 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_5233 = fun v -> (FAILWITH(v))[@inline] in
@@ -280,6 +278,8 @@ let%expect_test _ =
     let poly_#Test#failwith_5228 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_5227 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_5226 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_5225 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_5224 = fun v -> (FAILWITH(v))[@inline] in
     let #Test#originate_from_file#159 =
       fun gen#149 ->
       (let (gen#233, gen#234) = gen#149 in
@@ -290,87 +290,87 @@ let%expect_test _ =
        let (gen#237, gen#238) = gen#236 in
        let _v = gen#237 in
        let _s = gen#238 in
-       let _t = gen#234 in (poly_#Test#failwith_5237)@(L("TEST MODE")))[@inline] in
+       let _t = gen#234 in (poly_#Test#failwith_5235)@(L("TEST MODE")))[@inline] in
     let #Test#set_source#161 =
-      fun _a -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#set_baker#162 =
-      fun _a -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#transfer#163 =
       fun gen#151 ->
       (let (gen#241, gen#242) = gen#151 in
        let (gen#243, gen#244) = gen#241 in
        let _a = gen#243 in
        let _s = gen#244 in
-       let _t = gen#242 in (poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+       let _t = gen#242 in (poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#transfer_exn#164 =
       fun gen#152 ->
       (let (gen#245, gen#246) = gen#152 in
        let (gen#247, gen#248) = gen#245 in
        let _a = gen#247 in
        let _s = gen#248 in
-       let _t = gen#246 in (poly_#Test#failwith_5234)@(L("TEST MODE")))[@inline] in
+       let _t = gen#246 in (poly_#Test#failwith_5232)@(L("TEST MODE")))[@inline] in
     let #Test#get_storage_of_address#168 =
-      fun _a -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#get_balance#169 =
-      fun _a -> ((poly_#Test#failwith_5236)@(L("TEST MODE")))[@inline] in
+      fun _a -> ((poly_#Test#failwith_5234)@(L("TEST MODE")))[@inline] in
     let #Test#michelson_equal#170 =
       fun gen#155 ->
       (let (gen#249, gen#250) = gen#155 in
        let _m1 = gen#249 in
-       let _m2 = gen#250 in (poly_#Test#failwith_5235)@(L("TEST MODE")))[@inline] in
+       let _m2 = gen#250 in (poly_#Test#failwith_5233)@(L("TEST MODE")))[@inline] in
     let #Test#reset_state#172 =
       fun gen#156 ->
       (let (gen#251, gen#252) = gen#156 in
        let _n = gen#251 in
-       let _l = gen#252 in (poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+       let _l = gen#252 in (poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#get_voting_power#173 =
-      fun _kh -> ((poly_#Test#failwith_5234)@(L("TEST MODE")))[@inline] in
+      fun _kh -> ((poly_#Test#failwith_5232)@(L("TEST MODE")))[@inline] in
     let #Test#get_total_voting_power#174 =
-      (poly_#Test#failwith_5234)@(L("TEST MODE"))[@inline] in
+      (poly_#Test#failwith_5232)@(L("TEST MODE"))[@inline] in
     let #Test#nth_bootstrap_contract#176 =
-      fun _i -> ((poly_#Test#failwith_5233)@(L("TEST MODE")))[@inline] in
+      fun _i -> ((poly_#Test#failwith_5231)@(L("TEST MODE")))[@inline] in
     let #Test#nth_bootstrap_account#177 =
-      fun _i -> ((poly_#Test#failwith_5233)@(L("TEST MODE")))[@inline] in
+      fun _i -> ((poly_#Test#failwith_5231)@(L("TEST MODE")))[@inline] in
     let #Test#last_originations#179 =
-      fun _u -> ((poly_#Test#failwith_5232)@(L("TEST MODE")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_5230)@(L("TEST MODE")))[@inline] in
     let #Test#save_mutation#182 =
       fun gen#159 ->
       (let (gen#253, gen#254) = gen#159 in
        let _s = gen#253 in
-       let _m = gen#254 in (poly_#Test#failwith_5231)@(L("TEST MODE")))[@inline] in
+       let _m = gen#254 in (poly_#Test#failwith_5229)@(L("TEST MODE")))[@inline] in
     let #Test#add_account#189 =
       fun gen#163 ->
       (let (gen#255, gen#256) = gen#163 in
        let _s = gen#255 in
-       let _k = gen#256 in (poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+       let _k = gen#256 in (poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#new_account#190 =
-      fun _u -> ((poly_#Test#failwith_5230)@(L("TEST MODE")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_5228)@(L("TEST MODE")))[@inline] in
     let #Test#baker_account#191 =
       fun gen#164 ->
       (let (gen#257, gen#258) = gen#164 in
        let _p = gen#257 in
-       let _o = gen#258 in (poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+       let _o = gen#258 in (poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#bake_until_n_cycle_end#192 =
-      fun _n -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _n -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#register_delegate#193 =
-      fun _kh -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _kh -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#register_constant#194 =
-      fun _m -> ((poly_#Test#failwith_5229)@(L("TEST MODE")))[@inline] in
+      fun _m -> ((poly_#Test#failwith_5227)@(L("TEST MODE")))[@inline] in
     let #Test#create_chest#199 =
       fun gen#167 ->
       (let (gen#259, gen#260) = gen#167 in
        let _b = gen#259 in
-       let _n = gen#260 in (poly_#Test#failwith_5228)@(L("TEST MODE")))[@inline] in
+       let _n = gen#260 in (poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
     let #Test#create_chest_key#200 =
       fun gen#168 ->
       (let (gen#261, gen#262) = gen#168 in
        let _c = gen#261 in
-       let _n = gen#262 in (poly_#Test#failwith_5227)@(L("TEST MODE")))[@inline] in
+       let _n = gen#262 in (poly_#Test#failwith_5225)@(L("TEST MODE")))[@inline] in
     let #Test#constant_to_michelson_program#201 =
-      fun _s -> ((poly_#Test#failwith_5226)@(L("TEST MODE")))[@inline] in
+      fun _s -> ((poly_#Test#failwith_5224)@(L("TEST MODE")))[@inline] in
     let #Test#restore_context#202 =
-      fun _u -> ((poly_#Test#failwith_5226)@(L("TEST_POP_CONTEXT")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_5224)@(L("TEST_POP_CONTEXT")))[@inline] in
     let #Test#save_context#203 =
-      fun _u -> ((poly_#Test#failwith_5226)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+      fun _u -> ((poly_#Test#failwith_5224)@(L("TEST_PUSH_CONTEXT")))[@inline] in
     let v = PAIR(L(1) , L("b")) in
     let #A#y#204 = v in let tm = #A#y#204 in L(unit) |}]
