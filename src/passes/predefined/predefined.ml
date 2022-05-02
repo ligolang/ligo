@@ -44,6 +44,7 @@ module Tree_abstraction = struct
     | "Tezos.self"               -> some_const C_SELF
     | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.call_view"          -> some_const C_VIEW
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
