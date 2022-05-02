@@ -11,13 +11,7 @@ module Tree_abstraction = struct
 
   open Ast_imperative
 
-  module type Constant = sig
-    val constants      : string -> rich_constant option
-    val constant_to_string      : rich_constant -> string
-  end
-
   let some_const c = Some (Const c)
-  let some_deprecated name const = Some (Deprecated {name;const})
 
   (*
     Each front-end has its owns constants.
@@ -44,6 +38,7 @@ module Tree_abstraction = struct
     | "Tezos.self"               -> some_const C_SELF
     | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
 
     (* Sapling *)
@@ -66,11 +61,7 @@ module Tree_abstraction = struct
     | "Bitwise.or"          -> some_const C_OR
     | "Bitwise.and"         -> some_const C_AND
 
-    (* String module *)
-    | "String.size"     -> some_deprecated x C_SIZE  (* Deprecated *)
-    | "String.slice"    -> some_deprecated x C_SLICE (* Deprecated *)
     (* Operator module *)
-
     | "Operator.neg"   -> some_const C_NEG
     | "Operator.add"   -> some_const C_ADD
     | "Operator.sub"   -> some_const C_POLYMORPHIC_SUB
@@ -118,7 +109,6 @@ module Tree_abstraction = struct
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
-
     | C_NEG  -> "Operator.neg"
     | C_ADD  -> "Operator.add"
     | C_SUB  -> "Operator.sub"
@@ -139,307 +129,27 @@ module Tree_abstraction = struct
     | C_NEQ  -> "Operator.neq"
 
     (* Set module *)
-
     | C_SET_LITERAL    -> "Set.literal"
 
     (* Map module *)
-
     | C_MAP_LITERAL  -> "Map.literal"
     | C_MAP_ADD      -> "Map.add"
     | C_MAP_REMOVE   -> "Map.remove"
 
     (* Big_map module *)
-
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
 
     (* Bitwise module *)
-
     | C_XOR -> "Bitwise.xor"
     | C_LSL -> "Bitwise.shift_left"
     | C_LSR -> "Bitwise.shift_right"
 
-    (* Not parsed *)
-    (* | C_SOME -> "Some" *)
-    (* | C_NONE -> "None" *)
-
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
 
-  module Pascaligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos module (ex-Michelson) *)
-      | "chain_id"               -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "get_chain_id"           -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "balance"                -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "now"                    -> some_deprecated C_NOW                 (* Deprecated *)
-      | "amount"                 -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "sender"                 -> some_deprecated C_SENDER              (* Deprecated *)
-      | "address"                -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "self_address"           -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "implicit_account"       -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "source"                 -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "transaction"            -> some_deprecated C_CALL                    (* Deprecated *)
-      | "set_delegate"           -> some_deprecated C_SET_DELEGATE            (* Deprecated *)
-      | "get_contract"           -> some_deprecated C_CONTRACT                (* Deprecated *)
-      | "get_contract_opt"       -> some_deprecated C_CONTRACT_OPT            (* Deprecated *)
-      | "get_entrypoint"         -> some_deprecated C_CONTRACT_ENTRYPOINT     (* Deprecated *)
-      | "get_entrypoint_opt"     -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      | "cons"             -> some_deprecated C_CONS (* Deprecated *)
-
-      (* Crypto module *)
-
-      | "crypto_check"    -> some_deprecated C_CHECK_SIGNATURE       (* Deprecated *)
-      | "crypto_hash_key" -> some_deprecated C_HASH_KEY              (* Deprecated *)
-      | "blake2b"         -> some_deprecated C_BLAKE2b               (* Deprecated *)
-      | "sha_256"         -> some_deprecated C_SHA256                (* Deprecated *)
-      | "sha_512"         -> some_deprecated C_SHA512                (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "bytes_pack"   -> some_deprecated C_BYTES_PACK    (* Deprecated *)
-      | "bytes_unpack" -> some_deprecated C_BYTES_UNPACK  (* Deprecated *)
-      | "Bytes.size"   -> some_deprecated C_SIZE          (* Deprecated *)
-      | "bytes_concat" -> some_deprecated C_CONCAT        (* Deprecated *)
-      | "bytes_slice"  -> some_deprecated C_SLICE         (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE         (* Deprecated *)
-
-      (* List module *)
-
-      | "list_size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "list_iter"   -> some_deprecated C_LIST_ITER  (* Deprecated *)
-      | "list_map"    -> some_deprecated C_LIST_MAP   (* Deprecated *)
-      | "list_fold"   -> some_deprecated C_LIST_FOLD  (* Deprecated *)
-
-      (* Set module *)
-
-
-      | "Set.size"    -> some_deprecated C_SIZE        (* Deprecated *)
-      | "set_size"    -> some_deprecated C_SIZE        (* Deprecated *)
-      | "set_empty"   -> some_deprecated C_SET_EMPTY   (* Deprecated *)
-      | "set_mem"     -> some_deprecated C_SET_MEM     (* Deprecated *)
-      | "set_add"     -> some_deprecated C_SET_ADD     (* Deprecated *)
-      | "set_remove"  -> some_deprecated C_SET_REMOVE  (* Deprecated *)
-      | "set_iter"    -> some_deprecated C_SET_ITER    (* Deprecated *)
-      | "set_fold"    -> some_deprecated C_SET_FOLD    (* Deprecated *)
-
-      (* Map module *)
-
-      | "get_force"    -> some_deprecated C_MAP_FIND      (* Deprecated *)
-      | "map_get"      -> some_deprecated C_MAP_FIND_OPT  (* Deprecated *)
-      | "map_update"   -> some_deprecated C_MAP_UPDATE    (* Deprecated *)
-      | "map_remove"   -> some_deprecated C_MAP_REMOVE    (* Deprecated *)
-      | "map_iter"     -> some_deprecated C_MAP_ITER      (* Deprecated *)
-      | "map_map"      -> some_deprecated C_MAP_MAP       (* Deprecated *)
-      | "map_fold"     -> some_deprecated C_MAP_FOLD      (* Deprecated *)
-      | "map_mem"      -> some_deprecated C_MAP_MEM       (* Deprecated *)
-      | "map_size"     -> some_deprecated C_SIZE          (* Deprecated *)
-
-
-      (* Bitwise module *)
-
-      | "bitwise_or"          -> some_deprecated C_OR      (* Deprecated *)
-      | "bitwise_and"         -> some_deprecated C_AND     (* Deprecated *)
-      | "bitwise_xor"         -> some_deprecated C_XOR     (* Deprecated *)
-      | "bitwise_lsl"         -> some_deprecated C_LSL     (* Deprecated *)
-      | "bitwise_lsr"         -> some_deprecated C_LSR     (* Deprecated *)
-
-      (* String module *)
-
-      | "string_slice"    -> some_deprecated C_SLICE    (* Deprecated *)
-      | "string_concat"   -> some_deprecated C_CONCAT   (* Deprecated *)
-
-      (* Others *)
-
-      | "size"                   -> some_deprecated C_SIZE (* Deprecated *)
-
-      | _ as c                   -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos module (ex-Michelson) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "nil"
-
-      (*->  Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-
-      | _ as c            -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Cameligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-
-      | "chain_id"                   -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "Current.balance"            -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "balance"                    -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "Current.time"               -> some_deprecated C_NOW                 (* Deprecated *)
-      | "time"                       -> some_deprecated C_NOW                 (* Deprecated *)
-      | "Current.amount"             -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "amount"                     -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "Current.sender"             -> some_deprecated C_SENDER              (* Deprecated *)
-      | "sender"                     -> some_deprecated C_SENDER              (* Deprecated *)
-      | "Current.address"            -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "Current.self_address"       -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "Current.implicit_account"   -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-
-      | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
-      | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
-      | "Operation.get_contract"       -> some_deprecated C_CONTRACT          (* Deprecated *)
-      | "Operation.get_contract_opt"   -> some_deprecated C_CONTRACT_OPT      (* Deprecated *)
-      | "Operation.get_entrypoint"     -> some_deprecated C_CONTRACT_ENTRYPOINT (* Deprecated *)
-      | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "Bytes.size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE      (* Deprecated *)
-
-      (* Set module *)
-      | "Set.size"     -> some_deprecated C_SIZE (* Deprecated *)
-
-      (* Map module *)
-      | "Map.find"     -> some_deprecated C_MAP_FIND     (* Deprecated *)
-
-      (* Bitwise module *)
-
-      | "Bitwise.lor"         -> some_deprecated C_OR  (* Deprecated *)
-      | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
-      | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
-
-      (* Others *)
-
-      | _ as c -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "[]"
-
-      (* Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-      | C_TRUE -> "true"
-      | C_FALSE -> "false"
-
-      | _ as c -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Reasonligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-
-      | "chain_id"                   -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "Current.balance"            -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "balance"                    -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "Current.time"               -> some_deprecated C_NOW                 (* Deprecated *)
-      | "time"                       -> some_deprecated C_NOW                 (* Deprecated *)
-      | "Current.amount"             -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "amount"                     -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "Current.sender"             -> some_deprecated C_SENDER              (* Deprecated *)
-      | "sender"                     -> some_deprecated C_SENDER              (* Deprecated *)
-      | "Current.address"            -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "Current.self_address"       -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "Current.implicit_account"   -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-
-      | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
-      | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
-      | "Operation.get_contract"       -> some_deprecated C_CONTRACT          (* Deprecated *)
-      | "Operation.get_contract_opt"   -> some_deprecated C_CONTRACT_OPT      (* Deprecated *)
-      | "Operation.get_entrypoint"     -> some_deprecated C_CONTRACT_ENTRYPOINT (* Deprecated *)
-      | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "Bytes.size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE      (* Deprecated *)
-
-      (* Set module *)
-      | "Set.size"     -> some_deprecated C_SIZE (* Deprecated *)
-
-      (* Map module *)
-      | "Map.find"     -> some_deprecated C_MAP_FIND     (* Deprecated *)
-
-      (* Bitwise module *)
-
-      | "Bitwise.lor"         -> some_deprecated C_OR  (* Deprecated *)
-      | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
-      | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
-
-      (* Others *)
-
-      | _ as c -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "[]"
-
-      (* Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-      | C_TRUE -> "true"
-      | C_FALSE -> "false"
-
-      | _ as c -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Jsligo = Reasonligo
+  let constants x = pseudo_modules x
+  let constant_to_string = function
+      | Const x -> pseudo_module_to_string x
 end
 
 module Stacking = struct

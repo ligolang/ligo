@@ -1,6 +1,6 @@
 module AST = Ast_imperative
 module CST = Cst.Reasonligo
-module Predefined = Predefined.Tree_abstraction.Reasonligo
+module Predefined = Predefined.Tree_abstraction
 module Token    = Lexing_reasonligo.Token
 module Region   = Simple_utils.Region
 module Location = Simple_utils.Location

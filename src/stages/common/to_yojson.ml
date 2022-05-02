@@ -264,7 +264,6 @@ let deprecated {name;const} =
   ]
 
 let rich_constant = function
-  | Deprecated d -> `List [`String "Deprecatd"; deprecated d ]
   | Const      c -> `List [`String "Const"; constant' c ]
 
 let declaration_type type_expression a_t {type_binder; type_expr; type_attr} =
