@@ -224,8 +224,6 @@ const b : int = 5n - 2n
 
 // Therefore the following is invalid
 // const c : nat = 5n - 2n
-
-const d : tez = 5mutez - 1mutez
 ```
 
 </Syntax>
@@ -239,8 +237,6 @@ let b : int = 5n - 2n
 
 // Therefore the following is invalid
 // let c : nat = 5n - 2n
-
-let d : tez = 5mutez - 1mutez
 ```
 
 </Syntax>
@@ -254,8 +250,6 @@ let b : int = 5n - 2n;
 
 // Therefore the following is invalid
 // let c : nat = 5n - 2n;
-
-let d : tez = 5mutez - 1mutez;
 ```
 
 </Syntax>
@@ -269,8 +263,6 @@ let b: int = (5 as nat) - (2 as nat);
 
 // Therefore the following is invalid
 // let c : nat = (5 as nat) - (2 as nat);
-
-let d: tez = (5 as mutez) - (1 as mutez);
 ```
 
 </Syntax>
@@ -323,11 +315,9 @@ let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
 
 </Syntax>
 
-
 ## Multiplication
 
 You can multiply values of the same type, such as:
-
 
 <Syntax syntax="pascaligo">
 
