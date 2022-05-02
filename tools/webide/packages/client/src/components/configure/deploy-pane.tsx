@@ -1,8 +1,9 @@
 import React, {FC} from 'react';
 import { useDispatch, connect } from 'react-redux';
 import styled from 'styled-components';
+import { protocolType } from '../../redux/compile';
 
-import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType } from '../../redux/deploy';
+import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType, ChangeProtocolAction } from '../../redux/deploy';
 import { CheckboxComponent } from '../form/checkbox';
 import { AccessFunctionLabel, Group, HGroup, Input, Label, Textarea } from '../form/inputs';
 import { Option, Select } from '../form/select';
@@ -50,6 +51,15 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
   return (
     <Container>
       <Group>
+      <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+        <SelectCommand
+          id="protocol-select"
+          value={protocolType.Ithaca}
+          onChange={ev =>
+            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          }>
+          <Option value={protocolType.Ithaca}>Ithaca</Option>
+        </SelectCommand>
       <Label htmlFor="storage">Choose a Network</Label>
       <SelectCommand
           id="command-select"

@@ -8,6 +8,7 @@ interface CompileBody {
   syntax: string;
   expression: string;
   format?: string;
+  protocol: string;
 }
 
 const validateRequest = (body: any): { value: CompileBody; error?: any } => {
@@ -15,6 +16,7 @@ const validateRequest = (body: any): { value: CompileBody; error?: any } => {
     .object({
       syntax: joi.string().required(),
       expression: joi.string().required(),
+      protocol: joi.string().required(),
       format: joi.string().optional(),
     })
     .validate(body);
@@ -30,7 +32,8 @@ export async function compileExpressionHandler(req: Request, res: Response) {
       const michelsonCode = await new LigoCompiler().compileExpression(
         body.syntax,
         body.expression,
-        body.format || ''
+        body.format || '',
+        body.protocol
       );
 
       res.send({ result: michelsonCode });

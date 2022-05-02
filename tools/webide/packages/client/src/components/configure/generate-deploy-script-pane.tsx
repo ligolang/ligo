@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
+import { protocolType } from '../../redux/compile';
 import {
   ChangeEntrypointAction,
+  ChangeProtocolAction,
   ChangeStorageAction,
   ChangeToolAction,
   GenerateDeployScriptState,
@@ -15,6 +17,14 @@ import { Option, Select } from '../form/select';
 
 const Container = styled.div`
   overflow: auto;
+`;
+
+const SelectCommand = styled(Select)`
+  flex: 2;
+
+  &:hover {
+    box-shadow: var(--box-shadow);
+  }
 `;
 
 export const GenerateDeployScriptPane = () => {
@@ -35,6 +45,15 @@ export const GenerateDeployScriptPane = () => {
   return (
     <Container>
       <Group>
+      <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+        <SelectCommand
+          id="protocol-select"
+          value={protocolType.Ithaca}
+          onChange={ev =>
+            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          }>
+          <Option value={protocolType.Ithaca}>Ithaca</Option>
+        </SelectCommand>
         <Label>Tool</Label>
         <Select
           id="tool"

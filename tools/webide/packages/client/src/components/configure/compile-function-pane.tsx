@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { PushSpinner } from 'react-spinners-kit';
 import { Group, Label } from '../form/inputs';
 import { Option, Select } from '../form/select';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration';
-import { ChangeSelectedAction } from '../../redux/compile-function';
+import { ChangeProtocolAction, ChangeSelectedAction } from '../../redux/compile-function';
 import { ChangeOutputAction } from '../../redux/result';
 import { CommandType } from '../../redux/types';
+import { protocolType } from '../../redux/compile';
 
 const Container = styled.div``;
 
@@ -43,6 +44,7 @@ const CompileFunctionPaneComponent = (props) => {
   const [showSpinner, setShowSpinner] = useState<boolean>(false);
   let timeout;
 
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const lastLoadedTime = lastEditedTime
@@ -98,6 +100,15 @@ const CompileFunctionPaneComponent = (props) => {
       )}
       {!showSpinner && declaration && declaration.length > 0 && (
         <Group>
+          <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+          <SelectCommand
+            id="protocol-select"
+            value={protocolType.Ithaca}
+            onChange={ev =>
+              dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+            }>
+            <Option value={protocolType.Ithaca}>Ithaca</Option>
+          </SelectCommand>
           <Label>Select Function to compile</Label>
           <SelectCommand
             id="command-select"

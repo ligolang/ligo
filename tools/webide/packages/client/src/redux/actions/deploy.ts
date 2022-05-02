@@ -33,7 +33,8 @@ export class DeployAction extends CancellableAction {
       editorState.code,
       deployState.entrypoint,
       deployState.storage,
-      deployState.network
+      deployState.network,
+      deployState.protocol
     );
   }
 
@@ -70,6 +71,7 @@ export class DeployAction extends CancellableAction {
       editorState.code,
       deployState.entrypoint,
       deployState.storage,
+      deployState.protocol,
       MichelsonFormat.Json
     );
 
@@ -77,6 +79,7 @@ export class DeployAction extends CancellableAction {
       editorState.language,
       editorState.code,
       deployState.entrypoint,
+      deployState.protocol,
       MichelsonFormat.Json
     );
 

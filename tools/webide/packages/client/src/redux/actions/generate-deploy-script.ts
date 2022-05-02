@@ -39,13 +39,15 @@ export class GenerateDeployScriptAction extends CancellableAction {
           editor.language,
           editor.code,
           generateDeployScript.entrypoint,
+          generateDeployScript.protocol,
           MichelsonFormat.Json
         );
 
         const michelsonCode = await compileContract(
           editor.language,
           editor.code,
-          generateDeployScript.entrypoint
+          generateDeployScript.entrypoint,
+          generateDeployScript.protocol
         );
 
         if (this.isCancelled()) {
@@ -58,6 +60,7 @@ export class GenerateDeployScriptAction extends CancellableAction {
           editor.code,
           generateDeployScript.entrypoint,
           generateDeployScript.storage,
+          generateDeployScript.protocol,
           MichelsonFormat.Json
         );
 
@@ -65,7 +68,8 @@ export class GenerateDeployScriptAction extends CancellableAction {
           editor.language,
           editor.code,
           generateDeployScript.entrypoint,
-          generateDeployScript.storage
+          generateDeployScript.storage,
+          generateDeployScript.protocol
         );
 
         if (this.isCancelled()) {
