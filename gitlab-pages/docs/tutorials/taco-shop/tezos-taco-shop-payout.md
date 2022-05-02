@@ -46,7 +46,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
    const current_purchase_price : tez =
      taco_kind.max_price / taco_kind.current_stock;
 
-  if amount =/= current_purchase_price then
+  if Tezos.amount =/= current_purchase_price then
     // We won't sell tacos if the amount is not correct
     failwith ("Sorry, the taco you are trying to purchase has a different price");
 
@@ -123,7 +123,7 @@ receiver)` within a list of operations returned at the end of our
 contract.
 
 ```pascaligo group=ex1
-const payoutOperation : operation = Tezos.transaction (unit, amount, receiver) ;
+const payoutOperation : operation = Tezos.transaction (unit, Tezos.amount, receiver) ;
 const operations : list (operation) = list [payoutOperation];
 ```
 
@@ -174,7 +174,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
     | None -> (failwith ("Not a contract") : (contract(unit)))
     ];
 
-  const payoutOperation : operation = Tezos.transaction (unit, amount, receiver);
+  const payoutOperation : operation = Tezos.transaction (unit, Tezos.amount, receiver);
   const operations : list(operation) = list [payoutOperation]
 } with ((operations : list (operation)), taco_shop_storage)
 ```
@@ -237,8 +237,8 @@ const donationAmount : tez = Tezos.amount / 10n;
 
 const operations : list (operation) = list [
   // Pedro will get 90% of the amount
-  transaction (unit, Tezos.amount - donationAmount, receiver);
-  transaction (unit, donationAmount, donationReceiver)
+  Tezos.transaction (unit, Tezos.amount - donationAmount, receiver);
+  Tezos.transaction (unit, donationAmount, donationReceiver)
 ];
 ```
 

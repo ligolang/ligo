@@ -256,7 +256,7 @@ function withdraw (const param : parameter; var s : storage) is {
       Some (v) -> v
     | None -> 0mutez
     ];
-  if balance < @amount then failwith ("Insufficient balance");
+  if @balance < @amount then failwith ("Insufficient balance");
   const new_balance = @balance - @amount;
   const op = Tezos.transaction (Unit, @amount, beneficiary);
   s.balances [beneficiary_addr] := new_balance

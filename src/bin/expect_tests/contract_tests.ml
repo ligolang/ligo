@@ -10,34 +10,6 @@ let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
     1175 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
@@ -46,48 +18,6 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/multisig-v2.ligo", line 121, characters 22-67:
-    120 |           then s.proposal_counters[Tezos.sender] :=
-    121 |                  abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
-    122 |           else skip;
-
-    Warning: constant get_force is being deprecated soon.
-
-    File "../../test/contracts/multisig-v2.ligo", line 81, characters 6-51:
-     80 |     var sender_proposal_counter : nat :=
-     81 |       get_force (Tezos.sender, s.proposal_counters);
-     82 |
-
-    Warning: constant get_force is being deprecated soon.
-
-    File "../../test/contracts/multisig-v2.ligo", line 73, characters 13-58:
-     72 |           s.proposal_counters[sender] :=
-     73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-     74 |              new_store := set [Tezos.sender]
-
-    Warning: constant get_force is being deprecated soon.
-
-    File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-36:
-     71 |           // the message has never been received before
-     72 |           s.proposal_counters[sender] :=
-     73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 66, characters 17-62:
-     65 |           else s.proposal_counters[Tezos.sender] :=
-     66 |                  get_force (Tezos.sender, s.proposal_counters) + 1n;
-     67 |                  new_store := Set.add (Tezos.sender,voters)
-
-    Warning: constant get_force is being deprecated soon.
-
-    File "../../test/contracts/multisig-v2.ligo", line 57, characters 9-46:
-     56 |
-     57 |     case map_get (packed_msg, s.message_store) of [
-     58 |       Some (voters) ->
-
-    Warning: constant map_get is being deprecated soon.
-
     1569 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
@@ -96,98 +26,14 @@ let%expect_test _ =
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
     (Left (Left 1)) |}] ;
 
   run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
     (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 Invalid command line argument.
 The provided storage does not have the correct type for the contract.
 File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -204,34 +50,6 @@ Expected: "storage", but got: "parameter". |}] ;
 
   run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 Invalid command line argument.
 The provided parameter does not have the correct type for the given entrypoint.
 File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -249,12 +67,12 @@ Expected: "parameter", but got: "storage". |}] ;
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
+  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -262,50 +80,16 @@ let%expect_test _  =
     File "../../test/contracts/timestamp.ligo", line 3, characters 37-38:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-
-    File "../../test/contracts/timestamp.ligo", line 4, characters 59-62:
-      3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
-
-    Warning: constant now is being deprecated soon. Consider using Tezos.now instead.
 
     "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 { parameter
     (or (or (nat %buy_single) (nat %sell_single))
         (pair %transfer_single (nat %card_to_transfer) (address %destination))) ;
@@ -639,48 +423,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-File "../../test/contracts/multisig-v2.ligo", line 121, characters 22-67:
-120 |           then s.proposal_counters[Tezos.sender] :=
-121 |                  abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
-122 |           else skip;
-
-Warning: constant get_force is being deprecated soon.
-
-File "../../test/contracts/multisig-v2.ligo", line 81, characters 6-51:
- 80 |     var sender_proposal_counter : nat :=
- 81 |       get_force (Tezos.sender, s.proposal_counters);
- 82 |
-
-Warning: constant get_force is being deprecated soon.
-
-File "../../test/contracts/multisig-v2.ligo", line 73, characters 13-58:
- 72 |           s.proposal_counters[sender] :=
- 73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
- 74 |              new_store := set [Tezos.sender]
-
-Warning: constant get_force is being deprecated soon.
-
-File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-36:
- 71 |           // the message has never been received before
- 72 |           s.proposal_counters[sender] :=
- 73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 66, characters 17-62:
- 65 |           else s.proposal_counters[Tezos.sender] :=
- 66 |                  get_force (Tezos.sender, s.proposal_counters) + 1n;
- 67 |                  new_store := Set.add (Tezos.sender,voters)
-
-Warning: constant get_force is being deprecated soon.
-
-File "../../test/contracts/multisig-v2.ligo", line 57, characters 9-46:
- 56 |
- 57 |     case map_get (packed_msg, s.message_store) of [
- 58 |       Some (voters) ->
-
-Warning: constant map_get is being deprecated soon.
-
 { parameter
     (or (or (unit %default) (lambda %send bytes (list operation)))
         (lambda %withdraw bytes (list operation))) ;
@@ -1339,7 +1081,7 @@ let%expect_test _ =
 
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
+      8 |   fun (x : unit) -> Tezos.amount
       9 |
     :
     Warning: unused variable "x".
@@ -1348,13 +1090,13 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
+      8 |   fun (x : unit) -> Tezos.amount
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
     File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
-      3 |   let amt : tez = Current.amount in
+      3 |   let amt : tez = Tezos.amount in
       4 |   fun (x : unit) -> amt
       5 |
     :
@@ -1364,24 +1106,10 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Current.amount in
+      3 |   let amt : tez = Tezos.amount in
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 8, characters 20-34:
-      7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
-      9 |
-
-    Warning: constant Current.amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/amount_lambda.mligo", line 3, characters 18-32:
-      2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Current.amount in
-      4 |   fun (x : unit) -> amt
-
-    Warning: constant Current.amount is being deprecated soon. Consider using Tezos.amount instead.
 
     { parameter bool ;
       storage (lambda unit mutez) ;
@@ -1529,13 +1257,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
   [%expect {|
-    File "../../test/contracts/big_map.ligo", line 34, characters 11-30:
-     33 |   bar[42] := 0;
-     34 |   n[42] := get_force (42, bar)
-     35 | } with n
-
-    Warning: constant get_force is being deprecated soon.
-
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
@@ -2756,39 +2477,39 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let #Tezos#balance#4 = BALANCE()[@inline] in
-    let #Tezos#amount#5 = AMOUNT()[@inline] in
-    let #Tezos#now#6 = NOW()[@inline] in
-    let #Tezos#sender#7 = SENDER()[@inline] in
-    let #Tezos#source#8 = SOURCE()[@inline] in
-    let #Tezos#level#9 = LEVEL()[@inline] in
-    let #Tezos#self_address#10 = SELF_ADDRESS()[@inline] in
-    let #Tezos#chain_id#11 = CHAIN_ID()[@inline] in
-    let #Tezos#total_voting_power#12 = TOTAL_VOTING_POWER()[@inline] in
-    let #Tezos#voting_power#13 = fun kh -> (VOTING_POWER(kh))[@inline] in
-    let #Tezos#implicit_account#15 = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-    let #Tezos#pairing_check#21 = fun l -> (PAIRING_CHECK(l))[@inline] in
-    let #Tezos#open_chest#22 =
+    let #Tezos#balance#5 = BALANCE()[@inline] in
+    let #Tezos#amount#6 = AMOUNT()[@inline] in
+    let #Tezos#now#7 = NOW()[@inline] in
+    let #Tezos#sender#8 = SENDER()[@inline] in
+    let #Tezos#source#9 = SOURCE()[@inline] in
+    let #Tezos#level#10 = LEVEL()[@inline] in
+    let #Tezos#self_address#11 = SELF_ADDRESS()[@inline] in
+    let #Tezos#chain_id#12 = CHAIN_ID()[@inline] in
+    let #Tezos#total_voting_power#13 = TOTAL_VOTING_POWER()[@inline] in
+    let #Tezos#voting_power#14 = fun kh -> (VOTING_POWER(kh))[@inline] in
+    let #Tezos#implicit_account#16 = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
+    let #Tezos#pairing_check#22 = fun l -> (PAIRING_CHECK(l))[@inline] in
+    let #Tezos#open_chest#23 =
       fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-    let #Tezos#set_delegate#26 = fun o -> (SET_DELEGATE(o))[@inline] in
-    let #Bitwise#xor#27 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
-    let #Bitwise#shift_left#28 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
-    let #Bitwise#shift_right#29 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
-    let #String#concat#68 = fun b1 -> (fun b2 -> (CONCAT(b1 , b2)))[@inline] in
-    let #String#sub#69 =
+    let #Tezos#set_delegate#27 = fun o -> (SET_DELEGATE(o))[@inline] in
+    let #Bitwise#xor#28 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
+    let #Bitwise#shift_left#29 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
+    let #Bitwise#shift_right#30 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+    let #String#concat#71 = fun b1 -> (fun b2 -> (CONCAT(b1 , b2)))[@inline] in
+    let #String#sub#72 =
       fun s -> (fun l -> (fun b -> (SLICE(s , l , b))))[@inline] in
-    let #String#length#70 = fun b -> (SIZE(b))[@inline] in
-    let #Bytes#concat#73 = fun b1 -> (fun b2 -> (CONCAT(b1 , b2)))[@inline] in
-    let #Bytes#sub#74 =
+    let #String#length#73 = fun b -> (SIZE(b))[@inline] in
+    let #Bytes#concat#76 = fun b1 -> (fun b2 -> (CONCAT(b1 , b2)))[@inline] in
+    let #Bytes#sub#77 =
       fun s -> (fun l -> (fun b -> (SLICE(s , l , b))))[@inline] in
-    let #Bytes#length#77 = fun b -> (SIZE(b))[@inline] in
-    let #Crypto#blake2b#78 = fun b -> (BLAKE2b(b))[@inline] in
-    let #Crypto#sha256#79 = fun b -> (SHA256(b))[@inline] in
-    let #Crypto#sha512#80 = fun b -> (SHA512(b))[@inline] in
-    let #Crypto#sha3#81 = fun b -> (SHA3(b))[@inline] in
-    let #Crypto#keccak#82 = fun b -> (KECCAK(b))[@inline] in
-    let #Crypto#hash_key#83 = fun k -> (HASH_KEY(k))[@inline] in
-    let #Crypto#check#84 =
+    let #Bytes#length#80 = fun b -> (SIZE(b))[@inline] in
+    let #Crypto#blake2b#81 = fun b -> (BLAKE2b(b))[@inline] in
+    let #Crypto#sha256#82 = fun b -> (SHA256(b))[@inline] in
+    let #Crypto#sha512#83 = fun b -> (SHA512(b))[@inline] in
+    let #Crypto#sha3#84 = fun b -> (SHA3(b))[@inline] in
+    let #Crypto#keccak#85 = fun b -> (KECCAK(b))[@inline] in
+    let #Crypto#hash_key#86 = fun k -> (HASH_KEY(k))[@inline] in
+    let #Crypto#check#87 =
       fun k -> (fun s -> (fun b -> (CHECK_SIGNATURE(k , s , b))))[@inline] in
     let assert = fun b -> (ASSERTION(b))[@inline] in
     let assert_with_error =
@@ -2798,6 +2519,10 @@ let%expect_test _ =
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
+    let poly_#Test#failwith_3998 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_3997 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_3996 = fun v -> (FAILWITH(v))[@inline] in
+    let poly_#Test#failwith_3995 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3994 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3993 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3992 = fun v -> (FAILWITH(v))[@inline] in
@@ -2806,68 +2531,64 @@ let%expect_test _ =
     let poly_#Test#failwith_3989 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3988 = fun v -> (FAILWITH(v))[@inline] in
     let poly_#Test#failwith_3987 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_3986 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_3985 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_3984 = fun v -> (FAILWITH(v))[@inline] in
-    let poly_#Test#failwith_3983 = fun v -> (FAILWITH(v))[@inline] in
-    let #Test#originate_from_file#87 =
+    let #Test#originate_from_file#90 =
       fun _fn ->
       (fun _e ->
        (fun _v ->
-        (fun _s -> (fun _t -> ((poly_#Test#failwith_3994)@(L("TEST MODE")))))))[@inline] in
-    let #Test#set_source#89 =
-      fun _a -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#set_baker#90 =
-      fun _a -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#transfer#91 =
+        (fun _s -> (fun _t -> ((poly_#Test#failwith_3998)@(L("TEST MODE")))))))[@inline] in
+    let #Test#set_source#92 =
+      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#set_baker#93 =
+      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#transfer#94 =
       fun _a ->
-      (fun _s -> (fun _t -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))))[@inline] in
-    let #Test#transfer_exn#92 =
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))))[@inline] in
+    let #Test#transfer_exn#95 =
       fun _a ->
-      (fun _s -> (fun _t -> ((poly_#Test#failwith_3991)@(L("TEST MODE")))))[@inline] in
-    let #Test#get_storage_of_address#96 =
-      fun _a -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#get_balance#97 =
-      fun _a -> ((poly_#Test#failwith_3993)@(L("TEST MODE")))[@inline] in
-    let #Test#michelson_equal#98 =
-      fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_3992)@(L("TEST MODE"))))[@inline] in
-    let #Test#reset_state#100 =
-      fun _n -> (fun _l -> ((poly_#Test#failwith_3983)@(L("TEST MODE"))))[@inline] in
-    let #Test#get_voting_power#101 =
-      fun _kh -> ((poly_#Test#failwith_3991)@(L("TEST MODE")))[@inline] in
-    let #Test#get_total_voting_power#102 =
-      (poly_#Test#failwith_3991)@(L("TEST MODE"))[@inline] in
-    let #Test#nth_bootstrap_contract#104 =
-      fun _i -> ((poly_#Test#failwith_3990)@(L("TEST MODE")))[@inline] in
-    let #Test#nth_bootstrap_account#105 =
-      fun _i -> ((poly_#Test#failwith_3990)@(L("TEST MODE")))[@inline] in
-    let #Test#last_originations#107 =
-      fun _u -> ((poly_#Test#failwith_3989)@(L("TEST MODE")))[@inline] in
-    let #Test#save_mutation#110 =
-      fun _s -> (fun _m -> ((poly_#Test#failwith_3988)@(L("TEST MODE"))))[@inline] in
-    let #Test#add_account#117 =
-      fun _s -> (fun _k -> ((poly_#Test#failwith_3983)@(L("TEST MODE"))))[@inline] in
-    let #Test#new_account#118 =
-      fun _u -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
-    let #Test#baker_account#119 =
-      fun _p -> (fun _o -> ((poly_#Test#failwith_3983)@(L("TEST MODE"))))[@inline] in
-    let #Test#bake_until_n_cycle_end#120 =
-      fun _n -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#register_delegate#121 =
-      fun _kh -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#register_constant#122 =
-      fun _m -> ((poly_#Test#failwith_3986)@(L("TEST MODE")))[@inline] in
-    let #Test#create_chest#127 =
-      fun _b -> (fun _n -> ((poly_#Test#failwith_3985)@(L("TEST MODE"))))[@inline] in
-    let #Test#create_chest_key#128 =
-      fun _c -> (fun _n -> ((poly_#Test#failwith_3984)@(L("TEST MODE"))))[@inline] in
-    let #Test#constant_to_michelson_program#129 =
-      fun _s -> ((poly_#Test#failwith_3983)@(L("TEST MODE")))[@inline] in
-    let #Test#restore_context#130 =
-      fun _u -> ((poly_#Test#failwith_3983)@(L("TEST_POP_CONTEXT")))[@inline] in
-    let #Test#save_context#131 =
-      fun _u -> ((poly_#Test#failwith_3983)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-    let #Foo#x#132 = L(54) in let #Foo#y#133 = #Foo#x#132 in L(unit) |}]
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_3995)@(L("TEST MODE")))))[@inline] in
+    let #Test#get_storage_of_address#99 =
+      fun _a -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#get_balance#100 =
+      fun _a -> ((poly_#Test#failwith_3997)@(L("TEST MODE")))[@inline] in
+    let #Test#michelson_equal#101 =
+      fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_3996)@(L("TEST MODE"))))[@inline] in
+    let #Test#reset_state#103 =
+      fun _n -> (fun _l -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
+    let #Test#get_voting_power#104 =
+      fun _kh -> ((poly_#Test#failwith_3995)@(L("TEST MODE")))[@inline] in
+    let #Test#get_total_voting_power#105 =
+      (poly_#Test#failwith_3995)@(L("TEST MODE"))[@inline] in
+    let #Test#nth_bootstrap_contract#107 =
+      fun _i -> ((poly_#Test#failwith_3994)@(L("TEST MODE")))[@inline] in
+    let #Test#nth_bootstrap_account#108 =
+      fun _i -> ((poly_#Test#failwith_3994)@(L("TEST MODE")))[@inline] in
+    let #Test#last_originations#110 =
+      fun _u -> ((poly_#Test#failwith_3993)@(L("TEST MODE")))[@inline] in
+    let #Test#save_mutation#113 =
+      fun _s -> (fun _m -> ((poly_#Test#failwith_3992)@(L("TEST MODE"))))[@inline] in
+    let #Test#add_account#120 =
+      fun _s -> (fun _k -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
+    let #Test#new_account#121 =
+      fun _u -> ((poly_#Test#failwith_3991)@(L("TEST MODE")))[@inline] in
+    let #Test#baker_account#122 =
+      fun _p -> (fun _o -> ((poly_#Test#failwith_3987)@(L("TEST MODE"))))[@inline] in
+    let #Test#bake_until_n_cycle_end#123 =
+      fun _n -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#register_delegate#124 =
+      fun _kh -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#register_constant#125 =
+      fun _m -> ((poly_#Test#failwith_3990)@(L("TEST MODE")))[@inline] in
+    let #Test#create_chest#130 =
+      fun _b -> (fun _n -> ((poly_#Test#failwith_3989)@(L("TEST MODE"))))[@inline] in
+    let #Test#create_chest_key#131 =
+      fun _c -> (fun _n -> ((poly_#Test#failwith_3988)@(L("TEST MODE"))))[@inline] in
+    let #Test#constant_to_michelson_program#132 =
+      fun _s -> ((poly_#Test#failwith_3987)@(L("TEST MODE")))[@inline] in
+    let #Test#restore_context#133 =
+      fun _u -> ((poly_#Test#failwith_3987)@(L("TEST_POP_CONTEXT")))[@inline] in
+    let #Test#save_context#134 =
+      fun _u -> ((poly_#Test#failwith_3987)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+    let #Foo#x#135 = L(54) in let #Foo#y#136 = #Foo#x#135 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
