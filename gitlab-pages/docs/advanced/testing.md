@@ -287,7 +287,7 @@ performs the transaction, and returns a `test_exec_result` which
 can be matched on to know whether the transaction was successful or not.
 In case of success you will get access to the gas consumed by the execution
 of the contract and in case of failure you will get access to a `test_exec_error`
-describing the error.
+describing the error.  
 There is an alternative version, called `Test.transfer_to_contract_exn`
 which performs the transaction and will only return the gas consumption,
 failing in case that there was an error.
