@@ -12,6 +12,7 @@ type all =
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
+  | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
 ]
 
@@ -27,19 +28,30 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) -> (
+      let open Environment.Protocols in
+      Format.fprintf f
+        "@[<hv>Warning: Error(s) occurred while type checking the produced michelson contract:@.%a@. 
+        Note: You compiled your contract with protocol %s although we internally use protocol %s to typecheck the produced Michelson contract 
+        so you might want to ignore this error if related to a breaking change in protocol %s@.@]"
+          (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+          (variant_to_string user_proto)
+          (variant_to_string in_use)
+          (variant_to_string in_use)
+    )
     | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
-      Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
       Stage_common.PP.type_variable tv_chosen
       Stage_common.PP.type_variable tv_possible
     | `Main_view_ignored loc ->
-      Format.fprintf f "@[<hv>%a@.This view will be ignored, command line option override [@ view] annotation@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: This view will be ignored, command line option override [@ view] annotation@.@]"
       Snippet.pp loc
     | `Pascaligo_deprecated_case loc ->
-      Format.fprintf f "@[<hv>%a@.Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
       Snippet.pp loc
     | `Pascaligo_deprecated_semi_before_else loc ->
-      Format.fprintf f "@[<hv>%a@.Deprecated semicolon `;` before the `else` keyword. Please remove the semicolon.@.@]"
+      Format.fprintf f "@[<hv>%a@ Warning: Deprecated semicolon `;` before the `else` keyword. Please remove the semicolon.@.@]"
       Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
         Format.fprintf f
@@ -75,9 +87,17 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Michelson_typecheck_failed_with_different_protocol (user_proto,_) ->
+    let open Environment.Protocols in
+    let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in
+    let stage   = "Main" in
+    let content = `Assoc [
+                      ("message", message);
+                      ("used", `String (variant_to_string in_use));
+                      ("compiled_for", `String (variant_to_string user_proto))
+                    ] in
+    json_warning ~stage ~content
   | `Checking_ambiguous_contructor (loc,_,_) ->
-    (* Format.fprintf f "@[<hv>%a@.The type of this value is ambiguous, you might want to add a type annotation. Inferred type is %a but %a was also possible@.@]" *)
-
     let message = `String "the type of this value is ambiguous, you might want to add a type annotation" in
     let stage   = "Main" in
     let loc = Location.to_yojson loc in

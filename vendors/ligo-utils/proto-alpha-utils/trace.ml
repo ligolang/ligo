@@ -52,3 +52,14 @@ let tz_result_to_bool : ('a, TP.error list) Stdlib.result -> bool =
 
 let trace_tzresult_lwt ~raise err (x:_ TP.tzresult Lwt.t) : _ =
   trace_tzresult ~raise err @@ Lwt_main.run x
+
+let warn_on_tzresult :
+  add_warning: ('a -> unit) ->
+  (TP.error list -> 'a) -> ('b, TP.error list) Stdlib.result -> unit =
+  fun ~add_warning f_warning err ->
+    match err with
+    | Ok _ -> ()
+    | Error errs -> add_warning (f_warning errs)
+
+let warn_on_tzresult_lwt ~add_warning err (x:_ TP.tzresult Lwt.t) : _ =
+  warn_on_tzresult ~add_warning err @@ Lwt_main.run x

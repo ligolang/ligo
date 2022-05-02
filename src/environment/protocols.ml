@@ -1,5 +1,6 @@
 type t = Hangzhou | Ithaca
 let current = Hangzhou
+let in_use = Ithaca (* Protocol we depend on *)
 
 (* this list is used to print the list of protocols in the CLI help *)
 let protocols_str : string list = [
@@ -25,3 +26,5 @@ let compare : t -> t -> int = fun p q ->
   | Hangzhou, Ithaca -> -1
   | Ithaca, Ithaca -> 0
   | Ithaca, Hangzhou -> 1
+
+let equal : t -> t -> bool = fun a b -> (compare a b = 0)

@@ -1136,30 +1136,23 @@ let%expect_test _ =
     Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
-  [%expect {|
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-21:
-      1 | let main = (parameter : int, storage : address) =>
-      2 |   ([] : list (operation), "KT1badaddr" : address);
-    :
-    Warning: unused variable "parameter".
-    Hint: replace it by "_parameter" to prevent this warning.
-
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-36:
-      1 | let main = (parameter : int, storage : address) =>
-      2 |   ([] : list (operation), "KT1badaddr" : address);
-    :
-    Warning: unused variable "storage".
-    Hint: replace it by "_storage" to prevent this warning.
-
-    Error(s) occurred while type checking the contract:
+  run_ligo_good [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
+  [%expect{|
+    Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
-    Invalid contract notation "KT1badaddr" |}]
+    Invalid contract notation "KT1badaddr"
+
+            Note: You compiled your contract with protocol hangzhou although we internally use protocol ithaca to typecheck the produced Michelson contract
+            so you might want to ignore this error if related to a breaking change in protocol ithaca
+
+    { parameter int ;
+      storage address ;
+      code { DROP ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1995,7 +1988,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
-    The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
     Hint: You might want to add a type annotation.
 
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
@@ -2714,7 +2707,7 @@ File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-
   8 | (* here we expect a warning because both A constructor have the same parameter type *)
   9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
 
-The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
+Warning: The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
 Hint: You might want to add a type annotation.
 
 { parameter unit ;
