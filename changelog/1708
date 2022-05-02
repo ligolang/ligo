@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1708'
+title: Fix Tezos.call_view with impure
+type: fixed
