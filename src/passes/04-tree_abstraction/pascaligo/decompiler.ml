@@ -5,7 +5,7 @@ module AST  = Ast_imperative
 module CST  = Cst.Pascaligo
 module Wrap = Lexing_shared.Wrap
 module Token = Lexing_pascaligo.Token
-module Predefined = Predefined.Tree_abstraction.Pascaligo
+module Predefined = Predefined.Tree_abstraction
 module Shared_helpers = Tree_abstraction_shared.Helpers
 
 open Simple_utils.Function

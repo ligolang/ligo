@@ -24,7 +24,7 @@ let npseq_to_ne_list (hd, tl) = hd, (List.map ~f:snd tl)
 
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
-open Predefined.Tree_abstraction.Jsligo
+open Predefined.Tree_abstraction
 
 let r_split = Location.r_split
 

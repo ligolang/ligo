@@ -25,7 +25,7 @@ let pseq_to_list = function
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson";"Loop";"Current"]
 
-open Predefined.Tree_abstraction.Cameligo
+open Predefined.Tree_abstraction
 
 let r_split = Location.r_split
 

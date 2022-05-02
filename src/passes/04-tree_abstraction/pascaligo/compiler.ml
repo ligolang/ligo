@@ -17,7 +17,7 @@ let npseq_to_ne_list (hd, tl) = (hd, List.map ~f:snd tl)
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
 
-open Predefined.Tree_abstraction.Pascaligo
+open Predefined.Tree_abstraction
 
 let check_no_attributes ~(raise:Errors.abs_error Simple_utils.Trace.raise) (loc: Location.t) lst =
   (* TODO: should be done in a dedicated pass ?*)

@@ -1,7 +1,7 @@
 module AST = Ast_imperative
 module CST = Cst.Cameligo
 module Token = Lexing_cameligo.Token
-module Predefined = Predefined.Tree_abstraction.Cameligo
+module Predefined = Predefined.Tree_abstraction
 module Shared_helpers = Tree_abstraction_shared.Helpers
 
 open Simple_utils.Function
