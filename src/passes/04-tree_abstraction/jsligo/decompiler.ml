@@ -4,7 +4,7 @@
 
 module AST = Ast_imperative
 module CST = Cst.Jsligo
-module Predefined = Predefined.Tree_abstraction.Jsligo
+module Predefined = Predefined.Tree_abstraction
 module Region     = Simple_utils.Region
 module Location   = Simple_utils.Location
 module List       = Simple_utils.List
