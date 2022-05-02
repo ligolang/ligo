@@ -88,7 +88,6 @@ library:
     - bytestring
     - containers
     - data-default
-    - directory
     - dlist
     - fastsum
     - filepath
@@ -196,7 +195,6 @@ tests:
       - tasty
       - tasty-hunit
       - template-haskell
-      - temporary
       - text
       - unliftio
       - unordered-containers
@@ -236,7 +234,6 @@ tests:
       - tasty
       - tasty-hunit
       - template-haskell
-      - temporary
       - text
       - unliftio
       - unordered-containers
@@ -269,7 +266,6 @@ tests:
       - tasty
       - tasty-hunit
       - template-haskell
-      - temporary
       - text
       - unliftio
       - unordered-containers
@@ -302,7 +298,6 @@ tests:
       - tasty
       - tasty-hunit
       - template-haskell
-      - temporary
       - text
       - unliftio
       - unordered-containers

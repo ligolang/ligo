@@ -121,7 +121,6 @@ library
     , bytestring
     , containers
     , data-default
-    , directory
     , dlist
     , duplo
     , fastsum
@@ -381,7 +380,6 @@ test-suite integration-test
     , tasty
     , tasty-hunit
     , template-haskell
-    , temporary
     , text
     , unliftio
     , unordered-containers
@@ -469,7 +467,6 @@ test-suite ligo-contracts-test
     , tasty
     , tasty-hunit
     , template-haskell
-    , temporary
     , text
     , unliftio
     , unordered-containers
@@ -578,7 +575,6 @@ test-suite lsp-handlers-test
     , tasty
     , tasty-hunit
     , template-haskell
-    , temporary
     , text
     , unliftio
     , unordered-containers
@@ -677,7 +673,6 @@ test-suite lsp-test
     , tasty
     , tasty-hunit
     , template-haskell
-    , temporary
     , text
     , unliftio
     , unordered-containers

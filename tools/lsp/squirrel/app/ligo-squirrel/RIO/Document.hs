@@ -25,11 +25,12 @@ import Algebra.Graph.AdjacencyMap qualified as G hiding (overlays)
 import Algebra.Graph.Class qualified as G hiding (overlay, vertex)
 import Control.Arrow ((&&&))
 import Control.Lens ((??))
-import Control.Monad (join, unless, void, (<=<))
+import Control.Monad (join, void, (<=<))
 import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.HashSet qualified as HashSet
+import Data.List (isPrefixOf)
 import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -39,10 +40,10 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.VFS qualified as V
 import StmContainers.Map qualified as StmMap
-import System.FilePath (takeDirectory, (</>))
+import System.FilePath (splitDirectories, takeDirectory, (</>))
 import UnliftIO.Directory
-  ( Permissions (writable), createDirectory, doesDirectoryExist, doesFileExist, getPermissions
-  , setPermissions
+  ( Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist
+  , getPermissions, setPermissions
   )
 import UnliftIO.Exception (tryIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
@@ -58,7 +59,7 @@ import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRan
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
-import Cli (getLigoClientEnv)
+import Cli (TempDir (..), TempSettings (..), getLigoClientEnv)
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
 import Parser (Message (..), emptyParsedInfo)
@@ -174,15 +175,13 @@ preload normFp = Log.addNamespace "preload" do
 tempDirTemplate :: String
 tempDirTemplate = ".ligo-work"
 
-getTempPath :: FilePath -> RIO FilePath
+getTempPath :: FilePath -> RIO TempSettings
 getTempPath fallbackPath = do
   optsM <- tryReadMVar =<< asks reIndexOpts
   let path = fromMaybe fallbackPath (indexOptionsPath =<< optsM)
   let tempDir = path </> tempDirTemplate
-  dirExists <- doesDirectoryExist tempDir
-  unless dirExists do
-    createDirectory tempDir
-  pure tempDir
+  createDirectoryIfMissing False tempDir
+  pure $ TempSettings path $ UseDir tempDir
 
 loadWithoutScopes :: J.NormalizedFilePath -> RIO ContractInfo
 loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
@@ -236,7 +235,7 @@ loadDirectory root rootFileName = do
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        (/= temp)
+        (not . any (tempDirTemplate `isPrefixOf`) . splitDirectories)
         root
       (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
 

@@ -26,7 +26,7 @@ import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
 import AST
-import Cli.Impl (getLigoVersion)
+import Cli (TempSettings, getLigoVersion)
 import Config (Config (..))
 import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
@@ -242,7 +242,7 @@ handleTypeDefinitionRequest req respond = do
     $(Log.debug) [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
-formatImpl :: J.Uri -> RIO (FilePath, SomeLIGO Info')
+formatImpl :: J.Uri -> RIO (TempSettings, SomeLIGO Info')
 formatImpl uri = do
   let nuri = J.toNormalizedUri uri
   FindContract (Source path _) tree _ <- Document.fetch Document.BestEffort nuri

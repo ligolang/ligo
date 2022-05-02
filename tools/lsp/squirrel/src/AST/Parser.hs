@@ -12,15 +12,14 @@ module AST.Parser
 
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Foldable (toList)
-import Data.List (find)
+import Data.List (find, isPrefixOf)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
 import Data.Text qualified as Text (lines, unlines)
-import System.Directory (doesDirectoryExist, listDirectory)
-import System.FilePath ((</>), takeDirectory)
-import System.IO.Temp (getCanonicalTemporaryDirectory)
+import System.FilePath (splitDirectories, takeDirectory, takeFileName, (</>))
 import Text.Regex.TDFA ((=~))
 import UnliftIO.Async (pooledMapConcurrently)
+import UnliftIO.Directory (doesDirectoryExist, listDirectory)
 import UnliftIO.Exception (Handler (..), catches, displayException, fromEither)
 
 import AST.Includes (includesGraph)
@@ -34,7 +33,7 @@ import AST.Scope
   )
 import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
-  , SomeLigoException (..), fromLigoErrorToMsg, preprocess
+  , SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
   )
 import Extension
 import Log (Log, NoLoggingT (..), i)
@@ -57,12 +56,16 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-loadPreprocessed :: (HasLigoClient m, Log m) => FilePath -> Source -> m (Source, [Message])
-loadPreprocessed projDir src = do
+loadPreprocessed
+  :: (HasLigoClient m, Log m)
+  => TempSettings
+  -> Source
+  -> m (Source, [Message])
+loadPreprocessed tempSettings src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
-      ((, []) <$> preprocess projDir src') `catches`
+      ((, []) <$> preprocess tempSettings src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: SomeLigoException) ->
@@ -86,11 +89,14 @@ loadPreprocessed projDir src = do
       in
       (Source (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
 
-parsePreprocessed :: (HasLigoClient m, Log m) => FilePath -> Source -> m ContractInfo
-parsePreprocessed projDir src = do
-  (src', msgs) <- loadPreprocessed projDir src
+parsePreprocessed :: (HasLigoClient m, Log m) => TempSettings -> Source -> m ContractInfo
+parsePreprocessed tempSettings src = do
+  (src', msgs) <- loadPreprocessed tempSettings src
   addLigoErrsToMsg msgs <$> parse src'
 
+-- | Parse the given source and all other contracts in the same directory,
+-- adding scopes to it. This function is intended to be used by tests and for
+-- interactive debugging in GHCi.
 parseWithScopes
   :: forall impl m
    . (HasScopeForest impl (NoLoggingT m), MonadIO m)
@@ -99,8 +105,10 @@ parseWithScopes
 parseWithScopes fp = runNoLoggingT do
   let
     top = takeDirectory fp
-  temp <- liftIO getCanonicalTemporaryDirectory
-  graph <- includesGraph =<< parseContracts (parsePreprocessed temp) noProgress (const True) top
+    template = ".ligo-test-"
+    temp = TempSettings top $ GenerateDir $ template <> takeFileName fp
+    ignore = not . any (template `isPrefixOf`) . splitDirectories
+  graph <- includesGraph =<< parseContracts (parsePreprocessed temp) noProgress ignore top
   let group = find (isJust . lookupContract fp) $ Includes <$> wcc (getIncludes graph)
   scoped <- addScopes @impl temp noProgress $ fromMaybe graph group
   maybe (contractNotFoundException fp scoped) pure (lookupContract fp scoped)

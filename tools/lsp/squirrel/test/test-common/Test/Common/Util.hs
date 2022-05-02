@@ -1,3 +1,5 @@
+-- For some reason, GHC thinks the HasCallStack constraint is redundant.
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Util
   ( ScopeTester
   , testDir
@@ -15,29 +17,33 @@ module Test.Common.Util
 import Control.Monad ((<=<))
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
-import Data.List (isSuffixOf)
+import Data.List (isPrefixOf, isSuffixOf)
+import GHC.Stack (HasCallStack)
 import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
 import System.Environment (getEnv)
-import System.FilePath ((</>))
+import System.FilePath (splitDirectories, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
-import System.IO.Temp (getCanonicalTemporaryDirectory)
 import UnliftIO.Exception (catch, throwIO)
 
 import AST.Includes (Includes, includesGraph, insertPreprocessorRanges)
 import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
-import AST.Scope.Common
+import AST.Scope
   ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
   , addScopes, contractTree
   )
 import AST.Skeleton (SomeLIGO)
+import Cli.Types (TempDir (..), TempSettings (..))
 import Extension (supportedExtensions)
 import Log (NoLoggingT (..))
 import Parser (ParsedInfo)
 import ParseTree (pathToSrc)
 import Progress (noProgress)
 
-type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
+type ScopeTester impl = (HasCallStack, HasScopeForest impl (NoLoggingT IO))
+
+tempTemplate :: String
+tempTemplate = ".ligo-test"
 
 testDir, contractsDir :: FilePath
 testDir =
@@ -67,7 +73,7 @@ readContract filepath = do
 readContractWithMessages :: FilePath -> IO ContractInfo
 readContractWithMessages filepath = do
   src <- pathToSrc filepath
-  temp <- getCanonicalTemporaryDirectory
+  let temp = TempSettings (takeDirectory filepath) $ GenerateDir tempTemplate
   runNoLoggingT $ parsePreprocessed temp src
 
 readContractWithScopes
@@ -77,26 +83,27 @@ readContractWithScopes filepath =
   contractTree <$> parseWithScopes @parser filepath
 
 parseContractsWithDependencies
-  :: FilePath
+  :: TempSettings
   -> FilePath
   -> IO (Includes ParsedContractInfo)
-parseContractsWithDependencies temp top =
-  includesGraph =<<
-    parseContracts (runNoLoggingT . parsePreprocessed temp) noProgress (const True) top
+parseContractsWithDependencies tempSettings top =
+  let ignore = not . any (tempTemplate `isPrefixOf`) . splitDirectories in
+  includesGraph
+    =<< parseContracts (runNoLoggingT . parsePreprocessed tempSettings) noProgress ignore top
 
 parseContractsWithDependenciesScopes
   :: forall impl
    . ScopeTester impl
-  => FilePath
+  => TempSettings
   -> FilePath
   -> IO (Includes ContractInfo')
-parseContractsWithDependenciesScopes temp =
+parseContractsWithDependenciesScopes tempSettings =
   runNoLoggingT
-  . addScopes @impl temp noProgress <=< parseContractsWithDependencies temp
+  . addScopes @impl tempSettings noProgress <=< parseContractsWithDependencies tempSettings
 
 parseDirectoryWithScopes
   :: forall impl. ScopeTester impl
   => FilePath -> IO (Includes ContractInfo')
 parseDirectoryWithScopes dir = do
-  temp <- getCanonicalTemporaryDirectory
+  let temp = TempSettings dir $ GenerateDir tempTemplate
   parseContractsWithDependenciesScopes @impl temp dir

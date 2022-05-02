@@ -10,7 +10,7 @@ import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope (Info')
 import AST.Skeleton (SomeLIGO (..))
-import Cli (HasLigoClient, SomeLigoException, callForFormat)
+import Cli (HasLigoClient, SomeLigoException, TempSettings, callForFormat)
 import Duplo.Lattice (leq)
 import Duplo.Tree (extract, spineTo)
 import Log (Log)
@@ -20,11 +20,15 @@ import Parser (CodeSource (..))
 import Product (Product, getElem)
 import Range (Range (..), toLspRange)
 
-formatImpl :: (HasLigoClient m, Log m) => FilePath -> Product Info' -> m (J.List J.TextEdit)
-formatImpl projDir info = do
+formatImpl
+  :: (HasLigoClient m, Log m)
+  => TempSettings
+  -> Product Info'
+  -> m (J.List J.TextEdit)
+formatImpl tempSettings info = do
   let CodeSource source = getElem info
   let r@Range{_rFile} = getElem info
-  out <- callForFormat projDir (Source _rFile source) `catches`
+  out <- callForFormat tempSettings (Source _rFile source) `catches`
     [ Handler \(_ :: SomeLigoException) -> pure source
     -- Likely LIGO isn't installed or was not found.
     , Handler \(e :: IOError) ->
@@ -32,10 +36,19 @@ formatImpl projDir info = do
     ]
   pure $ J.List [J.TextEdit (toLspRange r) out]
 
-formatDocument :: (HasLigoClient m, Log m) => FilePath -> SomeLIGO Info' -> m (J.List J.TextEdit)
-formatDocument projDir (SomeLIGO _lang (extract -> info)) = formatImpl projDir info
+formatDocument
+  :: (HasLigoClient m, Log m)
+  => TempSettings
+  -> SomeLIGO Info'
+  -> m (J.List J.TextEdit)
+formatDocument tempSettings (SomeLIGO _lang (extract -> info)) = formatImpl tempSettings info
 
-formatAt :: (HasLigoClient m, Log m) => FilePath -> Range -> SomeLIGO Info' -> m (J.List J.TextEdit)
-formatAt projDir at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
+formatAt
+  :: (HasLigoClient m, Log m)
+  => TempSettings
+  -> Range
+  -> SomeLIGO Info'
+  -> m (J.List J.TextEdit)
+formatAt tempSettings at (SomeLIGO _lang tree) = case spineTo (leq at . getElem) tree of
   [] -> return $ J.List []
-  node : _ -> formatImpl projDir $ extract node
+  node : _ -> formatImpl tempSettings $ extract node

@@ -2,17 +2,21 @@ module Test.Common.Util.Parsers
   ( checkFile
   ) where
 
-import AST.Scope (pattern FindContract, HasScopeForest, ContractInfo, addShallowScopes)
+import System.FilePath (takeDirectory)
+
+import AST.Scope
+  ( pattern FindContract, HasScopeForest, ContractInfo, addShallowScopes, contractFile
+  )
+import Cli.Types (TempDir (..), TempSettings (..))
 import Parser (Message, collectTreeErrors)
 import Progress (noProgress)
-import System.IO.Temp (getCanonicalTemporaryDirectory)
 
 import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)
 import Test.Common.Util (readContractWithMessages)
 
 getScopedMsgs :: forall impl. HasScopeForest impl IO => ContractInfo -> IO [Message]
 getScopedMsgs c = do
-  temp <- getCanonicalTemporaryDirectory
+  let temp = TempSettings (takeDirectory $ contractFile c) $ GenerateDir ".temp"
   FindContract _file tree' msgs'' <- addShallowScopes @impl temp noProgress c
   pure $ collectTreeErrors tree' <> msgs''
 
