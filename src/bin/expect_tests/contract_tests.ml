@@ -2766,3 +2766,16 @@ let%expect_test _ =
   view "view_3" unit int { CDR ; PUSH int 3 ; ADD } ;
   view "view_2" unit int { CDR ; PUSH int 2 ; ADD } ;
   view "view_1" unit int { CDR ; PUSH int 1 ; ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "call_view_impure.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH address "tz1fakefakefakefakefakefakefakcphLA5" ;
+             SENDER ;
+             VIEW "foo" unit ;
+             IF_NONE { UNIT } {} ;
+             NIL operation ;
+             PAIR } } |}]
