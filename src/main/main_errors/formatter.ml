@@ -263,11 +263,15 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
-
+    | `Main_view_rule_violated loc ->
+      Format.fprintf f "@[<hv>%a@.View rule violated: 
+      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas) 
+      - Tezos.self can't be used because the entry-point does not make sense in a view@.@]"
+      Snippet.pp loc
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
 
-let json_error ~stage ?message ?child ?(extra_content=[]) () =
+let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
   let append_opt ~f xs opt = Option.fold opt ~init:xs ~f:(fun xs x -> f x :: xs) in
   let content = extra_content in
   let content = append_opt content message  ~f:(fun msg -> ("message", `String msg)) in
@@ -276,7 +280,8 @@ let json_error ~stage ?message ?child ?(extra_content=[]) () =
   `Assoc [
     ("status",  `String "error") ;
     ("stage",   `String stage)   ;
-    ("content", `Assoc content)  ]
+    ("content", `Assoc content) ;
+    ("location", Location.to_yojson loc)]
 
 
 let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
@@ -392,6 +397,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
 
   | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~message:"given entrypoint is not a function" ()
   | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~message:"given view is not a function" ()
+  | `Main_view_rule_violated loc -> json_error ~loc ~stage:"top-level glue" ~message:"view rule violated" ()
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~message:"Missing entrypoint" ()
 
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e

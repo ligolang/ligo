@@ -224,4 +224,5 @@ let build_views ~raise ~add_warning :
     let views = List.mapi ~f:aux views in
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
     let michelsons = List.map ~f:aux views in
+    let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in 
     michelsons
