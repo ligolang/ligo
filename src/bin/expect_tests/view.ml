@@ -51,13 +51,13 @@ let%expect_test _ =
 
 (* view + #import : no view expected *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "view_import.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "view_import.mligo" ] ;
   [%expect {| 
     { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 (* view inside module : no view expected *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "view_inside_module.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "view_inside_module.mligo" ] ;
   [%expect {|
     { parameter unit ;
       storage unit ;

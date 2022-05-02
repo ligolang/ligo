@@ -495,14 +495,14 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -698,7 +698,7 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
-run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" ; "hangzhou" ] ;
+run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
   File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
    14 |     let packed = Bytes.pack (fun() ->
@@ -723,7 +723,7 @@ let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test exited with value KT1JSxHPaoZTCEFVfK5Y1xwjtB8chWFSUyTN(None). |}]

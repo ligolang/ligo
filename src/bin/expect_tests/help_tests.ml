@@ -91,7 +91,7 @@ let%expect_test _ =
                                                pre-loaded into the LIGO environment
                                                (hangzhou ,
                                                ithaca). By default, the current
-                                               protocol (hangzhou) will be used
+                                               protocol (ithaca) will be used
                                                (alias: --protocol)
       [-help]                                  print this help text and exit
                                                (alias: -?)
@@ -155,7 +155,7 @@ let%expect_test _ =
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
                                          into the LIGO environment (hangzhou ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)
@@ -219,7 +219,7 @@ let%expect_test _ =
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
                                          into the LIGO environment (hangzhou ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)
@@ -251,8 +251,8 @@ let%expect_test _ =
       [--without-run]            disable running of compiled expression.
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
                                  LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -299,8 +299,8 @@ let%expect_test _ =
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
                                  LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -347,8 +347,8 @@ let%expect_test _ =
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
                                  LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -396,8 +396,8 @@ let%expect_test _ =
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
                                  LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -442,7 +442,7 @@ let%expect_test _ =
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
                                          into the LIGO environment (hangzhou ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)
