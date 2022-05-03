@@ -21,7 +21,8 @@ export class DryRunAction extends CancellableAction {
           editor.code,
           dryRunState.entrypoint,
           dryRunState.parameters,
-          dryRunState.storage
+          dryRunState.storage,
+          dryRunState.protocol,
         );
         if (this.isCancelled()) {
           return;

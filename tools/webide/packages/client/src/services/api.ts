@@ -25,12 +25,14 @@ export async function compileContract(
   syntax: Language,
   code: string,
   entrypoint: string,
+  protocol: string,
   format?: string
 ) {
   const response = await axios.post('/api/compile-contract', {
     syntax,
     code,
     entrypoint,
+    protocol,
     format,
   });
   return response.data;
@@ -39,11 +41,13 @@ export async function compileContract(
 export async function compileExpression(
   syntax: Language,
   expression: string,
+  protocol: string,
   format?: string
 ) {
   const response = await axios.post('/api/compile-expression', {
     syntax,
     expression: `${expression}`,
+    protocol,
     format,
   });
   return response.data;
@@ -54,6 +58,7 @@ export async function compileStorage(
   code: string,
   entrypoint: string,
   storage: string,
+  protocol: string,
   format?: string
 ) {
   // For whatever reason, storage set by examples is not treated as a string. So we convert it here.
@@ -63,6 +68,7 @@ export async function compileStorage(
     syntax,
     code,
     entrypoint,
+    protocol,
     storage,
     format,
   });
@@ -74,7 +80,8 @@ export async function dryRun(
   code: string,
   entrypoint: string,
   parameters: string,
-  storage: string
+  storage: string,
+  protocol: string
 ) {
   // For whatever reason, storage set by examples is not treated as a string. So we convert it here.
   storage = `${storage}`;
@@ -85,6 +92,7 @@ export async function dryRun(
     entrypoint,
     parameters,
     storage,
+    protocol,
   });
   return response.data;
 }
@@ -133,7 +141,8 @@ export async function deploy(
   code: string,
   entrypoint: string,
   storage: string,
-  network: string
+  network: string,
+  protocol: string
 ) {
   // For whatever reason, storage set by examples is not treated as a string. So we convert it here.
   storage = `${storage}`;
@@ -144,6 +153,7 @@ export async function deploy(
     entrypoint,
     storage,
     network,
+    protocol,
   });
   return response.data;
 }
@@ -151,12 +161,14 @@ export async function deploy(
 export async function evaluateValue(
   syntax: Language,
   code: string,
-  entrypoint: string
+  entrypoint: string,
+  protocol: string
 ) {
   const response = await axios.post('/api/evaluate-expr', {
     syntax,
     code,
     entrypoint,
+    protocol,
   });
   return response.data;
 }
@@ -165,13 +177,15 @@ export async function runFunction(
   syntax: Language,
   code: string,
   entrypoint: string,
-  parameters: string
+  parameters: string,
+  protocol: string
 ) {
   const response = await axios.post('/api/evaluate-call', {
     syntax,
     code,
     entrypoint,
     parameters,
+    protocol
   });
   return response.data;
 }
