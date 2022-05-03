@@ -123,14 +123,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_BIG_MAP -> C_BIG_MAP
   | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256 -> C_SHA256
-  | C_SHA512 -> C_SHA512
-  | C_BLAKE2b -> C_BLAKE2b
-  | C_HASH_KEY -> C_HASH_KEY
-  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
-  | C_CHAIN_ID -> C_CHAIN_ID
   (* Blockchain *)
+  | C_CHAIN_ID -> C_CHAIN_ID
   | C_CALL -> C_CALL
   | C_CONTRACT -> C_CONTRACT
   | C_CONTRACT_WITH_ERROR -> C_CONTRACT_WITH_ERROR
@@ -147,8 +141,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_SHA3 -> C_SHA3
-  | C_KECCAK -> C_KECCAK
   | C_LEVEL -> C_LEVEL
   | C_VOTING_POWER -> C_VOTING_POWER
   | C_TOTAL_VOTING_POWER -> C_TOTAL_VOTING_POWER

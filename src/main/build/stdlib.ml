@@ -105,13 +105,13 @@ module Bytes = struct
   [@hidden] [@inline] let length (b : bytes) : nat = [%external \"SIZE\"] b
 end
 module Crypto = struct
-  [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%external \"BLAKE2b\"] b
-  [@hidden] [@inline] let sha256 (b : bytes) : bytes = [%external \"SHA256\"] b
-  [@hidden] [@inline] let sha512 (b : bytes) : bytes = [%external \"SHA512\"] b
-  [@hidden] [@inline] let sha3 (b : bytes) : bytes = [%external \"SHA3\"] b
-  [@hidden] [@inline] let keccak (b : bytes) : bytes = [%external \"KECCAK\"] b
-  [@hidden] [@inline] let hash_key (k : key) : key_hash = [%external \"HASH_KEY\"] k
-  [@hidden] [@inline] let check ((k, s, b) : key * signature * bytes) : bool = [%external \"CHECK_SIGNATURE\"] k s b
+  [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%Michelson ({| { BLAKE2B } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha256 (b : bytes) : bytes = [%Michelson ({| { SHA256 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha512 (b : bytes) : bytes = [%Michelson ({| { SHA512 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha3 (b : bytes) : bytes = [%Michelson ({| { SHA3 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let keccak (b : bytes) : bytes = [%Michelson ({| { KECCAK } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let hash_key (k : key) : key_hash = [%Michelson ({| { HASH_KEY } |} : key -> key_hash)] k
+  [@hidden] [@inline] let check ((k, s, b) : key * signature * bytes) : bool = [%Michelson ({| { UNPAIR ; UNPAIR ; CHECK_SIGNATURE } |} : key * signature * bytes -> bool)] (k, s, b)
 end
 [@private] [@hidden] [@inline] let assert (b : bool) : unit = [%external \"ASSERTION\"] b
 [@private] [@hidden] [@inline] let assert_with_error ((b, s) : bool * string) = [%external \"ASSERTION_WITH_ERROR\"] b s
@@ -233,13 +233,13 @@ module Bytes = struct
   [@hidden] [@inline] let length (b : bytes) : nat = [%external \"SIZE\"] b
 end
 module Crypto = struct
-  [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%external \"BLAKE2b\"] b
-  [@hidden] [@inline] let sha256 (b : bytes) : bytes = [%external \"SHA256\"] b
-  [@hidden] [@inline] let sha512 (b : bytes) : bytes = [%external \"SHA512\"] b
-  [@hidden] [@inline] let sha3 (b : bytes) : bytes = [%external \"SHA3\"] b
-  [@hidden] [@inline] let keccak (b : bytes) : bytes = [%external \"KECCAK\"] b
-  [@hidden] [@inline] let hash_key (k : key) : key_hash = [%external \"HASH_KEY\"] k
-  [@hidden] [@inline] let check (k : key) (s : signature) (b : bytes) : bool = [%external \"CHECK_SIGNATURE\"] k s b
+  [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%Michelson ({| { BLAKE2B } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha256 (b : bytes) : bytes = [%Michelson ({| { SHA256 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha512 (b : bytes) : bytes = [%Michelson ({| { SHA512 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let sha3 (b : bytes) : bytes = [%Michelson ({| { SHA3 } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let keccak (b : bytes) : bytes = [%Michelson ({| { KECCAK } |} : bytes -> bytes)] b
+  [@hidden] [@inline] let hash_key (k : key) : key_hash = [%Michelson ({| { HASH_KEY } |} : key -> key_hash)] k
+  [@hidden] [@inline] let check (k : key) (s : signature) (b : bytes) : bool = [%Michelson ({| { UNPAIR ; UNPAIR ; CHECK_SIGNATURE } |} : key * signature * bytes -> bool)] (k, s, b)
 end
 [@private] [@hidden] [@inline] let assert (b : bool) : unit = [%external \"ASSERTION\"] b
 [@private] [@hidden] [@inline] let assert_with_error (b : bool) (s : string) = [%external \"ASSERTION_WITH_ERROR\"] b s

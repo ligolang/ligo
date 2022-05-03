@@ -328,15 +328,6 @@ module Constant_types = struct
                       ];
                     of_type C_BYTES_PACK O.(for_all "a" @@ fun a -> a ^-> t_bytes ());
                     of_type C_BYTES_UNPACK O.(for_all "a" @@ fun a -> t_bytes () ^-> t_option a);
-                    (* CRYPTO *)
-                    of_type C_SHA256 O.(t_bytes () ^-> t_bytes ());
-                    of_type C_SHA512 O.(t_bytes () ^-> t_bytes ());
-                    of_type C_SHA3 O.(t_bytes () ^-> t_bytes ());
-                    of_type C_KECCAK O.(t_bytes () ^-> t_bytes ());
-                    of_type C_BLAKE2b O.(t_bytes () ^-> t_bytes ());
-                    of_type C_HASH_KEY O.(t_key () ^-> t_key_hash ());
-                    of_type C_CHECK_SIGNATURE O.(t_key () ^-> t_signature () ^-> t_bytes () ^-> t_bool ());
-                    (* OPTION *)
                     of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
                     of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);

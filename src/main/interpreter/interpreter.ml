@@ -644,34 +644,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
-    | ( C_SHA256, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha256 b in
-      return @@ value
-    | ( C_SHA256 , _  ) -> fail @@ error_type
-    | ( C_SHA512, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha512 b in
-      return @@ value
-    | ( C_SHA512 , _  ) -> fail @@ error_type
-    | ( C_BLAKE2b, [ V_Ct (C_bytes b) ] )->
-      let>> value = Blake2b b in
-      return @@ value
-    | ( C_BLAKE2b , _  ) -> fail @@ error_type
-    | ( C_KECCAK, [ V_Ct (C_bytes b) ] )->
-      let>> value = Keccak b in
-      return @@ value
-    | ( C_KECCAK , _  ) -> fail @@ error_type
-    | ( C_SHA3, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha3 b in
-      return @@ value
-    | ( C_SHA3 , _  ) -> fail @@ error_type
-    | ( C_HASH_KEY, [ V_Ct (C_key k) ] )->
-      let>> value = Hash_key k in
-      return @@ value
-    | ( C_HASH_KEY , _  ) -> fail @@ error_type
-    | ( C_CHECK_SIGNATURE, [ V_Ct (C_key k) ; V_Ct (C_signature s) ; V_Ct (C_bytes b) ] )->
-      let>> value = Check_signature (k, s, b) in
-      return @@ value
-    | ( C_CHECK_SIGNATURE , _  ) -> fail @@ error_type
     | ( C_NEVER , [ _ ] ) -> failwith "Ex falso?"
     | ( C_NEVER , _  ) -> fail @@ error_type
     | ( C_PAIRING_CHECK , [ V_List l ] ) ->

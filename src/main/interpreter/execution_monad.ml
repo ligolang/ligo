@@ -67,14 +67,7 @@ module Command = struct
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
-    | Sha256 : bytes -> LT.value t
-    | Sha512 : bytes -> LT.value t
-    | Blake2b : bytes -> LT.value t
-    | Keccak : bytes -> LT.value t
-    | Sha3 : bytes -> LT.value t
-    | Hash_key : Tezos_protocol.Protocol.Alpha_context.public_key -> LT.value t
     | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
-    | Check_signature : Tezos_protocol.Protocol.Alpha_context.public_key * Tezos_protocol.Protocol.Alpha_context.signature * bytes -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
@@ -367,45 +360,10 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
-    | Sha256 b -> (
-      let b = Tezos_protocol.Protocol.Environment.Raw_hashes.sha256 b in
-      let v = LT.V_Ct (LT.C_bytes b) in
-      (v, ctxt)
-    )
-    | Sha512 b -> (
-      let b = Tezos_protocol.Protocol.Environment.Raw_hashes.sha512 b in
-      let v = LT.V_Ct (LT.C_bytes b) in
-      (v, ctxt)
-    )
-    | Blake2b b -> (
-      let b = Tezos_protocol.Protocol.Environment.Raw_hashes.blake2b b in
-      let v = LT.V_Ct (LT.C_bytes b) in
-      (v, ctxt)
-    )
-    | Keccak b -> (
-      let b = Tezos_protocol.Protocol.Environment.Raw_hashes.keccak256 b in
-      let v = LT.V_Ct (LT.C_bytes b) in
-      (v, ctxt)
-    )
-    | Sha3 b -> (
-      let b = Tezos_protocol.Protocol.Environment.Raw_hashes.sha3_256 b in
-      let v = LT.V_Ct (LT.C_bytes b) in
-      (v, ctxt)
-    )
-    | Hash_key k -> (
-      let kh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash k in
-      let v = LT.V_Ct (LT.C_key_hash kh) in
-      (v, ctxt)
-    )
     | Implicit_account (loc, kh) -> (
       let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
       let address = Tezos_state.implicit_account ~raise ~loc address in
       let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
-      (v, ctxt)
-    )
-    | Check_signature (k, s, b) -> (
-      let b = Tezos_protocol.Protocol.Environment.Signature.check k s b in
-      let v = LC.v_bool b in
       (v, ctxt)
     )
     | Pairing_check l -> (
