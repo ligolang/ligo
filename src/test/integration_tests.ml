@@ -990,6 +990,14 @@ let loop18 ~raise ~add_warning () : unit =
     expect_eq ~raise program "for_collection_with_patches" input expected in
   ()
 
+let loop19 ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/loop19.ligo" in
+  let () =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid ~raise program "nested_loops" make_input make_expected in
+  ()
+
 let loop ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/loop.ligo" in
   let () =
@@ -2355,6 +2363,7 @@ let main = test_suite "Integration (End to End)"
     test_w "loop16" loop16 ;
     test_w "loop17" loop17 ;
     test_w "loop18" loop18 ;
+    test_w "loop19" loop19 ;
     test_w "loop" loop ;
     test_w "loop (mligo)" loop_mligo ;
     test_w "loop (religo)" loop_religo ;
