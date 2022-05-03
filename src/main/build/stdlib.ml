@@ -125,7 +125,7 @@ end
 [@private] [@hidden] [@inline] let false : bool = [%external \"FALSE\"]
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]
 [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
-[@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%external \"INT\"] v
+[@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
 [@private] [@hidden] [@inline] let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%external \"EDIV\"] l r
 "
   | CameLIGO -> "
@@ -253,7 +253,7 @@ end
 [@private] [@hidden] [@inline] let false : bool = [%external \"FALSE\"]
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]
 [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
-[@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%external \"INT\"] v
+[@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
 [@private] [@hidden] [@inline] let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%external \"EDIV\"] l r
 "
 

@@ -59,7 +59,6 @@ let literal_to_enum = function
   | Literal_chest_key _ -> 18
 
 type constant' =
-  | C_INT
   | C_UNIT
   | C_NEVER
   | C_NIL

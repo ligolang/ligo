@@ -330,7 +330,6 @@ module Constant_types = struct
                     of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
                     of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
                     of_type C_FAILWITH O.(for_all "a" @@ fun a -> t_ext_failwith a);
-                    of_type C_INT O.(for_all "a" @@ fun a -> t_ext_int a);
                     (C_EDIV, any_of [
                         typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_ediv a b);
                         typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_u_ediv a b);

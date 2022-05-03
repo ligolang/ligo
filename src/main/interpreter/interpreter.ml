@@ -200,9 +200,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_NOT    , [ V_Ct (C_int a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NOT    , [ V_Ct (C_nat a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NOT , _  ) -> fail @@ error_type
-    | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
-    | ( C_INT    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return_ct @@ C_int (Bls12_381.Fr.to_z a')
-    | ( C_INT , _  ) -> fail @@ error_type
     | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g1 a')    ] ) -> return_ct @@ C_bls12_381_g1 (Bls12_381.G1.negate a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g2 a')    ] ) -> return_ct @@ C_bls12_381_g2 (Bls12_381.G2.negate a')
