@@ -35,7 +35,6 @@ let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()
 module Command = struct
   type 'a t =
     | Set_big_map : Z.t * (LT.value * LT.value) list * Ast_aggregated.type_expression -> unit t
-    | Pack : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Unpack : Location.t * bytes * Ast_aggregated.type_expression -> LT.value t
     | Bootstrap_contract : int * LT.value * LT.value * Ast_aggregated.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
@@ -98,13 +97,6 @@ module Command = struct
       let v_ty = Michelson_backend.compile_type ~raise v_ty in
       let ctxt = Tezos_state.set_big_map ~raise ctxt (Z.to_int id) kv k_ty v_ty in
       ((), ctxt)
-    | Pack (loc, value, value_ty) ->
-      let expr = Michelson_backend.val_to_ast ~raise ~loc value value_ty in
-      let expr = Ast_aggregated.e_a_pack expr in
-      let mich = Michelson_backend.compile_value ~raise ~options expr in
-      let ret_co, ret_ty = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
-      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
-      (ret, ctxt)
     | Unpack (loc, bytes, value_ty) ->
       let value_ty = trace_option ~raise (Errors.generic_error loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option value_ty in
       let expr = Ast_aggregated.(e_a_unpack (e_a_bytes bytes) value_ty) in

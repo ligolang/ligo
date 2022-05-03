@@ -224,12 +224,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_BYTES_PACK , [ value ] ) ->
-      let* () = check_value value in
-      let value_ty = List.nth_exn types 0 in
-      let>> value = Pack (loc, value, value_ty) in
-      return value
-    | ( C_BYTES_PACK , _  ) -> fail @@ error_type
     | ( C_BYTES_UNPACK , [ V_Ct (C_bytes bytes) ] ) ->
       let value_ty = expr_ty in
       let>> value = Unpack (loc, bytes, value_ty) in
@@ -470,17 +464,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , _  ) -> fail @@ error_type
     (* ternary *)
-    | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
-      (*TODO : allign with tezos*)
-      return @@ V_Ct (C_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed)))
-    | ( C_SLICE , [ V_Ct (C_nat start) ; V_Ct (C_nat length) ; V_Ct (C_bytes bytes) ] ) ->
-      let start = Z.to_int start in
-      let length = Z.to_int length in
-      if (start > Bytes.length bytes) || (start + length > Bytes.length bytes) then
-        fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
-      else
-        return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
-    | ( C_SLICE , _  ) -> fail @@ error_type
     | ( C_LOOP_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_} ; init ] ) -> (
       let* init_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let rec aux cur_env =

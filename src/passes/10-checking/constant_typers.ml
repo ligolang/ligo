@@ -322,11 +322,6 @@ module Constant_types = struct
                         O.(t_string () ^-> t_string () ^-> t_string ());
                         O.(t_bytes () ^-> t_bytes () ^-> t_bytes ());
                       ];
-                    of_types C_SLICE [
-                        O.(t_nat () ^-> t_nat () ^-> t_string () ^-> t_string ());
-                        O.(t_nat () ^-> t_nat () ^-> t_bytes () ^-> t_bytes ());
-                      ];
-                    of_type C_BYTES_PACK O.(for_all "a" @@ fun a -> a ^-> t_bytes ());
                     of_type C_BYTES_UNPACK O.(for_all "a" @@ fun a -> t_bytes () ^-> t_option a);
                     of_type C_NONE O.(for_all "a" @@ fun a -> t_option a);
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);

@@ -238,8 +238,6 @@ module Stacking = struct
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
     | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
-    | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
-    | C_BYTES_PACK         , _   -> Some ( simple_unary @@ prim "PACK")
     | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
     | C_CHAIN_ID           , _   -> Some ( simple_constant @@ prim "CHAIN_ID")
     | C_LEVEL              , _   -> Some ( simple_constant @@ prim "LEVEL")

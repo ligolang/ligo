@@ -342,6 +342,7 @@ let%expect_test _ =
               DUP 3 ;
               PAIR ;
               PAIR ;
+              PACK ;
               DUP 4 ;
               CAR ;
               CAR ;
@@ -374,7 +375,6 @@ let%expect_test _ =
                          COMPARE ;
                          EQ ;
                          IF { DUP 5 ;
-                              PACK ;
                               DIG 3 ;
                               CDR ;
                               DIG 2 ;

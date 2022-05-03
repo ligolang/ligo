@@ -88,9 +88,9 @@ module List = struct
   [@hidden] [@inline] let cons (type a) ((x, xs) : a * a list) : a list = [%external \"CONS\"] x xs
 end
 module String = struct
-  [@hidden] [@inline] let concat ((b1, b2) : string * string) : string = [%external \"CONCAT\"] b1 b2
-  [@hidden] [@inline] let sub ((s, l, b) : nat * nat * string) : string = [%external \"SLICE\"] s l b
-  [@hidden] [@inline] let length (b : string) : nat = [%external \"SIZE\"] b
+  [@hidden] [@inline] let concat ((b1, b2) : string * string) : string = [%Michelson ({| { UNPAIR ; CONCAT } |} : string * string -> string)] (b1, b2)
+  [@hidden] [@inline] let sub ((s, l, b) : nat * nat * string) : string = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string \"SLICE\" ; FAILWITH } {} } |} : nat * nat * string -> string)] (s, l, b)
+  [@hidden] [@inline] let length (b : string) : nat = [%Michelson ({| { SIZE } |} : string -> nat)] b
 end
 module Option = struct
   [@hidden] [@inline] let unopt (type a) (v : a option) : a = [%external \"UNOPT\"] v
@@ -98,11 +98,11 @@ module Option = struct
   (* [@hidden] [@inline] let map (type a b) ((f, v) : (a -> b) * (a option)) : b option = [%external \"OPTION_MAP\"] f v *)
 end
 module Bytes = struct
-  [@hidden] [@inline] let concat ((b1, b2) : bytes * bytes) : bytes = [%external \"CONCAT\"] b1 b2
-  [@hidden] [@inline] let sub ((s, l, b) : nat * nat * bytes) : bytes = [%external \"SLICE\"] s l b
-  [@hidden] [@inline] let pack (type a) (v : a) : bytes = [%external \"BYTES_PACK\"] v
+  [@hidden] [@inline] let concat ((b1, b2) : bytes * bytes) : bytes = [%Michelson ({| { UNPAIR ; CONCAT } |} : bytes * bytes -> bytes)] (b1, b2)
+  [@hidden] [@inline] let sub ((s, l, b) : nat * nat * bytes) : bytes = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string \"SLICE\" ; FAILWITH } {} } |} : nat * nat * bytes -> bytes)] (s, l, b)
+  [@hidden] [@inline] let pack (type a) (v : a) : bytes = [%Michelson ({| { PACK } |} : a -> bytes)] v
   [@hidden] [@inline] let unpack (type a) (b : bytes) : a option = [%external \"BYTES_UNPACK\"] b
-  [@hidden] [@inline] let length (b : bytes) : nat = [%external \"SIZE\"] b
+  [@hidden] [@inline] let length (b : bytes) : nat = [%Michelson ({| { SIZE } |} : bytes -> nat)] b
 end
 module Crypto = struct
   [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%Michelson ({| { BLAKE2B } |} : bytes -> bytes)] b
@@ -216,9 +216,9 @@ module List = struct
   [@hidden] [@inline] let cons (type a) (x : a) (xs : a list) : a list = [%external \"CONS\"] x xs
 end
 module String = struct
-  [@hidden] [@inline] let concat (b1 : string) (b2 : string) : string = [%external \"CONCAT\"] b1 b2
-  [@hidden] [@inline] let sub (s : nat) (l : nat) (b : string) : string = [%external \"SLICE\"] s l b
-  [@hidden] [@inline] let length (b : string) : nat = [%external \"SIZE\"] b
+  [@hidden] [@inline] let concat (b1 : string) (b2 : string) : string = [%Michelson ({| { UNPAIR ; CONCAT } |} : string * string -> string)] (b1, b2)
+  [@hidden] [@inline] let sub (s : nat) (l : nat) (b : string) : string = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string \"SLICE\" ; FAILWITH } {} } |} : nat * nat * string -> string)] (s, l, b)
+  [@hidden] [@inline] let length (b : string) : nat = [%Michelson ({| { SIZE } |} : string -> nat)] b
 end
 module Option = struct
   [@hidden] [@inline] let unopt (type a) (v : a option) : a = [%external \"UNOPT\"] v
@@ -226,11 +226,11 @@ module Option = struct
   (* [@hidden] [@inline] let map (type a b) (f : a -> b) (v : a option) : b option = [%external \"OPTION_MAP\"] f v *)
 end
 module Bytes = struct
-  [@hidden] [@inline] let concat (b1 : bytes) (b2 : bytes) : bytes = [%external \"CONCAT\"] b1 b2
-  [@hidden] [@inline] let sub (s : nat) (l : nat) (b : bytes) : bytes = [%external \"SLICE\"] s l b
-  [@hidden] [@inline] let pack (type a) (v : a) : bytes = [%external \"BYTES_PACK\"] v
+  [@hidden] [@inline] let concat (b1 : bytes) (b2 : bytes) : bytes = [%Michelson ({| { UNPAIR ; CONCAT } |} : bytes * bytes -> bytes)] (b1, b2)
+  [@hidden] [@inline] let sub (s : nat) (l : nat) (b : bytes) : bytes = [%Michelson ({| { UNPAIR ; UNPAIR ; SLICE ; IF_NONE { PUSH string \"SLICE\" ; FAILWITH } {} } |} : nat * nat * bytes -> bytes)] (s, l, b)
+  [@hidden] [@inline] let pack (type a) (v : a) : bytes = [%Michelson ({| { PACK } |} : a -> bytes)] v
   [@hidden] [@inline] let unpack (type a) (b : bytes) : a option = [%external \"BYTES_UNPACK\"] b
-  [@hidden] [@inline] let length (b : bytes) : nat = [%external \"SIZE\"] b
+  [@hidden] [@inline] let length (b : bytes) : nat = [%Michelson ({| { SIZE } |} : bytes -> nat)] b
 end
 module Crypto = struct
   [@hidden] [@inline] let blake2b (b : bytes) : bytes = [%Michelson ({| { BLAKE2B } |} : bytes -> bytes)] b

@@ -112,8 +112,6 @@ type constant' =
   (* Bytes/ String *)
   | C_SIZE
   | C_CONCAT
-  | C_SLICE
-  | C_BYTES_PACK
   | C_BYTES_UNPACK
   | C_CONS
   (* Pair *)

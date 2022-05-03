@@ -488,7 +488,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
         | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
         | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } -> Some C_ADD
         | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } -> Some C_CONCAT
-        | {expression_content = E_constant {cons_name = C_SLICE; _ }; _ } -> Some C_CONCAT
         | {expression_content = E_literal (Literal_int _); _ } -> Some C_ADD
         | {expression_content = E_record_accessor {record; path}; _ } ->
             (let x = get_record_field_type record.type_expression path in

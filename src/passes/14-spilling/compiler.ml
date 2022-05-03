@@ -72,8 +72,6 @@ let compile_constant' : AST.constant' -> constant' = function
   (* Bytes/ String *)
   | C_SIZE -> C_SIZE
   | C_CONCAT -> C_CONCAT
-  | C_SLICE -> C_SLICE
-  | C_BYTES_PACK -> C_BYTES_PACK
   | C_BYTES_UNPACK -> C_BYTES_UNPACK
   | C_CONS -> C_CONS
   (* Pair *)

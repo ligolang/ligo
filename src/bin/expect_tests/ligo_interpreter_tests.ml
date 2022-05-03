@@ -700,12 +700,13 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" ; "hangzhou" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 13, characters 8-9:
+   12 | let test =
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
-   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
-   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Invalid call to Test primitive. |}]
+  Expected address but got typed_address (unit ,
+  unit) |}]
 
 let () = Sys.chdir pwd
 
