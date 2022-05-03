@@ -183,7 +183,7 @@ let build_contract ~raise ~add_warning : options:Compiler_options.t -> string ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
     let typed_prg, contract = build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise typed_prg entry_point in
-    let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+    let mini_c     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let michelson  = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
     michelson, contract
 
