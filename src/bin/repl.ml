@@ -226,10 +226,12 @@ Included directives:
   #use \"file_path\";;
   #import \"file_path\" \"module_name\";;"
 
-let make_initial_state syntax protocol dry_run_opts project_root =
+let make_initial_state syntax protocol dry_run_opts project_root options =
+  let top_level = Build.Stdlib.typed ~options syntax in
+  let env = Environment.append top_level @@ Environment.default protocol in
   {
-    env = Environment.default protocol ;
-    top_level = [];
+    env;
+    top_level;
     syntax = syntax;
     protocol = protocol;
     dry_run_opts = dry_run_opts;
@@ -270,10 +272,8 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;
-      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root in
       let options = Compiler_options.make ~raw_options () in
-      let top_level = Build.Stdlib.typed ~options state.syntax in
-      let state = { state with top_level } in
+      let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root options in
       let state = match init_file with
         | None -> state
         | Some file_name -> let c = use_file state ~raw_options file_name in
