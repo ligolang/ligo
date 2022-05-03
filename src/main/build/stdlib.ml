@@ -119,8 +119,8 @@ end
 [@private] [@hidden] [@inline] let assert_some_with_error (type a) ((v, s) : a option * string) : unit = [%external \"ASSERT_SOME_WITH_ERROR\"] v s
 [@private] [@hidden] [@inline] let assert_none (type a) (v : a option) : unit = [%external \"ASSERT_NONE\"] v
 [@private] [@hidden] [@inline] let assert_none_with_error (type a) ((v, s) : a option * string) : unit = [%external \"ASSERT_NONE_WITH_ERROR\"] v s
-[@private] [@hidden] [@inline] let abs (i : int) : nat = [%external \"ABS\"] i
-[@private] [@hidden] [@inline] let is_nat (i : int) : nat option = [%external \"IS_NAT\"] i
+[@private] [@hidden] [@inline] let abs (i : int) : nat = [%Michelson ({| { ABS } |} : int -> nat)] i
+[@private] [@hidden] [@inline] let is_nat (i : int) : nat option = [%Michelson ({| { ISNAT } |} : int -> nat option)] i
 [@private] [@hidden] [@inline] let true : bool = [%external \"TRUE\"]
 [@private] [@hidden] [@inline] let false : bool = [%external \"FALSE\"]
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]
@@ -247,8 +247,8 @@ end
 [@private] [@hidden] [@inline] let assert_some_with_error (type a) (v : a option) (s : string) : unit = [%external \"ASSERT_SOME_WITH_ERROR\"] v s
 [@private] [@hidden] [@inline] let assert_none (type a) (v : a option) : unit = [%external \"ASSERT_NONE\"] v
 [@private] [@hidden] [@inline] let assert_none_with_error (type a) (v : a option) (s : string) : unit = [%external \"ASSERT_NONE_WITH_ERROR\"] v s
-[@private] [@hidden] [@inline] let abs (i : int) : nat = [%external \"ABS\"] i
-[@private] [@hidden] [@inline] let is_nat (i : int) : nat option = [%external \"IS_NAT\"] i
+[@private] [@hidden] [@inline] let abs (i : int) : nat = [%Michelson ({| { ABS } |} : int -> nat)] i
+[@private] [@hidden] [@inline] let is_nat (i : int) : nat option = [%Michelson ({| { ISNAT } |} : int -> nat option)] i
 [@private] [@hidden] [@inline] let true : bool = [%external \"TRUE\"]
 [@private] [@hidden] [@inline] let false : bool = [%external \"FALSE\"]
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]

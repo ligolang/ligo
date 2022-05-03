@@ -23,7 +23,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
   | C_NOW -> C_NOW
-  | C_IS_NAT -> C_IS_NAT
   | C_SOME -> C_SOME
   | C_NONE -> C_NONE
   | C_UNOPT -> C_UNOPT
@@ -47,7 +46,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_FOLD_RIGHT -> C_FOLD_RIGHT
   (* MATH *)
   | C_NEG -> C_NEG
-  | C_ABS -> C_ABS
   | C_ADD -> C_ADD
   | C_SUB -> C_SUB
   | C_MUL -> C_MUL

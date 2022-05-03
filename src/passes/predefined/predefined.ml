@@ -219,8 +219,6 @@ module Stacking = struct
     | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
     | C_ASSERTION_WITH_ERROR, _  -> Some ( simple_binary @@ i_if (seq [i_drop; i_push_unit]) (i_failwith))
     | C_INT                , _   -> Some ( simple_unary @@ prim "INT")
-    | C_ABS                , _   -> Some ( simple_unary @@ prim "ABS")
-    | C_IS_NAT             , _   -> Some ( simple_unary @@ prim "ISNAT")
     | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
     | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
     | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")

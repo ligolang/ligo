@@ -64,7 +64,6 @@ type constant' =
   | C_NEVER
   | C_NIL
   | C_NOW
-  | C_IS_NAT
   | C_SOME
   | C_NONE
   | C_UNOPT
@@ -88,7 +87,6 @@ type constant' =
   | C_FOLD_RIGHT
   (* MATH *)
   | C_NEG
-  | C_ABS
   | C_ADD
   | C_SUB
   | C_MUL

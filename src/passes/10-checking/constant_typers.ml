@@ -360,7 +360,6 @@ module Constant_types = struct
                     of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
                     of_type C_TRUE O.(t_bool ());
                     of_type C_FALSE O.(t_bool ());
-                    of_type C_IS_NAT O.(t_int () ^-> t_option (t_nat ()));
                     of_type C_PAIRING_CHECK O.(t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ())) ^-> t_bool ());
                     of_type C_OPEN_CHEST O.(t_chest_key () ^-> t_chest () ^-> t_nat () ^-> t_chest_opening_result ());
                     of_type C_VIEW O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_string () ^-> a ^-> t_address () ^-> t_option b);
@@ -452,7 +451,6 @@ module Constant_types = struct
                         O.(t_mutez () ^-> t_nat () ^-> t_mutez ());
                         O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
-                    of_type C_ABS O.(t_int () ^-> t_nat ());
                     of_types C_NEG [
                         O.(t_int () ^-> t_int ());
                         O.(t_nat () ^-> t_int ());

@@ -203,8 +203,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
     | ( C_INT    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return_ct @@ C_int (Bls12_381.Fr.to_z a')
     | ( C_INT , _  ) -> fail @@ error_type
-    | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_nat (Z.abs a')
-    | ( C_ABS , _  ) -> fail @@ error_type
     | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g1 a')    ] ) -> return_ct @@ C_bls12_381_g1 (Bls12_381.G1.negate a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g2 a')    ] ) -> return_ct @@ C_bls12_381_g2 (Bls12_381.G2.negate a')
@@ -212,10 +210,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_NEG , _  ) -> fail @@ error_type
     | ( C_SOME   , [ v                  ] ) -> return_some v
     | ( C_SOME , _  ) -> fail @@ error_type
-    | ( C_IS_NAT , [ V_Ct (C_int a')    ] ) ->
-      if Z.Compare.(>) a' Z.zero then return_some @@ V_Ct (C_nat a')
-      else return_none ()
-    | ( C_IS_NAT , _  ) -> fail @@ error_type
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
