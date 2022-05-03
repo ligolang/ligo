@@ -18,7 +18,7 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    1569 bytes |}] ;
+    1583 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -487,8 +487,10 @@ let%expect_test _ =
                      GET ;
                      IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                      ADD ;
-                     SOME ;
                      SENDER ;
+                     SWAP ;
+                     SOME ;
+                     SWAP ;
                      UPDATE ;
                      PAIR ;
                      PAIR ;
@@ -496,8 +498,9 @@ let%expect_test _ =
                      CAR ;
                      PAIR ;
                      EMPTY_SET address ;
-                     PUSH bool True ;
                      SENDER ;
+                     PUSH bool True ;
+                     SWAP ;
                      UPDATE ;
                      SWAP ;
                      PAIR }
@@ -525,8 +528,10 @@ let%expect_test _ =
                           GET ;
                           IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                           ADD ;
-                          SOME ;
                           SENDER ;
+                          SWAP ;
+                          SOME ;
+                          SWAP ;
                           UPDATE ;
                           PAIR ;
                           PAIR ;
@@ -749,8 +754,10 @@ let%expect_test _ =
                       IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                       SUB ;
                       ABS ;
-                      SOME ;
                       SENDER ;
+                      SWAP ;
+                      SOME ;
+                      SWAP ;
                       UPDATE ;
                       PAIR ;
                       PAIR ;

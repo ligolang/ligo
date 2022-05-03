@@ -84,16 +84,10 @@ module Tree_abstraction = struct
 
 
   let pseudo_module_to_string = function
-    | C_CHAIN_ID                -> "Tezos.chain_id"
-    | C_BALANCE                 -> "Tezos.balance"
-    | C_NOW                     -> "Tezos.now"
-    | C_AMOUNT                  -> "Tezos.amount"
-    | C_SENDER                  -> "Tezos.sender"
     | C_ADDRESS                 -> "Tezos.address"
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
     | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
-    | C_SOURCE                  -> "Tezos.source"
     | C_FAILWITH                -> "Tezos.failwith"
     | C_CREATE_CONTRACT         -> "Tezos.create_contract"
     | C_CALL                    -> "Tezos.transaction"
@@ -220,23 +214,16 @@ module Stacking = struct
     | C_ASSERTION_WITH_ERROR, _  -> Some ( simple_binary @@ i_if (seq [i_drop; i_push_unit]) (i_failwith))
     | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
     | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
-    | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")
-    | C_AMOUNT             , _   -> Some ( simple_constant @@ prim "AMOUNT")
     | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
     | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
     | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
     | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
-    | C_NOW                , _   -> Some ( simple_constant @@ prim "NOW")
     | C_CALL               , _   -> Some ( simple_ternary @@ prim "TRANSFER_TOKENS")
-    | C_SOURCE             , _   -> Some ( simple_constant @@ prim "SOURCE")
-    | C_SENDER             , _   -> Some ( simple_constant @@ prim "SENDER")
     | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
     | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
     | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
-    | C_CHAIN_ID           , _   -> Some ( simple_constant @@ prim "CHAIN_ID")
-    | C_LEVEL              , _   -> Some ( simple_constant @@ prim "LEVEL")
     | C_VOTING_POWER       , _   -> Some ( simple_unary @@ prim "VOTING_POWER")
     | C_TOTAL_VOTING_POWER , _   -> Some ( simple_unary @@ prim "TOTAL_VOTING_POWER")
 

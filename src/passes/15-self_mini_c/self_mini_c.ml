@@ -66,9 +66,8 @@ let is_pure_constant : constant' -> bool =
   | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
     -> true
   (* unfortunately impure: *)
-  | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER 
+  | C_VOTING_POWER | C_TOTAL_VOTING_POWER 
   | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
   | C_UNOPT

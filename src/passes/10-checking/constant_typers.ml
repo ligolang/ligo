@@ -334,11 +334,6 @@ module Constant_types = struct
                         typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_ediv a b);
                         typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_u_ediv a b);
                       ]);
-                    of_type C_AMOUNT O.(t_mutez ());
-                    of_type C_BALANCE O.(t_mutez ());
-                    of_type C_LEVEL O.(t_nat ());
-                    of_type C_SENDER O.(t_address ());
-                    of_type C_SOURCE O.(t_address ());
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
                     of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
                     of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
@@ -353,8 +348,6 @@ module Constant_types = struct
                     of_type C_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
                     of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_option (t_key_hash ()) ^-> t_mutez () ^-> b ^-> t_pair (t_operation ()) (t_address ()));
-                    of_type C_NOW O.(t_timestamp ());
-                    of_type C_CHAIN_ID O.(t_chain_id ());
                     of_type C_UNIT O.(t_unit ());
                     of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
                     of_type C_TRUE O.(t_bool ());

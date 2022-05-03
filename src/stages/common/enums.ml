@@ -62,7 +62,6 @@ type constant' =
   | C_UNIT
   | C_NEVER
   | C_NIL
-  | C_NOW
   | C_SOME
   | C_NONE
   | C_UNOPT
@@ -160,17 +159,12 @@ type constant' =
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
   (* Blockchain *)
-  | C_CHAIN_ID
   | C_CALL
   | C_CONTRACT
   | C_CONTRACT_OPT
   | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT
-  | C_BALANCE
-  | C_SOURCE
-  | C_SENDER
   | C_ADDRESS
   | C_SELF
   | C_SELF_ADDRESS
@@ -229,7 +223,6 @@ type constant' =
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
   (* New with EDO*)
-  | C_LEVEL
   | C_VOTING_POWER
   | C_TOTAL_VOTING_POWER
   | C_TICKET
