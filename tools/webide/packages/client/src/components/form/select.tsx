@@ -159,3 +159,11 @@ export const Select = (props: {
     </Container>
   );
 };
+
+export const SelectCommand = styled(Select)`
+  flex: 2;
+
+  &:hover {
+    box-shadow: var(--box-shadow);
+  }
+  `;

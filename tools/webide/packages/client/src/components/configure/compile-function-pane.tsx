@@ -3,12 +3,13 @@ import { connect, useDispatch } from 'react-redux';
 import styled from 'styled-components';
 import { PushSpinner } from 'react-spinners-kit';
 import { Group, Label } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand } from '../form/select';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration';
 import { ChangeProtocolAction, ChangeSelectedAction } from '../../redux/compile-function';
 import { ChangeOutputAction } from '../../redux/result';
 import { CommandType } from '../../redux/types';
 import { protocolType } from '../../redux/compile';
+
 
 const Container = styled.div``;
 
@@ -17,14 +18,6 @@ const SpinnerWrapper = styled.div`
   justify-content: center;
   align-content: center;
   margin-top: 20%;
-`;
-
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
 `;
 
 export interface MethodType {

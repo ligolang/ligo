@@ -6,20 +6,12 @@ import { AppState } from '../../redux/app';
 import { ChangeEntrypointAction, ChangeProtocolAction, ChangeMichelsonFormatAction, CompileState, MichelsonFormat, protocolType } from '../../redux/compile';
 import { CheckboxComponent } from '../form/checkbox';
 import { AccessFunctionLabel, Group, HGroup, Input, Label } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
 const Checkbox = styled(CheckboxComponent)`
   margin-right: 0.3em;
-`;
-
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
 `;
 
 export const CompilePaneComponent = () => {

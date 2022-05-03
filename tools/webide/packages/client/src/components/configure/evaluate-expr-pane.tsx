@@ -6,17 +6,10 @@ import { AppState } from '../../redux/app';
 import { protocolType } from '../../redux/compile';
 import { ChangeEntrypointAction, ChangeProtocolAction, EvaluateValueState } from '../../redux/evaluate-expr';
 import { Group, Input, Label } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
-`;
 
 export const EvaluateValuePaneComponent = () => {
   const dispatch = useDispatch();

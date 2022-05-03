@@ -13,19 +13,12 @@ import {
 } from '../../redux/generate-deploy-script';
 import { Tool } from '../../redux/types';
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand, Select } from '../form/select';
 
 const Container = styled.div`
   overflow: auto;
 `;
 
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
-`;
 
 export const GenerateDeployScriptPane = () => {
   const dispatch = useDispatch();

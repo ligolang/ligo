@@ -6,7 +6,7 @@ import { protocolType } from '../../redux/compile';
 import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType, ChangeProtocolAction } from '../../redux/deploy';
 import { CheckboxComponent } from '../form/checkbox';
 import { AccessFunctionLabel, Group, HGroup, Input, Label, Textarea } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
@@ -17,14 +17,6 @@ const Checkbox = styled(CheckboxComponent)`
 const Hint = styled.span`
   font-style: italic;
   font-size: 0.8em;
-`;
-
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
 `;
 
 interface stateTypes {

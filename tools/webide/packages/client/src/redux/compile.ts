@@ -40,7 +40,6 @@ type Action =
   | ChangeEntrypointAction
   | ChangeMichelsonFormatAction
   | ChangeSelectedExampleAction
-  | ChangeProtocolAction
   | ChangeProtocolAction;
 
 const DEFAULT_STATE: CompileState = {
