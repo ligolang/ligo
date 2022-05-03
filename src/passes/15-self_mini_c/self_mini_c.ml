@@ -48,7 +48,6 @@ let is_pure_constant : constant' -> bool =
   | C_LOOP_CONTINUE | C_LOOP_STOP
   | C_EDIV
   | C_SUB_MUTEZ
-  | C_SIZE
   | C_BYTES_UNPACK
   | C_SET_EMPTY | C_SET_LITERAL
   | C_LIST_EMPTY | C_LIST_LITERAL

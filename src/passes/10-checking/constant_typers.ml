@@ -311,13 +311,6 @@ module Constant_types = struct
                     of_type C_SET_ITER O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_set a ^-> t_unit ());
                     of_type C_SET_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_set a ^-> b ^-> b);
                     of_type C_SET_FOLD_DESC O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_set a ^-> b ^-> b);
-                    of_types C_SIZE [
-                        O.(for_all "a" @@ fun a -> t_list a ^-> t_nat ());
-                        O.(t_bytes () ^-> t_nat ());
-                        O.(t_string () ^-> t_nat ());
-                        O.(for_all "a" @@ fun a -> t_set a ^-> t_nat ());
-                        O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_map a b ^-> t_nat ())
-                      ];
                     of_types C_CONCAT [
                         O.(t_string () ^-> t_string () ^-> t_string ());
                         O.(t_bytes () ^-> t_bytes () ^-> t_bytes ());
