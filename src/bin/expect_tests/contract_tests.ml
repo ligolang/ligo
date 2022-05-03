@@ -1039,12 +1039,13 @@ Hint: replace it by "_ticket" to prevent this warning.
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              DUP ;
-             CAR ;
-             PUSH mutez 0 ;
-             DIG 2 ;
              CDR ;
              UNIT ;
              TICKET ;
+             SWAP ;
+             CAR ;
+             PUSH mutez 0 ;
+             DIG 2 ;
              TRANSFER_TOKENS ;
              SWAP ;
              NIL operation ;

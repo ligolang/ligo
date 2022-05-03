@@ -636,8 +636,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_FAILWITH , [ a ] ) ->
       fail @@ Errors.meta_lang_failwith loc calltrace a
     | ( C_FAILWITH , _  ) -> fail @@ error_type
-    | ( (C_TICKET | C_READ_TICKET | C_SPLIT_TICKET | C_JOIN_TICKET) , _ ) ->
-      fail @@ Errors.generic_error loc "Tickets are not supported."
     (*
     >>>>>>>>
       Test operators
