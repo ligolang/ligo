@@ -337,8 +337,6 @@ module Constant_types = struct
                     of_type C_SET_DELEGATE O.(t_option (t_key_hash ()) ^-> t_operation ());
                     of_type C_SELF O.(for_all "a" @@ fun a -> (t_string () ^-> t_contract a));
                     of_type C_SELF_ADDRESS O.(t_address ());
-                    of_type C_TOTAL_VOTING_POWER O.(t_nat ());
-                    of_type C_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
                     of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_option (t_key_hash ()) ^-> t_mutez () ^-> b ^-> t_pair (t_operation ()) (t_address ()));
                     of_type C_UNIT O.(t_unit ());

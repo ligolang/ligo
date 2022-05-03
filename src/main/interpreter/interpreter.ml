@@ -945,7 +945,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
-    | ( (C_SELF | C_SELF_ADDRESS | C_VOTING_POWER | C_TOTAL_VOTING_POWER) , _ ) ->
+    | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."

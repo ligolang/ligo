@@ -222,8 +222,6 @@ type constant' =
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
   (* New with EDO*)
-  | C_VOTING_POWER
-  | C_TOTAL_VOTING_POWER
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE

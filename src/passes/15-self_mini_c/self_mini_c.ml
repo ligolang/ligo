@@ -62,7 +62,6 @@ let is_pure_constant : constant' -> bool =
     -> true
   (* unfortunately impure: *)
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_VOTING_POWER | C_TOTAL_VOTING_POWER 
   | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
   | C_UNOPT
