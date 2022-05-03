@@ -41,6 +41,12 @@ let test_basic ~raise ~raw_options () =
   then ()
   else raise.raise @@ `Test_repl ([s], ["4"])
 
+let test_stdlib ~raise ~raw_options () =
+  let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_cameligo "String.concat \"Hello \" \"world!\"" in
+  if (String.compare s "\"Hello world!\"" = 0)
+  then ()
+  else raise.raise @@ `Test_repl (["\"Hello world!\""], [s])
+
 let test_empty ~raise ~raw_options () =
   test_seq ~raise ~raw_options init_state_cameligo [""]
                                ["unexpected error, missing expression?"]
@@ -102,6 +108,12 @@ let test_basic_jsligo ~raise ~raw_options () =
   if (String.compare s "4" = 0)
   then ()
   else raise.raise @@ `Test_repl ([s], ["4"])
+
+let test_stdlib_jsligo ~raise ~raw_options () =
+  let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_jsligo "String.concat(\"Hello \", \"world!\")" in
+  if (String.compare s "\"Hello world!\"" = 0)
+  then ()
+  else raise.raise @@ `Test_repl (["\"Hello world!\""], [s])
 
 let test_empty_jsligo ~raise ~raw_options () =
   test_seq ~raise ~raw_options init_state_jsligo [""]
@@ -208,6 +220,7 @@ let () =
   run_test @@ test_suite "LIGO" [
     test_suite "REPL (cameligo)" [
         test "basic" (test_basic ~raw_options);
+        test "stdlib" (test_stdlib ~raw_options);
         test "empty" (test_empty ~raw_options);
         test "def&eval" (test_def ~raw_options);
         test "mod" (test_mod ~raw_options);
@@ -216,6 +229,7 @@ let () =
       ] ;
     test_suite "REPL (jsligo)" [
         test "basic" (test_basic_jsligo ~raw_options);
+        test "stdlib" (test_stdlib_jsligo ~raw_options);
         test "empty" (test_empty_jsligo ~raw_options);
         test "def&eval" (test_def_jsligo ~raw_options);
         test "mod" (test_mod_jsligo ~raw_options);
