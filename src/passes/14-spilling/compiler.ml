@@ -47,7 +47,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_ADD -> C_ADD
   | C_SUB -> C_SUB
   | C_MUL -> C_MUL
-  | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
   | C_SUB_MUTEZ -> C_SUB_MUTEZ 

@@ -45,7 +45,6 @@ let is_pure_constant : constant' -> bool =
   | C_CONCAT
   | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SET_UPDATE
   | C_LOOP_CONTINUE | C_LOOP_STOP
-  | C_EDIV
   | C_SUB_MUTEZ
   | C_BYTES_UNPACK
   | C_SET_EMPTY | C_SET_LITERAL

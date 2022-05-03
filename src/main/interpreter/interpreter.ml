@@ -954,7 +954,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_POLYMORPHIC_SUB , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
-         C_FOLD_LEFT | C_FOLD_RIGHT | C_EDIV | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
+         C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |

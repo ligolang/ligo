@@ -188,12 +188,11 @@ let%expect_test "self_ast_imperative" =
   Ill-formed "ASSERTION" expression
   One function argument is expected.
   |}] ;
-  error (`Self_ast_imperative_bad_map_param_type (C_EDIV, expression)) ;
+  error (`Self_ast_imperative_bad_map_param_type (C_ADD, expression)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
-
-  Ill-formed "EDIV" expression.
+   Ill-formed "ADD" expression.
   A list of pair parameters is expected.
   |}] ;
   error (`Self_ast_imperative_bad_set_param_type (C_ITER, expression)) ;

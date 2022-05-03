@@ -171,7 +171,6 @@ module Stacking = struct
     | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
     | C_SUB_MUTEZ          , Ithaca -> Some ( simple_binary @@ prim "SUB_MUTEZ")
     | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
-    | C_EDIV               , _   -> Some ( simple_binary @@ prim "EDIV")
     | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
     | C_MOD                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
     | C_NEG                , _   -> Some ( simple_unary @@ prim "NEG")

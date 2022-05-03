@@ -126,7 +126,7 @@ end
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]
 [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
 [@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
-[@private] [@hidden] [@inline] let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%external \"EDIV\"] l r
+[@private] [@hidden] [@inline] let ediv (type a b) ((l, r) : (a * b)) : (a, b) external_u_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_u_ediv)] (l, r)
 "
   | CameLIGO -> "
 module Tezos = struct
@@ -254,7 +254,7 @@ end
 [@private] [@hidden] [@inline] let unit : unit = [%external \"UNIT\"]
 [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
 [@private] [@hidden] [@inline] let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
-[@private] [@hidden] [@inline] let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%external \"EDIV\"] l r
+[@private] [@hidden] [@inline] let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%Michelson ({| { UNPAIR ; EDIV } |} : a * b -> (a, b) external_ediv)] (l, r)
 "
 
 let stdlib ~options syntax =

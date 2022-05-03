@@ -246,9 +246,6 @@ module Constant_types = struct
   let of_types c ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
 
-  let typer_of_type_no_tc t =
-    typer_of_ligo_type ~add_tc:false ~fail:false t
-
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
                     of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> t_sum_ez [("left", a) ; ("right", b)]) ^-> a ^-> b);
@@ -330,10 +327,6 @@ module Constant_types = struct
                     of_type C_ASSERT_NONE O.(for_all "a" @@ fun a -> t_option a ^-> t_unit ());
                     of_type C_ASSERT_NONE_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> t_unit ());
                     of_type C_FAILWITH O.(for_all "a" @@ fun a -> t_ext_failwith a);
-                    (C_EDIV, any_of [
-                        typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_ediv a b);
-                        typer_of_type_no_tc @@ O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_ext_u_ediv a b);
-                      ]);
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
                     of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
                     of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
