@@ -55,7 +55,7 @@ let list_type_declarations (m : Ast_core.module_) : Ast_core.type_variable list 
       let open Location in
       let open Ast_core in
       match (el.wrap_content : Ast_core.declaration_content) with
-      | Declaration_type {type_binder;_} -> type_binder::prev
+      | Declaration_type {type_binder;type_attr;_} when type_attr.public -> type_binder::prev
       | _ -> prev)
     ~init:[] m
 

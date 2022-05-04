@@ -1,6 +1,11 @@
 let lib (s : Syntax_types.t) =
   match s with
   | PascaLIGO _ | ReasonLIGO | JsLIGO ->"
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@hidden] [@inline] let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external \"TEST_TO_CONTRACT\"] t
   [@hidden] [@inline] let originate_from_file ((fn, e, v, s, t) : string * string * string list * michelson_program * tez) : address * michelson_program * int = [%external \"TEST_ORIGINATE_FROM_FILE\"] fn e v s t
@@ -51,6 +56,11 @@ module Test = struct
 end
 "
  | CameLIGO -> "
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@hidden] [@inline] let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external \"TEST_TO_CONTRACT\"] t
   [@hidden] [@inline] let originate_from_file (fn : string) (e : string) (v : string list) (s : michelson_program)  (t : tez) : address * michelson_program * int = [%external \"TEST_ORIGINATE_FROM_FILE\"] fn e v s t
@@ -104,6 +114,12 @@ end
 let lib_stub (s : Syntax_types.t) =
   match s with
   | PascaLIGO _ | ReasonLIGO | JsLIGO ->"
+type michelson_program = unit
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
   type ('a, 'b) typed_address = unit
@@ -159,6 +175,12 @@ module Test = struct
 end
 "
  | CameLIGO -> "
+type michelson_program = unit
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
   type ('a, 'b) typed_address = unit
