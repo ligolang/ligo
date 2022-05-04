@@ -18,7 +18,7 @@ let to_core ~raise ~add_warning ~options ~meta (c_unit: Buffer.t) file_path =
   core
 
 let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : Ast_typed.program =
-  let meta          = Of_source.extract_meta ~raise stx f in
+  let meta          = Of_source.extract_meta stx in
   let c_unit,_      = Of_source.compile ~raise ~options:options.frontend ~meta f in
   let core          = to_core ~raise ~add_warning ~options ~meta c_unit f in
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form core in
@@ -42,8 +42,8 @@ let type_contract_string ~raise ~add_warning ~options syntax expression =
   let typed         = Of_core.typecheck ~raise ~add_warning ~options Env core in
   typed,core
 
-let type_expression ~raise ~options source_file syntax expression init_prog =
-  let meta              = Of_source.make_meta ~raise syntax source_file in (* TODO: should be computed outside *)
+let type_expression ~raise ~options syntax expression init_prog =
+  let meta              = Of_source.make_meta syntax in (* TODO: should be computed outside *)
   let c_unit_exp, _     = Of_source.compile_string ~raise ~options:options.Compiler_options.frontend ~meta expression in
   let imperative_exp    = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
@@ -51,8 +51,8 @@ let type_expression ~raise ~options source_file syntax expression init_prog =
   let typed_exp         = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
   typed_exp
 
-let compile_contract_input ~raise ~add_warning ~options parameter storage source_file syntax init_prog =
-  let meta       = Of_source.extract_meta ~raise syntax source_file in
+let compile_contract_input ~raise ~add_warning ~options parameter storage syntax init_prog =
+  let meta       = Of_source.extract_meta syntax in
   let (parameter,_),(storage,_) = Of_source.compile_contract_input ~raise ~options ~meta parameter storage in
   let aggregated_prg = Of_typed.compile_program ~raise init_prog in
   let imperative = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in

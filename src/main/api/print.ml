@@ -8,8 +8,7 @@ let pretty_print (raw_options : Compiler_options.raw) source_file display_format
     fun ~raise ->
     let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options = Compiler_options.make ~raw_options ~syntax () in
-    let Compiler_options.{ syntax ; _ } = options.frontend in
-    let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
+    let meta = Compile.Of_source.extract_meta syntax in
     Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
 
 let dependency_graph (raw_options : Compiler_options.raw) source_file display_format () =
@@ -27,8 +26,7 @@ let preprocess (raw_options : Compiler_options.raw) source_file display_format (
     fst @@
     let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options = Compiler_options.make ~raw_options ~syntax () in
-    let Compiler_options.{ syntax ; _ } = options.frontend in
-    let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
+    let meta = Compile.Of_source.extract_meta syntax in
     Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
 
 let cst (raw_options : Compiler_options.raw) source_file display_format () =
@@ -36,8 +34,7 @@ let cst (raw_options : Compiler_options.raw) source_file display_format () =
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
-      let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
+      let meta = Compile.Of_source.extract_meta syntax in
       Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
 
 let ast (raw_options : Compiler_options.raw) source_file display_format () =
@@ -46,8 +43,7 @@ let ast (raw_options : Compiler_options.raw) source_file display_format () =
       fun ~raise ->
       let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
-      let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
+      let meta     = Compile.Of_source.extract_meta syntax in
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       Compile.Utils.to_imperative ~raise ~add_warning ~options ~meta c_unit source_file
 
@@ -58,8 +54,7 @@ let ast_sugar (raw_options : Compiler_options.raw) source_file display_format ()
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
-      let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
+      let meta     = Compile.Of_source.extract_meta syntax in
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let sugar = Compile.Utils.to_sugar ~raise ~add_warning ~options ~meta c_unit source_file in
       if self_pass then
@@ -73,9 +68,8 @@ let ast_core (raw_options : Compiler_options.raw) source_file display_format () 
     fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ self_pass ; _ } = options.tools in
-      let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
+      let meta     = Compile.Of_source.extract_meta syntax in
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let core = Compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit source_file in
       if self_pass then

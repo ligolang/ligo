@@ -9,7 +9,7 @@ let make_raw_options = Raw_options.make
 let default_raw_options = Raw_options.default
 
 type frontend = {
-  syntax : Syntax_types.t ;
+  syntax : Syntax_types.t option ;
   (* dialect : string ; [@dead "frontend.dialect"]  *)
   entry_point : string ;
   libraries : string list ;
@@ -54,14 +54,14 @@ type t = {
 
 let make : 
   raw_options : raw ->
-  syntax : Syntax_types.t ->
+  ?syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
   ?test:bool ->
   ?has_env_comments : bool ->
   unit -> t =
   fun 
     ~raw_options
-    ~syntax
+    ?syntax
     ?(protocol_version = Protocols.current)
     ?(test = false)
     ?(has_env_comments = false)
