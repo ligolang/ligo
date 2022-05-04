@@ -552,7 +552,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
@@ -684,7 +684,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
      16 |       | None -> ()

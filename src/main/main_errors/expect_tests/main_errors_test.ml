@@ -180,12 +180,12 @@ let%expect_test "self_ast_imperative" =
   Ill-formed "UNIT" expression.
   No functions arguments are expected.
   |}] ;
-  error (`Self_ast_imperative_bad_single_arity (C_ASSERTION, expression)) ;
+  error (`Self_ast_imperative_bad_single_arity (C_BYTES_UNPACK, expression)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Ill-formed "ASSERTION" expression
+  Ill-formed "BYTES_UNPACK" expression
   One function argument is expected.
   |}] ;
   error (`Self_ast_imperative_bad_map_param_type (C_ADD, expression)) ;

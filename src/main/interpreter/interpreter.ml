@@ -215,42 +215,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> value = Unpack (loc, bytes, value_ty) in
       return value
     | ( C_BYTES_UNPACK , _  ) -> fail @@ error_type
-    | ( C_ASSERTION , [ v ] ) ->
-      if (is_true v) then return_ct @@ C_unit
-      else fail @@ Errors.meta_lang_eval loc calltrace "Failed assertion"
-    | ( C_ASSERTION , _  ) -> fail @@ error_type
-    | ( C_ASSERTION_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) ->
-      if (is_true v) then return_ct @@ C_unit
-      else fail @@ Errors.meta_lang_eval loc calltrace s
-    | ( C_ASSERTION_WITH_ERROR , _  ) -> fail @@ error_type
-    | ( C_ASSERT_SOME , [ v ] ) -> (
-      match get_option v with
-      | Some (Some _) -> return_ct @@ C_unit
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert some"
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_SOME , _  ) -> fail @@ error_type
-    | ( C_ASSERT_SOME_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
-      match get_option v with
-      | Some (Some _) -> return_ct @@ C_unit
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace s
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_SOME_WITH_ERROR , _  ) -> fail @@ error_type
-    | ( C_ASSERT_NONE , [ v ] ) -> (
-      match get_option v with
-      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert none"
-      | Some None -> return_ct @@ C_unit
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_NONE , _  ) -> fail @@ error_type
-    | ( C_ASSERT_NONE_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
-      match get_option v with
-      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace s
-      | Some None -> return_ct @@ C_unit
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_NONE_WITH_ERROR , _  ) -> fail @@ error_type
     | ( C_UNOPT , [ v ] ) -> (
       match get_option v with
       | Some (Some value) -> return @@ value
@@ -1029,8 +993,11 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
-            let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+             let>> ctxt = Get_state () in
+             (match Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression with
+             | Ok v -> return v
+             | Error (Failwith_string s) -> fail @@ Errors.meta_lang_eval term.location calltrace s
+             | Error _ -> fail @@ Errors.meta_lang_eval term.location calltrace "Failure")
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->

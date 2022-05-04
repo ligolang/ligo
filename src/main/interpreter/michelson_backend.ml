@@ -415,9 +415,9 @@ let run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) (code : (unit, s
      raise.raise (Errors.generic_error Location.generated "Could not parse") in
   match Ligo_run.Of_michelson.run_expression ~raise func func_ty with
   | Success (ty, value) ->
-      Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
-  | Fail _ ->
-     raise.raise (Errors.generic_error loc "Could not execute Michelson function")
+     Result.return @@ Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
+  | Fail f ->
+     Result.fail f
 
 let parse_code ~raise code =
   let open Tezos_micheline in
