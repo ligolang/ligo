@@ -336,7 +336,6 @@ module Constant_types = struct
                     of_type C_UNIT O.(t_unit ());
                     of_type C_TRUE O.(t_bool ());
                     of_type C_FALSE O.(t_bool ());
-                    of_type C_PAIRING_CHECK O.(t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ())) ^-> t_bool ());
                     of_type C_OPEN_CHEST O.(t_chest_key () ^-> t_chest () ^-> t_nat () ^-> t_chest_opening_result ());
                     of_type C_VIEW O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_string () ^-> a ^-> t_address () ^-> t_option b);
                     (* MATH *)

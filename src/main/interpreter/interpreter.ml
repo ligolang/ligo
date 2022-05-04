@@ -577,20 +577,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
-    | ( C_PAIRING_CHECK , [ V_List l ] ) ->
-      let rec aux acc = function
-        | [] -> Some acc
-        | (v :: tl) ->
-           match get_pair v with
-           | None -> None
-           | Some (l, r) ->
-              match get_bls12_381_g1 l, get_bls12_381_g2 r with
-              | Some b, Some b' -> aux (acc @ [(b, b')]) tl
-              | _ -> None in
-      let l = trace_option ~raise error_type @@ aux [] l in
-      let>> value = Pairing_check l in
-      return @@ value
-    | ( C_PAIRING_CHECK , _  ) -> fail @@ error_type
     | ( C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] )->
       let>> value = Implicit_account (loc, kh) in
       return @@ value

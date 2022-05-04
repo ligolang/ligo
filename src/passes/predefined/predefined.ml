@@ -233,7 +233,6 @@ module Stacking = struct
     | C_RIGHT              , _   -> Some (trivial_special "RIGHT")
     | C_SAPLING_EMPTY_STATE, _ -> Some (trivial_special "SAPLING_EMPTY_STATE")
     | C_SAPLING_VERIFY_UPDATE , _ -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
-    | C_PAIRING_CHECK , _ -> Some (simple_binary @@ prim "PAIRING_CHECK")
     | C_CONTRACT           , _   ->
       Some (special
               (fun with_args ->
