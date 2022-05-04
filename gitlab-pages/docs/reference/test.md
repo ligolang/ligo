@@ -30,13 +30,13 @@ A type for code that is compiled to Michelson.
 type test_exec_error_balance_too_low = record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type test_exec_error_balance_too_low = &#x007b contract_too_low : address ; contract_balance : tez ; spend_request : tez &#x007d
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address ; contract_balance : tez ; spend_request : tez &#x007d;
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type test_exec_error_balance_too_low = &#x007b contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type test_exec_error_balance_too_low = &#x007b contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
