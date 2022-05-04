@@ -28,9 +28,11 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       fun ~raise ->
       let options =
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+          let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
           let has_env_comments = has_env_comments michelson_comments in
           Compiler_options.make
             ~raw_options
+            ~syntax
             ~protocol_version
             ~has_env_comments
             ()
@@ -48,15 +50,16 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make
-          ~protocol_version
           ~raw_options
+          ~syntax
+          ~protocol_version
           ~has_env_comments:false
           ()
       in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
       let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
       let file_constants = read_file_constants ~raise file_constants in
@@ -75,15 +78,16 @@ let constant (raw_options : Compiler_options.raw) constants init_file display_fo
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~warning_as_error ~display_format Formatter.Michelson_formatter.michelson_constant_format get_warnings @@
       fun ~raise ->
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make
-          ~protocol_version
           ~raw_options
+          ~syntax
+          ~protocol_version
           ~has_env_comments:false
           ()
       in
-      let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ without_run ; _ } = options.backend in
       let (mini_c_exp,_) = Build.build_expression ~raise ~add_warning ~options syntax constants init_file in
       let compiled_exp   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
@@ -100,18 +104,19 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
       fun ~raise ->
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let options = Compiler_options.make
-            ~protocol_version
             ~raw_options
+            ~syntax
+            ~protocol_version
             ~has_env_comments:false
             () in
-        let Compiler_options.{ syntax ; _ } = options.frontend in
         let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
@@ -133,19 +138,21 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let options = Compiler_options.make
-            ~protocol_version
             ~raw_options
+            ~syntax
+            ~protocol_version
             ~has_env_comments:false
             () in
-        let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
+        let Compiler_options.{ entry_point ; _ } = options.frontend in
         let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let app_typed_prg, typed_prg =
           Build.build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options (Some source_file) syntax expression typed_prg in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options syntax expression typed_prg in
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =

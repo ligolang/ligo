@@ -22,9 +22,9 @@ let mutate_ast (raw_options : Compiler_options.raw) source_file display_format s
     let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
     let module Fuzzer = Fuzz.Ast_imperative.Mutator(Gen) in
     let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-    let options  = Compiler_options.make ~raw_options ~protocol_version () in
-    let Compiler_options.{ syntax ; _ } = options.frontend in
-    let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
+    let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+    let options  = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
+    let meta     = Compile.Of_source.extract_meta syntax in
     let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
     let imperative_prg = Compile.Utils.to_imperative ~raise ~add_warning ~options ~meta c_unit source_file in
     let _, imperative_prg = Fuzzer.mutate_module_ ?n:seed imperative_prg in
@@ -43,9 +43,9 @@ let mutate_cst (raw_options : Compiler_options.raw) source_file display_format s
       | `Generator_random -> (module Fuzz.Rnd : Fuzz.Monad) in
     let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
     let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-    let options  = Compiler_options.make ~raw_options ~protocol_version () in
-    let Compiler_options.{ syntax ; _ } = options.frontend in
-    let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
+    let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+    let options  = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
+    let meta     = Compile.Of_source.extract_meta syntax in
     let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
     match meta with
     | {syntax = CameLIGO} ->
