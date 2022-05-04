@@ -334,7 +334,6 @@ module Constant_types = struct
                     of_type C_CALL O.(for_all "a" @@ fun a -> (a ^-> t_mutez () ^-> t_contract a ^-> t_operation ()));
                     of_type C_CREATE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_option (t_key_hash ()) ^-> t_mutez () ^-> b ^-> t_pair (t_operation ()) (t_address ()));
                     of_type C_UNIT O.(t_unit ());
-                    of_type C_NEVER O.(for_all "a" @@ fun a -> t_never () ^-> a);
                     of_type C_TRUE O.(t_bool ());
                     of_type C_FALSE O.(t_bool ());
                     of_type C_PAIRING_CHECK O.(t_list (t_pair (t_bls12_381_g1 ()) (t_bls12_381_g2 ())) ^-> t_bool ());

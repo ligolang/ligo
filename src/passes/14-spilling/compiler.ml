@@ -19,7 +19,6 @@ let compile_variable : AST.expression_variable -> Mini_c.expression_variable = f
 
 let compile_constant' : AST.constant' -> constant' = function
   | C_UNIT -> C_UNIT
-  | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
   | C_SOME -> C_SOME
   | C_NONE -> C_NONE

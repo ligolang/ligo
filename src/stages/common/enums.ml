@@ -60,7 +60,6 @@ let literal_to_enum = function
 
 type constant' =
   | C_UNIT
-  | C_NEVER
   | C_NIL
   | C_SOME
   | C_NONE

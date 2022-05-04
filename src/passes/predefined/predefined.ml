@@ -97,7 +97,6 @@ module Tree_abstraction = struct
     | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
-    | C_NEVER                   -> "Tezos.never"
     | C_OPEN_CHEST              -> "Tezos.open_chest"
     | C_VIEW                    -> "Tezos.call_view"
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
@@ -201,7 +200,6 @@ module Stacking = struct
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
     | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
-    | C_NEVER                 , _   -> Some ( simple_unary @@ prim "NEVER")
     | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))

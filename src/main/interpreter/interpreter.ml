@@ -577,8 +577,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
-    | ( C_NEVER , [ _ ] ) -> failwith "Ex falso?"
-    | ( C_NEVER , _  ) -> fail @@ error_type
     | ( C_PAIRING_CHECK , [ V_List l ] ) ->
       let rec aux acc = function
         | [] -> Some acc
