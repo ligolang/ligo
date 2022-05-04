@@ -53,13 +53,13 @@ let rec is_dup (t : type_expression) =
   ); _} ->
      true
   | T_constant {injection=
-    (List    | 
+    (List    |
      Set    ); parameters = [t]; _} ->
       is_dup t
   | T_constant {injection=Contract;_} ->
       true
   | T_constant {injection=
-      (Big_map | 
+      (Big_map |
        Map    ); parameters = [t1;t2]; _} ->
       is_dup t1 && is_dup t2
   | T_record rows
@@ -73,10 +73,10 @@ let rec is_dup (t : type_expression) =
   | T_abstraction {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_constant { injection=(
-                     Map              | Big_map              | List            | 
-    Map_or_big_map | Set              | Michelson_program    | Michelson_or    | 
-    Michelson_pair | Test_exec_error  |  Pvss_key            | Baker_operation | 
-    Ticket         | Test_exec_result | Chest_opening_result | Baker_hash);_ }  -> false 
+                     Map              | Big_map              | List            |
+    Map_or_big_map | Set              | Michelson_program    | Michelson_or    |
+    Michelson_pair | Pvss_key         | Baker_operation      |
+    Ticket         |                    Chest_opening_result | Baker_hash);_ }  -> false
   | T_singleton _
   | T_module_accessor _ -> false
 

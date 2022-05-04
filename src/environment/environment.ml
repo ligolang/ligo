@@ -90,8 +90,6 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
   fun proto_types ->
     proto_types @ [
     (v_test_michelson   , t_constant Michelson_program        []) ;
-    (v_test_exec_error  , t_test_exec_error                   ()) ;
-    (v_test_exec_result , t_test_exec_result                  ()) ;
     (v_typed_address    , t_abstraction2 Typed_address star star) ;
     (v_mutation         , t_constant Mutation                 []) ;
   ]

@@ -535,6 +535,14 @@ let%expect_test _ =
     - test_contract exited with value ().
     - test_move exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_error_balance.jsligo" ] ;
+  [%expect {|
+    100000000000000mutez
+    3799997904750mutez
+    Everything at the top-level was executed.
+    - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 

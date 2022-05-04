@@ -54,7 +54,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
-  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -281,23 +281,23 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
-        Test_exec_error | Ticket   | Michelson_program    | Sapling_state       |
+        Ticket                     | Michelson_program    | Sapling_state       |
         Contract        | Map      | Big_map              | Typed_address       |
-        Michelson_pair  | Set      | Test_exec_result     | Mutation            |
-        List            | External _), []) 
+        Michelson_pair  | Set      | Mutation             |
+        List            | External _), [])
         -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
-      Baker_hash   | Pvss_key  | Test_exec_error      |
+      Baker_hash   | Pvss_key  |
       Chest        | Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key | Test_exec_result     |
+      Never        | Chest_key |
       Typed_address| Mutation  | Bytes                |
       List         | External _), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
