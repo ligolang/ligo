@@ -79,14 +79,21 @@ let check_tail_expression ~raise : expression -> expression = fun e ->
     )
   | e -> return e
 
-
-let remove_rec_expression : expression -> expression = fun e ->
+let show_unused_rec_warning ~add_warning ~warn_unused_rec fun_name = 
+  if warn_unused_rec then
+    add_warning 
+      (`Self_ast_typed_warning_unused_rec
+        (ValueVar.get_location fun_name, Format.asprintf "%a" ValueVar.pp fun_name))
+  else ()
+  
+let remove_rec_expression ~add_warning ~warn_unused_rec : expression -> expression 
+  = fun e ->
   let return expression_content = { e with expression_content } in
   match e.expression_content with
   | E_recursive {fun_name; fun_type=_; lambda} as e-> (
     let is_shadowed = check_rec_binder_shadowed ~fun_name ~lambda in
     if is_shadowed then
-      (* let () = show_unused_rec_warning ~add_warning ~warn_unused_rec fun_name in *)
+      let () = show_unused_rec_warning ~add_warning ~warn_unused_rec fun_name in
       return (E_lambda lambda)
     else
       return e

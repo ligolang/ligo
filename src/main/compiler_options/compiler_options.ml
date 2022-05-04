@@ -52,6 +52,14 @@ type t = {
   backend : backend ;
 }
 
+let warn_unused_rec ~syntax should_warn =
+  match syntax with
+    Some Syntax_types.JsLIGO -> false
+  | Some CameLIGO
+  | Some ReasonLIGO
+  | Some PascaLIGO _
+  | None -> should_warn
+
 let make : 
   raw_options : raw ->
   ?syntax : Syntax_types.t ->
@@ -83,7 +91,7 @@ let make :
         test ;
         init_env = if test then default_with_test protocol_version else default protocol_version ;
         protocol_version ;
-        warn_unused_rec = raw_options.warn_unused_rec ;
+        warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec ;
       } in
       let backend = {
         protocol_version ;
