@@ -43,6 +43,19 @@ let%expect_test _ =
     Pattern not of the expected type sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] |}]
 
 let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
+  [%expect{|
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 11, character 33 to line 14, character 10:
+   10 |         })),
+   11 |         S2: () => (match(action, {
+   12 |             A: () => S2(),
+   13 |             B: () => S1()
+   14 |         })),
+   15 |     });
+
+  Pattern matching anomaly (redundant, or non exhaustive). |}]
+
+let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
   [%expect{xxx|
     const test_foo =

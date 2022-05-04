@@ -101,7 +101,7 @@ let compress_matching ~raise : expression -> expression =
                   let body' = substitute_var_in_body pattern proj body in
                   stop body'
                 | _ , [] -> continue smap
-                | _ , _ -> raise.raise (corner_case __LOC__)
+                | _lst , _ -> raise.raise (pattern_matching_anomaly exp.location)
               )
               | None -> continue (SimplMap.add v (make_le cases) smap)
             )
