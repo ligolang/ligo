@@ -125,6 +125,7 @@ library
     , duplo
     , fastsum
     , filepath
+    , free
     , ghc-prim
     , interpolate
     , katip
@@ -152,6 +153,11 @@ executable ligo-squirrel
       ASTMap
       Language.LSP.Util
       RIO
+      RIO.Diagnostic
+      RIO.Document
+      RIO.Indexing
+      RIO.Registration
+      RIO.Types
       Paths_ligo_squirrel
   hs-source-dirs:
       app/ligo-squirrel
@@ -205,6 +211,7 @@ executable ligo-squirrel
     , containers
     , data-default
     , duplo
+    , filepath
     , focus
     , ghc-prim
     , hashable
@@ -486,6 +493,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.TypeDefinition
       Test.Common.LSP
       Test.DisabledFeatures
+      Test.Project.Driver
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
       Test.Common.Capabilities.Completion
       Test.Common.Capabilities.DocumentLink
@@ -551,6 +559,7 @@ test-suite lsp-handlers-test
   build-depends:
       HUnit
     , aeson
+    , algebraic-graphs
     , base
     , data-default
     , directory

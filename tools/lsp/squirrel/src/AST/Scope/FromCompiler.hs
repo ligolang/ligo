@@ -7,6 +7,8 @@ module AST.Scope.FromCompiler
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Category ((>>>))
+import Control.Comonad.Cofree (Cofree (..), _extract)
+import Control.Lens (view)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Function (on)
@@ -14,7 +16,6 @@ import Data.HashMap.Strict ((!))
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Duplo.Lattice
-import Duplo.Tree (fastMake, only)
 import UnliftIO.Directory (canonicalizePath)
 import UnliftIO.MVar (modifyMVar, newMVar)
 
@@ -26,7 +27,6 @@ import Cli
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log, i)
 import ParseTree (srcPath)
-import Product
 import Progress (Progress (..), (%))
 import Range
 import Util.Graph (forAMConcurrently)
@@ -60,7 +60,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
       ds <- Map.fromList <$> mapM (fromLigoDecl . (decls' !)) es
       let rs = Map.keysSet ds
       r' <- normalizeRange $ fromLigoRangeOrDef r
-      pure (injectScope (fastMake (rs :> r' :> Nil) []) ds sf)
+      pure (injectScope ((rs, r') :< []) ds sf)
 
     normalizeRange :: Range -> m Range
     normalizeRange = rFile canonicalizePath
@@ -87,7 +87,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
           = withListZipper
           $ find (subject `isCoveredBy`) >>> atLocus maybeLoop
 
-        isCoveredBy = leq `on` getRange
+        isCoveredBy = leq `on` snd . view _extract
 
         -- If there are no trees above subject here, just put it in.
         -- Otherwise, put it in a tree that covers it.
@@ -95,4 +95,4 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
         maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
-        restart (only -> (r, trees)) = fastMake r (loop trees)
+        restart (r :< trees) = r :< loop trees

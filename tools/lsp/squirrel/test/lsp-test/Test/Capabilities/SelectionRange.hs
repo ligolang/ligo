@@ -13,7 +13,7 @@ import AST.Skeleton (nestedLIGO)
 import Range (Range (..), point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
-import Test.Common.FixedExpectations (shouldBe)
+import Test.Common.FixedExpectations (shouldMatchList)
 import Test.Common.Util (readContract)
 
 contractsDir :: FilePath
@@ -32,13 +32,14 @@ unit_selectionRangeInsideCase = do
   let position = (point 16 8){_rFile = filepath}
       results = findCoveringRanges (tree ^. nestedLIGO) position
               & map simplify
-  results `shouldBe` [ SimpleRange (16, 8) ( 16, 12) filepath
-                     , SimpleRange (16, 8) ( 16, 16) filepath
-                     , SimpleRange (16, 8) ( 16, 21) filepath
-                     , SimpleRange (15, 6) ( 18,  9) filepath
-                     , SimpleRange (14, 4) ( 18,  9) filepath
-                     , SimpleRange (11, 3) ( 21,  4) filepath
-                     , SimpleRange (11, 3) ( 21, 11) filepath
-                     , SimpleRange (10, 1) ( 21, 11) filepath
-                     , SimpleRange ( 1, 1) (105,  1) filepath
-                     ]
+  results `shouldMatchList`
+    [ SimpleRange (16, 8) ( 16, 12) filepath
+    , SimpleRange (16, 8) ( 16, 16) filepath
+    , SimpleRange (16, 8) ( 16, 21) filepath
+    , SimpleRange (15, 6) ( 18,  7) filepath
+    , SimpleRange (14, 4) ( 18,  7) filepath
+    , SimpleRange (11, 3) ( 21,  4) filepath
+    , SimpleRange (11, 3) ( 21, 11) filepath
+    , SimpleRange (10, 1) ( 21, 11) filepath
+    , SimpleRange ( 1, 1) (105,  1) filepath
+    ]

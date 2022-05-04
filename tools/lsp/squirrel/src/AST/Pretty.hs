@@ -219,8 +219,7 @@ instance Pretty1 Expr where
     Attrs     ts         -> sexpr "attrs" ts
     BigMap    bs         -> sexpr "big_map" bs
     Map       bs         -> sexpr "map" bs
-    MapRemove k m        -> sexpr "remove_map" [k, m]
-    SetRemove k s        -> sexpr "remove_set" [k, s]
+    Remove    k c m      -> sexpr "remove" [k, c, m]
     -- Indexing  a j        -> sexpr "index" [a, j]
     Case      s az       -> sexpr "case" (s : az)
     Skip                 -> "skip"
@@ -230,11 +229,14 @@ instance Pretty1 Expr where
     Seq       es         -> sexpr "seq" es
     Block     es         -> sexpr "block" es
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
-    MapPatch  z bs       -> sexpr "patch" (z : bs)
-    SetPatch  z bs       -> sexpr "patch_set" (z : bs)
+    Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
+
+instance Pretty1 PatchableExpr where
+  pp1 = \case
+    PatchableExpr c e -> sexpr "patchable" [c, e]
 
 instance Pretty1 Collection where
   pp1 = \case
@@ -334,7 +336,7 @@ instance Pretty1 Ctor where
 
 instance Pretty1 TField where
   pp1 = \case
-    TField      n t -> n <.> ":" `indent` t
+    TField      n t -> n <.> maybe "" (":" `indent`) t
 
 instance Pretty1 Error where
   pp1 = \case
@@ -487,8 +489,7 @@ instance LPP1 'Pascal Expr where
     Annot     n t        -> parens $ n <+> ":" <+> t
     BigMap    bs         -> "big_map [" `indent` train ";" bs `above` "]"
     Map       bs         -> "map [" `indent` train ";" bs `above` "]"
-    MapRemove k m        -> "remove" <+> k <+> "from map" <+> m
-    SetRemove k s        -> "remove" <+> k <+> "from set" <+> s
+    Remove    k c s      -> "remove" <+> k <+> "from" <+> c <+> s
     Skip                 -> "skip"
     ForLoop   j s f d b  -> foldr (<+>) empty
       [ "for", j, ":=", lpp s
@@ -504,8 +505,7 @@ instance LPP1 'Pascal Expr where
     Seq       es         -> block' $ map (<.>";") es
     Attrs     ts         -> mconcat $ brackets . ("@"<+>) <$> ts
     Lambda    ps ty b    -> "function" <+> lpp ps <+> ":" <+> lpp ty <+> "is" <+> lpp b
-    MapPatch  z bs       -> "patch" <+> z <+> "with map" <+> lpp bs
-    SetPatch  z bs       -> "patch" <+> z <+> "with set" <+> lpp bs
+    Patch     z bs       -> "patch" <+> z <+> "with" <+> lpp bs
     RecordUpd r up       -> r <+> "with record" <+> lpp up
     Case      s az       -> foldr (<+>) empty
       [ "case"
@@ -516,6 +516,10 @@ instance LPP1 'Pascal Expr where
       ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
+
+instance LPP1 'Pascal PatchableExpr where
+  lpp1 = \case
+    PatchableExpr c e -> c <+> e
 
 instance LPP1 'Pascal Alt where
   lpp1 = \case
@@ -555,7 +559,7 @@ instance LPP1 'Pascal RecordFieldPattern where
 
 instance LPP1 'Pascal TField where
   lpp1 = \case
-    TField      n t -> n <.> ":" `indent` t
+    TField      n t -> n <.> maybe "" (":" `indent`) t
 
 instance LPP1 'Pascal MapBinding where
   lpp1 = \case
@@ -628,6 +632,9 @@ instance LPP1 'Reason Expr where
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
+instance LPP1 'Reason PatchableExpr where
+  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
+
 instance LPP1 'Reason Alt where
   lpp1 = \case
     Alt p b -> "|" <+> lpp p <+> "=>" <+> lpp b
@@ -667,7 +674,7 @@ instance LPP1 'Reason RecordFieldPattern where
 
 instance LPP1 'Reason TField where
   lpp1 = \case
-    TField      n t -> n <.> ":" `indent` t
+    TField      n t -> n <.> maybe "" (":" `indent`) t
 
 instance LPP1 'Reason MapBinding where
   lpp1 = \case
@@ -752,6 +759,9 @@ instance LPP1 'Caml Expr where
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
+instance LPP1 'Caml PatchableExpr where
+  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
+
 instance LPP1 'Caml Alt where
   lpp1 = \case
     Alt p b -> "|" <+> lpp p <+> "->" <+> lpp b
@@ -792,7 +802,7 @@ instance LPP1 'Caml RecordFieldPattern where
 
 instance LPP1 'Caml TField where
   lpp1 = \case
-    TField      n t -> n <.> ":" `indent` t
+    TField      n t -> n <.> maybe "" (":" `indent`) t
 
 type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr)
 

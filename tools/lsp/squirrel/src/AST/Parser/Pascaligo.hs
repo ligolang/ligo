@@ -24,43 +24,50 @@ recognise (SomeRawTree dialect rawTree)
     -- Expr
   , Descent do
       boilerplate \case
-        "let_expr"          -> Let       <$> field  "locals"    <*> field "body"
-        "fun_call"          -> Apply     <$> field  "f"         <*> fields "argument"
-        "par_call"          -> Apply     <$> field  "f"         <*> fields "argument"
-        "projection_call"   -> Apply     <$> field  "f"         <*> fields "argument"
-        "Some_call"         -> Apply     <$> field  "constr"    <*> fields "argument"
-        "constr_call"       -> Apply     <$> field  "constr"    <*> fields "argument"
-        "arguments"         -> Tuple     <$> fields "argument"
+        "block_with"        -> Let       <$> field  "locals"    <*> field "body"
+        "block_with_closed" -> Let       <$> field  "locals"    <*> field "body"
+        "call_expr"         -> Apply     <$> field  "f"         <*> fields "argument"
         "unop"              -> UnOp      <$> field  "negate"    <*> field "arg"
         "binop"             -> BinOp     <$> field  "arg1"      <*> field "op"   <*> field "arg2"
         "block"             -> Seq       <$> fields "statement"
         "clause_block"      -> Seq       <$> fields "statement"
         "list_expr"         -> List      <$> fields "element"
         "annot_expr"        -> Annot     <$> field  "subject"   <*> field "type"
-        "conditional"       -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
-        "cond_expr"         -> If        <$> field  "selector"  <*> field "then" <*> fieldOpt "else"
+        "if_then_instr"     -> If <$> field "selector" <*> field "then" <*> pure Nothing
+        "if_then_else_instr" -> If <$> field "selector" <*> field "then" <*> (Just <$> field "else")
+        "if_then_else_instr_closed" -> If <$> field "selector" <*> field "then" <*> (Just <$> field "else")
+        "if_then_expr"      -> If <$> field "selector" <*> field "then" <*> pure Nothing
+        "if_then_else_expr" -> If <$> field "selector" <*> field "then" <*> (Just <$> field "else")
+        "if_then_else_expr_closed" -> If <$> field "selector" <*> field "then" <*> (Just <$> field "else")
         "assignment"        -> Assign    <$> field  "LHS"       <*> field "RHS"
+        "assignment_closed" -> Assign    <$> field  "LHS"       <*> field "RHS"
         "record_expr"       -> Record    <$> fields "assignment"
-        "big_map_injection" -> BigMap    <$> fields "binding"
-        "map_remove"        -> MapRemove <$> field  "key"       <*> field "container"
+        "remove_instr"      -> Remove    <$> field  "key" <*> field "remove" <*> field "container"
         "tuple_expr"        -> Tuple     <$> fields "element"
         "skip"              -> return Skip
         "case_expr"         -> Case      <$> field  "subject"    <*> fields   "case"
         "case_instr"        -> Case      <$> field  "subject"    <*> fields   "case"
         "fun_expr"          -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
-        "for_cycle"         -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
-        "for_box"           -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
+        "fun_expr_closed"   -> Lambda    <$> fields "parameter"  <*> fieldOpt    "type"  <*> field "body"
+        "for_int"           -> ForLoop   <$> field  "name"       <*> field    "begin" <*> field "end" <*> fieldOpt "step" <*> field "body"
+        "for_in"            -> ForBox    <$> field  "key"        <*> fieldOpt "value" <*> field "kind"  <*> field "collection" <*> field "body"
         "while_loop"        -> WhileLoop <$> field  "breaker"    <*> field    "body"
-        "map_injection"     -> Map       <$> fields "binding"
+        "map_expr"          -> Map       <$> fields "binding"
+        "big_map_expr"      -> BigMap    <$> fields "binding"
         "list_injection"    -> List      <$> fields "element"
         "set_expr"          -> Set       <$> fields "element"
-        "map_patch"         -> MapPatch  <$> field  "container"  <*> fields "binding"
-        "set_patch"         -> SetPatch  <$> field  "container"  <*> fields "key"
-        "set_remove"        -> SetRemove <$> field  "key"        <*> field  "container"
+        "patch_instr"       -> Patch     <$> field  "container"  <*> field "expr"
         "update_record"     -> RecordUpd <$> field  "record"     <*> fields "assignment"
         "michelson_interop" -> Michelson <$> field  "code"       <*> field  "type"    <*> fields "argument"
         "paren_expr"        -> Paren     <$> field  "expr"
+        "ctor_app_expr"     -> Apply     <$> field  "ctor" <*> fields "arguments"
         _                   -> fallthrough
+
+  , Descent do
+      boilerplate \case
+        "patchable_call_expr"  -> PatchableExpr <$> field "patchable" <*> field "expr"
+        "patchable_paren_expr" -> PatchableExpr <$> field "patchable" <*> field "expr"
+        _ -> fallthrough
 
     -- Collection
   , Descent do
@@ -69,6 +76,13 @@ recognise (SomeRawTree dialect rawTree)
         ("collection", "set")  -> pure CSet
         ("collection", "list") -> pure CList
         _                      -> fallthrough
+
+    -- Removable
+  , Descent do
+      boilerplate' \case
+        ("removable", "map")  -> pure CMap
+        ("removable", "set")  -> pure CSet
+        _                     -> fallthrough
 
     -- Pattern
   , Descent do
@@ -142,7 +156,8 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate \case
-        "data_projection" -> QualifiedName <$> field "struct" <*> fields "accessor"
+        "data_projection" -> QualifiedName <$> field "selector" <*> fields "accessor"
+        "field_path"      -> QualifiedName <$> field "selector" <*> fields "accessor"
         "map_lookup"      -> QualifiedName <$> field "container" <*> fields "index"
         "module_field"    -> QualifiedName <$> field "module" <*> fields "method"
         _                 -> fallthrough
@@ -181,13 +196,6 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate \case
         "param_decl" -> BParameter <$> field "name" <*> fieldOpt "type"
         _            -> fallthrough
-
-  --   -- Mutable
-  -- , Descent do
-  --     boilerplate \case
-  --       "const" -> return Immutable
-  --       "var"   -> return Mutable
-  --       _       -> fallthrough
 
     -- Name
   , Descent do
@@ -246,7 +254,7 @@ recognise (SomeRawTree dialect rawTree)
     -- TField
   , Descent do
       boilerplate \case
-        "field_decl" -> TField <$> field "fieldName" <*> field "fieldType"
+        "field_decl" -> TField <$> field "fieldName" <*> fieldOpt "fieldType"
         _            -> fallthrough
 
     -- TypeName
@@ -266,10 +274,6 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' \case
         ("ConstrName", name) -> return $ Ctor name
         ("ModuleName", name) -> return $ Ctor name
-        ("None", _)          -> return $ Ctor "None"
-        ("True", _)          -> return $ Ctor "True"
-        ("False", _)         -> return $ Ctor "False"
-        ("Unit", _)          -> return $ Ctor "Unit"
         ("constr", n)        -> return $ Ctor n
         _                    -> fallthrough
 

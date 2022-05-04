@@ -12,11 +12,11 @@ function pop_switch (const h : heap) : heap is
    const result : heap_elt = get_top (h);
    const s : nat = Map.size (h);
    const last : heap_elt =
-     case h[s] of
+     case h[s] of [
        Some (e) -> e
      | None -> (failwith ("No element.") : heap_elt)
-     end;
-   remove 1n from h;
+     ];
+   remove 1n from map h;
    h[1n] := last
   } with h
 
@@ -25,14 +25,14 @@ function pop_ (const h : heap) : nat is
     const result : heap_elt = get_top (h);
     const s : nat = Map.size (h);
     var current : heap_elt :=
-      case h[s] of
+      case h[s] of [
         Some (e) -> e
       | None -> (failwith ("No element.") : heap_elt)
-      end;
+      ];
     const i : nat = 1n;
     const left : nat = 2n * i;
     const right : nat = left + 1n;
-    remove 1n from h;
+    remove 1n from map h;
     h[1n] := current;
     var largest : nat := i;
     const tmp : heap_elt = get_force (s, h);
@@ -69,7 +69,7 @@ function pop (const h : heap) : heap * heap_elt * nat is
     const result : heap_elt = get_top (h);
     var s : nat := size (h);
     const last : heap_elt = get_force (s,h);
-    remove s from h;
+    remove s from map h;
     h[1n] := last;
     s := size (h);
     var i : nat := 0n;
