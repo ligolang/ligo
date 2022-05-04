@@ -45,13 +45,19 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
   [%expect{|
-  File "../../test/contracts/negative/pattern_match6.jsligo", line 11, character 33 to line 14, character 10:
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 6, character 24 to line 15, character 6:
+    5 | let do_something = ([state, action]:[state,action]) : state => {
+    6 |     return match(state, {
+    7 |         S1: () => (match(action, {
+    8 |             A: () => S1(),
+    9 |             B: () => S2()
    10 |         })),
    11 |         S2: () => (match(action, {
    12 |             A: () => S2(),
    13 |             B: () => S1()
    14 |         })),
    15 |     });
+   16 | };
 
   Pattern matching anomaly (redundant, or non exhaustive). |}]
 
