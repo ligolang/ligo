@@ -167,7 +167,6 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
       | None ->
-         (* let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) None in *)
          let stdlib   = Stdlib.typed ~options syntax in
          let testlib  = Testlib.typed ~options syntax in
          let contract = Ligo_compile.Of_typed.compile_program ~raise (stdlib @ testlib) in
