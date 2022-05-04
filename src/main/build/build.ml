@@ -22,7 +22,8 @@ module M (Params : Params) =
     type meta_data = Ligo_compile.Helpers.meta
     let preprocess : file_name -> compilation_unit * meta_data * (file_name * module_name) list =
       fun file_name ->
-      let meta = Ligo_compile.Of_source.extract_meta ~raise "auto" file_name in
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+      let meta = Ligo_compile.Of_source.extract_meta ~raise syntax file_name in
       let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name in
       c_unit,meta,deps
     module AST = struct
@@ -157,7 +158,7 @@ let build_typed ~raise ~add_warning :
       in
       applied, contract
 
-let build_expression ~raise ~add_warning : options:Compiler_options.t -> string -> string -> file_name option -> _ =
+let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_types.t -> string -> file_name option -> _ =
   fun ~options syntax expression file_name ->
     let contract, aggregated_prg =
       match file_name with
@@ -166,7 +167,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> string 
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
       | None ->
-         let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
+         (* let syntax   = Syntax.of_string_opt ~raise (Syntax_name syntax) None in *)
          let stdlib   = Stdlib.typed ~options syntax in
          let testlib  = Testlib.typed ~options syntax in
          let contract = Ligo_compile.Of_typed.compile_program ~raise (stdlib @ testlib) in

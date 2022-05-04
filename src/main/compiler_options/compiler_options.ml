@@ -9,7 +9,7 @@ let make_raw_options = Raw_options.make
 let default_raw_options = Raw_options.default
 
 type frontend = {
-  syntax : string ;
+  syntax : Syntax_types.t ;
   (* dialect : string ; [@dead "frontend.dialect"]  *)
   entry_point : string ;
   libraries : string list ;
@@ -29,6 +29,7 @@ type middle_end = {
   test : bool ;
   init_env : Environment.t ;
   protocol_version : Protocols.t ;
+  warn_unused_rec : bool ;
 }
 
 type backend = {
@@ -53,18 +54,20 @@ type t = {
 
 let make : 
   raw_options : raw ->
+  syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
   ?test:bool ->
   ?has_env_comments : bool ->
   unit -> t =
   fun 
     ~raw_options
+    ~syntax
     ?(protocol_version = Protocols.current)
     ?(test = false)
     ?(has_env_comments = false)
     () ->
       let frontend = {
-        syntax = raw_options.syntax ;
+        syntax ;
         libraries = raw_options.libraries;
         entry_point = raw_options.entry_point;
         project_root = raw_options.project_root;
@@ -79,7 +82,8 @@ let make :
       let middle_end = {
         test ;
         init_env = if test then default_with_test protocol_version else default protocol_version ;
-        protocol_version;
+        protocol_version ;
+        warn_unused_rec = raw_options.warn_unused_rec ;
       } in
       let backend = {
         protocol_version ;

@@ -1092,7 +1092,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
             let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+            return @@ Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->

@@ -9,7 +9,8 @@ let test (raw_options : Compiler_options.raw) source_file display_format () =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-      let options = Compiler_options.make ~test:true ~protocol_version ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~test:true ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps ; _ } = options.test_framework in
       let typed   = Build.build_context ~raise ~add_warning ~options source_file in
       Interpreter.eval_test ~raise ~steps ~options typed
@@ -20,7 +21,8 @@ let dry_run (raw_options : Compiler_options.raw) source_file parameter storage a
     format_result ~warning_as_error ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-      let options = Compiler_options.make ~protocol_version ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in
       let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
       let typed_prg = Build.build_context ~raise ~add_warning ~options source_file in
@@ -43,8 +45,9 @@ let interpret (raw_options : Compiler_options.raw) expression init_file amount b
     format_result ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let options =
+        let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options syntax expression init_file in
@@ -59,8 +62,9 @@ let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amo
     format_result ~warning_as_error ~display_format (Decompile.Formatter.expression_format) get_warnings @@
       fun ~raise ->
       let options =
+        let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ entry_point ; syntax ; _ } = options.frontend in
       let init_prog, aggregated_prg =
@@ -88,8 +92,9 @@ let evaluate_expr (raw_options : Compiler_options.raw) source_file amount balanc
     format_result ~warning_as_error ~display_format Decompile.Formatter.expression_format get_warnings @@
       fun ~raise ->
         let options =
+          let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-          Compiler_options.make ~protocol_version ~raw_options ()
+          Compiler_options.make ~protocol_version ~raw_options ~syntax ()
         in
         let Compiler_options.{ entry_point ; syntax ; _ } = options.frontend in
         let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~add_warning ~options syntax entry_point (Some source_file) in

@@ -28,9 +28,11 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       fun ~raise ->
       let options =
           let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+          let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
           let has_env_comments = has_env_comments michelson_comments in
           Compiler_options.make
             ~raw_options
+            ~syntax
             ~protocol_version
             ~has_env_comments
             ()
@@ -50,9 +52,11 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
         Compiler_options.make
-          ~protocol_version
           ~raw_options
+          ~syntax
+          ~protocol_version
           ~has_env_comments:false
           ()
       in
@@ -77,9 +81,11 @@ let constant (raw_options : Compiler_options.raw) constants init_file display_fo
       fun ~raise ->
       let options =
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
         Compiler_options.make
-          ~protocol_version
           ~raw_options
+          ~syntax
+          ~protocol_version
           ~has_env_comments:false
           ()
       in
@@ -100,9 +106,11 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
       fun ~raise ->
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let options = Compiler_options.make
-            ~protocol_version
             ~raw_options
+            ~syntax
+            ~protocol_version
             ~has_env_comments:false
             () in
         let Compiler_options.{ syntax ; _ } = options.frontend in
@@ -133,9 +141,11 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) get_warnings @@
       fun ~raise ->
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let options = Compiler_options.make
-            ~protocol_version
             ~raw_options
+            ~syntax
+            ~protocol_version
             ~has_env_comments:false
             () in
         let Compiler_options.{ syntax ; entry_point ; _ } = options.frontend in

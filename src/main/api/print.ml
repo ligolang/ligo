@@ -6,7 +6,8 @@ let pretty_print (raw_options : Compiler_options.raw) source_file display_format
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
     fun ~raise ->
-    let options = Compiler_options.make ~raw_options () in
+    let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+    let options = Compiler_options.make ~raw_options ~syntax () in
     let Compiler_options.{ syntax ; _ } = options.frontend in
     let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
     Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
@@ -15,7 +16,8 @@ let dependency_graph (raw_options : Compiler_options.raw) source_file display_fo
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (BuildSystem.Formatter.graph_format) get_warnings @@
       fun ~raise ->
-      let options = Compiler_options.make ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let g,_ = Build.dependency_graph ~raise ~add_warning ~options Env source_file in
       (g,source_file)
 
@@ -23,7 +25,8 @@ let preprocess (raw_options : Compiler_options.raw) source_file display_format (
     format_result ~display_format Parsing.Formatter.ppx_format (fun _ -> []) @@
     fun ~raise ->
     fst @@
-    let options = Compiler_options.make ~raw_options () in
+    let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+    let options = Compiler_options.make ~raw_options ~syntax () in
     let Compiler_options.{ syntax ; _ } = options.frontend in
     let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
     Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
@@ -31,7 +34,8 @@ let preprocess (raw_options : Compiler_options.raw) source_file display_format (
 let cst (raw_options : Compiler_options.raw) source_file display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
       fun ~raise ->
-      let options = Compiler_options.make ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let meta = Compile.Of_source.extract_meta ~raise syntax source_file in
       Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
@@ -40,7 +44,8 @@ let ast (raw_options : Compiler_options.raw) source_file display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ast_imperative.Formatter.module_format) get_warnings @@
       fun ~raise ->
-      let options       = Compiler_options.make ~raw_options () in
+      let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options  = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
@@ -50,7 +55,8 @@ let ast_sugar (raw_options : Compiler_options.raw) source_file display_format ()
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ast_sugar.Formatter.module_format) get_warnings @@
       fun ~raise ->
-      let options = Compiler_options.make ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
@@ -65,7 +71,8 @@ let ast_core (raw_options : Compiler_options.raw) source_file display_format () 
     Trace.warning_with @@ fun add_warning get_warnings ->
     format_result ~display_format (Ast_core.Formatter.module_format) get_warnings @@
     fun ~raise ->
-      let options = Compiler_options.make ~raw_options () in
+      let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let Compiler_options.{ syntax ; _ } = options.frontend in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let meta     = Compile.Of_source.extract_meta ~raise syntax source_file in
@@ -81,8 +88,9 @@ let ast_typed (raw_options : Compiler_options.raw) source_file display_format ()
     format_result ~display_format (Ast_typed.Formatter.program_format) get_warnings @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
+        let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~test:true ~raw_options ()
+        Compiler_options.make ~protocol_version ~test:true ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let typed = Build.type_contract ~raise ~add_warning ~options source_file in
@@ -96,8 +104,9 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
     format_result ~display_format (Ast_aggregated.Formatter.expression_format) get_warnings @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
+        let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let typed = Build.build_context ~raise ~add_warning ~options source_file in
@@ -113,8 +122,9 @@ let ast_combined (raw_options : Compiler_options.raw) source_file display_format
   format_result ~display_format Ast_typed.Formatter.program_format get_warnings @@
   fun ~raise ->
     let options = (* TODO: options should be computed outside of the API *)
+      let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-      Compiler_options.make ~protocol_version ~raw_options ()
+      Compiler_options.make ~protocol_version ~raw_options ~syntax ()
     in
     let typed = Build.build_context ~raise ~add_warning ~options source_file in
     typed
@@ -124,8 +134,9 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
     format_result ~display_format (Mini_c.Formatter.program_format) get_warnings @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
+        let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~raw_options ()
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let typed = Build.build_context ~raise ~add_warning ~options source_file in
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
