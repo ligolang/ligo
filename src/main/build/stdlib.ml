@@ -41,7 +41,7 @@ module Bitwise = struct
 end
 module Big_map = struct
   [@hidden] [@inline] let empty (type k v) : (k, v) big_map = [%external \"BIG_MAP_EMPTY\"]
-  [@hidden] [@inline] let mem (type k v) ((k, m) : k * (k, v) big_map) : bool = [%external \"MAP_MEM\"] k m
+  [@hidden] [@inline] let mem (type k v) ((k, m) : k * (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
   [@hidden] [@inline] let add (type k v) ((k, v, m) : k * v * (k, v) big_map) : (k, v) big_map = [%external \"MAP_ADD\"] k v m
   [@hidden] [@inline] let remove (type k v) ((k, m) : k * (k, v) big_map) : (k, v) big_map = [%external \"MAP_REMOVE\"] k m
   [@hidden] [@inline] let update (type k v) ((k, v, m) : k * v option * (k, v) big_map) : (k, v) big_map = [%external \"MAP_UPDATE\"] k v m
@@ -51,8 +51,8 @@ module Big_map = struct
 end
 module Map = struct
   [@hidden] [@inline] let empty (type k v) : (k, v) map = [%external \"MAP_EMPTY\"]
-  [@hidden] [@inline] let size (type k v) (m : (k, v) map) : nat = [%Michelson ({| { SIZE } |} : (k, v) map -> nat)]  m
-  [@hidden] [@inline] let mem (type k v) ((k, m) : k * (k, v) map) : bool = [%external \"MAP_MEM\"] k m
+  [@hidden] [@inline] let size (type k v) (m : (k, v) map) : nat = [%Michelson ({| { SIZE } |} : (k, v) map -> nat)] m
+  [@hidden] [@inline] let mem (type k v) ((k, m) : k * (k, v) map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) map -> bool)] (k, m)
   [@hidden] [@inline] let add (type k v) ((k, v, m) : k * v * (k, v) map) : (k, v) map = [%external \"MAP_ADD\"] k v m
   [@hidden] [@inline] let remove (type k v) ((k, m) : k * (k, v) map) : (k, v) map = [%external \"MAP_REMOVE\"] k m
   [@hidden] [@inline] let update (type k v) ((k, v, m) : k * v option * (k, v) map) : (k, v) map = [%external \"MAP_UPDATE\"] k v m
@@ -169,7 +169,7 @@ module Bitwise = struct
 end
 module Big_map = struct
   [@hidden] [@inline] let empty (type k v) : (k, v) big_map = [%external \"BIG_MAP_EMPTY\"]
-  [@hidden] [@inline] let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%external \"MAP_MEM\"] k m
+  [@hidden] [@inline] let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
   [@hidden] [@inline] let add (type k v) (k : k) (v : v) (m : (k, v) big_map) : (k, v) big_map = [%external \"MAP_ADD\"] k v m
   [@hidden] [@inline] let remove (type k v) (k : k) (m : (k, v) big_map) : (k, v) big_map = [%external \"MAP_REMOVE\"] k m
   [@hidden] [@inline] let update (type k v) (k : k) (v : v option) (m : (k, v) big_map) : (k, v) big_map = [%external \"MAP_UPDATE\"] k v m
@@ -180,7 +180,7 @@ end
 module Map = struct
   [@hidden] [@inline] let empty (type k v) : (k, v) map = [%external \"MAP_EMPTY\"]
   [@hidden] [@inline] let size (type k v) (m : (k, v) map) : nat = [%Michelson ({| { SIZE } |} : (k, v) map -> nat)] m
-  [@hidden] [@inline] let mem (type k v) (k : k) (m : (k, v) map) : bool = [%external \"MAP_MEM\"] k m
+  [@hidden] [@inline] let mem (type k v) (k : k) (m : (k, v) map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) map -> bool)] (k, m)
   [@hidden] [@inline] let add (type k v) (k : k) (v : v) (m : (k, v) map) : (k, v) map = [%external \"MAP_ADD\"] k v m
   [@hidden] [@inline] let remove (type k v) (k : k) (m : (k, v) map) : (k, v) map = [%external \"MAP_REMOVE\"] k m
   [@hidden] [@inline] let update (type k v) (k : k) (v : v option) (m : (k, v) map) : (k, v) map = [%external \"MAP_UPDATE\"] k v m

@@ -193,7 +193,6 @@ module Stacking = struct
     | C_UPDATE             , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | C_SOME               , _   -> Some ( simple_unary  @@ prim "SOME")
     | C_MAP_FIND           , _   -> Some ( simple_binary @@ seq [prim "GET" ; i_assert_some_msg (i_push_string "MAP FIND")])
-    | C_MAP_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_MAP_FIND_OPT       , _   -> Some ( simple_binary @@ prim "GET")
     | C_MAP_ADD            , _   -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")

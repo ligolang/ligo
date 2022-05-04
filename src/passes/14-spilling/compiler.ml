@@ -101,7 +101,6 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_MAP_ITER -> C_MAP_ITER
   | C_MAP_MAP -> C_MAP_MAP
   | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_MEM -> C_MAP_MEM
   | C_MAP_FIND -> C_MAP_FIND
   | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
   (* Big Maps *)

@@ -508,8 +508,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         )
         init kvs
     | ( C_MAP_FOLD , _  ) -> fail @@ error_type
-    | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
-    | ( C_MAP_MEM , _  ) -> fail @@ error_type
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
     | ( C_MAP_ADD , _  ) -> fail @@ error_type
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
