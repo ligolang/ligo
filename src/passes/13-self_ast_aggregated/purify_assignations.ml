@@ -26,7 +26,7 @@ open Ast_aggregated
   Most important, the produce code will likely be highly inefficient.
   (unless this is done directly in michelson)
 
-  In order to avoid all those issue, we will use a more complex solution, that really on several hypothesis :
+  In order to avoid all those issue, we will use a more complex solution, that rely on several hypothesis :
     1. With our current front-end state, we have either purely functional code or purely imperative dialect.
        ie. we can't have `List.map` on a funtion that is not pure (and this won't work)
     2. An impure function can't be partially applied
