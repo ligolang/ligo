@@ -34,8 +34,6 @@ type t =
   | Never
   | Ticket
   | Michelson_program
-  | Test_exec_error
-  | Test_exec_result
   | Typed_address
   | Mutation
   | Chest
@@ -78,8 +76,6 @@ let to_string = function
   | Never                -> "never"
   | Ticket               -> "ticket"
   | Michelson_program    -> "michelson_program"
-  | Test_exec_error      -> "test_exec_error"
-  | Test_exec_result     -> "test_exec_result"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
   | Chest                -> "chest"
@@ -121,8 +117,6 @@ let to_string = function
   | "never"                -> Never
   | "ticket"               -> Ticket
   | "michelson_program"    -> Michelson_program
-  | "test_exec_error"      -> Test_exec_error
-  | "test_exec_result"     -> Test_exec_result
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
   | "chest"                -> Chest
@@ -167,8 +161,6 @@ let bls12_381_fr         = Bls12_381_fr
 let never                = Never
 let ticket               = Ticket
 let michelson_program    = Michelson_program
-let test_exec_error      = Test_exec_error
-let test_exec_result     = Test_exec_result
 let typed_address        = Typed_address
 let mutation             = Mutation
 let chest                = Chest
@@ -213,8 +205,6 @@ let v_bls12_381_fr         : type_variable = TypeVar.of_input_var (to_string Bls
 let v_never                : type_variable = TypeVar.of_input_var (to_string Never)
 let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
-let v_test_exec_error      : type_variable = TypeVar.of_input_var (to_string Test_exec_error)
-let v_test_exec_result     : type_variable = TypeVar.of_input_var (to_string Test_exec_result)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)

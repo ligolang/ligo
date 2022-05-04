@@ -172,6 +172,9 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
         let (i,top_def_map) = add_shadowing_def (i,get_binder_name var) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes , partials )
       )
+      | Declaration_type {type_attr={hidden = true; _} ; _} -> (
+        ( i, top_def_map, inner_def_map, scopes, partials )
+      )
       | Declaration_type {type_binder; type_expr ; type_attr=_} -> (
         let def = make_t_def (get_type_binder_name type_binder) decl.location type_expr in
         let (i,top_def_map) = add_shadowing_def (i,get_type_binder_name type_binder) def top_def_map in
