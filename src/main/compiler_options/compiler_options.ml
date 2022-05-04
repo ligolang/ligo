@@ -64,14 +64,12 @@ let make :
   raw_options : raw ->
   ?syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
-  ?test:bool ->
   ?has_env_comments : bool ->
   unit -> t =
   fun 
     ~raw_options
     ?syntax
     ?(protocol_version = Protocols.current)
-    ?(test = false)
     ?(has_env_comments = false)
     () ->
       let frontend = {
@@ -88,8 +86,8 @@ let make :
         steps = raw_options.steps;
       } in
       let middle_end = {
-        test ;
-        init_env = if test then default_with_test protocol_version else default protocol_version ;
+        test = raw_options.test;
+        init_env = if raw_options.test then default_with_test protocol_version else default protocol_version ;
         protocol_version ;
         warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec ;
       } in

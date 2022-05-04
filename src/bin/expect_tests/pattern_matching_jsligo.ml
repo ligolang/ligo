@@ -33,7 +33,7 @@ let%expect_test _ =
     Unsupported match pattern. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match3.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match3.jsligo") ; "--test" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 4-11:
       3 |     Success: (_ : nat) => "",

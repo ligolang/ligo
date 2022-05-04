@@ -84,7 +84,7 @@ let ast_typed (raw_options : Compiler_options.raw) source_file display_format ()
       let options = (* TODO: options should be computed outside of the API *)
         let syntax           = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
-        Compiler_options.make ~protocol_version ~test:true ~raw_options ~syntax ()
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
       let Compiler_options.{ self_pass ; _ } = options.tools in
       let typed = Build.type_contract ~raise ~add_warning ~options source_file in
@@ -108,7 +108,7 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
-        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression aggregated
+        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:options.middle_end.test aggregated
       else
         aggregated
 
