@@ -9,6 +9,7 @@ module type S = sig
   val to_kv_list_rev : 'a t -> (key * 'a) list
   val to_list : 'a t -> 'a list
   val to_kv_list : 'a t -> (key * 'a) list
+  val unzip : ('a * 'b) t -> 'a t * 'b t
   val keys : 'a t -> key list
   val values : 'a t -> 'a list
   val add_bindings : (key * 'a) list -> 'a t -> 'a t
@@ -39,6 +40,14 @@ module Make(Ord : Caml.Map.OrderedType) : S with type key = Ord.t = struct
 
   let to_list l = List.rev @@ to_list_rev l
   let to_kv_list l = List.rev @@ to_kv_list_rev l
+
+  let unzip m =
+    let k_lr = to_kv_list_rev m in
+    let k, lr = List.unzip k_lr in
+    let l,r = List.unzip lr in
+    let k_l = List.zip_exn k l in
+    let k_r = List.zip_exn k r in
+    of_list k_l, of_list k_r
 
   let keys l = List.rev @@ to_k_list_rev l
   let values l = List.rev @@ to_list_rev l

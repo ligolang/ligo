@@ -365,7 +365,7 @@ let match_on_write_effect let_binder rhs let_result effects effect_type =
       body=let_result;tv}
     }
 
-let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: expression) : expression =
+let rec morph_expression ?(returned_effect) ?entrypoint (effect : Effect.t) (e: expression) : expression =
   (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect; *)
   let return_1 ?returned_effect e =
     match returned_effect with None -> e
@@ -373,14 +373,19 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
   let return ?returned_effect expression_content =
     let ret_expr = { e with expression_content } in
     return_1 ?returned_effect ret_expr in
-  let self ?returned_effect ?rec_name = morph_expression ?returned_effect ?rec_name effect in
+  let self ?returned_effect = morph_expression ?returned_effect ?entrypoint effect in
   match e.expression_content with
   | E_literal lit -> return ?returned_effect @@ E_literal lit
   | E_raw_code rc -> return ?returned_effect @@ E_raw_code rc
   | E_variable variable ->
       (match Effect.get_read_effect effect variable with
         None,false -> return ?returned_effect @@ E_variable variable
-      | _ -> failwith "Hypothesis 2 failed"
+      | _ ->
+        (* Bypass check for entypoint *)
+        if (Option.equal ValueVar.equal entrypoint @@ Some variable )
+        then return @@ E_variable variable
+        else
+          failwith "Hypothesis 2 failed"
       )
     (* Special case use for compilation of imperative for each loops *)
   | E_constant {cons_name=( C_LIST_ITER | C_MAP_ITER | C_SET_ITER | C_ITER) as cons_name ;
@@ -450,7 +455,7 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
       let result = self ?returned_effect result in
       return @@ E_lambda {binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
-      let result = self ?returned_effect ~rec_name:fun_name result in
+      let result = self ?returned_effect result in
       return @@ E_recursive {fun_name;fun_type;lambda={binder;result}}
       (*
     (* This detect let () = x := a in res, an assignation in a sequence *)
@@ -572,11 +577,11 @@ let rec morph_expression ?(returned_effect) ?rec_name:_ (effect : Effect.t) (e: 
 
 
 
-let expression e =
-  let e = Deduplicate_binders.expression e in
+let expression ?entrypoint e =
+  let e = Deduplicate_binders.program e in
   (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in
   (* Format.printf "test: %a\n%!" Effect.pp effect; *)
-  let e = morph_expression effect e in
+  let e = morph_expression ?entrypoint effect e in
   (* Format.printf "morphed: %a\n%!" PP.expression e; *)
   e
