@@ -1,8 +1,9 @@
 let lib (s : Syntax_types.t) =
   match s with
   | PascaLIGO _ | ReasonLIGO | JsLIGO ->"
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
 type test_exec_error = Rejected of michelson_program * address
-                     | Balance_too_low of { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+                     | Balance_too_low of test_exec_error_balance_too_low
                      | Other of string
 type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
@@ -55,8 +56,9 @@ module Test = struct
 end
 "
  | CameLIGO -> "
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
 type test_exec_error = Rejected of michelson_program * address
-                     | Balance_too_low of { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+                     | Balance_too_low of test_exec_error_balance_too_low
                      | Other of string
 type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
@@ -112,8 +114,12 @@ end
 let lib_stub (s : Syntax_types.t) =
   match s with
   | PascaLIGO _ | ReasonLIGO | JsLIGO ->"
-type test_exec_error = unit
-type test_exec_result = unit
+type michelson_program = unit
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
   type ('a, 'b) typed_address = unit
@@ -169,8 +175,12 @@ module Test = struct
 end
 "
  | CameLIGO -> "
-type test_exec_error = unit
-type test_exec_result = unit
+type michelson_program = unit
+type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+type test_exec_error = Rejected of michelson_program * address
+                     | Balance_too_low of test_exec_error_balance_too_low
+                     | Other of string
+type test_exec_result = Success of nat | Fail of test_exec_error
 module Test = struct
   [@private] [@hidden] [@inline] let failwith (type a) (v : a) : a external_failwith = [%external \"FAILWITH\"] v
   type ('a, 'b) typed_address = unit
