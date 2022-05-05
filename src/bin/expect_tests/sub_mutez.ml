@@ -58,7 +58,7 @@ let%expect_test _ =
     const sub =
       lambda (gen#2) return  match gen#2 with
                               | ( store , delta ) ->
-                              SUB_MUTEZ(store , delta)
+                              C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (gen#3) return  match gen#3 with
                               | ( _#4 , store ) ->
@@ -70,7 +70,7 @@ let%expect_test _ =
     const sub =
       lambda (parameters#2) return  match parameters#2 with
                                      | ( store , delta ) ->
-                                     SUB_MUTEZ(store , delta)
+                                     C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (parameters#4) return  match parameters#4 with
                                      | ( _#3 , store ) ->
@@ -82,7 +82,7 @@ let%expect_test _ =
     const sub =
       lambda (gen#2) return  match gen#2 with
                               | ( store , delta ) ->
-                              SUB_MUTEZ(store , delta)
+                              C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (gen#3) return  match gen#3 with
                               | ( _#4 , store ) ->
@@ -92,7 +92,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.jsligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{xxx|
     const sub =
-      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB_MUTEZ(store ,
+      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in C_POLYMORPHIC_SUB(store ,
       delta)[@private]
     const main =
       lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) )[@private] |xxx}]
@@ -197,7 +197,7 @@ let%expect_test _ =
     const sub =
       lambda (gen#2) return  match gen#2 with
                               | ( store , delta ) ->
-                              SUB(store , delta)
+                              C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (gen#3) return  match gen#3 with
                               | ( _#4 , store ) ->
@@ -210,7 +210,7 @@ let%expect_test _ =
     const sub =
       lambda (parameters#2) return  match parameters#2 with
                                      | ( store , delta ) ->
-                                     SUB(store , delta)
+                                     C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (parameters#4) return  match parameters#4 with
                                      | ( _#3 , store ) ->
@@ -223,7 +223,7 @@ let%expect_test _ =
     const sub =
       lambda (gen#2) return  match gen#2 with
                               | ( store , delta ) ->
-                              SUB(store , delta)
+                              C_POLYMORPHIC_SUB(store , delta)
     const main =
       lambda (gen#3) return  match gen#3 with
                               | ( _#4 , store ) ->
@@ -234,7 +234,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.jsligo") ] ;
   [%expect{xxx|
     const sub =
-      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB(store ,
+      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in C_POLYMORPHIC_SUB(store ,
       delta)[@private]
     const main =
       lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )[@private]

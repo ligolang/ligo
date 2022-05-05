@@ -254,7 +254,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       | Some tv' -> assert_type_expression_eq ~raise e.location (tv' , tv) in
     let location = e.location in
     make_e ~location expr tv in
-  let protocol_version = options.protocol_version in
   let return_e (expr : O.expression) = return expr.expression_content expr.type_expression in
   trace ~raise (expression_tracer e) @@
   fun ~raise -> match e.expression_content with
@@ -481,44 +480,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let tv_lst = [tv_key;tv_val;tv_map] in
       let (name', tv) = type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
-  | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
-      let tv_lst = List.map ~f:get_type lst' in
-      let decide = function
-        | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
-        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } -> Some C_ADD
-        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } -> Some C_CONCAT
-        | {expression_content = E_constant {cons_name = C_SLICE; _ }; _ } -> Some C_CONCAT
-        | {expression_content = E_literal (Literal_int _); _ } -> Some C_ADD
-        | {expression_content = E_record_accessor {record; path}; _ } ->
-            (let x = get_record_field_type record.type_expression path in
-            match x with
-            Some s when is_t_string s ->
-              Some C_CONCAT
-            | _ -> None )
-        | {expression_content = E_variable _; type_expression = texpr ; location = _} ->
-            if is_t_string texpr then
-              Some C_CONCAT
-            else
-              None
-        | _ -> None in
-      let cst =
-        Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
-      let (name', tv) =
-        type_constant ~raise ~options cst e.location tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=lst'}) tv
-  | E_constant {cons_name = C_POLYMORPHIC_SUB;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
-      let tv_lst = List.map ~f:get_type lst' in
-      let decide = function
-        | Environment.Protocols.Ithaca, O.{ type_expression ; _ } when is_t_mutez type_expression ->
-          Some S.C_SUB_MUTEZ
-        | _ -> None in
-      let cst =
-        Option.value ~default:S.C_SUB @@ List.find_map lst' ~f:(fun e -> decide (protocol_version, e)) in
-      let (name', tv) =
-        type_constant ~raise ~options cst e.location tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
       let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let tv_lst = List.map ~f:get_type lst' in
