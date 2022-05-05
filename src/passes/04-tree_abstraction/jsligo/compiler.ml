@@ -11,11 +11,6 @@ open AST
 
 let add_warning: (Main_warnings.all -> unit) option ref  = ref None
 
-type nested_match_repr = (*TODO  , move that in AST. (see !909) *)
-  | PatternVar of AST.ty_expr binder
-  | TupleVar of AST.ty_expr binder * nested_match_repr list
-  | RecordVar of AST.ty_expr binder * AST.label list * nested_match_repr list
-
 let nseq_to_list (hd, tl) = hd :: tl
 
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
@@ -784,107 +779,42 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EAssign _ as e ->
     raise.raise @@ not_supported_assignment e
 
-and conv ~raise : const:bool -> CST.pattern -> nested_match_repr =
+and conv ~raise : const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
   fun ~const p ->
   match p with
-  | CST.PVar {value={variable; _}; _} ->
+  | PVar var ->
+    let (CST.{variable;_},loc) = r_split var in
     let var = compile_variable variable in
     let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
-    (PatternVar { var ; ascr = None ; attributes })
-  | CST.PArray tuple ->
-    let (tuple, _loc) = r_split tuple in
-    let lst = npseq_to_ne_list tuple.inside in
-    let patterns = List.Ne.to_list lst in
-    let nested = List.map ~f:(conv ~raise ~const) patterns in
-    let var = ValueVar.fresh () in
-    (TupleVar ({var ; ascr = None ; attributes = Stage_common.Helpers.empty_attribute} , nested))
-  | _ ->
-    raise.raise @@ unsupported_pattern_type p
-
-and get_binder : nested_match_repr -> AST.ty_expr binder =
-  fun s ->
-  match s with
-  | TupleVar (x,_) -> x
-  | PatternVar x -> x
-  | RecordVar (x,_,_) -> x
-
-and fold_nested_z
-  f acc l =
-  match l with
-  | [] -> acc
-  | ( PatternVar _ as z ) :: l ->
-    let x  = f acc z in
-    fold_nested_z f x l
-  | (TupleVar (_,inner) as z)::l ->
-    let x = f acc z in
-    let x = fold_nested_z f x inner in
-    fold_nested_z f x l
-  | (RecordVar (_,_,inner) as z)::l ->
-    let x = f acc z in
-    let x = fold_nested_z f x inner in
-    fold_nested_z f x l
-
-and nestrec : AST.expression -> (AST.expression -> AST.expression) -> nested_match_repr list -> AST.expression =
-  fun res f lst ->
-    let aux :  (AST.expression -> AST.expression) -> nested_match_repr -> (AST.expression -> AST.expression) =
-      fun f z ->
-        match z with
-        | PatternVar _ -> f
-        | TupleVar (matchee,nested) ->
-          let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
-          let pattern = Location.wrap @@ P_tuple binders in
-          let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
-          f'
-        | RecordVar (matchee,labels,nested) ->
-          let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
-          let pattern = Location.wrap @@ P_record (labels, binders) in
-          let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
-          f'
-    in
-    match lst with
-    | PatternVar _ :: tl -> nestrec res f tl
-    | TupleVar (matchee,nested) :: tl ->
-      let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
-      let pattern = Location.wrap @@ P_tuple binders in
-      let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
-      let f'' = fold_nested_z aux f' nested in
-      nestrec res f'' tl
-    | RecordVar (matchee,labels,nested) :: tl ->
-      let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) nested in
-      let pattern = Location.wrap @@ P_record (labels, binders) in
-      let f' = fun body -> f (e_matching (e_variable matchee.var) [{pattern ; body}]) in
-      let f'' = fold_nested_z aux f' nested in
-      nestrec res f'' tl
-    | [] -> f res
-
-and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> CST.array_pattern -> AST.expression -> AST.expression =
-  fun ~const matchee tuple ->
+    Location.wrap ~loc (AST.P_var {var ; ascr = None ; attributes})
+  | PArray tuple ->
     let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
-    let patterns = List.map ~f:(conv ~raise ~const) patterns in
-    let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) patterns in
-    let pattern = Location.wrap @@ P_tuple binders in
-    let f = fun body -> e_matching ~loc matchee [{pattern ; body}] in
-    (fun let_result -> nestrec let_result f patterns)
+    let nested = List.map ~f:(conv ~raise ~const) patterns in
+    Location.wrap ~loc (AST.P_tuple nested)
+  | PObject record ->
+    let (record, loc) = r_split record in
+    let ps = List.map ~f:(conv ~raise ~const) @@ Utils.nsepseq_to_list record.inside in
+    let labels = List.map
+        (Utils.nsepseq_to_list record.inside)
+        ~f:(function PVar var -> AST.Label var.value.variable.value | _ -> raise.raise @@ unsupported_pattern_type p)
+    in
+    Location.wrap ~loc (AST.P_record (labels,ps))
+  | (PRest _|PAssign _|PConstr _|PDestruct _) ->
+    raise.raise @@ unsupported_pattern_type p
+
+and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> CST.array_pattern -> AST.expression -> AST.expression =
+  fun ~const matchee tuple ->
+    let (_, loc) = r_split tuple in
+    let pattern = conv ~raise ~const (CST.PArray tuple) in
+    (fun body -> e_matching ~loc matchee [{pattern ; body}])
 
 and compile_object_let_destructuring ~raise : const:bool -> AST.expression -> CST.object_pattern -> (AST.expression -> AST.expression) =
   fun ~const matchee record ->
-    let (record, loc) = r_split record in
-    let aux : CST.pattern -> label * CST.pattern = fun field ->
-      match field with
-        PDestruct {value = {property; target; _}; _} ->
-          (AST.Label property.value, target.value.binders)
-      | _ ->
-        raise.raise @@ unsupported_pattern_type field
-    in
-    let lst = List.map ~f:aux @@ Utils.nsepseq_to_list record.inside in
-    let (labels,patterns) = List.unzip lst in
-    let patterns = List.map ~f:(conv ~raise ~const) patterns in
-    let binders = List.map ~f:(fun x -> let var = get_binder x in Location.wrap @@ P_var var) patterns in
-    let pattern = Location.wrap @@ P_record (labels, binders) in
-    let f = fun body -> e_matching ~loc matchee [{pattern ; body}] in
-    (fun let_result -> nestrec let_result f patterns)
+    let (_, loc) = r_split record in
+    let pattern = conv ~raise ~const (CST.PObject record) in
+    (fun body -> e_matching ~loc matchee [{pattern ; body}])
 
 and compile_parameter ~raise : CST.expr -> _ binder * (expression -> expression) = fun expr ->
   let return ?ascr ?(attributes = Stage_common.Helpers.const_attribute) fun_ var =
