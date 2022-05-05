@@ -108,7 +108,7 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
       let aggregated = Compile.Of_typed.compile_program ~raise typed in
       let aggregated = Aggregation.compile_expression_in_context (Ast_typed.e_a_unit ()) aggregated in
       if self_pass then
-        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:options.middle_end.test ~options aggregated
+        Trace.trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options aggregated
       else
         aggregated
 

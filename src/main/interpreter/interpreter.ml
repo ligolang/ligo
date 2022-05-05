@@ -1273,7 +1273,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
-  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:true ~options expr in
+  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options expr in
   let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
