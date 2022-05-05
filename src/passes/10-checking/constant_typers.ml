@@ -212,12 +212,19 @@ let rec any_table_of : typer_table list -> typer_table = fun typers ->
      | None -> any_table_of typers ~error ~raise ~options ~loc lst tv_opt
 
 
-(* This prevents wraps a typer, allowing usage only in Hangzhou *)
+(* This prevents wraps a typer, allowing usage only since a protocol version *)
 let constant_since_protocol ~since ~constant typer : typer = fun ~error ~raise ~options ~loc ->
   if (Environment.Protocols.compare options.protocol_version since) >= 0 then
     typer ~error ~raise ~options ~loc
   else
     raise.raise (constant_since_protocol loc constant since)
+
+(* This prevents wraps a typer, allowing usage only in a particular protocol version *)
+let only_on_protocol ~protocol typer : typer = fun ~error ~raise ~options ~loc ->
+  if (Environment.Protocols.compare options.protocol_version protocol) >= 0 then
+    typer ~error ~raise ~options ~loc
+  else
+    fun _ _ -> None
 
 
 module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
@@ -245,6 +252,9 @@ module Constant_types = struct
 
   let of_types c ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
+
+  let of_types_protocol c ts =
+    (c, any_of (List.map ~f:(fun (protocol, v) -> only_on_protocol ~protocol @@ typer_of_ligo_type v) ts))
 
   let typer_of_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
@@ -404,18 +414,23 @@ module Constant_types = struct
                         O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
                         O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
                       ];
-                    of_types C_POLYMORPHIC_SUB [
-                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
-                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
-                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
-                        O.(t_nat () ^-> t_nat () ^-> t_int ());
-                        O.(t_int () ^-> t_int () ^-> t_int ());
-                        O.(t_nat () ^-> t_int () ^-> t_int ());
-                        O.(t_int () ^-> t_nat () ^-> t_int ());
-                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
-                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
-                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
-                      ];
+                    of_types_protocol C_POLYMORPHIC_SUB (
+                        let l = [
+                            O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                            O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                            O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                            O.(t_nat () ^-> t_nat () ^-> t_int ());
+                            O.(t_int () ^-> t_int () ^-> t_int ());
+                            O.(t_nat () ^-> t_int () ^-> t_int ());
+                            O.(t_int () ^-> t_nat () ^-> t_int ());
+                            O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                            O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                          ] in
+                        let ithaca =
+                          List.map ~f:(fun t -> (Environment.Protocols.Ithaca, t)) (O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ())) :: l) in
+                        let hangzhou =
+                          List.map ~f:(fun t -> (Environment.Protocols.Hangzhou, t)) (O.(t_mutez () ^-> t_mutez () ^-> (t_mutez ())) :: l) in
+                        ithaca @ hangzhou);
                     of_types C_ADD [
                         O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
                         O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
