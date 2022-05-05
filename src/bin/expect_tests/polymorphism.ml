@@ -127,7 +127,7 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; (test "use_rec.jsligo") ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value 55. |}]
+    - test exited with value 51. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;

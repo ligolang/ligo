@@ -44,9 +44,9 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage mutez ;
-      code { PUSH mutez 1000000 ;
+      code { CDR ;
+             PUSH mutez 1000000 ;
              SWAP ;
-             CDR ;
              SUB_MUTEZ ;
              IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              NIL operation ;
@@ -92,10 +92,13 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.jsligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{xxx|
     const sub =
-      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB_MUTEZ(store ,
-      delta)[@private]
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB_MUTEZ(store , delta)[@private]
     const main =
-      lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) )[@private] |xxx}]
+      lambda (gen#4) return  match gen#4 with
+                              | ( _#3 , store ) ->
+                              ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) )[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.mligo") ] ;
@@ -149,16 +152,16 @@ let%expect_test _ =
   [%expect{|
     const sub[@var] =
       rec (sub:( tez * tez ) -> option (tez) => lambda (gen#2 : ( tez * tez )) : option (tez) return
-      let store = gen#2.0 in
-      let delta = gen#2.1 in C_POLYMORPHIC_SUB(store , delta) )[@private]
+       match gen#2 with
+        | (store,delta) -> C_POLYMORPHIC_SUB(store , delta) )[@private]
     const main[@var] =
       rec (main:( unit * tez ) -> ( list (operation) * tez ) => lambda (gen#4 :
-      ( unit * tez )) : ( list (operation) * tez ) return let _#3 = gen#4.0 in
-                                                          let store = gen#4.1 in
-                                                          ( LIST_EMPTY() : list (operation) ,
-                                                            (Option.unopt)@(
-                                                            (sub)@(( store ,
-                                                                     1000000mutez ))) ) )[@private] |}]
+      ( unit * tez )) : ( list (operation) * tez ) return  match gen#4 with
+                                                            | (_#3,store) ->
+                                                            ( LIST_EMPTY() : list (operation) ,
+                                                              (Option.unopt)@(
+                                                              (sub)@(( store ,
+                                                                       1000000mutez ))) ) )[@private] |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (test "sub_mutez_old.mligo") ; "--disable-michelson-typechecking" ] ;
@@ -189,7 +192,7 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage mutez ;
-      code { PUSH mutez 1000000 ; SWAP ; CDR ; SUB ; NIL operation ; PAIR } } |}]
+      code { CDR ; PUSH mutez 1000000 ; SWAP ; SUB ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.mligo") ] ;
@@ -234,10 +237,13 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_old.jsligo") ] ;
   [%expect{xxx|
     const sub =
-      lambda (gen#2) return let store = gen#2.0 in let delta = gen#2.1 in SUB(store ,
-      delta)[@private]
+      lambda (gen#2) return  match gen#2 with
+                              | ( store , delta ) ->
+                              SUB(store , delta)[@private]
     const main =
-      lambda (gen#4) return let _#3 = gen#4.0 in let store = gen#4.1 in ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )[@private]
+      lambda (gen#4) return  match gen#4 with
+                              | ( _#3 , store ) ->
+                              ( LIST_EMPTY() , (sub)@(( store , 1000000mutez )) )[@private]
   |xxx}]
 
 let%expect_test _ =
@@ -291,13 +297,13 @@ let%expect_test _ =
   [%expect{|
     const sub[@var] =
       rec (sub:( tez * tez ) -> tez => lambda (gen#2 : ( tez * tez )) : tez return
-      let store = gen#2.0 in
-      let delta = gen#2.1 in C_POLYMORPHIC_SUB(store , delta) )[@private]
+       match gen#2 with
+        | (store,delta) -> C_POLYMORPHIC_SUB(store , delta) )[@private]
     const main[@var] =
       rec (main:( unit * tez ) -> ( list (operation) * tez ) => lambda (gen#4 :
-      ( unit * tez )) : ( list (operation) * tez ) return let _#3 = gen#4.0 in
-                                                          let store = gen#4.1 in
-                                                          ( LIST_EMPTY() : list (operation) ,
-                                                            (sub)@(( store ,
-                                                                     1000000mutez )) ) )[@private]
+      ( unit * tez )) : ( list (operation) * tez ) return  match gen#4 with
+                                                            | (_#3,store) ->
+                                                            ( LIST_EMPTY() : list (operation) ,
+                                                              (sub)@(( store ,
+                                                                       1000000mutez )) ) )[@private]
   |}]

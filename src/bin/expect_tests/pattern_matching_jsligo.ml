@@ -52,6 +52,14 @@ let%expect_test _ =
                                  ""[@private] |xxx}]
 
 let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative/pattern_match7.jsligo", line 1, characters 11-20:
+      1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
+
+    Pattern not of the expected type ( int * int * int ) |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
   [%expect{|
     1 |}]
