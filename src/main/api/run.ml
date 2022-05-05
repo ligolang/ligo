@@ -10,7 +10,7 @@ let test (raw_options : Compiler_options.raw) source_file display_format () =
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
-      let options = Compiler_options.make ~test:true ~protocol_version ~syntax ~raw_options () in
+      let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps ; _ } = options.test_framework in
       let typed   = Build.build_context ~raise ~add_warning ~options source_file in
       Interpreter.eval_test ~raise ~steps ~options typed

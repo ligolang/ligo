@@ -16,6 +16,7 @@ type raw = {
   self_pass : bool ;
   
   (* Test framework *)
+  test : bool ;
   steps : int ;
   generator : string ;
   
@@ -49,6 +50,7 @@ module Default_options = struct
   let self_pass = false
   
   (* Test framework *)
+  let test = false
   let steps = 1000000
   let generator = "random"
   
@@ -70,6 +72,7 @@ let make
   ?(project_root = Default_options.project_root)
   ?(with_types = Default_options.with_types)
   ?(self_pass = Default_options.self_pass)
+  ?(test = Default_options.test)
   ?(steps = Default_options.steps)
   ?(generator = Default_options.generator)
   ?(protocol_version = Default_options.protocol_version)
@@ -97,6 +100,7 @@ let make
   self_pass ;
   
   (* Test framework *)
+  test ;
   steps ;
   generator ;
   
@@ -128,6 +132,7 @@ let default =
   self_pass = Default_options.self_pass ;
   
   (* Test framework *)
+  test = Default_options.test ;
   steps = Default_options.steps ;
   generator = Default_options.generator ;
   

@@ -197,6 +197,12 @@ let optimize =
   let doc = "ENTRY_POINT Apply Mini-C optimizations as if compiling ENTRY_POINT" in
   flag ~doc name @@ optional string
 
+let test_mode =
+  let open Command.Param in
+  let name = "--test" in
+  let doc  = "force testing mode." in
+  flag ~doc name no_arg
+
 let warn =
   let open Command.Param in
   let name = "--no-warn" in
@@ -399,7 +405,7 @@ let mutate_group =
 (** Run commands *)
 let test =
   let f source_file syntax steps protocol_version display_format project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~test:true () in
     return_result ~return @@
     Api.Run.test raw_options source_file display_format
   in
@@ -614,8 +620,8 @@ let print_ast_core =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
     Api.Print.ast_typed raw_options source_file  display_format   
   in
@@ -625,11 +631,11 @@ let print_ast_typed =
                   type the contract, but the contract is not combined \
                   with imported modules." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
 
 let print_ast_aggregated =
-  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
       Api.Print.ast_aggregated raw_options source_file display_format 
   in
@@ -637,7 +643,7 @@ let print_ast_aggregated =
   let readme () = "This sub-command prints the source file in the AST \
                    aggregated stage." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
 
 let print_ast_combined =
   let f source_file syntax protocol_version display_format project_root warn_unused_rec () =
