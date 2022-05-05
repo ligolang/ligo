@@ -5,7 +5,7 @@ type c_unit = Buffer.t
 let compile ~raise ~add_warning ~meta c_unit (source_filename:string) : Ast_imperative.module_  =
   parse_and_abstract ~raise ~add_warning ~meta c_unit source_filename
 
-let compile_expression = parse_and_abstract_expression
+let compile_expression ~raise ~add_warning = parse_and_abstract_expression ~raise ~add_warning
 
   let compile_string ~raise ~add_warning : meta:meta -> c_unit -> Ast_imperative.module_  =
     fun ~meta c_unit ->

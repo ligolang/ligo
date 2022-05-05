@@ -4,12 +4,13 @@ module Helpers   = Ligo_compile.Helpers
 
 let pretty_print (raw_options : Compiler_options.raw) source_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
-    format_result ~warning_as_error ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~warning_as_error ~display_format (Parsing.Formatter.ppx_format) get_warnings @@
     fun ~raise ->
     let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
     let options = Compiler_options.make ~raw_options ~syntax () in
     let meta = Compile.Of_source.extract_meta syntax in
-    Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
+    Compile.Utils.pretty_print ~add_warning ~raise ~options:options.frontend ~meta source_file
 
 let dependency_graph (raw_options : Compiler_options.raw) source_file display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->
@@ -30,12 +31,13 @@ let preprocess (raw_options : Compiler_options.raw) source_file display_format (
     Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
 
 let cst (raw_options : Compiler_options.raw) source_file display_format () =
-    format_result ~display_format (Parsing.Formatter.ppx_format) (fun _ -> []) @@
+    Trace.warning_with @@ fun add_warning get_warnings ->
+    format_result ~display_format (Parsing.Formatter.ppx_format) get_warnings @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
-      Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
+      Compile.Utils.pretty_print_cst ~raise ~add_warning ~options:options.frontend ~meta source_file
 
 let ast (raw_options : Compiler_options.raw) source_file display_format () =
     Trace.warning_with @@ fun add_warning get_warnings ->

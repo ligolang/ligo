@@ -11,13 +11,17 @@ module Core   = LexerLib.Core
 (* LIGO dependencies *)
 
 module type FILE = Preprocessing_shared.File.S
+module type Warning = sig
+  val add_warning : Main_warnings.all -> unit
+end
 
 (* The functor *)
 
 module Make (File        : FILE)
             (Token       : Token.S)
             (CLI         : LexerLib.CLI.S)
-            (Self_tokens : Self_tokens.S with type token = Token.t) =
+            (Self_tokens : Self_tokens.S with type token = Token.t)
+            (Warning     : Warning) =
   struct
     (* All exits *)
 
@@ -151,7 +155,7 @@ module Make (File        : FILE)
           in Stdlib.Ok token
         else
           let lex_units = Scan.LexUnits.from_lexbuf config lexbuf
-          in match Self_tokens.filter lex_units with
+          in match Self_tokens.filter ~add_warning:Warning.add_warning lex_units with
              Stdlib.Ok tokens ->
                store  := tokens;
                called := true;
@@ -180,7 +184,7 @@ module Make (File        : FILE)
             Some path -> Scan.LexUnits.from_file config path
           |      None -> Scan.LexUnits.from_channel config In_channel.stdin
       in
-      match Self_tokens.filter lex_units with
+      match Self_tokens.filter ~add_warning:Warning.add_warning lex_units with
         Stdlib.Ok _ -> ()
       | Error msg   -> print_in_red msg
 
