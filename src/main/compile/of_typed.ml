@@ -10,10 +10,10 @@ module SMap = Map.Make(String)
 let compile_program ~raise : Ast_typed.program -> Ast_typed.expression Ast_aggregated.program = fun p ->
   trace ~raise aggregation_tracer @@ Aggregation.compile_program p
 
-let compile_expression_in_context ~raise ?entrypoint : Ast_typed.expression -> Ast_typed.expression Ast_aggregated.program -> Ast_aggregated.expression =
+let compile_expression_in_context ~raise : Ast_typed.expression -> Ast_typed.expression Ast_aggregated.program -> Ast_aggregated.expression =
   fun exp prg ->
     let x = Aggregation.compile_expression_in_context exp prg in
-    trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ?entrypoint x
+    trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression x
 
 let compile_expression ~raise : Ast_typed.expression -> Ast_aggregated.expression = fun e ->
   let x = trace ~raise aggregation_tracer @@ compile_expression e in
@@ -27,7 +27,7 @@ let apply_to_entrypoint_contract ~raise : Ast_typed.program -> Ast_typed.express
   in
   let ty = t_arrow (t_pair p_ty s_ty) (t_pair (t_list (t_operation ())) s_ty) () in
   let var_ep = Ast_typed.(e_a_variable entrypoint ty) in
-  compile_expression_in_context ~raise ~entrypoint var_ep aggregated_prg
+  compile_expression_in_context ~raise var_ep aggregated_prg
 
 let apply_to_entrypoint_view ~raise : Ast_typed.program -> Ast_typed.expression_variable list -> Ast_aggregated.expression =
     fun prg views ->

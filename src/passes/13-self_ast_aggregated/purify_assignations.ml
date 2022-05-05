@@ -365,7 +365,7 @@ let match_on_write_effect let_binder rhs let_result effects effect_type =
       body=let_result;tv}
     }
 
-let rec morph_expression ?(returned_effect) ?entrypoint (effect : Effect.t) (e: expression) : expression =
+let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) : expression =
   (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect; *)
   let return_1 ?returned_effect e =
     match returned_effect with None -> e
@@ -373,7 +373,7 @@ let rec morph_expression ?(returned_effect) ?entrypoint (effect : Effect.t) (e: 
   let return ?returned_effect expression_content =
     let ret_expr = { e with expression_content } in
     return_1 ?returned_effect ret_expr in
-  let self ?returned_effect = morph_expression ?returned_effect ?entrypoint effect in
+  let self ?returned_effect = morph_expression ?returned_effect effect in
   match e.expression_content with
   | E_literal lit -> return ?returned_effect @@ E_literal lit
   | E_raw_code rc -> return ?returned_effect @@ E_raw_code rc
@@ -381,10 +381,6 @@ let rec morph_expression ?(returned_effect) ?entrypoint (effect : Effect.t) (e: 
       (match Effect.get_read_effect effect variable with
         None,false -> return ?returned_effect @@ E_variable variable
       | _ ->
-        (* Bypass check for entypoint *)
-        if (Option.equal ValueVar.equal entrypoint @@ Some variable )
-        then return @@ E_variable variable
-        else
           failwith "Hypothesis 2 failed"
       )
     (* Special case use for compilation of imperative for each loops *)
@@ -577,11 +573,11 @@ let rec morph_expression ?(returned_effect) ?entrypoint (effect : Effect.t) (e: 
 
 
 
-let expression ?entrypoint e =
+let expression e =
   let e = Deduplicate_binders.program e in
   (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in
   (* Format.printf "test: %a\n%!" Effect.pp effect; *)
-  let e = morph_expression ?entrypoint effect e in
+  let e = morph_expression effect e in
   (* Format.printf "morphed: %a\n%!" PP.expression e; *)
   e
