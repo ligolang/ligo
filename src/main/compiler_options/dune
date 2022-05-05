@@ -3,4 +3,4 @@
  (public_name ligo.compiler_options)
  (instrumentation
   (backend bisect_ppx))
- (libraries environment simple-utils ast_typed))
+ (libraries environment simple-utils ast_typed syntax_types))

@@ -197,11 +197,23 @@ let optimize =
   let doc = "ENTRY_POINT Apply Mini-C optimizations as if compiling ENTRY_POINT" in
   flag ~doc name @@ optional string
 
+let test_mode =
+  let open Command.Param in
+  let name = "--test" in
+  let doc  = "force testing mode." in
+  flag ~doc name no_arg
+
 let warn =
   let open Command.Param in
   let name = "--no-warn" in
   let doc = "disable warning messages" in
   map ~f:not @@ flag ~doc name no_arg
+
+let warn_unused_rec =
+  let open Command.Param in
+  let name = "--warn-unused-rec" in
+  let doc = "disable warning messages" in
+  flag ~doc name no_arg
 
 let werror =
   let open Command.Param in
@@ -249,8 +261,8 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~warning_as_error ~constants ~file_constants ~project_root () in
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -259,12 +271,12 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 
 let compile_parameter =
-  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root () in
+  let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format 
   in
@@ -274,11 +286,11 @@ let compile_parameter =
                   Michelson expression can be passed as an argument in \
                   a transaction which calls a contract." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
+  (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root () in
+  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format 
     in
@@ -288,11 +300,11 @@ let compile_expression =
                    expression to a Michelson expression and then \
                    interpreting it using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_storage =
-  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root () in
+  let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.storage raw_options source_file expression amount balance sender source now display_format michelson_format 
   in
@@ -303,11 +315,11 @@ let compile_storage =
                   resulting Michelson expression can be passed as an \
                   argument in a transaction which originates a contract." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root )
+  (f <$> source_file <*> expression "STORAGE" <*> entry_point <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_constant =
-  let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root () in
+  let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.constant raw_options expression init_file display_format
     in
@@ -318,7 +330,7 @@ let compile_constant =
                    expression to a Michelson expression and then \
                    interpreting it using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> warn <*> werror <*> project_root )
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let compile_group = Command.group ~summary:"compile a ligo program to michelson" @@
   [ "contract",   compile_file;
@@ -392,8 +404,8 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps protocol_version display_format project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root () in
+  let f source_file syntax steps protocol_version display_format project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~test:true () in
     return_result ~return @@
     Api.Run.test raw_options source_file display_format
   in
@@ -404,11 +416,11 @@ let test =
                   procedure should rely on this sub-command alone."
   in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format <*> project_root )
+  (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format <*> project_root <*> warn_unused_rec)
 
 let dry_run =
-  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
+  let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Run.dry_run raw_options source_file parameter storage amount balance sender source now display_format 
     in
@@ -419,11 +431,11 @@ let dry_run =
                   implemented. The interpretation is done using \
                   Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> expression "PARAMETER" <*> expression "STORAGE" <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> expression "PARAMETER" <*> expression "STORAGE" <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let evaluate_call =
-  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
+  let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root  ~warn_unused_rec() in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_call raw_options source_file parameter amount balance sender source now display_format 
     in
@@ -433,11 +445,11 @@ let evaluate_call =
                   file where the function is implemented. The \
                   interpretation is done using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> expression "PARAMETER" <*>  entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> expression "PARAMETER" <*>  entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let evaluate_expr =
-  let f source_file entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root () in
+  let f source_file entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_expr raw_options source_file amount balance sender source now display_format 
     in
@@ -447,11 +459,11 @@ let evaluate_expr =
                   definition is written. The interpretation is done \
                   using a Michelson interpreter." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> entry_point <*> amount <*> balance <*> sender <*> source <*> now <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let interpret =
-  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in 
+  let f expression init_file syntax protocol_version amount balance sender source now display_format project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root ~warn_unused_rec () in 
     return_result ~return @@
     Api.Run.interpret raw_options expression init_file amount balance sender source now display_format 
   in
@@ -461,7 +473,7 @@ let interpret =
                   file. The interpretation is done using Michelson's \
                   interpreter." in
   Command.basic ~summary ~readme
-  (f <$> expression "EXPRESSION" <*> init_file <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> project_root )
+  (f <$> expression "EXPRESSION" <*> init_file <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> project_root <*> warn_unused_rec)
 
 let run_group =
   Command.group ~summary:"compile and interpret ligo code"
@@ -487,8 +499,8 @@ let list_declarations =
   (f <$> source_file <*> syntax <*> display_format)
 
 let measure_contract =
-  let f source_file entry_point views syntax protocol_version display_format show_warnings warning_as_error project_root () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root () in
+  let f source_file entry_point views syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Info.measure_contract raw_options source_file display_format
   in
@@ -496,7 +508,7 @@ let measure_contract =
   let readme () = "This sub-command compiles a source file and measures \
                   the contract's compiled size in bytes." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root )
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let get_scope =
   let f source_file protocol_version libraries display_format with_types () =
@@ -532,7 +544,7 @@ let preprocessed =
                   as a module and therefore the content of the imported \
                   file is not printed by this sub-command." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root )
+  (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root)
 let pretty_print =
   let f source_file syntax display_format warning_as_error () =
     let raw_options = Compiler_options.make_raw_options ~syntax ~warning_as_error () in
@@ -556,7 +568,7 @@ let print_graph =
                   by the module system. It explores all imported source \
                   files (recursively) following a DFS strategy." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> display_format <*> project_root )
+  (f <$> source_file <*> syntax <*> display_format <*> project_root)
 
 let print_cst =
   let f source_file syntax display_format () =
@@ -608,8 +620,8 @@ let print_ast_core =
   (f <$> source_file <*> syntax <*> display_format <*> self_pass <*> project_root )
 
 let print_ast_typed =
-  let f source_file syntax protocol_version display_format self_pass project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
     Api.Print.ast_typed raw_options source_file  display_format   
   in
@@ -619,11 +631,11 @@ let print_ast_typed =
                   type the contract, but the contract is not combined \
                   with imported modules." in
   Command.basic ~summary ~readme @@
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
 
 let print_ast_aggregated =
-  let f source_file syntax protocol_version display_format self_pass project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root () in
+  let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
       Api.Print.ast_aggregated raw_options source_file display_format 
   in
@@ -631,11 +643,11 @@ let print_ast_aggregated =
   let readme () = "This sub-command prints the source file in the AST \
                    aggregated stage." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root )
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> self_pass <*> project_root <*> warn_unused_rec <*> test_mode)
 
 let print_ast_combined =
-  let f source_file syntax protocol_version display_format project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
+  let f source_file syntax protocol_version display_format project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
     return_result ~return @@
     Api.Print.ast_combined raw_options source_file display_format 
   in
@@ -645,11 +657,11 @@ let print_ast_combined =
                   type the contract, and the contract is combined with \
                   the imported modules." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> project_root )
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> project_root <*> warn_unused_rec)
 
 let print_mini_c =
-  let f source_file syntax protocol_version display_format optimize project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
+  let f source_file syntax protocol_version display_format optimize project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
     return_result ~return @@
     Api.Print.mini_c raw_options source_file display_format optimize 
   in
@@ -659,7 +671,7 @@ let print_mini_c =
                   and compile the contract. Compilation is applied \
                   after combination in the AST typed stage." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> optimize <*> project_root )
+  (f <$> source_file <*> syntax <*> protocol_version <*> display_format <*> optimize <*> project_root <*> warn_unused_rec)
 
 let print_group =
   let summary = "print intermediary program representation.\nWarning: Intended for development of LIGO and can break at any time" in

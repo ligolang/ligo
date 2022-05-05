@@ -121,7 +121,8 @@ let compile_groups ~raise filename grp_list =
       trace ~raise (test_md_file filename syntax grp contents) @@
       fun ~raise ->
       let options    = Compiler_options.make ~raw_options:Compiler_options.default_raw_options ~protocol_version () in
-      let meta       = Ligo_compile.Of_source.make_meta ~raise syntax None in
+      let syntax     = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some filename) in
+      let meta       = Ligo_compile.Of_source.make_meta syntax in
       let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options:options.frontend ~meta contents in
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in

@@ -107,7 +107,7 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
               }
 
 let try_eval ~raise ~raw_options state s =
-  let options = Compiler_options.make ~raw_options () in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~add_warning ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
@@ -129,7 +129,7 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
   (m1 @ m2)
 
 let try_declaration ~raise ~raw_options state s =
-  let options = Compiler_options.make ~raw_options () in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
   try
     try_with (fun ~raise ->
@@ -152,7 +152,7 @@ let try_declaration ~raise ~raw_options state s =
 
 let import_file ~raise ~raw_options state file_name module_name =
   let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
-  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
     let prg = Build.build_context ~raise ~add_warning ~options file_name in
@@ -165,7 +165,7 @@ let import_file ~raise ~raw_options state file_name module_name =
 
 let use_file ~raise ~raw_options state file_name =
   let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
-  let options = Compiler_options.make ~raw_options ~protocol_version:state.protocol () in
+  let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
   let module' = Build.build_context ~raise ~add_warning ~options file_name in
@@ -272,7 +272,7 @@ let main (raw_options : Compiler_options.raw) display_format now amount balance 
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
       print_endline welcome_msg;
-      let options = Compiler_options.make ~raw_options () in
+      let options = Compiler_options.make ~raw_options ~syntax () in
       let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root options in
       let state = match init_file with
         | None -> state
