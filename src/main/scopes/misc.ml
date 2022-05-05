@@ -23,10 +23,12 @@ let extract_variable_types :
       | E_type_inst _ -> return [] (* TODO *)
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
-        let in_t = match exp.type_expression.type_content with
+        let rec in_t t = match t.Ast_typed.type_content with
           | T_arrow { type1 ; _ } -> type1
+          | T_for_all { type_ ; _ } -> in_t type_
           | _ -> failwith "lambda does not have type arrow"
         in
+        let in_t = in_t exp.type_expression in
         return [binder,in_t]
       | E_recursive { fun_name ; fun_type ; lambda = { binder ; _ } } ->
         let in_t = match fun_type.type_content with
@@ -61,6 +63,7 @@ let extract_variable_types :
       )
     in
     match decl with
+    | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> prev
     | Declaration_constant { binder ; expr ; _ } ->
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr

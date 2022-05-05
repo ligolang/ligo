@@ -218,7 +218,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (inner, inner_us) = union us2 us3 in
     let (outer, outer_us) = union us1 inner_us in
     (E_if_left (meta, Cond (outer, e1, inner, e2, e3)), outer_us)
-  | E_let_in (e1, _inline, e2) ->
+  | E_let_in (e1, _inline, _thunk, e2) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in

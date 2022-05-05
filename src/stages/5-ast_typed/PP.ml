@@ -62,7 +62,7 @@ let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
-let type_and_module_attr ppf {public} = Stage_common.PP.option_public ppf public
+let type_and_module_attr ppf {public; hidden = _} = Stage_common.PP.option_public ppf public
 
 open Format
 
@@ -194,9 +194,11 @@ and expression_content ppf (ec: expression_content) =
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; thunk = _ ; hidden = false } } ->
       fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
+  | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true } } ->
+      fprintf ppf "%a" expression let_result
   | E_type_in   {type_binder; rhs; let_result} ->
       fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
         type_variable type_binder

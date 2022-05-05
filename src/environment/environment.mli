@@ -6,7 +6,7 @@ type t
 val pp : Format.formatter -> t -> unit
 
 val add_declaration : Ast_typed.declaration -> t -> t
-val add_module : ?public:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t
+val add_module : ?public:unit -> ?hidden:unit -> Ast_typed.module_variable -> Ast_typed.module_ -> t -> t
 val append : Ast_typed.program -> t -> t
 
 val default : Protocols.t -> t
@@ -16,7 +16,7 @@ val fold : f:('a -> Ast_typed.declaration -> 'a) -> init:'a -> t -> 'a
 
 (* Code smell that comes from a bad design of the buildsystem *)
 type core
-val add_core_module : ?public:unit -> Ast_core.module_variable -> Ast_core.module_ -> core -> core
+val add_core_module : ?public:unit -> ?hidden:unit -> Ast_core.module_variable -> Ast_core.module_ -> core -> core
 val init_core       : Ast_core.module_ -> core
 val to_program      : t -> Ast_typed.program
 val to_core_program : core -> Ast_core.module_

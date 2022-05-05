@@ -90,10 +90,10 @@ module Typing = struct
         | Declaration_constant {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
            else acc
-        | Declaration_type {type_binder;type_expr;type_attr={public}} ->
+        | Declaration_type {type_binder;type_expr;type_attr={public;_}} ->
            if public then add_type acc type_binder type_expr
            else acc
-        | Declaration_module {module_binder;module_;module_attr={public}} ->
+        | Declaration_module {module_binder;module_;module_attr={public;_}} ->
            if public then
              let context = context_of_module_expr ~outer_context:(union acc outer_context) module_ in
              add_module acc module_binder context
@@ -170,11 +170,11 @@ module Typing = struct
         | None -> matching_t_sum
   
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
+    let lst_kv  = LMap.to_kv_list_rev lmap in
     let rec rec_aux e =
       let aux = fun (_,type_) ->
         match type_.type_content with
         | T_record m -> Simple_utils.Option.(
-            let lst_kv  = LMap.to_kv_list_rev lmap in
             let lst_kv' = LMap.to_kv_list_rev m.content in
             let m = map ~f:(fun () -> m) @@ Ast_typed.Misc.assert_list_eq
                                               ( fun (ka,va) (kb,vb) ->

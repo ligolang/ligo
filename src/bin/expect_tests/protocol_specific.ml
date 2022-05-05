@@ -32,7 +32,7 @@ let%expect_test _ =
     const main =
       lambda (gen#2) return  match gen#2 with
                               | ( p , s ) ->
-                              ( LIST_EMPTY() , PAIRING_CHECK(p) ) |xxx}]
+                              ( LIST_EMPTY() , (Tezos.pairing_check)@(p) ) |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "sapling.mligo" ; "--disable-michelson-typechecking" ] ;

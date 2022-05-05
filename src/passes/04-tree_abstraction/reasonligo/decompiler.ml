@@ -1,6 +1,6 @@
 module AST = Ast_imperative
 module CST = Cst.Reasonligo
-module Predefined = Predefined.Tree_abstraction.Reasonligo
+module Predefined = Predefined.Tree_abstraction
 module Token    = Lexing_reasonligo.Token
 module Region   = Simple_utils.Region
 module Location = Simple_utils.Location
@@ -170,6 +170,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_variable _
   | E_literal _
   | E_constant _
+  | E_module_accessor _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -186,7 +187,7 @@ let pattern_type ({var;ascr;attributes}: _ AST.binder) =
 
 let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr option = fun cons_name arguments ->
   match cons_name, arguments with
-  | Const C_ADD, (arg1, [arg2]) 
+  | Const C_ADD, (arg1, [arg2])
   | Const C_POLYMORPHIC_ADD, (arg1, [arg2]) ->
      Some CST.(EArith (Add (wrap { op = ghost ; arg1 ; arg2 })))
   | Const C_SUB, (arg1, [arg2])
@@ -310,7 +311,7 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap (lamb,args))
   | E_lambda lambda ->
     let (binders,lhs_type,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {attributes=[]; binders;lhs_type;arrow=ghost;body} in
+    let fun_expr : CST.fun_expr = {attributes=[]; binders;type_params=None;lhs_type;arrow=ghost;body} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_type_abstraction _ -> failwith "type_abstraction not supported yet"
   | E_recursive _ ->

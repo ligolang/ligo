@@ -27,27 +27,40 @@ type michelson_program
 A type for code that is compiled to Michelson.
 
 <SyntaxTitle syntax="pascaligo">
+type test_exec_error_balance_too_low = record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address ; contract_balance : tez ; spend_request : tez &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
+</SyntaxTitle>
+
+<SyntaxTitle syntax="pascaligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Balance_too_low of record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Balance_too_low of \u007b contract_too_low : address ; contract_balance : tez ; spend_request : tez \u007d
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_error =
   Rejected(michelson_program, address)
-| Balance_too_low of \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_error =
   ["Rejected", michelson_program, address]
-| ["Balance_too_low", \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d]
+| ["Balance_too_low", test_exec_error_balance_too_low]
 | ["Other", string]
 </SyntaxTitle>
 
@@ -877,3 +890,37 @@ let create_chest_key : chest => nat => chest_key
 
 Unlock the value and create the time-lock proof.
 Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).
+
+
+<SyntaxTitle syntax="pascaligo">
+val save_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val save_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let save_context: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let save_context: (u: unit) => unit
+</SyntaxTitle>
+
+Takes current testing framework context and saves it, pushing it into
+a stack of contexts.
+
+<SyntaxTitle syntax="pascaligo">
+val restore_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val restore_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let restore_context: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let restore_context: (u: unit) => unit
+</SyntaxTitle>
+
+Pops a testing framework context from the stack of contexts, and sets
+it up as the new current context. In case the stack was empty, the
+current context is kept.

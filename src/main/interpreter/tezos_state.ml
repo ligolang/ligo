@@ -50,6 +50,7 @@ and internals = {
   parameter_tys : parameter_tys ; (* contract parameter ligo types of bootstrapped contracts *)
 }
 
+let contexts : context list ref = ref []
 
 (* Some getters    TODO: might be moved to tezos-X-test-helpers ? *)
 let get_timestamp (ctxt : context) =

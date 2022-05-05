@@ -138,23 +138,23 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value 111.
-  - test2 exited with value (). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value 111.
+    - test2 exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value 111.
-  - test2 exited with value (). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value 111.
+    - test2 exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "catch_balance_too_low.mligo" ] ;
-  [%expect {|
-  Everything at the top-level was executed.
-  - test exited with value (). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
@@ -518,6 +518,31 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_sub exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_context.mligo" ] ;
+  [%expect {|
+    "test_contract:"
+    0
+    10
+    5
+    0
+    0
+    "test_move:"
+    3800000000000mutez
+    3800100000000mutez
+    3800000000000mutez
+    Everything at the top-level was executed.
+    - test_contract exited with value ().
+    - test_move exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_error_balance.jsligo" ] ;
+  [%expect {|
+    100000000000000mutez
+    3799997904750mutez
+    Everything at the top-level was executed.
+    - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -526,56 +551,46 @@ let bad_test n = bad_test ("/interpreter_tests/"^n)
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
+    Test failed with "I am failing"
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test =
-      2 |   failwith "I am failing"
-
-    Test failed with "I am failing" |}]
+      2 |   failwith "I am failing" |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
+    Failed assertion
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
-      2 |     assert false
-
-    Failed assertion |}]
+      2 |     assert false |}]
 
 let%expect_test _ =
   run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
-      1 | let test = Test.reset_state 2n [4000tez;4000tez]
-
-     baker account initial balance must at least reach 6000 tez |}]
+    baker account initial balance must at least reach 6000 tez |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-26:
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 2-16:
       2 |   let f = (fun (_ : (unit * unit)) -> ()) in
       3 |   Test.originate f () 0tez
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - ( 'a * 'b ) -> ( list (operation) * 'b )
-    - 'b
-    - tez
-    but got arguments with types:
-    - ( unit * unit ) -> unit
-    - unit
-    - tez. |}]
+    Invalid type(s).
+    Expected: "( list (operation) * s )", but got: "unit". |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
   [%expect {|
+    Test failed with "negative"
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
       4 |   else
 
-    Test failed with "negative"
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
@@ -587,14 +602,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace2.mligo" ] ;
   [%expect {|
+    An uncaught error occured:
+    Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =
       6 |   let _ = Test.get_storage_of_address ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
       7 |   Test.transfer_to_contract_exn contr () 10tez
 
-    An uncaught error occured:
-    Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 12, characters 2-33 |}]
 
 let%expect_test _ =
@@ -606,99 +621,68 @@ let%expect_test _ =
       4 |     else
 
     Replacing by: 2.
+
+    Test failed with "Some mutation also passes the tests!"
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
      16 |     | None -> ()
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
-     18 |                                     failwith "Some mutation also passes the tests!"
-
-    Test failed with "Some mutation also passes the tests!" |}]
+     18 |                                     failwith "Some mutation also passes the tests!" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source1.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
-      9 |   let () = Test.set_source addr in
-     10 |   let (_, _, _) = Test.originate main () 0tez in
-     11 |   ()
-
     The source address is not an implicit account
     KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 10-52:
-      9 |   let () = Test.set_source addr in
-     10 |   let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
-     11 |   ()
-
     The source address is not an implicit account
     KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 20-45:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 12-20:
       1 | const foo = (x: {field: int}): {field: int} => {return x};
       2 | const bar = Test.run(foo, {property: "toto"});
       3 |
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - 'a -> 'b
-    - 'a
-    but got arguments with types:
-    - record[field -> int] -> record[field -> int]
-    - record[property -> string]. |}]
+    These types are not matching:
+     - record[property -> string]
+     - record[field -> int] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types2.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 20-33:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 12-20:
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - 'a -> 'b
-    - 'a
-    but got arguments with types:
-    - record[b -> int] -> record[b -> int]
-    - string. |}]
+    These types are not matching:
+     - string
+     - record[b -> int] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types3.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 20-42:
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 12-20:
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
 
-    Cannot match arguments for operation.
-    Expected arguments with types:
-    - 'a -> 'b
-    - 'a
-    but got arguments with types:
-    - int -> int
-    - record[field -> string]. |}]
+    These types are not matching:
+     - record[field -> string]
+     - int |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 26-27:
-      2 |   let x = Test.eval 4n in
-      3 |   let y = (Test.decompile x : string) in
-      4 |   ()
-
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_register_delegate.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
-     18 |   let () = Test.set_baker a in
-     19 |   let (ta, _, _) = Test.originate main 41 5tez in
-     20 |
-
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
@@ -708,13 +692,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
+    Failed assertion
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
      16 |       | None -> ()
      17 |       | Some x -> assert false
      18 | end
 
-    Failed assertion
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 29, characters 2-25 |}]
 
 let pwd = Sys.getcwd ()

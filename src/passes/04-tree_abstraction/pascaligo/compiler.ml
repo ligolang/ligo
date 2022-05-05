@@ -17,7 +17,7 @@ let npseq_to_ne_list (hd, tl) = (hd, List.map ~f:snd tl)
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
 
-open Predefined.Tree_abstraction.Pascaligo
+open Predefined.Tree_abstraction
 
 let check_no_attributes ~(raise:Errors.abs_error Simple_utils.Trace.raise) (loc: Location.t) lst =
   (* TODO: should be done in a dedicated pass ?*)
@@ -280,15 +280,21 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       e_application ~loc func args
   )
   (*TODO: move to proper module*)
-  | E_Call { value=( E_ModPath { value={ module_path = (module_name,[]) ; field ; _ }; region=_ }, args ); region }
+  | E_Call ({ value=( E_ModPath { value={ module_path = (module_name,[]) ; field ; _ }; region=_ }, args ); region } as call)
       when List.mem ~equal:String.equal build_ins module_name#payload -> (
     let loc = Location.lift region in
     let fun_name = compile_pseudomodule_access ~loc field module_name#payload in
     let var = module_name#payload ^ "." ^ fun_name in
-    let const = trace_option ~raise (unknown_constant var loc) @@ constants var in
-    let (args, _) = r_split args in
-    let args = List.map ~f:self @@ npseq_to_list args.inside in
-    e_constant ~loc const args
+    match constants var with
+    | Some const ->
+       let (args, _) = r_split args in
+       let args = List.map ~f:self @@ npseq_to_list args.inside in
+       e_constant ~loc const args
+    | None ->
+       let ((func, args), loc) = r_split call in
+       let func = self func in
+       let args = compile_tuple_expression args in
+       e_application ~loc func args
   )
   | E_Call call ->
     let ((func, args), loc) = r_split call in
@@ -333,7 +339,22 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       let var = module_name#payload ^ "." ^ fun_name in
       match constants var with
       | Some const -> e_constant ~loc const []
-      | None -> e_variable_ez ~loc var
+      | None -> (
+        let module_path = List.map ~f:compile_mod_var (npseq_to_list ma.module_path) in
+        match ma.field with
+        | E_Var v ->
+           e_module_accessor ~loc module_path (compile_variable v)
+        | E_Proj proj ->
+           let (proj, loc) = r_split proj in
+           (* let expr = self proj.record_or_tuple in *)
+           let var =
+             let (x,loc) = trace_option ~raise (expected_variable (Location.lift @@ CST.expr_to_region proj.record_or_tuple)) @@ get_var proj.record_or_tuple in
+             ValueVar.of_input_var ~loc x
+           in
+           let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ Utils.nsepseq_to_list proj.field_path in
+           e_accessor ~loc (e_module_accessor ~loc module_path var) sels
+        | _ -> raise.raise (expected_variable (Location.lift @@ CST.expr_to_region ma.field))
+      )
     )
     | _ -> (
       let module_path = List.map ~f:compile_mod_var (npseq_to_list ma.module_path) in

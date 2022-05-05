@@ -10,3 +10,5 @@ val compile_module     : raise:Errors.abs_error Simple_utils.Trace.raise -> CST.
 
 val decompile_expression: AST.expr -> CST.expr list
 val decompile_module: AST.module_ -> CST.ast
+
+val add_warning : (Main_warnings.all -> unit) option ref

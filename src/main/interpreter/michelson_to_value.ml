@@ -259,10 +259,18 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
         Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
-        Bls12_381_fr | Never         | Ticket              | Test_exec_error      | Test_exec_result | Chest        |
-        Chest_key    | Typed_address | Mutation            | Chest_opening_result), _) -> v
+        Bls12_381_fr | Never         | Ticket                                                        | Chest        |
+        Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _), _) -> v
   )
-  | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> v
+  | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> (
+    let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
+    match opt with
+    | None -> v_none ()
+    | Some s ->
+      let o = Option.value_exn (Ast_aggregated.get_t_option t) in
+      let s' = self s o in
+      v_some s'
+    )
   | T_sum {layout ; content} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ Ast_aggregated.Helpers.kv_list_of_t_sum ~layout content in
       let (Label constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in

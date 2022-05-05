@@ -147,65 +147,13 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/id.mligo", line 101, characters 27-33:
-    100 | let skip (p,s: unit * storage) =
-    101 |   let void: unit = assert (amount = storage.2.1) in
-    102 |   let identities, last_id, prices = storage in
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/negative/id.mligo", line 74, characters 64-70:
-     73 |       match current_id_details with
-     74 |       | Some id_details -> (sender = id_details.controller) || (sender = id_details.owner)
-     75 |       | None -> failwith ("No such ID " + id)
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/negative/id.mligo", line 74, characters 28-34:
-     73 |       match current_id_details with
-     74 |       | Some id_details -> (sender = id_details.controller) || (sender = id_details.owner)
-     75 |       | None -> failwith ("No such ID " + id)
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/negative/id.mligo", line 54, characters 7-13:
-     53 |   let is_allowed: bool =
-     54 |     if sender = current_id_details.owner
-     55 |     then true
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/negative/id.mligo", line 39, characters 12-18:
-     38 |   let new_id_details: id_details = {
-     39 |     owner = sender ;
-     40 |     controller = controller ;
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/negative/id.mligo", line 35, characters 14-20:
-     34 |     | Some addr -> addr
-     35 |     | None -> sender
-     36 |   in
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/negative/id.mligo", line 29, characters 27-33:
-     28 | let buy (parameter, storage: (bytes * address option) * storage) =
-     29 |   let void: unit = assert (amount = storage.2.0) in
-     30 |   let profile, initial_controller = parameter in
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/negative/id.mligo", line 45, characters 4-51:
+    File "../../test/contracts/negative/id.mligo", line 45, characters 4-18:
      44 |   let updated_identities: (id, id_details) big_map =
      45 |     Big_map.update new_id new_id_details identities
      46 |   in
 
-    Invalid arguments.
-    Expected an argument of type ('a, option ('b), map ('a ,
-    'b)) or ('a, option ('b), big_map ('a ,
-    'b)), but got an argument of type int, record[controller -> address , owner -> address , profile -> bytes], big_map (int ,
-    record[controller -> address , owner -> address , profile -> bytes]). |}]
+    Invalid type(s).
+    Expected: "option (v)", but got: "id_details". |}]
 
 (*
   This test is here to ensure compatibility with comparable pairs introduced in carthage
@@ -229,7 +177,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-46:
+    File "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-27:
       1 |
       2 | const bad : unit = failwith((nil : list(int)))
 

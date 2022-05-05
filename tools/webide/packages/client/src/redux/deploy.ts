@@ -7,7 +7,7 @@ import {
 
 export enum networkType {
   Mainnet = 'mainnet',
-  Hangzhounet = 'hangzhounet',
+  Ithacanet = 'ithacanet',
 }
 
 export enum signerType {
@@ -19,6 +19,7 @@ export enum signerType {
 export enum ActionType {
   ChangeEntrypoint = 'deploy-change-entrypoint',
   ChangeStorage = 'deploy-change-storage',
+  ChangeProtocol = 'deploy-change-protocol',
   UseNetwork = 'deploy-network',
   UseSigner = 'deploy-signer',
 }
@@ -27,6 +28,7 @@ export interface DeployState {
   entrypoint: string;
   storage: string;
   network: string;
+  protocol: string;
   signer: string;
 }
 
@@ -38,6 +40,11 @@ export class ChangeEntrypointAction {
 export class ChangeStorageAction {
   public readonly type = ActionType.ChangeStorage;
   constructor(public payload: DeployState['storage']) {}
+}
+
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeProtocol;
+  constructor(public payload: DeployState['protocol']) {}
 }
 
 export class UseNetworkAction {
@@ -55,12 +62,14 @@ type Action =
   | ChangeStorageAction
   | ChangeSelectedExampleAction
   | UseNetworkAction
-  | UseSignerAction;
+  | UseSignerAction
+  | ChangeProtocolAction;
 
 const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
-  network: NetworkType.HANGZHOUNET,
+  network: NetworkType.ITHACANET,
+  protocol: 'ithaca',
   signer: signerType.Sign,
 };
 
@@ -80,6 +89,11 @@ const deploy = (state = DEFAULT_STATE, action: Action): DeployState => {
       return {
         ...state,
         storage: action.payload,
+      };
+    case ActionType.ChangeProtocol:
+      return {
+        ...state,
+        protocol: action.payload,
       };
     case ActionType.UseNetwork:
       return {

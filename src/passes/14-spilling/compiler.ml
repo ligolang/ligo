@@ -54,7 +54,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
-  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -213,6 +213,8 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_REGISTER_CONSTANT
       | C_TEST_CONSTANT_TO_MICHELSON
       | C_TEST_REGISTER_FILE_CONSTANTS
+      | C_TEST_PUSH_CONTEXT
+      | C_TEST_POP_CONTEXT
     ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
@@ -279,25 +281,25 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
-        Test_exec_error | Ticket   | Michelson_program    | Sapling_state       |
+        Ticket                     | Michelson_program    | Sapling_state       |
         Contract        | Map      | Big_map              | Typed_address       |
-        Michelson_pair  | Set      | Test_exec_result     | Mutation            |
-        List), []) 
+        Michelson_pair  | Set      | Mutation             |
+        List            | External _), [])
         -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
-      Baker_hash   | Pvss_key  | Test_exec_error      |
+      Baker_hash   | Pvss_key  |
       Chest        | Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key | Test_exec_result     |
+      Never        | Chest_key |
       Typed_address| Mutation  | Bytes                |
-      List), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      List         | External _), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
@@ -386,7 +388,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (LMap.find_opt l fields)
         in
         let var = compile_variable @@ fst x in
-        return @@ E_let_in (expr, false, ((var, tree.type_), body))
+        return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
         let y_var = ValueVar.fresh () in
@@ -409,10 +411,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_type_abstraction _
   | E_type_inst _ ->
     raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, ((compile_variable let_binder, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder, rhs'.type_expression), result')))
   | E_type_in {type_binder=_; rhs=_; let_result} ->
     let result' = self let_result in
     result'
@@ -532,7 +534,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, ((record_var, record.type_expression),
+        (E_let_in (record, false, false, ((record_var, record.type_expression),
                    build_record_update
                      (e_var record_var record.type_expression)
                      path)))
@@ -680,7 +682,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                         (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
-                    return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
+                    return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let a' =
@@ -847,7 +849,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                       (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
-                  return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
+                  return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
                 )
               | ((`Node (a , b)) , tv) ->
                 let a' =

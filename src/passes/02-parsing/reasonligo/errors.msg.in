@@ -4158,3 +4158,308 @@ contract: WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+interactive_expr: ES6FUN LPAR Type WILD
+##
+## Ends in an error in state: 201.
+##
+## type_generics -> Type . Ident COMMA [ WILD LPAR LBRACE Ident Attr ]
+## type_generics -> Type . par(nsepseq(type_name,COMMA)) COMMA [ WILD LPAR LBRACE Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type LPAR WILD
+##
+## Ends in an error in state: 202.
+##
+## par(nsepseq(type_name,COMMA)) -> LPAR . nsepseq(type_name,COMMA) RPAR [ COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type LPAR Ident WILD
+##
+## Ends in an error in state: 203.
+##
+## nsepseq(type_name,COMMA) -> Ident . [ RPAR ]
+## nsepseq(type_name,COMMA) -> Ident . COMMA nsepseq(type_name,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type LPAR Ident COMMA WILD
+##
+## Ends in an error in state: 204.
+##
+## nsepseq(type_name,COMMA) -> Ident COMMA . nsepseq(type_name,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## Ident COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type Ident WILD
+##
+## Ends in an error in state: 208.
+##
+## type_generics -> Type Ident . COMMA [ WILD LPAR LBRACE Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type LPAR Ident RPAR WILD
+##
+## Ends in an error in state: 210.
+##
+## type_generics -> Type par(nsepseq(type_name,COMMA)) . COMMA [ WILD LPAR LBRACE Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## Type par(nsepseq(type_name,COMMA))
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type Ident COMMA Verbatim
+##
+## Ends in an error in state: 212.
+##
+## fun_expr(expr) -> ES6FUN LPAR type_generics . nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type Ident COMMA Ident RPAR WILD
+##
+## Ends in an error in state: 216.
+##
+## fun_expr(expr) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR . option(type_annotation) ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type Ident COMMA Ident RPAR COLON Ident Type
+##
+## Ends in an error in state: 217.
+##
+## fun_expr(expr) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) . ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 32, spurious reduction of production core_type -> Ident
+## In state 64, spurious reduction of production fun_type_level -> core_type
+## In state 81, spurious reduction of production type_expr -> fun_type_level
+## In state 87, spurious reduction of production type_annotation -> COLON type_expr
+## In state 156, spurious reduction of production option(type_annotation) -> type_annotation
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: ES6FUN LPAR Type Ident COMMA Ident RPAR ARROW WILD
+##
+## Ends in an error in state: 218.
+##
+## fun_expr(expr) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW . expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Attr ES6FUN LPAR Type Ident COMMA Verbatim
+##
+## Ends in an error in state: 331.
+##
+## fun_expr(expr) -> nseq(Attr) ES6FUN LPAR type_generics . nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Attr ES6FUN LPAR Type Ident COMMA Ident RPAR WILD
+##
+## Ends in an error in state: 333.
+##
+## fun_expr(expr) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR . option(type_annotation) ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Attr ES6FUN LPAR Type Ident COMMA Ident RPAR COLON Ident Type
+##
+## Ends in an error in state: 334.
+##
+## fun_expr(expr) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) . ARROW expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 32, spurious reduction of production core_type -> Ident
+## In state 64, spurious reduction of production fun_type_level -> core_type
+## In state 81, spurious reduction of production type_expr -> fun_type_level
+## In state 87, spurious reduction of production type_annotation -> COLON type_expr
+## In state 156, spurious reduction of production option(type_annotation) -> type_annotation
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: Attr ES6FUN LPAR Type Ident COMMA Ident RPAR ARROW WILD
+##
+## Ends in an error in state: 335.
+##
+## fun_expr(expr) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW . expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Module Let EOF Directive COMMA COLON Attr ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ES6FUN LPAR Type Ident COMMA Verbatim
+##
+## Ends in an error in state: 403.
+##
+## fun_expr(last_expr_opt_semi) -> ES6FUN LPAR type_generics . nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ES6FUN LPAR Type Ident COMMA Ident RPAR WILD
+##
+## Ends in an error in state: 405.
+##
+## fun_expr(last_expr_opt_semi) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR . option(type_annotation) ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ES6FUN LPAR Type Ident COMMA Ident RPAR COLON Ident Type
+##
+## Ends in an error in state: 406.
+##
+## fun_expr(last_expr_opt_semi) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) . ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 32, spurious reduction of production core_type -> Ident
+## In state 64, spurious reduction of production fun_type_level -> core_type
+## In state 81, spurious reduction of production type_expr -> fun_type_level
+## In state 87, spurious reduction of production type_annotation -> COLON type_expr
+## In state 156, spurious reduction of production option(type_annotation) -> type_annotation
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE ES6FUN LPAR Type Ident COMMA Ident RPAR ARROW WILD
+##
+## Ends in an error in state: 407.
+##
+## fun_expr(last_expr_opt_semi) -> ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW . last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Attr ES6FUN LPAR Type Ident COMMA Verbatim
+##
+## Ends in an error in state: 445.
+##
+## fun_expr(last_expr_opt_semi) -> nseq(Attr) ES6FUN LPAR type_generics . nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Attr ES6FUN LPAR Type Ident COMMA Ident RPAR WILD
+##
+## Ends in an error in state: 447.
+##
+## fun_expr(last_expr_opt_semi) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR . option(type_annotation) ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Attr ES6FUN LPAR Type Ident COMMA Ident RPAR COLON Ident Type
+##
+## Ends in an error in state: 448.
+##
+## fun_expr(last_expr_opt_semi) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) . ARROW last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 32, spurious reduction of production core_type -> Ident
+## In state 64, spurious reduction of production fun_type_level -> core_type
+## In state 81, spurious reduction of production type_expr -> fun_type_level
+## In state 87, spurious reduction of production type_annotation -> COLON type_expr
+## In state 156, spurious reduction of production option(type_annotation) -> type_annotation
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+interactive_expr: LBRACE Attr ES6FUN LPAR Type Ident COMMA Ident RPAR ARROW WILD
+##
+## Ends in an error in state: 449.
+##
+## fun_expr(last_expr_opt_semi) -> nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW . last_expr_opt_semi [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) ES6FUN LPAR type_generics nsepseq(fun_arg,COMMA) RPAR option(type_annotation) ARROW
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

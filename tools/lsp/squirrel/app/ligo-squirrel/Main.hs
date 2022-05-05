@@ -2,10 +2,11 @@
 
 module Main (main) where
 
-import Algebra.Graph.Class qualified as G (empty)
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
+import Data.Aeson qualified as Aeson
+import Data.Bool (bool)
 import Data.Default
 import Data.Foldable (for_)
 import Data.HashSet qualified as HashSet
@@ -15,22 +16,24 @@ import Data.Text qualified as T
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
-import StmContainers.Map (newIO)
 import System.Exit
 import System.Log qualified as L
 import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (modifyMVar_, newEmptyMVar, newMVar, tryReadMVar)
+import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
 import AST
-import ASTMap qualified
 import Cli.Impl (getLigoVersion)
 import Config (Config (..))
 import Config qualified
+import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
 import Log (i)
 import Log qualified
 import RIO (RIO, RioEnv (..))
 import RIO qualified
+import RIO.Diagnostic qualified as Diagnostic
+import RIO.Document qualified as Document
+import RIO.Indexing qualified as Indexing
 import Range
 import Util (toLocation)
 
@@ -44,7 +47,7 @@ mainLoop =
       serverDefinition = S.ServerDefinition
         { S.onConfigurationChange = Config.getConfigFromNotification
         , S.defaultConfig = def
-        , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> initialize
+        , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> RIO.newRioEnv
         , S.staticHandlers = catchExceptions handlers
         , S.interpretHandler = \envs -> S.Iso (runLogger . RIO.run envs) liftIO
         , S.options = lspOptions
@@ -119,15 +122,6 @@ mainLoop =
             then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
             else handler msg resp
 
-initialize :: IO RioEnv
-initialize = do
-  reConfig <- newEmptyMVar
-  reCache <- ASTMap.empty $ RIO.load @Fallback
-  reOpenDocs <- newMVar HashSet.empty
-  reIncludes <- newMVar G.empty
-  reTempFiles <- newIO
-  pure RioEnv {..}
-
 handlers :: S.Handlers RIO
 handlers = mconcat
   [ S.notificationHandler J.SInitialized handleInitialized
@@ -152,36 +146,33 @@ handlers = mconcat
   , S.requestHandler J.STextDocumentFormatting handleDocumentFormattingRequest
   , S.requestHandler J.STextDocumentRangeFormatting handleDocumentRangeFormattingRequest
   , S.requestHandler J.STextDocumentCodeAction handleTextDocumentCodeAction
-  -- , S.requestHandler J.STextDocumentOnTypeFormatting
 
   , S.notificationHandler J.SCancelRequest (\_msg -> pure ())
   , S.notificationHandler J.SWorkspaceDidChangeConfiguration handleDidChangeConfiguration
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
-  --, S.requestHandler J.SWorkspaceExecuteCommand _
+
+  , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
-handleInitialized _ = do
-  RIO.registerDidChangeConfiguration
-  void RIO.fetchCustomConfig
-  RIO.registerFileWatcher
+handleInitialized _ = RIO.initializeRio
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
 
-  RIO.Contract doc _ <- RIO.forceFetch' RIO.BestEffort uri
+  RIO.Contract doc _ <- Document.forceFetch' Document.BestEffort uri
   openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
-    RIO.collectErrors doc (Just ver)
+    Diagnostic.collectErrors doc (Just ver)
     pure $ HashSet.insert uri openDocs
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   $(Log.debug) [i|Changed text document: #{uri}|]
-  void $ RIO.forceFetchAndNotify notify RIO.LeastEffort uri
+  void $ Document.forceFetchAndNotify notify Document.LeastEffort uri
   where
     -- Clear diagnostics for all contracts in this WCC and then send diagnostics
     -- collected from this URI.
@@ -192,15 +183,15 @@ handleDidChangeTextDocument notif = do
       let ver = notif^.J.params.J.textDocument.J.version
       openDocsVar <- asks reOpenDocs
       modifyMVar_ openDocsVar \openDocs -> do
-        RIO.clearDiagnostics nuris
-        RIO.collectErrors doc ver
+        Diagnostic.clearDiagnostics nuris
+        Diagnostic.collectErrors doc ver
         pure openDocs
 
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
 
-  RIO.Contract _ nuris <- RIO.fetch' RIO.LeastEffort uri
+  RIO.Contract _ nuris <- Document.fetch' Document.LeastEffort uri
 
   openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
@@ -208,7 +199,7 @@ handleDidCloseTextDocument notif = do
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
     let nuriMap = HashSet.fromList nuris
     when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
-      RIO.clearDiagnostics nuris
+      Diagnostic.clearDiagnostics nuris
     pure openDocs'
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
@@ -222,7 +213,7 @@ handleDefinitionRequest req respond = do
       J.DefinitionParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri
       pos = fromLspPosition _position
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort (J.toNormalizedUri uri)
+    tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
     let location = case AST.definitionOf pos tree of
           Just defPos -> [toLocation defPos]
           Nothing     -> []
@@ -235,7 +226,7 @@ handleTypeDefinitionRequest req respond = do
       J.TypeDefinitionParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri
       pos = _position ^. to fromLspPosition
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort (J.toNormalizedUri uri)
+    tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
     let wrapAndRespond = respond . Right . J.InR . J.InL . J.List
     let definition = case AST.typeDefinitionAt pos tree of
           Just defPos -> [J.Location uri $ toLspRange defPos]
@@ -248,8 +239,8 @@ handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
     nuri = J.toNormalizedUri uri
-  tree <- contractTree <$> RIO.fetch RIO.BestEffort nuri
-  RIO.invalidate nuri
+  tree <- contractTree <$> Document.fetch Document.BestEffort nuri
+  Document.invalidate nuri
   respond . Right =<< AST.formatDocument tree
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
@@ -258,14 +249,14 @@ handleDocumentRangeFormattingRequest req respond = do
     uri = req ^. J.params . J.textDocument . J.uri
     nuri = J.toNormalizedUri uri
     pos = fromLspRange $ req ^. J.params . J.range
-  tree <- contractTree <$> RIO.fetch RIO.BestEffort nuri
-  RIO.invalidate nuri
+  tree <- contractTree <$> Document.fetch Document.BestEffort nuri
+  Document.invalidate nuri
   respond . Right =<< AST.formatAt pos tree
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
     let (_, nuri, pos) = getUriPos req
-    tree <- contractTree <$> RIO.fetch RIO.NormalEffort nuri
+    tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing   -> []
@@ -276,7 +267,7 @@ handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
 handleCompletionRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
+    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
     $(Log.debug) [i|Completion request returned #{completions}|]
     respond . Right . J.InL . J.List $ completions
@@ -292,14 +283,14 @@ handleSignatureHelpRequest req respond = do
     J.SignatureHelpParams{_textDocument, _position} = req ^. J.params
     uri = _textDocument ^. J.uri
     position = fromLspPosition _position
-  tree <- contractTree <$> RIO.fetch RIO.LeastEffort (J.toNormalizedUri uri)
+  tree <- contractTree <$> Document.fetch Document.LeastEffort (J.toNormalizedUri uri)
   let signatureHelp = getSignatureHelp (tree ^. nestedLIGO) position
   respond . Right $ signatureHelp
 
 handleFoldingRangeRequest :: S.Handler RIO 'J.TextDocumentFoldingRange
 handleFoldingRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
+    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     let actions = foldingAST (tree ^. nestedLIGO)
     respond . Right . J.List $ toFoldingRange <$> actions
 
@@ -309,7 +300,7 @@ handleTextDocumentCodeAction req respond = do
       uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
       r = req ^. J.params . J.range . to fromLspRange
       con = req ^. J.params . J.context
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
+    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     let actions = collectCodeActions r con (J.fromNormalizedUri uri) tree
     let response = Right . J.List . fmap J.InR $ actions
     respond response
@@ -318,14 +309,14 @@ handleSelectionRangeRequest :: S.Handler RIO 'J.TextDocumentSelectionRange
 handleSelectionRangeRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let positions = req ^. J.params . J.positions ^.. folded
-    tree <- contractTree <$> RIO.fetch RIO.NormalEffort uri
+    tree <- contractTree <$> Document.fetch Document.NormalEffort uri
     let results = map (findSelectionRange (tree ^. nestedLIGO)) positions
     respond . Right . J.List $ results
 
 handleDocumentLinkRequest :: S.Handler RIO 'J.TextDocumentDocumentLink
 handleDocumentLinkRequest req respond = do
   let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-  contractInfo <- RIO.fetch RIO.LeastEffort uri
+  contractInfo <- Document.fetch Document.LeastEffort uri
   collected <-
     getDocumentLinks
       (contractFile contractInfo)
@@ -335,7 +326,7 @@ handleDocumentLinkRequest req respond = do
 handleDocumentSymbolsRequest :: S.Handler RIO 'J.TextDocumentDocumentSymbol
 handleDocumentSymbolsRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
+    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     let result = extractDocumentSymbols (J.fromNormalizedUri uri) tree
     respond . Right . J.InR . J.List $ result
 
@@ -350,7 +341,7 @@ handleHoverRequest req respond = do
       J.HoverParams{_textDocument, _position} = req ^. J.params
       uri = _textDocument ^. J.uri . to J.toNormalizedUri
       pos = fromLspPosition _position
-    tree <- contractTree <$> RIO.fetch RIO.LeastEffort uri
+    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
     respond . Right $ hoverDecl pos tree
 
 handleRenameRequest :: S.Handler RIO 'J.TextDocumentRename
@@ -358,7 +349,7 @@ handleRenameRequest req respond = do
     let (_, nuri, pos) = getUriPos req
     let newName = req ^. J.params . J.newName
 
-    tree <- contractTree <$> RIO.fetch RIO.NormalEffort nuri
+    tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
 
     case renameDeclarationAt pos tree newName of
       NotFound -> do
@@ -385,15 +376,14 @@ handleRenameRequest req respond = do
               , _documentChanges = Nothing
               , _changeAnnotations = Nothing
               }
-        RIO.invalidate nuri
+        Document.invalidate nuri
         respond . Right $ response
-        RIO.invalidate nuri
 
 handlePrepareRenameRequest :: S.Handler RIO 'J.TextDocumentPrepareRename
 handlePrepareRenameRequest req respond = do
     let (_, nuri, pos) = getUriPos req
 
-    tree <- contractTree <$> RIO.fetch RIO.NormalEffort nuri
+    tree <- contractTree <$> Document.fetch Document.NormalEffort nuri
 
     respond . Right . fmap (J.InL . toLspRange) $ prepareRenameDeclarationAt pos tree
 
@@ -405,21 +395,20 @@ handleDidChangeConfiguration notif = do
 handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do
   let J.List changes = notif ^. J.params . J.changes
-  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) -> case change of
-    J.FcCreated -> do
-      $(Log.debug) [i|Created #{uri}|]
-      void $ RIO.forceFetch' RIO.BestEffort uri
-    J.FcChanged -> do
-      openDocsVar <- asks reOpenDocs
-      mOpenDocs <- tryReadMVar openDocsVar
-      case mOpenDocs of
-        Just openDocs | not $ HashSet.member uri openDocs -> do
-          $(Log.debug) [i|Changed #{uri}|]
-          void $ RIO.forceFetch' RIO.BestEffort uri
-        _ -> pure ()
-    J.FcDeleted -> do
-      $(Log.debug) [i|Deleted #{uri}|]
-      RIO.delete uri
+  for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) ->
+    for_ (J.uriToNormalizedFilePath uri) \nfp -> do
+      let fp = J.fromNormalizedFilePath nfp
+      bool Indexing.handleProjectFileChanged Document.handleLigoFileChanged (isLigoFile fp) nfp change
+
+handleCustomMethod'BuildGraph
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'BuildGraph req respond =
+  case req ^. J.params of
+    Aeson.Null -> do
+      buildGraphM <- tryReadMVar =<< asks reBuildGraph
+      respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
+    _ ->
+      respond $ Left $ J.ResponseError J.InvalidRequest "This request expects null" Nothing
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

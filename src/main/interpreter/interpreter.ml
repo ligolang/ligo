@@ -975,6 +975,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
+    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
@@ -995,7 +996,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> v = Register_file_constants (loc, calltrace, path) in
       return @@ v
     | ( C_TEST_REGISTER_FILE_CONSTANTS , _ ) -> fail @@ error_type
-    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
+    | ( C_TEST_PUSH_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Push_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_PUSH_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_POP_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Pop_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SOURCE | C_SENDER | C_AMOUNT | C_BALANCE | C_NOW | C_LEVEL | C_SELF |
@@ -1084,7 +1092,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
             let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+            return @@ Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
@@ -1092,7 +1100,11 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_}} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
+      let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
+      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
+    )
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
     )

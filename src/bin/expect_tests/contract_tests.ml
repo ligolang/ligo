@@ -10,35 +10,7 @@ let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    1171 bytes |}] ;
+    1175 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect {|
@@ -46,49 +18,7 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/multisig-v2.ligo", line 121, characters 22-67:
-    120 |           then s.proposal_counters[Tezos.sender] :=
-    121 |                  abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
-    122 |           else skip;
-
-    Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 81, characters 6-51:
-     80 |     var sender_proposal_counter : nat :=
-     81 |       get_force (Tezos.sender, s.proposal_counters);
-     82 |
-
-    Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 73, characters 13-58:
-     72 |           s.proposal_counters[sender] :=
-     73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-     74 |              new_store := set [Tezos.sender]
-
-    Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-36:
-     71 |           // the message has never been received before
-     72 |           s.proposal_counters[sender] :=
-     73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 66, characters 17-62:
-     65 |           else s.proposal_counters[Tezos.sender] :=
-     66 |                  get_force (Tezos.sender, s.proposal_counters) + 1n;
-     67 |                  new_store := Set.add (Tezos.sender,voters)
-
-    Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-    File "../../test/contracts/multisig-v2.ligo", line 57, characters 9-46:
-     56 |
-     57 |     case map_get (packed_msg, s.message_store) of [
-     58 |       Some (voters) ->
-
-    Warning: constant map_get is being deprecated soon. Consider using Map.find_opt instead.
-
-    1531 bytes |}] ;
+    1569 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect {|
@@ -96,98 +26,14 @@ let%expect_test _ =
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
     (Left (Left 1)) |}] ;
 
   run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
-    File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-    116 |     cards[s.next_id] := record [
-    117 |       card_owner   = sender;
-    118 |       card_pattern = action.card_to_buy
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    108 |     if price > amount then failwith ("Not enough money") else skip;
-    109 |     // Increase quantity
-
-    Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/coase.ligo", line 72, characters 27-33:
-     71 |       ];
-     72 |     if card.card_owner =/= sender
-     73 |     then failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-    File "../../test/contracts/coase.ligo", line 56, characters 27-33:
-     55 |       ];
-     56 |     if card.card_owner =/= sender then
-     57 |       failwith ("This card doesn't belong to you")
-
-    Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
     (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 Invalid command line argument.
 The provided storage does not have the correct type for the contract.
 File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -204,34 +50,6 @@ Expected: "storage", but got: "parameter". |}] ;
 
   run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 Invalid command line argument.
 The provided parameter does not have the correct type for the given entrypoint.
 File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -249,12 +67,12 @@ Expected: "parameter", but got: "storage". |}] ;
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
+  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -262,50 +80,16 @@ let%expect_test _  =
     File "../../test/contracts/timestamp.ligo", line 3, characters 37-38:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
-
-    File "../../test/contracts/timestamp.ligo", line 4, characters 59-62:
-      3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), now)
-
-    Warning: constant now is being deprecated soon. Consider using Tezos.now instead.
 
     "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
   [%expect {|
-File "../../test/contracts/coase.ligo", line 117, characters 21-27:
-116 |     cards[s.next_id] := record [
-117 |       card_owner   = sender;
-118 |       card_pattern = action.card_to_buy
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 108, characters 15-21:
-107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
-108 |     if price > amount then failwith ("Not enough money") else skip;
-109 |     // Increase quantity
-
-Warning: constant amount is being deprecated soon. Consider using Tezos.amount instead.
-
-File "../../test/contracts/coase.ligo", line 72, characters 27-33:
- 71 |       ];
- 72 |     if card.card_owner =/= sender
- 73 |     then failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/coase.ligo", line 56, characters 27-33:
- 55 |       ];
- 56 |     if card.card_owner =/= sender then
- 57 |       failwith ("This card doesn't belong to you")
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
 { parameter
     (or (or (nat %buy_single) (nat %sell_single))
         (pair %transfer_single (nat %card_to_transfer) (address %destination))) ;
@@ -556,7 +340,6 @@ let%expect_test _ =
               DUP 3 ;
               PAIR ;
               PAIR ;
-              PACK ;
               DUP 4 ;
               CAR ;
               CAR ;
@@ -589,6 +372,7 @@ let%expect_test _ =
                          COMPARE ;
                          EQ ;
                          IF { DUP 5 ;
+                              PACK ;
                               DIG 3 ;
                               CDR ;
                               DIG 2 ;
@@ -631,48 +415,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig-v2.ligo" ] ;
   [%expect {|
-File "../../test/contracts/multisig-v2.ligo", line 121, characters 22-67:
-120 |           then s.proposal_counters[Tezos.sender] :=
-121 |                  abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
-122 |           else skip;
-
-Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 81, characters 6-51:
- 80 |     var sender_proposal_counter : nat :=
- 81 |       get_force (Tezos.sender, s.proposal_counters);
- 82 |
-
-Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 73, characters 13-58:
- 72 |           s.proposal_counters[sender] :=
- 73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
- 74 |              new_store := set [Tezos.sender]
-
-Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-36:
- 71 |           // the message has never been received before
- 72 |           s.proposal_counters[sender] :=
- 73 |              get_force (Tezos.sender, s.proposal_counters) + 1n;
-
-Warning: constant sender is being deprecated soon. Consider using Tezos.sender instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 66, characters 17-62:
- 65 |           else s.proposal_counters[Tezos.sender] :=
- 66 |                  get_force (Tezos.sender, s.proposal_counters) + 1n;
- 67 |                  new_store := Set.add (Tezos.sender,voters)
-
-Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
-File "../../test/contracts/multisig-v2.ligo", line 57, characters 9-46:
- 56 |
- 57 |     case map_get (packed_msg, s.message_store) of [
- 58 |       Some (voters) ->
-
-Warning: constant map_get is being deprecated soon. Consider using Map.find_opt instead.
-
 { parameter
     (or (or (unit %default) (lambda %send bytes (list operation)))
         (lambda %withdraw bytes (list operation))) ;
@@ -782,9 +524,16 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
                           CAR ;
                           PAIR } ;
                      SWAP ;
-                     PUSH bool True ;
                      SENDER ;
-                     UPDATE } ;
+                     PUSH bool True ;
+                     SWAP ;
+                     UPDATE ;
+                     SWAP ;
+                     PAIR } ;
+                 DUP ;
+                 CAR ;
+                 SWAP ;
+                 CDR ;
                  SWAP ;
                  DUP ;
                  DUG 2 ;
@@ -953,8 +702,9 @@ Warning: constant map_get is being deprecated soon. Consider using Map.find_opt 
              IF_NONE
                { DROP }
                { DUP ;
-                 PUSH bool False ;
                  SENDER ;
+                 PUSH bool False ;
+                 SWAP ;
                  UPDATE ;
                  DUP ;
                  SIZE ;
@@ -1308,7 +1058,7 @@ let%expect_test _ =
 
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
+      8 |   fun (x : unit) -> Tezos.amount
       9 |
     :
     Warning: unused variable "x".
@@ -1317,13 +1067,13 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
+      8 |   fun (x : unit) -> Tezos.amount
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
     File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
-      3 |   let amt : tez = Current.amount in
+      3 |   let amt : tez = Tezos.amount in
       4 |   fun (x : unit) -> amt
       5 |
     :
@@ -1333,24 +1083,10 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Current.amount in
+      3 |   let amt : tez = Tezos.amount in
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 8, characters 20-34:
-      7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Current.amount
-      9 |
-
-    Warning: constant Current.amount is being deprecated soon. Consider using Tezos.amount instead.
-
-    File "../../test/contracts/amount_lambda.mligo", line 3, characters 18-32:
-      2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Current.amount in
-      4 |   fun (x : unit) -> amt
-
-    Warning: constant Current.amount is being deprecated soon. Consider using Tezos.amount instead.
 
     { parameter bool ;
       storage (lambda unit mutez) ;
@@ -1364,7 +1100,7 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
     const y =
-      lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in UNIT() in let ()#4 = let _x = +23 in UNIT() in let ()#3 = let _x = +42 in UNIT() in _x |}]
+      lambda (_#2) return let _x = +1 in let ()#5 = let _x = +2 in unit in let ()#4 = let _x = +23 in unit in let ()#3 = let _x = +42 in unit in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_type_operator.ligo" ] ;
@@ -1377,30 +1113,23 @@ let%expect_test _ =
     Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
-  [%expect {|
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 12-21:
-      1 | let main = (parameter : int, storage : address) =>
-      2 |   ([] : list (operation), "KT1badaddr" : address);
-    :
-    Warning: unused variable "parameter".
-    Hint: replace it by "_parameter" to prevent this warning.
-
-    File "../../test/contracts/bad_address_format.religo", line 1, characters 29-36:
-      1 | let main = (parameter : int, storage : address) =>
-      2 |   ([] : list (operation), "KT1badaddr" : address);
-    :
-    Warning: unused variable "storage".
-    Hint: replace it by "_storage" to prevent this warning.
-
-    Error(s) occurred while type checking the contract:
+  run_ligo_good [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
+  [%expect{|
+    Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
-    Invalid contract notation "KT1badaddr" |}]
+    Invalid contract notation "KT1badaddr"
+
+            Note: You compiled your contract with protocol hangzhou although we internally use protocol ithaca to typecheck the produced Michelson contract
+            so you might want to ignore this error if related to a breaking change in protocol ithaca
+
+    { parameter int ;
+      storage address ;
+      code { DROP ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1498,13 +1227,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "big_map.ligo" ; "(big_map1,unit)" ] ;
   [%expect {|
-    File "../../test/contracts/big_map.ligo", line 34, characters 11-30:
-     33 |   bar[42] := 0;
-     34 |   n[42] := get_force (42, bar)
-     35 | } with n
-
-    Warning: constant get_force is being deprecated soon. Consider using Big_map.find instead.
-
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
@@ -1584,105 +1306,140 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Free variable usage is not allowed in call to Tezos.create_contract:
-File "../../test/contracts/negative/create_contract_toplevel.mligo", line 3, characters 18-23:
-  2 |
-  3 | let main (action, store : string * string) : return =
-  4 |   let toto : operation * address = Tezos.create_contract |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#11. |}] ;
 
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_var.mligo" ] ;
-  [%expect {|
-File "../../test/contracts/negative/create_contract_var.mligo", line 7, characters 10-11:
-  6 |   let toto : operation * address = Tezos.create_contract
-  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
-  8 |     (None: key_hash option)
-:
-Warning: unused variable "p".
-Hint: replace it by "_p" to prevent this warning.
+  run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/create_contract_var.mligo", line 7, characters 10-11:
+      6 |   let toto : operation * address = Tezos.create_contract
+      7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+      8 |     (None: key_hash option)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_var.mligo", line 7, characters 13-14:
-  6 |   let toto : operation * address = Tezos.create_contract
-  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
-  8 |     (None: key_hash option)
-:
-Warning: unused variable "s".
-Hint: replace it by "_s" to prevent this warning.
+    File "../../test/contracts/create_contract_var.mligo", line 7, characters 13-14:
+      6 |   let toto : operation * address = Tezos.create_contract
+      7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
+      8 |     (None: key_hash option)
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_var.mligo", line 5, characters 10-16:
-  4 |
-  5 | let main (action, store : string * string) : return =
-  6 |   let toto : operation * address = Tezos.create_contract
-:
-Warning: unused variable "action".
-Hint: replace it by "_action" to prevent this warning.
+    File "../../test/contracts/create_contract_var.mligo", line 5, characters 10-16:
+      4 |
+      5 | let main (action, store : string * string) : return =
+      6 |   let toto : operation * address = Tezos.create_contract
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_var.mligo", line 6, character 35 to line 10, character 5:
-  5 | let main (action, store : string * string) : return =
-  6 |   let toto : operation * address = Tezos.create_contract
-  7 |     (fun (p, s : nat * int) -> (([] : operation list), a))
-  8 |     (None: key_hash option)
-  9 |     300tz
- 10 |     1
- 11 |   in
-
-Free variable usage is not allowed in call to Tezos.create_contract:
-File "../../test/contracts/negative/create_contract_var.mligo", line 3, characters 4-5:
-  2 |
-  3 | let a : int = 2
-  4 | |}] ;
+    { parameter string ;
+      storage string ;
+      code { CDR ;
+             PUSH int 1 ;
+             PUSH mutez 300000000 ;
+             NONE key_hash ;
+             CREATE_CONTRACT
+               { parameter nat ;
+                 storage int ;
+                 code { DROP ; PUSH int 2 ; NIL operation ; PAIR } } ;
+             PAIR ;
+             SWAP ;
+             NIL operation ;
+             DIG 2 ;
+             CAR ;
+             CONS ;
+             PAIR } } |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_modfv.mligo" ] ;
-  [%expect {|
-File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
-  7 |   let toto : operation * address = Tezos.create_contract
-  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
-  9 |     (None: key_hash option)
-:
-Warning: unused variable "p".
-Hint: replace it by "_p" to prevent this warning.
+  [%expect{|
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
+      7 |   let toto : operation * address = Tezos.create_contract
+      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+      9 |     (None: key_hash option)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 13-14:
-  7 |   let toto : operation * address = Tezos.create_contract
-  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
-  9 |     (None: key_hash option)
-:
-Warning: unused variable "s".
-Hint: replace it by "_s" to prevent this warning.
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 13-14:
+      7 |   let toto : operation * address = Tezos.create_contract
+      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+      9 |     (None: key_hash option)
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_modfv.mligo", line 3, characters 10-16:
-  2 |
-  3 | let main (action, store : string * string) : return =
-  4 |   module Foo = struct
-:
-Warning: unused variable "action".
-Hint: replace it by "_action" to prevent this warning.
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 3, characters 10-16:
+      2 |
+      3 | let main (action, store : string * string) : return =
+      4 |   module Foo = struct
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/create_contract_modfv.mligo", line 7, character 35 to line 11, character 8:
-  6 |   end in
-  7 |   let toto : operation * address = Tezos.create_contract
-  8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
-  9 |     (None: key_hash option)
- 10 |     300tz
- 11 |     "un"
- 12 |   in
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 7, character 35 to line 11, character 8:
+      6 |   end in
+      7 |   let toto : operation * address = Tezos.create_contract
+      8 |     (fun (p, s : nat * string) -> (([] : operation list), Foo.store))
+      9 |     (None: key_hash option)
+     10 |     300tz
+     11 |     "un"
+     12 |   in
 
-Free variable usage is not allowed in call to Tezos.create_contract:
-File "../../test/contracts/negative/create_contract_modfv.mligo", line 5, characters 8-13:
-  4 |   module Foo = struct
-  5 |     let store = store
-  6 |   end in |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#12. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 3, characters 40-46:
-      2 |
-      3 | let dummy_contract (p, s : nat * int) : return =
-      4 |  (([] : operation list), foo)
+  [%expect{|
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
+      8 | let main (action, store : int * int) : return =
+      9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+     10 |   let toto : operation list = [ op ] in
+    :
+    Warning: unused variable "addr".
+    Hint: replace it by "_addr" to prevent this warning.
 
-    Type "return" not found. |}] ;
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 10-16:
+      7 |
+      8 | let main (action, store : int * int) : return =
+      9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+    :
+    Warning: unused variable "action".
+    Hint: replace it by "_action" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 18-23:
+      7 |
+      8 | let main (action, store : int * int) : return =
+      9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+    :
+    Warning: unused variable "store".
+    Hint: replace it by "_store" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 19-89:
+      8 | let main (action, store : int * int) : return =
+      9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+     10 |   let toto : operation list = [ op ] in
+
+    Not all free variables could be inlined in Tezos.create_contract usage: foo. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract.mligo" ] ;
-  [%expect {|
+  [%expect{|
     File "../../test/contracts/create_contract.mligo", line 5, characters 10-11:
       4 |   let toto : operation * address = Tezos.create_contract
       5 |     (fun (p, s : nat * string) -> (([] : operation list), "one"))
@@ -1726,7 +1483,7 @@ File "../../test/contracts/negative/create_contract_modfv.mligo", line 5, charac
              PAIR } } |}];
 
   run_ligo_good [ "compile" ; "contract" ; contract "tuples_no_annotation.religo" ] ;
-  [%expect {|
+  [%expect{|
     File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14:
       4 |
       5 | let main = ((p,storage): (parameter, storage)) => {
@@ -1972,20 +1729,20 @@ const main : (int , storage) -> (list (operation) , storage) =
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
   (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return TRUE()
-const f1 = lambda (_a : string) return TRUE()
-const f2 = lambda (_a : string) return TRUE()
+const f0 = lambda (_a : string) return true
+const f1 = lambda (_a : string) return true
+const f2 = lambda (_a : string) return true
 const letin_nesting =
   lambda (_#2 : unit) return let s = "test" in
                              let p0 = (f0)@(s) in
                              {
-                                ASSERTION(p0);
+                                (assert)@(p0);
                                 let p1 = (f1)@(s) in
                                 {
-                                   ASSERTION(p1);
+                                   (assert)@(p1);
                                    let p2 = (f2)@(s) in
                                    {
-                                      ASSERTION(p2);
+                                      (assert)@(p2);
                                       s
                                    }
                                 }
@@ -2006,20 +1763,20 @@ const main =
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
   (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return TRUE()
-const f1 = lambda (_a : string) return TRUE()
-const f2 = lambda (_a : string) return TRUE()
+const f0 = lambda (_a : string) return true
+const f1 = lambda (_a : string) return true
+const f2 = lambda (_a : string) return true
 const letin_nesting =
   lambda (_#2 : unit) return let s = "test" in
                              let p0 = (f0)@(s) in
                              {
-                                ASSERTION(p0);
+                                (assert)@(p0);
                                 let p1 = (f1)@(s) in
                                 {
-                                   ASSERTION(p1);
+                                   (assert)@(p1);
                                    let p2 = (f2)@(s) in
                                    {
-                                      ASSERTION(p2);
+                                      (assert)@(p2);
                                       s
                                    }
                                 }
@@ -2208,7 +1965,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
-    The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
     Hint: You might want to add a type annotation.
 
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
@@ -2314,12 +2071,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "compile_test.mligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/compile_test.mligo", line 15, characters 28-42:
-     14 |  (match action with
-     15 |    Increment (n) -> let _ = Test.log "foo" in add (store, n)
-     16 |  | Decrement (n) -> sub (store, n)
+    File "../../test/contracts/negative/compile_test.mligo", line 21, characters 14-30:
+     20 |   let (taddr, _, _) = Test.originate main  initial_storage 0tez in
+     21 |   let contr = Test.to_contract(taddr) in
+     22 |   let _r = Test.transfer_to_contract_exn contr (Increment (32)) 1tez  in
 
-    Invalid call to Test primitive. |}]
+    Can't infer the type of this value, please add a type annotation. |}]
 
 (* remove unused declarations *)
 let%expect_test _ =
@@ -2340,11 +2097,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; bad_contract "bad_annotation_unpack.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-42:
+    File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-21:
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
 
     Invalid type(s).
-    Expected: "string", but got: "option ('a)". |}]
+    Expected: "string", but got: "option (a)". |}]
 
 (* check annotations' capitalization *)
 let%expect_test _ =
@@ -2847,14 +2604,12 @@ let%expect_test _ =
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "increment_with_test.mligo" ; "z.1" ] ;
-  [%expect{|
-    (Left (Right 32)) |}]
+  [%expect{| (Left (Right 32)) |}]
 
 (* Test compiling storage in a file which uses test primitives *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "increment_with_test.mligo" ; "z.0 + 10" ] ;
-  [%expect{|
-    42 |}]
+  [%expect{| 42 |}]
 
 (* Test compiling expression with curried recursive function *)
 let%expect_test _ =
@@ -2976,7 +2731,7 @@ File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-
   8 | (* here we expect a warning because both A constructor have the same parameter type *)
   9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
 
-The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
+Warning: The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
 Hint: You might want to add a type annotation.
 
 { parameter unit ;
@@ -2988,6 +2743,27 @@ Hint: You might want to add a type annotation.
 { parameter unit ;
   storage (or (nat %a) (nat %b)) ;
   code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
+
+(* extend built-in modules *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "y" ; "--init-file" ; contract "extend_builtin.ligo" ] ;
+  [%expect{|
+44 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "y" ; "--init-file" ; contract "extend_builtin.mligo" ] ;
+  [%expect{|
+44 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "y" ; "--init-file" ; contract "extend_builtin.jsligo" ] ;
+  [%expect{|
+44 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
+  [%expect{|
+44 |}]
 
 (* check compiling many (more than 10) views *)
 let%expect_test _ =
@@ -3007,3 +2783,16 @@ let%expect_test _ =
   view "view_3" unit int { CDR ; PUSH int 3 ; ADD } ;
   view "view_2" unit int { CDR ; PUSH int 2 ; ADD } ;
   view "view_1" unit int { CDR ; PUSH int 1 ; ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "call_view_impure.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH address "tz1fakefakefakefakefakefakefakcphLA5" ;
+             SENDER ;
+             VIEW "foo" unit ;
+             IF_NONE { UNIT } {} ;
+             NIL operation ;
+             PAIR } } |}]

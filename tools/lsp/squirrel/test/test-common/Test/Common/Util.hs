@@ -1,15 +1,14 @@
 module Test.Common.Util
   ( ScopeTester
+  , testDir
   , contractsDir
   , getContractsWithExtension
   , readContract
   , readContractWithMessages
   , readContractWithScopes
   , supportedExtensions
-  , withoutLogger
   ) where
 
-import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
 import Data.List (isSuffixOf)
@@ -21,27 +20,29 @@ import System.IO.Error (isDoesNotExistError)
 import UnliftIO.Exception (catch, throwIO)
 
 import AST.Includes (insertPreprocessorRanges)
-import AST.Parser (Source (Path), parsePreprocessed, parseWithScopes)
-import AST.Scope.Common (HasScopeForest, Info', contractTree, _cMsgs, _cTree, _getContract)
+import AST.Parser (parsePreprocessed, parseWithScopes)
+import AST.Scope.Common (ContractInfo, HasScopeForest, Info', contractTree)
 import AST.Skeleton (SomeLIGO)
 
 import Extension (supportedExtensions)
-import Log (NoLoggingT, withoutLogger)
-import Parser (ParsedInfo, Msg)
+import Log (NoLoggingT (..))
+import Parser (ParsedInfo)
+import ParseTree (pathToSrc)
 
 type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
 
-contractsDir :: FilePath
-contractsDir =
+testDir, contractsDir :: FilePath
+testDir =
   $(
     let
       getDir :: IO FilePath
-      getDir = getEnv "CONTRACTS_DIR" `catch` \e ->
+      getDir = getEnv "TEST_DIR" `catch` \e ->
         if isDoesNotExistError e
-        then pure "../../../src/test/contracts"
+        then pure $ ".." </> ".." </> ".." </> "src" </> "test"
         else throwIO e
     in liftIO getDir >>= liftString
   )
+contractsDir = testDir </> "contracts"
 
 getContractsWithExtension :: String -> [FilePath] -> FilePath -> IO [FilePath]
 getContractsWithExtension ext ignore dir = listDirectory dir
@@ -50,18 +51,19 @@ getContractsWithExtension ext ignore dir = listDirectory dir
                                 <&> filter (`notElem` ignore)
 
 readContract :: FilePath -> IO (SomeLIGO ParsedInfo)
-readContract filepath = withoutLogger \runLogger -> do
-  pp <- runLogger $ parsePreprocessed (Path filepath)
+readContract filepath = do
+  pp <- readContractWithMessages filepath
   ppRanges <- insertPreprocessorRanges pp
   pure (contractTree ppRanges)
 
-readContractWithMessages :: FilePath -> IO (SomeLIGO ParsedInfo, [Msg])
-readContractWithMessages filepath = withoutLogger \runLogger ->
-  (_cTree &&& _cMsgs) . _getContract
-    <$> (insertPreprocessorRanges =<< runLogger (parsePreprocessed $ Path filepath))
+readContractWithMessages :: FilePath -> IO ContractInfo
+readContractWithMessages filepath = do
+  src <- pathToSrc filepath
+  runNoLoggingT $ parsePreprocessed src
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath = withoutLogger \runLogger ->
-  contractTree <$> runLogger (parseWithScopes @parser $ Path filepath)
+readContractWithScopes filepath = do
+  src <- pathToSrc filepath
+  contractTree <$> runNoLoggingT (parseWithScopes @parser src)

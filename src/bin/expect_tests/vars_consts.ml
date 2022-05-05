@@ -325,7 +325,7 @@ let%expect_test _ =
     const bar =
       lambda (_u : unit) return  match (4 , 5) with
                                   | (x,y) -> let add = lambda (_u : unit) return ADD(x ,y) in
-                                             (add)@(UNIT()) |}]
+                                             (add)@(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;

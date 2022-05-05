@@ -36,12 +36,14 @@ let attributes attr =
   let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
-let known_attributes { inline ; no_mutation ; view ; public } =
+let known_attributes { inline ; no_mutation ; view ; public ; thunk ; hidden } =
   `Assoc [
     ("inline", `Bool inline) ;
     ("no_mutation", `Bool no_mutation) ;
     ("view", `Bool view) ;
     ("public", `Bool public) ;
+    ("thunk", `Bool thunk) ;
+    ("hidden", `Bool hidden) ;
   ]
 
 let for_all type_expression {ty_binder ; kind = _ ; type_ } =
@@ -262,7 +264,6 @@ let deprecated {name;const} =
   ]
 
 let rich_constant = function
-  | Deprecated d -> `List [`String "Deprecatd"; deprecated d ]
   | Const      c -> `List [`String "Const"; constant' c ]
 
 let declaration_type type_expression a_t {type_binder; type_expr; type_attr} =

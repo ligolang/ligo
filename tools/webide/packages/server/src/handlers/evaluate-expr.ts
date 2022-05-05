@@ -8,6 +8,7 @@ interface EvaluateValueBody {
   syntax: string;
   code: string;
   entrypoint: string;
+  protocol: string;
 }
 
 const validateRequest = (
@@ -18,6 +19,7 @@ const validateRequest = (
       syntax: joi.string().required(),
       code: joi.string().required(),
       entrypoint: joi.string().required(),
+      protocol: joi.string().required(),
       format: joi.string().optional()
     })
     .validate(body);
@@ -33,7 +35,8 @@ export async function evaluateValueHandler(req: Request, res: Response) {
       const michelsonCode = await new LigoCompiler().evaluateValue(
         body.syntax,
         body.code,
-        body.entrypoint
+        body.entrypoint,
+        body.protocol
       );
 
       res.send({ code: michelsonCode });

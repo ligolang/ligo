@@ -779,7 +779,8 @@ fromLigoTypeFull = enclose . \case
     fromLigoRecordField name LigoRecordField {..} = do
       st <- get
       n <- fromLigoPrimitive name
-      return $ make' (st, TField n (fromLigoTypeFull _lrfAssociatedType))
+      -- FIXME: Type annotation is optional.
+      return $ make' (st, TField n (Just $ fromLigoTypeFull _lrfAssociatedType))
 
     mkErr = gets . flip mkLigoError
 

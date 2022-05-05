@@ -5,7 +5,7 @@ module AST  = Ast_imperative
 module CST  = Cst.Pascaligo
 module Wrap = Lexing_shared.Wrap
 module Token = Lexing_pascaligo.Token
-module Predefined = Predefined.Tree_abstraction.Pascaligo
+module Predefined = Predefined.Tree_abstraction
 module Shared_helpers = Tree_abstraction_shared.Helpers
 
 open Simple_utils.Function
@@ -190,6 +190,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_variable _
   | E_literal _
   | E_constant _
+  | E_module_accessor _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"

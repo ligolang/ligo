@@ -264,9 +264,9 @@ type storage is
 type return is list (operation) * storage
 
 function back (var action : unit; var store : storage) : return is {
-  if now > store.deadline then failwith ("Deadline passed.");
-  case store.backers[sender] of [
-    None -> store.backers[sender] := amount
+  if Tezos.now > store.deadline then failwith ("Deadline passed.");
+  case store.backers[Tezos.sender] of [
+    None -> store.backers[Tezos.sender] := Tezos.amount
   | Some (_) -> skip
   ]
 } with ((nil : list (operation)), store) // Type annotation
@@ -293,9 +293,9 @@ let back (param, store : unit * storage) : return =
   if Tezos.now > store.deadline then
     (failwith "Deadline passed." : return) // Annotation
   else
-    match Map.find_opt sender store.backers with
+    match Map.find_opt Tezos.sender store.backers with
       None ->
-        let backers = Map.update sender (Some amount) store.backers
+        let backers = Map.update Tezos.sender (Some Tezos.amount) store.backers
         in no_op, {store with backers=backers}
     | Some (x) -> no_op, store
 ```
@@ -322,9 +322,9 @@ let back = ((param, store) : (unit, storage)) : return => {
     (failwith ("Deadline passed.") : return); // Annotation
   }
   else {
-    switch (Map.find_opt (sender, store.backers)) {
+    switch (Map.find_opt (Tezos.sender, store.backers)) {
     | None => {
-        let backers = Map.update (sender, Some (amount), store.backers);
+        let backers = Map.update (Tezos.sender, Some (Tezos.amount), store.backers);
         (no_op, {...store, backers:backers}) }
     | Some (x) => (no_op, store)
     }
@@ -354,12 +354,12 @@ type return_ = [list<operation>, storage];
 let back = ([param, store] : [unit, storage]) : return_ => {
   let no_op : list<operation> = list([]);
   if (Tezos.now > store.deadline) {
-    failwith ("Deadline passed.") as return_; // Annotation
+    return failwith ("Deadline passed.") as return_; // Annotation
   }
   else {
-    return match(Map.find_opt (sender, store.backers), {
+    return match(Map.find_opt (Tezos.sender, store.backers), {
       None: () => {
-        let backers = Map.update(sender, Some(amount), store.backers);
+        let backers = Map.update(Tezos.sender, Some(Tezos.amount), store.backers);
         return [no_op, {...store, backers:backers}];
       },
       Some: (x: tez) => [no_op, store]

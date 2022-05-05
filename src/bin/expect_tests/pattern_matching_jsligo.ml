@@ -33,7 +33,7 @@ let%expect_test _ =
     Unsupported match pattern. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match3.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match3.jsligo") ; "--test" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 4-11:
       3 |     Success: (_ : nat) => "",
@@ -43,13 +43,32 @@ let%expect_test _ =
     Pattern not of the expected type sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat] |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
   [%expect{|
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 6, character 24 to line 15, character 6:
+    5 | let do_something = ([state, action]:[state,action]) : state => {
+    6 |     return match(state, {
+    7 |         S1: () => (match(action, {
+    8 |             A: () => S1(),
+    9 |             B: () => S2()
+   10 |         })),
+   11 |         S2: () => (match(action, {
+   12 |             A: () => S2(),
+   13 |             B: () => S1()
+   14 |         })),
+   15 |     });
+   16 | };
+
+  Pattern matching anomaly (redundant, or non exhaustive). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
+  [%expect{xxx|
     const test_foo =
       lambda (x) return  match x with
                           | Fail _#3 ->
                             "" | Success _#2 ->
-                                 ""[@private] |}]
+                                 ""[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;

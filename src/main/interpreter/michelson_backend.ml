@@ -101,7 +101,7 @@ let compile_contract ~raise ~add_warning ~options source_file entry_point declar
   let open Ligo_compile in
   let michelson,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
   let views = Build.build_views ~raise ~add_warning ~options entry_point (declared_views,env) source_file in
-  Of_michelson.build_contract ~raise ~disable_typecheck:false michelson views
+  Of_michelson.build_contract ~raise ~add_warning ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
@@ -114,7 +114,7 @@ let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation) (e : expression) =
     if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
-      e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false }
+      e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false ; thunk = false ; hidden = false }
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -321,6 +321,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
+  | V_Thunk { value ; _ } ->
+     value
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
@@ -369,13 +371,12 @@ and make_ast_map ~raise ~loc key_ty value_ty kv =
                 (k, v)) kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_aggregated.e_a_map_add k v r) ~init:(Ast_aggregated.e_a_map_empty key_ty value_ty)
 
-and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
+and compile_simple_value ~raise ~options ?ctxt ~loc : Ligo_interpreter.Types.value ->
                       Ast_aggregated.type_expression ->
                       Ligo_interpreter.Types.typed_michelson_code =
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
   let (_: Ast_aggregated.expression) = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
-  let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
   let compiled_exp = compile_value ~raise ~options typed_exp in
   let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)
@@ -402,9 +403,9 @@ and make_subst_ast_env_exp ~raise env expr =
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
-let run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
+let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in
-  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~loc arg arg_ty in
+  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~loc arg arg_ty in
   let func_ty = compile_type ~raise func_ty in
   let func = match code with
   | Seq (_, s) ->
@@ -414,7 +415,7 @@ let run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) (code : (unit, s
   match Ligo_run.Of_michelson.run_expression ~raise func func_ty with
   | Success (ty, value) ->
       Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
-  | _ ->
+  | Fail _ ->
      raise.raise (Errors.generic_error loc "Could not execute Michelson function")
 
 let parse_code ~raise code =

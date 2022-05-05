@@ -42,7 +42,7 @@ import Cli.Json
 import Cli.Types
 import Log (Log, i)
 import Log qualified
-import ParseTree (Source (..), srcToText)
+import ParseTree (Source (..))
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -161,7 +161,7 @@ callLigoImpl :: HasLigoClient m => [String] -> Maybe Source -> m (Text, Text)
 callLigoImpl args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
-    raw <- maybe "" unpack <$> traverse srcToText conM
+    let raw = maybe "" (unpack . srcText) conM
     let fpM = srcPath <$> conM
     (ec, lo, le) <- readProcessWithExitCode _lceClientPath args raw
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
@@ -184,16 +184,21 @@ deriving anyclass instance ToObject Version
 instance LogItem Version where
   payloadKeys = const $ const AllKeys
 
-usingTemporaryDir :: MonadUnliftIO m => Source -> (FilePath -> Handle -> m a) -> m a
-usingTemporaryDir src action =
-  withRunInIO \run -> withSystemTempFile (takeFileName $ srcPath src) \tempFp handle -> do
-    contents <- srcToText src
+-- | Run some action using a temporary file, given some source. The action will
+-- be provided with the path to the temporary file, as well as its handle.
+-- Returns the original action, along with a function that replaces occurrences
+-- of the temporary file with the original one.
+usingTemporaryDir
+  :: MonadUnliftIO m
+  => Source
+  -> (FilePath -> Handle -> m a)
+  -> m (a, Text -> Text)
+usingTemporaryDir (Source fp contents) action =
+  withRunInIO \run -> withSystemTempFile (takeFileName fp) \tempFp handle -> do
     Text.hPutStr handle contents
     hFlush handle
-    run $ action tempFp handle
-
-fixMarkers :: FilePath -> FilePath -> Text -> Text
-fixMarkers tempFp fp = Text.replace (pack tempFp) (pack fp)
+    let fixMarkers = Text.replace (pack tempFp) (pack fp)
+    (, fixMarkers) <$> run (action tempFp handle)
 
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
@@ -230,7 +235,7 @@ getLigoVersion = Log.addNamespace "getLigoVersion" do
 -- find a workaround for this or report to them.
 callForFormat :: (HasLigoClient m, Log m) => Source -> m (Maybe Text)
 callForFormat source = Log.addNamespace "callForFormat" $ Log.addContext source $
-  usingTemporaryDir source \tempFp _ ->
+  fst <$> usingTemporaryDir source \tempFp _ ->
     let
       getResult = callLigo
         ["print", "pretty", tempFp]
@@ -255,23 +260,19 @@ preprocess
   -> m (Source, Text)
 preprocess contract = Log.addNamespace "preprocess" $ Log.addContext contract do
   $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
-  (mbOut, tempFp) <- usingTemporaryDir contract \tempFp _ -> do
-    mbOut <- try $ callLigo
+  (mbOut, fixMarkers) <- usingTemporaryDir contract \tempFp _ -> do
+    try $ callLigo
       ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"]
       contract
-    pure (mbOut, tempFp)
-  case join bimap (fixMarkers tempFp fp) <$> mbOut of
+  case join bimap fixMarkers <$> mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @Text . encodeUtf8 $ output of
         Left err -> do
           $(Log.err) [i|Unable to preprocess contract with: #{err}|]
           throwIO $ LigoPreprocessFailedException (pack err) fp
-        Right newContract -> pure $ (, errs) case contract of
-          Path       path   -> Text path newContract
-          Text       path _ -> Text path newContract
-          ByteString path _ -> ByteString path $ encodeUtf8 newContract
+        Right newContract -> pure (Source fp newContract, errs)
     Left LigoClientFailureException {cfeStderr} ->
-      handleLigoError fp cfeStderr
+      handleLigoError fp (fixMarkers cfeStderr)
   where
     fp, dir :: FilePath
     fp = srcPath contract
@@ -285,11 +286,11 @@ getLigoDefinitions
 getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
   let path = srcPath contract
-  (mbOut, tempFp) <- usingTemporaryDir contract \tempFp _ ->
-    fmap (, tempFp) $ try $ callLigo
+  (mbOut, fixMarkers) <- usingTemporaryDir contract \tempFp _ ->
+    try $ callLigo
       ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
       contract
-  case join bimap (fixMarkers tempFp fp) <$> mbOut of
+  case join bimap fixMarkers <$> mbOut of
     Right (output, errs) ->
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
@@ -297,7 +298,7 @@ getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addCon
           throwIO $ LigoDefinitionParseErrorException (pack err) output path
         Right definitions -> return (definitions, errs)
     Left LigoClientFailureException {cfeStderr} ->
-      handleLigoError path cfeStderr
+      handleLigoError path (fixMarkers cfeStderr)
   where
     fp, dir :: FilePath
     fp = srcPath contract

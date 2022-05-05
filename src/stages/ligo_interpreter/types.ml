@@ -24,6 +24,11 @@ and func_val = {
     env : env ;
   }
 
+and thunk_val = {
+    value : Ast_aggregated.expression ;
+    context : env ;
+  }
+
 and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggregated.type_expression }
 
 and michelson_code =
@@ -68,6 +73,7 @@ and value =
   | V_Michelson of michelson_code
   | V_Mutation of mutation
   | V_Func_val of func_val
+  | V_Thunk of thunk_val
 
 and calltrace = Location.t list
 

@@ -17,8 +17,16 @@ type attributes = string list
 type known_attributes = {
   inline: bool ;
   no_mutation: bool;
+  (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
+     TODO: we should change the type of such constants to be `unit -> 'a` instead of just 'a
+  *)
+  thunk : bool;
   view : bool;
   public: bool;
+  (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
+     set to true for standard libraries
+  *)
+  hidden: bool;
 }
 
 type expression_variable = ValueVar.t
@@ -37,7 +45,6 @@ module LMap = Simple_utils.Map.Make(struct type t = label let compare = compare_
 type 'a label_map = 'a LMap.t
 
 let const_name = function
-  | Deprecated {const;_} -> const
   | Const      const     -> const
 
 type 'ty_expr row_element_mini_c = {

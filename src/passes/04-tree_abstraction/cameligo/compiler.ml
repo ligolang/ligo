@@ -25,7 +25,7 @@ let pseq_to_list = function
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson";"Loop";"Current"]
 
-open Predefined.Tree_abstraction.Cameligo
+open Predefined.Tree_abstraction
 
 let r_split = Location.r_split
 
@@ -316,7 +316,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
     )
   (*TODO: move to proper module*)
-  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
+  | ECall ({value=(EModA {value={module_name;field;selector=_};region=_},args);region} as call) when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let loc = Location.lift region in
     let fun_name = match field with
@@ -332,7 +332,10 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let args = List.map ~f:self @@ nseq_to_list args in
       return @@ e_constant ~loc const args
     | None ->
-      raise.raise @@ unknown_constant var loc
+       let ((func, args), loc) = r_split call in
+       let func = self func in
+       let args = List.map ~f:self @@ nseq_to_list args in
+       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
       )
   | ECall call ->
     let ((func, args), loc) = r_split call in
@@ -362,6 +365,21 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EModA ma -> (
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
+    let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
+      match exp with
+      | EVar v ->
+         let accessed_el = compile_variable v in
+         return @@ e_module_accessor ~loc acc accessed_el
+      | EProj proj ->
+         let (proj, _) = r_split proj in
+         let (var, _) = r_split proj.struct_name in
+         let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
+         let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
+         return @@ e_accessor ~loc moda sels
+      | EModA ma ->
+         aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
+      | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+    in
     (*TODO: move to proper module*)
     if List.mem ~equal:Caml.(=) build_ins module_name then
       let fun_name = match ma.field with
@@ -374,23 +392,8 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let var = module_name ^ "." ^ fun_name in
       match constants var with
         Some const -> return @@ e_constant ~loc const []
-      | None -> return @@ e_variable_ez ~loc var
+      | None -> aux [compile_mod_var ma.module_name] ma.field
     else
-      let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
-        match exp with
-        | EVar v ->
-          let accessed_el = compile_variable v in
-          return @@ e_module_accessor ~loc acc accessed_el
-        | EProj proj ->
-          let (proj, _) = r_split proj in
-          let (var, _) = r_split proj.struct_name in
-          let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
-          let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
-          return @@ e_accessor ~loc moda sels
-        | EModA ma ->
-          aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
-        | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
-      in
       aux [compile_mod_var ma.module_name] ma.field
   )
   | EUpdate update ->
@@ -492,7 +495,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         let pattern = conv ~raise pattern in
         let match_case = { pattern ; body } in
         e_matching ~loc matchee [match_case]
-    | pattern, args -> (* functoin *)
+    | pattern, args -> (* function *)
     let let_binder, fun_ = compile_parameter ~raise pattern in
     let binders = List.map ~f:(compile_parameter ~raise) args in
     (* collect type annotation for let function declaration *)
