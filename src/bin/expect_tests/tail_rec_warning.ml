@@ -64,36 +64,124 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ] ;
-  [%expect.unreachable ]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
+  [%expect{|
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
+     30 |
+     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
 
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Tail_rec_warning.(fun) in file "src/bin/expect_tests/tail_rec_warning.ml", line 66, characters 2-77
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+    Toplevel let declaration are silently change to const declaration.
 
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  Hypothesis 2 failed. |}]
+    File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+      5 |
+      6 |   let id = (x : int) : int => x;
+      7 |
+      8 |   /* parameter shadows fun_name: simple */
+      9 |   let toto = (toto:int) : int => {
+     10 |     let number = toto;
+     11 |     return number + 1;
+     12 |   };
+     13 |
+     14 |   /* parameter shadows fun_name: complex */
+     15 |   let foo = (foo : ((p:int) => int)) : int => {
+     16 |     let foo = foo(0);
+     17 |     return foo;
+     18 |   };
+     19 |
+     20 |   /* fun_name shadowed in body */
+     21 |   let bar = (x : int) : t => {
+     22 |     let bar = x;
+     23 |     return { ...storage, bar : bar };
+     24 |   };
+     25 |
+     26 |   let n = toto(number)  + foo(id);
+     27 |
+     28 |   return bar(n);
+     29 | }
+     30 |
+
+    Toplevel let declaration are silently change to const declaration.
+
+    { parameter unit ;
+      storage (pair (int %bar) (int %foo)) ;
+      code { PUSH int 0 ;
+             PUSH int 1 ;
+             PUSH int 2 ;
+             ADD ;
+             ADD ;
+             SWAP ;
+             CDR ;
+             CDR ;
+             SWAP ;
+             PAIR ;
+             NIL operation ;
+             PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ; "--warn-unused-rec" ] ;
-  [%expect.unreachable ]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
+  [%expect{|
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
+     30 |
+     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
 
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Tail_rec_warning.(fun) in file "src/bin/expect_tests/tail_rec_warning.ml", line 84, characters 2-99
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+    Toplevel let declaration are silently change to const declaration.
 
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  Hypothesis 2 failed. |}]
+    File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+      5 |
+      6 |   let id = (x : int) : int => x;
+      7 |
+      8 |   /* parameter shadows fun_name: simple */
+      9 |   let toto = (toto:int) : int => {
+     10 |     let number = toto;
+     11 |     return number + 1;
+     12 |   };
+     13 |
+     14 |   /* parameter shadows fun_name: complex */
+     15 |   let foo = (foo : ((p:int) => int)) : int => {
+     16 |     let foo = foo(0);
+     17 |     return foo;
+     18 |   };
+     19 |
+     20 |   /* fun_name shadowed in body */
+     21 |   let bar = (x : int) : t => {
+     22 |     let bar = x;
+     23 |     return { ...storage, bar : bar };
+     24 |   };
+     25 |
+     26 |   let n = toto(number)  + foo(id);
+     27 |
+     28 |   return bar(n);
+     29 | }
+     30 |
+
+    Toplevel let declaration are silently change to const declaration.
+
+    { parameter unit ;
+      storage (pair (int %bar) (int %foo)) ;
+      code { PUSH int 0 ;
+             PUSH int 1 ;
+             PUSH int 2 ;
+             ADD ;
+             ADD ;
+             SWAP ;
+             CDR ;
+             CDR ;
+             SWAP ;
+             PAIR ;
+             NIL operation ;
+             PAIR } } |} ]

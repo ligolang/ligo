@@ -73,7 +73,7 @@ let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amo
       in
       let meta             = Compile.Of_source.extract_meta syntax in
       let c_unit_param,_   = Compile.Of_source.compile_string ~raise ~options:options.frontend ~meta parameter in
-      let imperative_param = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param in
+      let imperative_param = Compile.Of_c_unit.compile_expression ~add_warning ~raise ~meta c_unit_param in
       let sugar_param      = Compile.Of_imperative.compile_expression ~raise imperative_param in
       let core_param       = Compile.Of_sugar.compile_expression ~raise sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in

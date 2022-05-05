@@ -97,36 +97,34 @@ let parse_and_abstract_expression_reasonligo ~raise buffer =
     Tree_abstraction.Reasonligo.compile_expression raw
   in imperative
 
-let parse_and_abstract_jsligo ~raise buffer file_path =
+let parse_and_abstract_jsligo ~add_warning ~raise buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_module raw
+    Tree_abstraction.Jsligo.compile_module ~add_warning raw
   in imperative
 
-let parse_and_abstract_expression_jsligo ~raise buffer =
+let parse_and_abstract_expression_jsligo ~add_warning ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_expression raw
+    Tree_abstraction.Jsligo.compile_expression ~add_warning raw
   in imperative
 
 let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     : Ast_imperative.module_ =
   let parse_and_abstract =
     match meta.syntax with
-      PascaLIGO _ -> 
+      PascaLIGO _ ->
         Parsing.Pascaligo.Self_tokens.add_warning := Some add_warning;
         parse_and_abstract_pascaligo
     | CameLIGO    -> parse_and_abstract_cameligo
     | ReasonLIGO  -> parse_and_abstract_reasonligo
-    | JsLIGO      ->
-        Tree_abstraction.Jsligo.add_warning := Some add_warning;
-        parse_and_abstract_jsligo in
+    | JsLIGO      -> parse_and_abstract_jsligo ~add_warning in
   let abstracted =
     parse_and_abstract ~raise buffer file_path in
   let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
@@ -135,7 +133,7 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     Self_ast_imperative.all_module abstracted ~js_style_no_shadowing ~add_warning in
   applied
 
-let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
+let parse_and_abstract_expression ~add_warning ~raise ~(meta: meta) buffer =
   let parse_and_abstract =
     match meta.syntax with
       PascaLIGO _ ->
@@ -145,7 +143,7 @@ let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
     | ReasonLIGO  ->
         parse_and_abstract_expression_reasonligo
     | JsLIGO      ->
-        parse_and_abstract_expression_jsligo
+        parse_and_abstract_expression_jsligo ~add_warning
       in
   let abstracted =
     parse_and_abstract ~raise buffer in
@@ -180,16 +178,16 @@ let parse_and_abstract_string_cameligo ~raise buffer =
     Tree_abstraction.Cameligo.compile_module raw
   in imperative
 
-let parse_and_abstract_string_jsligo ~raise buffer =
+let parse_and_abstract_string_jsligo ~add_warning ~raise buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_string buffer in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_module raw
+    Tree_abstraction.Jsligo.compile_module ~add_warning raw
   in imperative
 
-let parse_and_abstract_string ~raise ~add_warning (syntax: Syntax_types.t) buffer =
+let parse_and_abstract_string ~add_warning ~raise (syntax: Syntax_types.t) buffer =
   let parse_and_abstract =
     match syntax with
       PascaLIGO _ ->
@@ -199,7 +197,7 @@ let parse_and_abstract_string ~raise ~add_warning (syntax: Syntax_types.t) buffe
     | ReasonLIGO  ->
         parse_and_abstract_string_reasonligo
     | JsLIGO      ->
-        parse_and_abstract_string_jsligo in
+        parse_and_abstract_string_jsligo ~add_warning in
   let abstracted =
     parse_and_abstract ~raise buffer in
   let js_style_no_shadowing = Caml.(=) syntax JsLIGO in
