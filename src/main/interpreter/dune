@@ -4,4 +4,4 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries tezos-012-Psithaca-test-helpers ast_aggregated ligo_interpreter
-   main_errors ligo_compile build fuzz ligo_run self_ast_typed))
+   main_errors ligo_compile build fuzz ligo_run self_ast_typed bls12-381))

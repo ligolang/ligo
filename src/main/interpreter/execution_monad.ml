@@ -409,13 +409,7 @@ module Command = struct
       (v, ctxt)
     )
     | Pairing_check l -> (
-      let check = match l with
-        | [] -> true
-        | pairs ->
-           Bls12_381.(
-               Pairing.miller_loop pairs |> Pairing.final_exponentiation_opt
-               |> Option.map ~f:Fq12.(eq one))
-           |> Option.value ~default:false in
+      let check = Bls12_381.Pairing.pairing_check l in
       (LC.v_bool check, ctxt)
     )
     | Add_account (loc, sk, pk) -> (
