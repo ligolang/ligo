@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \nfix detection of missing constructors in pattern matching
+merge_request: '1716'
+title: do not raise corner_case in pattern matching compression
+type: fixed
