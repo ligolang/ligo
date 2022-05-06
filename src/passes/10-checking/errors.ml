@@ -25,6 +25,7 @@ type typer_error = [
   | `Typer_bad_collect_loop of Ast_typed.type_expression * Location.t
   | `Typer_expected_record of Location.t * Ast_typed.type_expression
   | `Typer_expected_variant of Location.t * Ast_typed.type_expression
+  | `Typer_expected_map of Location.t * Ast_typed.type_expression
   | `Typer_expected of Location.t * Ast_typed.type_expression list * Ast_typed.type_expression list
   | `Typer_wrong_param_number of Location.t * string * int * Ast_typed.type_expression list
   | `Typer_expected_option of Location.t * Ast_typed.type_expression
@@ -201,6 +202,11 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         name
         expected (List.length actual)
+    | `Typer_expected_map (loc,e) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected a map, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression e
     | `Typer_expected_option (loc,e) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected an option, but got an argument of type \"%a\". @]"
@@ -516,6 +522,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
       ("actual", actual);
       ("expected", expected);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_map (loc,e) ->
+    let message = `String "expected a map" in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", Ast_typed.Yojson.type_expression e);
     ] in
     json_error ~stage ~content
   | `Typer_expected_option (loc,e) ->

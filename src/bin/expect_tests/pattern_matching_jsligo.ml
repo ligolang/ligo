@@ -65,10 +65,11 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
   [%expect{xxx|
     const test_foo =
-      lambda (x) return  match x with
-                          | Fail _#3 ->
-                            "" | Success _#2 ->
-                                 ""[@private] |xxx}]
+      lambda (x : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( unit * address )] , Success -> nat]) return
+       match x with
+        | Fail _#3 ->
+          "" | Success _#2 ->
+               ""[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
@@ -89,4 +90,3 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Cons([1,2]), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
   [%expect{|
     7 |}]
-                                              

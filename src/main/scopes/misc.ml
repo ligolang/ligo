@@ -16,7 +16,7 @@ let extract_variable_types :
     let aux : bindings_map -> Ast_typed.expression -> bindings_map = fun env exp ->
       let return = add env in
       match exp.expression_content with
-      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
+      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
       | E_type_in _ | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_module_accessor _ -> return []
@@ -29,15 +29,15 @@ let extract_variable_types :
           | _ -> failwith "lambda does not have type arrow"
         in
         let in_t = in_t exp.type_expression in
-        return [binder,in_t]
+        return [binder.var,in_t]
       | E_recursive { fun_name ; fun_type ; lambda = { binder ; _ } } ->
         let in_t = match fun_type.type_content with
           | T_arrow { type1 ; _ } -> type1
           | _ -> failwith "rec fun does not have type arrow"
         in
-        return [ (fun_name , fun_type) ; (binder , in_t) ]
+        return [ (fun_name , fun_type) ; (binder.var , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
-        return @@ [(let_binder,rhs.type_expression)]
+        return @@ [(let_binder.var,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
         | Match_variant {cases ; tv=_} -> (
@@ -59,7 +59,8 @@ let extract_variable_types :
             )
         )
         | Match_record { fields ; _ }  ->
-          return (Ast_typed.LMap.to_list fields)
+          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ascr) in
+          return (List.map ~f:aux @@ Ast_typed.LMap.to_list fields)
       )
     in
     match decl with

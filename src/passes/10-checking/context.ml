@@ -168,7 +168,7 @@ module Typing = struct
         match general_type_opt with
           Some general_type -> [general_type]
         | None -> matching_t_sum
-  
+
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
     let lst_kv  = LMap.to_kv_list_rev lmap in
     let rec rec_aux e =

@@ -168,6 +168,11 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
           let has_subst = has_subst' || has_subst in
           let letin = { letin with rhs } in
           ret false { exp with expression_content = E_let_in letin} has_subst
+        | I.E_assign assign when I.ValueVar.equal assign.binder.var to_subst ->
+          let has_subst',expression = substitute_var_in_body ~raise to_subst new_var assign.expression in
+          let has_subst = has_subst' || has_subst in
+          let assign = { assign with expression } in
+          ret false { exp with expression_content = E_assign assign} has_subst
         | I.E_lambda lamb when I.ValueVar.equal lamb.binder.var to_subst -> ret false exp has_subst
         | I.E_recursive r when I.ValueVar.equal r.fun_name to_subst -> ret false exp has_subst
         | I.E_matching m -> (
@@ -196,7 +201,7 @@ let rec substitute_var_in_body ~raise : I.expression_variable -> O.expression_va
         | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
            E_type_abstraction _|E_recursive _|E_let_in _|E_type_in _ | E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_record_accessor _ |
-           E_record_update _ | E_ascription _ | E_module_accessor _ ) -> ret true exp has_subst
+           E_record_update _ | E_ascription _ | E_module_accessor _ | E_assign _) -> ret true exp has_subst
     in
     let (has_subst, res) = Self_ast_core.fold_map_expression (aux ~raise) false body in
     (has_subst,res)
@@ -373,30 +378,30 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
   fun ~err_loc ~type_f ~body_t product_shape ms eqs def ->
   match ms with
   | mhd::_ -> (
-    let lb =
+    let lb :(_ * _ O.binder) list =
       let (p,t) = product_shape in
       match (p.wrap_content,t) with
       | P_tuple ps , t ->
-        let aux : int -> _ O.pattern_repr Location.wrap -> (O.label * (O.expression_variable * O.type_expression)) =
+        let aux : int -> _ O.pattern_repr Location.wrap -> (O.label * (O.type_expression O.binder)) =
           fun i proj_pattern ->
             let l = (O.Label (string_of_int i)) in
             let field_t = extract_record_type ~raise p l t in
-            let v = match proj_pattern.wrap_content with
-              | P_var x -> x.var
-              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" ()
+            let var,attributes = match proj_pattern.wrap_content with
+              | P_var x -> x.var,x.attributes
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"tuple_proj" (),Stage_common.Helpers.empty_attribute
             in
-            (l, (v,field_t))
+            (l, {var;ascr=Some field_t;attributes})
         in
         List.mapi ~f:aux ps
       | P_record (labels,patterns) , t ->
-        let aux : (O.label * _ O.pattern_repr Location.wrap)  -> (O.label * (O.expression_variable * O.type_expression)) =
+        let aux : (O.label * _ O.pattern_repr Location.wrap)  -> (O.label * (O.type_expression O.binder)) =
           fun (l,proj_pattern) ->
-            let v = match proj_pattern.wrap_content with
-              | P_var x -> x.var
-              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" ()
+            let var,attributes = match proj_pattern.wrap_content with
+              | P_var x -> x.var,x.attributes
+              | _ -> I.ValueVar.fresh ~loc:proj_pattern.location ~name:"record_proj" (),Stage_common.Helpers.empty_attribute
             in
             let field_t = extract_record_type ~raise p l t in
-            (l , (v,field_t))
+            (l , {var;ascr= Some field_t; attributes})
         in
         List.map ~f:aux (List.zip_exn labels patterns)
       | _ -> raise.raise @@ corner_case __LOC__
@@ -456,7 +461,7 @@ and product_rule ~raise : err_loc:Location.t -> type_f:type_fun -> body_t:O.type
     let matchee_t = type_matchee ~raise eqs in
     let eqs' = List.map ~f:aux eqs in
     let fields = O.LMap.of_list lb in
-    let new_matchees = List.map ~f:(fun (_,((x:O.expression_variable),_)) -> x) lb in
+    let new_matchees = List.map ~f:(fun (_,b) -> b.var) lb in
     let body = match_ ~raise ~err_loc ~type_f ~body_t (new_matchees @ ms) eqs' def in
     let cases = O.Match_record { fields; body ; tv = snd product_shape } in
     let matchee = O.e_a_variable mhd matchee_t in

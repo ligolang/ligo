@@ -4,7 +4,7 @@ open Stage_common
 
 include Ast_core.PP
 
-let map_lmap_t f map = 
+let map_lmap_t f map =
   LMap.map
     (fun ({associated_type;_} as field) ->
       let field' = f associated_type in
@@ -39,14 +39,15 @@ let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = f
       let res = self res let_result in
       res
     )
-  | E_type_in { type_binder = _; rhs = _ ; let_result } -> 
-    let res = self init let_result in 
+  | E_type_in { type_binder = _; rhs = _ ; let_result } ->
+    let res = self init let_result in
     res
   | E_mod_in  mi ->
     let res = fold_expression_in_module_expr self init mi.rhs in
     let res = self res mi.let_result in
     res
   | E_recursive r -> Folds.recursive self idle init r
+  | E_assign a -> Folds.assign self idle init a
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
@@ -132,6 +133,9 @@ let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fu
       let c = Maps.constant self c in
       return @@ E_constant c
     )
+  | E_assign a ->
+    let a = Maps.assign self (fun a -> a) a in
+    return @@ E_assign a
   | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> return e'
 
 and map_expression_in_declarations : (expression -> expression) -> module_ -> module_ = fun self xs ->
@@ -258,6 +262,9 @@ let rec fold_map_expression : type a . a fold_mapper -> a -> expression -> a * e
       let res,c = Fold_maps.constant self init c in
       (res, return @@ E_constant c)
     )
+  | E_assign a ->
+    let (res,a) = Fold_maps.assign self idle init a in
+    (res, return @@ E_assign a)
   | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ as e' -> (init, return e')
 
 and fold_map_expression_in_module_expr : type a . (a -> expression -> a * expression) -> a -> module_expr -> a * module_expr = fun self acc x ->

@@ -10,5 +10,3 @@ let compile_expression = Compiler.compile_expression
 
 let decompile_module    = Decompiler.decompile_module
 let decompile_expression = Decompiler.decompile_expression
-
-let add_warning = Compiler.add_warning
