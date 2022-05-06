@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
-import { ChangeEntrypointAction, ChangeParametersAction, EvaluateFunctionState } from '../../redux/evaluate-function';
+import { protocolType } from '../../redux/compile';
+import { ChangeEntrypointAction, ChangeParametersAction, ChangeProtocolAction, EvaluateFunctionState } from '../../redux/evaluate-function';
 import { Group, Input, Label, Textarea } from '../form/inputs';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
@@ -20,6 +22,15 @@ export const EvaluateFunctionPaneComponent = () => {
   return (
     <Container>
       <Group>
+        <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+        <SelectCommand
+          id="protocol-select"
+          value={protocolType.Ithaca}
+          onChange={ev =>
+            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          }>
+          <Option value={protocolType.Ithaca}>Ithaca</Option>
+        </SelectCommand>
         <Label htmlFor="entrypoint">Function name</Label>
         <Input
           id="entrypoint"

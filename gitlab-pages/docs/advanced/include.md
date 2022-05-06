@@ -12,8 +12,6 @@ has a modular structure, you might find it useful to use the
 You take the code that you want to include and put it in a separate
 file, for example `included.ligo`:
 
-
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo
@@ -47,16 +45,12 @@ let foo : int = 144;
 ```jsligo
 // Demonstrate JsLIGO inclusion statements, see includer.jsligo
 
-let foo: int = 144;
+const foo: int = 144;
 ```
 
 </Syntax>
 
-
-
 And then you can include this code using the `#include` statement like so:
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -90,7 +84,7 @@ let bar : int = foo;
 ```jsligo skip
 #include "included.jsligo"
 
-let bar: int = foo;
+const bar: int = foo;
 ```
 
 </Syntax>

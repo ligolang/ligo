@@ -40,7 +40,7 @@ let twice = (x : int) : int => x + x;
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
-let twice = (x: int): int => x + x;
+const twice = (x: int): int => x + x;
 ```
 
 </Syntax>
@@ -94,19 +94,20 @@ let test = simple_tests(twice);
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage
-let simple_tests = (f : ((input: int) => int)) : unit => {
+const simple_tests = (f : ((input: int) => int)) : unit => {
   /* Test 1 */
   assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
   /* Test 2 */
   assert (Test.michelson_equal(Test.run(f, 2), Test.eval(4)));
 };
 
-let test = simple_tests(twice);
+const test = simple_tests(twice);
 ```
 
 </Syntax>
 
 These tests check that `twice`:
+
 - when run on input `0`, it returns `0`.
 - when run on input `2`, it returns `2`.
 
@@ -180,7 +181,7 @@ let twice = (x : int) : int => x * x;
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=frontpage2
-let twice = (x: int): int => x * x;
+const twice = (x: int): int => x * x;
 ```
 
 </Syntax>
@@ -289,7 +290,7 @@ let test_mutation =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let test_mutation =
+const test_mutation =
   match(Test.mutation_test(twice, simple_tests), {
     None: () => unit,
     Some: pmutation => { Test.log(pmutation[1]);
@@ -436,7 +437,7 @@ let simple_tests = (f : (int => int)) => {
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let simple_tests = (f : ((input: int) => int)) : unit => {
+const simple_tests = (f : ((input: int) => int)) : unit => {
   /* Test 1 */
   assert (Test.michelson_equal(Test.run(f, 0), Test.eval(0)));
   /* Test 2 */
@@ -600,12 +601,12 @@ type parameter =
 type return_ = [list<operation>, storage];
 
 // Two entrypoints
-let add = ([store, delta]: [storage, int]): storage => store + delta;
-let sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = ([store, delta]: [storage, int]): storage => store + delta;
+const sub = ([store, delta]: [storage, int]): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store]: [parameter, storage]) : return_ => {
+const main = ([action, store]: [parameter, storage]) : return_ => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
@@ -681,7 +682,7 @@ let test = originate_and_test(main);
 ```jsligo test-ligo group=frontpage3
 // This continues mutation-contract.jsligo
 
-let originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
+const originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
   let initial_storage = 5 as int;
   let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
@@ -689,7 +690,7 @@ let originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : uni
   assert (Test.get_storage(taddr) == initial_storage + 7);
 };
 
-let test = originate_and_test(main);
+const test = originate_and_test(main);
 ```
 
 </Syntax>
@@ -735,7 +736,7 @@ let test_mutation =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let test_mutation =
+const test_mutation =
   match(Test.mutation_test(main, originate_and_test), {
     None: () => unit,
     Some: pmutation => { Test.log(pmutation[1]);
@@ -883,7 +884,7 @@ let originate_and_test = (mainf : (parameter, storage) => return) => {
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
+const originate_and_test = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
   let initial_storage = 5 as int;
   let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
@@ -987,7 +988,7 @@ let test_mutation =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let test_mutation =
+const test_mutation =
   match(Test.mutation_test_all(main, originate_and_test), list([
     ([]: list<[unit, mutation]>) => unit,
     ([hd,...tl]: list<[unit, mutation]>) => {
@@ -1147,12 +1148,12 @@ type parameter =
 type return_ = [list<operation>, storage];
 
 // Two entrypoints
-let add = ([store, delta]: [storage, int]): storage => store + delta;
-/* @no_mutation */ let sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = ([store, delta]: [storage, int]): storage => store + delta;
+/* @no_mutation */ const sub = ([store, delta]: [storage, int]): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store]: [parameter, storage]) : return_ => {
+const main = ([action, store]: [parameter, storage]) : return_ => {
   /* @no_mutation */ let _ = assert (0 == 0);
   return [
     list([]) as list<operation>,    // No operations

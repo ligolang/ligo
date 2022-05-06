@@ -27,27 +27,40 @@ type michelson_program
 A type for code that is compiled to Michelson.
 
 <SyntaxTitle syntax="pascaligo">
+type test_exec_error_balance_too_low = record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address ; contract_balance : tez ; spend_request : tez &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type test_exec_error_balance_too_low = &#x007b; contract_too_low : address , contract_balance : tez , spend_request : tez &#x007d;
+</SyntaxTitle>
+
+<SyntaxTitle syntax="pascaligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Balance_too_low of record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
-| Balance_too_low of \u007b contract_too_low : address ; contract_balance : tez ; spend_request : tez \u007d
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 type test_exec_error =
   Rejected(michelson_program, address)
-| Balance_too_low of \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d
+| Balance_too_low of test_exec_error_balance_too_low
 | Other of string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 type test_exec_error =
   ["Rejected", michelson_program, address]
-| ["Balance_too_low", \u007b contract_too_low : address , contract_balance : tez , spend_request : tez \u007d]
+| ["Balance_too_low", test_exec_error_balance_too_low]
 | ["Other", string]
 </SyntaxTitle>
 

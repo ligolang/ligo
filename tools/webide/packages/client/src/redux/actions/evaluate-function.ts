@@ -23,7 +23,8 @@ export class EvaluateFunctionAction extends CancellableAction {
           editor.language,
           editor.code,
           evaluateFunctionState.entrypoint,
-          evaluateFunctionState.parameters
+          evaluateFunctionState.parameters,
+          evaluateFunctionState.protocol
         );
         if (this.isCancelled()) {
           return;

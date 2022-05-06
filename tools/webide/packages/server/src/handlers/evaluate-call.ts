@@ -9,6 +9,7 @@ interface RunFunctionBody {
   code: string;
   entrypoint: string;
   parameters: string;
+  protocol: string;
 }
 
 const validateRequest = (body: any): { value: RunFunctionBody; error?: any } => {
@@ -17,6 +18,7 @@ const validateRequest = (body: any): { value: RunFunctionBody; error?: any } => 
       syntax: joi.string().required(),
       code: joi.string().required(),
       entrypoint: joi.string().required(),
+      protocol: joi.string().required(),
       parameters: joi.string().required()
     })
     .validate(body);
@@ -33,7 +35,8 @@ export async function runFunctionHandler(req: Request, res: Response) {
         body.syntax,
         body.code,
         body.entrypoint,
-        body.parameters
+        body.parameters,
+        body.protocol
       );
 
       res.send({ output: output });

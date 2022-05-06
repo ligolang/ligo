@@ -2,6 +2,7 @@
 module Language.LSP.Util
   ( sendError
   , sendWarning
+  , sendInfo
   , reverseUriMap
   ) where
 
@@ -11,13 +12,16 @@ import Data.Text (Text)
 import Language.LSP.Types qualified as J
 import Language.LSP.Server qualified as S
 
--- | Ask the LSP client to display an error to the user.
-sendError :: S.MonadLsp config m => Text -> m ()
-sendError = S.sendNotification J.SWindowShowMessage . J.ShowMessageParams J.MtError
+sendMsg :: S.MonadLsp config m => J.MessageType -> Text -> m ()
+sendMsg msg = S.sendNotification J.SWindowShowMessage . J.ShowMessageParams msg
 
+sendError, sendWarning, sendInfo :: S.MonadLsp config m => Text -> m ()
 -- | Ask the LSP client to display an error to the user.
-sendWarning :: S.MonadLsp config m => Text -> m ()
-sendWarning = S.sendNotification J.SWindowShowMessage . J.ShowMessageParams J.MtWarning
+sendError = sendMsg J.MtError
+-- | Ask the LSP client to display a warning to the user.
+sendWarning = sendMsg J.MtWarning
+-- | Ask the LSP client to display an information to the user.
+sendInfo = sendMsg J.MtInfo
 
 -- | Like 'S.reverseFilePath', but applied to 'J.NormalizedUri'.
 reverseUriMap :: S.MonadLsp config m => m (J.NormalizedUri -> J.NormalizedUri)

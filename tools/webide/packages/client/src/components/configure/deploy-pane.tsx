@@ -1,11 +1,12 @@
 import React, {FC} from 'react';
 import { useDispatch, connect } from 'react-redux';
 import styled from 'styled-components';
+import { protocolType } from '../../redux/compile';
 
-import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType } from '../../redux/deploy';
+import { ChangeEntrypointAction, ChangeStorageAction, UseNetworkAction, UseSignerAction, networkType, signerType, ChangeProtocolAction } from '../../redux/deploy';
 import { CheckboxComponent } from '../form/checkbox';
 import { AccessFunctionLabel, Group, HGroup, Input, Label, Textarea } from '../form/inputs';
-import { Option, Select } from '../form/select';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
@@ -16,14 +17,6 @@ const Checkbox = styled(CheckboxComponent)`
 const Hint = styled.span`
   font-style: italic;
   font-size: 0.8em;
-`;
-
-const SelectCommand = styled(Select)`
-  flex: 2;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
 `;
 
 interface stateTypes {
@@ -50,6 +43,15 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
   return (
     <Container>
       <Group>
+      <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+        <SelectCommand
+          id="protocol-select"
+          value={protocolType.Ithaca}
+          onChange={ev =>
+            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          }>
+          <Option value={protocolType.Ithaca}>Ithaca</Option>
+        </SelectCommand>
       <Label htmlFor="storage">Choose a Network</Label>
       <SelectCommand
           id="command-select"
@@ -64,7 +66,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
               }
           }}
         >
-          <Option value={networkType.Hangzhounet}>Hangzhounet</Option>
+          <Option value={networkType.Ithacanet}>Ithacanet</Option>
           <Option value={networkType.Mainnet}>Mainnet</Option>
         </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
@@ -87,7 +89,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }
         ></Textarea>
       </Group>
-      {useNetwork && ( useNetwork === networkType.Hangzhounet) &&
+      {useNetwork && ( useNetwork === networkType.Ithacanet) &&
       <HGroup>
         <Checkbox
           checked={true}

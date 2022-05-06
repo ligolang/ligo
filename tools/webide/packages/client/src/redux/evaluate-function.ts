@@ -8,6 +8,7 @@ export enum ActionType {
 export interface EvaluateFunctionState {
   entrypoint: string;
   parameters: string;
+  protocol: string;
 }
 
 export class ChangeEntrypointAction {
@@ -20,14 +21,21 @@ export class ChangeParametersAction {
   constructor(public payload: EvaluateFunctionState['parameters']) {}
 }
 
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeParameters;
+  constructor(public payload: EvaluateFunctionState['protocol']) {}
+}
+
 type Action =
   | ChangeEntrypointAction
   | ChangeParametersAction
+  | ChangeProtocolAction
   | ChangeSelectedExampleAction;
 
 const DEFAULT_STATE: EvaluateFunctionState = {
   entrypoint: '',
-  parameters: ''
+  parameters: '',
+  protocol: 'ithaca'
 };
 
 const evaluateFunction = (
@@ -39,6 +47,11 @@ const evaluateFunction = (
       return {
         ...state,
         ...(!action.payload ? DEFAULT_STATE : action.payload.evaluateFunction)
+      };
+    case ActionType.ChangeEntrypoint:
+      return {
+        ...state,
+        entrypoint: action.payload
       };
     case ActionType.ChangeEntrypoint:
       return {

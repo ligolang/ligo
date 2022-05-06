@@ -34,38 +34,20 @@ let rec expression ppf (e : expression) =
   expression_content ppf e.expression_content
 and expression_content ppf (ec : expression_content) =
   match ec with
-  | E_literal l ->
-      literal ppf l
-  | E_variable n ->
-      fprintf ppf "%a" expression_variable n
-  | E_application {lamb;args} ->
-      fprintf ppf "(%a)@(%a)" expression lamb expression args
-  | E_constructor c ->
-      fprintf ppf "%a(%a)" label c.constructor expression c.element
-  | E_constant c -> constant expression ppf c
-  | E_record m ->
+  | E_literal     l -> literal                ppf l
+  | E_variable    n -> expression_variable    ppf n
+  | E_application a -> application expression ppf a
+  | E_constructor c -> constructor expression ppf c
+  | E_constant    c -> constant expression ppf c
+  | E_record      m ->
       fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
-  | E_accessor {record;path} ->
-      fprintf ppf "%a.%a" expression record (list_sep accessor (const ".")) path
-  | E_update {record; path; update} ->
-      fprintf ppf "{ %a with %a = %a }" expression record (list_sep accessor (const ".")) path expression update
-  | E_map m ->
-      fprintf ppf "map[%a]" (list_sep_d (assoc_expression expression)) m
-  | E_big_map m ->
-      fprintf ppf "big_map[%a]" (list_sep_d (assoc_expression expression)) m
-  | E_list lst ->
-      fprintf ppf "list[%a]" (list_sep_d expression) lst
-  | E_set lst ->
-      fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_lambda l -> lambda expression type_expression ppf l
+  | E_tuple       t -> tuple       expression ppf t
+  | E_accessor    a -> accessor    expression ppf a
+  | E_update      u -> update      expression ppf u
+  | E_lambda      l -> lambda      expression type_expression ppf l
   | E_type_abstraction e -> type_abs expression ppf e
-  | E_recursive { fun_name; fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )"
-        expression_variable fun_name
-        type_expression fun_type
-        expression_content (E_lambda lambda)
-  | E_matching m ->
-      fprintf ppf "%a" (match_exp expression type_expression) m
+  | E_matching    m -> match_exp expression type_expression ppf m
+  | E_recursive  r -> recursive expression type_expression ppf r
   | E_let_in { let_binder ; rhs ; let_result; attributes=attr; mut} ->
       fprintf ppf "let %a%a = %a%a in %a"
         option_type_name let_binder
@@ -75,29 +57,18 @@ and expression_content ppf (ec : expression_content) =
         expression let_result
   | E_type_in   ti -> type_in expression type_expression ppf ti
   | E_mod_in    mi -> mod_in  expression type_expression attributes attributes attributes ppf mi
-  | E_raw_code {language; code} ->
-      fprintf ppf "[%%%s %a]" language expression code
-  | E_ascription {anno_expr; type_annotation} ->
-      fprintf ppf "%a : %a" expression anno_expr type_expression type_annotation
+  | E_raw_code   r -> raw_code   expression ppf r
+  | E_ascription a -> ascription expression type_expression ppf a
   | E_module_accessor ma -> module_access expression_variable ppf ma
-  | E_cond {condition; then_clause; else_clause} ->
-      fprintf ppf "if %a then %a else %a"
-        expression condition
-        expression then_clause
-        expression else_clause
-  | E_sequence {expr1;expr2} ->
-      fprintf ppf "{ %a; @. %a}" expression expr1 expression expr2
-  | E_skip ->
-      fprintf ppf "skip"
-  | E_tuple t ->
-      fprintf ppf "(%a)" (list_sep_d expression) t
+  | E_cond       c -> cond       expression ppf c
+  | E_sequence   s -> sequence   expression ppf s
+  | E_skip         -> skip                  ppf ()
+  | E_map        m -> map        expression ppf m
+  | E_big_map    m -> big_map    expression ppf m
+  | E_list       l -> lst        expression ppf l
+  | E_set        s -> set        expression ppf s
+  | E_assign     a -> assign     expression type_expression ppf a
 
-
-and accessor ppf a =
-  match a with
-    | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
-    | Access_record s -> fprintf ppf "%s" s
-    | Access_map e    -> fprintf ppf "%a" expression e
 
 and option_type_name ppf {var;ascr;attributes=_}=
   match ascr with

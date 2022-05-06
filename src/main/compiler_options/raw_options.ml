@@ -1,7 +1,10 @@
 type raw = {
   (* Formatter *)
   warning_as_error : bool ;
-  
+
+  (* Warnings *)
+  warn_unused_rec : bool ;
+
   (* Frontend *)
   syntax : string ;
   entry_point : string ;
@@ -13,6 +16,7 @@ type raw = {
   self_pass : bool ;
   
   (* Test framework *)
+  test : bool ;
   steps : int ;
   generator : string ;
   
@@ -29,6 +33,9 @@ module Default_options = struct
   (* Formatter *)
   let show_warnings = true
   let warning_as_error = false
+
+  (* Warnings *)
+  let warn_unused_rec = false
   
   (* Frontend *)
   let syntax = "auto"
@@ -43,6 +50,7 @@ module Default_options = struct
   let self_pass = false
   
   (* Test framework *)
+  let test = false
   let steps = 1000000
   let generator = "random"
   
@@ -57,12 +65,14 @@ end
 
 let make 
   ?(warning_as_error = Default_options.warning_as_error)
+  ?(warn_unused_rec = Default_options.warn_unused_rec)
   ?(syntax = Default_options.syntax)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
   ?(project_root = Default_options.project_root)
   ?(with_types = Default_options.with_types)
   ?(self_pass = Default_options.self_pass)
+  ?(test = Default_options.test)
   ?(steps = Default_options.steps)
   ?(generator = Default_options.generator)
   ?(protocol_version = Default_options.protocol_version)
@@ -75,6 +85,9 @@ let make
 {
   (* Formatter *)
   warning_as_error ;
+
+  (* Warnings *)
+  warn_unused_rec ;
   
   (* Frontend *)
   syntax ;
@@ -87,6 +100,7 @@ let make
   self_pass ;
   
   (* Test framework *)
+  test ;
   steps ;
   generator ;
   
@@ -103,6 +117,9 @@ let default =
 {
   (* Formatter *)
   warning_as_error = Default_options.show_warnings ;
+
+  (* Warnings *)
+  warn_unused_rec = Default_options.warn_unused_rec ;
   
   (* Frontend *)
   syntax = Default_options.syntax ;
@@ -115,6 +132,7 @@ let default =
   self_pass = Default_options.self_pass ;
   
   (* Test framework *)
+  test = Default_options.test ;
   steps = Default_options.steps ;
   generator = Default_options.generator ;
   

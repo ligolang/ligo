@@ -110,7 +110,7 @@ async function getLatestLigoRelease(): Promise<Release | undefined> {
   return releases[0]
 }
 
-function getLigoPath(config: vscode.WorkspaceConfiguration): string | undefined {
+export function getLigoPath(config: vscode.WorkspaceConfiguration): string | undefined {
   const ligoPath = config.get<string>('ligoLanguageServer.ligoBinaryPath')
   if (ligoPath) {
     return ligoPath

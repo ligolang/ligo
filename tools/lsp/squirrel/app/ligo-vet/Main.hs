@@ -12,8 +12,8 @@ import Options.Applicative
 import System.Environment (setEnv)
 
 import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parse, parseWithScopes)
-import Log (withoutLogger)
-import ParseTree (Source (Path))
+import Log (runNoLoggingT)
+import ParseTree (pathToSrc)
 
 newtype Command = PrintSexp PrintSexpOptions
 
@@ -58,7 +58,7 @@ instance Pretty SomePretty where
   pp (SomePretty a) = pp a
 
 main :: IO ()
-main = withUtf8 $ withoutLogger \runLogger -> do
+main = withUtf8 do
   PrintSexp PrintSexpOptions{ .. } <- liftIO $ execParser programInfo
   -- Don't depend on LIGO.
   liftIO $ setEnv "LIGO_BINARY_PATH" "/dev/null"
@@ -70,7 +70,8 @@ main = withUtf8 $ withoutLogger \runLogger -> do
     parser
       | psoWithScopes = toPretty . parseWithScopes @Fallback
       | otherwise     = toPretty . parse
-  (tree, messages) <- runLogger $ parser (Path psoContract)
+  src <- pathToSrc psoContract
+  (tree, messages) <- runNoLoggingT $ parser src
   liftIO do
     putStrLn (render (pp tree))
     unless (null messages) do

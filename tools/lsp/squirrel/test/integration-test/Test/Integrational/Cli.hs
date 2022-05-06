@@ -7,10 +7,10 @@ import System.FilePath ((</>))
 import UnliftIO.Exception (SomeException, fromException, tryJust)
 
 import Cli
-import ParseTree (Source (..))
+import Log (runNoLoggingT)
+import ParseTree (pathToSrc)
 
 import Test.Common.FixedExpectations (HasCallStack, expectationFailure)
-import Test.Common.Util (withoutLogger)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
@@ -22,8 +22,9 @@ filterException e = asum
   ]
 
 checkFile :: HasCallStack => FilePath -> TestTree
-checkFile path = testCase path $ withoutLogger \runLogger ->
-  tryJust filterException (runLogger $ getLigoDefinitions $ Path path) >>= \case
+checkFile path = testCase path do
+  src <- pathToSrc path
+  tryJust filterException (runNoLoggingT $ getLigoDefinitions src) >>= \case
     Left  _ -> pure ()
     Right _ -> expectationFailure "Expected contract to fail, but it has succeeded."
 
