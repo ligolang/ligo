@@ -447,7 +447,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1801n , 2165n , 2165n). |}]
+    - test exited with value (1802n , 1985n , 1985n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -469,13 +469,13 @@ let%expect_test _ =
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
     3800011000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
     3800022000000mutez
-    666n
+    4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -483,14 +483,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    950038000000mutez
-    166n
+    950038500000mutez
+    1000040000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950049000000mutez
-    166n
+    950049500000mutez
+    1000040000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950060000000mutez
-    166n
+    950060500000mutez
+    1000040000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -678,7 +678,7 @@ let%expect_test _ =
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
-    16n |}]
+    100000000000n |}]
 
 
 let%expect_test _ =
