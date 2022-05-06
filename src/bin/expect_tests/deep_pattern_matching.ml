@@ -119,13 +119,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 18, characters 8-15:
-     17 |         let f = fun (b:int) -> b + a in
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 19, characters 22-31:
      18 |         f (b+1)
      19 |       | Cons (a,b) -> "invalid"
+     20 |     in
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
@@ -434,39 +434,39 @@ let%expect_test _ =
             (fr)@(ys)
     const t2 =
       lambda (x) return lambda (y) return  match x with
-                                            | Cons ctor_proj#52 ->
-                                               match ctor_proj#52 with
+                                            | Cons ctor_proj#57 ->
+                                               match ctor_proj#57 with
                                                 | ( a , b ) ->
                                                 let old_b = b in let b =
                                                  match y with
-                                                  | Cons ctor_proj#55 ->
+                                                  | Cons ctor_proj#56 ->
                                                     ADD(a ,
                                                     b)
-                                                  | Nil unit_proj#54 ->
+                                                  | Nil unit_proj#55 ->
                                                     let f = lambda (b) return ADD(a ,
                                                     b) in (f)@(ADD(b ,
                                                     1)) in ADD(ADD(a ,
                                                 old_b) , b)
-                                            | Nil unit_proj#56 ->
+                                            | Nil unit_proj#59 ->
                                                match y with
-                                                | Cons ctor_proj#57 ->
-                                                   match ctor_proj#57 with
+                                                | Cons ctor_proj#52 ->
+                                                   match ctor_proj#52 with
                                                     | ( _a , b ) ->
                                                     let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
                                                     b)
-                                                | Nil unit_proj#59 ->
+                                                | Nil unit_proj#54 ->
                                                   1
     const t3 =
       lambda (x) return  match x with
-                          | One ctor_proj#60 ->
-                             match ctor_proj#60 with
+                          | One ctor_proj#63 ->
+                             match ctor_proj#63 with
                               | Cons ctor_proj#65 ->
-                                 match ctor_proj#60 with
-                                  | Cons ctor_proj#61 ->
-                                     match ctor_proj#61 with
+                                 match ctor_proj#63 with
+                                  | Cons ctor_proj#60 ->
+                                     match ctor_proj#60 with
                                       | ( a , b ) ->
                                       ADD(a , b)
-                                  | Nil unit_proj#63 ->
+                                  | Nil unit_proj#62 ->
                                     2
                               | Nil unit_proj#64 ->
                                 1
@@ -478,46 +478,46 @@ let%expect_test _ =
     const t2_3 =
       lambda (x) return lambda (y) return lambda (x2) return let t2 =  match
                                                                         x with
-                                                                        | Cons ctor_proj#68 ->
+                                                                        | Cons ctor_proj#74 ->
                                                                          match
-                                                                        ctor_proj#68 with
+                                                                        ctor_proj#74 with
                                                                         | ( a , b ) ->
                                                                         let old_b = b in let b =
                                                                          match
                                                                         y with
-                                                                        | Cons ctor_proj#70 ->
+                                                                        | Cons ctor_proj#71 ->
                                                                          match
-                                                                        ctor_proj#70 with
+                                                                        ctor_proj#71 with
                                                                         | ( a , b ) ->
                                                                         ADD(a ,
                                                                         b)
-                                                                        | Nil unit_proj#72 ->
+                                                                        | Nil unit_proj#73 ->
                                                                         let f = lambda (b) return ADD(a ,
                                                                         b) in (f)@(ADD(b ,
                                                                         1)) in ADD(ADD(a ,
                                                                         old_b) ,
                                                                         b)
-                                                                        | Nil unit_proj#73 ->
+                                                                        | Nil unit_proj#76 ->
                                                                          match
                                                                         y with
-                                                                        | Cons ctor_proj#74 ->
+                                                                        | Cons ctor_proj#68 ->
                                                                          match
-                                                                        ctor_proj#74 with
+                                                                        ctor_proj#68 with
                                                                         | ( _a , b ) ->
                                                                         let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
                                                                         b)
-                                                                        | Nil unit_proj#76 ->
+                                                                        | Nil unit_proj#70 ->
                                                                         1 in let t3 =
        match x2 with
-        | One ctor_proj#77 ->
-           match ctor_proj#77 with
+        | One ctor_proj#80 ->
+           match ctor_proj#80 with
             | Cons ctor_proj#82 ->
-               match ctor_proj#77 with
-                | Cons ctor_proj#78 ->
-                   match ctor_proj#78 with
+               match ctor_proj#80 with
+                | Cons ctor_proj#77 ->
+                   match ctor_proj#77 with
                     | ( a , b ) ->
                     ADD(a , b)
-                | Nil unit_proj#80 ->
+                | Nil unit_proj#79 ->
                   2
             | Nil unit_proj#81 ->
               1
@@ -644,12 +644,12 @@ let%expect_test _ =
                                                                         | Nili unit_proj#141 ->
                                                                         (fl)@(ys)
     const t11 =
-      lambda (x) return lambda (y) return let gen#143 = ( x , y ) in  match
-                                                                       gen#143 with
+      lambda (x) return lambda (y) return let gen#144 = ( x , y ) in  match
+                                                                       gen#144 with
                                                                        |
-                                                                       ( tuple_proj#144 , ys ) ->
+                                                                       ( tuple_proj#145 , ys ) ->
                                                                         match
-                                                                        tuple_proj#144 with
+                                                                        tuple_proj#145 with
                                                                         | Consi ctor_proj#160 ->
                                                                          match
                                                                         ys with
@@ -661,7 +661,7 @@ let%expect_test _ =
                                                                         ctor_proj#160 with
                                                                         | Some a ->
                                                                         a
-                                                                        | None unit_proj#150 ->
+                                                                        | None unit_proj#143 ->
                                                                         ADD((fo)@(ctor_proj#160) ,
                                                                         (fo)@(ctor_proj#158))
                                                                         | Some _a ->
@@ -672,7 +672,7 @@ let%expect_test _ =
                                                                         ctor_proj#160 with
                                                                         | Some a ->
                                                                         a
-                                                                        | None unit_proj#150 ->
+                                                                        | None unit_proj#143 ->
                                                                         ADD((fo)@(ctor_proj#160) ,
                                                                         (fo)@(ctor_proj#158))
                                                                         | Consi ctor_proj#152 ->
@@ -683,14 +683,14 @@ let%expect_test _ =
                                                                         ctor_proj#160 with
                                                                         | Some a ->
                                                                         a
-                                                                        | None unit_proj#150 ->
+                                                                        | None unit_proj#143 ->
                                                                         ADD((fo)@(ctor_proj#160) ,
                                                                         (fo)@(ctor_proj#158))
                                                                         | Some b ->
                                                                         let a = 1 in ADD(a ,
                                                                         b)
                                                                         | Nili unit_proj#157 ->
-                                                                        (fl)@(tuple_proj#144)
+                                                                        (fl)@(tuple_proj#145)
                                                                         | Nili unit_proj#159 ->
                                                                         (fl)@(ys)
     const t12 =

@@ -11,3 +11,6 @@ val map_pattern_t : ('a binder -> 'b binder) -> 'a pattern -> 'b pattern
 val var_attribute : binder_attributes
 val const_attribute : binder_attributes
 val empty_attribute : binder_attributes
+
+val compare_option_patterns : ('a,'b) match_case -> ('a,'b) match_case -> int
+val compare_bool_patterns   : ('a,'b) match_case -> ('a,'b) match_case -> int
