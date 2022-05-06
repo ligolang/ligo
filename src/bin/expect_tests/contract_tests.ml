@@ -2153,16 +2153,18 @@ let%expect_test _ =
       lambda (n : int) return let f : int -> int = rec (f:int -> int => lambda (n : int) return let gen#2[@var] = EQ(n ,
       0) in  match gen#2 with
               | False unit_proj#3 ->
-                (f)@(SUB(n ,
-                1)) | True unit_proj#4 ->
-                      1 ) in (f)@(4)
+                (f)@(C_POLYMORPHIC_SUB(n ,
+                1))
+              | True unit_proj#4 ->
+                1 ) in (f)@(4)
     const g =
       rec (g:int -> int -> int -> int => lambda (f : int -> int) return (g)@(let h : int -> int = rec (h:int -> int => lambda (n : int) return let gen#5[@var] = EQ(n ,
       0) in  match gen#5 with
               | False unit_proj#6 ->
-                (h)@(SUB(n ,
-                1)) | True unit_proj#7 ->
-                      1 ) in h) ) |}]
+                (h)@(C_POLYMORPHIC_SUB(n ,
+                1))
+              | True unit_proj#7 ->
+                1 ) in h) ) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
@@ -2220,11 +2222,11 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
   [%expect {|
     const x = 1[@inline][@private]
-    const foo = lambda (a : int) return let test[@var] = ADD(2 ,
+    const foo = lambda (a : int) return let test[@var] = C_POLYMORPHIC_ADD(2 ,
       a)[@inline] in test[@inline][@private]
     const y = 1[@private]
     const bar =
-      lambda (b : int) return let test[@var] = lambda (z : int) return ADD(ADD(2 ,
+      lambda (b : int) return let test[@var] = lambda (z : int) return C_POLYMORPHIC_ADD(C_POLYMORPHIC_ADD(2 ,
       b) , z)[@inline] in (test)@(b)[@private]
     const check = 4[@private] |}]
 
