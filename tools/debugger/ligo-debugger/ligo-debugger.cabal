@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b1f800731bdecdcdcbd28a22a10624f4116195e6674c4a2c0904a111da8d6a73
+-- hash: 77ca29d8d3771a31169b06383d5e7711925cb553810e8a941a140a4aa06ef6ee
 
 name:           ligo-debugger
 version:        0.0.0
@@ -14,11 +14,14 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Debug
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.Handlers.Impl
       Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
+      Language.LIGO.Debugger.Snapshots
+      Language.LIGO.Debugger.Types
       Prelude
       Util
   other-modules:
@@ -33,6 +36,7 @@ library
       aeson
     , base-noprelude
     , bytestring
+    , conduit
     , containers
     , data-default
     , directory
@@ -51,6 +55,7 @@ library
     , universum
     , unliftio
     , vector
+    , vinyl
     , with-utf8
   default-language: Haskell2010
 
@@ -78,6 +83,9 @@ test-suite ligo-debugger-test
   other-modules:
       Driver
       Test.LigoCall
+      Test.Snapshots
+      Test.SourceMapper
+      Test.Util
       Paths_ligo_debugger
   hs-source-dirs:
       test
@@ -88,11 +96,16 @@ test-suite ligo-debugger-test
   build-depends:
       HUnit
     , base-noprelude
+    , containers
+    , data-default
     , filepath
     , fmt
+    , lens
     , ligo-debugger
     , morley
     , morley-debugger
+    , nyan-interpolation
+    , singletons
     , tasty
     , tasty-hunit-compat
     , universum

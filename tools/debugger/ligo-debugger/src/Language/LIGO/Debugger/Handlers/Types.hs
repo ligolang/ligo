@@ -10,6 +10,8 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSpecificResponse (..)
   ) where
 
+import Fmt (Buildable (..), GenericBuildable (..))
+
 import Morley.Debugger.DAP.TH (deriveSum, jsonfyMany)
 
 data LigoLaunchRequest = LigoLaunchRequest
@@ -18,6 +20,7 @@ data LigoLaunchRequest = LigoLaunchRequest
   , commandLigoLaunchRequest :: String
   , argumentsLigoLaunchRequest :: LigoLaunchRequestArguments
   } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoLaunchRequest)
 
 data LigoLaunchRequestArguments = LigoLaunchRequestArguments
   { noDebugLigoLaunchRequestArguments :: Maybe Bool
@@ -34,6 +37,7 @@ data LigoLaunchRequestArguments = LigoLaunchRequestArguments
     -- | Parameter value for contract.
   , parameterLigoLaunchRequestArguments :: Maybe String
   } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoLaunchRequestArguments)
 
 data LigoInitializeLoggerRequest = LigoInitializeLoggerRequest
   { seqLigoInitializeLoggerRequest :: Int
@@ -41,26 +45,31 @@ data LigoInitializeLoggerRequest = LigoInitializeLoggerRequest
   , commandLigoInitializeLoggerRequest :: String
   , argumentsLigoInitializeLoggerRequest :: LigoInitializeLoggerRequestArguments
   } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoInitializeLoggerRequest)
 
 -- | Log directory for the debugger.
 data LigoInitializeLoggerRequestArguments = LigoInitializeLoggerRequestArguments
   { fileLigoInitializeLoggerRequestArguments :: FilePath
   , logDirLigoInitializeLoggerRequestArguments :: Maybe FilePath
   } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoInitializeLoggerRequestArguments)
 
 data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
   deriving stock (Eq, Show, Generic)
+  deriving Buildable via (GenericBuildable LigoSpecificRequest)
 
 data LigoInitializeLoggerResponse = LigoInitializeLoggerResponse
   { seqLigoInitializeLoggerResponse :: Int
   , request_seqLigoInitializeLoggerResponse :: Int
   , successLigoInitializeLoggerResponse :: Bool
-  } deriving stock (Show, Eq)
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoInitializeLoggerResponse)
 
 data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
   deriving stock (Eq, Show, Generic)
+  deriving Buildable via (GenericBuildable LigoSpecificResponse)
 
 deriveSum
   [ (''LigoSpecificRequest, "Request", "command", [])

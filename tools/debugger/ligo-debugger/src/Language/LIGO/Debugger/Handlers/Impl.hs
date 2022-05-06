@@ -4,39 +4,37 @@ module Language.LIGO.Debugger.Handlers.Impl
   ) where
 
 import Debug qualified
+import Unsafe qualified
 
 import Control.Concurrent.STM (writeTChan)
-import Control.Monad.Except (MonadError (..))
-import Data.IntMap qualified as IntMap
-import Data.Map qualified as Map
-import Data.Set qualified as Set
-import Data.Text.IO.Utf8 qualified as Utf8
+import Control.Lens (zoom, (.=))
+import Control.Monad.Except (MonadError (..), liftEither)
 import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
-  (DebugSource (..), DebuggerState (..), SourceLocation (..), SourceMapper (..), SourceType (..),
-  mkTapeL)
-import Morley.Debugger.Core.Snapshots
-  (InstrNo (..), InterpretHistory (..), annotateInstrWith, collectInterpretSnapshots)
+  (SourceLocation (..), SourceType (..), curSnapshot, dsSourceOrigin, frozen, runSourceMapper)
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
-  RIO, RioContext (..), pushMessage)
+  RIO, RioContext (..), StopEventDesc (..), dsDebuggerState, dsVariables, pushMessage)
+import Morley.Debugger.DAP.Types.Morley (mkDebuggerState)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
-import Morley.Michelson.Runtime (parseExpandContract)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
-import Morley.Michelson.TypeCheck (typeCheckContract, typeVerifyParameter, typeVerifyStorage)
+import Morley.Michelson.TypeCheck (typeVerifyParameter, typeVerifyStorage)
 import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
-import System.Directory (doesFileExist)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
+import UnliftIO.Directory (doesFileExist)
 
 import Language.LIGO.Debugger.Handlers.Types
-import Language.LIGO.Debugger.Michelson (dummyMapper)
-import Util (groupByKey)
+
+import Language.LIGO.Debugger.CLI.Call
+import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Snapshots
 
 data LIGO
 
@@ -46,10 +44,12 @@ instance HasSpecificMessages LIGO where
   type ExtraEventExt LIGO = Void
   type ExtraResponseExt LIGO = LigoSpecificResponse
   type LanguageServerStateExt LIGO = Void
+  type InterpretSnapshotExt LIGO = InterpretSnapshot
+  type StopEventExt LIGO = InterpretEvent
 
   handleLaunch LigoLaunchRequest {..} = do
     initRes <- lift . lift $
-      runExceptT (initDummyDebuggerSession logMessage argumentsLigoLaunchRequest)
+      runExceptT (initDebuggerSession logMessage argumentsLigoLaunchRequest)
     case initRes of
       Left msg ->
         pushMessage $ DAPResponse $ ErrorResponse DAP.defaultErrorResponse
@@ -66,8 +66,79 @@ instance HasSpecificMessages LIGO where
           { DAP.successLaunchResponse = True
           , DAP.request_seqLaunchResponse = seqLigoLaunchRequest
           }
+
+  handleStackTraceRequest DAP.StackTraceRequest{..} = zoom dsDebuggerState do
+    -- We mostly follow morley-debugger's implementation, but here we don't need
+    -- to look at the next snapshot, the current one is what we want.
+    snap <- frozen curSnapshot
+    let frames = toDAPStackFrames snap
+    pushMessage $ DAPResponse $ StackTraceResponse $ DAP.defaultStackTraceResponse
+      { DAP.successStackTraceResponse = True
+      , DAP.request_seqStackTraceResponse = seqStackTraceRequest
+      , DAP.bodyStackTraceResponse = DAP.defaultStackTraceResponseBody
+        { DAP.stackFramesStackTraceResponseBody = frames
+        , DAP.totalFramesStackTraceResponseBody = length frames
+        }
+      }
+
+    posM <- frozen . runSourceMapper . sfInstrNo $ head (isStackFrames snap)
+    whenJust posM \pos ->
+      dsSourceOrigin .= _slPath pos
+    where
+      toDAPStackFrames snap =
+        let frames = toList $ isStackFrames snap
+        in zip [1..] frames <&> \(i, frame) ->
+          let LigoRange{..} = sfLoc frame
+          in DAP.StackFrame
+            { DAP.idStackFrame = i
+            , DAP.nameStackFrame = toString $ sfName frame
+            , DAP.sourceStackFrame = DAP.defaultSource
+              { DAP.nameSource = Just $ takeFileName lrFile
+              , DAP.pathSource = lrFile
+              }
+              -- TODO: use `IsSourceLoc` conversion capability
+              -- Once morley-debugger#44 is merged
+            , DAP.lineStackFrame = Unsafe.fromIntegral $ lpLine lrStart
+            , DAP.columnStackFrame = Unsafe.fromIntegral $ lpCol lrStart + 1
+            , DAP.endLineStackFrame = Unsafe.fromIntegral $ lpLine lrEnd
+            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ lpCol lrEnd + 1
+            }
+
+  handleScopesRequest DAP.ScopesRequest{..} = do
+    -- We follow the implementation from morley-debugger
+
+    -- Lazily calculate tree of variables for the current scope and store it
+    -- for subsequent "variables" request.
+    -- TODO [LIGO-304]: fill with actual variables
+    dsVariables .= mempty
+
+    -- TODO [LIGO-304]: show detailed scopes
+    let theScope = DAP.defaultScope
+          { DAP.nameScope = "all variables"
+          , DAP.variablesReferenceScope = 1
+          }
+    pushMessage $ DAPResponse $ ScopesResponse $ DAP.defaultScopesResponse
+      { DAP.successScopesResponse = True
+      , DAP.request_seqScopesResponse = seqScopesRequest
+      , DAP.bodyScopesResponse = DAP.ScopesResponseBody
+        { DAP.scopesScopesResponseBody = [theScope]
+        }
+      }
+
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
+
+  reportLogs _ = pass
+
+  getStopEventInfo Proxy = curSnapshot <&> \snap -> case isStatus snap of
+    InterpretRunning event ->
+      let
+        shortDesc = case event of
+          EventFacedStatement -> Just $ StopEventDesc "at statement"
+          EventExpressionPreview -> Just $ StopEventDesc "upon exp"
+          EventExpressionEvaluated{} -> Just $ StopEventDesc "computed exp"
+      in (shortDesc, Just event)
+    _ -> (Nothing, Nothing)
 
 handleInitializeLogger :: LigoInitializeLoggerRequest -> RIO LIGO ()
 handleInitializeLogger LigoInitializeLoggerRequest {..} = do
@@ -79,7 +150,7 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
 
   ch <- asks _rcOutputChannel
 
-  program <- runExceptT $ ifM (liftIO $ doesFileExist file)
+  program <- runExceptT $ ifM (doesFileExist file)
     (pure file)
     (throwError $ DAP.mkErrorMessage "Contract file not found" $ toText file)
 
@@ -101,30 +172,29 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
       pure $ Right ()
   logMessage [int||Initializing logger for #{file} finished: #s{result}|]
 
-initDummyDebuggerSession
+initDebuggerSession
   :: (String -> RIO LIGO ())
      -- ^ Logger to file
   -> LigoLaunchRequestArguments
-  -> ExceptT DAP.Message (RIO LIGO) DAPSessionState
-initDummyDebuggerSession logger LigoLaunchRequestArguments {..} = do
-  --program <- checkArgument "program" programLigoLaunchRequestArguments
-  let program = "/home/heitor/Serokell/ligo/tools/debugger/src-mapper/noop.tz"
+  -> ExceptT DAP.Message (RIO LIGO) (DAPSessionState InterpretSnapshot)
+initDebuggerSession logger LigoLaunchRequestArguments {..} = do
+  program <- checkArgument "program" programLigoLaunchRequestArguments
   storageT <- checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- checkArgument "parameter" parameterLigoLaunchRequestArguments
 
-  unlessM (liftIO $ doesFileExist program) $
+  unlessM (doesFileExist program) $
     throwError $ DAP.mkErrorMessage "Contract file not found" $ toText program
 
   let src = P.MSFile program
 
-  uContract <- liftIO (Utf8.readFile program) <&> parseExpandContract src >>=
-    either (throwError . DAP.mkErrorMessage "Could not parse contract" . pretty) pure
+  ligoDebugInfo <- compileLigoContractDebug program
+  lift . logger $ "Successfully read the LIGO debug output for " <> pretty program
 
-  forM_ (U.contractCode uContract) $ lift . logger . pretty
-
+  -- TODO [LIGO-554]: use LIGO for parsing it
   uParam <- P.parseExpandValue src (toText paramT) &
     either (throwError . DAP.mkErrorMessage "Could not parse parameter" . pretty) pure
 
+  -- TODO [LIGO-554]: use LIGO for parsing it
   uStorage <- P.parseExpandValue src (toText storageT) &
     either (throwError . DAP.mkErrorMessage "Could not parse storage" . pretty) pure
 
@@ -136,15 +206,12 @@ initDummyDebuggerSession logger LigoLaunchRequestArguments {..} = do
   --     • Couldn't match type ‘a0’ with ‘()’
   --         ‘a0’ is untouchable
   do
-    SomeContract (contract@Contract{} :: Contract cp st) <-
-      typeCheckContract uContract
-      & typeCheckingForDebugger
-      & either (throwError . DAP.mkErrorMessage "Could not typecheck contract") pure
+    (sourceMapper, SomeContract (contract@Contract{} :: Contract cp st)) <-
+      readLigoMapper ligoDebugInfo
+      & first (DAP.mkErrorMessage "Failed to process contract: " . pretty)
+      & liftEither
 
-    -- TODO
-    let indexedContract = T.mapContractCode (annotateInstrWith $ map InstrNo $ IntMap.keys $ _smLocs dummyMapper) contract
-
-    lift $ logger $ pretty $ cCode indexedContract
+    lift $ logger $ pretty (cCode contract)
 
     epcRes <- T.mkEntrypointCall entrypoint (cParamNotes contract) &
       maybe (throwError $ DAP.mkErrorMessage "Entrypoint not found" $ pretty entrypoint) pure
@@ -158,21 +225,8 @@ initDummyDebuggerSession logger LigoLaunchRequestArguments {..} = do
           & typeCheckingForDebugger
           & either (throwError . DAP.mkErrorMessage "Storage does not typecheck") pure
 
-        let his = collectInterpretSnapshots indexedContract epc arg storage dummyContractEnv
-        pure $ DAPSessionState (mkDebuggerState (SourcePath program) his) mempty program
-
--- | Construct initial debugger state.
-mkDebuggerState :: SourceType -> InterpretHistory -> DebuggerState
-mkDebuggerState source (InterpretHistory snapshots) =
-  let
-    sortedLocs = groupByKey _slPath _slSrcPos $ IntMap.elems $ _smLocs dummyMapper
-  in
-  DebuggerState
-    { _dsSnapshots    = mkTapeL snapshots
-    , _dsSources      = Map.fromList $ DebugSource mempty . Set.fromList <<$>> sortedLocs
-    , _dsIndexedLocs  = dummyMapper
-    , _dsSourceOrigin = source
-    }
+        let his = collectInterpretSnapshots program contract epc arg storage dummyContractEnv
+        pure $ DAPSessionState (mkDebuggerState (SourcePath program) sourceMapper his) mempty program
 
 checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a

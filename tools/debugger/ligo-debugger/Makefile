@@ -10,6 +10,7 @@ FORCE:
 
 clean:
 	stack clean
+	rm -rf $$(stack path --local-install-root)/bin/ligo-debugger
 
 build:
 	stack build $(STACK_DEV_OPTIONS)

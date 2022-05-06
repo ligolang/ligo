@@ -1,3 +1,4 @@
+-- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
@@ -16,6 +17,7 @@ import Text.Interpolation.Nyan
 -- common limits for sure.
 newtype TextualNumber a = TextualNumber a
   deriving stock Functor
+  deriving newtype NFData
 
 instance Integral a => FromJSON (TextualNumber a) where
   parseJSON = \case
@@ -38,7 +40,8 @@ data LigoPosition = LigoPosition
     -- ^ 1-indexed line number
   , lpCol  :: Word
     -- ^ 0-indexed column number
-  } deriving stock (Show, Eq, Ord)
+  } deriving stock (Show, Eq, Ord, Generic)
+    deriving anyclass (NFData)
 
 instance Buildable LigoPosition where
   build (LigoPosition line col) = [int||#{line}:#{col}|]
@@ -48,7 +51,8 @@ data LigoRange = LigoRange
   { lrFile  :: FilePath
   , lrStart :: LigoPosition
   , lrEnd   :: LigoPosition
-  } deriving stock (Show, Eq)
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
 
 instance Buildable LigoRange where
   build (LigoRange file start end) = [int||#{file}:#{start}-#{end}|]
@@ -65,6 +69,7 @@ instance FromJSON LigoRange where
         file <- o .: "file"
         TextualNumber line <- o .: "line"
         TextualNumber col  <- o .: "col"
+        when (line < 1) $ fail "Line number is zero"
         return (file, LigoPosition line col)
 
 -- | Describes a variable.
@@ -80,7 +85,8 @@ instance Buildable LigoVariable where
 --
 -- Not used at the moment.
 newtype LigoTypeRef = LigoTypeRef { unLigoTypeRef :: Word }
-  deriving stock (Show, Eq, Ord)
+  deriving stock (Show, Eq, Ord, Generic)
+  deriving anyclass (NFData)
 
 instance Buildable LigoTypeRef where
   build (LigoTypeRef i) = [int||type##{i}|]
@@ -94,7 +100,8 @@ data LigoType = LigoType
 data LigoExposedStackEntry = LigoExposedStackEntry
   { leseDeclaration :: Maybe LigoVariable
   , leseType        :: LigoTypeRef
-  } deriving stock (Show, Eq)
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
 
 instance Buildable LigoExposedStackEntry where
   build (LigoExposedStackEntry decl ty) =
@@ -113,8 +120,9 @@ data LigoStackEntry
     -- ^ Stack entry with known details.
   | LigoHiddenStackEntry
     -- ^ Stack entry that is unknown.
-    -- This can denote some auxilary entry added by LIGO, like reusable functions.
-  deriving stock (Show, Eq)
+    -- This can denote some auxiliary entry added by LIGO, like reusable functions.
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (NFData)
 
 instance Buildable LigoStackEntry where
   build = \case
@@ -141,11 +149,44 @@ instance FromJSON LigoStackEntry where
 
 type LigoStack = [LigoStackEntry]
 
--- | All the information provided for specific point of the Michelson program.
+-- | All the information provided for specific point of a Michelson program.
 data LigoIndexedInfo = LigoIndexedInfo
   { liiLocation    :: Maybe LigoRange
+    {- ^ Info about some expression (or sub-expression).
+
+      For instance, if I have
+
+      @
+      let b = a + 1 in
+      let c = 2 * b * b in
+      @
+
+      and this gets compiled to Michelson
+
+      @
+      DUPN x; PUSH 1; ADD;
+      DUP; PUSH 2; MUL; MUL;
+      @
+
+      then @ADD@ and two @MUL@s will have metadata attached to them with0
+      @location@ being set and pointing to @a + 1@, @2 * b@, and @2 * b * b@
+      expressions respectively.
+
+    -}
+
   , liiEnvironment :: Maybe LigoStack
-  } deriving stock (Show, Eq)
+    {- ^ Info about LIGO stack at the current point.
+
+      For each value in /Michelson stack/ it contains a corresponding LIGO
+      variable (if such is associated). But this is limited to the part of stack
+      related in the current stack frame.
+
+      This metadata is usually set between LIGO statements.
+
+    -}
+
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
 
 instance Buildable LigoIndexedInfo where
   build = \case

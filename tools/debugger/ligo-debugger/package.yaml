@@ -66,6 +66,7 @@ library:
   dependencies:
     - aeson
     - bytestring
+    - conduit
     - containers
     - directory
     - data-default
@@ -83,6 +84,7 @@ library:
     - text
     - unliftio
     - vector
+    - vinyl
     - with-utf8
 
   source-dirs:
@@ -117,11 +119,16 @@ tests:
     main: Main.hs
 
     dependencies:
+      - containers
+      - data-default
       - filepath
       - fmt
+      - lens
       - ligo-debugger
+      - nyan-interpolation
       - morley
       - morley-debugger
+      - singletons
       - tasty
       - HUnit
       - tasty-hunit-compat

@@ -11,7 +11,7 @@ packages:
 extra-deps:
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: 9caeda45f6c16f13e984c8bdb178fe39cff64f28
+  commit: e88420edd8361396a9741a176d67ae168105b730  # master
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git
@@ -21,7 +21,7 @@ extra-deps:
 - hex-text-0.1.0.0
 - show-type-0.1.1
 - git: https://gitlab.com/morley-framework/morley.git
-  commit: d52d0df045021d32fd8958187f7e2e6efbcfd48a
+  commit: c5df3bf7c4d683768b0a3dc36dc5154455045f45
   subdirs:
     - code/lorentz
     - code/morley
