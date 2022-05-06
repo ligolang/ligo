@@ -43,10 +43,6 @@ simpleTest = do
         "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n"
         SeverityError
         (mkRange (3, 17) (3, 19) dtFile)
-      , Message
-        "reserved name int"
-        SeverityError
-        (mkRange (3, 20) (3, 23) dtFile)
       ]
     , dtFallbackMsgs =
       [ Message "Unexpected: :: int"   SeverityError (mkRange (3, 17) (3, 23) dtFile)
@@ -63,7 +59,7 @@ treeDoesNotContainNameTest = do
     { dtFile
     , dtCompilerMsgs =
       [ Message "Syntax error #200." SeverityError (mkRange (1, 14) (1, 16) dtFile)
-      , Message "Syntax error #221." SeverityError (mkRange (1, 17) (1, 18) dtFile)
+      , Message "Syntax error #233." SeverityError (mkRange (1, 17) (1, 18) dtFile)
       ]
     , dtFallbackMsgs =
       [ Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)

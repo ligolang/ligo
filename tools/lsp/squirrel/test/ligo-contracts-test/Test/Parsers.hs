@@ -61,6 +61,7 @@ okayTests =
       , "polymorphism" </> "cases_annotation2.mligo"
       , "polymorphism" </> "comb.ligo"
       , "polymorphism" </> "comb.mligo"
+      , "polymorphism" </> "comb.religo"
       , "polymorphism" </> "ctrct.mligo"
       , "polymorphism" </> "error_monad.mligo"
       , "polymorphism" </> "lambda.mligo"
