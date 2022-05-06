@@ -276,6 +276,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_raw_code {language;code} -> (
     let (res,code) = self init code in
     (res, return @@ E_raw_code { language ; code }))
+  | E_assign a ->
+    let (res,a) = Fold_maps.assign self (fun a b -> a,b) init a in
+    (res, return @@ E_assign a)
   | E_literal _ | E_variable _  | E_module_accessor _ as e' -> (init, return e')
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->

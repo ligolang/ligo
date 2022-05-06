@@ -103,6 +103,7 @@ and expression_content = function
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access ValueVar.to_yojson e]
   | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
+  | E_assign          e -> `List [ `String "E_assign";   assign expression type_expression e ]
 
 and constant {cons_name;arguments} =
   `Assoc [
@@ -122,9 +123,9 @@ and application {lamb;args} =
     ("args", expression args);
   ]
 
-and lambda {binder;result} =
+and lambda {binder=b;result} =
   `Assoc [
-    ("binder", ValueVar.to_yojson binder);
+    ("binder", binder type_expression b);
     ("result", expression result);
   ]
 
@@ -160,7 +161,7 @@ and module_attribute ({public ; hidden}: module_attribute) =
 
 and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
-    ("let_binder", ValueVar.to_yojson let_binder);
+    ("let_binder", binder type_expression let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("attr", attribute attr);
@@ -229,7 +230,7 @@ and matching_content_case {constructor; pattern; body} =
 
 and matching_content_record {fields; body; tv} =
   `Assoc [
-    ("fields", label_map (pair ValueVar.to_yojson type_expression) fields);
+    ("fields", label_map (binder type_expression) fields);
     ("body", expression body);
     ("record_type", type_expression tv);
   ]

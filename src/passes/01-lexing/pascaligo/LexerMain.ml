@@ -9,5 +9,11 @@ module Self_tokens      = Lexing_pascaligo.Self_tokens
 module MainGen          = Lexing_shared.LexerMainGen
 module Main = MainGen.Make (File) (Token) (Lexer_CLI) (Self_tokens)
 
-let () = Main.check_cli ()
-let () = Main.scan_all ()
+(* TODO: this run in dune build, make it run with dune runtest instead *)
+module None_warning = struct
+   let add_warning = fun _ -> ()
+end
+
+module Main_test = Main(None_warning)
+let () = Main_test.check_cli ()
+let () = Main_test.scan_all ()

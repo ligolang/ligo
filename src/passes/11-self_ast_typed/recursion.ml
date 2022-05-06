@@ -44,10 +44,9 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
   | E_record_update {record;update;_} ->
     check_recursive_call ~raise n false record;
     check_recursive_call ~raise n false update
-  | E_module_accessor _ ->
-    ()
-  | E_type_inst _ ->
-    ()
+  | E_module_accessor _
+  | E_type_inst _
+  | E_assign _ -> ()
 
 and check_recursive_call_in_matching ~raise = fun n final_path c ->
   match c with
@@ -61,9 +60,9 @@ and check_recursive_call_in_matching ~raise = fun n final_path c ->
 
 let check_rec_binder_shadowed ~fun_name ~lambda =
   let _, fv = FV.expression lambda.result in
-  let is_binder_shadowed_in_body 
+  let is_binder_shadowed_in_body
     = not @@ List.mem fv fun_name ~equal:var_equal in
-  var_equal fun_name lambda.binder ||
+  var_equal fun_name lambda.binder.var ||
   is_binder_shadowed_in_body
 
 let check_tail_expression ~raise : expression -> expression = fun e ->
@@ -71,22 +70,22 @@ let check_tail_expression ~raise : expression -> expression = fun e ->
   match e.expression_content with
   | E_recursive {fun_name; fun_type=_; lambda} as e-> (
     let is_shadowed = check_rec_binder_shadowed ~fun_name ~lambda in
-    let () = 
-      if is_shadowed 
-      then () (* No recursion, so no need to check if tail call*) 
+    let () =
+      if is_shadowed
+      then () (* No recursion, so no need to check if tail call*)
       else check_recursive_call ~raise fun_name true lambda.result in
     return e
     )
   | e -> return e
 
-let show_unused_rec_warning ~add_warning ~warn_unused_rec fun_name = 
+let show_unused_rec_warning ~add_warning ~warn_unused_rec fun_name =
   if warn_unused_rec then
-    add_warning 
+    add_warning
       (`Self_ast_typed_warning_unused_rec
         (ValueVar.get_location fun_name, Format.asprintf "%a" ValueVar.pp fun_name))
   else ()
-  
-let remove_rec_expression ~add_warning ~warn_unused_rec : expression -> expression 
+
+let remove_rec_expression ~add_warning ~warn_unused_rec : expression -> expression
   = fun e ->
   let return expression_content = { e with expression_content } in
   match e.expression_content with

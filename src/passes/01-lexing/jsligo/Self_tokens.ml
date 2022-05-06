@@ -198,7 +198,7 @@ let vertical_bar_insertion units = apply vertical_bar_insertion units
 
 (* COMPOSING FILTERS (exported) *)
 
-let filter units =
+let filter ~add_warning:_ units =
   attributes
   @@ automatic_semicolon_insertion
   @@ vertical_bar_insertion

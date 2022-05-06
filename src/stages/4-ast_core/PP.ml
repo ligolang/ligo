@@ -141,5 +141,6 @@ and expression_content ppf (ec : expression_content) =
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
   | E_module_accessor ma -> module_access expression_variable ppf ma
+  | E_assign a -> assign expression type_expression ppf a
 
 let module_ ppf (p : module_) = declarations expression type_expression e_attributes t_attributes m_attributes ppf p

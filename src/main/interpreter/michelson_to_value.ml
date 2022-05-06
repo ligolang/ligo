@@ -190,7 +190,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
       let insertion = e_a_raw_code Stage_common.Backends.michelson code_block (t_arrow t_input t_output ()) in
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
-      let orig_lambda = e_a_lambda {binder=arg_binder; result=body} t_input t_output in
+      let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
   (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
    *   ignore addr;
@@ -291,7 +291,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
            | E_raw_code {code;language=_} ->
               let insertion = e_a_raw_code Stage_common.Backends.michelson code (t_arrow type1 type2 ()) in
               let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
-              let orig_lambda = e_a_lambda {binder=arg_binder; result=body} type1 type2 in
+              let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} type1 type2 in
               V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
            | _ -> v)
        | _ -> v)
