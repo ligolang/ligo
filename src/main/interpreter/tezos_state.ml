@@ -1,13 +1,13 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_012_Psithaca_test_helpers
+module Tezos_alpha_test_helpers = Tezos_013_PtJakart_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
-module Tezos_protocol_parameters = Tezos_protocol_012_Psithaca_parameters
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
 
 type r = Errors.interpreter_error raise
 

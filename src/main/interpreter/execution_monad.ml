@@ -8,8 +8,8 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_client = Tezos_client_012_Psithaca
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_client = Tezos_client_013_PtJakart
 
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
