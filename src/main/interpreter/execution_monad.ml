@@ -197,6 +197,7 @@ module Command = struct
         | _ -> 
           (fail_other (), ctxt)
       )
+      (* this error is only caught because we have local modifications in tezos-ligo *)
       | (Ecoproto_error (Contract_storage.Balance_too_low (contract_too_low,contract_balance,spend_request))) :: _ -> (
         let contract_too_low : LT.mcontract = Michelson_backend.contract_to_contract contract_too_low in
         let contract_too_low = LT.V_Ct (C_address contract_too_low) in
