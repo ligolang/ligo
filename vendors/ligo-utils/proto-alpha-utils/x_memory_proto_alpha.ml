@@ -19,21 +19,20 @@ module X = struct
       (((ta, ra) stack_ty, (tb, rb) stack_ty) eq * context) tzresult
     = fun ctxt lvl ta tb ->
       let dummy_loc  = 0 in (*TODO not sure ..*)
+      let error_details = Informative in
       match ta, tb with
-      | Item_t (tva, ra, _), Item_t (tvb, rb, _) ->
-        ty_eq ctxt dummy_loc tva tvb |>
-        record_trace (Bad_stack_item lvl) >>? fun (Eq, ctxt) ->
+      | Item_t (tva, ra), Item_t (tvb, rb) ->
+        let x = ty_eq ~error_details dummy_loc tva tvb in
+        Gas_monad.run ctxt x >>? fun (x, ctxt) -> x >>? fun Eq ->
         stack_ty_eq ctxt (lvl + 1) ra rb >>? fun (Eq, ctxt) ->
         (Ok (Eq, ctxt) : (((ta, ra) stack_ty, (tb, rb) stack_ty) eq * context) tzresult)
       | Bot_t, Bot_t -> Ok (Eq, ctxt)
       | _, _ -> error Bad_stack_length
 
-
-
   module Unparse_costs = Michelson_v1_gas.Cost_of.Unparsing
 
   type ex_typed_value =
-    Ex_typed_value : ('a Script_typed_ir.ty * 'a) -> ex_typed_value
+    Ex_typed_value : (('a,'comparable) Script_typed_ir.ty * 'a) -> ex_typed_value
 
 module Interp_costs = Michelson_v1_gas.Cost_of
 
@@ -50,16 +49,20 @@ let stack_ty_eq (type a ra b rb)
 
 let ty_eq (type a b)
     ?(tezos_context = (dummy_environment ()).tezos_context)
-    (a:a ty) (b:b ty)
+    (a:(a,_) ty) (b:(b,_) ty) : ((_, _) eq, Tezos_base.TzPervasives.tztrace) result
   =
   let open Tezos_base.TzPervasives.Result_syntax in
-  let* (Eq, _) = alpha_wrap (Script_ir_translator.ty_eq tezos_context 0 a b) in
-  return Eq
+  let error_details = Script_tc_errors.Informative in
+  let* (x,_) = alpha_wrap (
+    let x = Script_ir_translator.ty_eq ~error_details 0 a b in
+    Gas_monad.run tezos_context x
+  ) in
+  alpha_wrap x
 
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_012_Psithaca.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_013_PtJakart.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -80,7 +83,7 @@ let lazy_expr expr =
 
 let parse_michelson_fail (type aft aftr)
     ?(tezos_context = (dummy_environment ()).tezos_context)
-    ~top_level michelson
+    ~(top_level : tc_context) michelson
     ?type_logger
     (bef:('a, 'b) Script_typed_ir.stack_ty) (aft:(aft, aftr) Script_typed_ir.stack_ty)
     : (('a, 'b, aft, aftr) descr, error trace) result Lwt.t
@@ -278,11 +281,11 @@ let interpret ?(options = make_options ()) (instr:('a, 'b, 'c, 'd) kdescr) bef :
     payer ;
     amount ;
     chain_id ;
-    balance = _ ;
+    balance ;
     now ;
     level ;
   } = options in
-  let step_constants = { source ; self ; payer ; amount ; chain_id ; now ; level } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now ; level } in
   (* (EmptyCell, EmptyCell) feels wrong here ..*)
   Script_interpreter.step no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
   fun (stack, _, _) -> Lwt_result_syntax.return stack
@@ -323,7 +326,7 @@ let failure_interpret
     payer ;
     amount ;
     chain_id ;
-    balance = _ ;
+    balance ;
     now ;
     level ;
   } = options in
@@ -340,7 +343,7 @@ let failure_interpret
   } in
   let instr = kdescr in
 
-  let step_constants = { source ; self ; payer ; amount ; chain_id ; now  ; level } in
+  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now  ; level } in
   Script_interpreter.step no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
   match x with
   | Ok (s, _, _ctxt) -> Lwt_result_syntax.return @@ Succeed s
@@ -349,7 +352,7 @@ let failure_interpret
       Alpha_environment.(Ecoproto_error ( (Reject (_, expr, _)))::_t) -> Lwt_result_syntax.return @@ Fail expr (* This catches failwith errors *)
     | _ -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
 
-let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
+let pack (data_ty: ('a,_) ty) (data: 'a) : bytes tzresult Lwt.t =
   pack_data (dummy_environment ()).tezos_context data_ty data >>=?? fun (packed,_) -> Lwt_result_syntax.return packed
 
 let strings_of_prims = Michelson_v1_primitives.strings_of_prims

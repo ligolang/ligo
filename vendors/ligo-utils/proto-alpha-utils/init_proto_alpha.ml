@@ -155,14 +155,14 @@ module Context_init = struct
   let contents
         ~predecessor
         ?(proof_of_work_nonce = default_proof_of_work_nonce)
-        ?(round = Alpha_context.Round.zero) ?seed_nonce_hash ?(liquidity_baking_escape_vote = false) () =
+        ?(round = Alpha_context.Round.zero) ?seed_nonce_hash ?(liquidity_baking_toggle_vote = Liquidity_baking_repr.LB_off) () =
     let payload_hash = Alpha_context.Block_payload.hash ~predecessor round Alpha_environment.Operation_list_hash.zero in
     Alpha_context.Block_header.({
         payload_hash ;
         payload_round = round ;
         proof_of_work_nonce ;
         seed_nonce_hash ;
-        liquidity_baking_escape_vote ;
+        liquidity_baking_toggle_vote ;
       })
 
 

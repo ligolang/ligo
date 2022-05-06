@@ -174,6 +174,11 @@ let compile_type ~raise type_exp =
   let ty = Of_aggregated.compile_type ~raise type_exp in
   Of_mini_c.compile_type ty
 
+let entrypoint_of_string x =
+  match Tezos_raw_protocol.Entrypoint_repr.of_annot_lax_opt (Tezos_raw_protocol.Non_empty_string.of_string_exn x) with
+  | Some x -> x
+  | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
+
 let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let open Ligo_compile in
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
