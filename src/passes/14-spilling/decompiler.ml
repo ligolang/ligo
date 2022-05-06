@@ -120,16 +120,6 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         get_string v in
       return (E_literal (Literal_signature n))
     )
-    | (Option, [o])  -> (
-        let opt =
-          trace_option ~raise (wrong_mini_c_value t v) @@
-          get_option v in
-        match opt with
-        | None -> (e_a_none o)
-        | Some s ->
-            let s' = self s o in
-            (e_a_some s')
-      )
     | (Map, [k_ty;v_ty])  -> (
         let map =
           trace_option ~raise (wrong_mini_c_value t v) @@
@@ -138,10 +128,10 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
           let aux = fun (k, v) ->
             let key   = self k k_ty in
             let value = self v v_ty in
-            ({key; value} : AST.map_kv) in
+            (key, value) in
           List.map ~f:aux map in
         let map' = List.dedup_and_sort ~compare:Caml.compare map' in (* AST.Compare.map_kbv is broken because of expression and litteral being broken *)
-        let aux = fun ({ key ; value } : AST.map_kv) prev ->
+        let aux = fun ( key , value ) prev ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
         let init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
@@ -155,10 +145,10 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
           let aux = fun (k, v) ->
             let key   = self k k_ty in
             let value = self v v_ty in
-            ({key; value} : AST.map_kv) in
+            ( key, value ) in
           List.map ~f:aux big_map in
         let big_map' = List.dedup_and_sort ~compare:Caml.compare big_map' in
-        let aux = fun ({ key ; value } : AST.map_kv) prev ->
+        let aux = fun ( key, value ) prev ->
           return @@ E_constant {cons_name=C_MAP_ADD;arguments=[key ; value ; prev]}
         in
         let init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
@@ -204,15 +194,25 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     | ((Michelson_pair | Michelson_or),_) ->
       raise.raise @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2     |
-        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Option           |
-        Map             | Big_map              | Set             | Bool     | Baker_hash        | Pvss_key         | 
-        Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Test_exec_result |
-        Test_exec_error | String               | Typed_address   | Mutation | List              | Chest            | 
-        Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp        | 
-        Operation), _) ->
+        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         |
+        Map             | Big_map              | Set             | Bool     | Baker_hash        | Pvss_key         |
+        Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program |
+                          String               | Typed_address   | Mutation | List              | Chest            |
+        Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp        |
+        Operation       | External _), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.raise @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
+  | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) ->
+    (match v with
+    | D_some v ->
+      let tv = trace_option ~raise (corner_case ~loc:"unspiller" "impossible") @@ Ast_aggregated.get_t_option t in
+      let sub = self v tv in
+      return (E_constructor {constructor=Label "Some";element=sub})
+    | D_none ->
+      return (E_constructor {constructor=Label "None";element=make_e (e_unit ()) (t_unit ())})
+    | _ -> raise.raise @@ corner_case ~loc:"unspiller" "impossible"
+    )
   | T_sum {layout ; content} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout content in
       let (constructor, v, tv) = Layout.extract_constructor ~raise ~layout v lst in

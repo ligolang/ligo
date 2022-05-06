@@ -49,6 +49,8 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Mutation (l, e) ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_aggregated.PP.expression e
+  | V_Thunk { context = _ ; value } ->
+     Format.fprintf ppf "Thunk(%a)" Ast_aggregated.PP.expression value
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term

@@ -170,6 +170,8 @@ let get_attributes (node : CST.pattern) =
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
+%attribute nsepseq(statement,SEMI) [@recover.cost 1004]
+
 (* Entry points *)
 
 %start contract interactive_expr

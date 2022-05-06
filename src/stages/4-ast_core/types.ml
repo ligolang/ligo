@@ -8,7 +8,7 @@ type sugar_expression_option = Ast_sugar.expression option
 
 type string_option = string option
 
-type type_attribute = { public: bool }
+type type_attribute = { public: bool ; hidden : bool }
 and module_attribute = type_attribute
 
 and module_              = (expression , ty_expr , known_attributes , type_attribute , module_attribute) declarations'
@@ -67,6 +67,7 @@ and expression_content =
   | E_record_update   of expr record_update
   | E_ascription      of (expr,ty_expr) ascription
   | E_module_accessor of expression_variable module_access
+  | E_assign   of (expr,ty_expr) assign
 
 and type_expression_option = type_expression option
 
@@ -81,3 +82,5 @@ and let_in = {
   }
 
 and matching_expr = (expr, ty_expr) match_exp
+
+type program = module_

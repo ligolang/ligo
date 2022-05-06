@@ -59,6 +59,26 @@ let destruct_arrows_n (t : type_expression) (n : int) =
     | _ -> (List.rev type_vars, t)
   in destruct_arrows [] t
 
+(* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
+let destruct_arrows (t : type_expression) =
+  let rec destruct_arrows type_vars (t : type_expression) = match t.type_content with
+    | T_arrow { type1 ; type2 } ->
+       destruct_arrows (type1 :: type_vars) type2
+    | _ -> (List.rev type_vars, t)
+  in destruct_arrows [] t
+
+let destruct_tuple (t : type_expression) =
+  match t.type_content with
+  | T_record { content ; _ } ->
+     let f ({associated_type;_} : row_element) = associated_type in
+     let fields = LMap.values content in
+     let fields = List.map ~f fields in
+     fields
+  | _ -> [t]
+
+let destruct_tuples (t : type_expression list) =
+  List.concat_map ~f:destruct_tuple t
+
 (* This function takes an expression l and a list of arguments [e1; ...; en] and constructs `l e1 ... en`,
    but it checks that types make sense (i.e. l has a function type with enough arguments) *)
 let build_applications_opt (lamb : expression) (args : expression list) =

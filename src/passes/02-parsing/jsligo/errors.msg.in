@@ -1401,6 +1401,15 @@ contract: WILD As LBRACKET ZWSP
 ## The known suffix of the stack is as follows:
 ## LBRACKET
 ##
+contract: LPAR Bytes COLON ZWSP
+##
+## Ends in an error in state: 12.
+##
+## type_annotation -> COLON . type_expr [ RPAR RBRACE COMMA ARROW ]
+##
+## The known suffix of the stack is as follows:
+## COLON
+##
 
 Ill-formed type annotation.
 At this point, a type expression is expected.
@@ -3012,3 +3021,94 @@ contract: Attr Type Ident LT Ident GT EQ ZWSP
 
 Ill-formed parametric type declaration.
 At this point, the right-hand side is expected as a type expression.
+
+contract: Const Ident COLON LT ZWSP
+##
+## Ends in an error in state: 288.
+##
+## chevrons(nsepseq(ctor,COMMA)) -> LT . nsepseq(ctor,COMMA) GT [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+## chevrons(nsepseq(ctor,COMMA)) -> LT . nsepseq(ctor,COMMA) GT ZWSP [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## LT
+##
+contract: Const Ident COLON LT UIdent COMMA ZWSP
+##
+## Ends in an error in state: 290.
+##
+## nsepseq(ctor,COMMA) -> UIdent COMMA . nsepseq(ctor,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## UIdent COMMA
+##
+
+Ill-formed generic type.
+At this point, a generic type is expected.
+
+contract: Const Ident COLON LT UIdent ZWSP
+##
+## Ends in an error in state: 289.
+##
+## nsepseq(ctor,COMMA) -> UIdent . [ GT ]
+## nsepseq(ctor,COMMA) -> UIdent . COMMA nsepseq(ctor,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## UIdent
+##
+
+Ill-formed generic type.
+At this point, one of the following is expected:
+ * a closing chevron '>' if the generic type is complete.
+ * a comma, followed by another generic type.
+
+contract: Const Ident COLON LT UIdent GT ZWSP ZWSP
+##
+## Ends in an error in state: 295.
+##
+## binding_type -> COLON type_generics . type_expr [ EQ ]
+##
+## The known suffix of the stack is as follows:
+## COLON type_generics
+##
+
+Ill-formed type annotation.
+At this point, if the type generics are complete, a type expression is expected.
+
+
+contract: Const Ident COLON LT UIdent GT While
+##
+## Ends in an error in state: 293.
+##
+## chevrons(nsepseq(ctor,COMMA)) -> LT nsepseq(ctor,COMMA) GT . [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+## chevrons(nsepseq(ctor,COMMA)) -> LT nsepseq(ctor,COMMA) GT . ZWSP [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident Attr ]
+##
+## The known suffix of the stack is as follows:
+## LT nsepseq(ctor,COMMA) GT
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Const Ident COLON LT Ident ZWSP
+##
+## Ends in an error in state: 291.
+##
+## nsepseq(type_name,COMMA) -> Ident . [ GT ]
+## nsepseq(type_name,COMMA) -> Ident . COMMA nsepseq(type_name,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Const Ident COLON LT Ident COMMA ZWSP
+##
+## Ends in an error in state: 292.
+##
+## nsepseq(type_name,COMMA) -> Ident COMMA . nsepseq(type_name,COMMA) [ GT ]
+##
+## The known suffix of the stack is as follows:
+## Ident COMMA
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

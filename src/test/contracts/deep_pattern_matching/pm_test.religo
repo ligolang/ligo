@@ -23,7 +23,7 @@ let t2 =
             | Nil => 1
             | Cons (_a, b) =>
                 let a = "a";
-                int(Bytes.length(a)) + b
+                int(String.length(a)) + b
             }
         }
         | Cons (a, b) =>
@@ -49,7 +49,7 @@ let t3 =
          | Cons (a, b) => a + b
          }
      )
-     | Two {a , b , c } => a + int (b) + int(Bytes.length(c))
+     | Two {a , b , c } => a + int (b) + int(String.length(c))
      });
 
 let t2_3 = 
@@ -63,7 +63,7 @@ let t2_3 =
                  | Nil => 1
                  | Cons(_a, b) =>
                      let a = "a";
-                     int(Bytes.length(a)) + b
+                     int(String.length(a)) + b
                  }
              }
              | Cons (a, b) =>
@@ -86,7 +86,7 @@ let t2_3 =
                  | Cons (a, b) => a + b
                  }
              }
-             | Two {a : a , b : b , c : c } => a + b + int(Bytes.length(c))
+             | Two {a : a , b : b , c : c } => a + b + int(String.length(c))
              };
            t2 + t3 )));
 
@@ -98,7 +98,7 @@ let t4 =
         | One Nil, y => 2
         | One (Cons (a, b)), y => a + b
         | Two {a , b , c}, Two{a : aa, b : _, c : cc } =>
-          a + int(b) + int (Bytes.length (c)) + aa + int (Bytes.length (cc))
+          a + int(b) + int (String.length (c)) + aa + int (String.length (cc))
         }));
 
 let t5 = (x: int) => {
@@ -210,5 +210,5 @@ let t13 =
             hd
         | { a : _, b : _ }, {a : Some([hd, ..._tl]), b : [] } =>
             hd
-        | { a : Some a, b : _}, _ => int(Bytes.length(a))
+        | { a : Some a, b : _}, _ => int(List.length(a))
         }));

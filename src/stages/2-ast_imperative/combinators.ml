@@ -114,8 +114,6 @@ let e_bytes_hex_ez ?loc b : expression option =
 let e_bytes_raw ?loc (b: bytes) : expression = make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_hex ?loc b : expression = e_bytes_raw ?loc @@ Hex.to_bytes b
 let e_bytes_string ?loc (s: string) : expression = e_bytes_hex ?loc @@ Hex.of_string s
-let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = Const C_SOME; arguments = [s]}
-let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = Const C_NONE; arguments = []}
 let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = Const C_CONCAT; arguments = [sl ; sr ]}
 let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = Const C_MAP_ADD; arguments = [k ; v ; old]}
 let e_add ?loc a b : expression = make_e ?loc @@ E_constant {cons_name = Const C_ADD; arguments = [a ; b]}
@@ -148,6 +146,8 @@ let e_raw_code ?loc language code = make_e ?loc @@ E_raw_code {language; code}
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Label s; element = a}
 let e_true  ?loc (): expression = e_constructor ?loc "True"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "False" @@ e_unit ?loc ()
+let e_some ?loc s  : expression = e_constructor ?loc "Some"  @@ s
+let e_none ?loc () : expression = e_constructor ?loc "None"  @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
   let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap ?loc @@ (P_var b)) binders in
@@ -213,8 +213,8 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
-let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression}
-let e_assign_ez ?loc variable access_path expression = e_assign ?loc (ValueVar.of_input_var ?loc variable) access_path expression
+let e_assign ?loc binder access_path expression = make_e ?loc @@ E_assign {binder;access_path;expression}
+let e_assign_ez ?loc variable access_path expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) access_path expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
   let attributes = {const_or_var = None} in

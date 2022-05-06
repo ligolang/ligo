@@ -5,19 +5,30 @@ export enum MichelsonFormat {
   Json = 'json'
 }
 
+export enum protocolType {
+  Ithaca = 'ithaca',
+}
+
 export enum ActionType {
   ChangeEntrypoint = 'compile-change-entrypoint',
+  ChangeProtocol = 'compile-change-protocol',
   ChangeMichelsonFormat = 'compile-change-michelson-format'
 }
 
 export interface CompileState {
   entrypoint: string;
   michelsonFormat?: MichelsonFormat;
+  protocol: string;
 }
 
 export class ChangeEntrypointAction {
   public readonly type = ActionType.ChangeEntrypoint;
   constructor(public payload: CompileState['entrypoint']) {}
+}
+
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeProtocol;
+  constructor(public payload: CompileState['protocol']) {}
 }
 
 export class ChangeMichelsonFormatAction {
@@ -28,10 +39,12 @@ export class ChangeMichelsonFormatAction {
 type Action =
   | ChangeEntrypointAction
   | ChangeMichelsonFormatAction
-  | ChangeSelectedExampleAction;
+  | ChangeSelectedExampleAction
+  | ChangeProtocolAction;
 
 const DEFAULT_STATE: CompileState = {
   entrypoint: '',
+  protocol: 'ithaca',
   michelsonFormat: MichelsonFormat.Text
 };
 
@@ -46,6 +59,11 @@ const compile = (state = DEFAULT_STATE, action: Action): CompileState => {
       return {
         ...state,
         entrypoint: action.payload
+      };
+    case ActionType.ChangeProtocol:
+      return {
+        ...state,
+        protocol: action.payload
       };
     case ActionType.ChangeMichelsonFormat:
       return {

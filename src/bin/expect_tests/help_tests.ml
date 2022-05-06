@@ -83,6 +83,7 @@ let%expect_test _ =
                                                be compiled as on-chain views,
                                                separated by ','
                                                (alias: -v)
+      [--warn-unused-rec]                      disable warning messages
       [--werror]                               treat warnings as errors
       [-e ENTRY-POINT]                         the entry-point that will be
                                                compiled.
@@ -149,6 +150,7 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                disable warning messages
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
@@ -213,6 +215,7 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                disable warning messages
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
@@ -247,6 +250,7 @@ let%expect_test _ =
                                  context initialization.
       [--no-warn]                disable warning messages
       [--project-root PATH]      The path to root of the project.
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [--without-run]            disable running of compiled expression.
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
@@ -294,6 +298,7 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
@@ -342,6 +347,7 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
@@ -391,6 +397,7 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
@@ -415,29 +422,37 @@ let%expect_test _ =
 
     === flags ===
 
-      [--display-format FORMAT]         the format that will be used by the CLI.
-                                        Available formats are 'dev', 'json', and
-                                        'human-readable' (default). When
-                                        human-readable lacks details (we are still
-                                        tweaking it), please contact us and use
-                                        another format in the meanwhile.
-                                        (alias: --format)
-      [--init-file FILENAME]            the path to the smart contract file to be
-                                        used for context initialization.
-      [--michelson-format CODE_FORMAT]  format that will be used by compile-contract
-                                        for the resulting Michelson. Available
-                                        formats are 'text' (default), 'json' and
-                                        'hex'.
-      [--no-warn]                       disable warning messages
-      [--project-root PATH]             The path to root of the project.
-      [--werror]                        treat warnings as errors
-      [--without-run]                   disable running of compiled expression.
-      [-p PROTOCOL]                     choose protocol's types/values pre-loaded
-                                        into the LIGO environment (hangzhou ,
-                                        ithaca). By default, the current protocol
-                                        (hangzhou) will be used
-                                        (alias: --protocol)
-      [-help]                           print this help text and exit
-                                        (alias: -?)
+      [--constants CONSTANTS]            A list of global constants that will be
+                                         assumed in the context, separated by ','
+                                         (alias: -c)
+      [--display-format FORMAT]          the format that will be used by the CLI.
+                                         Available formats are 'dev', 'json', and
+                                         'human-readable' (default). When
+                                         human-readable lacks details (we are still
+                                         tweaking it), please contact us and use
+                                         another format in the meanwhile.
+                                         (alias: --format)
+      [--file-constants FILE_CONSTANTS]  A file with a JSON list of strings with
+                                         Michelson code. Those Michelson values will
+                                         be registered as global constants in the
+                                         context.
+      [--init-file FILENAME]             the path to the smart contract file to be
+                                         used for context initialization.
+      [--michelson-format CODE_FORMAT]   format that will be used by
+                                         compile-contract for the resulting
+                                         Michelson. Available formats are 'text'
+                                         (default), 'json' and 'hex'.
+      [--no-warn]                        disable warning messages
+      [--project-root PATH]              The path to root of the project.
+      [--warn-unused-rec]                disable warning messages
+      [--werror]                         treat warnings as errors
+      [--without-run]                    disable running of compiled expression.
+      [-p PROTOCOL]                      choose protocol's types/values pre-loaded
+                                         into the LIGO environment (hangzhou ,
+                                         ithaca). By default, the current protocol
+                                         (hangzhou) will be used
+                                         (alias: --protocol)
+      [-help]                            print this help text and exit
+                                         (alias: -?)
 
     (src/command.ml.Exit_called (status 0)) |} ] ;

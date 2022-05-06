@@ -79,7 +79,7 @@ let substitute_var_in_body : expression_variable -> expression_variable -> expre
     let ((), res) = fold_map_expression aux () body in
     res
 
-let compress_matching ~raise : expression -> expression =
+let compress_matching : expression -> expression =
   fun exp ->
     let aux : (bool*simpl_map) -> expression -> bool * (bool*simpl_map) * expression =
       fun (has_been_simpl,smap) exp ->
@@ -100,8 +100,7 @@ let compress_matching ~raise : expression -> expression =
                   let (_,proj) = List.find_exn ~f:(fun (Label constructor',_) -> String.equal constructor' constructor) le in
                   let body' = substitute_var_in_body pattern proj body in
                   stop body'
-                | _ , [] -> continue smap
-                | _ , _ -> raise.raise (corner_case __LOC__)
+                | _ , _ -> continue smap
               )
               | None -> continue (SimplMap.add v (make_le cases) smap)
             )
@@ -135,6 +134,6 @@ let anomaly_check ~raise : expression -> unit =
     fold_expression aux () exp
 
 let peephole_expression ~raise exp =
-  let exp' = compress_matching ~raise exp in
+  let exp' = compress_matching exp in
   let () = anomaly_check ~raise exp' in
   exp'

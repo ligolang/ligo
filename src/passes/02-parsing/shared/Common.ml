@@ -142,7 +142,7 @@ module MakeParser
 
     (* Parsing a file *)
 
-    let from_file ~raise buffer file_path : CST.tree =
+    let from_file ~add_warning ~raise buffer file_path : CST.tree =
       let module File =
         struct
           let input        = Some file_path
@@ -151,9 +151,10 @@ module MakeParser
           let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
+      let module Warning = struct let add_warning = add_warning end in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) (CLI.ParserConfig) in
       let string = Buffer.contents buffer in
@@ -169,7 +170,7 @@ module MakeParser
 
     (* Parsing a string *)
 
-    let from_string ~raise buffer : CST.tree =
+    let from_string ~add_warning ~raise buffer : CST.tree =
       let module File =
         struct
           let input        = None
@@ -178,9 +179,10 @@ module MakeParser
           let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
+      let module Warning = struct let add_warning = add_warning end in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) (CLI.ParserConfig) in
       let string = Buffer.contents buffer in

@@ -132,7 +132,7 @@ let print_tokens (tokens: (token list, _) result) =
 
 (* Exported *)
 
-let filter =
+let filter ~add_warning:_ =
   Utils.(
   (* print_tokens
   <@  *)

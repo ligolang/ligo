@@ -49,7 +49,7 @@ let michelson_add = (n : (nat, nat)) : nat =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let michelson_add = (n: [nat, nat]): nat =>
+const michelson_add = (n: [nat, nat]): nat =>
   (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
@@ -216,7 +216,7 @@ type parameter =
 
 type storage = int;
 
-let main = ([action,store]: [parameter, storage]) => {
+const main = ([action,store]: [parameter, storage]) => {
   let storage =
     match(action, {
      Increment: (n: int) => store + n,

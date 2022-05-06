@@ -1,33 +1,33 @@
 type dup<a> = [a, a];
 
-let diag : ((x : _a) => dup<_a>) = (x : _a) => [x, x];
+let diag : <T>((x : T) => dup<T>) = (x : T) => [x, x];
 
-let _rev  : ((p : [list<_a>, list<_a>]) => list<_a>) = ([xs, acc] : [list<_a>, list<_a>]) : list<_a> =>
+let _rev : <T>((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
   match(xs, list([
-  ([] : list<_a>) => acc,
-  ([x,... xs] : list<_a>) => _rev([xs, list([x,...acc])])
+  ([] : list<T>) => acc,
+  ([x,... xs] : list<T>) => _rev([xs, list([x,...acc])])
   ]));
 
-let rev : ((xs : list<_a>) => list<_a>) = (xs : list<_a>) : list<_a> => _rev([xs, (list([]) as list<_a>)]);
+let rev : <T>((xs : list<T>) => list<T>) = (xs : list<T>) : list<T> => _rev([xs, (list([]) as list<T>)]);
 
 
-let _zip : ((p : [list<_a>, list<_b>, list<[_a, _b]>]) => list<[_a, _b]>) = ([xs, ys, acc] : [list<_a>, list<_b>, list<[_a, _b]>]) : list<[_a, _b]> =>
+let _zip : <T,U>((p : [list<T>, list<U>, list<[T, U]>]) => list<[T, U]>) = ([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, U]> =>
   match(xs, list([
-  ([] : list<_a>) =>
+  ([] : list<T>) =>
        match(ys, list([
-       ([] : list<_b>) => acc,
-       ([_y, ..._ys] : list<_b>)  => (failwith ("oops") as list<[_a, _b]>)
+       ([] : list<U>) => acc,
+       ([_y, ..._ys] : list<U>)  => (failwith ("oops") as list<[T, U]>)
        ])),
-  ([x, ...xs] : list<_a>) =>
+  ([x, ...xs] : list<T>) =>
         match(ys, list([
-        ([] : list<_b>) => (failwith ("oops") as list<[_a, _b]>),
-        ([y, ...ys] : list<_b>) => _zip([xs, ys, list([[x, y], ...acc])])
+        ([] : list<U>) => (failwith ("oops") as list<[T, U]>),
+        ([y, ...ys] : list<U>) => _zip([xs, ys, list([[x, y], ...acc])])
         ]))
   ]));
 
-let zip : ((xs : list<_a>) => ((ys : list<_b>) => list<[_a, _b]>)) = (xs : list<_a>) => ((ys : list<_b>) : list<[_a, _b]> => rev (_zip ([xs, ys, (list([]) as list<[_a, _b]>)])));
+let zip : <T,U>((xs : list<T>) => ((ys : list<U>) => list<[T, U]>)) = (xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, (list([]) as list<[T, U]>)])));
 
-let self_zip : ((xs : list<_tau>) => list<[_tau, _tau]>) = (xs : list<_tau>) : list<[_tau, _tau]> => {
+let self_zip : <T>((xs : list<T>) => list<[T, T]>) = (xs : list<T>) : list<[T, T]> => {
   let [xs, ys] = diag(xs);
   return (zip(xs))(ys)
 };

@@ -90,10 +90,10 @@ module Typing = struct
         | Declaration_constant {binder;expr;attr={public;_}} ->
            if public then add_value acc binder.var expr.type_expression
            else acc
-        | Declaration_type {type_binder;type_expr;type_attr={public}} ->
+        | Declaration_type {type_binder;type_expr;type_attr={public;_}} ->
            if public then add_type acc type_binder type_expr
            else acc
-        | Declaration_module {module_binder;module_;module_attr={public}} ->
+        | Declaration_module {module_binder;module_;module_attr={public;_}} ->
            if public then
              let context = context_of_module_expr ~outer_context:(union acc outer_context) module_ in
              add_module acc module_binder context
@@ -153,7 +153,7 @@ module Typing = struct
           )
           | _ -> None
         in
-        match List.filter_map ~f:aux (get_types ctxt) with
+        let matching_t_sum = match List.filter_map ~f:aux (get_types ctxt) with
         | [] ->
           (* If the constructor isn't matched in the context of values,
             reccursively search for in the context of all the modules in scope *)
@@ -163,13 +163,18 @@ module Typing = struct
               match res with | [] -> get_sum ctor module_ | lst -> lst
             )
         | lst -> lst
-  
+        in
+        let general_type_opt = List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum in
+        match general_type_opt with
+          Some general_type -> [general_type]
+        | None -> matching_t_sum
+
   let get_record : _ label_map -> t -> (type_variable option * rows) option = fun lmap e ->
+    let lst_kv  = LMap.to_kv_list_rev lmap in
     let rec rec_aux e =
       let aux = fun (_,type_) ->
         match type_.type_content with
         | T_record m -> Simple_utils.Option.(
-            let lst_kv  = LMap.to_kv_list_rev lmap in
             let lst_kv' = LMap.to_kv_list_rev m.content in
             let m = map ~f:(fun () -> m) @@ Ast_typed.Misc.assert_list_eq
                                               ( fun (ka,va) (kb,vb) ->

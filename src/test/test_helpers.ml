@@ -9,9 +9,9 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options = 
-  Compiler_options.make 
-    ~raw_options:Compiler_options.default_raw_options 
+let options =
+  Compiler_options.make
+    ~raw_options:Compiler_options.default_raw_options
     ~protocol_version:Environment.Protocols.Ithaca ()
 
 let test_format : 'a Simple_utils.Display.format = {
@@ -116,8 +116,9 @@ let wrap_ref file f =
 
 (* Common functions used in tests *)
 
-let type_file ~raise ?(st = "auto") f entry options =
-  Ligo_compile.Utils.type_file ~raise ~options f st entry
+let type_file ~raise ~add_warning ?(st = "auto") f entry options =
+  ignore st;
+  snd @@ Build.build_typed ~raise ~add_warning ~options entry f
 
 let get_program ~raise ~add_warning ?(st = "auto") f entry =
   wrap_ref f (fun s ->
@@ -341,5 +342,5 @@ let compile_main ~raise ~add_warning f () =
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : _ Tezos_utils.Michelson.michelson =
     (* fails if the given entry point is not a valid contract *)
-    Ligo_compile.Of_michelson.build_contract ~raise michelson_prg [] in
+    Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version:Environment.Protocols.in_use michelson_prg [] in
   ()

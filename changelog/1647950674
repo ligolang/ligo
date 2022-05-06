@@ -1,0 +1,4 @@
+author: er433
+title: Change fail case when abstracting constants/built-in modules
+type: internal
+merge_request: '1648'

@@ -86,27 +86,25 @@ let%expect_test _ =
     const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
-      lambda (gen#6) return  match gen#6 with
-                              | ( p , s ) ->
-                              let s = ADD(ADD(p , s) ,
-                              toto) in ( LIST_EMPTY() , s ) |}]
+      lambda (gen#5 : ( int * int )) return  match gen#5 with
+                                              | ( p , s ) ->
+                                              let s = ADD(ADD(p , s) ,
+                                              toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
-let #../../test/contracts/build/A.mligo#toto#9 = L(1) in
-let #../../test/contracts/build/B.mligo#titi#11 =
-  ADD(#../../test/contracts/build/A.mligo#toto#9 , L(42)) in
-let #../../test/contracts/build/C.mligo#tata#15 =
-  ADD(#../../test/contracts/build/A.mligo#toto#9 ,
-      #../../test/contracts/build/B.mligo#titi#11) in
-let #../../test/contracts/build/C.mligo#foo#16 =
-  let (gen#19, gen#20) = PAIR(L(unit) , L(3)) in
-  let x =
-    ADD(ADD(gen#20 , #../../test/contracts/build/A.mligo#toto#9) ,
-        #../../test/contracts/build/B.mligo#titi#11) in
-  PAIR(LIST_EMPTY() , x) in
-let toto = ADD(L(10) , #../../test/contracts/build/A.mligo#toto#9) in L(unit) |}]
+let #../../test/contracts/build/A.mligo#toto#154 = L(1) in
+let #../../test/contracts/build/B.mligo#titi#303 =
+  ADD(#../../test/contracts/build/A.mligo#toto#154 , L(42)) in
+let #../../test/contracts/build/C.mligo#tata#748 =
+  ADD(#../../test/contracts/build/A.mligo#toto#154 ,
+      #../../test/contracts/build/B.mligo#titi#303) in
+let x =
+  ADD(ADD(L(3) , #../../test/contracts/build/A.mligo#toto#154) ,
+      #../../test/contracts/build/B.mligo#titi#303) in
+let toto = ADD(L(10) , #../../test/contracts/build/A.mligo#toto#154) in
+L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "D.mligo" ] ;

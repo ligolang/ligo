@@ -39,3 +39,17 @@ let%expect_test _ =
 
     Option.map is supported in protocol Ithaca onwards.
     Hint: pass the compiler option `--protocol ithaca`. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; (test "option.mligo") ] ;
+  [%expect{| None |}]
+  
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "n" ; "--init-file" ; (test "option.mligo") ] ;
+  [%expect{| None |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; (test "option_record.mligo") ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
