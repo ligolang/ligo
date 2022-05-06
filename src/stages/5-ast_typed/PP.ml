@@ -126,7 +126,7 @@ and option ppf (te : type_expression) : unit =
   | None   -> fprintf ppf "option ('a)")
 and type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
-  if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else 
+  if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else
   if Option.is_some (Combinators.get_t_option te) then option ppf te
   else
     fprintf ppf "%a" type_content te.type_content
@@ -158,7 +158,7 @@ and type_expression_orig ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   match te.orig_var with
   | None ->
-    if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else 
+    if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else
     if Option.is_some (Combinators.get_t_option te) then option ppf te
     else
       fprintf ppf "%a" type_content_orig te.type_content
@@ -188,14 +188,14 @@ and expression_content ppf (ec: expression_content) =
       fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
-  | E_lambda {binder; result} ->
-      fprintf ppf "lambda (%a) return %a" expression_variable binder
+  | E_lambda {binder=b; result} ->
+      fprintf ppf "lambda (%a) return %a" (binder type_expression) b
         expression result
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; thunk = _ ; hidden = false } } ->
-      fprintf ppf "let %a = %a%a%a in %a" expression_variable let_binder expression
+      fprintf ppf "let %a = %a%a%a in %a" (binder type_expression) let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true } } ->
       fprintf ppf "%a" expression let_result
@@ -218,6 +218,7 @@ and expression_content ppf (ec: expression_content) =
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_module_accessor ma -> module_access expression_variable ppf ma
+  | E_assign a -> assign expression type_expression ppf a
 
 
 and option_inline ppf inline =
@@ -235,7 +236,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = LMap.map (fun (v,_) -> v) fields in
+      let fields = LMap.map (fun b -> b.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
         (tuple_or_record_sep_expr expression_variable) fields
         f body

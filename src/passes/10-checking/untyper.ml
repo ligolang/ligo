@@ -62,7 +62,7 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   | O.T_for_all x ->
     let type_ = untype_type_expression x.type_ in
     return @@ T_for_all {x with type_}
-    
+
 let rec untype_expression (e:O.expression) : I.expression =
   untype_expression_content e.type_expression e.expression_content
 and untype_expression_content ty (ec:O.expression_content) : I.expression =
@@ -87,7 +87,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let (input_type , output_type) =
         Simple_utils.Pair.map ~f:untype_type_expression (type1, type2) in
       let result = untype_expression result in
-      return (e_lambda {var=binder;ascr=Some input_type;attributes=Stage_common.Helpers.empty_attribute} (Some output_type) result)
+      return (e_lambda {binder with ascr=Some input_type} (Some output_type) result)
     )
   | E_type_abstraction {type_binder;result} -> (
     let result = untype_expression result in
@@ -130,9 +130,9 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let cases = List.map ~f:aux cases in
       return (e_matching matchee cases)
     | Match_record {fields ; body ; tv=_} -> (
-      let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
-        fun (Ast_typed.Label label, (proj,_)) -> (
-          let proj = Location.wrap @@ P_var { ascr = None ; var = proj ; attributes = Stage_common.Helpers.empty_attribute } in
+      let aux : (Ast_typed.label * Ast_typed.type_expression binder) -> label * Ast_core.type_expression pattern =
+        fun (Ast_typed.Label label, binder) -> (
+          let proj = Location.wrap @@ P_var {binder with ascr = Option.map ~f:untype_type_expression binder.ascr} in
           (Label label, proj)
         )
       in
@@ -153,7 +153,7 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let tv = untype_type_expression rhs.type_expression in
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
-      return (e_let_in {var=let_binder ; ascr=(Some tv) ; attributes = Stage_common.Helpers.empty_attribute} rhs result attr)
+      return (e_let_in {let_binder with ascr=(Some tv)} rhs result attr)
   | E_type_in {type_binder;rhs;let_result} ->
       let rhs = untype_type_expression rhs in
       let let_result = untype_expression let_result in
@@ -171,6 +171,9 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
   | E_module_accessor ma -> return @@ I.make_e @@ E_module_accessor ma
+  | E_assign a ->
+    let a = Stage_common.Maps.assign untype_expression untype_type_expression a in
+    return @@ make_e @@ E_assign a
   | E_type_inst {forall;type_=type_inst} ->
     match forall.type_expression.type_content with
     | T_for_all {ty_binder;type_;kind=_} ->
@@ -214,7 +217,7 @@ and untype_declaration_module : O.declaration_module -> I.declaration_module =
     let module_ = untype_module_expr module_ in
     let module_attr = (I.{public;hidden}: I.module_attribute) in
     I.{module_binder; module_ ; module_attr}
-      
+
 and untype_declaration =
   let return (d: I.declaration_content) = d in
   fun (d: O.declaration_content) -> match d with
@@ -229,5 +232,5 @@ and untype_declaration =
     return @@ Declaration_module dm
 and untype_declarations : O.module_ -> I.module_ = fun p ->
   List.map ~f:(Location.map untype_declaration) p
-    
+
 and untype_program : O.module_ -> I.module_ = fun x -> untype_declarations x

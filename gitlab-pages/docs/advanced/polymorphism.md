@@ -41,7 +41,7 @@ let id = (x : int) : int => x;
 <Syntax syntax="jsligo">
 
 ```jsligo group=mono
-let id = (x: int): int => x;
+const id = (x: int): int => x;
 ```
 
 </Syntax>
@@ -73,7 +73,7 @@ let idnat = (x : nat) : nat => x;
 <Syntax syntax="jsligo">
 
 ```jsligo group=mono
-let idnat = (x : nat): nat => x;
+const idnat = (x : nat): nat => x;
 ```
 
 </Syntax>
@@ -118,7 +118,7 @@ types prefixed with `_` are treated as generalisable.
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let id : <T>((x : T) => T) = x => x;
+const id : <T>((x : T) => T) = x => x;
 ```
 
 Here `T` is a type variable which can be generalised. In general,
@@ -219,8 +219,8 @@ let rev = (type a, xs : list (a)) : list (a) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let rev : <T>((xs : list<T>) => list<T>) = xs => {
-  let rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
+const rev : <T>((xs : list<T>) => list<T>) = xs => {
+  const rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
     ([] : list<T>) => acc,
     ([x,... xs] : list<T>) => rev([xs, list([x,...acc])])

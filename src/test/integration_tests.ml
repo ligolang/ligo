@@ -82,7 +82,7 @@ let variant ~raise ~add_warning f : unit =
     expect_eq_evaluate ~raise program "kee" expected in
   ()
 
-  
+
 let variant_matching ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/variant-matching.ligo" in
   let () =
@@ -145,7 +145,7 @@ let closure_jsligo ~raise ~add_warning () : unit =
     expect_eq ~raise program "test" input expected
   in
   ()
-  
+
 
 let shadow ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/shadow.ligo" in
@@ -189,7 +189,7 @@ let shared_function ~raise ~add_warning f : unit =
   in
   ()
 
-  
+
 let bool_expression ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
   let _ =
@@ -221,7 +221,7 @@ let arithmetic ~raise ~add_warning f : unit =
   let () = expect_eq_n_pos ~raise program "ediv_op" e_int (fun n -> e_some (e_pair (e_int (n/2)) (e_nat (n mod 2)))) in
   let () = expect_eq_evaluate ~raise program "mul_woo" (e_unit ()) in
   ()
-  
+
 
 let bitwise_arithmetic ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
@@ -253,7 +253,7 @@ let string_arithmetic ~raise ~add_warning f : unit =
   let () = expect_fail ~raise program "sub_op" (e_string "ba") in
   ()
 
-  
+
 
 let bytes_arithmetic ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
@@ -455,7 +455,7 @@ let modules_religo ~raise ~add_warning () : unit =
 let modules_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/modules.jsligo" in
   modules ~raise program
-  
+
 
 let record_ez_int names n =
   e_record_ez @@ List.map ~f:(fun x -> x, e_int n) names
@@ -866,6 +866,10 @@ let loop4 ~raise ~add_warning () : unit =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid ~raise program "while_sum" make_input make_expected in
+  let () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (if n = 0 then 0 else 1) in
+    expect_eq_n_pos_mid ~raise program "while_record" make_input make_expected in
   ()
 
 let loop5 ~raise ~add_warning () : unit =
@@ -984,6 +988,14 @@ let loop18 ~raise ~add_warning () : unit =
     in
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
     expect_eq ~raise program "for_collection_with_patches" input expected in
+  ()
+
+let loop19 ~raise ~add_warning () : unit =
+  let program = type_file ~raise ~add_warning "./contracts/loop19.ligo" in
+  let () =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid ~raise program "nested_loops" make_input make_expected in
   ()
 
 let loop ~raise ~add_warning () : unit =
@@ -1179,7 +1191,7 @@ let loop2_jsligo ~raise ~add_warning () : unit =
     let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
     expect_eq ~raise program "for_collection_with_patches" input expected in *)
   ()
-  
+
 
 let matching ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/match.ligo" in
@@ -1336,7 +1348,7 @@ let assert_jsligo ~raise ~add_warning () : unit =
   let _ = expect_fail ~raise program "main" (make_input false) in
   let _ = expect_eq ~raise program "main" (make_input true) make_expected in
   ()
-    
+
 let recursion_ligo ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
   let _ =
@@ -1415,7 +1427,7 @@ let let_in_jsligo ~raise ~add_warning () : unit =
     expect_eq ~raise program "letin_nesting2" (e_int 4) (e_int 9)
   in
   ()
-  
+
 
 let local_type_decl ~raise program : unit =
   let () =
@@ -1473,7 +1485,7 @@ let match_variant_js ~raise ~add_warning () : unit =
   let make_expected n =
     e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n ~raise program "main" make_input make_expected
-  
+
 
 let match_matej ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/match_bis.mligo" in
@@ -1498,7 +1510,7 @@ let match_matej_js ~raise ~add_warning () : unit =
   let make_expected n =
     e_pair (e_typed_list [] (t_operation ())) (e_int (3-n))
   in expect_eq_n ~raise program "main" make_input make_expected
-  
+
 
 let mligo_list ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/list.mligo" in
@@ -1567,7 +1579,7 @@ let jsligo_list ~raise ~add_warning () : unit =
   let () = expect_eq ~raise program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
   let () = expect_eq ~raise program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ()
-  
+
 
 
 let lambda ~raise ~add_warning f : unit =
@@ -1581,7 +1593,7 @@ let lambda2 ~raise ~add_warning f : unit =
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   let make_expected = (e_unit ()) in
   expect_eq ~raise program "main" make_input make_expected
-  
+
 
 let fibo_mligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/fibo.mligo" in
@@ -1639,7 +1651,7 @@ let tez_mligo ~raise ~add_warning () : unit =
   let _ = expect_eq_evaluate ~raise program "add_more_tez" (e_mutez 111111000) in
   ()
 
-  
+
 let mligo_let_multiple ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/let_multiple.mligo" in
   let () =
@@ -1711,7 +1723,7 @@ let jsligo_let_multiple ~raise ~add_warning () : unit =
     expect_eq ~raise program "non_tuple_rhs" input expected
   in
   ()
-  
+
 
 let balance_test_options ~raise () =
   let balance = trace_option ~raise (test_internal "could not convert balance") @@
@@ -1768,7 +1780,7 @@ let tuples_sequences_functions_religo ~raise ~add_warning () : unit =
 let tuples_sequences_functions_jsligo ~raise ~add_warning () : unit =
   let _ = type_file ~raise ~add_warning "./contracts/tuples_sequences_functions.jsligo" in
   ()
-  
+
 
 let is_nat ~raise ~add_warning f : unit =
   let program = type_file ~raise ~add_warning f in
@@ -2010,7 +2022,7 @@ let tuple_type_jsligo ~raise ~add_warning () : unit =
     expect_eq_n ~raise program "tuple_test_inline" input expected
   in
   ()
-  
+
 
 let no_semicolon_religo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/no_semicolon.religo" in
@@ -2057,17 +2069,17 @@ let if_no_else_jsligo ~raise ~add_warning () : unit =
   let _ = type_file ~raise ~add_warning "./contracts/if_no_else.jsligo" in
   ()
 
-let tuple_assignment_jsligo ~raise ~add_warning () : unit = 
+let tuple_assignment_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/tuple_assignment.jsligo" in
-  expect_eq ~raise program "tuple_assignment" (e_unit ()) (e_tuple [e_int 2; e_int 5])  
-  
+  expect_eq ~raise program "tuple_assignment" (e_unit ()) (e_tuple [e_int 2; e_int 5])
+
 let chained_assignment_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/chained_assignment.jsligo" in
-  expect_eq ~raise program "bar" (e_unit ()) (e_int 9) 
+  expect_eq ~raise program "bar" (e_unit ()) (e_int 9)
 
-let no_arg_func_religo ~raise ~add_warning () : unit = 
+let no_arg_func_religo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/no_arg_func.religo" in
-  expect_eq ~raise program "no_arg_func2" (e_unit ()) (e_int 2) 
+  expect_eq ~raise program "no_arg_func2" (e_unit ()) (e_int 2)
 
 let block_scope_jsligo ~raise ~add_warning () : unit =
   let program = type_file ~raise ~add_warning "./contracts/block_scope.jsligo" in
@@ -2136,7 +2148,7 @@ let switch_cases_jsligo ~raise ~add_warning () : unit =
   let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 1) (e_string "Hello World!!! ???") in
   let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 2) (e_string "Hello !!! ???") in
   let _ = expect_eq ~raise program "case_case_fallthrough_break" (e_int 3) (e_string "Hello  ???") in
-  
+
   let _ = expect_eq ~raise program "case_case_break_break" (e_int 1) (e_string "Hello World ???") in
   let _ = expect_eq ~raise program "case_case_break_break" (e_int 2) (e_string "Hello !!! ???") in
   let _ = expect_eq ~raise program "case_case_break_break" (e_int 3) (e_string "Hello  ???") in
@@ -2161,7 +2173,7 @@ let switch_cases_jsligo ~raise ~add_warning () : unit =
   let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 2) (e_string "Hello !!!@@@ ???") in
   let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 3) (e_string "Hello @@@ ???") in
   let _ = expect_eq ~raise program "case_all_fallthrough" (e_int 4) (e_string "Hello  ???") in
-  
+
   let _ = expect_eq ~raise program "case_all_break" (e_int 1) (e_string "Hello World ???") in
   let _ = expect_eq ~raise program "case_all_break" (e_int 2) (e_string "Hello !!! ???") in
   let _ = expect_eq ~raise program "case_all_break" (e_int 3) (e_string "Hello @@@ ???") in
@@ -2253,10 +2265,12 @@ let main = test_suite "Integration (End to End)"
 
     test_w_all "lambda" lambda @
     test_w_all "lambda2" lambda2 @
-    (* t_west "fibo (mligo)" fibo_mligo ; *)
-    (* t_west "fibo2 (mligo)" fibo2_mligo ; *)
-    (* t_west "fibo3 (mligo)" fibo3_mligo ; *)
-    (* t_west "fibo4 (mligo)" fibo4_mligo ; *)
+  [
+    (* test_w "fibo (mligo)" fibo_mligo ; *)
+    (* test_w "fibo2 (mligo)" fibo2_mligo ; *)
+    (* test_w "fibo3 (mligo)" fibo3_mligo ; *)
+    (* test_w "fibo4 (mligo)" fibo4_mligo ; *)
+  ] @
 
     test_w_all "tuple" tuple @ [
     test_w "tuple type (mligo)" tuple_type_mligo ;
@@ -2269,7 +2283,7 @@ let main = test_suite "Integration (End to End)"
     test_w_all "map" map @
     test_w_all "big_map" big_map @
 
-    test_w_all "condition" condition @ 
+    test_w_all "condition" condition @
 [
     test_w "sequence (mligo)" sequence_mligo ;
     test_w "type alias" type_alias ;
@@ -2292,7 +2306,7 @@ let main = test_suite "Integration (End to End)"
 ] @
     test_w_all "shared-function" shared_function @
     test_w_all "high-order" higher_order @
-    test_w_all "variant" variant @ 
+    test_w_all "variant" variant @
 [
     test_w "matching" matching ;
     test_w "variant matching" variant_matching ;
@@ -2349,6 +2363,7 @@ let main = test_suite "Integration (End to End)"
     test_w "loop16" loop16 ;
     test_w "loop17" loop17 ;
     test_w "loop18" loop18 ;
+    test_w "loop19" loop19 ;
     test_w "loop" loop ;
     test_w "loop (mligo)" loop_mligo ;
     test_w "loop (religo)" loop_religo ;
@@ -2412,5 +2427,5 @@ let main = test_suite "Integration (End to End)"
     test_w "if_if_return (jsligo)" if_if_return_jsligo;
     test_w "switch case (jsligo)" switch_cases_jsligo;
     test_w "tuple fun (religo)" tuple_fun_religo;
-    test_w "for-of & while loop (jsligo)"while_and_for_loops_jsligo
+    test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
   ]

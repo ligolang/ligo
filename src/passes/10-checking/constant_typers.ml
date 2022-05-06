@@ -265,6 +265,10 @@ module Constant_types = struct
                     of_type C_LEFT O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
                     of_type C_LOOP_CONTINUE O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
                     of_type C_LOOP_STOP O.(for_all "a" @@ fun a -> a ^-> t_sum_ez [("left", a) ; ("right", a)]);
+                    of_types C_ITER [
+                        O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_list a ^-> t_unit ());
+                        O.(for_all "a" @@ fun a -> (a ^-> t_unit ()) ^-> t_set  a ^-> t_unit ());
+                      ];
                     of_types C_FOLD [
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_list b ^-> a ^-> a);
                         O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> a) ^-> t_set b ^-> a ^-> a);

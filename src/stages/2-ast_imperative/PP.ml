@@ -1,4 +1,3 @@
-[@@@coverage exclude_file]
 open Types
 open Format
 open Simple_utils.PP_helpers
@@ -90,7 +89,7 @@ and expression_content ppf (ec : expression_content) =
   | E_big_map    m -> big_map    expression ppf m
   | E_list       l -> lst        expression ppf l
   | E_set        s -> set        expression ppf s
-  | E_assign     a -> assign     expression ppf a
+  | E_assign     a -> assign     expression type_expression ppf a
   | E_for        f -> for_       expression ppf f
   | E_for_each   f -> for_each   expression ppf f
   | E_while      w -> while_     expression ppf w

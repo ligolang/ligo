@@ -166,8 +166,8 @@ and 'exp sequence = {
   expr2: 'exp ;
   }
 
-and 'exp assign = {
-  variable    : expression_variable ;
+and ('exp,'ty_exp) assign = {
+  binder      : 'ty_exp binder ;
   access_path : 'exp access list ;
   expression  : 'exp ;
   }

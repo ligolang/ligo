@@ -66,7 +66,7 @@ and expression_content =
   | E_list of expression list
   | E_set of expression list
   (* Imperative *)
-  | E_assign   of expr assign
+  | E_assign   of (expr,ty_expr) assign
   | E_for      of expr for_
   | E_for_each of expr for_each
   | E_while    of expr while_loop

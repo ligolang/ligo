@@ -24,7 +24,6 @@ type of a main function is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
 
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
@@ -58,8 +57,6 @@ type return_ = [list<operation>, storage];
 
 </Syntax>
 
-
-
 The contract storage can only be modified by activating a main
 function: given the state of the storage *on-chain*, a main function
 specifies how to create another state for it, depending on the
@@ -67,8 +64,6 @@ contract's parameter.
 
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -80,6 +75,7 @@ type return is list (operation) * storage
 function save (const action : parameter; const store : storage) : return is
   ((nil : list (operation)), store)
 ```
+
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -112,13 +108,11 @@ type parameter = nat;
 type storage = nat;
 type return_ = [list<operation>, storage];
 
-let main = ([action, store]: [parameter, storage]): return_ =>
+const main = ([action, store]: [parameter, storage]): return_ =>
   [(list([]) as list<operation>), store];
 ```
 
 </Syntax>
-
-
 
 ## Entrypoints
 
@@ -140,8 +134,6 @@ parameter.
 In the following example, the storage contains a counter of type `nat`
 and a name of type `string`. Depending on the parameter of the
 contract, either the counter or the name is updated.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -241,13 +233,13 @@ type storage = {
 
 type @return = [list<operation>, storage];
 
-let entry_A = ([n, store]: [nat, storage]): @return =>
+const entry_A = ([n, store]: [nat, storage]): @return =>
   [(list([]) as list<operation>), {...store, counter: n}];
 
-let entry_B = ([s, store]: [string, storage]): @return =>
+const entry_B = ([s, store]: [string, storage]): @return =>
   [(list([]) as list<operation>), {...store, name: s}];
 
-let main = ([action, store]: [parameter, storage]): @return =>
+const main = ([action, store]: [parameter, storage]): @return =>
   match(action, {
     Action_A: (n: nat) => entry_A([n, store]),
     Action_B: (s: string) => entry_B([s, store])
@@ -255,7 +247,6 @@ let main = ([action, store]: [parameter, storage]): @return =>
 ```
 
 </Syntax>
-
 
 ## Tezos-specific Built-ins
 
@@ -268,7 +259,6 @@ how those built-ins can be utilised.
 This example shows how `Tezos.amount` and `failwith` can be used to
 decline any transaction that sends more tez than `0tez`, that is, no
 incoming tokens are accepted.
-
 
 <Syntax syntax="pascaligo">
 
@@ -298,7 +288,6 @@ let deny (action, store : parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -322,7 +311,7 @@ type parameter = unit;
 type storage = unit;
 type @return = [list<operation>, storage];
 
-let deny = ([action, store]: [parameter, storage]): @return => {
+const deny = ([action, store]: [parameter, storage]): @return => {
   if (Tezos.amount > (0 as tez)) {
     return failwith("This contract does not accept tokens.") as @return;
   }
@@ -340,7 +329,7 @@ type parameter = unit;
 type storage = unit;
 type @return = [list<operation>, storage];
 
-let deny = ([action, store]: [parameter, storage]): @return => {
+const deny = ([action, store]: [parameter, storage]): @return => {
   if (Tezos.amount > (0 as tez)) {
     return failwith("This contract does not accept tokens.") as @return;
   }
@@ -352,13 +341,10 @@ let deny = ([action, store]: [parameter, storage]): @return => {
 
 </Syntax>
 
-
-
 ### Access Control
 
 This example shows how `Tezos.source` can be used to deny access to an
 entrypoint.
-
 
 <Syntax syntax="pascaligo">
 
@@ -397,16 +383,15 @@ let main = ((action, store) : (parameter, storage)) : return => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-let main = ([action, store]: [parameter, storage]): @return => {
+const main = ([action, store]: [parameter, storage]): @return => {
   if(Tezos.source != owner) { return failwith("Access denied.") as @return; }
   else { return [list([]) as list<operation>, store]; };
 };
 ```
 
 </Syntax>
-
 
 ### Inter-Contract Invocations
 
@@ -431,8 +416,6 @@ In our case, we have a `counter.ligo` contract that accepts an action
 of type `parameter`, and we have a `proxy.ligo` contract that accepts
 the same parameter type, and forwards the call to the deployed counter
 contract.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -588,9 +571,9 @@ type storage = unit;
 
 type @return = [list<operation>, storage];
 
-let dest : address = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
+const dest : address = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 
-let proxy = ([action, store]: [parameter, storage]): @return => {
+const proxy = ([action, store]: [parameter, storage]): @return => {
   let counter: contract<parameter> =
     match ((Tezos.get_contract_opt(dest) as option<contract<parameter>>), {
     Some: (contract: any) => contract,

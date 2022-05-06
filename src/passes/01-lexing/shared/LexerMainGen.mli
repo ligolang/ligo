@@ -6,6 +6,11 @@ module Region = Simple_utils.Region
 
 module type FILE = Preprocessing_shared.File.S
 
+(* Warning handling *)
+module type Warning = sig
+  val add_warning : Main_warnings.all -> unit
+end
+
 (* This module factors the common actions expected from LexerMain in
    all LIGO syntaxes, like reading and checking the command-line,
    building the preprocessor, the lexer, composing them and calling
@@ -14,7 +19,8 @@ module type FILE = Preprocessing_shared.File.S
 module Make (File        : FILE)
             (Token'      : Token.S)
             (CLI         : LexerLib.CLI.S)
-            (Self_tokens : Self_tokens.S with type token = Token'.t) :
+            (Self_tokens : Self_tokens.S with type token = Token'.t)
+            (Warning     : Warning) :
   sig
     module Token : Token.S
     type token = Token.t

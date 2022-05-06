@@ -90,7 +90,7 @@ type parameter =
 
 type return_ = [list<operation>, storage];
 
-let main = ([action, store]: [parameter, storage]): return_ => {
+const main = ([action, store]: [parameter, storage]): return_ => {
  return [list([]) as list<operation>,    // No operations
   match(action, {
     Append: (s: string) => store + s
@@ -161,7 +161,6 @@ ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.relig
 
 </Syntax>
 
-
 Now it is time to test this Michelson code we obtained: we want to
 execute it using the mockup mode.
 
@@ -190,6 +189,7 @@ alias mockup-client='tezos-client --mode mockup --base-dir /tmp/mockup'
 ```
 
 We can list the addresses returned above by running:
+
 ```shell
 mockup-client list known addresses
 // Outputs:

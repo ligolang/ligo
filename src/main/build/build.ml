@@ -128,7 +128,7 @@ let type_contract ~raise ~add_warning : options:Compiler_options.t -> file_name 
     end) in
     trace ~raise build_error_tracer @@ from_result (compile_separate file_name)
 
-let build_context ~raise ~add_warning : options:Compiler_options.t -> file_name -> Ast_typed.program =
+let merge_and_type_libraries ~raise ~add_warning : options:Compiler_options.t -> file_name -> Ast_typed.program =
   fun ~options file_name ->
     let open BuildSystem.Make(Infer(struct
       let raise = raise
@@ -147,7 +147,7 @@ let build_typed ~raise ~add_warning :
         let add_warning = add_warning
         let options = options
       end) in
-      let contract = build_context ~raise ~add_warning ~options file_name in
+      let contract = merge_and_type_libraries ~raise ~add_warning ~options file_name in
       let applied =
         match entry_point with
         | Ligo_compile.Of_core.Contract entrypoint ->
@@ -163,7 +163,7 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_
     let contract, aggregated_prg =
       match file_name with
       | Some init_file ->
-         let module_ = build_context ~raise ~add_warning ~options init_file in
+         let module_ = merge_and_type_libraries ~raise ~add_warning ~options init_file in
          let contract = Ligo_compile.Of_typed.compile_program ~raise module_ in
          (module_, contract)
       | None ->

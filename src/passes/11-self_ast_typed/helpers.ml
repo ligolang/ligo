@@ -64,6 +64,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
     let res = self res let_result in
     res
   )
+  | E_assign a -> Folds.assign self (fun a _ -> a) init a
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
@@ -192,6 +193,9 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let args = List.map ~f:self c.arguments in
     return @@ E_constant {c with arguments=args}
   )
+  | E_assign a ->
+    let a = Maps.assign self (fun a -> a) a in
+    return @@ E_assign a
   | E_module_accessor ma-> return @@ E_module_accessor ma
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
@@ -305,6 +309,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_raw_code {language;code} -> (
     let (res,code) = self init code in
     (res, return @@ E_raw_code { language ; code }))
+  | E_assign a ->
+    let (res,a) = Fold_maps.assign self (fun a b -> a,b) init a in
+    (res, return @@ E_assign a)
   | E_literal _ | E_variable _  | E_module_accessor _ as e' -> (init, return e')
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
@@ -350,7 +357,7 @@ and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 
     return res (M_struct decls)
   | M_module_path _ as x -> return acc x
   | M_variable _ as x -> return acc x
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
@@ -472,12 +479,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
-      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder @@ fv}
+      {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder.var @@ fv}
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
-      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder @@ fv}
+      {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv}
     | E_constructor {constructor=_;element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -492,7 +499,7 @@ module Free_variables :
       self record
     | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
-      let fv2 = VarSet.remove let_binder fv2 in
+      let fv2 = VarSet.remove let_binder.var fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
     | E_type_in {let_result;type_binder=_;rhs=_} ->
       self let_result
@@ -503,6 +510,8 @@ module Free_variables :
     | E_module_accessor { module_path ; element } ->
       ignore element;
       {modVarSet = ModVarSet.of_list module_path (* not sure about that *) ;moduleEnv=VarMap.empty ;varSet=VarSet.empty}
+    | E_assign { binder=_; access_path=_; expression } ->
+      self expression
 
   and get_fv_cases : matching_expr -> moduleEnv' = fun m ->
     match m with
@@ -512,7 +521,7 @@ module Free_variables :
         {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet} in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = LMap.values fields |> List.map ~f:fst in
+      let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
       let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
       {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 

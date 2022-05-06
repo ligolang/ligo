@@ -56,7 +56,7 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
       Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
     (true, dat, e)
   | _ -> (true,dat,e)
-    
+
 let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
   match e.expression_content with
   | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
@@ -103,13 +103,13 @@ and get_fv expr =
      return env @@ E_type_inst {forall;type_}
   | E_lambda {binder ; result} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove binder @@ used_var} @@ E_lambda {binder;result}
+     return {env;used_var=VVarSet.remove binder.var @@ used_var} @@ E_lambda {binder;result}
   | E_type_abstraction {type_binder;result} ->
      let env,result = self result in
      return env @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name; lambda = {binder; result};fun_type} ->
      let {env;used_var},result = self result in
-     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove binder @@ used_var} @@
+     return {env;used_var=VVarSet.remove fun_name @@ VVarSet.remove binder.var @@ used_var} @@
        E_recursive {fun_name; lambda = {binder; result};fun_type}
   | E_constructor {constructor;element} ->
      let env,element = self element in
@@ -133,7 +133,7 @@ and get_fv expr =
      return env @@ E_record_accessor {record;path}
   | E_let_in { let_binder ; rhs ; let_result ; attr} ->
      let env,let_result = (self let_result) in
-     let env = {env with used_var=VVarSet.remove let_binder env.used_var} in
+     let env = {env with used_var=VVarSet.remove let_binder.var env.used_var} in
      let env', rhs = self rhs in
      return (merge_env env env') @@ E_let_in {let_binder; rhs; let_result; attr}
   | E_type_in {type_binder;rhs;let_result} ->
@@ -153,6 +153,9 @@ and get_fv expr =
     let init = {env=MVarMap.empty ;used_var=VVarSet.singleton element} in
     let env = List.fold_right module_path ~f:(fun module_name env -> {env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) ~init in
     return env @@ E_module_accessor {module_path;element}
+  | E_assign { binder; access_path; expression } ->
+     let env, expression = self expression in
+     return env @@ E_assign { binder; access_path; expression}
 and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
   match m with
   | Match_variant {cases;tv} ->
@@ -162,7 +165,7 @@ and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
      let envs,cases = List.unzip @@  List.map ~f:aux cases in
      (unions envs), Match_variant {cases;tv}
   | Match_record {fields; body; tv} ->
-     let pattern = LMap.values fields |> List.map ~f:fst in
+     let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
      let env,body = get_fv body in
      {env with used_var=List.fold_right pattern ~f:VVarSet.remove ~init:env.used_var}, Match_record {fields;body;tv}
 
@@ -208,7 +211,7 @@ and get_fv_module_expr env x =
   | M_variable v ->
     let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
     new_env, x
-   
+
 let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
