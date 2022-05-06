@@ -345,6 +345,9 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     in
     let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
+    let () = if Option.is_none tv_opt then trace_option ~raise (not_annotated e.location) @@
+      if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
+    in
     let c_t = Ast_typed.Helpers.psubst_type table c_arg_t in
     let sum_t = Ast_typed.Helpers.psubst_type table sum_t in
     let () = assert_type_expression_eq ~raise c_arg.location (c_t, c_arg.type_expression) in
@@ -500,19 +503,35 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~add_warning ~options (app_context, context) matchee in
-    let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * typing_context)) =
-      fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
+    (* Note: This is not necessary, it done in order to maintain compatibility with
+       with the current way of how pattern type check, this can be removed later,
+       By removing this the typer will ask for type annotations in case of bool & option *)
+    let cases = match O.get_t_sum matchee'.type_expression with 
+      Some _ when Option.is_some (O.get_t_option matchee'.type_expression) ->
+        List.sort cases ~compare:Stage_common.Helpers.compare_option_patterns
+    | Some _ when Option.is_some (O.get_t_bool matchee'.type_expression) ->
+        List.sort cases ~compare:Stage_common.Helpers.compare_bool_patterns
+    | Some _ | None -> cases
     in
-    let eqs = List.map ~f:aux cases in
-    let aux = fun ~raise context ?tv_opt i -> type_expression' ~raise ~add_warning ~options (App_context.create tv_opt, context) ?tv_opt i in
+    let _, eqs = List.fold_map cases ~init:tv_opt ~f:(fun tv_opt {pattern;body} -> 
+      let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
+      match tv_opt with
+        Some tv_opt -> 
+          let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
+          Some tv_opt, ([(pattern,matchee'.type_expression)],body)
+      | None ->
+          let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
+          Some body.type_expression, ([(pattern,matchee'.type_expression)],body)
+    ) in
+
     match matchee.expression_content with
     | E_variable matcheevar ->
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
       let matcheevar = I.ValueVar.fresh () in
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = {var=matcheevar;ascr=None;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; thunk = false ; hidden = false } } in
       return x case_exp.type_expression
@@ -607,6 +626,61 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let () = assert_type_expression_eq ~raise e.location (variable_type,expression_type) in
     return (E_assign {binder; access_path; expression}) @@ O.t_unit ()
 
+and type_pattern ~raise (pattern : I.type_expression I.pattern) (expected_typ : O.type_expression) context = 
+  match pattern.wrap_content, expected_typ.type_content with
+    I.P_unit , O.T_constant { injection = Stage_common.Constant.Unit ; _ } -> context, (Location.wrap ~loc:pattern.location O.P_unit)
+  | I.P_unit , _ -> 
+    raise.raise (wrong_type_for_unit_pattern pattern.location expected_typ)
+  | I.P_var v , _ -> 
+    Context.Typing.add_value context v.var expected_typ, (Location.wrap ~loc:pattern.location (O.P_var {v with ascr=Some expected_typ}))
+  | I.P_list (I.Cons (hd, tl)) , O.T_constant { injection = Stage_common.Constant.List ; parameters ; _ } ->
+    let list_elt_typ = List.hd_exn parameters in (* TODO: dont use _exn*)
+    let list_typ = expected_typ in
+    let context,hd = type_pattern ~raise hd list_elt_typ context in
+    let context,tl = type_pattern ~raise tl list_typ context in
+    context, (Location.wrap ~loc:pattern.location (O.P_list (O.Cons (hd, tl))))
+  | I.P_list (I.List lst) , O.T_constant { injection = Stage_common.Constant.List ; parameters ; _ } ->
+    let list_elt_typ = List.hd_exn parameters in (* TODO: dont use _exn*)
+    let context, lst = List.fold_right lst ~init:(context,[]) 
+      ~f:(fun pattern (context,lst) -> 
+            let context, p = type_pattern ~raise pattern list_elt_typ context in
+            context, p::lst
+    ) in
+    context, (Location.wrap ~loc:pattern.location (O.P_list (O.List lst)))
+  | I.P_variant (label,pattern') , O.T_sum sum_type ->
+    let label_map = sum_type.content in
+    let c = O.LMap.find_opt label label_map in
+    let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+    let sum_typ = c.associated_type in
+    let context,pattern = type_pattern ~raise pattern' sum_typ context in
+    context, (Location.wrap ~loc:pattern.location (O.P_variant (label,pattern)))
+  | I.P_tuple tupl , O.T_record record_type ->
+    let label_map = record_type.content in
+    if O.LMap.cardinal label_map <> List.length tupl 
+    then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
+    else
+    let _, context, elts = List.fold_left tupl ~init:(0, context, []) ~f:(fun (idx,context,elts) pattern' -> 
+      let c = O.LMap.find_opt (Label (string_of_int idx)) label_map in
+      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+      let tupl_elt_typ = c.associated_type in
+      let context, elt = type_pattern ~raise pattern' tupl_elt_typ context in 
+      idx+1, context, elt::elts) in
+    let elts = List.rev elts in
+    context, (Location.wrap ~loc:pattern.location (O.P_tuple elts))
+  | I.P_record (labels,patterns) , O.T_record record_type ->
+    let label_map = record_type.content in
+    if O.LMap.cardinal label_map <> List.length labels 
+    then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
+    else
+    let label_patterns = List.zip_exn labels patterns in (* TODO: dont use _exn*)
+    let context,patterns = List.fold_right label_patterns ~init:(context,[]) ~f:(fun (label,pattern') (context,patterns) ->
+      let c = O.LMap.find_opt label label_map in
+      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+      let field_typ = c.associated_type in
+      let context,pattern = type_pattern ~raise pattern' field_typ context in 
+      context, pattern::patterns) in
+    context, (Location.wrap ~loc:pattern.location (O.P_record (labels,patterns)))
+  | _ -> raise.raise @@ pattern_do_not_conform_type pattern expected_typ
 
 and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; result } =
       let top_i_t , top_o_t = match tv_opt with
