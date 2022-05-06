@@ -221,7 +221,7 @@ let constant_since_protocol ~since ~constant typer : typer = fun ~error ~raise ~
 
 (* This prevents wraps a typer, allowing usage only in a particular protocol version *)
 let only_on_protocol ~protocol typer : typer = fun ~error ~raise ~options ~loc ->
-  if (Environment.Protocols.compare options.protocol_version protocol) >= 0 then
+  if (Environment.Protocols.compare options.protocol_version protocol) = 0 then
     typer ~error ~raise ~options ~loc
   else
     fun _ _ -> None
