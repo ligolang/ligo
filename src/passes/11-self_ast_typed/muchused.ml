@@ -74,7 +74,7 @@ let rec is_dup (t : type_expression) =
   | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_constant { injection=(
                      Map              | Big_map              | List            |
-    Map_or_big_map | Set              | Michelson_program    | Michelson_or    |
+                     Set              | Michelson_program    | Michelson_or    |
     Michelson_pair | Pvss_key         | Baker_operation      |
     Ticket         |                    Chest_opening_result | Baker_hash);_ }  -> false
   | T_singleton _

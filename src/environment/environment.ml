@@ -58,7 +58,6 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_map                , t_abstraction2 Map            star star) ;
     (v_set                , t_abstraction1 Set                 star) ;
     (v_contract           , t_abstraction1 Contract            star) ;
-    (v_map_or_big_map     , t_abstraction2 Map_or_big_map star star) ;
     (v_michelson_or       , t_abstraction2 Michelson_or   star star) ;
     (v_michelson_pair     , t_abstraction2 Michelson_pair star star) ;
     (v_chain_id           , t_chain_id                           ()) ;
