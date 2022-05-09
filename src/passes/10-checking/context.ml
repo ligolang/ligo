@@ -2,6 +2,10 @@
 module Location = Simple_utils.Location
 open Ast_typed
 
+module HMap = Simple_utils.Map.Make(struct type t = type_expression
+                                           let compare t1 t2 = Int.compare (Hash.hash_type_expression t1) (Hash.hash_type_expression t2)
+                                    end)
+
 module Typing = struct
   module Types = struct
 
@@ -196,6 +200,13 @@ module Typing = struct
            ) ~init:None modules
     in rec_aux e
 
+  let hash_types (t : t) =
+    let rec aux path (t : t) =
+      let map : (module_variable list * type_variable) HMap.t = HMap.empty in
+      let map = List.fold_left t.types ~init:map ~f:(fun map (v, t) -> HMap.add t (path, v) map) in
+      let map = List.fold_left t.modules ~init:map ~f:(fun map (v, t) -> HMap.union (fun _ _ b -> Some b) map @@ aux (path @ [v]) t) in
+      map in
+    aux [] t
 end
 
 module App = struct
