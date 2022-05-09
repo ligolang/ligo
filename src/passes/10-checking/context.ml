@@ -27,12 +27,17 @@ module Typing = struct
       module type IdMapSig = sig
         type key
         type 'a t
+        type 'a kvi_list = (key * 'a * int) list
 
         val empty : 'a t
         val add : 'a t -> key -> 'a -> 'a t
         (* In case of merge conflict between two values with same keys, this merge function keeps the value with the highest id.
            This follows the principle that this map always keeps the latest value in case of conflict *)
         val merge : 'a t -> 'a t -> 'a t
+        (* Converts the map into an unsorted (key * value * id) 3-uple *)
+        val to_kvi_list : 'a t -> (key * 'a * int) list
+        (* Converts the kvi_list into a id-sorted kv_list *)
+        val sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list
         val to_kv_list : 'a t -> (key * 'a) list
       end (* of module type S *)
 
@@ -46,6 +51,7 @@ module Typing = struct
           value : 'a
         }
         type 'a t = ('a id_wrapped) Map.t
+        type 'a kvi_list = (key * 'a * int) list
 
         let empty = Map.empty
 
@@ -98,6 +104,28 @@ module Typing = struct
         types   : types   ;
         modules : modules ;
       }
+
+    (* Recursively fetches all types from the given module and its submodules
+
+    For example, to get the list of all types declared in a module and its submodules,
+    we perform a recusive search in the context maps and accumulate the types found.
+    Then, in order to convert those maps into a id-sorted list, we can :
+    1. Use [merge], and convert the merged map into a (sorted) kv_list. This will remove duplicate eponym types
+    2. Use [to_kvi_list], append all the kvi_lists, and sort the resulting kvi_list by id, into a kv_list, this keeps duplicates *)
+    let get_module_types : context -> (type_variable * type_expression) list =
+      fun ctxt ->
+      let rec aux : context -> type_expression TypeMap.kvi_list =
+        fun ctxt ->
+          (* First, get types in the current scope *)
+          let accu_types = TypeMap.to_kvi_list @@ ctxt.types in
+          (* Then recursively fetch those in the submodules*)
+          let module_list = ModuleMap.to_kv_list ctxt.modules in
+          List.fold module_list
+            ~init:accu_types
+            ~f:(fun accu_types (_, ctxt) -> List.rev_append accu_types @@ aux ctxt)
+      in
+      TypeMap.sort_to_kv_list @@ aux ctxt
+
   end (* of module Types *)
 
 
@@ -222,8 +250,18 @@ module Typing = struct
   2. list of abstracted type variables in the constructor parameter (e.g. ['a ; 'b] for `Foo of ('a * int * 'b)`)
   3. type of the constructor parameter (e.g. `'a * int * 'b` for `Foo of ('a * int * 'b)`)
   4. type of the sum-type found in the context
+
+  NOTE : Here, we return all the matching types found in the module and its submodules, even if we found matching types in current scope.
+  Indeed, we want to check for other matching types in submodules anyway, to warn the user in case of conflict.
+  For example :
+    module Mod_a = struct
+      type tx = A of int
+    end
+    type ty = A of int
+    let a = A 42
+  Here, for [a], we find a matching type [ty] in the current scope, but we still want to warn the user that type [Mod_a.tx] matches too.
 *)
-  let rec get_sum: label -> t -> (type_variable * type_variable list * type_expression * type_expression) list =
+  let get_sum: label -> t -> (type_variable * type_variable list * type_expression * type_expression) list =
     fun ctor ctxt ->
         let aux = fun (var,type_) ->
           let t_params, type_ = Ast_typed.Helpers.destruct_type_abstraction type_ in
@@ -235,17 +273,7 @@ module Typing = struct
           )
           | _ -> None
         in
-        let matching_t_sum = match List.filter_map ~f:aux (Types.TypeMap.to_kv_list @@ get_types ctxt) with
-        | [] ->
-          (* If the constructor isn't matched in the context of values,
-            reccursively search for in the context of all the modules in scope *)
-          let modules = get_modules ctxt in
-          List.fold_left (Types.ModuleMap.to_kv_list modules) ~init:[]
-            ~f:(fun res (_,module_) ->
-              match res with | [] -> get_sum ctor module_ | lst -> lst
-            )
-        | lst -> lst
-        in
+        let matching_t_sum = List.filter_map ~f:aux @@ Types.get_module_types ctxt in
         let general_type_opt = List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum in
         match general_type_opt with
           Some general_type -> [general_type]
