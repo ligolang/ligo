@@ -38,9 +38,9 @@ and row_element = type_expression row_element_mini_c
 
 and type_expression = {
     type_content: type_content;
-    type_meta: type_meta;
+    type_meta: type_meta [@hash.ignore] ;
     orig_var: type_variable option ;
-    location: location;
+    location: location [@hash.ignore] ;
   }
 and ty_expr = type_expression
 

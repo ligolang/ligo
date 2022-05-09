@@ -1,7 +1,7 @@
 module Location = Simple_utils.Location
 
 module type VAR = sig
-   type t
+   type t [@@deriving hash]
    val equal : t -> t -> bool
    val compare  : t -> t -> int
    val to_yojson: t -> Yojson.Safe.t
@@ -30,10 +30,10 @@ module Internal () = struct
 type t = {
   name : string;
   counter : int;
-  location : Location.t;
+  location : Location.t [@hash.ignore];
   generated : bool;
   mutable_ : bool;
-} [@@deriving yojson]
+  } [@@deriving yojson, hash]
 
 let equal {name=na;counter=ca;_} {name=nb;counter=cb;_} =
   String.equal na nb
