@@ -61,12 +61,12 @@ let%expect_test _ =
             then failwith ("This card doesn't belong to you")
             else skip;
 
-            card.card_owner := action.destination;
+            card := card.card_owner with action.destination;
 
-            const cards
-            = Map.add (action.card_to_transfer, card, cards);
+            cards :=
+              Map.add (action.card_to_transfer, card, cards);
 
-            s.cards := cards
+            s := s.cards with cards
           } with ((list [] : list (operation)), s)
       ]
 
@@ -94,24 +94,24 @@ let%expect_test _ =
                    : card_pattern)
               ];
 
-            card_pattern.quantity :=
-              abs (Operator.sub (card_pattern.quantity, 1n));
+            card_pattern :=
+              card_pattern.quantity with
+                abs (Operator.sub (card_pattern.quantity, 1n));
 
             const card_patterns : card_patterns
             = s.card_patterns;
 
-            const card_patterns
-            = Map.add
+            card_patterns :=
+              Map.add
                 (card.card_pattern, card_pattern, card_patterns);
 
-            s.card_patterns := card_patterns;
+            s := s.card_patterns with card_patterns;
 
             const cards : cards = s.cards;
 
-            const cards
-            = Map.remove (action.card_to_sell, cards);
+            cards := Map.remove (action.card_to_sell, cards);
 
-            s.cards := cards;
+            s := s.cards with cards;
 
             const price : tez
             = Operator.times
@@ -156,31 +156,32 @@ let%expect_test _ =
             then failwith ("Not enough money")
             else skip;
 
-            card_pattern.quantity :=
-              Operator.add (card_pattern.quantity, 1n);
+            card_pattern :=
+              card_pattern.quantity with
+                Operator.add (card_pattern.quantity, 1n);
 
             const card_patterns : card_patterns
             = s.card_patterns;
 
-            const card_patterns
-            = Map.add
+            card_patterns :=
+              Map.add
                 (action.card_to_buy, card_pattern, card_patterns);
 
-            s.card_patterns := card_patterns;
+            s := s.card_patterns with card_patterns;
 
             const cards : cards = s.cards;
 
-            const cards
-            = Map.add
+            cards :=
+              Map.add
                 (s.next_id,
                  record [
                    card_owner = Tezos.sender;
                    card_pattern = action.card_to_buy
                  ], cards);
 
-            s.cards := cards;
+            s := s.cards with cards;
 
-            s.next_id := Operator.add (s.next_id, 1n)
+            s := s.next_id with Operator.add (s.next_id, 1n)
           } with ((list [] : list (operation)), s)
       ]
 
@@ -243,16 +244,25 @@ let%expect_test _ =
                if (card.card_owner <> Tezos.sender)
                then failwith "This card doesn't belong to you"
                else ();
-               let card =
-                 {card with
-                   {card_owner = action.destination}} in
-               let cards =
-                 (Map.add
-                    (action.card_to_transfer)
-                    (card)
-                    (cards)) in
-               let s = {s with {cards = cards}} in
-               ([] : operation list), s
+               begin
+                 let [@var] card =
+                   {card with
+                     {card_owner = action.destination}} in
+                 ();
+                 begin
+                   let [@var] cards =
+                     (Map.add
+                        (action.card_to_transfer)
+                        (card)
+                        (cards)) in
+                   ();
+                   begin
+                     let [@var] s = {s with {cards = cards}} in
+                     ();
+                     ([] : operation list), s
+                   end
+                 end
+               end
              end)
 
     let sell_single : action_sell_single * storage -> return =
@@ -278,36 +288,58 @@ let%expect_test _ =
                  | None () ->
                      (failwith "sell_single: No card pattern."
                       : card_pattern) in
-               let card_pattern =
-                 {card_pattern with
-                   {quantity = abs (card_pattern.quantity - 1n)}} in
-               let [@var] card_patterns : card_patterns =
-                 s.card_patterns in
-               let card_patterns =
-                 (Map.add
-                    (card.card_pattern)
-                    (card_pattern)
-                    (card_patterns)) in
-               let s = {s with {card_patterns = card_patterns}} in
-               let [@var] cards : cards = s.cards in
-               let cards =
-                 (Map.remove (action.card_to_sell) (cards)) in
-               let s = {s with {cards = cards}} in
-               let price : tez =
-                 (card_pattern.coefficient
-                  * card_pattern.quantity) in
-               let receiver : unit contract =
-                 match (Tezos.get_contract_opt Tezos.sender
-                        : unit contract option)
-                 with
-                   Some contract -> contract
-                 | None () ->
-                     (failwith "sell_single: No contract."
-                      : unit contract) in
-               let op : operation =
-                 Tezos.transaction unit price receiver in
-               let operations : operation list = [op] in
-               operations, s
+               begin
+                 let [@var] card_pattern =
+                   {card_pattern with
+                     {quantity =
+                        abs (card_pattern.quantity - 1n)}} in
+                 ();
+                 let [@var] card_patterns : card_patterns =
+                   s.card_patterns in
+                 begin
+                   let [@var] card_patterns =
+                     (Map.add
+                        (card.card_pattern)
+                        (card_pattern)
+                        (card_patterns)) in
+                   ();
+                   begin
+                     let [@var] s =
+                       {s with
+                         {card_patterns = card_patterns}} in
+                     ();
+                     let [@var] cards : cards = s.cards in
+                     begin
+                       let [@var] cards =
+                         (Map.remove
+                            (action.card_to_sell)
+                            (cards)) in
+                       ();
+                       begin
+                         let [@var] s = {s with {cards = cards}} in
+                         ();
+                         let price : tez =
+                           (card_pattern.coefficient
+                            * card_pattern.quantity) in
+                         let receiver : unit contract =
+                           match (Tezos.get_contract_opt
+                                    Tezos.sender
+                                  : unit contract option)
+                           with
+                             Some contract -> contract
+                           | None () ->
+                               (failwith
+                                  "sell_single: No contract."
+                                : unit contract) in
+                         let op : operation =
+                           Tezos.transaction unit price receiver in
+                         let operations : operation list = [op] in
+                         operations, s
+                       end
+                     end
+                   end
+                 end
+               end
              end)
 
     let buy_single : action_buy_single * storage -> return =
@@ -330,27 +362,49 @@ let%expect_test _ =
                if (price > Tezos.amount)
                then failwith "Not enough money"
                else ();
-               let card_pattern =
-                 {card_pattern with
-                   {quantity = (card_pattern.quantity + 1n)}} in
-               let [@var] card_patterns : card_patterns =
-                 s.card_patterns in
-               let card_patterns =
-                 (Map.add
-                    (action.card_to_buy)
-                    (card_pattern)
-                    (card_patterns)) in
-               let s = {s with {card_patterns = card_patterns}} in
-               let [@var] cards : cards = s.cards in
-               let cards =
-                 (Map.add
-                    (s.next_id)
-                    ({card_owner = Tezos.sender;
-                      card_pattern = action.card_to_buy})
-                    (cards)) in
-               let s = {s with {cards = cards}} in
-               let s = {s with {next_id = (s.next_id + 1n)}} in
-               ([] : operation list), s
+               begin
+                 let [@var] card_pattern =
+                   {card_pattern with
+                     {quantity = (card_pattern.quantity + 1n)}} in
+                 ();
+                 let [@var] card_patterns : card_patterns =
+                   s.card_patterns in
+                 begin
+                   let [@var] card_patterns =
+                     (Map.add
+                        (action.card_to_buy)
+                        (card_pattern)
+                        (card_patterns)) in
+                   ();
+                   begin
+                     let [@var] s =
+                       {s with
+                         {card_patterns = card_patterns}} in
+                     ();
+                     let [@var] cards : cards = s.cards in
+                     begin
+                       let [@var] cards =
+                         (Map.add
+                            (s.next_id)
+                            ({card_owner = Tezos.sender;
+                              card_pattern = action.card_to_buy})
+                            (cards)) in
+                       ();
+                       begin
+                         let [@var] s = {s with {cards = cards}} in
+                         ();
+                         begin
+                           let [@var] s =
+                             {s with
+                               {next_id = (s.next_id + 1n)}} in
+                           ();
+                           ([] : operation list), s
+                         end
+                       end
+                     end
+                   end
+                 end
+               end
              end)
 
     let main : parameter * storage -> return =
@@ -415,16 +469,25 @@ let transfer_single
 
              ()
              };
-           let card =
-             {...card,
-               {card_owner: action.destination}};
-           let cards =
-             (
-              Map.add((action.card_to_transfer),
-                 (card),
-                 (cards)));
-           let s = {...s, {cards: cards}};
-           ([] : list(operation)), s
+           {
+             let [@var] card =
+               {...card,
+                 {card_owner: action.destination}};
+             ();
+             {
+               let [@var] cards =
+                 (
+                  Map.add((action.card_to_transfer),
+                     (card),
+                     (cards)));
+               ();
+               {
+                 let [@var] s = {...s, {cards: cards}};
+                 ();
+                 ([] : list(operation)), s
+               }
+             }
+           }
          }
      });
 
@@ -453,38 +516,62 @@ let sell_single: (action_sell_single, storage) => return =
                  (failwith("sell_single: No card pattern.")
                    : card_pattern)
              };
-           let card_pattern =
-             {...card_pattern,
+           {
+             let [@var] card_pattern =
+               {...card_pattern,
+                 {
+                   quantity:
+                     abs(((card_pattern.quantity) - (1n)))}};
+             ();
+             let [@var] card_patterns: card_patterns =
+               s.card_patterns;
+             {
+               let [@var] card_patterns =
+                 (
+                  Map.add((card.card_pattern),
+                     (card_pattern),
+                     (card_patterns)));
+               ();
                {
-                 quantity:
-                   abs(((card_pattern.quantity) - (1n)))}};
-           let [@var] card_patterns: card_patterns =
-             s.card_patterns;
-           let card_patterns =
-             (
-              Map.add((card.card_pattern),
-                 (card_pattern),
-                 (card_patterns)));
-           let s = {...s, {card_patterns: card_patterns}};
-           let [@var] cards: cards = s.cards;
-           let cards =
-             (Map.remove((action.card_to_sell), (cards)));
-           let s = {...s, {cards: cards}};
-           let price: tez =
-             ((card_pattern.coefficient) * (card_pattern.
-                 quantity));
-           let receiver: contract(unit) =
-             switch (Tezos.get_contract_opt(Tezos.sender)
-               : option(contract(unit))) {
-             | Some contract => contract
-             | None() =>
-                 (failwith("sell_single: No contract.")
-                   : contract(unit))
-             };
-           let op: operation =
-             Tezos.transaction(unit, price, receiver);
-           let operations: list(operation) = [op];
-           operations, s
+                 let [@var] s =
+                   {...s,
+                     {card_patterns: card_patterns}};
+                 ();
+                 let [@var] cards: cards = s.cards;
+                 {
+                   let [@var] cards =
+                     (
+                      Map.remove((action.card_to_sell),
+                         (cards)));
+                   ();
+                   {
+                     let [@var] s = {...s, {cards: cards}};
+                     ();
+                     let price: tez =
+                       ((card_pattern.coefficient) * (card_pattern.
+                           quantity));
+                     let receiver: contract(unit) =
+                       switch (
+                         Tezos.get_contract_opt(Tezos.sender)
+                         : option(contract(unit))) {
+                       | Some contract => contract
+                       | None() =>
+                           (
+                             failwith("sell_single: No contract.")
+                             : contract(unit))
+                       };
+                     let op: operation =
+
+                       Tezos.transaction(unit,
+                          price,
+                          receiver);
+                     let operations: list(operation) = [op];
+                     operations, s
+                   }
+                 }
+               }
+             }
+           }
          }
      });
 
@@ -510,28 +597,52 @@ let buy_single: (action_buy_single, storage) => return =
 
              ()
              };
-           let card_pattern =
-             {...card_pattern,
-               {quantity: ((card_pattern.quantity) + (1n))}};
-           let [@var] card_patterns: card_patterns =
-             s.card_patterns;
-           let card_patterns =
-             (
-              Map.add((action.card_to_buy),
-                 (card_pattern),
-                 (card_patterns)));
-           let s = {...s, {card_patterns: card_patterns}};
-           let [@var] cards: cards = s.cards;
-           let cards =
-             (
-              Map.add((s.next_id),
-                 ({
-                   card_owner: Tezos.sender,
-                   card_pattern: action.card_to_buy}),
-                 (cards)));
-           let s = {...s, {cards: cards}};
-           let s = {...s, {next_id: ((s.next_id) + (1n))}};
-           ([] : list(operation)), s
+           {
+             let [@var] card_pattern =
+               {...card_pattern,
+                 {
+                   quantity:
+                     ((card_pattern.quantity) + (1n))}};
+             ();
+             let [@var] card_patterns: card_patterns =
+               s.card_patterns;
+             {
+               let [@var] card_patterns =
+                 (
+                  Map.add((action.card_to_buy),
+                     (card_pattern),
+                     (card_patterns)));
+               ();
+               {
+                 let [@var] s =
+                   {...s,
+                     {card_patterns: card_patterns}};
+                 ();
+                 let [@var] cards: cards = s.cards;
+                 {
+                   let [@var] cards =
+                     (
+                      Map.add((s.next_id),
+                         ({
+                           card_owner: Tezos.sender,
+                           card_pattern: action.card_to_buy}),
+                         (cards)));
+                   ();
+                   {
+                     let [@var] s = {...s, {cards: cards}};
+                     ();
+                     {
+                       let [@var] s =
+                         {...s,
+                           {next_id: ((s.next_id) + (1n))}};
+                       ();
+                       ([] : list(operation)), s
+                     }
+                   }
+                 }
+               }
+             }
+           }
          }
      });
 
@@ -561,7 +672,7 @@ let%expect_test _ =
       = (record [x = (0, 1); y = (10, 11)],
          record [x = (100, 101); y = (110, 111)]);
 
-      a.0 := a.0.x with a.0. x.0 with 2
+      a := a.0 with a.0.x with a.0. x.0 with 2
     } with a.0. x. 0
 
     function asymetric_tuple_access (const gen___3 : unit) is
@@ -578,9 +689,10 @@ let%expect_test _ =
 
     function nested_record (const nee : nested_record_t) is
     {
-      nee.nesty :=
-        nee.nesty.mymap with
-          Map.add (1, "one", nee.nesty. mymap)
+      nee :=
+        nee.nesty with
+          nee.nesty.mymap with
+            Map.add (1, "one", nee.nesty. mymap)
     } with
         case nee.nesty. mymap [1]  of [
           Some (s) -> s
@@ -599,10 +711,13 @@ let%expect_test _ =
       (fun gen___2 : unit ->
          let [@var] a : ppp =
            {x = 0, 1; y = 10, 11}, {x = 100, 101; y = 110, 111} in
-         let a =
-           {a with
-             {0 = {a with {0.x = {a with {0.x.0 = 2}}}}}} in
-         a.0.x.0)
+         begin
+           let [@var] a =
+             {a with
+               {0 = {a with {0.x = {a with {0.x.0 = 2}}}}}} in
+           ();
+           a.0.x.0
+         end)
 
     let asymetric_tuple_access : unit -> int =
       (fun gen___3 : unit ->
@@ -613,53 +728,63 @@ let%expect_test _ =
 
     let nested_record : nested_record_t -> string =
       (fun [@var] nee : nested_record_t ->
-         let nee =
-           {nee with
-             {nesty =
-                {nee with
-                  {nesty.mymap =
-                     (Map.add (1) ("one") (nee.nesty.mymap))}}}} in
-         match Map.find_opt 1 nee.nesty.mymap with
-           Some s -> s
-         | None () -> (failwith "Should not happen." : string)) |}];
+         begin
+           let [@var] nee =
+             {nee with
+               {nesty =
+                  {nee with
+                    {nesty.mymap =
+                       (Map.add (1) ("one") (nee.nesty.mymap))}}}} in
+           ();
+           match Map.find_opt 1 nee.nesty.mymap with
+             Some s -> s
+           | None () -> (failwith "Should not happen." : string)
+         end) |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "reasonligo" ] ;
   [%expect{|
-    type pii = (int, int);
+type pii = (int, int);
 
-    type ppi = {x: pii, y: pii};
+type ppi = {x: pii, y: pii};
 
-    type ppp = (ppi, ppi);
+type ppp = (ppi, ppi);
 
-    let main: unit => int =
-      ((gen___2: unit): int =>
-         let [@var] a: ppp =
-           {
-              x: 0, 1,
-              y: 10, 11}, {x: 100, 101, y: 110, 111};
-         let a = {...a, {0: {...a, {0.x: {...a, {0.x[0]: 2}}}}}};
-         a[0].x[0]);
+let main: unit => int =
+  ((gen___2: unit): int =>
+     let [@var] a: ppp =
+       {
+          x: 0, 1,
+          y: 10, 11}, {x: 100, 101, y: 110, 111};
+     {
+       let [@var] a =
+         {...a,
+           {0: {...a, {0.x: {...a, {0.x[0]: 2}}}}}};
+       ();
+       a[0].x[0]
+     });
 
-    let asymetric_tuple_access: unit => int =
-      ((gen___3: unit): int =>
-         let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
-         ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
+let asymetric_tuple_access: unit => int =
+  ((gen___3: unit): int =>
+     let [@var] tuple: (int, (int, (int, int))) = 0, 1, 2, 3;
+     ((((((tuple[0]) + (tuple[1][0]))) + (tuple[1][1][0]))) + (tuple[1][1][1])));
 
-    type nested_record_t = {nesty: {mymap: map(int, string)}};
+type nested_record_t = {nesty: {mymap: map(int, string)}};
 
-    let nested_record: nested_record_t => string =
-      (([@var] nee: nested_record_t): string =>
-         let nee =
-           {...nee,
-             {
-               nesty:
-                 {...nee,
-                   {
-                     nesty.mymap:
-                       (Map.add((1), ("one"), (nee.nesty.mymap)))}}}};
-         switch Map.find_opt(1, nee.nesty.mymap) {
-         | Some s => s
-         | None() => (failwith("Should not happen.") : string)
-         }); |}]
+let nested_record: nested_record_t => string =
+  (([@var] nee: nested_record_t): string => {
+     let [@var] nee =
+       {...nee,
+         {
+           nesty:
+             {...nee,
+               {
+                 nesty.mymap:
+                   (Map.add((1), ("one"), (nee.nesty.mymap)))}}}};
+     ();
+     switch Map.find_opt(1, nee.nesty.mymap) {
+     | Some s => s
+     | None() => (failwith("Should not happen.") : string)
+     }
+   }); |}]
 
 (*
 let%expect_test _ =
@@ -836,54 +961,25 @@ function foobar (const i : int) is
 {
   const p : parameter = (Zero (42n));
 
-  const gen__env13 = (i);
+  if Operator.gt (i, 0)
+  then {
+    i := Operator.add (i, 1);
 
-  const gen__env13
-  = if Operator.gt (i, 0)
-    then
-      {
-        const i = Operator.add (i, 1);
+    if Operator.gt (i, 10)
+    then {
+      i := 20;
 
-        gen__env13.0 := i;
+      failwith ("who knows");
 
-        const gen__env11 = (i);
-
-        const gen__env11
-        = if Operator.gt (i, 10)
-          then
-            {
-              const i = 20;
-
-              gen__env11.0 := i;
-
-              failwith ("who knows");
-
-              const i = 30;
-
-              gen__env11.0 := i;
-
-              skip
-            } with gen__env11
-          else
-            {
-              skip
-            } with gen__env11;
-
-        const i = gen__env11.0;
-
-        gen__env13.0 := i;
-
-        skip
-      } with gen__env13
-    else
-      {
-        case p of [
-          Zero (gen___5) -> failwith (42n)
-        | Pos (gen___6) -> skip
-        ]
-      } with gen__env13;
-
-  const i = gen__env13.0
+      i := 30
+    }
+    else skip
+  }
+  else
+    case p of [
+      Zero (gen___5) -> failwith (42n)
+    | Pos (gen___6) -> skip
+    ]
 } with
     case p of [
       Zero (gen___3) -> i
@@ -918,49 +1014,33 @@ let main : parameter * storage -> return =
 let foobar : int -> int =
   (fun [@var] i : int ->
      let [@var] p : parameter = (Zero 42n) in
-     let gen__env13 = i in
-     let gen__env13 =
+     begin
        if (i > 0)
        then
-         let i = (i + 1) in
-         let gen__env13 = {gen__env13 with {0 = i}} in
-         let gen__env11 = i in
-         let gen__env11 =
+         begin
+           let [@var] i = (i + 1) in
+           ();
            if (i > 10)
            then
-             let i = 20 in
-             let gen__env11 = {gen__env11 with {0 = i}} in
              begin
-               failwith "who knows";
-               let i = 30 in
-               let gen__env11 = {gen__env11 with {0 = i}} in
+               let [@var] i = 20 in
+               ();
                begin
-                 ();
-                 gen__env11
+                 failwith "who knows";
+                 let [@var] i = 30 in
+                 ()
                end
              end
-           else
-             begin
-               ();
-               gen__env11
-             end in
-         let i = gen__env11.0 in
-         let gen__env13 = {gen__env13 with {0 = i}} in
-         begin
-           ();
-           gen__env13
+           else ()
          end
        else
-         begin
-           match p with
-             Zero gen___5 -> failwith 42n
-           | Pos gen___6 -> ();
-           gen__env13
-         end in
-     let i = gen__env13.0 in
-     match p with
-       Zero gen___3 -> i
-     | Pos gen___4 -> (failwith "waaaa" : int))
+         match p with
+           Zero gen___5 -> failwith 42n
+         | Pos gen___6 -> ();
+       match p with
+         Zero gen___3 -> i
+       | Pos gen___4 -> (failwith "waaaa" : int)
+     end)
 
 let failer : int -> int =
   (fun p : int ->
@@ -1004,54 +1084,39 @@ let main: (parameter, storage) => return =
 let foobar: int => int =
   (([@var] i: int): int =>
      let [@var] p: parameter = (Zero 42n);
-     let gen__env13 = i;
-     let gen__env13 =
+     {
        if(((i) > (0))) {
 
-         let i = ((i) + (1));
-         let gen__env13 = {...gen__env13, {0: i}};
-         let gen__env11 = i;
-         let gen__env11 =
+         {
+           let [@var] i = ((i) + (1));
+           ();
            if(((i) > (10))) {
 
-             let i = 20;
-             let gen__env11 = {...gen__env11, {0: i}};
              {
-               failwith("who knows");
-               let i = 30;
-               let gen__env11 = {...gen__env11, {0: i}};
+               let [@var] i = 20;
+               ();
                {
-                 ();
-                 gen__env11
+                 failwith("who knows");
+                 let [@var] i = 30;
+                 ()
                }
              }
            } else {
 
-             {
-               ();
-               gen__env11
+             ()
              }
-             };
-         let i = gen__env11[0];
-         let gen__env13 = {...gen__env13, {0: i}};
-         {
-           ();
-           gen__env13
          }
        } else {
 
-         {
-           switch  p {
-           | Zero gen___5 => failwith(42n)
-           | Pos gen___6 => ()
-           };
-           gen__env13
+         switch  p {
+         | Zero gen___5 => failwith(42n)
+         | Pos gen___6 => ()
          }
          };
-     let i = gen__env13[0];
-     switch  p {
-     | Zero gen___3 => i
-     | Pos gen___4 => (failwith("waaaa") : int)
+       switch  p {
+       | Zero gen___3 => i
+       | Pos gen___4 => (failwith("waaaa") : int)
+       }
      });
 
 let failer: int => int =

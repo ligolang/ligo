@@ -275,6 +275,7 @@ let rec compile_expression : I.expression -> O.expression =
       let (_, lst ) = List.fold ~f:aux ~init:(0,[]) t in
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
+    | I.E_assign a -> let a = assign self self_type a in return @@ O.E_assign a
 
 and compile_module : I.module_ -> O.module_ = fun x ->
   let pass = Stage_common.Maps.declarations

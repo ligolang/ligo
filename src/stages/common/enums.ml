@@ -267,5 +267,4 @@ type deprecated = {
 }
 
 type rich_constant =
-  | Deprecated of deprecated
   | Const of constant'

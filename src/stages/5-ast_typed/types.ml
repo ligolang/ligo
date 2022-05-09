@@ -61,7 +61,7 @@ and matching_content_variant = {
   }
 
 and matching_content_record = {
-  fields : (expression_variable * type_expression) label_map;
+  fields : (type_expression binder) label_map;
   body : expression;
   tv : type_expression;
 }
@@ -120,6 +120,7 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   | E_module_accessor of expression_variable module_access
+  | E_assign   of (expr,ty_expr) assign
 
 and type_inst = {
     forall: expression ;
@@ -137,12 +138,12 @@ and application = {
   }
 
 and lambda =  {
-    binder: expression_variable ;
+    binder: ty_expr binder ;
     result: expression ;
   }
 
 and let_in = {
-    let_binder: expression_variable ;
+    let_binder: ty_expr binder ;
     rhs: expression ;
     let_result: expression ;
     attr: known_attributes ;
@@ -158,7 +159,7 @@ and raw_code = {
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
-  lambda : lambda;
+  lambda   : lambda;
   }
 
 and constructor = {

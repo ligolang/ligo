@@ -9,7 +9,7 @@ function foo (var x : record [a : int]) : int is x.a
 
 function main (const action : parameter; const _ : storage) : return is
  ((nil : list (operation)),
-  case action of
+  case action of [
     First (n) -> foo (n)
   | Second (n) -> foo (n)
-  end)
+  ])

@@ -33,7 +33,8 @@ export class DeployAction extends CancellableAction {
       editorState.code,
       deployState.entrypoint,
       deployState.storage,
-      deployState.network
+      deployState.network,
+      deployState.protocol
     );
   }
 
@@ -41,12 +42,12 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === NetworkType.HANGZHOUNET) {
+    if (launchNetwork === NetworkType.ITHACANET) {
       await beaconWallet.requestPermissions({
         network: {
-          type: NetworkType.HANGZHOUNET,
-          name: 'Hangzhounet',
-          rpcUrl: `https://hangzhounet.api.tez.ie`,
+          type: NetworkType.ITHACANET,
+          name: 'Ithacanet',
+          rpcUrl: `https://ithacanet.ecadinfra.com`,
         },
       });
     } else if (launchNetwork === NetworkType.MAINNET) {
@@ -70,6 +71,7 @@ export class DeployAction extends CancellableAction {
       editorState.code,
       deployState.entrypoint,
       deployState.storage,
+      deployState.protocol,
       MichelsonFormat.Json
     );
 
@@ -77,15 +79,16 @@ export class DeployAction extends CancellableAction {
       editorState.language,
       editorState.code,
       deployState.entrypoint,
+      deployState.protocol,
       MichelsonFormat.Json
     );
 
-    let networkURL = 'https://hangzhounet.api.tez.ie';
-    let network = { type: NetworkType.HANGZHOUNET };
+    let networkURL = 'https://ithacanet.ecadinfra.com';
+    let network = { type: NetworkType.ITHACANET };
 
-    if (deployState.network === 'hangzhounet') {
-      networkURL = 'https://hangzhounet.api.tez.ie';
-      network = { type: NetworkType.HANGZHOUNET };
+    if (deployState.network === 'Ithacanet') {
+      networkURL = 'https://ithacanet.ecadinfra.com';
+      network = { type: NetworkType.ITHACANET };
     } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://mainnet.api.tez.ie';
       network = { type: NetworkType.MAINNET };

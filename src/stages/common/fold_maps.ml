@@ -147,11 +147,12 @@ let conditional : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a conditional -> 'acc * 
   let acc,else_clause = f acc else_clause in
   (acc,{condition;then_clause;else_clause})
 
-let assign : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a assign -> 'acc * 'b assign
-= fun f acc {variable; access_path; expression} ->
+let assign : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) assign -> 'acc * ('b,'d) assign
+= fun f g acc {binder=b; access_path; expression} ->
+  let acc,binder      = binder g acc b in
   let acc,access_path = path f acc access_path in
   let acc,expression  = f acc expression in
-  (acc, {variable; access_path; expression})
+  (acc, {binder; access_path; expression})
 
 let for_
 = fun f acc {binder; start; final; incr; f_body} ->

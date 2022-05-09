@@ -1,4 +1,4 @@
-{ buildNpmPackage, ligo-squirrel, haskell-nix, vscode, xvfb-run, git, writeText }:
+{ buildNpmPackage, ligo-squirrel, haskell-nix, python3, vscode, xvfb-run, git, writeText, pkg-config, libsecret }:
 let
   src = ../../..;
   subDir = "tools/lsp/vscode-plugin";
@@ -14,17 +14,21 @@ buildNpmPackage {
   };
 
   nativeBuildInputs = [ xvfb-run git ];
+  extraNodeModulesArgs = {
+    buildInputs = [ python3 pkg-config libsecret ];
+  };
 
   npmBuild = ''
     export HOME="$NIX_BUILD_TOP"
     export XDG_CONFIG_HOME="$NIX_BUILD_TOP"
     export XDG_RUNTIME_DIR="$NIX_BUILD_TOP"
     export CONTRACTS_DIR="$NIX_BUILD_TOP/contracts"
+    cp ${../../../LICENSE.md} ./LICENSE.md
     cp ${../squirrel/test/contracts} "$CONTRACTS_DIR" --no-preserve=all -r
     mkdir bin
     cp -Lr ${ligo-squirrel}/* .
     npm run package
-    xvfb-run npm run test -- --vscodeExecutablePath ${codePath} --extensionDevelopmentPath "$PWD" --extensionTestsPath "$PWD/client/out/test/vsc-test/index.js"
+    # xvfb-run npm run test -- --vscodeExecutablePath ${codePath} --extensionDevelopmentPath "$PWD" --extensionTestsPath "$PWD/client/out/test/vsc-test/index.js"
     npm run lint
   '';
 

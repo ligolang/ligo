@@ -121,7 +121,8 @@ let compile_groups ~raise filename grp_list =
       trace ~raise (test_md_file filename syntax grp contents) @@
       fun ~raise ->
       let options    = Compiler_options.make ~raw_options:Compiler_options.default_raw_options ~protocol_version () in
-      let meta       = Ligo_compile.Of_source.make_meta ~raise syntax None in
+      let syntax     = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some filename) in
+      let meta       = Ligo_compile.Of_source.make_meta syntax in
       let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options:options.frontend ~meta contents in
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
@@ -141,7 +142,7 @@ let compile_groups ~raise filename grp_list =
         let core = stdlib @ core in
         let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
-        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise (Ast_typed.e_a_unit ()) agg_prg in
+        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
         let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
         let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()

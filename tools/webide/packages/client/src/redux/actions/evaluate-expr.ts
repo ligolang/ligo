@@ -22,7 +22,8 @@ export class EvaluateValueAction extends CancellableAction {
         const result = await evaluateValue(
           editor.language,
           editor.code,
-          evaluateValueState.entrypoint
+          evaluateValueState.entrypoint,
+          evaluateValueState.protocol
         );
 
         if (this.isCancelled()) {

@@ -115,7 +115,7 @@ let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation) (e : expression) =
     if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
-      e_a_let_in let_binder expr e { inline = false ; no_mutation ; view = false ; public = false ; thunk = false ; hidden = false }
+      e_a_let_in {var=let_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} expr e { inline = false ; no_mutation ; view = false ; public = false ; thunk = false ; hidden = false }
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -183,14 +183,14 @@ let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty
   let open Ligo_compile in
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
-    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = arg_binder } in_ty out_ty
-    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = arg_binder } } in
+    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} } in_ty out_ty
+    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}}} in
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
-  Ast_aggregated.e_a_lambda {result=typed_exp'; binder=arg_binder} in_ty out_ty
+  Ast_aggregated.e_a_lambda {result=typed_exp'; binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in_ty out_ty
 
 let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
                           Ast_aggregated.type_expression ->
@@ -334,7 +334,7 @@ and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
   let env = make_subst_ast_env_exp ~raise env orig in
   let typed_exp' = add_ast_env ?name:name env arg body in
-  let lambda = { result=typed_exp' ; binder=arg} in
+  let lambda = { result=typed_exp' ; binder={var=arg;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in
   let typed_exp' = match name with
     | None ->
        let { type1 = in_ty ; type2 = out_ty } =
@@ -377,13 +377,12 @@ and make_ast_map ~raise ~loc key_ty value_ty kv =
                 (k, v)) kv in
   List.fold_right kv ~f:(fun (k, v) r -> Ast_aggregated.e_a_map_add k v r) ~init:(Ast_aggregated.e_a_map_empty key_ty value_ty)
 
-and compile_simple_value ~raise ?ctxt ~loc : Ligo_interpreter.Types.value ->
+and compile_simple_value ~raise ~options ?ctxt ~loc : Ligo_interpreter.Types.value ->
                       Ast_aggregated.type_expression ->
                       Ligo_interpreter.Types.typed_michelson_code =
   fun v ty ->
   let typed_exp = val_to_ast ~raise ~loc v ty in
   let (_: Ast_aggregated.expression) = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj typed_exp in
-  let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
   let compiled_exp = compile_value ~raise ~options typed_exp in
   let expr, _ = run_expression_unwrap ~raise ?ctxt ~loc compiled_exp in
   (* TODO-er: check the ignored second component: *)
@@ -410,9 +409,9 @@ and make_subst_ast_env_exp ~raise env expr =
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
-let run_michelson_func ~raise ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
+let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in
-  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~loc arg arg_ty in
+  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~loc arg arg_ty in
   let func_ty = compile_type ~raise func_ty in
   let func = match code with
   | Seq (_, s) ->

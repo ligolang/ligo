@@ -18,6 +18,7 @@ export class CompileAction extends CancellableAction {
           editor.language,
           editor.code,
           compileState.entrypoint,
+          compileState.protocol,
           compileState.michelsonFormat
         );
 

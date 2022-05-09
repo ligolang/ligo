@@ -44,5 +44,5 @@ let tokens_of = function
 
 (* Exported *)
 
-let filter =
+let filter ~add_warning:_ =
   Utils.(tokens_of <@ Style.check)

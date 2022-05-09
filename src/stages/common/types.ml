@@ -45,7 +45,6 @@ module LMap = Simple_utils.Map.Make(struct type t = label let compare = compare_
 type 'a label_map = 'a LMap.t
 
 let const_name = function
-  | Deprecated {const;_} -> const
   | Const      const     -> const
 
 type 'ty_expr row_element_mini_c = {
@@ -167,8 +166,8 @@ and 'exp sequence = {
   expr2: 'exp ;
   }
 
-and 'exp assign = {
-  variable    : expression_variable ;
+and ('exp,'ty_exp) assign = {
+  binder      : 'ty_exp binder ;
   access_path : 'exp access list ;
   expression  : 'exp ;
   }

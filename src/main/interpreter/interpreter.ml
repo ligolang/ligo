@@ -1092,21 +1092,21 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
             let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+            return @@ Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
-      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
+      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
       let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
@@ -1215,13 +1215,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
-        let aux : label -> ( expression_variable * _ ) -> env -> env =
-          fun l (v,ty) env ->
+        let aux : label ->  _ binder -> env -> env =
+          fun l {var;ascr;attributes=_} env ->
             let iv = match LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env v (ty,iv)
+            Env.extend env var (Option.value_exn ascr,iv)
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body calltrace env'
@@ -1230,7 +1230,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_recursive {fun_name; fun_type=_; lambda} ->
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
-                             arg_binder = lambda.binder ;
+                             arg_binder = lambda.binder.var ;
                              body = lambda.result ;
                              env = env }
     | E_raw_code {language ; code} -> (
@@ -1243,6 +1243,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
+    | E_assign _ -> failwith "todo"
 
 and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 
@@ -1273,7 +1274,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
-  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~test:true expr in
+  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
   let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->

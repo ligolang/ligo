@@ -5,15 +5,17 @@ type all =
 [
   | `Self_ast_typed_warning_unused of Location.t * string
   | `Self_ast_typed_warning_muchused of Location.t * string
+  | `Self_ast_typed_warning_unused_rec of Location.t * string
   | `Checking_ambiguous_contructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
-  | `Self_ast_imperative_warning_deprecated_constant of Location.t * string * string option
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of Location.t * Stage_common.Types.TypeVar.t
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
   | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
+  | `Jsligo_deprecated_toplevel_let of Location.t
+
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -61,22 +63,23 @@ let pp : display_format:string display_format ->
         Format.fprintf f
           "@[<hv>%a:@.Warning: variable \"%s\" cannot be used more than once.\n@]"
           Snippet.pp loc s
+    | `Self_ast_typed_warning_unused_rec (loc, s) ->
+      Format.fprintf f
+        "@[<hv>%a:@.Warning: unused recursion .@.Hint: remove recursion from the function \"%s\" to prevent this warning.\n@]"
+        Snippet.pp loc s      
     | `Self_ast_imperative_warning_layout (loc,Label s) ->
         Format.fprintf f
           "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
           Snippet.pp loc s
-    | `Self_ast_imperative_warning_deprecated_constant (loc, name, replacement) ->
-        Format.fprintf f
-          "@[<hv>%a@ Warning: constant %s is being deprecated soon.%s@.@]"
-          Snippet.pp loc name (match replacement with
-                               | Some r -> Format.asprintf " Consider using %s instead." r
-                               | None -> "")
     | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
         Format.fprintf f
           "@[<hv>%a@ Warning: %a is not recognize as a polymorphic variable anymore. If you want to make a polymorphic function, please consult the online documentation @.@]"
           Snippet.pp loc Stage_common.Types.TypeVar.pp name
     | `Jsligo_deprecated_failwith_no_return loc ->
       Format.fprintf f "@[<hv>%a@.Deprecated `failwith` without `return`: `failwith` is just a function.@.Please add an explicit `return` before `failwith` if you meant the built-in `failwith`.@.For now, compilation proceeds adding such `return` automatically.@.@]"
+      Snippet.pp loc
+    | `Jsligo_deprecated_toplevel_let loc ->
+      Format.fprintf f "@[<hv>%a@.Toplevel let declaration are silently change to const declaration.@.@]"
       Snippet.pp loc
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
@@ -155,19 +158,21 @@ let to_json : all -> Yojson.Safe.t = fun a ->
                        ("variable", description)
                      ] in
      json_warning ~stage ~content
+  | `Self_ast_typed_warning_unused_rec (loc, s) ->
+      let message = `String "unused recursion in function" in
+      let stage   = "self_ast_typed" in
+      let description = `String s in
+      let loc = `String (Format.asprintf "%a" Location.pp loc) in
+      let content = `Assoc [
+                        ("message", message);
+                        ("location", loc);
+                        ("variable", description)
+                      ] in
+      json_warning ~stage ~content  
   | `Self_ast_imperative_warning_layout (loc, s) ->
     let message = `String (Format.asprintf "Layout attribute on constructor %a" Ast_imperative.PP.label s) in
      let stage   = "self_ast_imperative" in
     let loc = Location.to_yojson loc in
-    let content = `Assoc [
-      ("message", message);
-      ("location", loc);
-    ] in
-    json_warning ~stage ~content
-  | `Self_ast_imperative_warning_deprecated_constant (loc, name, _) ->
-    let message = `String (Format.asprintf "Deprecated constant %s" name) in
-     let stage   = "self_ast_imperative" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -184,6 +189,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
     json_warning ~stage ~content
   | `Jsligo_deprecated_failwith_no_return loc ->
     let message = `String "deprecated use of failwith without return" in
+    let stage   = "lexer" in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
+  | `Jsligo_deprecated_toplevel_let loc ->
+    let message = `String "Toplevel let declarations are silently convert to const declarations" in
     let stage   = "lexer" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [

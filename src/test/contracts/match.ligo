@@ -12,10 +12,10 @@ function match_bool (const i : int) : int is
 function match_bool_old (const i : int) : int is
   block {
     var result : int := 23;
-    case i = 2 of
+    case i = 2 of [
       True  -> result := 42
     | False -> result := 0
-    end
+    ]
   } with result
 
 function match_option (const o : option (int)) : int is

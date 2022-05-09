@@ -17,7 +17,7 @@ let npseq_to_ne_list (hd, tl) = (hd, List.map ~f:snd tl)
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
 
-open Predefined.Tree_abstraction.Pascaligo
+open Predefined.Tree_abstraction
 
 let check_no_attributes ~(raise:Errors.abs_error Simple_utils.Trace.raise) (loc: Location.t) lst =
   (* TODO: should be done in a dedicated pass ?*)
@@ -823,10 +823,10 @@ and compile_assignment : loc:Location.t -> last_proj_update:(expression -> expre
         )
     in
     match path with
-    | [] -> e_assign ~loc lhs [] default_rhs
+    | [] -> e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] default_rhs
     | _ ->
       let init = e_variable ~loc lhs in
-      e_assign ~loc lhs [] (aux (init,Fun.id) path)
+      e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] (aux (init,Fun.id) path)
 
 and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST.expression  = fun ?next instruction ->
   let return expr = Option.value_map next ~default:expr ~f:(e_sequence expr) in
@@ -852,23 +852,23 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST
   )
   | I_Assign {region ; value = { lhs ; rhs ; _ }} -> (
     let loc = Location.lift region in
-    let (v,path) = path_of_lvalue ~raise lhs in
+    let (var,path) = path_of_lvalue ~raise lhs in
     match List.rev path with
     | [] ->
       let rhs = compile_expression ~raise rhs in
-      return @@ e_assign ~loc v [] rhs
+      return @@ e_assign ~loc {var;ascr=None;attributes={const_or_var=Some `Var}} [] rhs
     | last_access::path -> (
       let path = List.rev path in
       match last_access with
       | Access_map k ->
-        let default_rhs = e_map_add ~loc k (compile_expression ~raise rhs) (e_variable v) in
+        let default_rhs = e_map_add ~loc k (compile_expression ~raise rhs) (e_variable var) in
         let last_proj_update = fun last_proj -> e_map_add ~loc k (compile_expression ~raise rhs) last_proj in
-        return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
+        return @@ compile_assignment ~loc ~last_proj_update ~lhs:var ~path ~default_rhs
       | Access_record _ | Access_tuple _ ->
         let rhs = compile_expression ~raise rhs in
-        let default_rhs = e_update ~loc (e_variable v) [last_access] rhs in
+        let default_rhs = e_update ~loc (e_variable var) [last_access] rhs in
         let last_proj_update = fun last_proj -> e_update ~loc last_proj [last_access] rhs in
-        return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
+        return @@ compile_assignment ~loc ~last_proj_update ~lhs:var ~path ~default_rhs
     )
   )
   | I_While { region ; value = { cond ; block ; _ } } -> (

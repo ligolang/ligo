@@ -83,13 +83,14 @@ let%expect_test _ =
                                                be compiled as on-chain views,
                                                separated by ','
                                                (alias: -v)
+      [--warn-unused-rec]                      disable warning messages
       [--werror]                               treat warnings as errors
       [-e ENTRY-POINT]                         the entry-point that will be
                                                compiled.
                                                (alias: --entry-point)
       [-p PROTOCOL]                            choose protocol's types/values
                                                pre-loaded into the LIGO environment
-                                               (hangzhou ,
+                                               (jakarta ,
                                                ithaca). By default, the current
                                                protocol (ithaca) will be used
                                                (alias: --protocol)
@@ -149,11 +150,12 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                disable warning messages
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
                                          (ithaca) will be used
                                          (alias: --protocol)
@@ -213,11 +215,12 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                disable warning messages
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
                                          (ithaca) will be used
                                          (alias: --protocol)
@@ -247,10 +250,11 @@ let%expect_test _ =
                                  context initialization.
       [--no-warn]                disable warning messages
       [--project-root PATH]      The path to root of the project.
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [--without-run]            disable running of compiled expression.
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
+                                 LIGO environment (jakarta ,
                                  ithaca). By default, the current protocol (ithaca)
                                  will be used
                                  (alias: --protocol)
@@ -294,11 +298,12 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
+                                 LIGO environment (jakarta ,
                                  ithaca). By default, the current protocol (ithaca)
                                  will be used
                                  (alias: --protocol)
@@ -342,11 +347,12 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
+                                 LIGO environment (jakarta ,
                                  ithaca). By default, the current protocol (ithaca)
                                  will be used
                                  (alias: --protocol)
@@ -391,11 +397,12 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        disable warning messages
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
+                                 LIGO environment (jakarta ,
                                  ithaca). By default, the current protocol (ithaca)
                                  will be used
                                  (alias: --protocol)
@@ -437,10 +444,11 @@ let%expect_test _ =
                                          (default), 'json' and 'hex'.
       [--no-warn]                        disable warning messages
       [--project-root PATH]              The path to root of the project.
+      [--warn-unused-rec]                disable warning messages
       [--werror]                         treat warnings as errors
       [--without-run]                    disable running of compiled expression.
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
                                          (ithaca) will be used
                                          (alias: --protocol)

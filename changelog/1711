@@ -1,0 +1,8 @@
+author: er433
+description: \n### Deprecated constants\n\nIn previous versions of LIGO, warnings
+  were emitted for deprecated constants (e.g. `balance`, `sender`, etc.). We finally
+  remove those constants. Please consult API documentation in ligolang.org to find
+  a new constant that can replace the old one in your contract.
+merge_request: '1711'
+title: Remove deprecated constants
+type: breaking
