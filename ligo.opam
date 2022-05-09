@@ -54,6 +54,7 @@ depends: [
   "ringo-lwt"
   "pure-splitmix"
   "resto-cohttp-self-serving-client"
+  "tezos-rust-libs"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

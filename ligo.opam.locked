@@ -203,6 +203,7 @@ depends: [
   "tezos-lwt-result-stdlib" {= "dev"}
   "tezos-micheline" {= "dev"}
   "tezos-rpc" {= "dev"}
+  "tezos-rust-libs" {= "1.1"}
   "tezos-stdlib" {= "dev"}
   "tezos-stdlib-unix" {= "dev"}
   "time_now" {= "v0.14.0"}
