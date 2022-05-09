@@ -10,6 +10,6 @@
    result
    unix
    str)
-  (preprocess (staged_pps ppx_import ppx_hash))
+  (preprocess (pps ppx_hash))
   (flags (:standard -open Core))
 )
