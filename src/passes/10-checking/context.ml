@@ -3,24 +3,106 @@ module Location = Simple_utils.Location
 open Ast_typed
 
 module Typing = struct
+
+  let global_id = ref 0
   module Types = struct
 
-    (* Use of list to allow type shadowing, which is weird *)
-    (* We should use data structure that are better for lookup but we first need
-   to agree on typechecker property *)
-    type values  = (expression_variable * type_expression) List.t
-    type types   = (type_variable       * type_expression) List.t
-    type modules = (module_variable     * context        ) List.t
-    and  context = { (* TODO : move to sets, requires new architecture *)
+    (* An [IdMap] is a [Map] augmented with an [id] field (which is wrapped around the map [value] field).
+      Using a map instead of a list makes shadowed modules inaccessible,
+      since they are overwritten from the map when adding the shadower, whilst they were kept when using lists.
+      The [id] field in the map values is used to infer the type to which a constructor belong when they are not annotated
+      e.g. we need to keep the declaration order to infer that 'c' has type z in:
+
+        type x = A of int | B
+        module M = struct
+          type y = A of int
+        end
+        type z = A of int | AA
+
+        let c = A 2
+    *)
+    module IdMap = struct
+      module type OrderedType = Caml.Map.OrderedType
+
+      module type IdMapSig = sig
+        type key
+        type 'a t
+
+        val empty : 'a t
+        val add : 'a t -> key -> 'a -> 'a t
+        (* In case of merge conflict between two values with same keys, this merge function keeps the value with the highest id.
+           This follows the principle that this map always keeps the latest value in case of conflict *)
+        val merge : 'a t -> 'a t -> 'a t
+        val to_kv_list : 'a t -> (key * 'a) list
+      end (* of module type S *)
+
+      module Make (Ord : OrderedType) : IdMapSig with type key = Ord.t = struct
+        module Map = Simple_utils.Map.Make(Ord)
+
+        type key = Ord.t
+
+        type 'a id_wrapped = {
+          id : int; (* This is is used in [filter_values], to return a list of matching values in chronological order *)
+          value : 'a
+        }
+        type 'a t = ('a id_wrapped) Map.t
+
+        let empty = Map.empty
+
+        let add : 'a t -> key -> 'a -> 'a t =
+          fun map key value ->
+            global_id := !global_id + 1;
+            let id = !global_id in
+            let id_value = { id ; value } in
+            Map.add key id_value map
+
+        let merge : 'a t -> 'a t -> 'a t =
+          fun m1 m2 ->
+            let merger : key -> 'a id_wrapped option -> 'a id_wrapped option -> 'a id_wrapped option =
+              fun _ v1 v2 ->
+                match (v1, v2) with
+                | None,   None   -> None
+                | Some v, None   -> Some v
+                | None,   Some v -> Some v
+                | Some v1, Some v2 ->
+                  if v1.id > v2.id then Some v1 else Some v2
+            in
+            Map.merge merger m1 m2
+
+        let to_kvi_list : 'a t -> (key * 'a * int) list =
+          fun map ->
+            List.map ~f:(fun (key, value) -> (key, value.value, value.id)) @@ Map.to_kv_list map
+
+        let sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list =
+          fun list ->
+            let sorted_list = List.sort list ~compare:(fun (_, _, id1) (_, _, id2) -> Int.compare id2 id1) in
+            List.map ~f:(fun (k, v, _) -> (k, v)) sorted_list
+
+        let to_kv_list : 'a t -> (key * 'a) list =
+          fun map ->
+            sort_to_kv_list @@ to_kvi_list map
+
+      end (* of module IdMap.Make*)
+
+    end (* of module IdMap *)
+
+    module ValueMap  = IdMap.Make(ValueVar)
+    module TypeMap   = IdMap.Make(TypeVar)
+    module ModuleMap = IdMap.Make(ModuleVar)
+
+    type values  = type_expression ValueMap.t
+    type types   = type_expression TypeMap.t
+    type modules = context ModuleMap.t
+    and  context = {
         values  : values  ;
         types   : types   ;
         modules : modules ;
       }
-  end
+  end (* of module Types *)
 
 
   type t = Types.context
-  let empty : t = { values = []; types = [] ; modules = [] }
+  let empty : t = { values = Types.ValueMap.empty ; types = Types.TypeMap.empty ; modules = Types.ModuleMap.empty }
 
   module PP = struct
     open Format
@@ -37,18 +119,18 @@ module Typing = struct
     let rec module_binding ppf (mod_var,type_) =
       fprintf ppf "%a => %a" module_variable mod_var context type_
 
-    and context ppf {values;types;modules} =
+    and context ppf ({values;types;modules} : Types.context) =
       fprintf ppf "{[ %a; @; %a; %a; ]}"
-        (list_sep_scope value_binding ) values
-        (list_sep_scope type_binding  ) types
-        (list_sep_scope module_binding) modules
+        (list_sep_scope value_binding ) (ValueMap.to_kv_list  values)
+        (list_sep_scope type_binding  ) (TypeMap.to_kv_list   types)
+        (list_sep_scope module_binding) (ModuleMap.to_kv_list modules)
 
-  end
+  end (* of module PP *)
   let pp =  PP.context
 
   (* Not commutative as a shadows b*)
   let union : t -> t -> t = fun a b ->
-    {values = a.values @ b.values; types = a.types @ b.types ; modules = a.modules @ b.modules}
+    Types.{values = ValueMap.merge a.values b.values; types = TypeMap.merge a.types b.types ; modules = ModuleMap.merge a.modules b.modules}
 
   (* TODO: generate *)
   let get_types  : t -> Types.types  = fun { values=_ ; types ; modules=_ } -> types
@@ -58,11 +140,11 @@ module Typing = struct
 
   (* TODO: generate : these are now messy, clean them up. *)
   let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te ->
-    let values = (ev,te)::c.values in
+    let values = Types.ValueMap.add c.values ev te in
     {c with values}
 
   let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te ->
-    let types = (tv,te)::c.types in
+    let types = Types.TypeMap.add c.types tv te in
     {c with types}
 
   (* we represent for_all types as themselves because we don't have typechecking yet *)
@@ -73,14 +155,14 @@ module Typing = struct
   let add_kind : t -> Ast_typed.type_variable -> unit -> t = fun c tv () ->
     add_type_var c tv ()
   let add_module : t -> Ast_typed.module_variable -> t -> t = fun c mv te ->
-    let modules = (mv,te)::c.modules in
+    let modules = Types.ModuleMap.add c.modules mv te in
     {c with modules}
 
-  let get_value (e:t)  = List.Assoc.find ~equal:Ast_typed.ValueVar.equal e.values
-  let get_type (e:t)   = List.Assoc.find ~equal:Ast_typed.TypeVar.equal e.types
-  let get_module (e:t) = List.Assoc.find ~equal:Ast_typed.ModuleVar.equal e.modules
+  let get_value (e:t)  = List.Assoc.find ~equal:Ast_typed.ValueVar.equal @@ Types.ValueMap.to_kv_list e.values
+  let get_type (e:t)   = List.Assoc.find ~equal:Ast_typed.TypeVar.equal @@ Types.TypeMap.to_kv_list e.types
+  let get_module (e:t) = List.Assoc.find ~equal:Ast_typed.ModuleVar.equal @@ Types.ModuleMap.to_kv_list e.modules
 
-  let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip types
+  let get_type_vars : t -> Ast_typed.type_variable list  = fun { values=_ ; types ; modules=_ } -> fst @@ List.unzip @@ Types.TypeMap.to_kv_list types
 
   let rec context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t = fun ~outer_context me ->
     match me.wrap_content with
@@ -153,12 +235,12 @@ module Typing = struct
           )
           | _ -> None
         in
-        let matching_t_sum = match List.filter_map ~f:aux (get_types ctxt) with
+        let matching_t_sum = match List.filter_map ~f:aux (Types.TypeMap.to_kv_list @@ get_types ctxt) with
         | [] ->
           (* If the constructor isn't matched in the context of values,
             reccursively search for in the context of all the modules in scope *)
           let modules = get_modules ctxt in
-          List.fold_left modules ~init:[]
+          List.fold_left (Types.ModuleMap.to_kv_list modules) ~init:[]
             ~f:(fun res (_,module_) ->
               match res with | [] -> get_sum ctor module_ | lst -> lst
             )
@@ -187,13 +269,13 @@ module Typing = struct
                         )
         | _ -> None
       in
-      match List.find_map ~f:aux (get_types e) with
+      match List.find_map ~f:aux @@ Types.TypeMap.to_kv_list @@ get_types e with
         Some _ as s -> s
       | None ->
          let modules = get_modules e in
          List.fold_left ~f:(fun res (__,module_) ->
              match res with Some _ as s -> s | None -> rec_aux module_
-           ) ~init:None modules
+           ) ~init:None (Types.ModuleMap.to_kv_list modules)
     in rec_aux e
 
 end
