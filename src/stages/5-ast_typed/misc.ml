@@ -87,11 +87,7 @@ let layout_eq a b = match (a,b) with
   | _ -> false
 
 let constant_compare ia ib =
-  let open Stage_common.Constant in
-  match ia,ib with
-  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
-  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
-  | _ -> Stage_common.Constant.compare ia ib
+  Stage_common.Constant.compare ia ib
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
