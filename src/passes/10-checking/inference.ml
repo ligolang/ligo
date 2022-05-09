@@ -10,14 +10,6 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
   let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    let ad_hoc_maps_unification a b =
-      let open Stage_common.Constant in
-      match a,b with
-      | Map_or_big_map, x              -> (x, x)
-      | x             , Map_or_big_map -> (x, x)
-      | _                              -> (a, b)
-    in
-    let (a,b) = ad_hoc_maps_unification a b in
     Stage_common.Constant.equal a b
   in
   match type_matched.type_content, type_.type_content with

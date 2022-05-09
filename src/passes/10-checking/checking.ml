@@ -473,9 +473,13 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let tv_val = get_type val' in
       let tv = match tv_opt with
           Some tv -> tv
-        | None -> t_map_or_big_map tv_key tv_val
+        | None -> t_map tv_key tv_val
       in
-      let map' =  type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv map in
+      let map' = try_with (type_expression' ~add_warning ~options (app_context, context) ~tv_opt:tv map)
+               (fun _ -> let tv = match tv_opt with
+                             Some tv -> tv
+                           | None -> t_big_map tv_key tv_val
+                         in type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv map) in
       let tv_map = get_type map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
       let (name', tv) = type_constant ~raise ~options cst e.location tv_lst tv_opt in
