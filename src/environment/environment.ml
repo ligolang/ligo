@@ -81,7 +81,12 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_chest_opening_result , t_chest_opening_result ());
 ]
 
-let hangzhou_types = basic_types @ michelson_base
+let jakarta_extra : (type_variable * type_expression) list = [
+
+]
+
+let base = basic_types @ michelson_base
+let jakarta_types = base @ jakarta_extra
 
 let meta_ligo_types : (type_variable * type_expression) list -> (type_variable * type_expression) list =
   fun proto_types ->
@@ -96,9 +101,9 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}})
 
 let default : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type hangzhou_types
-  (* | Protocols.Hangzhou -> of_list_type hangzhou_types *)
+  | Protocols.Ithaca -> of_list_type base
+  | Protocols.Jakarta -> of_list_type jakarta_types
 
 let default_with_test : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type (meta_ligo_types hangzhou_types)
-  (* | Protocols.Hangzhou -> of_list_type (meta_ligo_types hangzhou_types) *)
+  | Protocols.Ithaca -> of_list_type (meta_ligo_types base)
+  | Protocols.Jakarta -> of_list_type (meta_ligo_types jakarta_types)
