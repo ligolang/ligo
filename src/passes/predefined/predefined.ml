@@ -541,7 +541,6 @@ module Stacking = struct
     | C_LEVEL              , _   -> Some ( simple_constant @@ prim "LEVEL")
     | C_VOTING_POWER       , _   -> Some ( simple_unary @@ prim "VOTING_POWER")
     | C_TOTAL_VOTING_POWER , _   -> Some ( simple_unary @@ prim "TOTAL_VOTING_POWER")
-
     | C_SELF               , _   -> Some (trivial_special "SELF")
     | C_NONE               , _   -> Some (trivial_special "NONE")
     | C_NIL                , _   -> Some (trivial_special "NIL")

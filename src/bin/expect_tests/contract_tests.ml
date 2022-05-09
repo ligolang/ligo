@@ -1136,9 +1136,9 @@ let%expect_test _ =
     Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
-    Error(s) occurred while type checking the contract:
+    Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
@@ -1148,7 +1148,25 @@ let%expect_test _ =
     { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } } |}]
+      "data": { "input": "KT1badaddr" } }
+
+            Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+            so you might want to ignore this error if related to a breaking change in protocol jakarta
+
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+
+            Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+            so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;

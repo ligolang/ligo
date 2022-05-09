@@ -39,7 +39,11 @@ let t_constant ?loc ?core injection parameters : type_expression =
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
-[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash", "chest_key", "chest"))]
+[@@map (_type_, (
+    "signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez",
+    "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash",
+    "chest_key", "chest" , "tx_rollup_l2_address"
+  ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]

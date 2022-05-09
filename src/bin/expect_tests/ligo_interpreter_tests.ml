@@ -483,14 +483,14 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    950038500000mutez
-    1000040000000n
+    950048000000mutez
+    1000050000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950049500000mutez
-    1000040000000n
+    950059000000mutez
+    1000050000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950060500000mutez
-    1000040000000n
+    950070000000mutez
+    1000050000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 

@@ -82,7 +82,7 @@ let michelson_base : (type_variable * type_expression) list = [
 ]
 
 let jakarta_extra : (type_variable * type_expression) list = [
-
+    (v_tx_rollup_l2_address, t_tx_rollup_l2_address ())
 ]
 
 let base = basic_types @ michelson_base

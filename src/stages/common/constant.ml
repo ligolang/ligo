@@ -41,6 +41,7 @@ type t =
   | Chest
   | Chest_key
   | Chest_opening_result
+  | Tx_rollup_l2_address 
   | External of string
   [@@deriving ord, eq]
 
@@ -85,6 +86,7 @@ let to_string = function
   | Chest                -> "chest"
   | Chest_key            -> "chest_key"
   | Chest_opening_result -> "chest_opening_result"
+  | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
 
   let of_string = function
@@ -128,6 +130,7 @@ let to_string = function
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
+  | "tx_rollup_l2_address" -> Tx_rollup_l2_address
   | "external_failwith"    -> External "failwith"
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
@@ -174,6 +177,7 @@ let mutation             = Mutation
 let chest                = Chest
 let chest_key            = Chest_key
 let chest_opening_result = Chest_opening_result
+let tx_rollup_l2_address = Tx_rollup_l2_address
 let external_failwith    = External "failwith"
 let external_int         = External "int"
 let external_ediv        = External "ediv"
@@ -220,6 +224,7 @@ let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mut
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
+let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
 let v_external_failwith    : type_variable = TypeVar.of_input_var (to_string @@ External "failwith")
 let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
 let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
