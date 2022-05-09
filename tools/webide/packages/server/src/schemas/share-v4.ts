@@ -61,24 +61,29 @@ export class SchemaMigrationV4 extends Migration {
         .required(),
       compile: joi.object({
         entrypoint: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       dryRun: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow(''),
         storage: joi.any().allow(''),
+        protocol: joi.string().required(),
       }),
       deploy: joi.object({
         entrypoint: joi.string().allow(''),
         storage: joi.any().allow(''),
         network: joi.string().allow(''),
         signer: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       evaluateValue: joi.object({
         entrypoint: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       evaluateFunction: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow(''),
+        protocol: joi.string().required(),
       }),
       generateDeployScript: joi.object({
         tool: joi.string().allow(''),
@@ -86,6 +91,7 @@ export class SchemaMigrationV4 extends Migration {
         storage: joi.any().allow(''),
         originationAccount: joi.string().allow(''),
         burnCap: joi.number().allow(''),
+        protocol: joi.string().required(),
       }),
     }),
   });
