@@ -154,7 +154,6 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         List.fold_right ~f:aux ~init big_map'
       )
-    | (Map_or_big_map, _)  -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
     | (List, [ty])  -> (
         let lst =
           trace_option ~raise (wrong_mini_c_value t v) @@

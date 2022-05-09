@@ -272,8 +272,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Big_map, [k; v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_big_map kv')
-    | (Map_or_big_map, _) ->
-      raise.raise @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
     | (List, [t]) ->
       let t' = compile_type t in
       return (T_list t')
