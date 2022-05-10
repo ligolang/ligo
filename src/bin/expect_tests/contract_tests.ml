@@ -1137,9 +1137,8 @@ let%expect_test _ =
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
     Invalid contract notation "KT1badaddr"
-
-            Note: You compiled your contract with protocol hangzhou although we internally use protocol ithaca to typecheck the produced Michelson contract
-            so you might want to ignore this error if related to a breaking change in protocol ithaca
+    Note: You compiled your contract with protocol hangzhou although we internally use protocol ithaca to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol ithaca
 
     { parameter int ;
       storage address ;

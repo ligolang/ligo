@@ -120,6 +120,13 @@ let%expect_test _ =
     { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "identity.jsligo") ] ;
+  [%expect{|
+    { parameter unit ;
+      storage int ;
+      code { DROP ; PUSH int 1 ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;
   [%expect{|
     File "./comb.jsligo", line 36, characters 0-90:
