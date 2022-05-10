@@ -50,8 +50,8 @@ let const_name = function
 
 type 'ty_expr row_element_mini_c = {
   associated_type      : 'ty_expr ;
-  michelson_annotation : string option ;
-  decl_pos : int ;
+  michelson_annotation : string option [@hash.ignore] ;
+  decl_pos : int [@hash.ignore] ;
   } [@@deriving hash]
 
 type 'ty_exp type_app = {
