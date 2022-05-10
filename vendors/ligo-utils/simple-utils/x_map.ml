@@ -78,7 +78,9 @@ end
 
 module MakeHashable(Ord : OrderedHashableType) : SHashable with type key = Ord.t = struct
   include Make(Ord)
-  let hash_fold_t hash_fold_a hsv arg = Hash.Builtin.hash_fold_list (fun st (k, v) -> Ord.hash_fold_t (hash_fold_a st v) k) hsv (to_kv_list arg)
+  let hash_fold_t hash_fold_a hsv arg =
+    let sort l = List.sort ~compare:(fun (k, _) (k',_) -> Ord.compare k k') l in
+    Hash.Builtin.hash_fold_list (fun st (k, v) -> Ord.hash_fold_t (hash_fold_a st v) k) hsv (sort (to_kv_list arg))
 end
 
 module String = Make(String)
