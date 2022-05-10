@@ -141,14 +141,14 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
             name     = if start2D == finish2D then "ERROR" else Text.pack ty
             range = Range
               { _rStart  =
-                  ( pointRow    start2D + 1
-                  , pointColumn start2D + 1
-                  , nodeStartByte node
+                  ( fromIntegral $ pointRow    start2D + 1
+                  , fromIntegral $ pointColumn start2D + 1
+                  , fromIntegral $ nodeStartByte node
                   )
               , _rFinish =
-                  ( pointRow    finish2D + 1
-                  , pointColumn finish2D + 1
-                  , nodeEndByte node
+                  ( fromIntegral $ pointRow    finish2D + 1
+                  , fromIntegral $ pointColumn finish2D + 1
+                  , fromIntegral $ nodeEndByte node
                   )
               , _rFile = fp
               }

@@ -22,7 +22,8 @@ import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Reader
 import Data.Aeson (ToJSON (..), eitherDecodeStrict', object, (.=))
 import Data.Bifunctor (bimap)
-import Data.Foldable (asum)
+import Data.Foldable (asum, toList)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text, pack, unpack)
 import Data.Text qualified as Text
@@ -60,7 +61,8 @@ data LigoClientFailureException = LigoClientFailureException
 
 -- | Expected ligo failure decoded from its JSON output
 data LigoDecodedExpectedClientFailureException = LigoDecodedExpectedClientFailureException
-  { decfeErrorDecoded :: LigoError -- ^ Successfully decoded ligo error
+  { decfeErrorsDecoded :: NonEmpty LigoError -- ^ Successfully decoded ligo errors
+  , decfeWarningsDecoded :: [LigoError]
   , decfeFile :: FilePath -- ^ File that caused the error
   } deriving anyclass (LigoException)
     deriving stock (Show)
@@ -122,9 +124,11 @@ instance Exception LigoClientFailureException where
     <> "\nCaused by: " <> fromMaybe "<unknown file>" cfeFile
 
 instance Exception LigoDecodedExpectedClientFailureException where
-  displayException LigoDecodedExpectedClientFailureException {decfeErrorDecoded, decfeFile} =
+  displayException LigoDecodedExpectedClientFailureException {decfeErrorsDecoded, decfeWarningsDecoded, decfeFile} =
     "LIGO binary produced expected error which we successfully decoded as:\n"
-    <> show (pp decfeErrorDecoded)
+    <> show (pp $ toList decfeErrorsDecoded)
+    <> "\nWith warnings:\n"
+    <> show (pp decfeWarningsDecoded)
     <> "\nCaused by: " <> decfeFile
 
 instance Exception LigoErrorNodeParseErrorException where
@@ -285,7 +289,6 @@ getLigoDefinitions
   -> m (LigoDefinitions, Text)
 getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
   $(Log.debug) [i|parsing the following contract:\n#{contract}|]
-  let path = srcPath contract
   (mbOut, fixMarkers) <- usingTemporaryDir contract \tempFp _ ->
     try $ callLigo
       ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir]
@@ -295,10 +298,10 @@ getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addCon
       case eitherDecodeStrict' @LigoDefinitions . encodeUtf8 $ output of
         Left err -> do
           $(Log.err) [i|Unable to parse ligo definitions with: #{err}|]
-          throwIO $ LigoDefinitionParseErrorException (pack err) output path
+          throwIO $ LigoDefinitionParseErrorException (pack err) output fp
         Right definitions -> return (definitions, errs)
     Left LigoClientFailureException {cfeStderr} ->
-      handleLigoError path (fixMarkers cfeStderr)
+      handleLigoMessages fp (fixMarkers cfeStderr)
   where
     fp, dir :: FilePath
     fp = srcPath contract
@@ -308,7 +311,6 @@ getLigoDefinitions contract = Log.addNamespace "getLigoDefinitions" $ Log.addCon
 -- multiple levels up allowing us from restoring from expected ligo errors.
 handleLigoError :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
 handleLigoError path stderr = Log.addNamespace "handleLigoError" do
-  -- Call ligo with `compile contract` to extract more readable error message
   case eitherDecodeStrict' @LigoError . encodeUtf8 $ stderr of
     Left err -> do
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
@@ -326,7 +328,22 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
           throwIO $ LigoUnexpectedCrashException (pack recovered) path
     Right decodedError -> do
       $(Log.err) [i|ligo error decoding successful with:\n#{decodedError}|]
-      throwIO $ LigoDecodedExpectedClientFailureException decodedError path
+      throwIO $ LigoDecodedExpectedClientFailureException (pure decodedError) [] path
+
+-- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
+-- happen. On a decode failure, attempts to decode as a single LIGO error
+-- instead.
+handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
+handleLigoMessages path stderr = Log.addNamespace "handleLigoErrors" do
+  case eitherDecodeStrict' @LigoMessages $ encodeUtf8 stderr of
+    Left err -> do
+      $(Log.err) [i|ligo errors decoding failure: #{err}|]
+      -- It's possible it's the old format, with only one error. Try to decode
+      -- it instead:
+      handleLigoError path stderr
+    Right (LigoMessages decodedErrors decodedWarnings) -> do
+      $(Log.err) [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
+      throwIO $ LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
 
 -- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to
 -- extract the error message that was included with the crash.

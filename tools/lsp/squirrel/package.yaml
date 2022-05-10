@@ -120,18 +120,19 @@ executables:
       - aeson
       - algebraic-graphs
       - clock
+      - co-log-core
       - containers
       - data-default
       - filepath
       - focus
       - hashable
-      - hslogger
       - interpolate
       - katip
       - lens
       - ligo-squirrel
       - lsp
       - mtl
+      - prettyprinter
       - stm
       - stm-containers
       - text

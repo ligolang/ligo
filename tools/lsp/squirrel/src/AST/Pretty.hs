@@ -19,12 +19,12 @@ import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
-import Data.Word (Word32)
 import Duplo (Cofree ((:<)), Layers)
 import Duplo.Pretty as Exports
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, indent,
   parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
+import Language.LSP.Types qualified as J
 
 import AST.Skeleton hiding (Type)
 import AST.Skeleton qualified as AST
@@ -351,7 +351,7 @@ instance Pretty LineMarkerType where
   pp ReturnToFile = "2"
 
 -- Orphans
-instance Pretty Word32 where
+instance Pretty J.UInt where
   pp = pp . Text.pack . show
 
 ----------------------------------------------------------------------------
