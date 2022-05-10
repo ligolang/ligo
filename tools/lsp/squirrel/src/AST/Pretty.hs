@@ -804,13 +804,16 @@ instance LPP1 'Caml TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
-type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr)
+-- TODO: JsLIGO pretty printer
+
+type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
   Pascal -> lpp @'Pascal
-  Caml -> lpp @'Caml
+  Caml   -> lpp @'Caml
   Reason -> lpp @'Reason
+  Js     -> lpp @'Js
 
 docToText :: Doc -> Text
 docToText = Text.pack . show
