@@ -102,6 +102,7 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
       Caml   -> cameLIGOKeywords
       Pascal -> pascaLIGOKeywords
       Reason -> reasonLIGOKeywords
+      Js     -> jsLIGOKeywords
 
 completeField
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]

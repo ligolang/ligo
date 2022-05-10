@@ -12,6 +12,7 @@ function extToDialect(ext : string) {
     case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.religo': return 'reasonligo'
+    case '.jsligo': return 'jsligo'
     default:
       console.error('Unknown dialect');
       return undefined
@@ -22,7 +23,8 @@ async function executeLigoCommand(command, getSyntax = false, showOutput = true)
   let path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
   console.log(path)
-  if (ext !== '.ligo' && ext !== '.mligo' && ext !== '.religo') {
+  // TODO: change this
+  if (ext !== '.ligo' && ext !== '.mligo' && ext !== '.religo' && ext !== '.jsligo') {
     if (!lastContractPath) {
       return undefined;
     }

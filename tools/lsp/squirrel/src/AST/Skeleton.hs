@@ -11,7 +11,7 @@ module AST.Skeleton
   , Tree'
   , RawLigoList
   , Lang (..)
-  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords
+  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
