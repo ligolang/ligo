@@ -85,7 +85,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "list (string)", but got: "option (int)". |} ] ;
+    Expected: "list (string)", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|

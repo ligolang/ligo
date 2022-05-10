@@ -39,7 +39,7 @@ type t =
   | Chest_key
   | Chest_opening_result
   | External of string
-  [@@deriving ord, eq]
+  [@@deriving ord, eq, hash]
 
 let to_string = function
   | Bool                 -> "bool"

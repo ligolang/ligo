@@ -2,6 +2,10 @@
 module Location = Simple_utils.Location
 open Ast_typed
 
+module HMap = Simple_utils.Map.Make(struct type t = type_expression
+                                           let compare t1 t2 = Int.compare (Hash.hash_type_expression t1) (Hash.hash_type_expression t2)
+                                    end)
+
 module Typing = struct
   module Types = struct
 
@@ -195,7 +199,35 @@ module Typing = struct
              match res with Some _ as s -> s | None -> rec_aux module_
            ) ~init:None modules
     in rec_aux e
+end
 
+module Hashes = struct
+  module HTBL = Caml.Hashtbl.Make(struct type t = type_expression
+                                         let hash = Hash.hash_type_expression
+                                         let equal t1 t2 = match assert_type_expression_eq (t1, t2) with
+                                           | Some _ -> true
+                                           | None -> false
+                                  end)
+
+  let hashtbl : (module_variable list * type_variable) HTBL.t = HTBL.create 256
+
+  let context = ref (false, Typing.empty)
+  let set_context (t : Typing.t) : unit = context := (false, t)
+
+  let hash_types () : unit =
+    let (hashed, t) = ! context in
+    if hashed then
+      ()
+    else
+      let rec aux path (t : Typing.t) =
+        List.iter (List.rev t.types) ~f:(fun (v, t) -> HTBL.add hashtbl t (path, v)) ;
+        List.iter (List.rev t.modules) ~f:(fun (v, t) -> aux (path @ [v]) t) in
+      HTBL.clear hashtbl ;
+      aux [] t ;
+      context := (true, t)
+
+  let find_type (t : type_expression) : (module_variable list * type_variable) option =
+    HTBL.find_opt hashtbl t
 end
 
 module App = struct
