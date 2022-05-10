@@ -201,7 +201,6 @@ module Typing = struct
     in rec_aux e
 end
 
-
 module Hashes = struct
   module HTBL = Caml.Hashtbl.Make(struct type t = type_expression
                                          let hash = Hash.hash_type_expression
@@ -230,7 +229,6 @@ module Hashes = struct
   let find_type (t : type_expression) : (module_variable list * type_variable) option =
     HTBL.find_opt hashtbl t
 end
-
 
 module App = struct
   type e = { args : type_expression list ; old_expect : type_expression option  }
