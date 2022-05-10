@@ -324,3 +324,26 @@ and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 
     return res (M_struct decls)
   | M_module_path _ as x -> return acc x
   | M_variable _ as x -> return acc x
+
+let rec fold_type_expression : type a . type_expression -> init:a -> f:(a -> type_expression -> a) -> a =
+  fun te ~init ~f ->
+    let self te = fold_type_expression te ~f in
+    let init = f init te in
+    match te.type_content with
+    | T_variable _ -> init
+    | T_constant {parameters; _} -> (
+        List.fold parameters ~init ~f
+      )
+    | T_sum {content; _}
+    | T_record {content; _} -> (
+        LMap.fold (fun _ row acc -> self ~init:acc row.associated_type) content init
+      )
+    | T_arrow {type1; type2} -> (
+        self type2 ~init:(self type1 ~init)
+      )
+    | T_module_accessor _ -> init
+    | T_singleton _ -> init
+    | T_abstraction {type_; _}
+    | T_for_all {type_; _} -> (
+        self type_ ~init
+      )
