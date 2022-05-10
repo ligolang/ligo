@@ -398,7 +398,11 @@ let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> te
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
   let open Tezos_alpha_test_helpers in
-  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end n ctxt.raw in
+  let policy = match Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit ctxt.internals.baker with
+    | Some x -> Some (Block.By_account x)
+    | None -> None
+  in
+  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end ?policy n ctxt.raw in
   { ctxt with raw }
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
