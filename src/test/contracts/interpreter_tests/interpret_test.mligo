@@ -331,7 +331,7 @@ let test_list_fold_left_sum =
 let test_bytes_sub =
   let () = assert (Bytes.sub 0n 3n (Bytes.pack 5n) = (Bytes.pack 5)) in
   let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
-  let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 3n 0n (Bytes.pack 5)) in
+  let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 2n 0n (Bytes.pack 5)) in
   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
 

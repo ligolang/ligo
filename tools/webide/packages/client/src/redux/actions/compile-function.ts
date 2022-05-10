@@ -17,6 +17,7 @@ export class CompileFunctionAction extends CancellableAction {
         const michelsonCode = await compileExpression(
           editor.language,
           editor.code,
+          compileFunction.protocol,
           compileFunction.functionName
         );
 

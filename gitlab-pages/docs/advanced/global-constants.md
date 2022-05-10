@@ -129,7 +129,6 @@ For LIGO users, we recommend to use `compile constant` as it
 simplifies the usage flow (see example below).
 :::
 
-
 ## Usage example
 
 Given the following contract `global_call`:
@@ -170,15 +169,14 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=pre_global
-let helper = ([s, x] : [string, int]) : int =>
+const helper = ([s, x] : [string, int]) : int =>
   String.length(s) + x * 3 + 2;
 
-let main = ([p, s] : [string, int]) : [list<operation>, int] =>
+const main = ([p, s] : [string, int]) : [list<operation>, int] =>
   [(list([]) as list<operation>), helper (p, s)];
 ```
 
 </Syntax>
-
 
 We want to turn the function `helper` into a global constant. The first
 step is to ask LIGO to compile the constant:
@@ -377,7 +375,7 @@ let main = ((p, s) : (string, int)) : (list (operation), int) =>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let main = ([p, s] : [string, int]) : [list<operation>, int] =>
+const main = ([p, s] : [string, int]) : [list<operation>, int] =>
   [(list([]) as list<operation>), (Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8") as ((_ps : [string, int]) => int))([p, s])];
 ```
 
@@ -561,21 +559,21 @@ let test =
 type storage = int
 type parameter = unit
 
-let f = (x : int) : int => x * 3 + 2;
+const f = (x : int) : int => x * 3 + 2;
 
-let ct : string = Test.register_constant(Test.eval(f));
+const ct : string = Test.register_constant(Test.eval(f));
 
-let main = ([p, s] : [parameter, storage]) : [list<operation>, storage] =>
+const main = ([p, s] : [parameter, storage]) : [list<operation>, storage] =>
   [(list([]) as list<operation>), (((Tezos.constant(ct) as ((x:int) => int)))(s))];
 
-let _test = (_u : unit) : unit => {
+const _test = (_u : unit) : unit => {
   let [taddr, _, _] = Test.originate(main, 1, (0 as tez));
   let ctr = Test.to_contract(taddr);
   let _ = Test.transfer_to_contract_exn(ctr, unit, (0 as tez));
   assert (Test.get_storage(taddr) == 5);
 };
 
-let test = _test();
+const test = _test();
 ```
 
 </Syntax>

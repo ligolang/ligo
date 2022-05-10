@@ -15,7 +15,6 @@ type t =
   | Key_hash
   | Timestamp
   | Chain_id
-  | Option
   | List
   | Map
   | Big_map
@@ -35,13 +34,12 @@ type t =
   | Never
   | Ticket
   | Michelson_program
-  | Test_exec_error
-  | Test_exec_result
   | Typed_address
   | Mutation
   | Chest
   | Chest_key
   | Chest_opening_result
+  | External of string
   [@@deriving ord, eq]
 
 let to_string = function
@@ -59,7 +57,6 @@ let to_string = function
   | Key_hash             -> "key_hash"
   | Timestamp            -> "timestamp"
   | Chain_id             -> "chain_id"
-  | Option               -> "option"
   | List                 -> "list"
   | Map                  -> "map"
   | Big_map              -> "big_map"
@@ -79,13 +76,12 @@ let to_string = function
   | Never                -> "never"
   | Ticket               -> "ticket"
   | Michelson_program    -> "michelson_program"
-  | Test_exec_error      -> "test_exec_error"
-  | Test_exec_result     -> "test_exec_result"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
   | Chest                -> "chest"
   | Chest_key            -> "chest_key"
   | Chest_opening_result -> "chest_opening_result"
+  | External s           -> "external_" ^ s
 
   let of_string = function
   | "bool"                 -> Bool
@@ -102,7 +98,6 @@ let to_string = function
   | "key_hash"             -> Key_hash
   | "timestamp"            -> Timestamp
   | "chain_id"             -> Chain_id
-  | "option"               -> Option
   | "list"                 -> List
   | "map"                  -> Map
   | "big_map"              -> Big_map
@@ -122,13 +117,15 @@ let to_string = function
   | "never"                -> Never
   | "ticket"               -> Ticket
   | "michelson_program"    -> Michelson_program
-  | "test_exec_error"      -> Test_exec_error
-  | "test_exec_result"     -> Test_exec_result
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
+  | "external_failwith"    -> External "failwith"
+  | "external_int"         -> External "int"
+  | "external_ediv"        -> External "ediv"
+  | "external_u_ediv"      -> External "u_ediv"
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let bool                 = Bool
@@ -145,7 +142,6 @@ let key                  = Key
 let key_hash             = Key_hash
 let timestamp            = Timestamp
 let chain_id             = Chain_id
-let option               = Option
 let list                 = List
 let map                  = Map
 let big_map              = Big_map
@@ -165,13 +161,15 @@ let bls12_381_fr         = Bls12_381_fr
 let never                = Never
 let ticket               = Ticket
 let michelson_program    = Michelson_program
-let test_exec_error      = Test_exec_error
-let test_exec_result     = Test_exec_result
 let typed_address        = Typed_address
 let mutation             = Mutation
 let chest                = Chest
 let chest_key            = Chest_key
 let chest_opening_result = Chest_opening_result
+let external_failwith    = External "failwith"
+let external_int         = External "int"
+let external_ediv        = External "ediv"
+let external_u_ediv      = External "u_ediv"
 
 let v_bool                 : type_variable = TypeVar.of_input_var (to_string Bool)
 let v_string               : type_variable = TypeVar.of_input_var (to_string String)
@@ -187,7 +185,7 @@ let v_key                  : type_variable = TypeVar.of_input_var (to_string Key
 let v_key_hash             : type_variable = TypeVar.of_input_var (to_string Key_hash)
 let v_timestamp            : type_variable = TypeVar.of_input_var (to_string Timestamp)
 let v_chain_id             : type_variable = TypeVar.of_input_var (to_string Chain_id)
-let v_option               : type_variable = TypeVar.of_input_var (to_string Option)
+let v_option               : type_variable = TypeVar.of_input_var ("option")
 let v_list                 : type_variable = TypeVar.of_input_var (to_string List)
 let v_map                  : type_variable = TypeVar.of_input_var (to_string Map)
 let v_big_map              : type_variable = TypeVar.of_input_var (to_string Big_map)
@@ -207,10 +205,12 @@ let v_bls12_381_fr         : type_variable = TypeVar.of_input_var (to_string Bls
 let v_never                : type_variable = TypeVar.of_input_var (to_string Never)
 let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
-let v_test_exec_error      : type_variable = TypeVar.of_input_var (to_string Test_exec_error)
-let v_test_exec_result     : type_variable = TypeVar.of_input_var (to_string Test_exec_result)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
+let v_external_failwith    : type_variable = TypeVar.of_input_var (to_string @@ External "failwith")
+let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
+let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
+let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")

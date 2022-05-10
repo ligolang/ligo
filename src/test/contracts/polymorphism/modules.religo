@@ -1,11 +1,11 @@
 module Bytes_ = {
-  let pack_ : _a => bytes = (x : _a) => Bytes.pack(x)
-  let unpack_ : bytes => option (_a) = (x : bytes) => (Bytes.unpack(x) : option (_a))
+  let pack_  = (type a, x : a) => Bytes.pack(x)
+  let unpack_  = (type a, x : bytes) => (Bytes.unpack(x) : option (a))
 }
 
 module Foo = Bytes_
 
-let packer : _b => bytes = (x : _b) => Foo.pack_(x)
+let packer = (type b, x : b) => Foo.pack_(x)
 
 let foo = (packer(1), packer("hello"))
 

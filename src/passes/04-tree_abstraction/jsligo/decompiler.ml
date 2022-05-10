@@ -4,7 +4,7 @@
 
 module AST = Ast_imperative
 module CST = Cst.Jsligo
-module Predefined = Predefined.Tree_abstraction.Jsligo
+module Predefined = Predefined.Tree_abstraction
 module Region     = Simple_utils.Region
 module Location   = Simple_utils.Location
 module List       = Simple_utils.List
@@ -183,6 +183,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_variable _
   | E_literal _
   | E_constant _
+  | E_module_accessor _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -210,7 +211,7 @@ let decompile_operator : AST.rich_constant -> CST.expr List.Ne.t -> CST.expr opt
   | Const C_ADD, (arg1, [arg2])
   | Const C_POLYMORPHIC_ADD, (arg1, [arg2]) ->
      Some CST.(EArith (Add (Region.wrap_ghost { op = Token.ghost_plus ; arg1 ; arg2 })))
-  | Const C_SUB, (arg1, [arg2]) 
+  | Const C_SUB, (arg1, [arg2])
   | Const C_POLYMORPHIC_SUB, (arg1, [arg2]) ->
      Some CST.(EArith (Sub (Region.wrap_ghost { op = Token.ghost_minus ; arg1 ; arg2 })))
   | Const C_MUL, (arg1, [arg2]) ->
@@ -359,6 +360,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     let let_binding = CST.{
       binders;
       lhs_type;
+      type_params=None;
       eq = Token.ghost_eq;
       expr
     } in
@@ -564,10 +566,10 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     return_expr @@ [Expr (CST.ECall (Region.wrap_ghost @@ (var,args)))]
   (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ [Expr (CST.EUnit (Region.wrap_ghost (Token.ghost_lpar,Token.ghost_rpar)))]
-  | E_assign {variable;access_path;expression} when List.length access_path > 0 ->
+  | E_assign {binder;access_path;expression} when List.length access_path > 0 ->
     failwith "Assignments with access paths are not supported by JsLIGO."
-  | E_assign {variable;expression;_} ->
-    let name = decompile_variable variable in
+  | E_assign {binder;expression;_} ->
+    let name = decompile_variable binder.var in
     let evar = CST.EVar name in
     let rhs = decompile_expression_in expression in
     return_expr @@ [Expr (CST.EAssign (evar, {value = CST.Eq; region = Region.ghost}, e_hd rhs))]
@@ -786,6 +788,7 @@ and decompile_declaration : AST.declaration -> CST.statement = fun decl ->
     let binding = CST.({
       binders;
       lhs_type;
+      type_params=None;
       eq = Token.ghost_eq;
       expr
     }) in

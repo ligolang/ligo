@@ -40,7 +40,7 @@ let t__type_ ?loc ?sugar () : type_expression = t_constant ?loc ?sugar _type_ []
 [@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash", "chest_key", "chest"))]
 
 let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type_ [t]
-[@@map (_type_, ("option", "list", "set", "contract", "ticket"))]
+[@@map (_type_, ("list", "set", "contract", "ticket"))]
 
 let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type_ [t; t']
 [@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
@@ -86,6 +86,18 @@ let t_shallow_closure ?loc ?sugar param result: type_expression = make_t ?loc ?s
 
 let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0-> Some ()
+  | _ -> None
+
+let get_t_option (t:type_expression) : type_expression option = 
+  match t.type_content with
+  | T_sum {fields;_} ->
+    let keys = LMap.keys fields in
+    (match keys with
+      [Label "Some" ; Label "None"]
+    | [Label "None" ; Label "Some"] ->
+      let some = LMap.find (Label "Some") fields in
+      Some some.associated_type 
+    | _ -> None)
   | _ -> None
 
 let tuple_of_record (m: _ LMap.t) =

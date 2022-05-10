@@ -16,26 +16,28 @@ let extract_variable_types :
     let aux : bindings_map -> Ast_typed.expression -> bindings_map = fun env exp ->
       let return = add env in
       match exp.expression_content with
-      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _
+      | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
       | E_type_in _ | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
       | E_module_accessor _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
-        let in_t = match exp.type_expression.type_content with
+        let rec in_t t = match t.Ast_typed.type_content with
           | T_arrow { type1 ; _ } -> type1
+          | T_for_all { type_ ; _ } -> in_t type_
           | _ -> failwith "lambda does not have type arrow"
         in
-        return [binder,in_t]
+        let in_t = in_t exp.type_expression in
+        return [binder.var,in_t]
       | E_recursive { fun_name ; fun_type ; lambda = { binder ; _ } } ->
         let in_t = match fun_type.type_content with
           | T_arrow { type1 ; _ } -> type1
           | _ -> failwith "rec fun does not have type arrow"
         in
-        return [ (fun_name , fun_type) ; (binder , in_t) ]
+        return [ (fun_name , fun_type) ; (binder.var , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
-        return @@ [(let_binder,rhs.type_expression)]
+        return @@ [(let_binder.var,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
         | Match_variant {cases ; tv=_} -> (
@@ -48,25 +50,21 @@ let extract_variable_types :
               in
               return (List.map ~f:aux cases)
             | None -> (
-              match Ast_typed.get_t_option matchee.type_expression with
-                | Some proj_t ->
-                  let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Some") cases in
-                  return [(x.pattern,proj_t)]
-                | None -> (
-                  match Ast_typed.get_t_list matchee.type_expression with
-                  | Some list_proj ->
-                    let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
-                    let t = Ast_typed.t_pair list_proj matchee.type_expression in
-                    return [(x.pattern,t)]
-                  | None -> failwith "matched value in the Match_variant: wrong type"
-                )
-              )
+              match Ast_typed.get_t_list matchee.type_expression with
+              | Some list_proj ->
+                let x = List.find_exn ~f:(fun ({constructor=Label l;_}:Ast_typed.matching_content_case) -> String.equal l "Cons") cases in
+                let t = Ast_typed.t_pair list_proj matchee.type_expression in
+                return [(x.pattern,t)]
+              | None -> failwith "matched value in the Match_variant: wrong type"
+            )
         )
         | Match_record { fields ; _ }  ->
-          return (Ast_typed.LMap.to_list fields)
+          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ascr) in
+          return (List.map ~f:aux @@ Ast_typed.LMap.to_list fields)
       )
     in
     match decl with
+    | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> prev
     | Declaration_constant { binder ; expr ; _ } ->
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr

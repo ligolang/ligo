@@ -25,7 +25,6 @@ following:
 
 Here is a full example:
 
-
 ```shell
 ligo run dry-run src/basic.ligo Unit Unit --entry-point main
 // Outputs:
@@ -33,7 +32,6 @@ ligo run dry-run src/basic.ligo Unit Unit --entry-point main
 //          Unit
 // ]
 ```
-
 
 Output of the `dry-run` is the return value of our main function, we
 can see the operations emitted (in our case an empty list, and the new
@@ -129,10 +127,10 @@ type storage = int;
 
 type return_ = [list<operation>, storage];
 
-let add = ([n, store]: [int, storage]): storage => store + n;
-let sub = ([n, store]: [int, storage]): storage => store - n;
+const add = ([n, store]: [int, storage]): storage => store + n;
+const sub = ([n, store]: [int, storage]): storage => store - n;
 
-let main = ([action, store]: [parameter, storage]): return_ =>
+const main = ([action, store]: [parameter, storage]): return_ =>
   [list([]) as list <operation>,
     (match (action, {
      Increment: (n: int) => add ([n, store]),
@@ -153,7 +151,6 @@ ligo run dry-run src/counter.ligo "Increment(5)" 5 --entry-point main
 // ]
 ```
 
-
 Our contract's storage has been successfully incremented to `10`.
 
 ## Deploying and interacting with a contract on a live-chain
@@ -167,7 +164,6 @@ ligo compile contract src/counter.ligo --entry-point main
 ```
 
 Command above will output the following Michelson code:
-
 
 ```michelson
 { parameter (or (int %decrement) (int %increment)) ;
@@ -223,7 +219,6 @@ compile our `action` variant into Michelson, here's how:
 ligo compile parameter src/counter.ligo 'Increment(5)' --entry-point main
 // Outputs: (Right 5)
 ```
-
 
 Now we can use `(Right 5)` which is a Michelson value, to invoke our
 contract - e.g., via `tezos-client`

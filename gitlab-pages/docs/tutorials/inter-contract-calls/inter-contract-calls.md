@@ -47,7 +47,7 @@ block {
       Some (contract) -> contract
     | None -> (failwith ("Contract does not exist") : contract (unit))
     ];
-  const op = Tezos.transaction (Unit, amount, destination_contract)
+  const op = Tezos.transaction (Unit, Tezos.amount, destination_contract)
 } with (op, Unit)
 ```
 
@@ -66,7 +66,7 @@ let main (destination_addr, _ : parameter * storage) =
     match maybe_contract with
       Some contract -> contract
     | None -> (failwith "Contract does not exist" : unit contract) in
-  let op = Tezos.transaction () amount destination_contract in
+  let op = Tezos.transaction () Tezos.amount destination_contract in
   op, ()
 ```
 
@@ -86,7 +86,7 @@ let main = ((destination_addr, _): (parameter, storage)) => {
     | Some (contract) => contract
     | None => (failwith("Contract does not exist") : contract(unit))
     };
-  let op = Tezos.transaction((), amount, destination_contract);
+  let op = Tezos.transaction((), Tezos.amount, destination_contract);
   (op, ())
 };
 ```
@@ -117,7 +117,7 @@ block {
 
 function main (const param : parameter; const callee_addr : storage) is
 block {
-  const callee : contract (int) = get_contract (callee_addr);
+  const callee : contract (int) = Tezos.get_contract (callee_addr);
   const op = Tezos.transaction (param, 0mutez, callee)
 } with (list [op], callee_addr)
 ```

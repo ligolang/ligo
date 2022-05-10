@@ -3,13 +3,15 @@ import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelecte
 export enum ActionType {
   ChangeEntrypoint = 'dry-run-change-entrypoint',
   ChangeParameters = 'dry-run-change-parameters',
-  ChangeStorage = 'dry-run-change-storage'
+  ChangeStorage = 'dry-run-change-storage',
+  ChangeProtocol = 'dry-run-change-protocol'
 }
 
 export interface DryRunState {
   entrypoint: string;
   parameters: string;
   storage: string;
+  protocol : string;
 }
 
 export class ChangeEntrypointAction {
@@ -22,6 +24,11 @@ export class ChangeParametersAction {
   constructor(public payload: DryRunState['parameters']) {}
 }
 
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeProtocol;
+  constructor(public payload: DryRunState['protocol']) {}
+}
+
 export class ChangeStorageAction {
   public readonly type = ActionType.ChangeStorage;
   constructor(public payload: DryRunState['storage']) {}
@@ -31,12 +38,14 @@ type Action =
   | ChangeEntrypointAction
   | ChangeParametersAction
   | ChangeStorageAction
-  | ChangeSelectedExampleAction;
+  | ChangeSelectedExampleAction
+  | ChangeProtocolAction;
 
 const DEFAULT_STATE: DryRunState = {
   entrypoint: '',
   parameters: '',
-  storage: ''
+  storage: '',
+  protocol: 'ithaca'
 };
 
 export const dryRun = (state = DEFAULT_STATE, action: Action): DryRunState => {
@@ -50,6 +59,11 @@ export const dryRun = (state = DEFAULT_STATE, action: Action): DryRunState => {
       return {
         ...state,
         entrypoint: action.payload
+      };
+    case ActionType.ChangeProtocol:
+      return {
+        ...state,
+        protocol: action.payload
       };
     case ActionType.ChangeParameters:
       return {

@@ -60,9 +60,10 @@ let rec constraint_identifier_unicode (ci : Int64.t) =
   in
   if Int64.equal ci 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
 
-let t_attributes ppf ({ public } : type_attribute) =
-  fprintf ppf "%a"
+let t_attributes ppf ({ public ; hidden } : type_attribute) =
+  fprintf ppf "%a%a"
     option_public public
+    option_hidden hidden
 let m_attributes ppf x = t_attributes ppf x
 
 let constraint_identifier_short ppf x =
@@ -77,10 +78,16 @@ let list_sep_d_par f ppf lst =
 
 let rec type_expression ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
-  if Option.is_some (Combinators.get_t_bool te) then
-    fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+  if Option.is_some (Combinators.get_t_bool   te) then bool   ppf    else 
+  if Option.is_some (Combinators.get_t_option te) then option ppf te 
   else
     fprintf ppf "%a" type_content te.type_content
+and bool ppf = fprintf ppf "%a" type_variable Stage_common.Constant.v_bool
+and option ppf (te : type_expression) = 
+  let t = Combinators.get_t_option te in
+    (match t with
+      Some t -> fprintf ppf "option (%a)" type_expression t
+    | None   -> fprintf ppf "option ('a)")
 and type_content : formatter -> type_content -> unit =
   fun ppf te ->
   match te with
@@ -134,5 +141,6 @@ and expression_content ppf (ec : expression_content) =
   | E_raw_code r -> raw_code expression ppf r
   | E_ascription a -> ascription expression type_expression ppf a
   | E_module_accessor ma -> module_access expression_variable ppf ma
+  | E_assign a -> assign expression type_expression ppf a
 
 let module_ ppf (p : module_) = declarations expression type_expression e_attributes t_attributes m_attributes ppf p

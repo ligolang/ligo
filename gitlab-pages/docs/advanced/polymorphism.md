@@ -41,7 +41,7 @@ let id = (x : int) : int => x;
 <Syntax syntax="jsligo">
 
 ```jsligo group=mono
-let id = (x: int): int => x;
+const id = (x: int): int => x;
 ```
 
 </Syntax>
@@ -73,7 +73,7 @@ let idnat = (x : nat) : nat => x;
 <Syntax syntax="jsligo">
 
 ```jsligo group=mono
-let idnat = (x : nat): nat => x;
+const idnat = (x : nat): nat => x;
 ```
 
 </Syntax>
@@ -84,8 +84,6 @@ the rest, the body of the function remains the same.
 
 Thanks to parametric polymorphism, we can write a single function
 declaration that works for both cases.
-
-
 
 <Syntax syntax="pascaligo">
 
@@ -110,20 +108,20 @@ Here we introduce a type variable `a` which can be generalised using
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=poly
-let id : (_a => _a) = (x : _a) => x;
+let id =  (type a, x : a) => x;
 ```
 
-Here `_a` is a type variable which can be generalised. In general,
+Here, `a` is a type variable which can be generalised. In general,
 types prefixed with `_` are treated as generalisable.
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let id : ((x : _a) => _a) = (x: _a) => x;
+const id : <T>((x : T) => T) = x => x;
 ```
 
-Here `_a` is a type variable which can be generalised. In general,
+Here `T` is a type variable which can be generalised. In general,
 types prefixed with `_` are treated as generalisable.
 
 </Syntax>
@@ -208,27 +206,27 @@ let rev (type a) (xs : a list) : a list =
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=poly
-let rev : (list (_a) => list (_a)) = (xs : list (_a)) : list (_a) =>
-  let rec rev : ((list (_a), list (_a)) => list (_a)) = ((xs, acc) : (list (_a), list (_a))) : list (_a) =>
+let rev = (type a, xs : list (a)) : list (a) =>
+  let rec rev : ((list (a), list (a)) => list (a)) = ((xs, acc) : (list (a), list (a))) : list (a) =>
     switch xs {
     | [] => acc
     | [x,... xs] => rev (xs, [x,... acc])
     };
-  rev (xs, ([] : list (_a)));
+  rev (xs, ([] : list (a)));
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=poly
-let rev : ((xs : list<_a>) => list<_a>) = (xs : list<_a>) : list<_a> => {
-  let _rev  : ((p : [list<_a>, list<_a>]) => list<_a>) = ([xs, acc] : [list<_a>, list<_a>]) : list<_a> =>
+const rev : <T>((xs : list<T>) => list<T>) = xs => {
+  const rev : ((p : [list<T>, list<T>]) => list<T>) = ([xs, acc] : [list<T>, list<T>]) : list<T> =>
     match(xs, list([
-    ([] : list<_a>) => acc,
-    ([x,... xs] : list<_a>) => _rev([xs, list([x,...acc])])
+    ([] : list<T>) => acc,
+    ([x,... xs] : list<T>) => rev([xs, list([x,...acc])])
     ]));
 
-  return _rev([xs, (list([]) as list<_a>)]);
+  return rev([xs, (list([]) as list<T>)]);
 };
 ```
 

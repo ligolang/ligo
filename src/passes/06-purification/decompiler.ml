@@ -132,6 +132,9 @@ let rec decompile_expression : O.expression -> I.expression =
   | O.E_set set ->
     let set = List.map ~f:self set in
     return @@ I.E_set set
+  | O.E_assign a ->
+    let a = Maps.assign self self_type a in
+    return @@ I.E_assign a
 
 let decompile_module : O.module_ -> I.module_ = fun m ->
   Maps.declarations decompile_expression decompile_type_expression (fun a -> a) (fun a -> a) (fun a -> a) m

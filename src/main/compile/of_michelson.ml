@@ -24,12 +24,13 @@ let dummy : Stacking.meta =
     binder = None }
 
 (* should preserve locations, currently wipes them *)
-let build_contract ~raise :
+let build_contract ~raise ~add_warning :
+  protocol_version:Environment.Protocols.t ->
   ?disable_typecheck:bool ->
   ?constants:string list ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ?(disable_typecheck= false) ?(constants = []) compiled views ->
+    fun ~protocol_version ?(disable_typecheck= false) ?(constants = []) compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -67,8 +68,17 @@ let build_contract ~raise :
                       ctxt) in
         let environment = { environment with tezos_context } in
         (* Type-check *)
-        let _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
-          Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract' in
+        let () =
+          if Environment.Protocols.(not @@ equal protocol_version in_use) then
+            Trace.warn_on_tzresult_lwt ~add_warning (fun errs -> `Michelson_typecheck_failed_with_different_protocol (protocol_version, errs)) @@
+              Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
+          else
+            let _ : (_,_) Micheline.Micheline.node =
+              Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
+                Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
+            in
+            ()
+        in
         contract
 
 let measure ~raise = fun m ->

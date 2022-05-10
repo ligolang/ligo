@@ -82,8 +82,6 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_e ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
-let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
 
 let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable ?loc v = make_e ?loc @@ E_variable v
@@ -124,9 +122,6 @@ let make_option_typed ?loc e t_opt =
   | None -> e
   | Some t -> e_annotation ?loc e t
 
-let e_typed_none ?loc t_opt =
-  let type_annotation = t_option t_opt in
-  e_annotation ?loc (e_none ?loc ()) type_annotation
 let e_typed_list ?loc lst t =
   e_annotation ?loc (e_list lst) (t_list t)
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)

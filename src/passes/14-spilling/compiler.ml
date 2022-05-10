@@ -54,7 +54,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
-  | C_SUB_MUTEZ -> C_SUB_MUTEZ 
+  | C_SUB_MUTEZ -> C_SUB_MUTEZ
   (* LOGIC *)
   | C_NOT -> C_NOT
   | C_AND -> C_AND
@@ -213,6 +213,8 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_REGISTER_CONSTANT
       | C_TEST_CONSTANT_TO_MICHELSON
       | C_TEST_REGISTER_FILE_CONSTANTS
+      | C_TEST_PUSH_CONTEXT
+      | C_TEST_POP_CONTEXT
     ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
@@ -264,9 +266,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Contract, [x]) ->
       let x' = compile_type x in
       return (T_contract x')
-    | (Option, [o]) ->
-      let o' = compile_type o in
-      return (T_option o')
     | (Map, [k;v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_map kv')
@@ -281,27 +280,31 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Set, [t]) ->
       let t' = compile_type t in
       return (T_set t')
-    | ((Michelson_or    | Option   | Chest_opening_result | Sapling_transaction |
-        Test_exec_error | Ticket   | Michelson_program    | Sapling_state       |
+    | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
+        Ticket                     | Michelson_program    | Sapling_state       |
         Contract        | Map      | Big_map              | Typed_address       |
-        Michelson_pair  | Set      | Test_exec_result     | Mutation            |
-        List), []) 
+        Michelson_pair  | Set      | Mutation             |
+        List            | External _), [])
         -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
-      Option       | String    | Chest_opening_result |
+      String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
-      Baker_hash   | Pvss_key  | Test_exec_error      |
+      Baker_hash   | Pvss_key  |
       Chest        | Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key | Test_exec_result     |
+      Never        | Chest_key |
       Typed_address| Mutation  | Bytes                |
-      List), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      List         | External _), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
+  | T_sum _ when Option.is_some (AST.get_t_option t) ->
+    let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
+    let o' = compile_type o in
+    return (T_option o')
   | T_sum { content = m ; layout } -> (
       let open AST.Helpers in
       match is_michelson_or m with
@@ -354,7 +357,7 @@ let internal_error loc msg =
 (* todo: refactor handling of recursive functions *)
 let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.matching_content_record) =
   let record =
-    trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+    trace_option ~raise (corner_case ~loc:__LOC__ "compile_record_matching: getting lr tree") @@
     get_t_record_opt tv in
   match record.layout with
   (* TODO unify with or simplify other case below? *)
@@ -368,7 +371,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
             (corner_case ~loc:__LOC__ ("missing label in record"))
             (LMap.find_opt l fields)
           in
-          (compile_variable @@ fst x, t)
+          (compile_variable @@ x.var, t)
         )
         record_fields
     in
@@ -384,8 +387,8 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (corner_case ~loc:__LOC__ ("missing label in record"))
           (LMap.find_opt l fields)
         in
-        let var = compile_variable @@ fst x in
-        return @@ E_let_in (expr, false, ((var, tree.type_), body))
+        let var = compile_variable @@ x.var in
+        return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
         let y_var = ValueVar.fresh () in
@@ -408,10 +411,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_type_abstraction _
   | E_type_inst _ ->
     raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, ((compile_variable let_binder, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
   | E_type_in {type_binder=_; rhs=_; let_result} ->
     let result' = self let_result in
     result'
@@ -423,10 +426,15 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       let a = self lamb in
       let b = self args in
       return @@ E_application (a, b)
-  | E_constructor {constructor=Label name;element} when String.equal name "True" && Ast_aggregated.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
+  | E_constructor {constructor=Label "True";element} when Ast_aggregated.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_TRUE ; arguments = [] }
-  | E_constructor {constructor=Label name;element} when String.equal name "False" && Ast_aggregated.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
+  | E_constructor {constructor=Label "False";element} when Ast_aggregated.Compare.expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_FALSE ; arguments = [] }
+  | E_constructor {constructor=Label "None";_} ->
+    return @@ E_constant { cons_name = C_NONE ; arguments = [] }
+  | E_constructor {constructor=Label "Some";element} ->
+    let e = compile_expression ~raise element in
+    return @@ E_constant { cons_name = C_SOME ; arguments = [e] }
   | E_constructor {constructor;element} -> (
     let ty' = compile_type ~raise ae.type_expression in
     let ty_variant =
@@ -526,7 +534,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, ((record_var, record.type_expression),
+        (E_let_in (record, false, false, ((record_var, record.type_expression),
                    build_record_update
                      (e_var record_var record.type_expression)
                      path)))
@@ -633,7 +641,8 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
               (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
             in
             return @@ E_if_cons (expr' , nil , cons)
-          | T_constant { injection = Stage_common.Constant.Option ; parameters = [opt_tv]; language=_ } ->
+          | T_sum _ when Option.is_some (AST.get_t_option expr.type_expression) ->
+            let opt_tv = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option expr.type_expression in
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
             let get_case c =
@@ -661,7 +670,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
             let (t , f) = Pair.map ~f:self (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
           | _ -> (
-              let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+              let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "compile_expression: getting lr tree") @@
                 get_t_sum_opt tv in
               let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
               let rec aux top t =
@@ -673,7 +682,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                         (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
-                    return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
+                    return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let a' =
@@ -726,12 +735,13 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.raise (raw_michelson_must_be_seq ae.location code)
     )
+    | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
 
 and compile_lambda ~raise l fun_type =
   let { binder ; result } : AST.lambda = l in
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
-  let binder = compile_variable binder in
+  let binder = compile_variable binder.var in
   let closure = E_closure { binder; body = result'} in
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
@@ -739,7 +749,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> expression * expression_variable list = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;result} ->
-      let binder   = compile_variable binder in
+      let binder   = compile_variable binder.var in
       let (body,l) = map_lambda  fun_name loop_type result in
       (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
     | _  ->
@@ -749,11 +759,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   and replace_callback ~raise : AST.expression_variable -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       | E_let_in li ->
-        let shadowed = shadowed || AST.ValueVar.equal li.let_binder fun_name in
+        let shadowed = shadowed || AST.ValueVar.equal li.let_binder.var fun_name in
         let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
         let rhs = compile_expression ~raise li.rhs in
         let ty  = compile_type ~raise li.rhs.type_expression in
-        let let_binder = compile_variable li.let_binder in
+        let let_binder = compile_variable li.let_binder.var in
         e_let_in let_binder ty li.attr.inline rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
@@ -799,7 +809,8 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
             (((hd,list_ty), (tl,expr'.type_expression)), cons_body')
           in
           return @@ E_if_cons (expr' , nil , cons)
-        | T_constant { injection = Stage_common.Constant.Option; parameters = [opt_tv] ; language=_} ->
+        | T_sum _ when Option.is_some (AST.get_t_option m.matchee.type_expression) ->
+          let opt_tv = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option m.matchee.type_expression in
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map ~f:get_c_body cases) in
           let get_case c =
@@ -827,7 +838,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
           let (t , f) = Pair.map ~f:self (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
         | _ -> (
-            let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+            let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "compile_recursive: getting lr tree") @@
               get_t_sum_opt tv in
             let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
             let rec aux top t =
@@ -839,7 +850,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                       (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
-                  return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
+                  return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
                 )
               | ((`Node (a , b)) , tv) ->
                 let a' =
@@ -867,11 +878,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = compile_variable lambda.binder :: binder in
+  let binder = compile_variable lambda.binder.var :: binder in
   let loc = Ast_typed.ValueVar.get_location fun_name in
   let binder = match binder with hd::[] -> hd | _ -> raise.raise @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder, input_type), body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder.var, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->

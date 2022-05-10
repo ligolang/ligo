@@ -975,6 +975,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_TEST_CREATE_CHEST_KEY , [ V_Ct (C_bytes chest) ; V_Ct (C_nat time)] ) ->
       let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
       return @@ V_Ct (C_bytes chest_key)
+    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
     | ( C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ]) ->
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
@@ -995,7 +996,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> v = Register_file_constants (loc, calltrace, path) in
       return @@ v
     | ( C_TEST_REGISTER_FILE_CONSTANTS , _ ) -> fail @@ error_type
-    | ( C_TEST_CREATE_CHEST_KEY , _  ) -> fail @@ error_type
+    | ( C_TEST_PUSH_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Push_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_PUSH_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_POP_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Pop_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SOURCE | C_SENDER | C_AMOUNT | C_BALANCE | C_NOW | C_LEVEL | C_SELF |
@@ -1084,17 +1092,21 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
             let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~loc:term.location ctxt code term.type_expression args' args.type_expression
+            return @@ Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
-      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder ; body=result ; env}
+      return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_}} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
+      let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
+    )
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
@@ -1139,10 +1151,15 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         arguments in
       apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
-    | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "True" ->
+    | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
-    | E_constructor { constructor = Label c ; element = { expression_content = E_literal (Literal_unit) ; _ } } when String.equal c "False" ->
+    | E_constructor { constructor = Label "False"; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool false)
+    | E_constructor { constructor = Label "Some" ; element } ->
+      let* v = eval_ligo element (term.location :: calltrace) env in
+      return @@ v_some v
+    | E_constructor { constructor = Label "None" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
+      return @@ v_none ()
     | E_constructor { constructor = Label c ; element } ->
       let* v' = eval_ligo element calltrace env in
       return @@ V_Construct (c,v')
@@ -1198,13 +1215,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
-        let aux : label -> ( expression_variable * _ ) -> env -> env =
-          fun l (v,ty) env ->
+        let aux : label ->  _ binder -> env -> env =
+          fun l {var;ascr;attributes=_} env ->
             let iv = match LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env v (ty,iv)
+            Env.extend env var (Option.value_exn ascr,iv)
         in
         let env' = LMap.fold aux fields env in
         eval_ligo body calltrace env'
@@ -1213,7 +1230,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_recursive {fun_name; fun_type=_; lambda} ->
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
-                             arg_binder = lambda.binder ;
+                             arg_binder = lambda.binder.var ;
                              body = lambda.result ;
                              env = env }
     | E_raw_code {language ; code} -> (
@@ -1226,6 +1243,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
+    | E_assign _ -> failwith "todo"
 
 and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 

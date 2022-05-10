@@ -29,7 +29,7 @@ let%expect_test _ =
       3 | [@view] let v1 (n,s: int * int) : int = s + n + 1
       4 | let v2 (_,s: int * int) : int = s + 2
 
-    This view will be ignored, command line option override [
+    Warning: This view will be ignored, command line option override [
     view] annotation
 
     { parameter unit ;

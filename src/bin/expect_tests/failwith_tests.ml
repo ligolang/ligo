@@ -5,13 +5,11 @@ let contract basename =
 
 let%expect_test _ =
   run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo"; "1" ; "-e"; "failer"; "--no-warn" ] ;
-  [%expect {|
-    failwith(42) |}]
+  [%expect{| failwith(42) |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo" ; "1" ; "-e" ; "failer" ; "--format";"json" ; "--no-warn" ] ;
-  [%expect {|
-    { "value": null, "failure": "failwith(42)" } |}]
+  [%expect{| { "value": null, "failure": "failwith(42)" } |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "dry-run" ; contract "subtle_nontail_fail.mligo" ; "()" ; "()" ] ;

@@ -60,6 +60,8 @@ and expression_content =
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
+  (* Imperative *)
+  | E_assign   of (expr,ty_expr) assign
 
 
 and let_in = {

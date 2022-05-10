@@ -131,7 +131,8 @@ export class LigoCompiler {
     syntax: string,
     code: string,
     entrypoint: string,
-    format: string
+    format: string,
+    protocol: string
   ) {
     const { name, remove } = await this.createTemporaryFile(code, syntax);
 
@@ -146,6 +147,8 @@ export class LigoCompiler {
         format,
         '-s',
         syntax,
+        '--protocol',
+        protocol,
       ]);
       return result;
     } finally {
@@ -156,7 +159,8 @@ export class LigoCompiler {
   async compileExpression(
     syntax: string,
     expression: string,
-    methodName: string
+    methodName: string,
+    protocol: string
   ) {
     const { name, remove } = await this.createTemporaryFile(expression, syntax);
     try {
@@ -167,6 +171,8 @@ export class LigoCompiler {
         methodName,
         '--init-file',
         name,
+        '--protocol',
+        protocol,
       ]);
 
       return result;
@@ -196,7 +202,8 @@ export class LigoCompiler {
     code: string,
     entrypoint: string,
     format: string,
-    storage: string
+    storage: string,
+    protocol: string
   ) {
     const { name, remove } = await this.createTemporaryFile(code, syntax);
 
@@ -212,6 +219,8 @@ export class LigoCompiler {
         format,
         '-s',
         syntax,
+        '--protocol',
+        protocol,
       ]);
 
       return result;
@@ -225,7 +234,8 @@ export class LigoCompiler {
     code: string,
     entrypoint: string,
     parameter: string,
-    storage: string
+    storage: string,
+    protocol: string
   ) {
     const { name, remove } = await this.createTemporaryFile(code, syntax);
     try {
@@ -239,6 +249,8 @@ export class LigoCompiler {
         entrypoint,
         '-s',
         syntax,
+        '--protocol',
+        protocol,
       ]);
       return result;
     } finally {
@@ -246,7 +258,7 @@ export class LigoCompiler {
     }
   }
 
-  async evaluateValue(syntax: string, code: string, entrypoint: string) {
+  async evaluateValue(syntax: string, code: string, entrypoint: string, protocol: string) {
     const { name, remove } = await this.createTemporaryFile(code, syntax);
     try {
       const result = await this.execPromise(this.ligoCmd, [
@@ -257,6 +269,8 @@ export class LigoCompiler {
         syntax,
         '-e',
         entrypoint,
+        '--protocol',
+        protocol,
       ]);
       return result;
     } finally {
@@ -268,7 +282,8 @@ export class LigoCompiler {
     syntax: string,
     code: string,
     entrypoint: string,
-    parameter: string
+    parameter: string,
+    protocol: string
   ) {
     const { name, remove } = await this.createTemporaryFile(code, syntax);
     try {
@@ -281,6 +296,8 @@ export class LigoCompiler {
         entrypoint,
         '-s',
         syntax,
+        '--protocol',
+        protocol,
       ]);
       return result;
     } finally {

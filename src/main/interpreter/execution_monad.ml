@@ -84,6 +84,8 @@ module Command = struct
     | Register_constant : Location.t * Ligo_interpreter.Types.calltrace * LT.mcode -> string t
     | Constant_to_Michelson : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.mcode t
     | Register_file_constants : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.value t
+    | Push_context : unit -> unit t
+    | Pop_context : unit -> unit t
 
   let eval
     : type a.
@@ -252,6 +254,7 @@ module Command = struct
     | Compile_contract_from_file (source_file, entry_point, views) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
+      let options = Compiler_options.set_test_flag options false in
       let contract_code =
         Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
       let size =
@@ -268,9 +271,8 @@ module Command = struct
                             Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
-      let options = Compiler_options.make ~raw_options:Compiler_options.default_raw_options () in
       let func_code = Michelson_backend.compile_value ~raise ~options func_typed_exp in
-      let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc v in_ty in
+      let { code = arg_code ; _ } = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v in_ty in
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
       let options = Michelson_backend.make_options ~raise ~param:input_ty (Some ctxt) in
       let runres = Ligo_run.Of_michelson.run_function ~raise ~options func_code.expr func_code.expr_ty arg_code in
@@ -280,7 +282,7 @@ module Command = struct
       let ret = LT.V_Michelson (Ty_code { code = expr ; code_ty = expr_ty ; ast_ty = f.body.type_expression }) in
       (ret, ctxt)
     | Eval (loc, v, expr_ty) ->
-      let value = Michelson_backend.compile_simple_value ~raise ~ctxt ~loc v expr_ty in
+      let value = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v expr_ty in
       (LT.V_Michelson (Ty_code value), ctxt)
     | Compile_contract (loc, v, _ty_expr) ->
        let compiled_expr, compiled_expr_ty = match v with
@@ -458,6 +460,17 @@ module Command = struct
       let (hashes, ctxt) = Tezos_state.register_file_constants ~raise ~loc ~calltrace ~source:ctxt.internals.source fn ctxt in
       let hashes = LT.V_List (List.map ~f:(fun s -> LT.(V_Ct (C_string s))) hashes) in
       (hashes, ctxt)
+    )
+    | Push_context () -> (
+      Tezos_state.contexts := ctxt ::  ! Tezos_state.contexts ;
+      ((), ctxt)
+    )
+    | Pop_context () -> (
+      match ! Tezos_state.contexts with
+      | [] -> ((), ctxt)
+      | ctxt :: ctxts ->
+         Tezos_state.contexts := ctxts ;
+         ((), ctxt)
     )
 end
 

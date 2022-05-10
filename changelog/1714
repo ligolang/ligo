@@ -1,0 +1,5 @@
+author: melwyn95
+description: Fixes bug in tail-call recursion check
+merge_request: '1714'
+title: Fix recursive functions when fun_name shadowed
+type: fixed

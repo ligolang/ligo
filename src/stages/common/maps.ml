@@ -145,11 +145,12 @@ let conditional : ('a -> 'b) -> 'a conditional -> 'b conditional
   let else_clause = f else_clause in
   {condition;then_clause;else_clause}
 
-let assign : ('a -> 'b) -> 'a assign -> 'b assign
-= fun f {variable; access_path; expression} ->
+let assign : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) assign -> ('b,'d) assign
+= fun f g {binder=b; access_path; expression} ->
+  let binder      = binder g b in
   let access_path = path f access_path in
   let expression  = f expression in
-  {variable; access_path; expression}
+  {binder; access_path; expression}
 
 let for_
 = fun f {binder; start; final; incr; f_body} ->
