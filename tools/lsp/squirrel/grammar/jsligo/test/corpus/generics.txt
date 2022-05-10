@@ -1,0 +1,39 @@
+=========
+generic type
+=========
+
+type my_typ<A,B,C> =
+      ["First", A]
+    | ["Second", B]
+    | ["Third", C]
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+      (type_params (TypeName) (TypeName) (TypeName))
+      (sum_type
+        (variant (ConstrName) (TypeName))
+        (variant (ConstrName) (TypeName))
+        (variant (ConstrName) (TypeName)))))
+
+=========
+generic function
+=========
+
+let id : <T>((x : T) => T) = x => x;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation
+      (type_params (TypeName))
+      (fun_type
+        (fun_param (Name) (type_annotation (TypeName)))
+        (TypeName)))
+      (fun_expr
+        (Name)
+        (body (Name)))))
