@@ -199,15 +199,38 @@ module Typing = struct
              match res with Some _ as s -> s | None -> rec_aux module_
            ) ~init:None modules
     in rec_aux e
-
-  let hash_types (t : t) =
-    let rec aux path (t : t) =
-      let map : (module_variable list * type_variable) HMap.t = HMap.empty in
-      let map = List.fold_left t.types ~init:map ~f:(fun map (v, t) -> HMap.add t (path, v) map) in
-      let map = List.fold_left t.modules ~init:map ~f:(fun map (v, t) -> HMap.union (fun _ _ b -> Some b) map @@ aux (path @ [v]) t) in
-      map in
-    aux [] t
 end
+
+
+module Hashes = struct
+  module HTBL = Caml.Hashtbl.Make(struct type t = type_expression
+                                         let hash = Hash.hash_type_expression
+                                         let equal t1 t2 = match assert_type_expression_eq (t1, t2) with
+                                           | Some _ -> true
+                                           | None -> false
+                                  end)
+
+  let hashtbl : (module_variable list * type_variable) HTBL.t = HTBL.create 256
+
+  let context = ref (false, Typing.empty)
+  let set_context (t : Typing.t) : unit = context := (false, t)
+
+  let hash_types () : unit =
+    let (hashed, t) = ! context in
+    if hashed then
+      ()
+    else
+      let rec aux path (t : Typing.t) =
+        List.iter (List.rev t.types) ~f:(fun (v, t) -> HTBL.add hashtbl t (path, v)) ;
+        List.iter (List.rev t.modules) ~f:(fun (v, t) -> aux (path @ [v]) t) in
+      HTBL.clear hashtbl ;
+      aux [] t ;
+      context := (true, t)
+
+  let find_type (t : type_expression) : (module_variable list * type_variable) option =
+    HTBL.find_opt hashtbl t
+end
+
 
 module App = struct
   type e = { args : type_expression list ; old_expect : type_expression option  }
