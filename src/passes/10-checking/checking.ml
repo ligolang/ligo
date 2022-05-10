@@ -247,6 +247,7 @@ and infer_t_insts ~raise ~options ~loc app_context ( (tc,t) : O.expression_conte
   | _ -> tc, t
 
 and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun (app_context, context) ?tv_opt e ->
+  Context.Hashes.set_context context ;
   let return expr tv =
     let () =
       match tv_opt with
