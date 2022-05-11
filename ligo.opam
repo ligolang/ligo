@@ -42,8 +42,8 @@ depends: [
   # work around tezos' failure to constrain
   "lwt" { = "5.5.0" }
   "bisect_ppx" {>= "2.3"}
-  "irmin" { = "3.2.0" }
   "irmin"
+  "cmdliner" {= "1.1.0"}
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.3.0" }
   # dependencies of vendored dependencies
