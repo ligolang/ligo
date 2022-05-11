@@ -1,8 +1,11 @@
 # This file contains pipeline configuration used by Serokell at https://gitlab.com/serokell/ligo/ligo
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  USE_NEWER_NIX: 1
+  FLAKE_FLAGS: --accept-flake-config -L
 
 stages:
+  - nix
   - ligo
   - lsp
   - tooling
@@ -34,6 +37,7 @@ ligo-build:
     - docker cp ligo-$CI_JOB_ID:/root/highlighting ./highlighting
 
     - chmod u+w ./ligo
+
     # pin built images to cache them for future builds; use a distinct tag for
     # "tooling" branch so it won't be overriden by an image from an MR
     - if [[ $CI_COMMIT_REF_NAME == "tooling" ]]; then PINNED_TAG=latest;
@@ -55,52 +59,62 @@ lsp-lint:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.lint
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lint
     # Nix has some trouble with git so we run it directly from the CI
     - cd tools/lsp
     - bash squirrel/scripts/check-trailing-whitespace.sh
+
+print-nix-version:
+  stage: nix
+  only: [merge_requests, tooling]
+  script:
+    - nix --version
+    - nix-store --version
 
 vscode-extension-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.lsp-test
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp&submodules=1'#checks.x86_64-linux.lsp-test
 
 vscode-extension-integration-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.integration-test
+    - git add ./ligo # Ligo binary is needed for this tests
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.integration-test
 
 vscode-extension-sexp-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-sexp-test
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.squirrel-sexp-test
 
 vscode-extension-grammar-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.squirrel-grammar-test
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.squirrel-grammar-test
 
 vscode-extension-lsp-handler-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.lsp-handlers-test
+    - git add ./ligo # Ligo binary is needed for this tests
+    - ls ligo -halR
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-handlers-test
 
 vscode-extension-linux:
-  stage: lsp
+  stage: nix
   only: [merge_requests]
   script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension-native
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#vscode-extension-native
 
 vscode-extension:
-  stage: lsp
+  stage: nix
   only: [tooling, vscode-production]
   script:
-    - nix-build tools/lsp -A packages.x86_64-linux.vscode-extension
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#vscode-extension
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
   artifacts:
     paths:
@@ -110,7 +124,7 @@ lsp-docker-image:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix-build tools/lsp -A lsp-docker-image
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#lsp-docker-image-default
 
 lsp-check-generated-highlighting:
   stage: lsp
@@ -124,11 +138,11 @@ lsp-check-generated-highlighting:
     - scripts/diff_dir.sh highlighting/textmate tools/ligo-syntax-highlighting/textmate
 
 vscode-extension-publish-checks:
-  stage: lsp
+  stage: nix
   only: [merge_requests, tooling]
   script:
-    - nix run -f nix/vsce.nix -c vsce --help
-    - nix run -f nix/vsce.nix -c ovsx --help
+    - nix shell -f nix/vsce.nix $FLAKE_FLAGS --command vsce --help
+    - nix shell -f nix/vsce.nix $FLAKE_FLAGS --command ovsx --help
 
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:
@@ -137,8 +151,8 @@ vscode-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix run -f nix/vsce.nix -c ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix $FLAKE_FLAGS --command -- vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix $FLAKE_FLAGS --command -- ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:
@@ -151,5 +165,5 @@ lsp-docker-image-publish:
     # docker registry credentials provided by gitlab
     - DEST_CREDS="$CI_REGISTRY_USER":"$CI_REGISTRY_PASSWORD"
     # use '--insecury-policy' to disable container signature checking, because we only upload the image
-    - nix run -f tools/lsp skopeo -c
+    - nix shell 'git+file:///'$PWD'?dir=tools/lsp'#skopeo $FLAKE_FLAGS --command --
         skopeo --insecure-policy copy --dest-creds "$DEST_CREDS" docker-archive:./result docker://"$CI_REGISTRY_IMAGE"/ligo-lsp:latest
