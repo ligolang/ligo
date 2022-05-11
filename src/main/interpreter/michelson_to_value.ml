@@ -239,7 +239,6 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux big_map in
         V_Map big_map'
       )
-    | (Map_or_big_map, _) -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
     | (List, [ty]) -> (
         let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
         let lst' =

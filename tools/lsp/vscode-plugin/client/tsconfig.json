@@ -6,6 +6,6 @@
         "rootDir": "src",
         "sourceMap": true
     },
-    "include": ["src"],
+    "include": ["src", "commands/ligoCommands.ts"],
     "exclude": ["node_modules", ".vscode-test"]
 }

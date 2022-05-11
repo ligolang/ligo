@@ -1140,9 +1140,8 @@ let%expect_test _ =
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
       "data": { "input": "KT1badaddr" } }
-
-            Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-            so you might want to ignore this error if related to a breaking change in protocol jakarta
+    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol jakarta
 
     Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
@@ -1155,9 +1154,8 @@ let%expect_test _ =
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
       "data": { "input": "KT1badaddr" } }
-
-            Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-            so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
+    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;

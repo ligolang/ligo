@@ -27,7 +27,7 @@ module AST.Scope.Common
   , contractTree
   , contractMsgs
 
-  , addLigoErrToMsg
+  , addLigoErrsToMsg
 
   , cFile
   , cTree
@@ -100,7 +100,7 @@ data MarkerInfo = MarkerInfo
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.
-  , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
+  , _cMsgs :: [Message] -- ^ Messages produced by this contract.
   } deriving stock (Show)
     deriving Pretty via ShowPP (ParsedContract info)
 
@@ -123,14 +123,14 @@ contractFile (FindFilepath pc) = srcPath $ _cFile pc
 contractTree :: FindFilepath info -> info
 contractTree (FindFilepath pc) = _cTree pc
 
-contractMsgs :: FindFilepath info -> [Msg]
+contractMsgs :: FindFilepath info -> [Message]
 contractMsgs (FindFilepath pc) = _cMsgs pc
 
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
-addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
-addLigoErrToMsg err = getContract . cMsgs %~ (err :)
+addLigoErrsToMsg :: [Message] -> FindFilepath info -> FindFilepath info
+addLigoErrsToMsg errs = getContract . cMsgs %~ (errs <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
@@ -355,7 +355,7 @@ addScopes reportProgress graph = do
 lookupContract :: FilePath -> Includes (FindFilepath a) -> Maybe (FindFilepath a)
 lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
 
-pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
+pattern FindContract :: Source -> info -> [Message] -> FindFilepath info
 pattern FindContract f t m = FindFilepath (ParsedContract f t m)
 {-# COMPLETE FindContract #-}
 

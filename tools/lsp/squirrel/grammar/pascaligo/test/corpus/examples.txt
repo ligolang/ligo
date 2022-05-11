@@ -88,5 +88,5 @@ const uno : storage = EURO.one
   (module_alias (ModuleName) (ModuleName))
   (type_decl (TypeName) (module_TypeName (ModuleName) (TypeName)))
   (const_decl (var_pattern (NameDecl)) (TypeName)
-    (module_access (ModuleName) (FieldName)))
+    (module_access (ModuleName) (Name)))
 )

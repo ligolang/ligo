@@ -7,55 +7,75 @@ packages:
 - completed:
     subdir: lsp-types
     name: lsp-types
-    version: 1.4.0.0
+    version: 1.5.0.0
     git: https://github.com/haskell/lsp.git
     pantry-tree:
-      size: 4148
-      sha256: 006d8ce51c03f5311f5f7f0082f7cdd511114efdf015160533ce48e5a67a4f88
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+      size: 4160
+      sha256: 8700dc38e8aeac889d0ba7ce2a7dd2b8579e26608f64b220f5e790f0633dce24
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp-types
     git: https://github.com/haskell/lsp.git
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
     subdir: lsp
     name: lsp
-    version: 1.2.0.1
+    version: 1.5.0.0
     git: https://github.com/haskell/lsp.git
     pantry-tree:
-      size: 1417
-      sha256: 4486bc37c027cd07bcd1da8f85e80ac4ebd7eb02cffac7eb06509c0514fa0f70
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+      size: 1551
+      sha256: 8d13180ceb84b5b0f24ba4df81109dd7300adc5e471579b933a86f5941bbe5c0
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp
     git: https://github.com/haskell/lsp.git
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
     subdir: lsp-test
     name: lsp-test
-    version: 0.14.0.1
+    version: 0.14.0.3
     git: https://github.com/haskell/lsp.git
     pantry-tree:
       size: 2061
-      sha256: e3626f9c6c0dbc8ce8287b2936055f39549674475830ea796ffeefda81466684
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+      sha256: 415236a1e28d1c93b0f87f0422c86e7becf7be8fc23f557abab628298b0a7b3c
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   original:
     subdir: lsp-test
     git: https://github.com/haskell/lsp.git
-    commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+    commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
 - completed:
-    subdir: tree-sitter
     name: tree-sitter
     version: 0.9.0.2
-    git: https://github.com/serokell/haskell-tree-sitter.git
+    git: https://github.com/serokell/tree-sitter.git
     pantry-tree:
-      size: 33762
-      sha256: ee9c77be055d293a56b754d5b6848d974e1eaa4269c99c001f3bb47a4be95d21
-    commit: 27c33c98b00f8961c8619de2e3771a1932501ada
+      size: 34276
+      sha256: 0d689d5664fc5e21422183dfd9c76d1aeb2ecb63dfb4fc0036bed6f332ad6a41
+    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
   original:
-    subdir: tree-sitter
-    git: https://github.com/serokell/haskell-tree-sitter.git
-    commit: 27c33c98b00f8961c8619de2e3771a1932501ada
+    git: https://github.com/serokell/tree-sitter.git
+    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+- completed:
+    name: co-log-core
+    version: 0.3.1.0
+    git: https://github.com/co-log/co-log-core.git
+    pantry-tree:
+      size: 872
+      sha256: 52ef0d55fb2b4c86357369f48f6dcdef81e80a161917befc9ce15129d8eaec20
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+  original:
+    git: https://github.com/co-log/co-log-core.git
+    commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+- completed:
+    name: text-rope
+    version: '0.2'
+    git: https://github.com/Bodigrim/text-rope
+    pantry-tree:
+      size: 1431
+      sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+  original:
+    git: https://github.com/Bodigrim/text-rope
+    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
 - completed:
     hackage: fastsum-0.1.1.1@sha256:ddb41e30396cc091845596130fb441150118086c6f227c0bd5ce30dadf9dad56,2398
     pantry-tree:
