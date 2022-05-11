@@ -28,14 +28,14 @@ let (_ , first_contract) =
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
-
-(* let op_list ~raise =
+let op_list ~raise =
   let open Memory_proto_alpha.Protocol.Alpha_context in
   let open Proto_alpha_utils in
   let source =
     Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
     (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
-  let operation =
+  (* let operation : 'a Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation = *)
+  let transaction : transaction =
     let parameters : Script.lazy_expr = Script.unit_parameter in
     let entrypoint =
       let open Tezos_raw_protocol_013_PtJakart in
@@ -49,12 +49,19 @@ let (_ , first_contract) =
       in
       Destination.Contract c
     in
-    Transaction {amount=Tez.zero; parameters; entrypoint; destination} in
+    {amount=Tez.zero; parameters; entrypoint; destination}
+  in
+  let operation : _ Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation =
+    Memory_proto_alpha.Protocol.Script_typed_ir.( Transaction {transaction ; location = 0 ; parameters = () ; parameters_ty = Unit_t } )
+  in
+  let internal_operation : Memory_proto_alpha.Protocol.Script_typed_ir.packed_internal_operation =
+    Memory_proto_alpha.Protocol.Script_typed_ir.( Internal_operation { source ; operation ; nonce=0 } ) in
   let opbytes =
-    Data_encoding.Binary.to_bytes_exn
-      Operation.bounded_encoding
-      (Tezos_raw_protocol_013_PtJakart.Script_typed_ir.Internal_operation {source; operation; nonce=0}) in
-  (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ())) *)
+    let contents = Memory_proto_alpha.Protocol.Apply_results.contents_of_packed_internal_operation internal_operation in
+    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_results.internal_contents_encoding contents
+  in
+  (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
+
 let empty_payload = e_unit ()
 
 let chain_id_zero =
@@ -112,7 +119,7 @@ let invalid_1_of_1 ~raise ~add_warning f () =
   ()
 
 (* Provide one valid signature when the threshold is one of one key *)
-(* let valid_1_of_1 ~raise ~add_warning f () =
+let valid_1_of_1 ~raise ~add_warning f () =
   let program = get_program ~raise ~add_warning f () in
   let op_list = op_list ~raise in
   let keys = gen_keys () in
@@ -124,10 +131,10 @@ let invalid_1_of_1 ~raise ~add_warning f () =
       (fun n ->
         e_pair op_list (init_storage 1 (n+1) [keys])
       ) in
-  () *)
+  ()
 
 (* Provive two valid signatures when the threshold is two of three keys *)
-(* let valid_2_of_3 ~raise ~add_warning f () =
+let valid_2_of_3 ~raise ~add_warning f () =
   let program = get_program ~raise ~add_warning f () in
   let op_list = op_list ~raise in
   let param_keys = [gen_keys (); gen_keys ()] in
@@ -140,7 +147,7 @@ let invalid_1_of_1 ~raise ~add_warning f () =
       (fun n ->
         e_pair op_list (init_storage 2 (n+1) st_keys)
       ) in
-  () *)
+  ()
 
 (* Provide one invalid signature and two valid signatures when the threshold is two of three keys *)
 let invalid_3_of_3 ~raise ~add_warning f () =
@@ -169,26 +176,26 @@ let not_enough_2_of_3 ~raise ~add_warning f () =
 let main = test_suite "Basic Multisig" [
     test_w "compile"                       (compile_main       file);
     test_w "unmatching_counter"            (unmatching_counter file);
-    (* test_w "valid_1_of_1"                  (valid_1_of_1       file); *)
+    test_w "valid_1_of_1"                  (valid_1_of_1       file);
     test_w "invalid_1_of_1"                (invalid_1_of_1     file);
     test_w "not_enough_signature"          (not_enough_1_of_2  file);
-    (* test_w "valid_2_of_3"                  (valid_2_of_3       file); *)
+    test_w "valid_2_of_3"                  (valid_2_of_3       file);
     test_w "invalid_3_of_3"                (invalid_3_of_3     file);
     test_w "not_enough_2_of_3"             (not_enough_2_of_3  file);
     test_w "compile (mligo)"               (compile_main       mfile);
     test_w "unmatching_counter (mligo)"    (unmatching_counter mfile);
-    (* test_w "valid_1_of_1 (mligo)"          (valid_1_of_1       mfile); *)
+    test_w "valid_1_of_1 (mligo)"          (valid_1_of_1       mfile);
     test_w "invalid_1_of_1 (mligo)"        (invalid_1_of_1     mfile);
     test_w "not_enough_signature (mligo)"  (not_enough_1_of_2  mfile);
-    (* test_w "valid_2_of_3 (mligo)"          (valid_2_of_3       mfile); *)
+    test_w "valid_2_of_3 (mligo)"          (valid_2_of_3       mfile);
     test_w "invalid_3_of_3 (mligo)"        (invalid_3_of_3     mfile);
     test_w "not_enough_2_of_3 (mligo)"     (not_enough_2_of_3  mfile);
     test_w "compile (religo)"              (compile_main       refile);
     test_w "unmatching_counter (religo)"   (unmatching_counter refile);
-    (* test_w "valid_1_of_1 (religo)"         (valid_1_of_1       refile); *)
+    test_w "valid_1_of_1 (religo)"         (valid_1_of_1       refile);
     test_w "invalid_1_of_1 (religo)"       (invalid_1_of_1     refile);
     test_w "not_enough_signature (religo)" (not_enough_1_of_2  refile);
-    (* test_w "valid_2_of_3 (religo)"         (valid_2_of_3       refile); *)
+    test_w "valid_2_of_3 (religo)"         (valid_2_of_3       refile);
     test_w "invalid_3_of_3 (religo)"       (invalid_3_of_3     refile);
     test_w "not_enough_2_of_3 (religo)"    (not_enough_2_of_3  refile);
   ]
