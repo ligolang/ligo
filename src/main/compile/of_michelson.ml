@@ -3,6 +3,32 @@ open Tezos_utils
 open Proto_alpha_utils
 open Trace
 
+
+let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
+  (* From Tezos changelog on views: 
+    CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS cannot be used at the top-level of a
+    view because they are stateful, and SELF because the entry-point does not make sense in a view.
+    However, CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS remain available in lambdas defined inside a view. (MR !3737)
+  *)
+  let open Tezos_micheline.Micheline in
+  let rec iter_prim_mich : inside_lambda:bool -> (inside_lambda:bool -> 'loc * 'p -> unit) -> ('loc,'p) node -> unit = fun ~inside_lambda f m ->
+    match m with
+    | Int _ | String _ | Bytes _ -> ()
+    | Seq (_,x) -> List.iter ~f:(iter_prim_mich ~inside_lambda f) x
+    | Prim (loc,p,lst,_) ->
+      f ~inside_lambda (loc,p) ;
+      let inside_lambda = if String.equal p "LAMBDA" then true else false in
+      List.iter ~f:(iter_prim_mich ~inside_lambda f) lst
+  in
+  let iter_prim_mich = iter_prim_mich ~inside_lambda:false in
+  let f ~inside_lambda : Mini_c.meta * string -> unit = fun ( {location;_} , prim_str ) ->
+    match prim_str, inside_lambda with
+    | "SELF" , (true | false) -> raise.raise (`Main_view_rule_violated location)
+    | ("CREATE_CONTRACT" | "SET_DELEGATE" | "TRANSFER_TOKENS") , false -> raise.raise (`Main_view_rule_violated location)
+    | _ -> ()
+  in
+  List.iter ~f:(fun m -> iter_prim_mich f m.expr) views_mich
+
 let parse_constant ~raise code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in

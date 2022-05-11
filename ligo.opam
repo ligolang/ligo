@@ -10,7 +10,7 @@ license: "MIT"
 # If you change the dependencies, run `opam lock` in the root
 depends: [
   # Jane Street Core
-  "core"
+  "core" {= "v0.14.1"}
   # Tooling
   "odoc" { build }
   "ocamlfind" { build }
@@ -33,7 +33,6 @@ depends: [
   "tezos-base"
   "tezos-crypto"
   "tezos-micheline"
-  # "tezos-012-Psithaca-test-helpers"
   # PPXs
   "ppx_deriving"
   "ppx_deriving_yojson"
@@ -41,30 +40,30 @@ depends: [
   "ppx_import"
   "ppx_inline_test"
   # work around tezos' failure to constrain
-  "ctypes-foreign"
-  "lwt" { = "5.4.2" }
+  "lwt" { = "5.5.0" }
   "bisect_ppx" {>= "2.3"}
-  "irmin" { = "2.8.0" }
+  "irmin"
+  "cmdliner" {= "1.1.0"}
   # work around upstream in-place update
-  "ocaml-migrate-parsetree" { = "2.1.0" }
+  "ocaml-migrate-parsetree" { = "2.3.0" }
   # dependencies of vendored dependencies
-  "bls12-381-legacy"
-  "bls12-381" { >= "1.1.0" & < "1.2.0" }
+  "bls12-381"
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
   "ringo-lwt"
   "pure-splitmix"
-  "resto-cohttp-self-serving-client" { >= "0.6" & < "0.7" }
+  "resto-cohttp-self-serving-client"
+  "tezos-rust-libs"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 pin-depends: [
-  [ "tezos-012-Psithaca-test-helpers.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_protocol/test/helpers" ]
+  [ "tezos-013-PtJakart-test-helpers.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol/test/helpers" ]
   [ "tezos-base.dev" "./vendors/tezos-ligo/src/lib_base" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/src/lib_clic" ]
-  [ "tezos-client-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_client" ]
+  [ "tezos-client-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_client" ]
   [ "tezos-client-base.dev" "./vendors/tezos-ligo/src/lib_client_base" ]
   [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/src/lib_client_base_unix" ]
   [ "tezos-client-commands.dev" "./vendors/tezos-ligo/src/lib_client_commands" ]
@@ -72,8 +71,7 @@ pin-depends: [
   [ "tezos-crypto.dev" "./vendors/tezos-ligo/src/lib_crypto" ]
   [ "tezos-error-monad.dev" "./vendors/tezos-ligo/src/lib_error_monad" ]
   [ "tezos-event-logging.dev" "./vendors/tezos-ligo/src/lib_event_logging" ]
-  [ "tezos-hacl-glue.dev" "./vendors/tezos-ligo/src/lib_hacl_glue/virtual" ]
-  [ "tezos-hacl-glue-unix.dev" "./vendors/tezos-ligo/src/lib_hacl_glue/unix" ]
+  [ "tezos-hacl.dev" "./vendors/tezos-ligo/src/lib_hacl"]
   [ "tezos-lwt-result-stdlib.dev" "./vendors/tezos-ligo/src/lib_lwt_result_stdlib" ]
   [ "tezos-micheline.dev" "./vendors/tezos-ligo/src/lib_micheline" ]
   [ "tezos-mockup.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
@@ -82,14 +80,11 @@ pin-depends: [
   [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/src/lib_p2p" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/src/lib_p2p_services" ]
-  [ "tezos-protocol-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_protocol" ]
-  [ "tezos-protocol-012-Psithaca-parameters.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_parameters" ]
+  [ "tezos-protocol-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol" ]
+  [ "tezos-protocol-013-PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
   [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/src/lib_protocol_compiler" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-environment-packer.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-environment-sigs.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-environment-structs.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-plugin-012-Psithaca.dev" "./vendors/tezos-ligo/src/proto_012_Psithaca/lib_plugin" ]
+  [ "tezos-protocol-plugin-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_plugin" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/src/lib_proxy" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/src/lib_rpc" ]
   [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/src/lib_rpc_http" ]
