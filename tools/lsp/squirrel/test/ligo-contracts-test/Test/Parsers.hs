@@ -61,6 +61,7 @@ okayTests =
       , "polymorphism" </> "cases_annotation2.mligo"
       , "polymorphism" </> "comb.ligo"
       , "polymorphism" </> "comb.mligo"
+      , "polymorphism" </> "comb.religo"
       , "polymorphism" </> "ctrct.mligo"
       , "polymorphism" </> "error_monad.mligo"
       , "polymorphism" </> "lambda.mligo"
@@ -74,18 +75,13 @@ okayTests =
       , "polymorphism" </> "modules.religo"
       , "polymorphism" </> "annotate.mligo"
       , "polymorphism" </> "same_vars.mligo"
+      , "negative" </> "interpreter_tests" </> "test_random.mligo"
       , "negative" </> "polymorphism" </> "cases_annotation.mligo"
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"
 
-        -- LIGO-481
-      , "aggregation" </> "bug_module_record.ligo"
-
         -- LIGO-477
       , "negative" </> "missing_funarg_annotation.religo"
-
-        -- LIGO-478
-      , "negative" </> "bad_michelson_insertion_3.ligo"
 
         -- LIGO fails to parse these:
       , "match.ligo"

@@ -235,11 +235,13 @@ const donationReceiver : contract (unit) =
 
 const donationAmount : tez = Tezos.amount / 10n;
 
-const operations : list (operation) = list [
-  // Pedro will get 90% of the amount
-  Tezos.transaction (unit, Tezos.amount - donationAmount, receiver);
-  Tezos.transaction (unit, donationAmount, donationReceiver)
-];
+const operations : list (operation) = block {
+    // Pedro will get 90% of the amount
+    const op = case (Tezos.amount - donationAmount) of [
+      | Some (x) -> Tezos.transaction (unit, x, receiver)
+      | None -> (failwith ("Insufficient balance") )
+    ] ;
+  } with list [ op; Tezos.transaction (unit, donationAmount, donationReceiver) ];
 ```
 
 This will result into two operations being subsequently executed on the blockchain:

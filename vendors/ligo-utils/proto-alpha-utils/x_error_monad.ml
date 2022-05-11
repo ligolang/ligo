@@ -14,10 +14,13 @@ let force_lwt ~msg a = force_ok ~msg @@ Lwt_main.run a
 let force_lwt_alpha ~msg a = force_ok ~msg @@ alpha_wrap @@ Lwt_main.run a
 
 let assert_error res =
-  res >>= function Ok _ -> assert false | Error _ -> return_unit
+  let open Lwt_result_syntax in
+  let* res = res in
+  match res with Ok _ -> assert false | Error _ -> return_unit
 
 let (>>=??) a f =
-  a >>= fun a ->
+  let open Lwt_syntax in
+  let* a = a in
   match alpha_wrap a with
   | Ok result -> f result
   | Error errs -> Lwt.return (Error errs)

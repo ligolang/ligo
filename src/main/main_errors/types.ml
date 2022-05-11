@@ -68,6 +68,7 @@ type all =
  | `Main_entrypoint_not_a_function
  | `Main_entrypoint_not_found
  | `Main_view_not_a_function of Ast_typed.expression_variable
+ | `Main_view_rule_violated of Location.t
  | `Main_invalid_balance of string
  | `Main_invalid_amount of string
  | `Main_invalid_sender of string

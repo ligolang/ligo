@@ -1127,7 +1127,7 @@ let%expect_test _ =
       lambda (_#2 : unit) return let _x : nat = +1 in let ()#5 : unit = let _x : nat = +2 in unit in let ()#4 : unit = let _x : nat = +23 in unit in let ()#3 : unit = let _x : nat = +42 in unit in _x |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "bad_address_format.religo" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
     Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
@@ -1136,14 +1136,26 @@ let%expect_test _ =
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
-    Invalid contract notation "KT1badaddr"
+    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol jakarta
 
-            Note: You compiled your contract with protocol hangzhou although we internally use protocol ithaca to typecheck the produced Michelson contract
-            so you might want to ignore this error if related to a breaking change in protocol ithaca
-
-    { parameter int ;
-      storage address ;
-      code { DROP ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } } |}]
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1969,7 +1981,7 @@ let%expect_test _ =
     At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ] ;
   [%expect{|
     { parameter (pair (chest %c) (chest_key %ck)) ;
       storage int ;
@@ -2271,91 +2283,91 @@ let%expect_test _ =
 
 (* Test compile contract with Big_map.get_and_update for Hangzhou *)
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ; "--protocol"; "hangzhou" ] ;
-  [%expect {|
-{ parameter
-    (or (ticket %receive unit)
-        (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
-  storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
-  code { PUSH mutez 0 ;
-         AMOUNT ;
-         COMPARE ;
-         EQ ;
-         IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-         UNPAIR ;
-         SWAP ;
-         UNPAIR ;
-         DIG 2 ;
-         IF_LEFT
-           { READ_TICKET ;
-             CAR ;
-             DIG 3 ;
-             NONE (ticket unit) ;
-             DUP 3 ;
-             GET_AND_UPDATE ;
-             IF_NONE
-               { DIG 2 }
-               { DIG 3 ;
-                 PAIR ;
-                 JOIN_TICKETS ;
-                 IF_NONE { PUSH string "impossible?" ; FAILWITH } {} } ;
-             SOME ;
-             DIG 2 ;
-             GET_AND_UPDATE ;
-             DROP ;
-             SWAP ;
-             PAIR ;
-             NIL operation ;
-             PAIR }
-           { SWAP ;
-             DUP ;
-             DUG 2 ;
-             SENDER ;
+  run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
+  [%expect{|
+    { parameter
+        (or (ticket %receive unit)
+            (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
+      storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
+      code { PUSH mutez 0 ;
+             AMOUNT ;
              COMPARE ;
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNPAIR ;
+             SWAP ;
+             UNPAIR ;
              DIG 2 ;
-             NONE (ticket unit) ;
-             DUP 3 ;
-             GET 4 ;
-             GET_AND_UPDATE ;
-             IF_NONE
-               { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
+             IF_LEFT
                { READ_TICKET ;
-                 CDR ;
-                 CDR ;
-                 DUP 4 ;
-                 GET 3 ;
-                 DUP ;
+                 CAR ;
+                 DIG 3 ;
+                 NONE (ticket unit) ;
+                 DUP 3 ;
+                 GET_AND_UPDATE ;
+                 IF_NONE
+                   { DIG 2 }
+                   { DIG 3 ;
+                     PAIR ;
+                     JOIN_TICKETS ;
+                     IF_NONE { PUSH string "impossible?" ; FAILWITH } {} } ;
+                 SOME ;
                  DIG 2 ;
-                 SUB ;
-                 ISNAT ;
-                 IF_NONE { PUSH string "not enough tickets" ; FAILWITH } {} ;
+                 GET_AND_UPDATE ;
+                 DROP ;
                  SWAP ;
                  PAIR ;
-                 SWAP ;
-                 SPLIT_TICKET ;
+                 NIL operation ;
+                 PAIR }
+               { SWAP ;
+                 DUP ;
+                 DUG 2 ;
+                 SENDER ;
+                 COMPARE ;
+                 EQ ;
+                 IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+                 DIG 2 ;
+                 NONE (ticket unit) ;
+                 DUP 3 ;
+                 GET 4 ;
+                 GET_AND_UPDATE ;
                  IF_NONE
-                   { DROP 3 ; PUSH string "impossible?" ; FAILWITH }
-                   { UNPAIR ;
-                     DUG 2 ;
-                     SOME ;
+                   { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
+                   { READ_TICKET ;
+                     CDR ;
+                     CDR ;
                      DUP 4 ;
-                     GET 4 ;
-                     GET_AND_UPDATE ;
-                     DROP ;
+                     GET 3 ;
+                     DUP ;
                      DIG 2 ;
-                     CAR ;
-                     PUSH mutez 0 ;
-                     DIG 3 ;
-                     TRANSFER_TOKENS ;
+                     SUB ;
+                     ISNAT ;
+                     IF_NONE { PUSH string "not enough tickets" ; FAILWITH } {} ;
                      SWAP ;
-                     DIG 2 ;
                      PAIR ;
-                     NIL operation ;
-                     DIG 2 ;
-                     CONS ;
-                     PAIR } } } } } |} ]
+                     SWAP ;
+                     SPLIT_TICKET ;
+                     IF_NONE
+                       { DROP 3 ; PUSH string "impossible?" ; FAILWITH }
+                       { UNPAIR ;
+                         DUG 2 ;
+                         SOME ;
+                         DUP 4 ;
+                         GET 4 ;
+                         GET_AND_UPDATE ;
+                         DROP ;
+                         DIG 2 ;
+                         CAR ;
+                         PUSH mutez 0 ;
+                         DIG 3 ;
+                         TRANSFER_TOKENS ;
+                         SWAP ;
+                         DIG 2 ;
+                         PAIR ;
+                         NIL operation ;
+                         DIG 2 ;
+                         CONS ;
+                         PAIR } } } } } |} ]
 
 (* source location comments *)
 let%expect_test _ =
@@ -2521,8 +2533,8 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
-  [%expect {|
+  run_ligo_good [ "compile" ; "contract" ; contract "global_constant.mligo" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect{|
     { parameter unit ;
       storage int ;
       code { CDR ;
@@ -2531,29 +2543,24 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "parameter" ; contract "global_constant.mligo" ; "()" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
-  [%expect {|
-    Unit |}]
+  run_ligo_good [ "compile" ; "parameter" ; contract "global_constant.mligo" ; "()" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect{| Unit |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "v" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
-  [%expect {|
-    128 |}]
+  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "v" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect{| 128 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "42" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
-  [%expect {|
-    42 |}]
+  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "42" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect{| 42 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "42" ; "--protocol" ; "hangzhou" ; "--file-constants" ; contract_resource "const.json" ] ;
-  [%expect {|
-    42 |}]
+  run_ligo_good [ "compile" ; "storage" ; contract "global_constant.mligo" ; "42" ; "--file-constants" ; contract_resource "const.json" ] ;
+  [%expect{| 42 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "v" ; "--init-file" ; contract "global_constant.mligo" ; "--protocol" ; "hangzhou" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
-  [%expect {|
-    128 |}]
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "v" ; "--init-file" ; contract "global_constant.mligo" ; "--constants" ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }" ] ;
+  [%expect{| 128 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "v" ; "--init-file" ; contract "global_constant.mligo" ; "--file-constants" ; contract_resource "const.json" ] ;
@@ -2571,8 +2578,8 @@ let%expect_test _ =
     (Pair 1 { PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "constant" ; "cameligo" ; "fun (x : int) -> if x > 3 then x * 2 else x * String.length \"fja\" + 1" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "compile" ; "constant" ; "cameligo" ; "fun (x : int) -> if x > 3 then x * 2 else x * String.length \"fja\" + 1" ] ;
+  [%expect{|
     Michelson constant as JSON string:
     "{ PUSH int 3 ;\n  SWAP ;\n  DUP ;\n  DUG 2 ;\n  COMPARE ;\n  GT ;\n  IF { PUSH int 2 ; SWAP ; MUL }\n     { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }"
     This string can be passed in `--constants` argument when compiling a contract.

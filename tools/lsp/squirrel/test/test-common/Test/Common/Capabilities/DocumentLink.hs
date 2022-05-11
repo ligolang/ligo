@@ -8,8 +8,7 @@ module Test.Common.Capabilities.DocumentLink
   ) where
 
 import Control.Lens ((^.))
-import Data.Word (Word32)
-import Language.LSP.Types (DocumentLink (..), uriToFilePath)
+import Language.LSP.Types (DocumentLink (..), UInt, uriToFilePath)
 import Language.LSP.Types.Lens (character, end, line, start)
 import System.Directory (canonicalizePath)
 import System.FilePath ((</>))
@@ -26,7 +25,7 @@ import Test.Common.Util (ScopeTester, readContractWithScopes)
 getContractsDir :: IO FilePath
 getContractsDir = canonicalizePath (Common.contractsDir </> "find" </> "includes")
 
-type SimpleDocumentLink = ((Word32, Word32), (Word32, Word32), Maybe FilePath)
+type SimpleDocumentLink = ((UInt, UInt), (UInt, UInt), Maybe FilePath)
 
 simplifyDocumentLink :: DocumentLink -> SimpleDocumentLink
 simplifyDocumentLink (DocumentLink _range _uri _ _) =

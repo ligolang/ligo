@@ -15,6 +15,7 @@ module AST.Parser
 import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
+import Data.Foldable (toList)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
@@ -31,7 +32,7 @@ import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
   ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , ParsedContractInfo, addLigoErrToMsg, addScopes, contractNotFoundException
+  , ParsedContractInfo, addLigoErrsToMsg, addScopes, contractNotFoundException
   , lookupContract
   )
 import Cli
@@ -58,23 +59,23 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, Maybe Msg)
+loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, [Message])
 loadPreprocessed src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
-      (second (const Nothing) <$> preprocess src') `catches`
-        [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
-          pure (src', Just $ fromLigoErrorToMsg err)
+      (second (const []) <$> preprocess src') `catches`
+        [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
+          pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: SomeLigoException) ->
-          pure (src', Nothing)
+          pure (src', [])
         , Handler \(e :: IOError) -> do
           -- Likely LIGO isn't installed or was not found.
           $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
-          pure (src', Nothing)
+          pure (src', [])
         ]
     else
-      pure (src', Nothing)
+      pure (src', [])
   where
     -- If the user has hand written any line markers, they will get removed here.
     -- Also query whether we need to do any preprocessing at all in the first place.
@@ -89,8 +90,8 @@ loadPreprocessed src = do
 
 parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
 parsePreprocessed src = do
-  (src', msg) <- loadPreprocessed src
-  maybe id addLigoErrToMsg msg <$> parse src'
+  (src', msgs) <- loadPreprocessed src
+  addLigoErrsToMsg msgs <$> parse src'
 
 parseWithScopes
   :: forall impl m
@@ -160,6 +161,6 @@ parseContractsWithDependenciesScopes
 parseContractsWithDependenciesScopes parser reportProgress =
   addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 
-collectAllErrors :: ContractInfo' -> [Msg]
+collectAllErrors :: ContractInfo' -> [Message]
 collectAllErrors (FindContract _ tree errs) =
-   errs <> collectTreeErrors tree
+  errs <> collectTreeErrors tree
