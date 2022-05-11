@@ -274,7 +274,7 @@ module.exports = grammar({
 
     type_decl: $ => seq("type", $.TypeName, optional($.type_params), '=', $._type_expr),
 
-    type_params: $ => common.chev(common.sepBy1(',', field("type_param", $.TypeName))),
+    type_params: $ => common.chev(common.sepBy1(',', field("type_param", $.TypeVariableName))),
 
     let_decl: $ => common.withAttrs($, seq('let', field("binding_list", $._binding_list))),
 
@@ -396,6 +396,7 @@ module.exports = grammar({
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
     TypeName: $ => choice($._Name, $._NameCapital),
+    TypeVariableName: $ => choice($._Name, $._NameCapital),
     Name: $ => $._Name,
     NameDecl: $ => $._Name,
 

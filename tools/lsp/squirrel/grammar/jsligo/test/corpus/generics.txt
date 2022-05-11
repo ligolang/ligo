@@ -12,7 +12,7 @@ type my_typ<A,B,C> =
 (source_file
   (type_decl
     (TypeName)
-      (type_params (TypeName) (TypeName) (TypeName))
+      (type_params (TypeVariableName) (TypeVariableName) (TypeVariableName))
       (sum_type
         (variant (ConstrName) (TypeName))
         (variant (ConstrName) (TypeName))
@@ -30,7 +30,7 @@ let id : <T>((x : T) => T) = x => x;
   (let_decl
     (var_pattern (Name))
     (type_annotation
-      (type_params (TypeName))
+      (type_params (TypeVariableName))
       (fun_type
         (fun_param (Name) (type_annotation (TypeName)))
         (TypeName)))
