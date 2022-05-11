@@ -179,6 +179,8 @@ data Expr it
   | Remove    it it it -- (Expr) (Collection) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
+  | Break
+  | SwitchStm it [it]  -- (Expr) [CaseOrDefaultStm] 
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
@@ -218,6 +220,11 @@ newtype Preprocessor it
 
 data Alt it
   = Alt it it -- (Pattern) (Expr)
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+data CaseOrDefaultStm it
+  = CaseStm it it -- (Expr) (Expr)
+  | DefaultStm it -- (Expr)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data MapBinding it
