@@ -258,7 +258,7 @@ module Constant_types = struct
 
   let typer_of_type_no_tc t =
     typer_of_ligo_type ~add_tc:false ~fail:false t
-
+  let () = ignore typer_of_type_no_tc
   let tbl : t = CTMap.of_list [
                     (* LOOPS *)
                     of_type C_LOOP_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> t_sum_ez [("left", a) ; ("right", b)]) ^-> a ^-> b);
@@ -330,8 +330,7 @@ module Constant_types = struct
                     of_type C_SOME O.(for_all "a" @@ fun a -> a ^-> t_option a);
                     of_type C_UNOPT O.(for_all "a" @@ fun a -> t_option a ^-> a);
                     of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
-                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Option.map"
-                      C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
+                    of_type C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
                     (* GLOBAL *)
                     of_type C_FAILWITH O.(for_all "a" @@ fun a -> t_ext_failwith a);
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
@@ -365,23 +364,18 @@ module Constant_types = struct
                         O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
                         O.(t_int () ^-> t_timestamp () ^-> t_timestamp ());
                       ];
-                    of_types_protocol C_POLYMORPHIC_SUB (
-                        let l = [
-                            O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
-                            O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
-                            O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
-                            O.(t_nat () ^-> t_nat () ^-> t_int ());
-                            O.(t_int () ^-> t_int () ^-> t_int ());
-                            O.(t_nat () ^-> t_int () ^-> t_int ());
-                            O.(t_int () ^-> t_nat () ^-> t_int ());
-                            O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
-                            O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
-                          ] in
-                        let ithaca =
-                          List.map ~f:(fun t -> (Environment.Protocols.Ithaca, t)) (O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ())) :: l) in
-                        let hangzhou =
-                          List.map ~f:(fun t -> (Environment.Protocols.Hangzhou, t)) (O.(t_mutez () ^-> t_mutez () ^-> (t_mutez ())) :: l) in
-                        ithaca @ hangzhou);
+                    of_types C_POLYMORPHIC_SUB [
+                        O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
+                        O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
+                        O.(t_bls12_381_fr () ^-> t_bls12_381_fr () ^-> t_bls12_381_fr ());
+                        O.(t_nat () ^-> t_nat () ^-> t_int ());
+                        O.(t_int () ^-> t_int () ^-> t_int ());
+                        O.(t_nat () ^-> t_int () ^-> t_int ());
+                        O.(t_int () ^-> t_nat () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_timestamp () ^-> t_int ());
+                        O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
+                        O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ())) ;
+                      ];
                     of_types C_ADD [
                         O.(t_bls12_381_g1 () ^-> t_bls12_381_g1 () ^-> t_bls12_381_g1 ());
                         O.(t_bls12_381_g2 () ^-> t_bls12_381_g2 () ^-> t_bls12_381_g2 ());
@@ -421,8 +415,7 @@ module Constant_types = struct
                         O.(t_timestamp () ^-> t_int () ^-> t_timestamp ());
                         O.(t_mutez () ^-> t_mutez () ^-> t_mutez ());
                       ];
-                    of_type_since ~since:Ligo_proto.Ithaca ~constant:"Operator.sub_mutez"
-                      C_SUB_MUTEZ O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
+                    of_type C_SUB_MUTEZ O.(t_mutez () ^-> t_mutez () ^-> t_option (t_mutez ()));
                     of_types C_DIV [
                         O.(t_nat () ^-> t_nat () ^-> t_nat ());
                         O.(t_int () ^-> t_int () ^-> t_int ());

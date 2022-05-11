@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version":  "0.4.10",
+    "version": "0.4.11",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -106,6 +106,12 @@
                     "type": "array",
                     "default": [],
                     "description": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
+                },
+                "ligoLanguageServer.tezos_source_account": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "baker",
+                    "description": "Account for originating contracts from. It should contain enough money for origination"
                 }
             }
         },
@@ -131,6 +137,11 @@
                 "description": "Compiles the current LIGO contract and prints the output to the console"
             },
             {
+                "command": "ligo.compileStorage",
+                "title": "LIGO: Compile the current LIGO contract's storage",
+                "description": "Compiles the current LIGO contract's storage and prints the output to the console"
+            },
+            {
                 "command": "ligo.compileExpression",
                 "title": "LIGO: Compile an entrypoint in the current LIGO contract",
                 "description": "Compiles an entrypoint in the current LIGO contract and prints the output to the console"
@@ -149,6 +160,16 @@
                 "command": "ligo.evaluateValue",
                 "title": "LIGO: Evaluate a LIGO definition",
                 "description": "Evaluates a LIGO definition"
+            },
+            {
+                "command": "ligo.deploy",
+                "title": "Tezos: Deploy the current contract",
+                "description": "Deploys the current contract on a given network"
+            },
+            {
+                "command": "ligo.generateDeployScript",
+                "title": "Tezos: Generate deploy script",
+                "description": "Generates deploy script for a given contract"
             }
         ]
     },
@@ -163,7 +184,11 @@
         "test": "npm run build-tests && node client/out/test/driver.js"
     },
     "dependencies": {
+        "@airgap/beacon-sdk": "^3.0.0",
+        "@taquito/signer": "^12.0.3",
+        "@taquito/taquito": "^12.0.3",
         "axios": "^0.21.1",
+        "node-fetch": "^3.2.3",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
@@ -182,6 +207,6 @@
         "mocha": "^9.1.3",
         "ts-command-line-args": "^2.1.0",
         "typescript": "^4.3.2",
-        "vsce": "^1.93.0"
+        "vsce": "^2.7.0"
     }
 }

@@ -39,7 +39,11 @@ let t_constant ?loc ?core injection parameters : type_expression =
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
-[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash", "chest_key", "chest"))]
+[@@map (_type_, (
+    "signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez",
+    "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash",
+    "chest_key", "chest" , "tx_rollup_l2_address"
+  ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
@@ -50,7 +54,7 @@ let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (Extern
 let t_ext_u_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "u_ediv") [t; t']
 
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t; t']
-[@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
+[@@map (_type_, ("map", "big_map", "typed_address"))]
 
 let t_mutez = t_tez
 
@@ -229,7 +233,6 @@ let get_t_or (t:type_expression) : (type_expression * type_expression) option = 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
@@ -240,7 +243,6 @@ let get_t_typed_address (t:type_expression) : (type_expression * type_expression
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Big_map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with

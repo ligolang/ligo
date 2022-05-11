@@ -8,8 +8,7 @@
   zarith
   hex
   tezos-utils
-  tezos-hacl-glue-unix
-  bls12-381-unix)
+  tezos-hacl)
  (inline_tests)
  (preprocess
   (pps

@@ -3,7 +3,8 @@ module Var      = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
 
-module Tezos_protocol = Tezos_protocol_012_Psithaca
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
@@ -172,6 +173,11 @@ let compile_type ~raise type_exp =
   let open Ligo_compile in
   let ty = Of_aggregated.compile_type ~raise type_exp in
   Of_mini_c.compile_type ty
+
+let entrypoint_of_string x =
+  match Tezos_raw_protocol.Entrypoint_repr.of_annot_lax_opt (Tezos_raw_protocol.Non_empty_string.of_string_exn x) with
+  | Some x -> x
+  | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
 let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let open Ligo_compile in

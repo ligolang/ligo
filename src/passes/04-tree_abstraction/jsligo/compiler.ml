@@ -1116,10 +1116,10 @@ and compile_statement ?(wrap=false) ~add_warning ~raise : CST.statement -> state
             e_sequence rhs e2
         | _ ->
           (* This handle polymorphic annotation *)
-          let expr = Option.value_map ~default:expr ~f:(fun (tp : CST.type_generics) ->
+          let rhs = Option.value_map ~default:rhs ~f:(fun (tp : CST.type_generics) ->
             let (tp,loc) = r_split tp in
             let type_vars = List.Ne.map compile_type_var @@ npseq_to_ne_list tp.inside in
-            List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:expr type_vars
+            List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:rhs type_vars
           ) type_params in
           e_let_in ~loc: (Location.lift region) binder attr rhs expr
         in

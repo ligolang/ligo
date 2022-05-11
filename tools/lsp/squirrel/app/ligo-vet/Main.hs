@@ -11,7 +11,10 @@ import Options.Applicative
   short, strOption, switch)
 import System.Environment (setEnv)
 
-import AST (Fallback, FindFilepath, Msg, ParsedContract (..), _getContract, parse, parseWithScopes)
+import AST
+  ( Fallback, FindFilepath, Message (..), ParsedContract (..), _getContract, parse
+  , parseWithScopes
+  )
 import Log (runNoLoggingT)
 import ParseTree (pathToSrc)
 
@@ -65,7 +68,7 @@ main = withUtf8 do
 
   let
     treeMsgs (ParsedContract _ tree msgs) = (tree, msgs)
-    toPretty :: (Functor f, Pretty info) => f (FindFilepath info) -> f (SomePretty, [Msg])
+    toPretty :: (Functor f, Pretty info) => f (FindFilepath info) -> f (SomePretty, [Message])
     toPretty = fmap (first SomePretty . treeMsgs . _getContract)
     parser
       | psoWithScopes = toPretty . parseWithScopes @Fallback
@@ -76,5 +79,5 @@ main = withUtf8 do
     putStrLn (render (pp tree))
     unless (null messages) do
       putStrLn "The following errors have been encountered: "
-      for_ messages $ \(range, err) ->
+      for_ messages \(Message err _ range) ->
         putStrLn (render (pp range <> ": " <> pp err))

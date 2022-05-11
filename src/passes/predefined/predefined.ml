@@ -168,7 +168,7 @@ module Stacking = struct
     match c , protocol_version with
     | C_ADD                , _   -> Some ( simple_binary @@ prim "ADD")
     | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
-    | C_SUB_MUTEZ          , Ithaca -> Some ( simple_binary @@ prim "SUB_MUTEZ")
+    | C_SUB_MUTEZ          , _   -> Some ( simple_binary @@ prim "SUB_MUTEZ")
     | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
     | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
     | C_MOD                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
@@ -214,7 +214,6 @@ module Stacking = struct
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
     | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
     | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
-
     | C_SELF               , _   -> Some (trivial_special "SELF")
     | C_NONE               , _   -> Some (trivial_special "NONE")
     | C_NIL                , _   -> Some (trivial_special "NIL")

@@ -7,12 +7,12 @@ module Progress
 
 import Data.Ratio qualified ((%))
 import Data.Text (Text)
-import Data.Word (Word32)
+import Language.LSP.Types qualified as J
 
 -- | Represents how much of some task was done, and what was done last. Should
 -- be normalized between 0 and 100.
 data Progress = Progress
-  { pTotal :: Word32
+  { pTotal :: J.UInt
   , pMessage :: Text
   }
 

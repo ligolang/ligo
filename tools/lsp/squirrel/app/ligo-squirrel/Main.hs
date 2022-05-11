@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Colog.Core qualified as Colog
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
@@ -13,18 +14,19 @@ import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import Prettyprinter qualified as PP
 import System.Exit
-import System.Log qualified as L
+import System.IO (stdin, stdout)
 import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
 import AST
 import Cli.Impl (getLigoVersion)
 import Config (Config (..))
-import Config qualified
 import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
 import Log (i)
@@ -45,7 +47,7 @@ mainLoop =
   Log.withLogger $$(Log.flagBasedSeverity) "lls" $$(Log.flagBasedEnv) \runLogger -> do
     let
       serverDefinition = S.ServerDefinition
-        { S.onConfigurationChange = Config.getConfigFromNotification
+        { S.onConfigurationChange = \old _ -> Right old
         , S.defaultConfig = def
         , S.doInitialize = \lcEnv _msg -> Right . (lcEnv, ) <$> RIO.newRioEnv
         , S.staticHandlers = catchExceptions handlers
@@ -53,8 +55,7 @@ mainLoop =
         , S.options = lspOptions
         }
 
-    S.setupLogger Nothing [] L.EMERGENCY
-    S.runServer serverDefinition
+    S.runServerWithHandles mempty lspLogger stdin stdout serverDefinition
   where
     syncOptions :: J.TextDocumentSyncOptions
     syncOptions = J.TextDocumentSyncOptions
@@ -116,11 +117,16 @@ mainLoop =
           :: forall (meth :: J.Method 'J.FromClient 'J.Request).
              S.Handler RIO meth -> S.Handler RIO meth
         handleDisabledReq handler msg@J.RequestMessage{_method} resp = do
-          Config {_cDisabledFeatures} <- RIO.getCustomConfig
+          Config {_cDisabledFeatures} <- S.getConfig
           let err = T.pack [i|Cannot handle #{_method}: disabled by user.|]
           if Set.member (J.SomeClientMethod _method) _cDisabledFeatures
             then resp $ Left $ J.ResponseError J.RequestCancelled err Nothing
             else handler msg resp
+
+    lspLogger :: Colog.LogAction (S.LspM Config) (Colog.WithSeverity S.LspServerLog)
+    lspLogger =
+      Colog.filterBySeverity Colog.Error Colog.getSeverity
+      $ Colog.cmap (fmap (T.pack . show . PP.pretty)) L.logToLogMessage
 
 handlers :: S.Handlers RIO
 handlers = mconcat
@@ -389,8 +395,10 @@ handlePrepareRenameRequest req respond = do
 
 handleDidChangeConfiguration :: S.Handler RIO 'J.WorkspaceDidChangeConfiguration
 handleDidChangeConfiguration notif = do
-  let config = notif ^. J.params . J.settings
-  RIO.updateCustomConfig config
+  let value = notif ^. J.params . J.settings
+   in case value of
+        Aeson.Null -> RIO.fetchConfig
+        _ -> RIO.setConfigFromJSON value
 
 handleDidChangeWatchedFiles :: S.Handler RIO 'J.WorkspaceDidChangeWatchedFiles
 handleDidChangeWatchedFiles notif = do

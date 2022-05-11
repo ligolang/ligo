@@ -4,7 +4,8 @@ import {
   LanguageClient,
 } from 'vscode-languageclient/node'
 
-import * as lc from './ligoCommands'
+import * as lc from './commands/ligoCommands'
+import * as tc from './commands/tezosCommands'
 import * as ui from './ui'
 
 const LigoCommands = {
@@ -51,6 +52,14 @@ const LigoCommands = {
       async () => LigoCommands.CompileContract.run(),
     ),
   },
+  CompileStorage: {
+    name: 'ligo.compileStorage',
+    run: () => lc.executeCompileStorage(),
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.CompileStorage.name,
+      async () => LigoCommands.CompileStorage.run(),
+    ),
+  },
   CompileExpression: {
     name: 'ligo.compileExpression',
     run: lc.executeCompileExpression,
@@ -83,14 +92,33 @@ const LigoCommands = {
       async () => LigoCommands.EvaluateValue.run(),
     ),
   },
+  Deploy: {
+    name: 'ligo.deploy',
+    run: tc.executeDeploy,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.Deploy.name,
+      async () => LigoCommands.Deploy.run(),
+    ),
+  },
+  GenerateDeployScript: {
+    name: 'ligo.generateDeployScript',
+    run: tc.executeGenerateDeployScript,
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.GenerateDeployScript.name,
+      async () => LigoCommands.GenerateDeployScript.run(),
+    ),
+  },
   ChooseLigoOption: {
     name: 'ligo.chooseOption',
     run: async () => {
-      const possibleOptions = ['Compile contract', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
+      const possibleOptions = ['Compile contract', 'Compile storage', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
       const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
       switch (curCommand) {
         case 'Compile contract':
           lc.executeCompileContract();
+          break;
+        case 'Compile storage':
+          lc.executeCompileStorage();
           break;
         case 'Compile expression':
           lc.executeCompileExpression();
@@ -113,18 +141,47 @@ const LigoCommands = {
       async () => LigoCommands.ChooseLigoOption.run(),
     ),
   },
+  ChooseDeploymentOption: {
+    name: 'tezos.chooseOption',
+    run: async () => {
+      const possibleOptions = ['Deploy contract', 'Generate deploy script']
+      const curCommand = await ui.createQuickPickBox(possibleOptions, 'Deployment options', 'command')
+      switch (curCommand) {
+        case 'Deploy contract':
+          tc.executeDeploy();
+          break;
+        case 'Generate deploy script':
+          tc.executeGenerateDeployScript();
+          break;
+        default:
+          console.error('Unknown command');
+      }
+    },
+    register: () => vscode.commands.registerCommand(
+      LigoCommands.ChooseDeploymentOption.name,
+      async () => LigoCommands.ChooseDeploymentOption.run(),
+    ),
+  },
 }
 
 export default LigoCommands
 
 export function registerCommands(client: LanguageClient) {
+  // Boot
   LigoCommands.StartServer.register(client);
   LigoCommands.StopServer.register(client);
   LigoCommands.RestartServer.register(client);
+  // Buttons
   LigoCommands.ChooseLigoOption.register();
+  LigoCommands.ChooseDeploymentOption.register();
+  // LIGO commands
   LigoCommands.CompileContract.register();
   LigoCommands.CompileExpression.register();
+  LigoCommands.CompileStorage.register();
   LigoCommands.DryRun.register();
   LigoCommands.EvaluateFunction.register();
   LigoCommands.EvaluateValue.register();
+  // Tezos commands
+  LigoCommands.Deploy.register();
+  LigoCommands.GenerateDeployScript.register();
 }

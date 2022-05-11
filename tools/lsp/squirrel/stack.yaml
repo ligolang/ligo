@@ -10,19 +10,22 @@ packages:
 
 extra-deps:
 - git: https://github.com/haskell/lsp.git
-  commit: 8db20a514b2a5533e5ad3eb82df1b102c0a7c2ee
+  commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
   subdirs:
     - lsp-types
     - lsp
     - lsp-test
 
-- git: https://github.com/serokell/haskell-tree-sitter.git
-  commit: 27c33c98b00f8961c8619de2e3771a1932501ada
-  subdirs:
-    - tree-sitter
-  # nix-sha256: 18axg1qnwgyljczq5chw7m2rsbplq3ny3pl770xi0102l1x1gj8a
+- git: https://github.com/serokell/tree-sitter.git
+  commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+  # nix-sha256: 02ahzy1y38pa4mdm2cfwp8b4alsh29xdil3zd8km6w3lfmywqyw2
+- git: https://github.com/co-log/co-log-core.git
+  commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+  # nix-sha256: 04hr72vrcyz02gxqlrbizbscjz0ykqgxk42kl4ccvzj864han6b3
+- git: https://github.com/Bodigrim/text-rope
+  commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+  # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l
 - fastsum-0.1.1.1
-
 - stm-containers-1.2
 - stm-hamt-1.2.0.6
 - primitive-extras-0.10.1

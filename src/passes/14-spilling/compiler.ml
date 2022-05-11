@@ -209,6 +209,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Pvss_key,        []) -> return (T_base TB_pvss_key)
     | (Chest,           []) -> return (T_base TB_chest)
     | (Chest_key,       []) -> return (T_base TB_chest_key)
+    | (Tx_rollup_l2_address, []) -> return (T_base TB_tx_rollup_l2_address)
     | (Baker_operation, []) -> return (T_base TB_baker_operation)
     | (Bls12_381_g1,    []) -> return (T_base TB_bls12_381_g1)
     | (Bls12_381_g2,    []) -> return (T_base TB_bls12_381_g2)
@@ -235,8 +236,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Big_map, [k; v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_big_map kv')
-    | (Map_or_big_map, _) ->
-      raise.raise @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
     | (List, [t]) ->
       let t' = compile_type t in
       return (T_list t')
@@ -262,7 +261,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Set          | Tez       | Michelson_pair       |
       Never        | Chest_key |
       Typed_address| Mutation  | Bytes                |
-      List         | External _), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
