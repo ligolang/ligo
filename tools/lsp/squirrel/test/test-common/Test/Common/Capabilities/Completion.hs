@@ -4,8 +4,7 @@ module Test.Common.Capabilities.Completion
   ) where
 
 import Data.Maybe (fromJust)
-import Data.Word (Word32)
-import Language.LSP.Types (CompletionItemKind (..))
+import Language.LSP.Types (CompletionItemKind (..), UInt)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
@@ -26,7 +25,7 @@ contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
-  , tiPosition :: (Word32, Word32)
+  , tiPosition :: (UInt, UInt)
   , tiExpected :: [Completion]
   }
 

@@ -4,30 +4,16 @@
 
 module Config
   ( Config(..)
-  , getConfigFromNotification
   ) where
 
 import Data.Aeson
-  (FromJSON (parseJSON), Result (Error, Success), ToJSON (toJSON), Value, fromJSON, object,
-  withObject, (.!=), (.:), (.:?), (.=))
+  (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:),
+  (.:?), (.=))
 import Data.Default (Default (def))
 import Data.Set (Set)
-import Data.Text qualified as T
 import Language.LSP.Types qualified as J
 
 import Cli (LigoClientEnv (..))
-
-----------------------------------------------------------------------------
--- Handlers
-----------------------------------------------------------------------------
-
--- | Given a DidChangeConfigurationNotification message, this function returns the parsed
--- Config object if possible.
-getConfigFromNotification :: Config -> Value -> Either T.Text Config
-getConfigFromNotification _old p =
-  case fromJSON p of
-    Success c -> Right c
-    Error err -> Left $ T.pack err
 
 ----------------------------------------------------------------------------
 -- Types
