@@ -15,6 +15,7 @@ function extToDialect(ext : string) {
     case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.religo': return 'reasonligo'
+    case '.jsligo': return 'jsligo'
     default:
       console.error('Unknown dialect');
       return undefined
