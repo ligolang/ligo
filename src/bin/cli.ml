@@ -212,7 +212,7 @@ let warn =
 let warn_unused_rec =
   let open Command.Param in
   let name = "--warn-unused-rec" in
-  let doc = "disable warning messages" in
+  let doc = "warn about unused recursion in a recursive function" in
   flag ~doc name no_arg
 
 let werror =
