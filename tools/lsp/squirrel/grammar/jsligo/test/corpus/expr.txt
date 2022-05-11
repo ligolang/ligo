@@ -67,3 +67,17 @@ let y = [(1), ("foo"), 3];
       (paren_expr (Int))
       (paren_expr (String))
       (Int))))
+
+=========
+unit type & value
+=========
+
+let n : unit = unit;
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (Name))
+    (type_annotation (TypeName))
+    (Unit_kwd)))

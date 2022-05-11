@@ -135,6 +135,7 @@ module.exports = grammar({
       $.Bytes,
       $.String,
       $._Bool,
+      $.Unit_kwd,
       $.ctor_expr,
       $.projection,
       $.michelson_interop,
@@ -413,6 +414,7 @@ module.exports = grammar({
     Keyword: $ => /[A-Za-z][a-z]*/,
     _Bool: $ => choice($.False_kwd, $.True_kwd),
 
+    Unit_kwd: $ => 'unit',
     False_kwd: $ => 'false',
     True_kwd: $ => 'true',
     wildcard: $ => '_',

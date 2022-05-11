@@ -18,7 +18,7 @@ recognise (SomeRawTree dialect rawTree)
   [ -- Contract
     Descent do
       boilerplate $ \case
-        "source_file" -> RawContract <$> fields "declaration"
+        "source_file" -> RawContract <$> fields "toplevel"
         _ -> fallthrough
 
     -- Expr
@@ -247,10 +247,9 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate' $ \case
         ("ConstrName", name)   -> return $ Ctor name
-        ("Some", _)            -> return $ Ctor "Some"
-        ("None", _)            -> return $ Ctor "None"
-        ("Bool", b)            -> return $ Ctor b
-        ("Unit", _)            -> return $ Ctor "Unit"
+        ("True_kwd", b)        -> return $ Ctor "True"
+        ("False_kwd", b)       -> return $ Ctor "False"
+        ("Unit_kwd", _)        -> return $ Ctor "Unit"
         _                      -> fallthrough
 
   -- Err
