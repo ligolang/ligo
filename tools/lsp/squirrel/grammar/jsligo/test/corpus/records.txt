@@ -73,7 +73,7 @@ type full_name = [string, string]
 (source_file
   (type_decl
     (TypeName)
-    (type_tuple (TypeName) (TypeName))))
+    (tuple_type (TypeName) (TypeName))))
 
 =========
 tuple value decl

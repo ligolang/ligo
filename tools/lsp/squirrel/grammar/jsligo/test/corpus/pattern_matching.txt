@@ -67,7 +67,7 @@ let int_of_color = (c : color) : int =>
             (ConstrName)
             (ctor_param
               (Name)
-              (type_tuple (TypeName) (TypeName) (TypeName)))
+              (tuple_type (TypeName) (TypeName) (TypeName)))
             (body
               (binary_operator
                 (binary_operator

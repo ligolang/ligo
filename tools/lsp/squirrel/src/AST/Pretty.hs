@@ -234,6 +234,7 @@ instance Pretty1 Expr where
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
+    SwitchStm _ _        -> error "todo"
 
 instance Pretty1 PatchableExpr where
   pp1 = \case

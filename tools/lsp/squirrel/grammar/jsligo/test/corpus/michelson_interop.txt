@@ -13,7 +13,7 @@ let michelson_add = (n: [nat, nat]): nat =>
     (fun_expr
       (parameter
         (Name)
-        (type_tuple (TypeName) (TypeName)))
+        (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (call_expr
@@ -21,7 +21,7 @@ let michelson_add = (n: [nat, nat]): nat =>
             (michelson_interop
               (michelson_code)
               (fun_type
-                (type_tuple (TypeName) (TypeName))
+                (tuple_type (TypeName) (TypeName))
                 (TypeName))))
           (arguments (Name)))))))
 
@@ -38,7 +38,7 @@ type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
     (TypeName)
       (app_type
         (TypeName)
-        (type_tuple 
+        (tuple_type
           (TypeName) 
           (string_type (String)) 
           (TypeName)
@@ -57,7 +57,7 @@ type y_or = michelson_or<[unit, "y", x_and, "other"]>;
     (TypeName)
       (app_type
         (TypeName)
-        (type_tuple 
+        (tuple_type 
           (TypeName) 
           (string_type (String)) 
           (TypeName)

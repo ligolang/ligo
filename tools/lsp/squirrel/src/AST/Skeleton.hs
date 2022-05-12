@@ -70,7 +70,7 @@ type RawLigoList =
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
-  , ModuleName, ModuleAccess, TypeParams, SwitchStm, CaseOrDefaultStm
+  , ModuleName, ModuleAccess, TypeParams--, SwitchStm, CaseOrDefaultStm
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.

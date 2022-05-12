@@ -247,8 +247,8 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate' $ \case
         ("ConstrName", name)   -> return $ Ctor name
-        ("True_kwd", b)        -> return $ Ctor "True"
-        ("False_kwd", b)       -> return $ Ctor "False"
+        ("True_kwd", _)        -> return $ Ctor "True"
+        ("False_kwd", _)       -> return $ Ctor "False"
         ("Unit_kwd", _)        -> return $ Ctor "Unit"
         _                      -> fallthrough
 

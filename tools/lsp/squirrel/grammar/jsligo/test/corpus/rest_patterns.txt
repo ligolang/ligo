@@ -31,7 +31,7 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
     (fun_expr
       (parameter
         (array_literal (Name) (Name))
-        (type_tuple (TypeName) (TypeName)))
+        (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (paren_expr

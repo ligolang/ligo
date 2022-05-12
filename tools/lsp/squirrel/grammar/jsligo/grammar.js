@@ -247,7 +247,7 @@ module.exports = grammar({
       $.module_access_t,
       $.record_type,
       $.app_type,
-      common.withAttrs($, $.type_tuple),
+      common.withAttrs($, $.tuple_type),
       common.par($._type_expr)
     ),
 
@@ -264,7 +264,7 @@ module.exports = grammar({
 
     app_type: $ => prec(3, seq(field("functor", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
 
-    type_tuple: $ => common.brackets(common.sepBy1(',', field("type_element", $._type_expr))),
+    tuple_type: $ => common.brackets(common.sepBy1(',', field("element", $._type_expr))),
 
     import_statement: $ => seq('import', field("alias_name", $.ModuleName), '=', common.sepBy1('.', field("module_path", $.ModuleName))),
 
@@ -278,7 +278,9 @@ module.exports = grammar({
 
     type_decl: $ => seq("type", $.TypeName, optional($.type_params), '=', $._type_expr),
 
-    type_params: $ => common.chev(common.sepBy1(',', field("type_param", $.TypeVariableName))),
+    type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
+
+    var_type: $ => field("name", $.TypeVariableName),
 
     let_decl: $ => common.withAttrs($, seq('let', field("binding_list", $._binding_list))),
 
