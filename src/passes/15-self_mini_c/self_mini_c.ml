@@ -32,7 +32,7 @@ let map_expression = Helpers.map_expression
    assuming arguments are pure *)
 let is_pure_constant : constant' -> bool =
   function
-  | C_UNIT | C_NEVER
+  | C_UNIT
   | C_CAR | C_CDR | C_PAIR
   | C_NIL | C_CONS
   | C_NEG | C_OR | C_AND | C_XOR | C_NOT
@@ -41,49 +41,31 @@ let is_pure_constant : constant' -> bool =
   | C_LEFT | C_RIGHT
   | C_TRUE | C_FALSE
   | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
-  | C_INT | C_ABS | C_IS_NAT
   | C_ADDRESS
-  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE | C_SET_UPDATE
-  | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
-  | C_SHA3 | C_KECCAK
-  | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
+  | C_CONCAT
+  | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SET_UPDATE
   | C_LOOP_CONTINUE | C_LOOP_STOP
-  | C_EDIV
   | C_SUB_MUTEZ
-  | C_SIZE
   | C_BYTES_UNPACK
   | C_SET_EMPTY | C_SET_LITERAL
   | C_LIST_EMPTY | C_LIST_LITERAL
   | C_MAP_EMPTY | C_MAP_LITERAL
-  | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
+  | C_MAP_GET | C_MAP_REMOVE
   | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
   | C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT
-  | C_TICKET
-  | C_READ_TICKET
-  | C_SPLIT_TICKET
-  | C_JOIN_TICKET
-  | C_PAIRING_CHECK
   | C_SAPLING_EMPTY_STATE
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
   | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
     -> true
   (* unfortunately impure: *)
-  | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER
   | C_POLYMORPHIC_ADD | C_POLYMORPHIC_SUB
   (* impure: *)
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
   | C_OPTION_MAP
-  | C_ASSERTION
-  | C_ASSERTION_WITH_ERROR
-  | C_ASSERT_SOME
-  | C_ASSERT_SOME_WITH_ERROR
-  | C_ASSERT_NONE
-  | C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_CALL

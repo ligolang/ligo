@@ -195,21 +195,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_FALSE , [] ) -> return @@ v_bool false
     | ( C_FALSE , _  ) -> fail @@ error_type
     (* unary *)
-    | ( C_SIZE   , [(V_Set l | V_List l)] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
-    | ( C_SIZE   , [ V_Map l            ] ) -> return_ct @@ C_nat (Z.of_int @@ List.length l)
-    | ( C_SIZE   , [ V_Ct (C_string s ) ] ) -> return_ct @@ C_nat (Z.of_int @@ String.length s)
-    | ( C_SIZE   , [ V_Ct (C_bytes b  ) ] ) -> return_ct @@ C_nat (Z.of_int @@ Bytes.length b)
-    | ( C_SIZE , _  ) -> fail @@ error_type
     | ( C_NOT    , [ V_Ct (C_bool a'  ) ] ) -> return_ct @@ C_bool (not a')
     (* TODO-er: fix two complements: *)
     | ( C_NOT    , [ V_Ct (C_int a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NOT    , [ V_Ct (C_nat a'   ) ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NOT , _  ) -> fail @@ error_type
-    | ( C_INT    , [ V_Ct (C_nat a')    ] ) -> return_ct @@ C_int a'
-    | ( C_INT    , [ V_Ct (C_bls12_381_fr a')    ] ) -> return_ct @@ C_int (Bls12_381.Fr.to_z a')
-    | ( C_INT , _  ) -> fail @@ error_type
-    | ( C_ABS    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_nat (Z.abs a')
-    | ( C_ABS , _  ) -> fail @@ error_type
     | ( C_NEG    , [ V_Ct (C_int a')    ] ) -> return_ct @@ C_int (Z.neg a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g1 a')    ] ) -> return_ct @@ C_bls12_381_g1 (Bls12_381.G1.negate a')
     | ( C_NEG    , [ V_Ct (C_bls12_381_g2 a')    ] ) -> return_ct @@ C_bls12_381_g2 (Bls12_381.G2.negate a')
@@ -217,60 +207,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_NEG , _  ) -> fail @@ error_type
     | ( C_SOME   , [ v                  ] ) -> return_some v
     | ( C_SOME , _  ) -> fail @@ error_type
-    | ( C_IS_NAT , [ V_Ct (C_int a')    ] ) ->
-      if Z.Compare.(>) a' Z.zero then return_some @@ V_Ct (C_nat a')
-      else return_none ()
-    | ( C_IS_NAT , _  ) -> fail @@ error_type
     | ( C_ADDRESS , [ V_Ct (C_contract { address ; entrypoint=_}) ] ) ->
       return (V_Ct (C_address address))
     | ( C_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_BYTES_PACK , [ value ] ) ->
-      let* () = check_value value in
-      let value_ty = List.nth_exn types 0 in
-      let>> value = Pack (loc, value, value_ty) in
-      return value
-    | ( C_BYTES_PACK , _  ) -> fail @@ error_type
     | ( C_BYTES_UNPACK , [ V_Ct (C_bytes bytes) ] ) ->
       let value_ty = expr_ty in
       let>> value = Unpack (loc, bytes, value_ty) in
       return value
     | ( C_BYTES_UNPACK , _  ) -> fail @@ error_type
-    | ( C_ASSERTION , [ v ] ) ->
-      if (is_true v) then return_ct @@ C_unit
-      else fail @@ Errors.meta_lang_eval loc calltrace "Failed assertion"
-    | ( C_ASSERTION , _  ) -> fail @@ error_type
-    | ( C_ASSERTION_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) ->
-      if (is_true v) then return_ct @@ C_unit
-      else fail @@ Errors.meta_lang_eval loc calltrace s
-    | ( C_ASSERTION_WITH_ERROR , _  ) -> fail @@ error_type
-    | ( C_ASSERT_SOME , [ v ] ) -> (
-      match get_option v with
-      | Some (Some _) -> return_ct @@ C_unit
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert some"
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_SOME , _  ) -> fail @@ error_type
-    | ( C_ASSERT_SOME_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
-      match get_option v with
-      | Some (Some _) -> return_ct @@ C_unit
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace s
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_SOME_WITH_ERROR , _  ) -> fail @@ error_type
-    | ( C_ASSERT_NONE , [ v ] ) -> (
-      match get_option v with
-      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace "Failed assert none"
-      | Some None -> return_ct @@ C_unit
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_NONE , _  ) -> fail @@ error_type
-    | ( C_ASSERT_NONE_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
-      match get_option v with
-      | Some (Some _) -> fail @@ Errors.meta_lang_eval loc calltrace s
-      | Some None -> return_ct @@ C_unit
-      | None -> fail @@ Errors.generic_error loc "Expected option type"
-    )
-    | ( C_ASSERT_NONE_WITH_ERROR , _  ) -> fail @@ error_type
     | ( C_UNOPT , [ v ] ) -> (
       match get_option v with
       | Some (Some value) -> return @@ value
@@ -470,17 +414,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , _  ) -> fail @@ error_type
     (* ternary *)
-    | ( C_SLICE , [ V_Ct (C_nat st) ; V_Ct (C_nat ed) ; V_Ct (C_string s) ] ) ->
-      (*TODO : allign with tezos*)
-      return @@ V_Ct (C_string (String.sub s ~pos:(Z.to_int st) ~len:(Z.to_int ed)))
-    | ( C_SLICE , [ V_Ct (C_nat start) ; V_Ct (C_nat length) ; V_Ct (C_bytes bytes) ] ) ->
-      let start = Z.to_int start in
-      let length = Z.to_int length in
-      if (start > Bytes.length bytes) || (start + length > Bytes.length bytes) then
-        fail @@ Errors.meta_lang_failwith loc calltrace (V_Ct (C_string "SLICE"))
-      else
-        return @@ V_Ct (C_bytes (Bytes.sub bytes ~pos:start ~len:length))
-    | ( C_SLICE , _  ) -> fail @@ error_type
     | ( C_LOOP_LEFT , [ V_Func_val {arg_binder ; body ; env ; rec_name=_; orig_lambda=_} ; init ] ) -> (
       let* init_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
       let rec aux cur_env =
@@ -575,8 +508,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         )
         init kvs
     | ( C_MAP_FOLD , _  ) -> fail @@ error_type
-    | ( C_MAP_MEM , [k ; V_Map kvs]) -> return @@ v_bool (List.Assoc.mem ~equal:LC.equal_value kvs k)
-    | ( C_MAP_MEM , _  ) -> fail @@ error_type
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs] ) -> return (V_Map ((k,v) :: List.Assoc.remove ~equal:LC.equal_value kvs k))
     | ( C_MAP_ADD , _  ) -> fail @@ error_type
     | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> return @@ V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k)
@@ -644,50 +575,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_OPTION_MAP , [ V_Func_val _  ; V_Construct ("None" , V_Ct C_unit) as v ] ) ->
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
-    | ( C_SHA256, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha256 b in
-      return @@ value
-    | ( C_SHA256 , _  ) -> fail @@ error_type
-    | ( C_SHA512, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha512 b in
-      return @@ value
-    | ( C_SHA512 , _  ) -> fail @@ error_type
-    | ( C_BLAKE2b, [ V_Ct (C_bytes b) ] )->
-      let>> value = Blake2b b in
-      return @@ value
-    | ( C_BLAKE2b , _  ) -> fail @@ error_type
-    | ( C_KECCAK, [ V_Ct (C_bytes b) ] )->
-      let>> value = Keccak b in
-      return @@ value
-    | ( C_KECCAK , _  ) -> fail @@ error_type
-    | ( C_SHA3, [ V_Ct (C_bytes b) ] )->
-      let>> value = Sha3 b in
-      return @@ value
-    | ( C_SHA3 , _  ) -> fail @@ error_type
-    | ( C_HASH_KEY, [ V_Ct (C_key k) ] )->
-      let>> value = Hash_key k in
-      return @@ value
-    | ( C_HASH_KEY , _  ) -> fail @@ error_type
-    | ( C_CHECK_SIGNATURE, [ V_Ct (C_key k) ; V_Ct (C_signature s) ; V_Ct (C_bytes b) ] )->
-      let>> value = Check_signature (k, s, b) in
-      return @@ value
-    | ( C_CHECK_SIGNATURE , _  ) -> fail @@ error_type
-    | ( C_NEVER , [ _ ] ) -> failwith "Ex falso?"
-    | ( C_NEVER , _  ) -> fail @@ error_type
-    | ( C_PAIRING_CHECK , [ V_List l ] ) ->
-      let rec aux acc = function
-        | [] -> Some acc
-        | (v :: tl) ->
-           match get_pair v with
-           | None -> None
-           | Some (l, r) ->
-              match get_bls12_381_g1 l, get_bls12_381_g2 r with
-              | Some b, Some b' -> aux (acc @ [(b, b')]) tl
-              | _ -> None in
-      let l = trace_option ~raise error_type @@ aux [] l in
-      let>> value = Pairing_check l in
-      return @@ value
-    | ( C_PAIRING_CHECK , _  ) -> fail @@ error_type
     | ( C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] )->
       let>> value = Implicit_account (loc, kh) in
       return @@ value
@@ -695,8 +582,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_FAILWITH , [ a ] ) ->
       fail @@ Errors.meta_lang_failwith loc calltrace a
     | ( C_FAILWITH , _  ) -> fail @@ error_type
-    | ( (C_TICKET | C_READ_TICKET | C_SPLIT_TICKET | C_JOIN_TICKET) , _ ) ->
-      fail @@ Errors.generic_error loc "Tickets are not supported."
     (*
     >>>>>>>>
       Test operators
@@ -1006,15 +891,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
-    | ( (C_SOURCE | C_SENDER | C_AMOUNT | C_BALANCE | C_NOW | C_LEVEL | C_SELF |
-         C_SELF_ADDRESS | C_CHAIN_ID | C_VOTING_POWER | C_TOTAL_VOTING_POWER) , _ ) ->
+    | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
     | ( C_POLYMORPHIC_SUB , _ ) ->
       fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
-         C_FOLD_LEFT | C_FOLD_RIGHT | C_EDIV | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
+         C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
@@ -1091,8 +975,11 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo body (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
-            let>> ctxt = Get_state () in
-            return @@ Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression
+             let>> ctxt = Get_state () in
+             (match Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression with
+             | Ok v -> return v
+             | Error (Failwith_string s) -> fail @@ Errors.meta_lang_eval term.location calltrace s
+             | Error _ -> fail @@ Errors.meta_lang_eval term.location calltrace "Failure")
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->

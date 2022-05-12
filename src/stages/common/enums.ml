@@ -59,22 +59,12 @@ let literal_to_enum = function
   | Literal_chest_key _ -> 18
 
 type constant' =
-  | C_INT
   | C_UNIT
-  | C_NEVER
   | C_NIL
-  | C_NOW
-  | C_IS_NAT
   | C_SOME
   | C_NONE
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
-  | C_ASSERTION
-  | C_ASSERTION_WITH_ERROR
-  | C_ASSERT_SOME
-  | C_ASSERT_SOME_WITH_ERROR
-  | C_ASSERT_NONE
-  | C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED
   | C_FAILWITH
   | C_UPDATE
@@ -88,11 +78,9 @@ type constant' =
   | C_FOLD_RIGHT
   (* MATH *)
   | C_NEG
-  | C_ABS
   | C_ADD
   | C_SUB
   | C_MUL
-  | C_EDIV
   | C_DIV
   | C_MOD
   (* LOGIC *)
@@ -110,10 +98,7 @@ type constant' =
   | C_LE
   | C_GE
   (* Bytes/ String *)
-  | C_SIZE
   | C_CONCAT
-  | C_SLICE
-  | C_BYTES_PACK
   | C_BYTES_UNPACK
   | C_CONS
   (* Pair *)
@@ -156,7 +141,6 @@ type constant' =
   | C_MAP_ITER
   | C_MAP_MAP
   | C_MAP_FOLD
-  | C_MAP_MEM
   | C_MAP_FIND
   | C_MAP_FIND_OPT
   | C_MAP_GET_AND_UPDATE
@@ -165,13 +149,6 @@ type constant' =
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
-  (* Crypto *)
-  | C_SHA256
-  | C_SHA512
-  | C_BLAKE2b
-  | C_HASH_KEY
-  | C_CHECK_SIGNATURE
-  | C_CHAIN_ID
   (* Blockchain *)
   | C_CALL
   | C_CONTRACT
@@ -179,10 +156,6 @@ type constant' =
   | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT
-  | C_BALANCE
-  | C_SOURCE
-  | C_SENDER
   | C_ADDRESS
   | C_SELF
   | C_SELF_ADDRESS
@@ -241,16 +214,6 @@ type constant' =
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
   (* New with EDO*)
-  | C_SHA3
-  | C_KECCAK
-  | C_LEVEL
-  | C_VOTING_POWER
-  | C_TOTAL_VOTING_POWER
-  | C_TICKET
-  | C_READ_TICKET
-  | C_SPLIT_TICKET
-  | C_JOIN_TICKET
-  | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
