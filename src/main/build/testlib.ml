@@ -239,36 +239,37 @@ end
 let testlib ~options syntax =
   if options.Compiler_options.middle_end.test then
     match Simple_utils.Trace.to_stdlib_result @@
-            Ligo_compile.Utils.type_contract_string ~add_warning:(fun _ -> ()) ~options CameLIGO (lib syntax) with
+            Ligo_compile.Utils.type_program_string ~add_warning:(fun _ -> ()) ~options CameLIGO (lib syntax) with
     | Ok s -> s
     | Error e ->
        let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
        failwith ("Error compiling the testlib: " ^ error_msg)
   else
     match Simple_utils.Trace.to_stdlib_result @@
-            Ligo_compile.Utils.type_contract_string ~add_warning:(fun _ -> ()) ~options CameLIGO (lib_stub syntax) with
+            Ligo_compile.Utils.type_program_string ~add_warning:(fun _ -> ()) ~options CameLIGO (lib_stub syntax) with
     | Ok s -> s
     | Error e ->
        let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
        failwith ("Error compiling the testlib: " ^ error_msg)
 
-module LanguageMap = Simple_utils.Map.Make(struct type t = Syntax_types.t * bool let compare (t, b) (t', b') = match Syntax_types.compare t t' with 0 -> compare_bool b b' | c -> c end)
-let cached = ref LanguageMap.empty
-
 let typed ~options syntax =
-  Helpers.internalize_typed @@
-    match LanguageMap.find_opt (syntax, options.Compiler_options.middle_end.test) @@ ! cached with
+  let open Helpers in
+  let k = build_key ~options syntax in
+  internalize_typed @@
+    match LanguageMap.find_opt k @@ ! test_lib_cache with
     | None ->
        let typed, core = testlib ~options syntax in
-       cached := LanguageMap.add (syntax, options.Compiler_options.middle_end.test) (typed, core) @@ ! cached;
+       test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
        typed
     | Some (typed, _) -> typed
 
 let core ~options syntax =
-  Helpers.internalize_core @@
-    match LanguageMap.find_opt (syntax, options.Compiler_options.middle_end.test) @@ ! cached with
+  let open Helpers in
+  let k = build_key ~options syntax in
+  internalize_core @@
+    match LanguageMap.find_opt k @@ ! test_lib_cache with
     | None ->
        let typed, core = testlib ~options syntax in
-       cached := LanguageMap.add (syntax, options.Compiler_options.middle_end.test) (typed, core) @@ ! cached;
+       test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
        core
     | Some (_, core) -> core
