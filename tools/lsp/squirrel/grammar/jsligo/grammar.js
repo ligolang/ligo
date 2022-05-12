@@ -266,7 +266,7 @@ module.exports = grammar({
 
     tuple_type: $ => common.brackets(common.sepBy1(',', field("element", $._type_expr))),
 
-    import_statement: $ => seq('import', field("alias_name", $.ModuleName), '=', common.sepBy1('.', field("module_path", $.ModuleName))),
+    import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
     export_statement: $ => seq(field("export", 'export'), $._declaration_statement),
 
@@ -276,7 +276,7 @@ module.exports = grammar({
       $.type_decl
     ),
 
-    type_decl: $ => seq("type", $.TypeName, optional($.type_params), '=', $._type_expr),
+    type_decl: $ => seq("type", field("type_name", $.TypeName), optional(field("params", $.type_params)), '=', field("type_value", $._type_expr)),
 
     type_params: $ => common.chev(common.sepBy1(',', field("param", $.var_type))),
 

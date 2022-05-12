@@ -152,16 +152,15 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate $ \case
-        -- TODO: We forget "rec" field in let
-        "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
-        "type_decl" -> BTypeDecl  <$> field "type_name" <*> fieldOpt "params"  <*> field "type_value"
-        "attr_decl" -> BAttribute <$> field "name"
-        "p_include" -> BInclude   <$> field "filename"
-        "p_import"  -> BImport    <$> field "filename" <*> field "alias"
-        "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"
-        "module_decl" -> BModuleDecl <$> field "moduleName" <*> fields "declaration"
-        "module_alias" -> BModuleAlias <$> field "moduleName" <*> fields "module"
-        _           -> fallthrough
+        -- TODO: "let_decl"         -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
+        -- TODO: "const_decl"          -> BConst       <$> 
+        "type_decl"           -> BTypeDecl    <$> field "type_name"  <*> fieldOpt "params" <*> field "type_value"
+        "p_include"           -> BInclude     <$> field "filename"
+        "p_import"            -> BImport      <$> field "filename"   <*> field "alias"
+        "parameter"           -> BParameter   <$> field "expr"       <*> fieldOpt "type"
+        "namespace_statement" -> BModuleDecl  <$> field "moduleName" <*> fields "declaration"
+        "import_statement"    -> BModuleAlias <$> field "moduleName" <*> fields "module"
+        _                     -> fallthrough
 
     -- TypeParams
   , Descent do
@@ -179,8 +178,6 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate' $ \case
         ("Name", n) -> return $ Name n
-        ("and", _)  -> return $ Name "and"
-        ("or", _)   -> return $ Name "or"
         _           -> fallthrough
 
     -- NameDecl
