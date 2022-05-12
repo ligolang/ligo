@@ -13,7 +13,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tezos-protocol-environment"
-  "tezos-protocol-012-Psithaca"
+  "tezos-protocol-013-PtJakart"
 ]
 build: [
   ["dune" "build" "-p" name]

@@ -28,26 +28,40 @@ let (_ , first_contract) =
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
-
 let op_list ~raise =
   let open Memory_proto_alpha.Protocol.Alpha_context in
   let open Proto_alpha_utils in
   let source =
     Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
     (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
-  let operation =
+  (* let operation : 'a Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation = *)
+  let transaction : transaction =
     let parameters : Script.lazy_expr = Script.unit_parameter in
-    let entrypoint = "default" in
-    let destination =
-      Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
-       Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
+    let entrypoint =
+      let open Tezos_raw_protocol_013_PtJakart in
+      match (Entrypoint_repr.of_annot_lax_opt (Non_empty_string.of_string_exn "default")) with
+      | Some x -> x
+      | None -> raise.raise (Main_errors.test_internal __LOC__)
     in
-    Transaction {amount=Tez.zero; parameters; entrypoint; destination} in
+    let destination =
+      let c = Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
+       Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
+      in
+      Destination.Contract c
+    in
+    {amount=Tez.zero; parameters; entrypoint; destination}
+  in
+  let operation : _ Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation =
+    Memory_proto_alpha.Protocol.Script_typed_ir.( Transaction {transaction ; location = 0 ; parameters = () ; parameters_ty = Unit_t } )
+  in
+  let internal_operation : Memory_proto_alpha.Protocol.Script_typed_ir.packed_internal_operation =
+    Memory_proto_alpha.Protocol.Script_typed_ir.( Internal_operation { source ; operation ; nonce=0 } ) in
   let opbytes =
-    Data_encoding.Binary.to_bytes_exn
-      Operation.internal_operation_encoding
-      (Internal_operation {source; operation; nonce=0}) in
+    let contents = Memory_proto_alpha.Protocol.Apply_results.contents_of_packed_internal_operation internal_operation in
+    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_results.internal_contents_encoding contents
+  in
   (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
+
 let empty_payload = e_unit ()
 
 let chain_id_zero =

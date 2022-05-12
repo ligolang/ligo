@@ -1,13 +1,13 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_012_Psithaca_test_helpers
+module Tezos_alpha_test_helpers = Tezos_013_PtJakart_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
-module Tezos_protocol_parameters = Tezos_protocol_012_Psithaca_parameters
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
 
 type r = Errors.interpreter_error raise
 
@@ -60,7 +60,7 @@ let get_balance ~raise ~loc ~calltrace (ctxt :context) addr =
     Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> bool = fun ctxt contract ->
   let info = Lwt_main.run @@
-    Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
+    Tezos_raw_protocol.Alpha_services.Contract.info ~normalize_types:true Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
 let get_voting_power ~raise ~loc ~calltrace (ctxt :context) key_hash =
@@ -201,9 +201,9 @@ let extract_origination_from_result :
   let open Tezos_raw_protocol in
   match x with
   | Manager_operation_result { operation_result = Applied (Transaction_result _) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_operation_result) =
+    let aux (x:Apply_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
+      | Internal_manager_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
       | _ -> []
     in
     List.concat @@ List.map ~f:aux internal_operation_results
@@ -218,11 +218,11 @@ let extract_lazy_storage_diff_from_result :
   fun x ->
   let open Tezos_raw_protocol in
   match x with
-  | Manager_operation_result { operation_result = Applied (Transaction_result y) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_operation_result) =
+  | Manager_operation_result { operation_result = Applied (Transaction_result (Transaction_to_contract_result y)) ; internal_operation_results ; balance_updates=_ } ->
+    let aux (x:Apply_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
-      | Internal_operation_result ({source = _ ; _},Applied (Transaction_result x)) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (Transaction_result (Transaction_to_contract_result x))) -> [x.lazy_storage_diff]
       | _ -> []
     in
     (List.concat @@ List.map ~f:aux internal_operation_results) @ [y.lazy_storage_diff]
@@ -354,7 +354,8 @@ let get_single_tx_result (x : Tezos_raw_protocol.Apply_results.packed_operation_
   | Operation_metadata ({contents = Single_result y} : _ Tezos_raw_protocol.Apply_results.operation_metadata)  -> (
     match y with
     | Manager_operation_result { operation_result = Applied (
-          Transaction_result { consumed_gas ; _ }
+          Transaction_result (Transaction_to_contract_result { consumed_gas ; _ })
+        | Transaction_result (Transaction_to_tx_rollup_result { consumed_gas ; _ })
         | Origination_result { consumed_gas ; _ }
         | Delegation_result { consumed_gas ; _ }
         | Register_global_constant_result { consumed_gas ; _ } )
@@ -397,7 +398,11 @@ let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> te
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
   let open Tezos_alpha_test_helpers in
-  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end n ctxt.raw in
+  let policy = match Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit ctxt.internals.baker with
+    | Some x -> Some (Block.By_account x)
+    | None -> None
+  in
+  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end ?policy n ctxt.raw in
   { ctxt with raw }
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
@@ -482,7 +487,7 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
+      Op.contract_origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success (ctxt,_) ->
@@ -497,7 +502,11 @@ let get_bootstrapped_contract ~raise (n : int) =
       0 -> e
     | k -> foldnat s (s e) (k - 1) in
   let open Tezos_raw_protocol.Contract_repr in
-  let origination_nonce = foldnat incr_origination_nonce (initial_origination_nonce (Tezos_crypto.Operation_hash.hash_bytes [Bytes.of_string "Un festival de GADT."])) n in
+  let origination_nonce =
+    let open Memory_proto_alpha.Protocol.Origination_nonce in
+    let initial = initial (Tezos_crypto.Operation_hash.hash_bytes [Bytes.of_string "Un festival de GADT."]) in
+    foldnat incr initial n
+  in
   let contract = to_b58check (originated_contract origination_nonce) in
   let contract = Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check contract in
   Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error Location.generated "Error parsing address") @@ contract

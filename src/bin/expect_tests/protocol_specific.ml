@@ -54,4 +54,48 @@ let%expect_test _ =
              SAPLING_VERIFY_UPDATE ;
              IF_NONE { PUSH string "failed" ; FAILWITH } {} ;
              NIL operation ;
-             PAIR } } |}] ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "rollup.mligo" ; "--protocol" ; "jakarta" ] ;
+  [%expect{|
+    { parameter tx_rollup_l2_address ;
+      storage unit ;
+      code { DROP ; PUSH string "roll up !" ; FAILWITH } } |}] ;
+
+  run_ligo_bad [ "compile" ; "contract" ; contract "rollup.mligo"] ;
+  [%expect{|
+    File "../../test/contracts/rollup.mligo", line 1, characters 14-34:
+      1 | let main (_ : tx_rollup_l2_address * unit ) : operation list * unit =
+      2 |   (failwith "roll up !" : operation list * unit)
+
+    Type "tx_rollup_l2_address" not found. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; contract "min_block_time.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/min_block_time.mligo", line 2, characters 6-26:
+      1 | let main (_ : unit * nat ) : operation list * nat =
+      2 |   ([],Tezos.min_block_time ())
+
+    Variable "min_block_time" not found. |}]
+(* let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "min_block_time.mligo" ; "--protocol" ; "jakarta" ] ;
+  [%expect.unreachable] ;
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_good)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
+  Called from Cli_expect_tests__Protocol_specific.(fun) in file "src/bin/expect_tests/protocol_specific.ml", line 83, characters 2-103
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  File "../../test/contracts/min_block_time.mligo", line 2, characters 6-26:
+    1 | let main (_ : unit * nat ) : operation list * nat =
+    2 |   ([],Tezos.min_block_time ())
+
+  Variable "min_block_time" not found. |}] *)

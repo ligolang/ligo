@@ -8,8 +8,8 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_client = Tezos_client_012_Psithaca
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_client = Tezos_client_013_PtJakart
 
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
@@ -162,6 +162,7 @@ module Command = struct
     | Get_mod_res () -> 
       (state.mod_res,ctxt)
     | External_call (loc, calltrace, { address; entrypoint }, param, amt) -> (
+      let entrypoint = Option.map ~f:(fun x -> Michelson_backend.entrypoint_of_string x) entrypoint in
       let x = Tezos_state.transfer ~raise ~loc ~calltrace ctxt address ?entrypoint param amt in
       match x with
       | Success (ctxt',gas_consumed) ->
@@ -197,6 +198,7 @@ module Command = struct
         | _ -> 
           (fail_other (), ctxt)
       )
+      (* this error is only caught because we have local modifications in tezos-ligo *)
       | (Ecoproto_error (Contract_storage.Balance_too_low (contract_too_low,contract_balance,spend_request))) :: _ -> (
         let contract_too_low : LT.mcontract = Michelson_backend.contract_to_contract contract_too_low in
         let contract_too_low = LT.V_Ct (C_address contract_too_low) in
@@ -342,10 +344,10 @@ module Command = struct
       ((), {ctxt with internals = { ctxt.internals with baker }})
     | Get_voting_power (loc, calltrace, key_hash) ->
       let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in
-      ((LT.V_Ct (LT.C_nat (Z.of_int32 vp))), ctxt)
+      ((LT.V_Ct (LT.C_nat (Z.of_int64 vp))), ctxt)
     | Get_total_voting_power (loc, calltrace) ->
       let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
-      ((LT.V_Ct (LT.C_nat (Z.of_int32 tvp))), ctxt)
+      ((LT.V_Ct (LT.C_nat (Z.of_int64 tvp))), ctxt)
     | Get_bootstrap (loc,x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
@@ -408,13 +410,7 @@ module Command = struct
       (v, ctxt)
     )
     | Pairing_check l -> (
-      let check = match l with
-        | [] -> true
-        | pairs ->
-           Bls12_381.(
-               Pairing.miller_loop pairs |> Pairing.final_exponentiation_opt
-               |> Option.map ~f:Fq12.(eq one))
-           |> Option.value ~default:false in
+      let check = Bls12_381.Pairing.pairing_check l in
       (LC.v_bool check, ctxt)
     )
     | Add_account (loc, sk, pk) -> (

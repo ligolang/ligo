@@ -68,28 +68,28 @@ contract` sub-command in the `--constants` argument:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile contract global_call.ligo --protocol hangzhou --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract global_call.ligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract global_call.mligo --protocol hangzhou --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile contract global_call.religo --protocol hangzhou --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract global_call.religo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract global_call.jsligo --protocol hangzhou --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract global_call.jsligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
@@ -184,7 +184,7 @@ step is to ask LIGO to compile the constant:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile constant pascaligo "helper" --init-file global_call.ligo --protocol hangzhou
+ligo compile constant pascaligo "helper" --init-file global_call.ligo
 // Outputs:
 // Michelson constant as JSON string:
 // "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -209,7 +209,7 @@ ligo compile constant pascaligo "helper" --init-file global_call.ligo --protocol
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile constant cameligo "helper" --init-file global_call.mligo --protocol hangzhou
+ligo compile constant cameligo "helper" --init-file global_call.mligo
 // Outputs:
 // Michelson constant as JSON string:
 // "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -234,7 +234,7 @@ ligo compile constant cameligo "helper" --init-file global_call.mligo --protocol
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile constant reasonligo "helper" --init-file global_call.religo --protocol hangzhou
+ligo compile constant reasonligo "helper" --init-file global_call.religo
 // Outputs:
 // Michelson constant as JSON string:
 // "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -259,7 +259,7 @@ ligo compile constant reasonligo "helper" --init-file global_call.religo --proto
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile constant jsligo "helper" --init-file global_const.jsligo --protocol hangzhou
+ligo compile constant jsligo "helper" --init-file global_const.jsligo
 // Outputs:
 // Michelson constant as JSON string:
 // "{ PUSH int 2 ;\n  PUSH int 3 ;\n  DUP 3 ;\n  CDR ;\n  MUL ;\n  DIG 2 ;\n  CAR ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -420,7 +420,7 @@ passing the file with constants in the flag `--file-constants`:
 <Syntax syntax="pascaligo">
 
 ```shell
-ligo compile contract global_call.ligo --protocol hangzhou --file-constants consts.json
+ligo compile contract global_call.ligo --file-constants consts.json
 // Outputs:
 // { parameter string ;
 //   storage int ;
@@ -433,7 +433,7 @@ ligo compile contract global_call.ligo --protocol hangzhou --file-constants cons
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract global_call.mligo --protocol hangzhou --file-constants consts.json
+ligo compile contract global_call.mligo --file-constants consts.json
 // Outputs:
 // { parameter string ;
 //   storage int ;
@@ -446,7 +446,7 @@ ligo compile contract global_call.mligo --protocol hangzhou --file-constants con
 <Syntax syntax="reasonligo">
 
 ```shell
-ligo compile contract global_call.religo --protocol hangzhou --file-constants consts.json
+ligo compile contract global_call.religo --file-constants consts.json
 // Outputs:
 // { parameter string ;
 //   storage int ;
@@ -459,7 +459,7 @@ ligo compile contract global_call.religo --protocol hangzhou --file-constants co
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract global_call.jsligo --protocol hangzhou --file-constants consts.json
+ligo compile contract global_call.jsligo --file-constants consts.json
 // Outputs:
 // { parameter string ;
 //   storage int ;
