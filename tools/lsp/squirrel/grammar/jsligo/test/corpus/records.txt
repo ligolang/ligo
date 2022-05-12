@@ -13,7 +13,7 @@ type user = {
 (source_file
   (type_decl
     (TypeName)
-      (object_type
+      (record_type
         (field_decl
           (FieldName) (TypeName))
         (field_decl

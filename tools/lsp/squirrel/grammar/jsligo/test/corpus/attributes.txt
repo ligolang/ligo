@@ -63,7 +63,7 @@ type person = /* @layout:comb */ {
 (source_file
   (type_decl
     (TypeName)
-    (object_type
+    (record_type
       (attr)
       (field_decl
         (FieldName)
@@ -82,7 +82,7 @@ type person = {
 (source_file
   (type_decl
     (TypeName)
-    (object_type
+    (record_type
       (field_decl
         (attr)
         (attr)

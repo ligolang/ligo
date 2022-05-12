@@ -245,7 +245,7 @@ module.exports = grammar({
       $.TypeName,
       $.string_type,
       $.module_access_t,
-      $.object_type,
+      $.record_type,
       $.app_type,
       common.withAttrs($, $.type_tuple),
       common.par($._type_expr)
@@ -255,7 +255,7 @@ module.exports = grammar({
 
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.Name)),
 
-    object_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', $.field_decl))),
+    record_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', field("field", $.field_decl)))),
 
     field_decl: $ => common.withAttrs($, choice(
       field("field_name", $.FieldName),
