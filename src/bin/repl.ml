@@ -134,7 +134,7 @@ let try_declaration ~raise ~raw_options state s =
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s in
+        Ligo_compile.Utils.type_program_string ~raise ~add_warning ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))

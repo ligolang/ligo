@@ -33,7 +33,7 @@ let type_expression_string ~add_warning ~raise ~options syntax expression init_p
   let typed_exp         = Of_core.compile_expression ~add_warning ~raise ~options ~init_prog core_exp in
   typed_exp
 
-let type_contract_string ~raise ~add_warning ~options syntax expression =
+let type_program_string ~raise ~add_warning ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
   let c_unit, _     = Of_source.compile_string_without_preproc expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
