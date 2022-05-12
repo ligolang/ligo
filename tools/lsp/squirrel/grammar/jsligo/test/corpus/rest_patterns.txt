@@ -8,7 +8,7 @@ let larger_list: list<int> = list([5, ...my_list]);
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (call_expr
       (lambda (Name))
@@ -27,7 +27,7 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (array_literal (Name) (Name))

@@ -10,6 +10,8 @@ import Duplo.Tree
 import ParseTree
 import Parser
 
+-- TODO: add support for switch-case-default
+
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
   = fmap (SomeLIGO dialect)

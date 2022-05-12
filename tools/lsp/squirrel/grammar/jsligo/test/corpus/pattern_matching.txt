@@ -12,7 +12,7 @@ let weird_length = (v : list<int>) : int =>
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (Name)
@@ -54,7 +54,7 @@ let int_of_color = (c : color) : int =>
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (Name)

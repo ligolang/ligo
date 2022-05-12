@@ -16,7 +16,7 @@ let x = () => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (body
         (if_statement
@@ -45,7 +45,7 @@ let x = () => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (body
         (if_else_statement
@@ -73,7 +73,7 @@ let x = () => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (body
         (if_else_statement
@@ -106,7 +106,7 @@ let x = (x : string) => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (Name)
@@ -139,7 +139,7 @@ let x = (x : string) => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (Name)
@@ -169,7 +169,7 @@ let x = (x : string) => {
 
 (source_file
   (let_decl
-    (var_pattern (Name))
+    (var_pattern (NameDecl))
     (fun_expr
       (parameter
         (Name)

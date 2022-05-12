@@ -297,7 +297,7 @@ module.exports = grammar({
       $.array_pattern
     ),
 
-    var_pattern: $ => common.withAttrs($, $.Name),
+    var_pattern: $ => common.withAttrs($, $.NameDecl),
 
     object_pattern: $ => common.block($.property_patterns),
 
@@ -308,12 +308,12 @@ module.exports = grammar({
     ),
 
     property_pattern: $ => choice(
-      seq($.Name, '=', $._expr),
-      seq($.Name, ':', $._binding_initializer),
+      seq($.FieldName, '=', $._expr),
+      seq($.FieldName, ':', $._binding_initializer),
       $.var_pattern,
     ),
 
-    object_rest_pattern: $ => seq('...', $.Name),
+    object_rest_pattern: $ => seq('...', $.NameDecl),
 
     array_pattern: $ => common.brackets($._array_item_patterns),
 
