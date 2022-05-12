@@ -16,20 +16,20 @@ let weird_length = (v : list<int>) : int =>
     (fun_expr
       (parameter
         (Name)
-        (type_ctor_app (TypeName) (TypeName)))
+        (app_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (match_expr
           (Name)
           (list_case
             (array_literal)
-            (type_ctor_app (TypeName) (TypeName))
+            (app_type (TypeName) (TypeName))
             (body (Int)))
           (list_case
             (array_literal
               (Name)
               (array_item_rest_expr (Name)))
-              (type_ctor_app (TypeName) (TypeName))
+              (app_type (TypeName) (TypeName))
             (body
               (binary_operator
                 (Int)

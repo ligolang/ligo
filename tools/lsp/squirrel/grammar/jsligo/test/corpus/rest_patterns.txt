@@ -9,7 +9,7 @@ let larger_list: list<int> = list([5, ...my_list]);
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_ctor_app (TypeName) (TypeName))
+    (app_type (TypeName) (TypeName))
     (call_expr
       (lambda (Name))
       (arguments

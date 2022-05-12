@@ -246,7 +246,7 @@ module.exports = grammar({
       $.string_type,
       $.module_access_t,
       $.object_type,
-      $.type_ctor_app,
+      $.app_type,
       common.withAttrs($, $.type_tuple),
       common.par($._type_expr)
     ),
@@ -262,7 +262,7 @@ module.exports = grammar({
       seq(field("field_name", $.FieldName), field("field_type", $._type_annotation))
     )),
 
-    type_ctor_app: $ => prec(3, seq(field("type", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
+    app_type: $ => prec(3, seq(field("functor", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
 
     type_tuple: $ => common.brackets(common.sepBy1(',', field("type_element", $._type_expr))),
 

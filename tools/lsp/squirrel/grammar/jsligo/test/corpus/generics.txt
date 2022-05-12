@@ -34,3 +34,16 @@ let id : <T>((x : T) => T) = x => x;
     (fun_expr
       (Name)
       (body (Name)))))
+
+=========
+type application
+=========
+
+type x_y_z_typ = my_typ<X, yield, Z>
+
+---
+
+(source_file
+  (type_decl (TypeName)
+    (app_type
+      (TypeName) (TypeName) (TypeName) (TypeName))))

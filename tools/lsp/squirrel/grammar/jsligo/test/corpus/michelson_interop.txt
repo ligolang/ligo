@@ -36,7 +36,7 @@ type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
 (source_file
   (type_decl
     (TypeName)
-      (type_ctor_app
+      (app_type
         (TypeName)
         (type_tuple 
           (TypeName) 
@@ -55,7 +55,7 @@ type y_or = michelson_or<[unit, "y", x_and, "other"]>;
 (source_file
   (type_decl
     (TypeName)
-      (type_ctor_app
+      (app_type
         (TypeName)
         (type_tuple 
           (TypeName) 

@@ -18,7 +18,7 @@ let sum_list = (l: list<int>): int => {
     (fun_expr
       (parameter
           (Name)
-          (type_ctor_app (TypeName) (TypeName)))
+          (app_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (let_decl
