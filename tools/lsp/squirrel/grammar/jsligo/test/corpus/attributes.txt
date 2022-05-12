@@ -12,9 +12,9 @@ type foo = /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (ConstrName))
+          (String))
         (variant
-          (ConstrName)))))
+          (String)))))
 
 =========
 sum
@@ -29,8 +29,8 @@ type foo = /* @boom */ | ["True"] | ["False"]
     (TypeName)
       (sum_type
         (attr)
-        (variant (ConstrName))
-        (variant (ConstrName)))))
+        (variant (String))
+        (variant (String)))))
 
 =========
 constr with bar
@@ -46,9 +46,9 @@ type foo = | /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (ConstrName))
+          (String))
         (variant
-          (ConstrName)))))
+          (String)))))
 
 =========
 record

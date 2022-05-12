@@ -12,6 +12,7 @@ module.exports = grammar({
     [$.module_access],
     [$._expr_statement, $.projection],
     [$.annot_expr, $.parameter],
+    [$.variant, $.string_type]
   ],
 
   rules: {
@@ -233,15 +234,16 @@ module.exports = grammar({
 
     variant: $ => common.withAttrs($, common.brackets(
       choice(
-        seq('"', field("constructor", $.ConstrName), '"'),
-        seq('"', field("constructor", $.ConstrName), '"', ',', field("arguments", common.sepBy1(',', $._type_expr)))
+        field("constructor", $.String),
+        seq(field("constructor", $.String), ',', field("arguments", common.sepBy1(',', $._type_expr)))
       )
     )),
 
     _core_type: $ => choice(
       $.Int,
-      $.wildcard,
+      $.TypeWildcard,
       $.TypeName,
+      $.string_type,
       $.module_access_t,
       $.object_type,
       $.type_ctor_app,
@@ -249,13 +251,15 @@ module.exports = grammar({
       common.par($._type_expr)
     ),
 
+    string_type: $ => field("value", $.String),
+
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.Name)),
 
     object_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', $.field_decl))),
 
     field_decl: $ => common.withAttrs($, choice(
-      field("field", $.FieldName),
-      seq(field("field", $.FieldName), field("type", $.type_annotation))
+      field("field_name", $.FieldName),
+      seq(field("field_name", $.FieldName), field("field_type", $.type_annotation))
     )),
 
     type_ctor_app: $ => prec(3, seq(field("type", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),

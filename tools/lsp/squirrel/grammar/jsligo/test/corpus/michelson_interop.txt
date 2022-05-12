@@ -28,3 +28,41 @@ let michelson_add = (n: [nat, nat]): nat =>
                     (type_tuple (TypeName) (TypeName))))
                 (TypeName))))
           (arguments (Name)))))))
+
+=========
+michelson pair
+=========
+
+type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+      (type_ctor_app
+        (TypeName)
+        (type_tuple 
+          (TypeName) 
+          (string_type (String)) 
+          (TypeName)
+          (string_type (String))))))
+
+=========
+michelson or
+=========
+
+type y_or = michelson_or<[unit, "y", x_and, "other"]>;
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+      (type_ctor_app
+        (TypeName)
+        (type_tuple 
+          (TypeName) 
+          (string_type (String)) 
+          (TypeName)
+          (string_type (String))))))

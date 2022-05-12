@@ -209,7 +209,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Module access:
   , Descent do
       boilerplate $ \case
-        "module_TypeName" -> ModuleAccess <$> fields "path" <*> field "type"
+        "module_access_t" -> ModuleAccess <$> fields "path" <*> field "type"
         "module_access"   -> ModuleAccess <$> fields "path" <*> field "field"
         _                 -> fallthrough
 
