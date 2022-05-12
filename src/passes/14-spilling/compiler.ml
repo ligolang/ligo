@@ -18,22 +18,12 @@ let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v -> v
 
 let compile_constant' : AST.constant' -> constant' = function
-  | C_INT -> C_INT
   | C_UNIT -> C_UNIT
-  | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
-  | C_NOW -> C_NOW
-  | C_IS_NAT -> C_IS_NAT
   | C_SOME -> C_SOME
   | C_NONE -> C_NONE
   | C_UNOPT -> C_UNOPT
   | C_UNOPT_WITH_ERROR -> C_UNOPT_WITH_ERROR
-  | C_ASSERTION -> C_ASSERTION
-  | C_ASSERTION_WITH_ERROR -> C_ASSERTION_WITH_ERROR
-  | C_ASSERT_SOME -> C_ASSERT_SOME
-  | C_ASSERT_SOME_WITH_ERROR -> C_ASSERT_SOME_WITH_ERROR
-  | C_ASSERT_NONE -> C_ASSERT_NONE
-  | C_ASSERT_NONE_WITH_ERROR -> C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
   | C_FAILWITH -> C_FAILWITH
   | C_UPDATE -> C_UPDATE
@@ -47,11 +37,9 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_FOLD_RIGHT -> C_FOLD_RIGHT
   (* MATH *)
   | C_NEG -> C_NEG
-  | C_ABS -> C_ABS
   | C_ADD -> C_ADD
   | C_SUB -> C_SUB
   | C_MUL -> C_MUL
-  | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
   | C_SUB_MUTEZ -> C_SUB_MUTEZ
@@ -70,10 +58,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LE -> C_LE
   | C_GE -> C_GE
   (* Bytes/ String *)
-  | C_SIZE -> C_SIZE
   | C_CONCAT -> C_CONCAT
-  | C_SLICE -> C_SLICE
-  | C_BYTES_PACK -> C_BYTES_PACK
   | C_BYTES_UNPACK -> C_BYTES_UNPACK
   | C_CONS -> C_CONS
   (* Pair *)
@@ -116,20 +101,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_MAP_ITER -> C_MAP_ITER
   | C_MAP_MAP -> C_MAP_MAP
   | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_MEM -> C_MAP_MEM
   | C_MAP_FIND -> C_MAP_FIND
   | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
   (* Big Maps *)
   | C_BIG_MAP -> C_BIG_MAP
   | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256 -> C_SHA256
-  | C_SHA512 -> C_SHA512
-  | C_BLAKE2b -> C_BLAKE2b
-  | C_HASH_KEY -> C_HASH_KEY
-  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
-  | C_CHAIN_ID -> C_CHAIN_ID
   (* Blockchain *)
   | C_CALL -> C_CALL
   | C_CONTRACT -> C_CONTRACT
@@ -137,26 +114,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CONTRACT_OPT -> C_CONTRACT_OPT
   | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT -> C_AMOUNT
-  | C_BALANCE -> C_BALANCE
-  | C_SOURCE -> C_SOURCE
-  | C_SENDER -> C_SENDER
   | C_ADDRESS -> C_ADDRESS
   | C_SELF -> C_SELF
   | C_SELF_ADDRESS -> C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_SHA3 -> C_SHA3
-  | C_KECCAK -> C_KECCAK
-  | C_LEVEL -> C_LEVEL
-  | C_VOTING_POWER -> C_VOTING_POWER
-  | C_TOTAL_VOTING_POWER -> C_TOTAL_VOTING_POWER
-  | C_TICKET -> C_TICKET
-  | C_READ_TICKET -> C_READ_TICKET
-  | C_SPLIT_TICKET -> C_SPLIT_TICKET
-  | C_JOIN_TICKET -> C_JOIN_TICKET
-  | C_PAIRING_CHECK -> C_PAIRING_CHECK
   | C_MAP_GET_AND_UPDATE -> C_MAP_GET_AND_UPDATE
   | C_BIG_MAP_GET_AND_UPDATE -> C_BIG_MAP_GET_AND_UPDATE
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
