@@ -110,7 +110,7 @@ let x = (x : string) => {
     (fun_expr
       (parameter
         (Name)
-        (type_annotation (TypeName)))
+        (TypeName))
       (body
         (switch_statement
           (Name)
@@ -143,7 +143,7 @@ let x = (x : string) => {
     (fun_expr
       (parameter
         (Name)
-        (type_annotation (TypeName)))
+        (TypeName))
       (body
         (switch_statement
           (Name)
@@ -173,7 +173,7 @@ let x = (x : string) => {
     (fun_expr
       (parameter
         (Name)
-        (type_annotation (TypeName)))
+        (TypeName))
       (body
         (switch_statement
           (Name)

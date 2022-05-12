@@ -79,5 +79,5 @@ let n : unit = unit;
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (Unit_kwd)))

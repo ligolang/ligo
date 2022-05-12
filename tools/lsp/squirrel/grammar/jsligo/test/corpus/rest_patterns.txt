@@ -9,8 +9,7 @@ let larger_list: list<int> = list([5, ...my_list]);
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation
-      (type_ctor_app (TypeName) (TypeName)))
+    (type_ctor_app (TypeName) (TypeName))
     (call_expr
       (lambda (Name))
       (arguments
@@ -32,9 +31,8 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
     (fun_expr
       (parameter
         (array_literal (Name) (Name))
-        (type_annotation
-          (type_tuple (TypeName) (TypeName))))
-      (type_annotation (TypeName))
+        (type_tuple (TypeName) (TypeName)))
+      (TypeName)
       (body
         (paren_expr
           (object_literal

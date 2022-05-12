@@ -29,11 +29,8 @@ let id : <T>((x : T) => T) = x => x;
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation
-      (type_params (TypeVariableName))
-      (fun_type
-        (fun_param (Name) (type_annotation (TypeName)))
-        (TypeName)))
-      (fun_expr
-        (Name)
-        (body (Name)))))
+    (type_params (TypeVariableName))
+    (fun_type (TypeName) (TypeName))
+    (fun_expr
+      (Name)
+      (body (Name)))))

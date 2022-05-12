@@ -13,19 +13,15 @@ let michelson_add = (n: [nat, nat]): nat =>
     (fun_expr
       (parameter
         (Name)
-        (type_annotation
-          (type_tuple (TypeName) (TypeName))))
-      (type_annotation (TypeName))
+        (type_tuple (TypeName) (TypeName)))
+      (TypeName)
       (body
         (call_expr
           (lambda
             (michelson_interop
               (michelson_code)
               (fun_type
-                (fun_param
-                  (Name)
-                  (type_annotation
-                    (type_tuple (TypeName) (TypeName))))
+                (type_tuple (TypeName) (TypeName))
                 (TypeName))))
           (arguments (Name)))))))
 

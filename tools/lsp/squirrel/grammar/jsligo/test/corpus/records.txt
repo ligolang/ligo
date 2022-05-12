@@ -15,11 +15,11 @@ type user = {
     (TypeName)
       (object_type
         (field_decl
-          (FieldName) (type_annotation (TypeName)))
+          (FieldName) (TypeName))
         (field_decl
-          (FieldName) (type_annotation (TypeName)))
+          (FieldName) (TypeName))
         (field_decl
-          (FieldName) (type_annotation (TypeName))))))
+          (FieldName) (TypeName)))))
 
 =========
 record value decl
@@ -36,7 +36,7 @@ let alice : user = {
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (object_literal
       (property
         (property_name (Name))
@@ -59,7 +59,7 @@ let alice_admin: bool = alice.is_admin;
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (projection (Name) (Name))))
 
 =========
@@ -86,7 +86,7 @@ let full_name: full_name = ["Alice", "Johnson"];
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (array_literal
       (String)
       (String))))
@@ -104,7 +104,7 @@ let [first_name, last_name]: full_name = full_name;
     (array_pattern
       (var_pattern (Name))
       (var_pattern (Name)))
-    (type_annotation (TypeName))
+    (TypeName)
     (Name)))
 
 =========
@@ -123,8 +123,8 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
           (array_literal
             (Name)
             (wildcard))
-          (type_annotation (TypeName)))
-      (type_annotation (TypeName))
+          (TypeName))
+      (TypeName)
       (body (Name)))))
 
 =========
@@ -138,7 +138,7 @@ let first_name_component: string = full_name[0];
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (projection
       (Name)
       (Int))))

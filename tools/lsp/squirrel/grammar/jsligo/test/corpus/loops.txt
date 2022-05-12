@@ -18,13 +18,12 @@ let sum_list = (l: list<int>): int => {
     (fun_expr
       (parameter
           (Name)
-          (type_annotation
-            (type_ctor_app (TypeName) (TypeName))))
-      (type_annotation (TypeName))
+          (type_ctor_app (TypeName) (TypeName)))
+      (TypeName)
       (body
         (let_decl
           (var_pattern (Name))
-          (type_annotation (TypeName))
+          (TypeName)
           (Int))
         (for_of_statement
           (Const_kwd)
@@ -63,11 +62,11 @@ let gcd = (x: nat, y: nat): nat => {
     (fun_expr
       (parameter
         (Name)
-        (type_annotation (TypeName)))
+        (TypeName))
       (parameter
         (Name)
-        (type_annotation (TypeName)))
-      (type_annotation (TypeName))
+        (TypeName))
+      (TypeName)
       (body
         (let_decl
           (array_pattern
@@ -81,13 +80,13 @@ let gcd = (x: nat, y: nat): nat => {
           (block_statement
             (const_decl
               (var_pattern (Name))
-              (type_annotation (TypeName))
+              (TypeName)
               (Name))
             (assignment_operator (Name) (Name))
             (assignment_operator (Name) (Name))))
         (let_decl
           (var_pattern (Name))
-          (type_annotation (TypeName))
+          (TypeName)
           (type_as_annotation (Int) (TypeName)))
         (while_statement
           (binary_operator

@@ -16,23 +16,20 @@ let weird_length = (v : list<int>) : int =>
     (fun_expr
       (parameter
         (Name)
-        (type_annotation
-          (type_ctor_app (TypeName) (TypeName))))
-      (type_annotation (TypeName))
+        (type_ctor_app (TypeName) (TypeName)))
+      (TypeName)
       (body
         (match_expr
           (Name)
           (list_case
             (array_literal)
-            (type_annotation
-              (type_ctor_app (TypeName) (TypeName)))
-                (body (Int)))
+            (type_ctor_app (TypeName) (TypeName))
+            (body (Int)))
           (list_case
             (array_literal
               (Name)
               (array_item_rest_expr (Name)))
-            (type_annotation
-              (type_ctor_app (TypeName) (TypeName)))
+              (type_ctor_app (TypeName) (TypeName))
             (body
               (binary_operator
                 (Int)
@@ -61,8 +58,8 @@ let int_of_color = (c : color) : int =>
     (fun_expr
       (parameter
         (Name)
-        (type_annotation (TypeName)))
-      (type_annotation (TypeName))
+        (TypeName))
+      (TypeName)
       (body
         (match_expr
           (Name)
@@ -70,7 +67,7 @@ let int_of_color = (c : color) : int =>
             (ConstrName)
             (ctor_param
               (Name)
-              (type_annotation (type_tuple (TypeName) (TypeName) (TypeName))))
+              (type_tuple (TypeName) (TypeName) (TypeName)))
             (body
               (binary_operator
                 (binary_operator
@@ -87,7 +84,7 @@ let int_of_color = (c : color) : int =>
             (ConstrName)
             (ctor_param
               (Name)
-              (type_annotation (TypeName)))
+              (TypeName))
             (body
               (binary_operator (Int) (Name))))
           (ctor_case

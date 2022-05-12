@@ -24,16 +24,16 @@ let uno : storage = EURO.one;
     (export_statement
       (let_decl
         (var_pattern (Name))
-        (type_annotation (TypeName))
+        (TypeName)
         (type_as_annotation (Int) (TypeName))))
     (namespace_statement (ModuleName)
       (let_decl
         (var_pattern (Name))
-        (type_annotation (TypeName))
+        (TypeName)
         (type_as_annotation (Int) (TypeName)))
       (let_decl
         (var_pattern (Name))
-        (type_annotation (TypeName))
+        (TypeName)
         (type_as_annotation (Int) (TypeName)))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl
@@ -43,7 +43,7 @@ let uno : storage = EURO.one;
       (Name)))
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (module_access (ModuleName) (FieldName))))
 
 =========
@@ -57,7 +57,7 @@ let x : int = foo(bar(baz(1)))
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (call_expr
       (lambda (Name))
       (arguments
@@ -79,7 +79,7 @@ let x : int = int(List.List.List.length(x))
 (source_file
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (call_expr
       (lambda (Name))
       (arguments
@@ -115,10 +115,10 @@ let foo = () : int => 1
     (module_access_t (ModuleName) (Name)))
   (let_decl
     (var_pattern (Name))
-    (type_annotation (TypeName))
+    (TypeName)
     (module_access (ModuleName) (FieldName)))
   (let_decl
     (var_pattern (Name))
     (fun_expr
-      (type_annotation (TypeName))
+      (TypeName)
       (body (Int)))))
