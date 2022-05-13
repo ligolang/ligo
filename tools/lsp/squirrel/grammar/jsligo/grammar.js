@@ -12,7 +12,9 @@ module.exports = grammar({
     [$.module_access],
     [$._expr_statement, $.projection],
     [$.annot_expr, $.parameter],
-    [$.variant, $.string_type]
+    [$.variant, $.string_type],
+    [$._member_expr, $.Nat, $.Tez],
+    [$.Int, $.Nat, $.Tez]
   ],
 
   rules: {
@@ -51,13 +53,13 @@ module.exports = grammar({
 
     _expr_statement: $ => choice(
       $.fun_expr,
-      $.type_as_annotation,
       $.assignment_operator,
       $.binary_operator,
       $.unary_operator,
       $.call_expr,
       $._member_expr,
-      $.match_expr
+      $.match_expr,
+      $.type_as_annotation,
     ),
 
     assignment_operator: $ => prec.right(2,
@@ -135,6 +137,8 @@ module.exports = grammar({
       $.Int,
       $.Bytes,
       $.String,
+      $.Nat,
+      $.Tez,
       $._Bool,
       $.Unit_kwd,
       $.ctor_expr,
@@ -271,8 +275,8 @@ module.exports = grammar({
     export_statement: $ => seq(field("export", 'export'), $._declaration_statement),
 
     _declaration_statement: $ => choice(
-      $.let_decl,
-      $.const_decl,
+      $._let_decls,
+      $._const_decls,
       $.type_decl
     ),
 
@@ -282,13 +286,25 @@ module.exports = grammar({
 
     var_type: $ => field("name", $.TypeVariableName),
 
-    let_decl: $ => common.withAttrs($, seq('let', field("binding_list", $._binding_list))),
+    _let_decls: $ => common.withAttrs($, seq('let', common.sepBy1(',', $.let_decl))),
 
-    const_decl: $ => common.withAttrs($, seq('const', field("binding_list", $._binding_list))),
+    _const_decls: $ => common.withAttrs($, seq('const', common.sepBy1(',', $.const_decl))),
 
-    _binding_list: $ => common.sepBy1(',', field("binding", $._binding_initializer)),
+    let_decl: $ => $._binding_initializer,
 
-    _binding_initializer: $ => seq($._binding_pattern, optional(seq(optional($.type_params), $._type_annotation)), '=', $._expr),
+    const_decl: $ => $._binding_initializer,
+
+    _binding_initializer: $ => seq(
+      field("binding", $._binding_pattern), 
+      optional(
+        seq(
+          optional($.type_params), 
+          field("type", $._type_annotation)
+        )
+      ), 
+      '=', 
+      field("value", $._expr)
+    ),
 
     _binding_pattern: $ => choice(
       $.var_pattern,
@@ -410,8 +426,10 @@ module.exports = grammar({
     attr: $ => $._js_ligo_attribute,
 
     String: $ => /\"(\\.|[^"])*\"/,
-    Int: $ => /-?([1-9][0-9_]*|0)/,
-    _PositiveInt: $ => /([1-9][0-9_]*|0)/,
+    _Int: $ => /-?([1-9][0-9_]*|0)/,
+    Int: $ => $._Int,
+    Nat: $ => seq($._Int, 'as', 'nat'),
+    Tez: $ => seq($._Int, 'as', choice('tez', 'mutez')),
     Bytes: $ => /0x[0-9a-fA-F]+/,
 
     _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,

@@ -87,12 +87,12 @@ let gcd = (x: nat, y: nat): nat => {
         (let_decl
           (var_pattern (NameDecl))
           (TypeName)
-          (type_as_annotation (Int) (TypeName)))
+          (Nat))
         (while_statement
           (binary_operator
             (Name)
             (paren_expr
-              (type_as_annotation (Int) (TypeName))))
+              (Nat)))
           (block_statement
             (assignment_operator (Name) (binary_operator (Name) (Name)))
             (assignment_operator (Name) (Name))

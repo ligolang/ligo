@@ -40,7 +40,7 @@ let alice : user = {
     (object_literal
       (property
         (property_name (Name))
-        (type_as_annotation (Int) (TypeName)))
+        (Nat))
       (property
         (property_name (Name))
         (True_kwd))

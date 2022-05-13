@@ -81,3 +81,33 @@ let n : unit = unit;
     (var_pattern (NameDecl))
     (TypeName)
     (Unit_kwd)))
+
+=========
+nat decl
+=========
+
+let n = 1 as nat
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (Nat)))
+
+=========
+tez decl
+=========
+
+let n = 1 as tez
+let m = 2 as mutez
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (Tez))
+  (let_decl
+    (var_pattern (NameDecl))
+    (Tez)))

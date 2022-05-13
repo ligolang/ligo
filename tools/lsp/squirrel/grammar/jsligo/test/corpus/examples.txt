@@ -16,6 +16,8 @@ import US_DOLLAR = EURO;
 type storage = EURO.t;
 let uno : storage = EURO.one;
 
+let foo = x as my_typ;
+
 ---
 (source_file
   (namespace_statement (ModuleName)
@@ -25,16 +27,16 @@ let uno : storage = EURO.one;
       (let_decl
         (var_pattern (NameDecl))
         (TypeName)
-        (type_as_annotation (Int) (TypeName))))
+        (Nat)))
     (namespace_statement (ModuleName)
       (let_decl
         (var_pattern (NameDecl))
         (TypeName)
-        (type_as_annotation (Int) (TypeName)))
+        (Nat))
       (let_decl
         (var_pattern (NameDecl))
         (TypeName)
-        (type_as_annotation (Int) (TypeName)))))
+        (Nat))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl
     (TypeName)
@@ -44,7 +46,10 @@ let uno : storage = EURO.one;
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (module_access (ModuleName) (FieldName))))
+    (module_access (ModuleName) (FieldName)))
+  (let_decl
+    (var_pattern (NameDecl))
+    (type_as_annotation (Name) (TypeName))))
 
 =========
 nested function calls

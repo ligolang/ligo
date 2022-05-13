@@ -152,8 +152,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate $ \case
-        -- TODO: "let_decl"         -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
-        -- TODO: "const_decl"          -> BConst       <$> 
+        "let_decl"            -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
+        "const_decl"          -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
         "type_decl"           -> BTypeDecl    <$> field "type_name"  <*> fieldOpt "params" <*> field "type_value"
         "p_include"           -> BInclude     <$> field "filename"
         "p_import"            -> BImport      <$> field "filename"   <*> field "alias"

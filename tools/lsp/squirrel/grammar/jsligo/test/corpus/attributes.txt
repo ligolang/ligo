@@ -98,8 +98,8 @@ let decl
 ---
 
 (source_file
+  (attr)
   (let_decl
-    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -113,9 +113,9 @@ let decl twice
 ---
 
 (source_file
+  (attr)
+  (attr)
   (let_decl
-    (attr)
-    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -140,12 +140,13 @@ let bar = (b : int) : int => {
         (Name)
         (TypeName))
       (TypeName)
-          (body
-      (let_decl (attr) (attr)
-        (var_pattern (NameDecl))
-        (Int))
-      (return_statement
-        (Name))))))
+      (body
+        (attr) (attr)
+        (let_decl 
+          (var_pattern (NameDecl))
+          (Int))
+        (return_statement
+          (Name))))))
 
 =========
 const expr
@@ -168,7 +169,8 @@ const bar = (b : int) : int => {
         (TypeName))
       (TypeName)
       (body
-        (const_decl (attr) (attr)
+        (attr) (attr)
+        (const_decl 
           (var_pattern (NameDecl))
           (Int))
         (return_statement
@@ -183,8 +185,8 @@ const decl
 ---
 
 (source_file
+  (attr)
   (const_decl
-    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -198,9 +200,9 @@ const decl twice
 ---
 
 (source_file
+  (attr)
+  (attr)
   (const_decl
-    (attr)
-    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
