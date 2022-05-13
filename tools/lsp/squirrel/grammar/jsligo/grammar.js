@@ -56,11 +56,14 @@ module.exports = grammar({
       $.assignment_operator,
       $.binary_call,
       $.unary_call,
-      $.call_expr,
+      $.apply,
+      $.list,
       $._member_expr,
       $.match_expr,
       $.type_as_annotation,
     ),
+
+    list: $ => seq('list', common.par($.array_literal)),
 
     assignment_operator: $ => prec.right(2,
       seq(field("lhs", $._expr_statement),
@@ -80,11 +83,11 @@ module.exports = grammar({
 
     unary_call: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
 
-    call_expr: $ => prec.right(2, seq(field("f", $.lambda), $.arguments)),
+    apply: $ => prec.right(2, seq(field("function", $.lambda), $.arguments)),
 
     arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
 
-    lambda: $ => prec(5, choice($.call_expr, $._member_expr)),
+    lambda: $ => prec(5, choice($.apply, $._member_expr)),
 
     _expr: $ => choice($._expr_statement, $.object_literal),
 

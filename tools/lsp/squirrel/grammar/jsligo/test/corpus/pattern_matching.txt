@@ -33,10 +33,10 @@ let weird_length = (v : list<int>) : int =>
             (body
               (binary_call
                 (Int)
-                (call_expr
+                (apply
                   (lambda (Name))
                   (arguments
-                    (call_expr
+                    (apply
                       (lambda (Name))
                       (arguments (Name)))))))))))))
 

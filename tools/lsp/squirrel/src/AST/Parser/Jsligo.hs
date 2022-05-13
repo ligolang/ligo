@@ -30,10 +30,10 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         "unary_call"        -> UnOp       <$> field  "negate"      <*> field    "arg"
         "binary_call"       -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
-        
         "apply"             -> Apply      <$> field  "function"    <*> fields   "argument"
-        "block"             -> Seq        <$> fields "statement"
+        "block_statement"   -> Seq        <$> fields "statement"
         "list"              -> List       <$> fields "element"
+
         "indexing"          -> ListAccess <$> field  "box"         <*> fields   "index"
         "annot_expr"        -> Annot      <$> field  "subject"     <*> field    "type"
         "if_then_else"      -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"

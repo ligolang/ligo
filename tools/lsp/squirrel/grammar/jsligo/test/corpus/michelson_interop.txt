@@ -16,7 +16,7 @@ let michelson_add = (n: [nat, nat]): nat =>
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body
-        (call_expr
+        (apply
           (lambda
             (michelson_interop
               (michelson_code)

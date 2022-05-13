@@ -63,13 +63,13 @@ let x : int = foo(bar(baz(1)))
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (call_expr
+    (apply
       (lambda (Name))
       (arguments
-        (call_expr
+        (apply
           (lambda (Name))
           (arguments
-            (call_expr
+            (apply
               (lambda (Name))
               (arguments (Int)))))))))
 
@@ -85,10 +85,10 @@ let x : int = int(List.List.List.length(x))
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (call_expr
+    (apply
       (lambda (Name))
       (arguments
-        (call_expr
+        (apply
           (lambda
             (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
             (arguments (Name)))))))
