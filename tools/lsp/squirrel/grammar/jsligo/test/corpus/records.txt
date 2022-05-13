@@ -130,7 +130,7 @@ let full_name: full_name = ["Alice", "Johnson"];
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (array_literal
+    (tuple
       (String)
       (String))))
 
@@ -163,7 +163,7 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
     (var_pattern (NameDecl))
       (fun_expr
         (parameter
-          (array_literal
+          (tuple
             (Name)
             (wildcard))
           (TypeName))

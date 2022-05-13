@@ -1,5 +1,5 @@
 =========
-rest-pattern: array / list rest
+list-spread: array / list spread
 =========
 
 let larger_list: list<int> = list([5, ...my_list]);
@@ -11,9 +11,9 @@ let larger_list: list<int> = list([5, ...my_list]);
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list
-      (array_literal
+      (list_literal
         (Int)
-        (array_item_rest_expr (Name))))))
+        (spread (Name))))))
 
 =========
 rest-pattern: object rest
@@ -29,7 +29,7 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
     (var_pattern (NameDecl))
     (fun_expr
       (parameter
-        (array_literal (Name) (Name))
+        (tuple (Name) (Name))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body

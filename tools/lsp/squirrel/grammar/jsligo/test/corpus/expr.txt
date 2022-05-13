@@ -25,7 +25,7 @@ let x = [1, "foo", 3]
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (array_literal
+    (tuple
       (Int)
       (String)
       (Int))))
@@ -57,13 +57,13 @@ let y = [(1), ("foo"), 3];
   (let_decl
     (var_pattern (NameDecl))
     (paren_expr
-      (array_literal
+      (tuple
         (Int)
         (String)
         (Int))))
   (let_decl
     (var_pattern (NameDecl))
-    (array_literal
+    (tuple
       (paren_expr (Int))
       (paren_expr (String))
       (Int))))
@@ -125,9 +125,9 @@ let my_list: list<int> = list([1, 2, 2]);
   (let_decl
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
-    (list (array_literal)))
+    (list (list_literal)))
   (let_decl
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list
-      (array_literal (Int) (Int) (Int)))))
+      (list_literal (Int) (Int) (Int)))))

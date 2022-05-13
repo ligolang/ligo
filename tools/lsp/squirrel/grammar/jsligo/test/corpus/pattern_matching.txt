@@ -22,13 +22,13 @@ let weird_length = (v : list<int>) : int =>
         (match_expr
           (Name)
           (list_case
-            (array_literal)
+            (list_literal)
             (app_type (TypeName) (TypeName))
             (body (Int)))
           (list_case
-            (array_literal
+            (list_literal
               (Name)
-              (array_item_rest_expr (Name)))
+              (spread (Name)))
               (app_type (TypeName) (TypeName))
             (body
               (binary_call

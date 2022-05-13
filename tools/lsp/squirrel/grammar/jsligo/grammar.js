@@ -63,7 +63,7 @@ module.exports = grammar({
       $.type_as_annotation,
     ),
 
-    list: $ => seq('list', common.par($.array_literal)),
+    list: $ => seq('list', common.par($.list_literal)),
 
     assignment_operator: $ => prec.right(2,
       seq(field("lhs", $._expr_statement),
@@ -114,7 +114,7 @@ module.exports = grammar({
     ),
 
     list_case: $ => seq(
-      field("pattern", common.par(seq($.array_literal, optional($._type_annotation)))),
+      field("pattern", common.par(seq($.list_literal, optional($._type_annotation)))),
       '=>',
       field("body", $.body)
     ),
@@ -149,9 +149,11 @@ module.exports = grammar({
       $.michelson_interop,
       $.paren_expr,
       $.module_access,
-      $.array_literal,
+      $.tuple,
       $.wildcard
     ),
+
+    tuple: $ => common.brackets(common.sepBy1(',', field("item", $._annot_expr))),
 
     paren_expr: $ => common.par(field("expr", $._annot_expr)),
 
@@ -184,11 +186,9 @@ module.exports = grammar({
       field("field", $.FieldName),
     ),
 
-    array_literal: $ => choice(common.brackets(common.sepBy(',', field("element", $._array_item)))),
+    list_literal: $ => common.brackets(common.sepBy(',', field("element", $._list_item))),
 
-    _array_item: $ => choice($._annot_expr, $.array_item_rest_expr),
-
-    array_item_rest_expr: $ => seq('...', field("expr", $._expr)),
+    _list_item: $ => choice($._annot_expr, $.spread),
 
     fun_expr: $ => choice(
       seq(

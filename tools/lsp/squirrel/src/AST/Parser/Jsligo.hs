@@ -34,19 +34,19 @@ recognise (SomeRawTree dialect rawTree)
         "if_statement"      -> If         <$> field  "selector"    <*> field    "then"
         "record"            -> Record     <$> fields "assignment"
         "record_update"     -> RecordUpd  <$> field  "subject"     <*> fields   "field"
-
+        "paren_expr"        -> Paren      <$> field  "expr"
         "tuple"             -> Tuple      <$> fields "item"
+
         "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
         "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> fields "argument"
             "let_in"            -> Let        <$> field  "declaration" <*> field    "body" -- NA for JsLIGO I think??
-        "paren_expr"        -> Paren      <$> field  "expr"
         -- TODO: add support for switch-case-default
         -- TODO: add support of loops - for & while
         -- TODO: add support for assignment & assignment operators ?? will this be handled in binop ??
         _                   -> fallthrough
 
-    -- Pattern
+    -- Pattern --
   , Descent do
       boilerplate $ \case
         "tuple_pattern"          -> IsTuple  <$> fields "pattern"
@@ -60,20 +60,20 @@ recognise (SomeRawTree dialect rawTree)
         "wildcard"               -> return IsWildcard
         _                        -> fallthrough
 
-    -- Irrefutable tuple
+    -- Irrefutable tuple --
   , Descent do
       boilerplate $ \case
         "irrefutable_tuple" -> IsTuple <$> fields "item"
         _                   -> fallthrough
 
-    -- RecordFieldPattern
+    -- RecordFieldPattern -- 
   , Descent do
       boilerplate $ \case
         "record_field_pattern"   -> IsRecordField   <$> field "name" <*> field "body"
         "record_capture_pattern" -> IsRecordCapture <$> field "name"
         _                        -> fallthrough
 
-    -- Alt
+    -- Alt --
   , Descent do
       boilerplate $ \case
         "alt"  -> Alt <$> field "pattern" <*> field "expr"
