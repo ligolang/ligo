@@ -54,8 +54,8 @@ module.exports = grammar({
     _expr_statement: $ => choice(
       $.fun_expr,
       $.assignment_operator,
-      $.binary_operator,
-      $.unary_operator,
+      $.binary_call,
+      $.unary_call,
       $.call_expr,
       $._member_expr,
       $.match_expr,
@@ -70,7 +70,7 @@ module.exports = grammar({
 
     type_as_annotation: $ => seq(field("subject", $._expr_statement), 'as', field("type", $._core_type)),
 
-    binary_operator: $ => choice(
+    binary_call: $ => choice(
       prec.left(4,  seq(field("left", $._expr_statement), field("op", '||'), field("right", $._expr_statement))),
       prec.left(5,  seq(field("left", $._expr_statement), field("op", '&&'), field("right", $._expr_statement))),
       prec.left(10, seq(field("left", $._expr_statement), field("op", choice('<', '<=', '>', '>=', '==', '!=')), field("right", $._expr_statement))),
@@ -78,7 +78,7 @@ module.exports = grammar({
       prec.left(13, seq(field("left", $._expr_statement), field("op", choice('*', '/', '%')), field("right", $._expr_statement)))
     ),
 
-    unary_operator: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
+    unary_call: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
 
     call_expr: $ => prec.right(2, seq(field("f", $.lambda), $.arguments)),
 

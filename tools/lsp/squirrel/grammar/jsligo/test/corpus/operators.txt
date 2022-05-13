@@ -10,7 +10,7 @@ let x = 1 + 2;
   (let_decl
     (var_pattern
       (NameDecl))
-    (binary_operator (Int) (Int))))
+    (binary_call (Int) (Int))))
 
 =========
 assignment operator
@@ -41,7 +41,7 @@ let x = true || false;
   (let_decl
     (var_pattern
       (NameDecl))
-    (binary_operator (True_kwd) (False_kwd))))
+    (binary_call (True_kwd) (False_kwd))))
 
 =========
 unary operator
@@ -55,4 +55,4 @@ let x = - 1;
   (let_decl
     (var_pattern
       (NameDecl))
-    (unary_operator (Int))))
+    (unary_call (Int))))

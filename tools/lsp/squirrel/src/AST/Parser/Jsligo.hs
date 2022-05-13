@@ -11,6 +11,8 @@ import ParseTree
 import Parser
 
 -- TODO: add support for switch-case-default
+-- TODO: add support for assignment & assignment operators
+-- TODO: add support of loops - for & while
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -28,7 +30,7 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate $ \case
         "unary_call"        -> UnOp       <$> field  "negate"      <*> field    "arg"
         "binary_call"       -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
-        "Some_call"         -> Apply      <$> field  "some"        <*> fields   "argument"
+        
         "apply"             -> Apply      <$> field  "function"    <*> fields   "argument"
         "block"             -> Seq        <$> fields "statement"
         "list"              -> List       <$> fields "element"
@@ -79,8 +81,7 @@ recognise (SomeRawTree dialect rawTree)
         "alt"  -> Alt <$> field "pattern" <*> field "expr"
         _      -> fallthrough
 
-    -- Record fields
-    -- TODO: record
+    -- Record fields -- TODO??
   , Descent do
       boilerplate $ \case
         "capture"           -> Capture         <$> fields "accessor"
@@ -102,13 +103,6 @@ recognise (SomeRawTree dialect rawTree)
         ("p_error"   , rest) -> return $ PreprocessorCommand $ "#error "   <> rest
         ("p_define"  , rest) -> return $ PreprocessorCommand $ "#define "  <> rest
         _                    -> fallthrough
-
-  -- TODO
-    -- MapBinding
-  , Descent do
-      boilerplate $ \case
-        "binding" -> MapBinding <$> field "key" <*> field "value"
-        _         -> fallthrough
 
   , Descent do
       boilerplate' $ \case

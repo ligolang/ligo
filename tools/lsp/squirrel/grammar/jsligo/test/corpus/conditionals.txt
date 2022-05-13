@@ -77,11 +77,11 @@ let x = () => {
     (fun_expr
       (body
         (if_else_statement
-          (binary_operator (Int) (Int))
+          (binary_call (Int) (Int))
           (block_statement
             (return_statement (False_kwd)))
           (if_else_statement
-            (binary_operator (Int) (Int))
+            (binary_call (Int) (Int))
             (block_statement
               (return_statement (False_kwd)))
             (block_statement

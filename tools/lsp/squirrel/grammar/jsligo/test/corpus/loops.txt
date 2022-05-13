@@ -32,7 +32,7 @@ let sum_list = (l: list<int>): int => {
           (block_statement
             (assignment_operator
               (Name)
-              (binary_operator (Name) (Name)))))
+              (binary_call (Name) (Name)))))
         (return_statement (Name))))))
 
 =========
@@ -76,7 +76,7 @@ let gcd = (x: nat, y: nat): nat => {
             (Name)
             (Name)))
         (if_statement
-          (binary_operator (Name) (Name))
+          (binary_call (Name) (Name))
           (block_statement
             (const_decl
               (var_pattern (NameDecl))
@@ -89,12 +89,12 @@ let gcd = (x: nat, y: nat): nat => {
           (TypeName)
           (Nat))
         (while_statement
-          (binary_operator
+          (binary_call
             (Name)
             (paren_expr
               (Nat)))
           (block_statement
-            (assignment_operator (Name) (binary_operator (Name) (Name)))
+            (assignment_operator (Name) (binary_call (Name) (Name)))
             (assignment_operator (Name) (Name))
             (assignment_operator (Name) (Name))))
         (return_statement
