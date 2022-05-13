@@ -10,7 +10,7 @@ module.exports = grammar({
   conflicts: $ => [
     [$.variant],
     [$.module_access],
-    [$._expr_statement, $.projection],
+    [$._expr_statement, $.data_projection],
     [$.annot_expr, $.parameter],
     [$.variant, $.string_type],
     [$._member_expr, $.Nat, $.Tez],
@@ -142,7 +142,7 @@ module.exports = grammar({
       $._Bool,
       $.Unit_kwd,
       $.ctor_expr,
-      $.projection,
+      $.data_projection,
       $.michelson_interop,
       $.paren_expr,
       $.module_access,
@@ -156,10 +156,12 @@ module.exports = grammar({
 
     ctor_args: $ => common.par(common.sepBy(',', $._expr)),
 
-    projection: $ => choice(
-      seq($._member_expr, common.brackets($._expr)),
-      seq($._member_expr, '.', $.Name)
+    data_projection: $ => choice(
+      seq(field("field", $._member_expr), common.brackets(field("accessor", $._expr))),
+      seq(field("field", $._member_expr), '.', $._accessor_chain)
     ),
+
+    _accessor_chain: $ => prec.right(common.sepBy1('.', field("accessor", $.Name))),
 
     michelson_interop: $ => seq(
       '(Michelson',

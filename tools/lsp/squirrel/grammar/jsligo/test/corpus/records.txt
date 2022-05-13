@@ -60,7 +60,7 @@ let alice_admin: bool = alice.is_admin;
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (projection (Name) (Name))))
+    (data_projection (Name) (Name))))
 
 =========
 tuple type decl
@@ -139,6 +139,6 @@ let first_name_component: string = full_name[0];
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (projection
+    (data_projection
       (Name)
       (Int))))

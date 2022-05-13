@@ -73,12 +73,12 @@ let int_of_color = (c : color) : int =>
                 (binary_operator
                   (binary_operator
                     (Int)
-                    (projection (Name) (Int)))
+                    (data_projection (Name) (Int)))
                   (binary_operator
-                    (projection (Name) (Int))
+                    (data_projection (Name) (Int))
                     (Int)))
                 (binary_operator
-                  (projection (Name) (Int))
+                  (data_projection (Name) (Int))
                   (Int)))))
           (ctor_case
             (ConstrName)
