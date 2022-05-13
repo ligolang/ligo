@@ -36,11 +36,9 @@ recognise (SomeRawTree dialect rawTree)
         "record_update"     -> RecordUpd  <$> field  "subject"     <*> fields   "field"
         "paren_expr"        -> Paren      <$> field  "expr"
         "tuple"             -> Tuple      <$> fields "item"
-
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
         "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> []
-
-        "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
+        "pattern_match"     -> Case       <$> field  "subject"     <*> fields   "alt"
         -- TODO: add support for switch-case-default
         -- TODO: add support of loops - for & while
         -- TODO: add support for assignment & assignment operators ?? will this be handled in binop ??
@@ -73,11 +71,12 @@ recognise (SomeRawTree dialect rawTree)
         "record_capture_pattern" -> IsRecordCapture <$> field "name"
         _                        -> fallthrough
 
-    -- Alt --
+    -- Alt
   , Descent do
       boilerplate $ \case
-        "alt"  -> Alt <$> field "pattern" <*> field "expr"
-        _      -> fallthrough
+        "list_case" -> Alt <$> field "pattern" <*> field "expr"
+        "ctor_case" -> Alt <$> field "pattern" <*> field "expr"
+        _           -> fallthrough
 
     -- Record fields
   , Descent do

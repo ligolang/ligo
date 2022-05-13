@@ -19,7 +19,7 @@ let weird_length = (v : list<int>) : int =>
         (app_type (TypeName) (TypeName)))
       (TypeName)
       (body
-        (match_expr
+        (pattern_match
           (Name)
           (list_case
             (list_literal)
@@ -61,7 +61,7 @@ let int_of_color = (c : color) : int =>
         (TypeName))
       (TypeName)
       (body
-        (match_expr
+        (pattern_match
           (Name)
           (ctor_case
             (ConstrName)

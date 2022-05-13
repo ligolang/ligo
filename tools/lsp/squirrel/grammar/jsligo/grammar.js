@@ -59,7 +59,7 @@ module.exports = grammar({
       $.apply,
       $.list,
       $._member_expr,
-      $.match_expr,
+      $.pattern_match,
       $.type_as_annotation,
     ),
 
@@ -101,13 +101,22 @@ module.exports = grammar({
       $._type_annotation
     ),
 
-    match_expr: $ => seq('match', common.par(seq(field("subject", $._member_expr), ',', field("alt", choice($._list_cases, $._ctor_cases))))),
+    pattern_match: $ => seq(
+      'match', 
+      common.par(
+        seq(
+          field("subject", $._member_expr), 
+          ',', 
+          choice($._list_cases, $._ctor_cases)
+        )
+      )
+    ),
 
     _list_cases: $ => seq('list',
       common.par(
         common.brackets(
           common.sepBy1(',',
-            $.list_case
+            field("alt", $.list_case)
           )
         )
       )
@@ -116,23 +125,23 @@ module.exports = grammar({
     list_case: $ => seq(
       field("pattern", common.par(seq($.list_literal, optional($._type_annotation)))),
       '=>',
-      field("body", $.body)
+      field("expr", $.body)
     ),
 
     _ctor_cases: $ => common.block(
       common.sepBy1(',',
-        $.ctor_case
+        field("alt", $.ctor_case)
       )
     ),
 
-    ctor_param: $ => seq($._expr, $._type_annotation),
+    ctor_param: $ => seq(/* TODO: this should be pattern I think */ $._expr , $._type_annotation),
 
     ctor_case: $ => seq(
       field("pattern", $.ConstrName),
       ':',
       common.par(common.sepBy(',', $.ctor_param)),
       '=>',
-      field("body", $.body)
+      field("expr", $.body)
     ),
 
     _member_expr: $ => choice(
