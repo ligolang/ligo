@@ -73,6 +73,7 @@ let rec translate_type ?var : I.type_expression -> (meta, string) node =
   | I.T_base I.TB_never -> Prim (nil, "never", [], [])
   | I.T_base I.TB_chest -> Prim (nil, "chest", [], [])
   | I.T_base I.TB_chest_key -> Prim (nil, "chest_key", [], [])
+  | I.T_base I.TB_tx_rollup_l2_address -> Prim (nil, "tx_rollup_l2_address", [], [])
   | I.T_ticket x -> Prim (nil, "ticket", [translate_type x], [])
   | I.T_sapling_transaction memo_size -> Prim (nil, "sapling_transaction", [Int (nil, memo_size)], [])
   | I.T_sapling_state memo_size -> Prim (nil, "sapling_state", [Int (nil, memo_size)], [])
@@ -218,7 +219,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (inner, inner_us) = union us2 us3 in
     let (outer, outer_us) = union us1 inner_us in
     (E_if_left (meta, Cond (outer, e1, inner, e2, e3)), outer_us)
-  | E_let_in (e1, _inline, e2) ->
+  | E_let_in (e1, _inline, _thunk, e2) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in

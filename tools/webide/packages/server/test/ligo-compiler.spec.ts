@@ -27,7 +27,8 @@ describe('Ligo compiler', () => {
       PASCALIGO_CODE,
       'main',
       'json',
-      '0'
+      '0',
+      'ithaca'
     );
 
     expect(michelsonCode.trim()).toEqual('{ "int": "0" }');

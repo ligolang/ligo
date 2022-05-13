@@ -158,12 +158,12 @@ type parameter =
 type @return = [list<operation>, storage];
 
 // Two entrypoints
-let add = ([store, delta]: [storage, int]): storage => store + delta;
-let sub = ([store, delta]: [storage, int]): storage => store - delta;
+const add = ([store, delta]: [storage, int]): storage => store + delta;
+const sub = ([store, delta]: [storage, int]): storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-let main = ([action, store]: [parameter, storage]) : @return => {
+const main = ([action, store]: [parameter, storage]) : @return => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
@@ -175,7 +175,6 @@ let main = ([action, store]: [parameter, storage]) : @return => {
 ```
 
 </Syntax>
-
 
 We can deploy it and query the storage right after, to check that the
 storage is in fact the one which we started with:
@@ -422,7 +421,7 @@ let balances_under = ( (b, threshold) : (balances, tez) ) : balances =>
 
 type balances = map <address, tez>
 
-let balances_under = (b : balances, threshold:tez) : balances => {
+const balances_under = (b : balances, threshold:tez) : balances => {
   let f = (acc : balances, kv :[address , tez] ) : balances => {
     let [k,v] = kv ;
     if (v < threshold) { return Map.remove (k,acc) } else {return acc}
@@ -530,7 +529,6 @@ More concretely `Test.run f v` performs the following:
 The function that is being compiled is called `tester`.
 
 We also print the actual and expected sizes for good measure.
-
 
 <Syntax syntax="cameligo">
 

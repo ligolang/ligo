@@ -238,6 +238,8 @@ type constant' =
   | C_TEST_REGISTER_CONSTANT [@only_interpreter]
   | C_TEST_CONSTANT_TO_MICHELSON [@only_interpreter]
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
+  | C_TEST_PUSH_CONTEXT [@only_interpreter]
+  | C_TEST_POP_CONTEXT [@only_interpreter]
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
@@ -254,11 +256,10 @@ type constant' =
   | C_GLOBAL_CONSTANT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
-  (* New with Ithaca *)
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
   | C_OPTION_MAP
-[@@deriving enum, yojson, print_constant, only_interpreter_tags ]
+[@@deriving enum, yojson, print_constant, only_interpreter_tags, read_constant ]
 
 type deprecated = {
   name : string ;
@@ -266,5 +267,4 @@ type deprecated = {
 }
 
 type rich_constant =
-  | Deprecated of deprecated
   | Const of constant'

@@ -32,6 +32,8 @@ let list_of_option = function
 (* END HEADER *)
 %}
 
+%attribute last_expr [@recover.cost 1004]
+
 (* Reductions on error *)
 (* TODO *)
 
@@ -583,6 +585,7 @@ fun_expr(right_expr):
   attributes ES6FUN single_fun_arg "=>" right_expr {
     let region = cover (pattern_to_region $3) (expr_to_region $5) in
     let value = {binders    = $3;
+                 type_params= None;
                  lhs_type   = None;
                  arrow      = $4;
                  body       = $5;
@@ -600,18 +603,18 @@ fun_expr(right_expr):
           inside = PUnit $3;
           rpar = snd $3.value}
       } in
-    let value = {binders; lhs_type=$4; arrow=$5; body=$6; attributes=$1}
+    let value = {binders; type_params=None; lhs_type=$4; arrow=$5; body=$6; attributes=$1}
     in EFun {region; value}
   }
 | attributes ES6FUN
-  "(" nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
+  "(" ioption(type_generics) nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
     let lpar = $3 in
-    let rpar = $5 in
-    let arrow = $7 in
-    let stop   = expr_to_region $8 in
+    let rpar = $6 in
+    let arrow = $8 in
+    let stop   = expr_to_region $9 in
     let region = cover lpar#region stop in
-    let ptuple_region = nsepseq_to_region pattern_to_region $4 in
-    let (hd, tl) = $4 in
+    let ptuple_region = nsepseq_to_region pattern_to_region $5 in
+    let (hd, tl) = $5 in
     let binders = PPar {
       region = cover lpar#region arrow#region;
       value = {
@@ -619,11 +622,15 @@ fun_expr(right_expr):
           inside =
             (match tl with
                [] -> hd
-             | _ -> PTuple {value = $4; region = ptuple_region});
+             | _ -> PTuple {value = $5; region = ptuple_region});
           rpar}
       } in
-    let value = {binders; lhs_type=$6; arrow; body=$8; attributes=$1}
+    let value = {binders; type_params=$4; lhs_type=$7; arrow; body=$9; attributes=$1}
     in EFun {region; value} }
+
+type_generics :
+  "type" type_name "," { {kwd_type=$1;type_vars=($2,[]) } }
+| "type" par(nsepseq(type_name,",")) "," { {kwd_type=$1;type_vars=$2.value.inside} }
 
 single_fun_arg:
   var_pattern ":" type_expr {

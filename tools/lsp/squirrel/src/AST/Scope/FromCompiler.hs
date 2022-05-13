@@ -7,6 +7,8 @@ module AST.Scope.FromCompiler
 import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Arrow ((&&&))
 import Control.Category ((>>>))
+import Control.Comonad.Cofree (Cofree (..), _extract)
+import Control.Lens (view)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Function (on)
@@ -14,7 +16,6 @@ import Data.HashMap.Strict ((!))
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Duplo.Lattice
-import Duplo.Tree (fastMake, only)
 import UnliftIO.Directory (canonicalizePath)
 import UnliftIO.MVar (modifyMVar, newMVar)
 
@@ -25,8 +26,8 @@ import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log, i)
+import Parser (Message)
 import ParseTree (srcPath)
-import Product
 import Progress (Progress (..), (%))
 import Range
 import Util.Graph (forAMConcurrently)
@@ -41,17 +42,18 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
     -- 'StateT'. It's best to avoid using this class for stateful monads.
     counter <- newMVar 0
-    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msg) -> do
+    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msgs) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
       (defs, _) <- getLigoDefinitions src
-      forest <- fromCompiler dialect defs
-      pure $ FindContract src forest msg
+      (forest, msgs') <- fromCompiler dialect defs
+      pure $ FindContract src forest (msgs <> msgs')
 
 -- | Extract `ScopeForest` from LIGO scope dump.
-fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m ScopeForest
-fromCompiler dialect (LigoDefinitions decls scopes) =
-    foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
+fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
+fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
+  let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
+  (, msgs) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.
@@ -60,7 +62,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
       ds <- Map.fromList <$> mapM (fromLigoDecl . (decls' !)) es
       let rs = Map.keysSet ds
       r' <- normalizeRange $ fromLigoRangeOrDef r
-      pure (injectScope (fastMake (rs :> r' :> Nil) []) ds sf)
+      pure (injectScope ((rs, r') :< []) ds sf)
 
     normalizeRange :: Range -> m Range
     normalizeRange = rFile canonicalizePath
@@ -87,7 +89,7 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
           = withListZipper
           $ find (subject `isCoveredBy`) >>> atLocus maybeLoop
 
-        isCoveredBy = leq `on` getRange
+        isCoveredBy = leq `on` snd . view _extract
 
         -- If there are no trees above subject here, just put it in.
         -- Otherwise, put it in a tree that covers it.
@@ -95,4 +97,4 @@ fromCompiler dialect (LigoDefinitions decls scopes) =
         maybeLoop = Just . maybe subject restart
 
         -- Take a forest out of tree, loop, put it back.
-        restart (only -> (r, trees)) = fastMake r (loop trees)
+        restart (r :< trees) = r :< loop trees

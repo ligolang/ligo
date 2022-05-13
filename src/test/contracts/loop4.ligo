@@ -10,3 +10,15 @@ function while_sum (var n : nat) : nat is
     };
     var _ := i;
   } with r
+
+
+function while_record (var n: nat) : nat is
+  block {
+    var c := 0n;
+    var tmp := record [ y = n; prev_y = 0n; ];
+    while abs (tmp.y - tmp.prev_y) > 1n
+      block {
+        tmp.prev_y := tmp.y ;
+        tmp.y := (tmp.y + c) / 2n
+      }
+  } with tmp.y

@@ -294,7 +294,7 @@ module Fold_helpers(M : Monad) = struct
        let value = {mod_alias;semi;body} in
        return @@ EModAlias {value;region}
     | EFun     {value;region} ->
-       let {binders=_; lhs_type; arrow=_; body;attributes=_} = value in
+       let {binders=_; type_params=_; lhs_type; arrow=_; body;attributes=_} = value in
        let* body = self body in
        let* lhs_type = bind_map_option (fun (a,b) ->
                            let* b = self_type b in ok (a,b)) lhs_type in

@@ -18,12 +18,13 @@ import AST.Scope.Common (contractTree, lookupContract)
 import AST.Scope.ScopedDecl (Parameter (..), Pattern (..), Type (..))
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
+import Log (runNoLoggingT)
 import Progress (noProgress)
 import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (ScopeTester, withoutLogger)
+import Test.Common.Util (ScopeTester)
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
@@ -209,8 +210,8 @@ caseInfos =
   ]
 
 simpleFunctionCallDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
-simpleFunctionCallDriver testCases = withoutLogger \runLogger -> do
-  graph <- runLogger $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
+simpleFunctionCallDriver testCases = do
+  graph <- runNoLoggingT $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
   pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) testCases
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)

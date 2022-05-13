@@ -2,6 +2,7 @@ module AST.Parser
   ( Source (..)
   , ParserCallback
   , parse
+  , loadPreprocessed
   , parsePreprocessed
   , parseWithScopes
   , parseContracts
@@ -14,7 +15,7 @@ module AST.Parser
 import Control.Monad ((<=<))
 import Control.Monad.IO.Unlift (MonadIO (liftIO), MonadUnliftIO)
 import Data.Bifunctor (second)
-import Data.Either (isRight)
+import Data.Foldable (toList)
 import Data.List (find)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Text (Text)
@@ -31,7 +32,7 @@ import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Scope
   ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
-  , ParsedContractInfo, addLigoErrToMsg, addScopes, contractNotFoundException
+  , ParsedContractInfo, addLigoErrsToMsg, addScopes, contractNotFoundException
   , lookupContract
   )
 import Cli
@@ -41,7 +42,7 @@ import Cli
 import Extension
 import Log (Log, i)
 import Log qualified
-import ParseTree (Source (..), srcToText, toParseTree)
+import ParseTree (Source (..), pathToSrc, toParseTree)
 import Parser
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
@@ -58,24 +59,23 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
-parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
-parsePreprocessed src = do
-  (src', needsPreprocessing) <- liftIO $ prePreprocess <$> srcToText src
+loadPreprocessed :: (HasLigoClient m, Log m) => Source -> m (Source, [Message])
+loadPreprocessed src = do
+  let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
-    then do
-      (src'', err) <- (second (const Nothing) <$> preprocess src') `catches`
-        [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
-          pure (src', Just $ fromLigoErrorToMsg err)
+    then
+      (second (const []) <$> preprocess src') `catches`
+        [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
+          pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: SomeLigoException) ->
-          pure (src', Nothing)
+          pure (src', [])
         , Handler \(e :: IOError) -> do
           -- Likely LIGO isn't installed or was not found.
           $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
-          pure (src', Nothing)
+          pure (src', [])
         ]
-      maybe id addLigoErrToMsg err <$> parse src''
     else
-      parse src'
+      pure (src', [])
   where
     -- If the user has hand written any line markers, they will get removed here.
     -- Also query whether we need to do any preprocessing at all in the first place.
@@ -86,7 +86,12 @@ parsePreprocessed src = do
         prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
-      (Text (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
+      (Source (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
+
+parsePreprocessed :: (HasLigoClient m, Log m) => Source -> m ContractInfo
+parsePreprocessed src = do
+  (src', msgs) <- loadPreprocessed src
+  addLigoErrsToMsg msgs <$> parse src'
 
 parseWithScopes
   :: forall impl m
@@ -115,7 +120,8 @@ parseContracts parser reportProgress top = do
   pooledMapConcurrently
     (\(n, c) -> do
       reportProgress (Progress (n % numContracts) (mkMsg c))
-      parser (Path c))
+      src <- pathToSrc c
+      parser src)
     (zip [(0 :: Int) ..] input)
 
 -- | Scan the whole directory for LIGO contracts.
@@ -132,7 +138,7 @@ scanContractsImpl seen top = do
     exists <- doesDirectoryExist p
     if exists
       then scanContractsImpl seen p
-      else if isRight (getExt p)
+      else if isLigoFile p
         then pure $ p : seen
         else pure seen
 
@@ -155,6 +161,6 @@ parseContractsWithDependenciesScopes
 parseContractsWithDependenciesScopes parser reportProgress =
   addScopes @impl reportProgress <=< parseContractsWithDependencies parser reportProgress
 
-collectAllErrors :: ContractInfo' -> [Msg]
+collectAllErrors :: ContractInfo' -> [Message]
 collectAllErrors (FindContract _ tree errs) =
-   errs <> collectTreeErrors tree
+  errs <> collectTreeErrors tree

@@ -1,11 +1,13 @@
 import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelectedExampleAction } from './examples';
 
 export enum ActionType {
-  ChangeEntrypoint = 'evaluate-expr-change-entrypoint'
+  ChangeEntrypoint = 'evaluate-expr-change-entrypoint',
+  ChangeProtocol = 'evaluate-expr-change-protocol'
 }
 
 export interface EvaluateValueState {
   entrypoint: string;
+  protocol: string;
 }
 
 export class ChangeEntrypointAction {
@@ -13,10 +15,17 @@ export class ChangeEntrypointAction {
   constructor(public payload: EvaluateValueState['entrypoint']) {}
 }
 
-type Action = ChangeEntrypointAction | ChangeSelectedExampleAction;
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeProtocol;
+  constructor(public payload: EvaluateValueState['protocol']) {}
+}
+
+
+type Action = ChangeEntrypointAction | ChangeSelectedExampleAction | ChangeProtocolAction;
 
 const DEFAULT_STATE: EvaluateValueState = {
-  entrypoint: ''
+  entrypoint: '',
+  protocol: 'ithaca'
 };
 
 const evaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueState => {
@@ -25,6 +34,11 @@ const evaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueStat
       return {
         ...state,
         ...(!action.payload ? DEFAULT_STATE : action.payload.evaluateValue)
+      };
+    case ActionType.ChangeProtocol:
+      return {
+        ...state,
+        entrypoint: action.payload
       };
     case ActionType.ChangeEntrypoint:
       return {

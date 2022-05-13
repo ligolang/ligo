@@ -69,7 +69,7 @@ and expression_content = function
   | E_big_map     e -> `List [ `String "E_big_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_list        e -> `List [ `String "E_list"; list expression e]
   | E_set         e -> `List [ `String "E_set"; list expression e]
-  | E_assign      e -> `List [ `String "E_assign";   assign expression e ]
+  | E_assign      e -> `List [ `String "E_assign";   assign expression type_expression e ]
   | E_for         e -> `List [ `String "E_for";      for_   expression e ]
   | E_for_each    e -> `List [ `String "E_for_each"; for_each   expression e ]
   | E_while       e -> `List [ `String "E_while";    while_loop expression e ]

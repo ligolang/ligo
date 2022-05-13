@@ -30,7 +30,7 @@ let v_none : unit -> value =
 let v_ctor : string -> value -> value =
   fun ctor value -> V_Construct (ctor, value)
 
-let v_address : Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.t -> value =
+let v_address : Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t -> value =
   fun a -> V_Ct (C_address a)
 
 let extract_pair : value -> (value * value) option =
@@ -62,7 +62,7 @@ let is_bool : value -> bool =
 let counter_of_address : string -> int = fun addr ->
   try (int_of_string addr) with | Failure _ -> -1
 
-let get_address : value -> Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.t option = function
+let get_address : value -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t option = function
   | V_Ct ( C_address x ) -> Some x
   | _ -> None
 
@@ -200,9 +200,9 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_string s, C_string s' -> String.compare s s'
   | C_bytes b, C_bytes b' -> Bytes.compare b b'
   | C_mutez m, C_mutez m' -> Z.compare m m'
-  | C_address a, C_address a' -> Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.compare a a'
+  | C_address a, C_address a' -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a'
   | C_contract {address=a;entrypoint=e}, C_contract {address=a';entrypoint=e'} -> (
-     match Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.compare a a' with
+     match Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a' with
        0 -> Option.compare String.compare e e'
      | c -> c
   )
@@ -230,6 +230,7 @@ let tag_value : value -> int = function
   | V_Michelson _ -> 6
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
+  | V_Thunk _ -> 9
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -272,7 +273,8 @@ let rec compare_value (v : value) (v' : value) : int =
     | c -> c
   )
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _) -> Int.compare (tag_value v) (tag_value v')
+  | V_Thunk v, V_Thunk v' -> Caml.compare v v'
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

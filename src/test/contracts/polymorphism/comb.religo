@@ -1,16 +1,16 @@
 type dup ('a) = ('a, 'a);
 
-let diag : (_a => dup (_a)) = (x : _a) => (x, x);
+let diag = (type a, x : a) => (x, x);
 
-let rec rev  : ((list (_a), list (_a)) => list (_a)) = ((xs, acc) : (list (_a), list (_a))) : list (_a) =>
+let rec rev = (type a, (xs, acc) : (list (a), list (a))) : list (a) =>
   switch xs {
   | [] => acc
   | [x,... xs] => rev (xs, [x,... acc])
   };
 
-let rev : (list (_a) => list (_a)) = (xs : list (_a)) : list (_a) => rev (xs, ([] : list (_a)));
+let rev = (type a, xs : list (a)) : list (a) => rev (xs, ([] : list (a)));
 
-let rec zip : ((list (_a), list (_b), list((_a, _b))) => list ((_a, _b))) = ((xs, ys, acc) : (list (_a), list (_b), list ((_a, _b)))) : list ((_a, _b)) =>
+let rec zip = (type (a,b), (xs, ys, acc) : (list (a), list (b), list ((a, b)))) : list ((a, b)) =>
   switch (xs) {
   | [] =>
        switch (ys) {
@@ -24,9 +24,9 @@ let rec zip : ((list (_a), list (_b), list((_a, _b))) => list ((_a, _b))) = ((xs
         }
   };
 
-let zip : (list (_a) => list (_b) => list ((_a, _b))) = (xs : list (_a)) => (ys : list (_b)) : list ((_a, _b)) => rev (zip (xs, ys, ([] : list ((_a, _b)))));
+let zip = (type (a,b), xs : list (a)) => (ys : list (b)) : list ((a, b)) => rev (zip (xs, ys, ([] : list ((a, b)))));
 
-let self_zip : (list (_tau) => list ((_tau, _tau))) = (xs : list (_tau)) : list ((_tau, _tau)) =>
+let self_zip = (type tau, xs : list (tau)) : list ((tau, tau)) =>
   let (xs, ys) = diag (xs);
   (zip (xs))(ys);
 

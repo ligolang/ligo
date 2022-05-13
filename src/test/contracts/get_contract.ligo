@@ -2,7 +2,7 @@ type storage is unit
 type return is list (operation) * storage
 
 function cb (const s : storage) : return is block {
-  const c : contract (unit) = get_contract (Tezos.sender)
+  const c : contract (unit) = Tezos.get_contract (Tezos.sender)
 } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 

@@ -5,7 +5,7 @@ module AST  = Ast_imperative
 module CST  = Cst.Pascaligo
 module Wrap = Lexing_shared.Wrap
 module Token = Lexing_pascaligo.Token
-module Predefined = Predefined.Tree_abstraction.Pascaligo
+module Predefined = Predefined.Tree_abstraction
 module Shared_helpers = Tree_abstraction_shared.Helpers
 
 open Simple_utils.Function
@@ -41,7 +41,7 @@ let prefix_colon a = (Wrap.ghost "", a)
 (* Dialect-relevant functions *)
 open Syntax_types
 
-type dialect = Syntax_types.pascaligo_dialect 
+type dialect = Syntax_types.pascaligo_dialect
 let terminator = function
   | Terse -> Some Token.ghost_semi
   | Verbose -> None
@@ -190,6 +190,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_variable _
   | E_literal _
   | E_constant _
+  | E_module_accessor _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -583,8 +584,8 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let set = list_to_sepseq ~sep:Token.ghost_semi set in
     let compound : CST.expr CST.compound = inject Token.ghost_set set in
     return_expr @@ CST.E_Set (Region.wrap_ghost @@ compound)
-  | E_assign {variable;access_path;expression} ->
-    let lhs = decompile_to_lhs dialect variable access_path in
+  | E_assign {binder;access_path;expression} ->
+    let lhs = decompile_to_lhs dialect binder.var access_path in
     let rhs = decompile_expression ~dialect expression in
     let assign : CST.assignment = {lhs;assign=Token.ghost_ass;rhs} in
     return_inst @@ I_Assign (Region.wrap_ghost assign)

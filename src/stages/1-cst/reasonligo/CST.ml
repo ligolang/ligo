@@ -157,6 +157,11 @@ and let_binding = {
   let_rhs  : expr
 }
 
+and type_params = {
+  kwd_type  : kwd_type;
+  type_vars : (variable, comma) nsepseq
+}
+
 (* Type declarations *)
 
 and type_decl = {
@@ -469,6 +474,7 @@ and mod_alias = {
 }
 
 and fun_expr = {
+  type_params : type_params option;
   binders     : pattern;
   lhs_type    : (colon * type_expr) option;
   arrow       : arrow;

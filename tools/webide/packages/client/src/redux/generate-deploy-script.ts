@@ -7,6 +7,7 @@ import { Tool } from './types';
 export enum ActionType {
   ChangeTool = 'generate-deploy-script-change-tool',
   ChangeEntrypoint = 'generate-deploy-script-change-entrypoint',
+  ChangeProtocol = 'generate-deploy-script-change-protocol',
   ChangeStorage = 'generate-deploy-script-change-storage',
 }
 
@@ -16,6 +17,7 @@ export interface GenerateDeployScriptState {
   originationAccount: string;
   storage: string;
   burnCap: number;
+  protocol: string;
 }
 
 export class ChangeToolAction {
@@ -28,6 +30,11 @@ export class ChangeEntrypointAction {
   constructor(public payload: GenerateDeployScriptState['entrypoint']) {}
 }
 
+export class ChangeProtocolAction {
+  public readonly type = ActionType.ChangeProtocol;
+  constructor(public payload: GenerateDeployScriptState['protocol']) {}
+}
+
 export class ChangeStorageAction {
   public readonly type = ActionType.ChangeStorage;
   constructor(public payload: GenerateDeployScriptState['storage']) {}
@@ -37,6 +44,7 @@ type Action =
   | ChangeToolAction
   | ChangeEntrypointAction
   | ChangeStorageAction
+  | ChangeProtocolAction
   | ChangeSelectedExampleAction;
 
 const DEFAULT_STATE: GenerateDeployScriptState = {
@@ -44,6 +52,7 @@ const DEFAULT_STATE: GenerateDeployScriptState = {
   entrypoint: '',
   storage: '',
   originationAccount: '',
+  protocol: 'ithaca',
   burnCap: 0,
 };
 
@@ -68,6 +77,11 @@ const generateDeployScript = (
       return {
         ...state,
         entrypoint: action.payload,
+     };
+    case ActionType.ChangeProtocol:
+      return {
+        ...state,
+        protocol: action.payload,
       };
     case ActionType.ChangeStorage:
       return {

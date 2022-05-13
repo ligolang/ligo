@@ -105,7 +105,7 @@ data Type
 
 data TypeField = TypeField
   { _tfName :: Text
-  , _tfTspec :: TypeDeclSpecifics Type
+  , _tfTspec :: Maybe (TypeDeclSpecifics Type)
   }
   deriving stock (Eq, Show)
 
@@ -205,7 +205,7 @@ instance IsLIGO TypeVariable where
 
 instance IsLIGO TypeField where
   toLIGO TypeField{ .. } = node
-    (LIGO.TField (node (LIGO.FieldName _tfName)) (toLIGO _tfTspec))
+    (LIGO.TField (node (LIGO.FieldName _tfName)) (toLIGO <$> _tfTspec))
 
 instance IsLIGO TypeConstructor where
   toLIGO TypeConstructor{ .. } = node
@@ -288,4 +288,4 @@ accessField tspec (Left num) = do
 accessField tspec (Right text) = do
   typeFields <- tspec ^? tdsInit . _RecordType
   fitting <- find ((text ==) . _tfName) typeFields
-  pure (_tfTspec fitting)
+  _tfTspec fitting
