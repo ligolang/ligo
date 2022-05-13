@@ -49,10 +49,15 @@ module Typing = struct
   module PP = struct
     open Format
     open Ast_typed.PP
-    open Simple_utils.PP_helpers
     open Types
 
-    let list_sep_scope x = list_sep x (const " | ")
+    let print_list elt_printer ppf l =
+      let rec aux ppf = function
+      | [] -> fprintf ppf ""
+      | hd :: tl -> Format.fprintf ppf "| %a@,%a" elt_printer hd aux tl
+      in
+      fprintf ppf "@[<hv>%a@]" aux l
+
     let value_binding ppf (ev,te) =
       fprintf ppf "%a => %a" expression_variable ev type_expression te
     let type_binding ppf (type_var,type_) =
@@ -62,10 +67,10 @@ module Typing = struct
       fprintf ppf "%a => %a" module_variable mod_var context type_
 
     and context ppf {values;types;modules} =
-      fprintf ppf "{[ %a; @; %a; %a; ]}"
-        (list_sep_scope value_binding ) (ValueMap.to_kv_list  values)
-        (list_sep_scope type_binding  ) (TypeMap.to_kv_list   types)
-        (list_sep_scope module_binding) (ModuleMap.to_kv_list modules)
+      fprintf ppf "context:@,{[@[<v 2>@,%a; @,%a; @,%a; ]}@]"
+        (print_list value_binding)  (ValueMap.to_kv_list  values)
+        (print_list type_binding)   (TypeMap.to_kv_list   types)
+        (print_list module_binding) (ModuleMap.to_kv_list modules)
 
   end (* of module PP *)
   let pp =  PP.context
