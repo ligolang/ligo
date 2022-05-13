@@ -100,10 +100,10 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate' \case
         ("p_if"      , rest) -> return $ PreprocessorCommand $ "#if "      <> rest
         ("p_error"   , rest) -> return $ PreprocessorCommand $ "#error "   <> rest
-        ("p_warning" , rest) -> return $ PreprocessorCommand $ "#warning " <> rest
         ("p_define"  , rest) -> return $ PreprocessorCommand $ "#define "  <> rest
         _                    -> fallthrough
 
+  -- TODO
     -- MapBinding
   , Descent do
       boilerplate $ \case
@@ -112,25 +112,25 @@ recognise (SomeRawTree dialect rawTree)
 
   , Descent do
       boilerplate' $ \case
-        ("+", _)      -> return $ Op "+"
-        ("-", _)      -> return $ Op "-"
-        ("mod", _)    -> return $ Op "mod"
-        ("/", _)      -> return $ Op "/"
-        ("*", _)      -> return $ Op "*"
-        ("land", _)   -> return $ Op "land"
-        ("lor", _)    -> return $ Op "lor"
-        ("lxor", _)   -> return $ Op "lxor"
-        ("lsl", _)    -> return $ Op "lsl"
-        ("lsr", _)    -> return $ Op "lsr"
-        ("++", _)     -> return $ Op "++"
-        (">", _)      -> return $ Op ">"
-        ("<", _)      -> return $ Op "<"
-        (">=", _)     -> return $ Op ">="
-        ("<=", _)     -> return $ Op "<="
-        ("==", _)     -> return $ Op "=="
-        ("!=", _)     -> return $ Op "!="
         ("||", _)     -> return $ Op "||"
         ("&&", _)     -> return $ Op "&&"
+        ("<", _)      -> return $ Op "<"
+        ("<=", _)     -> return $ Op "<="
+        (">", _)      -> return $ Op ">"
+        (">=", _)     -> return $ Op ">="
+        ("==", _)     -> return $ Op "=="
+        ("!=", _)     -> return $ Op "!="
+        ("+", _)      -> return $ Op "+"
+        ("-", _)      -> return $ Op "-"
+        ("*", _)      -> return $ Op "*"
+        ("/", _)      -> return $ Op "/"
+        ("%", _)      -> return $ Op "%"
+        ("=", _)      -> return $ Op "="
+        ("*=", _)     -> return $ Op "*="
+        ("/=", _)     -> return $ Op "/="
+        ("%=", _)     -> return $ Op "%="
+        ("+=", _)     -> return $ Op "+="
+        ("-=", _)     -> return $ Op "-="
         ("negate", n) -> return $ Op n
         _             -> fallthrough
 
