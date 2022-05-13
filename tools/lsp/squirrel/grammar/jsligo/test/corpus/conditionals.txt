@@ -17,7 +17,7 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
+    (lambda
       (body
         (if_statement
           (True_kwd)
@@ -46,7 +46,7 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
+    (lambda
       (body
         (if_else_statement
           (True_kwd)
@@ -74,7 +74,7 @@ let x = () => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
+    (lambda
       (body
         (if_else_statement
           (binary_call (Int) (Int))
@@ -107,8 +107,8 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (body
@@ -140,8 +140,8 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (body
@@ -170,8 +170,8 @@ let x = (x : string) => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (body

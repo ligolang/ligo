@@ -27,8 +27,8 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (tuple (Name) (Name))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)

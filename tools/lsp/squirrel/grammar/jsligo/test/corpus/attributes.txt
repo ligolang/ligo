@@ -135,8 +135,8 @@ let bar = (b : int) : int => {
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (TypeName)
@@ -163,8 +163,8 @@ const bar = (b : int) : int => {
 (source_file
   (const_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (TypeName)

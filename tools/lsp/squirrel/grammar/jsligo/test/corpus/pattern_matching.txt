@@ -13,8 +13,8 @@ let weird_length = (v : list<int>) : int =>
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (app_type (TypeName) (TypeName)))
       (TypeName)
@@ -34,10 +34,10 @@ let weird_length = (v : list<int>) : int =>
               (binary_call
                 (Int)
                 (apply
-                  (lambda (Name))
+                  (Name)
                   (arguments
                     (apply
-                      (lambda (Name))
+                      (Name)
                       (arguments (Name)))))))))))))
 
 =========
@@ -55,8 +55,8 @@ let int_of_color = (c : color) : int =>
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (TypeName))
       (TypeName)

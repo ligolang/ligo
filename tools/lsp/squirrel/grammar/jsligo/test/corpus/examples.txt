@@ -64,13 +64,13 @@ let x : int = foo(bar(baz(1)))
     (var_pattern (NameDecl))
     (TypeName)
     (apply
-      (lambda (Name))
+      (Name)
       (arguments
         (apply
-          (lambda (Name))
+          (Name)
           (arguments
             (apply
-              (lambda (Name))
+              (Name)
               (arguments (Int)))))))))
 
 =========
@@ -86,12 +86,11 @@ let x : int = int(List.List.List.length(x))
     (var_pattern (NameDecl))
     (TypeName)
     (apply
-      (lambda (Name))
+      (Name)
       (arguments
         (apply
-          (lambda
-            (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
-            (arguments (Name)))))))
+          (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName))
+          (arguments (Name)))))))
 
 =========
 automatic semicolon insertion
@@ -124,6 +123,6 @@ let foo = () : int => 1
     (module_access (ModuleName) (FieldName)))
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
+    (lambda
       (TypeName)
       (body (Int)))))

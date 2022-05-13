@@ -24,7 +24,7 @@ let x = () => { x += 2; return x };
 (source_file
   (let_decl
   (var_pattern (NameDecl))
-  (fun_expr
+  (lambda
     (body
       (assignment_operator (Name) (Int))
       (return_statement (Name))))))

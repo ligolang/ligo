@@ -11,7 +11,7 @@ let x = (foo (42))
     (var_pattern (NameDecl))
     (paren_expr
       (apply
-        (lambda (Name))
+        (Name)
         (arguments (Int))))))
 
 =========

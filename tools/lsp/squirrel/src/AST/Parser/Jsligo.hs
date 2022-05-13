@@ -37,10 +37,10 @@ recognise (SomeRawTree dialect rawTree)
         "paren_expr"        -> Paren      <$> field  "expr"
         "tuple"             -> Tuple      <$> fields "item"
 
-        "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
-        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> fields "argument"
-            "let_in"            -> Let        <$> field  "declaration" <*> field    "body" -- NA for JsLIGO I think??
+        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> []
+
+        "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         -- TODO: add support for switch-case-default
         -- TODO: add support of loops - for & while
         -- TODO: add support for assignment & assignment operators ?? will this be handled in binop ??
@@ -148,7 +148,7 @@ recognise (SomeRawTree dialect rawTree)
         "type_decl"           -> BTypeDecl    <$> field "type_name"  <*> fieldOpt "params" <*> field "type_value"
         "p_include"           -> BInclude     <$> field "filename"
         "p_import"            -> BImport      <$> field "filename"   <*> field "alias"
-        "parameter"           -> BParameter   <$> field "expr"       <*> fieldOpt "type"
+        "fun_arg"             -> BParameter   <$> field "argument"   <*> fieldOpt "type"
         "namespace_statement" -> BModuleDecl  <$> field "moduleName" <*> fields "declaration"
         "import_statement"    -> BModuleAlias <$> field "moduleName" <*> fields "module"
         _                     -> fallthrough

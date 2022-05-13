@@ -10,19 +10,18 @@ let michelson_add = (n: [nat, nat]): nat =>
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (fun_expr
-      (parameter
+    (lambda
+      (fun_arg
         (Name)
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (apply
-          (lambda
-            (michelson_interop
-              (michelson_code)
-              (fun_type
-                (tuple_type (TypeName) (TypeName))
-                (TypeName))))
+          (michelson_interop
+            (michelson_code)
+            (fun_type
+              (tuple_type (TypeName) (TypeName))
+              (TypeName)))
           (arguments (Name)))))))
 
 =========

@@ -161,8 +161,8 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-      (fun_expr
-        (parameter
+      (lambda
+        (fun_arg
           (tuple
             (Name)
             (wildcard))

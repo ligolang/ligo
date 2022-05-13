@@ -11,7 +11,7 @@ module.exports = grammar({
     [$.variant],
     [$.module_access],
     [$._expr_statement, $.data_projection],
-    [$.annot_expr, $.parameter],
+    [$.annot_expr, $.fun_arg],
     [$.variant, $.string_type],
     [$._member_expr, $.Nat, $.Tez],
     [$.Int, $.Nat, $.Tez]
@@ -52,7 +52,7 @@ module.exports = grammar({
     break_statement: $ => 'break',
 
     _expr_statement: $ => choice(
-      $.fun_expr,
+      $.lambda,
       $.assignment_operator,
       $.binary_call,
       $.unary_call,
@@ -83,11 +83,11 @@ module.exports = grammar({
 
     unary_call: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
 
-    apply: $ => prec.right(2, seq(field("function", $.lambda), $.arguments)),
+    apply: $ => prec.right(2, seq(field("function", $._apply), $.arguments)),
 
     arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
 
-    lambda: $ => prec(5, choice($.apply, $._member_expr)),
+    _apply: $ => prec(5, choice($.apply, $._member_expr)),
 
     _expr: $ => choice($._expr_statement, $._record_expr),
 
@@ -173,7 +173,7 @@ module.exports = grammar({
         seq(
           field("code", $.michelson_code),
           'as',
-          field("type", $._core_type),
+          field("type", $._type_expr),
         ),
       ')'
     ),
@@ -190,9 +190,9 @@ module.exports = grammar({
 
     _list_item: $ => choice($._annot_expr, $.spread),
 
-    fun_expr: $ => choice(
+    lambda: $ => choice(
       seq(
-        common.par($._parameters),
+        common.par(common.sepBy1(',', field("argument", $.fun_arg))),
         optional(field("type", $._type_annotation)), '=>',
         field("body", $.body),
       ),
@@ -213,9 +213,7 @@ module.exports = grammar({
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
-    _parameters: $ => common.sepBy1(',', field("argument", $.parameter)),
-
-    parameter: $ => seq(field("expr", $._expr), field("type", $._type_annotation)),
+    fun_arg: $ => seq(field("argument", $._expr), field("type", $._type_annotation)),
 
     return_statement: $ => prec.left(2, seq('return', field("expr", optional($._expr)))),
 
