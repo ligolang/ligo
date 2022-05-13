@@ -89,7 +89,7 @@ module.exports = grammar({
 
     lambda: $ => prec(5, choice($.apply, $._member_expr)),
 
-    _expr: $ => choice($._expr_statement, $.object_literal),
+    _expr: $ => choice($._expr_statement, $._record_expr),
 
     _annot_expr: $ => choice(
       $.annot_expr,
@@ -221,11 +221,33 @@ module.exports = grammar({
 
     block_statement: $ => prec.left(2, seq('{', $._statements, '}', optional($._automatic_semicolon))),
 
-    object_literal: $ => common.block(common.sepBy(',', $.property)),
+    _record_expr: $ => choice($.record, $.record_update),
 
-    property: $ => choice($.Name, seq(field("property_name", $.property_name), ':', field("expr", $._expr)), $._property_spread),
+    record: $ => common.block(seq(
+      field("assignment", $._record_field),
+      optional(seq(
+        ',',
+        common.sepEndBy(',', field("assignment", $._record_field)),
+      ))
+    )),
 
-    _property_spread: $ => seq('...', field("spread_expr", $._expr_statement)),
+    _record_field: $ => choice($.record_field, $.capture),
+
+    record_field: $ => seq(
+      field("accessor", $.property_name), 
+      ':', 
+      field("value", $._expr)
+    ),
+
+    capture: $ => field("accessor", $.Name),
+
+    record_update: $ => common.block(seq(
+      field("subject", $.spread),
+      ',',
+      common.sepEndBy1(',', field("field", $._record_field)),
+    )),
+
+    spread: $ => seq('...', field("name", $._expr_statement)),
 
     property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 

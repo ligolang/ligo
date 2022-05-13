@@ -10,10 +10,6 @@ import Duplo.Tree
 import ParseTree
 import Parser
 
--- TODO: add support for switch-case-default
--- TODO: add support for assignment & assignment operators
--- TODO: add support of loops - for & while
-
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
   = fmap (SomeLIGO dialect)
@@ -33,19 +29,21 @@ recognise (SomeRawTree dialect rawTree)
         "apply"             -> Apply      <$> field  "function"    <*> fields   "argument"
         "block_statement"   -> Seq        <$> fields "statement"
         "list"              -> List       <$> fields "element"
-
-        "indexing"          -> ListAccess <$> field  "box"         <*> fields   "index"
         "annot_expr"        -> Annot      <$> field  "subject"     <*> field    "type"
-        "if_then_else"      -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
+        "if_else_statement" -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
+        "if_statement"      -> If         <$> field  "selector"    <*> field    "then"
         "record"            -> Record     <$> fields "assignment"
         "record_update"     -> RecordUpd  <$> field  "subject"     <*> fields   "field"
-        "record_punning"    -> Record     <$> fields "assignment"
+
         "tuple"             -> Tuple      <$> fields "item"
         "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
         "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> fields "argument"
-        "let_in"            -> Let        <$> field  "declaration" <*> field    "body"
+            "let_in"            -> Let        <$> field  "declaration" <*> field    "body" -- NA for JsLIGO I think??
         "paren_expr"        -> Paren      <$> field  "expr"
+        -- TODO: add support for switch-case-default
+        -- TODO: add support of loops - for & while
+        -- TODO: add support for assignment & assignment operators ?? will this be handled in binop ??
         _                   -> fallthrough
 
     -- Pattern
@@ -81,13 +79,12 @@ recognise (SomeRawTree dialect rawTree)
         "alt"  -> Alt <$> field "pattern" <*> field "expr"
         _      -> fallthrough
 
-    -- Record fields -- TODO??
+    -- Record fields
   , Descent do
       boilerplate $ \case
         "capture"           -> Capture         <$> fields "accessor"
         "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
-        "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
-        "spread"            -> Spread          <$> field "name"
+        "spread"            -> Spread          <$> field  "name"
         _                   -> fallthrough
 
     -- Preprocessor

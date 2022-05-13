@@ -37,14 +37,14 @@ let alice : user = {
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (object_literal
-      (property
+    (record
+      (record_field
         (property_name (Name))
         (Nat))
-      (property
+      (record_field
         (property_name (Name))
         (True_kwd))
-      (property
+      (record_field
         (property_name (Name))
         (String)))))
 
@@ -61,6 +61,49 @@ let alice_admin: bool = alice.is_admin;
     (var_pattern (NameDecl))
     (TypeName)
     (data_projection (Name) (Name))))
+
+=========
+record field punning
+=========
+
+let alice : user = {
+  id,
+  is_admin,
+  name
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern
+      (NameDecl))
+      (TypeName)
+      (record
+        (capture (Name))
+        (capture (Name))
+        (capture (Name)))))
+
+=========
+record update & punning
+=========
+
+let alice : user = {
+  ...bob,
+  is_admin,
+  name     : "Alice"
+};
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (TypeName)
+    (record_update
+      (spread (Name))
+      (capture (Name))
+      (record_field (property_name (Name)) (String)))))
 
 =========
 tuple type decl
@@ -142,3 +185,18 @@ let first_name_component: string = full_name[0];
     (data_projection
       (Name)
       (Int))))
+
+=========
+tuple access multiple
+=========
+
+let x = y[0][1][2]
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (data_projection 
+      (data_projection 
+        (data_projection (Name) (Int)) (Int)) (Int))))
