@@ -24,27 +24,27 @@ recognise (SomeRawTree dialect rawTree)
     -- Expr
   , Descent do
       boilerplate $ \case
-        "unary_call"        -> UnOp       <$> field  "negate"      <*> field    "arg"
-        "binary_call"       -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
-        "apply"             -> Apply      <$> field  "function"    <*> fields   "argument"
-        "block_statement"   -> Seq        <$> fields "statement"
-        "list"              -> List       <$> fields "element"
-        "annot_expr"        -> Annot      <$> field  "subject"     <*> field    "type"
-        "if_else_statement" -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
-        "if_statement"      -> If         <$> field  "selector"    <*> field    "then"     <*> pure Nothing
-        "record"            -> Record     <$> fields "assignment"
-        "record_update"     -> RecordUpd  <$> field  "subject"     <*> fields   "field"
-        "paren_expr"        -> Paren      <$> field  "expr"
-        "tuple"             -> Tuple      <$> fields "item"
-        "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
-        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> pure []
-        "pattern_match"     -> Case       <$> field  "subject"     <*> fields   "alt"
+        "unary_call"          -> UnOp       <$> field  "negate"      <*> field    "arg"
+        "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
+        "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"       <*> field "rhs" 
+        "apply"               -> Apply      <$> field  "function"    <*> fields   "argument"
+        "block_statement"     -> Seq        <$> fields "statement"
+        "list"                -> List       <$> fields "element"
+        "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
+        "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
+        "if_statement"        -> If         <$> field  "selector"    <*> field    "then"     <*> pure Nothing
+        "record"              -> Record     <$> fields "assignment"
+        "record_update"       -> RecordUpd  <$> field  "subject"     <*> fields   "field"
+        "paren_expr"          -> Paren      <$> field  "expr"
+        "tuple"               -> Tuple      <$> fields "item"
+        "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
+        "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"     <*> pure []
+        "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         -- TODO: add support for switch-case-default
         -- TODO: add support of loops - for & while
-        -- TODO: add support for assignment & assignment operators ?? will this be handled in binop ??
         _                   -> fallthrough
 
-    -- Pattern --
+    -- Pattern
   , Descent do
       boilerplate $ \case
         "tuple_pattern"          -> IsTuple  <$> fields "pattern"
@@ -54,15 +54,15 @@ recognise (SomeRawTree dialect rawTree)
         "wildcard"               -> return IsWildcard
         "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field    "type"
-
         "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
 
-    -- RecordFieldPattern -- 
+    -- RecordFieldPattern
   , Descent do
       boilerplate $ \case
         "record_field_pattern"   -> IsRecordField   <$> field "name" <*> field "body"
         "record_capture_pattern" -> IsRecordCapture <$> field "name"
+        "record_rest_pattern"    -> IsRecordCapture <$> field "name"
         _                        -> fallthrough
 
     -- Alt

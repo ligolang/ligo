@@ -106,6 +106,21 @@ let alice : user = {
       (record_field (property_name (Name)) (String)))))
 
 =========
+record desctructuring
+=========
+
+let { a , b } = x ; 
+
+---
+
+(source_file
+  (let_decl
+    (record_pattern
+      (record_capture_pattern (NameDecl))
+      (record_capture_pattern (NameDecl)))
+    (Name)))
+
+=========
 tuple type decl
 =========
 

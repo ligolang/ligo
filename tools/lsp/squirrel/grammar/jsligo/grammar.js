@@ -349,28 +349,32 @@ module.exports = grammar({
     _binding_pattern: $ => choice(
       $.var_pattern,
       $.wildcard,
-      $.object_pattern,
+      $.record_pattern,
       $.list_pattern,
       $.tuple_pattern
     ),
 
     var_pattern: $ => field("var", $.NameDecl),
 
-    object_pattern: $ => common.block($.property_patterns),
+    record_pattern: $ => common.withAttrs($, common.block(
+      common.sepEndBy1(",", field("field", $._record_field_pattern)),
+    )),
 
-    property_patterns: $ => choice(
-      $.property_pattern,
-      seq($.property_patterns, ',', $.property_pattern),
-      seq($.property_patterns, ',', $.object_rest_pattern)
+    _record_field_pattern: $ => choice(
+      $.record_field_pattern,
+      $.record_capture_pattern,
+      $.record_rest_pattern,
     ),
 
-    property_pattern: $ => choice(
-      seq($.FieldName, '=', $._expr),
-      seq($.FieldName, ':', $._binding_initializer),
-      $.var_pattern,
-    ),
+    record_field_pattern: $ => common.withAttrs($, prec(9, seq(
+      field("name", $.FieldName),
+      ":",
+      field("body", $._binding_pattern),
+    ))),
 
-    object_rest_pattern: $ => seq('...', $.NameDecl),
+    record_capture_pattern: $ => field("name", $.NameDecl),
+
+    record_rest_pattern: $ => seq('...', field("name", $.NameDecl)),
 
     list_pattern: $ => choice(
       seq('[', ']'),
