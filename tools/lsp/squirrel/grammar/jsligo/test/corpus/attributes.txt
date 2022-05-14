@@ -137,7 +137,7 @@ let bar = (b : int) : int => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
       (body
@@ -165,7 +165,7 @@ const bar = (b : int) : int => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
       (body
@@ -206,3 +206,108 @@ const decl twice
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
+
+=========
+inline annotation
+=========
+
+// @inline
+const fst = (p: [nat, nat]): nat => p[0];
+
+---
+
+(source_file
+  (attr)
+  (const_decl
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg 
+        (var_pattern (NameDecl))
+        (tuple_type (TypeName) (TypeName)))
+        (TypeName)
+        (body
+          (data_projection
+            (Name)
+            (Int))))))
+
+=========
+variant type layout:comb annotation
+=========
+
+type animal =
+// @layout:comb
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+
+---
+
+(source_file
+  (type_decl (TypeName)
+  (sum_type
+    (attr)
+    (variant (String))
+    (variant (String))
+    (variant (String)))))
+
+=========
+recod type layout:comb annotation
+=========
+
+type artist =
+// @layout:comb
+{
+  genre : string,
+  since : timestamp,
+  name  : string
+};
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (record_type
+      (attr)
+      (field_decl (FieldName) (TypeName))
+      (field_decl (FieldName) (TypeName))
+      (field_decl (FieldName) (TypeName)))))
+
+=========
+variant type @annot
+=========
+
+type animal =
+| /* @annot:memory */ ["Elephant"]
+| /* @annot:face */ ["Dog"]
+| /* @annot:fish */ ["Cat"]
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (sum_type
+      (variant (attr) (String))
+      (variant (attr) (String))
+      (variant (attr) (String)))))
+
+=========
+record type @annot
+=========
+
+type artist = {
+  /* @annot:style */ genre: string,
+  /* @annot:from */ since: timestamp,
+  /* @annot:performer */ name: string
+}
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (record_type
+      (field_decl (attr) (FieldName) (TypeName))
+      (field_decl (attr) (FieldName) (TypeName))
+      (field_decl (attr) (FieldName) (TypeName)))))

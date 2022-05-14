@@ -109,7 +109,7 @@ let x = (x : string) => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (body
         (switch_statement
@@ -142,7 +142,7 @@ let x = (x : string) => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (body
         (switch_statement
@@ -172,7 +172,7 @@ let x = (x : string) => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (body
         (switch_statement

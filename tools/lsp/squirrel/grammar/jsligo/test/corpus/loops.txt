@@ -17,7 +17,7 @@ let sum_list = (l: list<int>): int => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (app_type (TypeName) (TypeName)))
       (TypeName)
       (body
@@ -61,15 +61,15 @@ let gcd = (x: nat, y: nat): nat => {
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
       (body
         (let_decl
-          (array_pattern
+          (tuple_pattern
             (var_pattern (NameDecl))
             (var_pattern (NameDecl)))
           (tuple (Name) (Name)))

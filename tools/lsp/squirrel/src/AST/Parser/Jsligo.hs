@@ -48,21 +48,15 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "tuple_pattern"          -> IsTuple  <$> fields "pattern"
-        "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
         "list_pattern"           -> IsList   <$> fields "pattern"
-        "var_pattern"            -> IsVar    <$> field  "var"
-        "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "spread_pattern"         -> IsSpread <$> field  "expr"
-        "record_pattern"         -> IsRecord <$> fields "field"
-        "paren_pattern"          -> IsParen  <$> field  "pattern"
+        "var_pattern"            -> IsVar    <$> field  "var"
         "wildcard"               -> return IsWildcard
-        _                        -> fallthrough
 
-    -- Irrefutable tuple --
-  , Descent do
-      boilerplate $ \case
-        "irrefutable_tuple" -> IsTuple <$> fields "item"
-        _                   -> fallthrough
+        "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
+        "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "record_pattern"         -> IsRecord <$> fields "field"
+        _                        -> fallthrough
 
     -- RecordFieldPattern -- 
   , Descent do

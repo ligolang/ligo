@@ -12,7 +12,7 @@ let michelson_add = (n: [nat, nat]): nat =>
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body

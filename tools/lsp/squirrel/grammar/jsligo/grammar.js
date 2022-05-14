@@ -14,7 +14,10 @@ module.exports = grammar({
     [$.annot_expr, $.fun_arg],
     [$.variant, $.string_type],
     [$._member_expr, $.Nat, $.Tez],
-    [$.Int, $.Nat, $.Tez]
+    [$.Int, $.Nat, $.Tez],
+    [$._binding_pattern, $._list_item_pattern],
+    [$.Name, $.NameDecl],
+    [$.Name, $.FieldName]
   ],
 
   rules: {
@@ -123,7 +126,7 @@ module.exports = grammar({
     ),
 
     list_case: $ => seq(
-      field("pattern", common.par(seq($.list_literal, optional($._type_annotation)))),
+      field("pattern", common.par(seq($._binding_pattern, optional($._type_annotation)))),
       '=>',
       field("expr", $.body)
     ),
@@ -134,7 +137,7 @@ module.exports = grammar({
       )
     ),
 
-    ctor_param: $ => seq(/* TODO: this should be pattern I think */ $._expr , $._type_annotation),
+    ctor_param: $ => seq($._binding_pattern , $._type_annotation /* annotated pattern ?? */),
 
     ctor_case: $ => seq(
       field("pattern", $.ConstrName),
@@ -159,7 +162,6 @@ module.exports = grammar({
       $.paren_expr,
       $.module_access,
       $.tuple,
-      $.wildcard
     ),
 
     tuple: $ => common.brackets(common.sepBy1(',', field("item", $._annot_expr))),
@@ -222,7 +224,7 @@ module.exports = grammar({
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
-    fun_arg: $ => seq(field("argument", $._expr), field("type", $._type_annotation)),
+    fun_arg: $ => seq(field("argument", $._binding_pattern), field("type", $._type_annotation)),
 
     return_statement: $ => prec.left(2, seq('return', field("expr", optional($._expr)))),
 
@@ -344,10 +346,11 @@ module.exports = grammar({
       $.var_pattern,
       $.wildcard,
       $.object_pattern,
-      $.array_pattern
+      $.list_pattern,
+      $.tuple_pattern
     ),
 
-    var_pattern: $ => common.withAttrs($, $.NameDecl),
+    var_pattern: $ => field("var", $.NameDecl),
 
     object_pattern: $ => common.block($.property_patterns),
 
@@ -365,21 +368,26 @@ module.exports = grammar({
 
     object_rest_pattern: $ => seq('...', $.NameDecl),
 
-    array_pattern: $ => common.brackets($._array_item_patterns),
-
-    _array_item_patterns: $ => choice(
-      $._array_item_pattern,
-      seq($._array_item_patterns, ',', $._array_item_pattern),
-      seq($._array_item_patterns, ',', $.array_rest_pattern)
+    list_pattern: $ => choice(
+      seq('[', ']'),
+      common.brackets(
+        seq(
+          common.sepBy1(',', field("pattern", $._list_item_pattern)),
+          ',',
+          field("pattern", $.spread_pattern)
+        )
+      ),
     ),
 
-    _array_item_pattern: $ => choice(
+    _list_item_pattern: $ => choice(
       $.var_pattern,
       $.wildcard,
-      $.array_pattern
+      $.list_pattern
     ),
 
-    array_rest_pattern: $ => seq('...', field("name", $.Name)),
+    spread_pattern: $ => seq('...', field("expr", $._list_item_pattern)),
+
+    tuple_pattern: $ => common.brackets(common.sepBy1(',', field("pattern", $._binding_pattern))), 
 
     switch_statement: $ => seq('switch', common.par(field("selector", $._expr)), field("cases", common.block($._cases))),
 
@@ -476,6 +484,7 @@ module.exports = grammar({
     False_kwd: $ => 'false',
     True_kwd: $ => 'true',
     wildcard: $ => '_',
+    wildcard_pattern: $ => '_',
     Let_kwd: $ => 'let',
     Const_kwd: $ => 'const',
   }

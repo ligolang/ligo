@@ -144,7 +144,7 @@ let [first_name, last_name]: full_name = full_name;
 
 (source_file
   (let_decl
-    (array_pattern
+    (tuple_pattern
       (var_pattern (NameDecl))
       (var_pattern (NameDecl)))
     (TypeName)
@@ -163,8 +163,8 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
     (var_pattern (NameDecl))
       (lambda
         (fun_arg
-          (tuple
-            (Name)
+          (tuple_pattern
+            (var_pattern (NameDecl))
             (wildcard))
           (TypeName))
       (TypeName)

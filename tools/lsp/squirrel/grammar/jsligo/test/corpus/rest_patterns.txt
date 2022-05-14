@@ -29,7 +29,7 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (tuple (Name) (Name))
+        (tuple_pattern (var_pattern (NameDecl)) (var_pattern (NameDecl)))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
       (body

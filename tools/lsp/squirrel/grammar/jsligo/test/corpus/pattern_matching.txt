@@ -15,21 +15,21 @@ let weird_length = (v : list<int>) : int =>
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (app_type (TypeName) (TypeName)))
       (TypeName)
       (body
         (pattern_match
           (Name)
           (list_case
-            (list_literal)
+            (list_pattern)
             (app_type (TypeName) (TypeName))
             (body (Int)))
           (list_case
-            (list_literal
-              (Name)
-              (spread (Name)))
-              (app_type (TypeName) (TypeName))
+            (list_pattern
+              (var_pattern (NameDecl))
+              (spread_pattern (var_pattern (NameDecl))))
+            (app_type (TypeName) (TypeName))
             (body
               (binary_call
                 (Int)
@@ -57,7 +57,7 @@ let int_of_color = (c : color) : int =>
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
-        (Name)
+        (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
       (body
@@ -66,7 +66,7 @@ let int_of_color = (c : color) : int =>
           (ctor_case
             (ConstrName)
             (ctor_param
-              (Name)
+              (var_pattern (NameDecl))
               (tuple_type (TypeName) (TypeName) (TypeName)))
             (body
               (binary_call
@@ -83,7 +83,7 @@ let int_of_color = (c : color) : int =>
           (ctor_case
             (ConstrName)
             (ctor_param
-              (Name)
+              (var_pattern (NameDecl))
               (TypeName))
             (body
               (binary_call (Int) (Name))))
