@@ -40,9 +40,16 @@ recognise (SomeRawTree dialect rawTree)
         "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
         "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"     <*> pure []
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
-        -- TODO: add support for switch-case-default
+        "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         -- TODO: add support of loops - for & while
         _                   -> fallthrough
+
+    -- Case & Default
+  , Descent do
+      boilerplate $ \case
+        "case"         -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
+        "default_case" -> DefaultStm <$> fieldOpt "body"
+        _              -> fallthrough
 
     -- Pattern
   , Descent do

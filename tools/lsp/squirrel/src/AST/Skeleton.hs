@@ -18,7 +18,7 @@ module AST.Skeleton
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
   , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
-  , TypeParams (..), PatchableExpr (..)
+  , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
   , getLIGO
   , setLIGO
@@ -70,7 +70,7 @@ type RawLigoList =
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
   , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
-  , ModuleName, ModuleAccess, TypeParams--, SwitchStm, CaseOrDefaultStm
+  , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -225,8 +225,8 @@ data Alt it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data CaseOrDefaultStm it
-  = CaseStm it it -- (Expr) (Expr)
-  | DefaultStm it -- (Expr)
+  = CaseStm it (Maybe it) -- (Expr) (Expr)
+  | DefaultStm (Maybe it) -- (Expr)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data MapBinding it
@@ -476,4 +476,11 @@ instance Eq1 Pattern where
   liftEq f (IsSpread a) (IsSpread b) = f a b
   liftEq f (IsList xa) (IsList xb) = liftEqList f xa xb
   liftEq f (IsTuple xa) (IsTuple xb) = liftEqList f xa xb
+  liftEq _ _ _ = False
+
+instance Eq1 CaseOrDefaultStm where
+  liftEq f (CaseStm c s) (CaseStm c' s') =
+    f c c' && liftEqMaybe f s s'
+  liftEq f (DefaultStm s) (DefaultStm s') =
+    liftEqMaybe f s s'
   liftEq _ _ _ = False

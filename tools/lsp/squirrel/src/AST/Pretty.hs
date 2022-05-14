@@ -353,6 +353,11 @@ instance Pretty LineMarkerType where
   pp IncludedFile = "1"
   pp ReturnToFile = "2"
 
+instance Pretty1 CaseOrDefaultStm where
+  pp1 = \case
+    CaseStm  c s -> sexpr "case"    [c, pp s]
+    DefaultStm s -> sexpr "default" [pp s]
+
 -- Orphans
 instance Pretty J.UInt where
   pp = pp . Text.pack . show
@@ -568,6 +573,11 @@ instance LPP1 'Pascal MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
 
+instance LPP1 'Pascal CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
+
 ----------------------------------------------------------------------------
 -- Reason
 ----------------------------------------------------------------------------
@@ -682,6 +692,11 @@ instance LPP1 'Reason TField where
 instance LPP1 'Reason MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
+
+instance LPP1 'Reason CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
 
 ----------------------------------------------------------------------------
 -- Js
@@ -799,6 +814,11 @@ instance LPP1 'Js TField where
 instance LPP1 'Js MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
+
+instance LPP1 'Js CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
 
 ----------------------------------------------------------------------------
 -- Caml
@@ -924,8 +944,10 @@ instance LPP1 'Caml TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
--- TODO: JsLIGO pretty printer
-
+instance LPP1 'Caml CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
 type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc

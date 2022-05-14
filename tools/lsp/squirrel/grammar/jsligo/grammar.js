@@ -397,20 +397,20 @@ module.exports = grammar({
 
     tuple_pattern: $ => common.brackets(common.sepBy1(',', field("pattern", $._binding_pattern))), 
 
-    switch_statement: $ => seq('switch', common.par(field("selector", $._expr)), field("cases", common.block($._cases))),
+    switch_statement: $ => seq('switch', common.par(field("selector", $._expr)), common.block($._cases)),
 
     _cases: $ => choice(
-      seq(repeat1($.case), optional($.default_case)),
-      $.default_case
+      seq(repeat1(field("case", $.case)), optional(field("case", $.default_case))),
+      field("case", $.default_case)
     ),
 
-    case: $ => seq('case', field("selector_value", $._expr), field("body", $._case_statements)),
+    case: $ => seq('case', field("selector_value", $._expr), $._case_statements),
 
-    default_case: $ => seq('default', field("body", $._case_statements)),
+    default_case: $ => seq('default', $._case_statements),
 
     _case_statements: $ => seq(':', choice(
-      optional($._statements),
-      $.block_statement,
+      optional(field("body", $._statements)),
+      field("body", $.block_statement),
     )),
 
     if_else_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), 'else', field("else", $._statement)),
