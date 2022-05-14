@@ -234,8 +234,9 @@ instance Pretty1 Expr where
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
-    SwitchStm _ _        -> error "todo"
-    AssignOp  _ _ _      -> error "todo"
+    SwitchStm _ _        -> error "todo sexp"
+    AssignOp  _ _ _      -> error "todo sexp"
+    ForOfLoop _ _ _      -> error "todo sexp"
 
 instance Pretty1 PatchableExpr where
   pp1 = \case
@@ -764,6 +765,7 @@ instance LPP1 'Js Expr where
     Lambda    ps ty b    -> foldr (<+>) empty
       [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
+    ForOfLoop _ _ _      -> error "todo pretty print"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where

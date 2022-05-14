@@ -167,7 +167,6 @@ data Expr it
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
-  -- TODO: loops - for & while
   | Assign    it it -- (LHS) (Expr)
   | AssignOp  it it it --- (LHS) Text (Expr)
   | List      [it] -- [Expr]
@@ -185,6 +184,7 @@ data Expr it
   | SwitchStm it [it]  -- (Expr) [CaseOrDefaultStm] 
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
+  | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
   | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)

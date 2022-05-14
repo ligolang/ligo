@@ -41,7 +41,8 @@ recognise (SomeRawTree dialect rawTree)
         "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"     <*> pure []
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
-        -- TODO: add support of loops - for & while
+        "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
+        -- TODO: add support loop - for
         _                   -> fallthrough
 
     -- Case & Default
