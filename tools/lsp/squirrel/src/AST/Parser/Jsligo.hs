@@ -25,25 +25,25 @@ recognise (SomeRawTree dialect rawTree)
   , Descent do
       boilerplate $ \case
         "unary_call"          -> UnOp       <$> field  "negate"      <*> field    "arg"
-        "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"       <*> field "right"
-        "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"       <*> field "rhs" 
+        "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"        <*> field "right"
+        "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"        <*> field "rhs"
         "apply"               -> Apply      <$> field  "function"    <*> fields   "argument"
         "block_statement"     -> Seq        <$> fields "statement"
         "list"                -> List       <$> fields "element"
         "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
-        "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then"     <*> fieldOpt "else"
-        "if_statement"        -> If         <$> field  "selector"    <*> field    "then"     <*> pure Nothing
+        "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then"      <*> fieldOpt "else"
+        "if_statement"        -> If         <$> field  "selector"    <*> field    "then"      <*> pure Nothing
         "record"              -> Record     <$> fields "assignment"
         "record_update"       -> RecordUpd  <$> field  "subject"     <*> fields   "field"
         "paren_expr"          -> Paren      <$> field  "expr"
         "tuple"               -> Tuple      <$> fields "item"
-        "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
-        "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"     <*> pure []
+        "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"       <*> field "body"
+        "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"       <*> pure []
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
-        -- TODO: add support loop - for
-        _                   -> fallthrough
+        "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "body"
+        _                     -> fallthrough
 
     -- Case & Default
   , Descent do
