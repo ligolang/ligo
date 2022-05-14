@@ -64,10 +64,11 @@ let int_of_color = (c : color) : int =>
         (pattern_match
           (Name)
           (ctor_case
-            (ConstrName)
-            (ctor_param
-              (var_pattern (NameDecl))
-              (tuple_type (TypeName) (TypeName) (TypeName)))
+            (constr_pattern
+              (ConstrName)
+              (ctor_param
+                (var_pattern (NameDecl))
+                (tuple_type (TypeName) (TypeName) (TypeName))))
             (body
               (binary_call
                 (binary_call
@@ -81,12 +82,11 @@ let int_of_color = (c : color) : int =>
                   (data_projection (Name) (Int))
                   (Int)))))
           (ctor_case
-            (ConstrName)
-            (ctor_param
-              (var_pattern (NameDecl))
-              (TypeName))
+            (constr_pattern
+              (ConstrName)
+              (ctor_param (var_pattern (NameDecl)) (TypeName)))
             (body
               (binary_call (Int) (Name))))
           (ctor_case
-            (ConstrName)
-              (body (Int))))))))
+            (constr_pattern (ConstrName))
+            (body (Int))))))))

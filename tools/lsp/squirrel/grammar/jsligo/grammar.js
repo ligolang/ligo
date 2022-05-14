@@ -137,14 +137,18 @@ module.exports = grammar({
       )
     ),
 
-    ctor_param: $ => seq($._binding_pattern , $._type_annotation /* annotated pattern ?? */),
+    ctor_param: $ => seq(field("subject", $._binding_pattern), field("type", $._type_annotation)),
 
     ctor_case: $ => seq(
-      field("pattern", $.ConstrName),
-      ':',
-      common.par(common.sepBy(',', $.ctor_param)),
+      field("pattern", $.constr_pattern),
       '=>',
       field("expr", $.body)
+    ),
+    
+    constr_pattern: $ => seq(
+      field("constructor", $.ConstrName),
+      ':',
+      field("arg", common.par(optional($.ctor_param)))
     ),
 
     _member_expr: $ => choice(

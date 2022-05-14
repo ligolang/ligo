@@ -52,9 +52,9 @@ recognise (SomeRawTree dialect rawTree)
         "spread_pattern"         -> IsSpread <$> field  "expr"
         "var_pattern"            -> IsVar    <$> field  "var"
         "wildcard"               -> return IsWildcard
-
-        "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field "type"
         "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field    "type"
+
         "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
 
