@@ -1,0 +1,33 @@
+=========
+misc: if no else
+=========
+
+let a = (x: bool): bool => {
+    let _a = 2;
+    if (x == true) {
+      _a = 1; // to ensure this doesn't cause issues.
+      return true
+    }
+    return false
+  }
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (var_pattern (NameDecl)) (TypeName))
+      (TypeName)
+      (body
+      (block_statement
+        (let_decl
+          (var_pattern (NameDecl))
+          (Int))
+        (if_statement
+          (binary_call (Name) (True_kwd))
+          (block_statement
+            (assignment_operator (Name) (Int))
+            (comment)
+            (return_statement (True_kwd))))
+        (return_statement (False_kwd)))))))

@@ -31,8 +31,7 @@ module.exports = grammar({
       optional(field("export", 'export')), 'namespace', field("moduleName", $.ModuleName),
       '{',
       common.sepEndBy($._semicolon, field("declaration", $._statement_or_namespace_or_preprocessor)),
-      '}',
-      optional($._semicolon)
+      '}'
     )),
 
     _statement: $ => prec.right(1, field("statement", choice($._base_statement, $.if_statement))),
@@ -230,15 +229,15 @@ module.exports = grammar({
       )
     ),
 
-    _statements: $ => common.sepEndBy1($._semicolon, $._statement),
+    _statements: $ => common.sepEndBy1(optional($._semicolon), $._statement),
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
     fun_arg: $ => seq(field("argument", $._binding_pattern), field("type", $._type_annotation)),
 
-    return_statement: $ => prec.left(2, seq('return', field("expr", optional($._expr)), optional($._semicolon))),
+    return_statement: $ => prec.right(seq('return', optional(field("expr", $._expr)))),
 
-    block_statement: $ => prec.left(2, seq('{', $._statements, '}', optional($._semicolon))),
+    block_statement: $ => prec.left(2, seq('{', $._statements, '}')),
 
     _record_expr: $ => choice($.record, $.record_update),
 
@@ -420,13 +419,7 @@ module.exports = grammar({
 
     default_case: $ => seq('default', $._case_statements),
 
-    _case_statements: $ => seq(':', optional(
-        choice(
-          field("body", $._statements),
-          field("body", $.block_statement),
-        )
-      )
-    ),
+    _case_statements: $ => seq(':', optional(field("body", $._statements))),
 
     if_else_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), 'else', field("else", $._statement)),
 
