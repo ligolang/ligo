@@ -3,6 +3,7 @@ import { extname, basename } from 'path';
 import { execFileSync } from 'child_process';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
+
 let lastContractPath;
 
 type BinaryInfo = {
@@ -80,7 +81,7 @@ export async function executeCommand(
   errorPrefix = undefined,
 ) {
   const contractInfo = getLastContractPath()
-  const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, vscode.workspace.getConfiguration());
+  const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
 
   if (!ligoPath || ligoPath === '') {
     vscode.window.showWarningMessage('LIGO executable not found. Aborting ...');
