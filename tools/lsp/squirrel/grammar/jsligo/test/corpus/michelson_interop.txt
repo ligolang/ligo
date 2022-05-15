@@ -22,7 +22,7 @@ let michelson_add = (n: [nat, nat]): nat =>
             (fun_type
               (tuple_type (TypeName) (TypeName))
               (TypeName)))
-          (arguments (Name)))))))
+          (Name))))))
 
 =========
 michelson pair

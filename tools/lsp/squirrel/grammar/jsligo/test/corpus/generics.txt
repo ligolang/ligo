@@ -54,14 +54,30 @@ nested generic functions
 
 const id : <P>(x : P) => P = (x : P) => {
     const id_1 : <Q>(y : Q) => Q = (y : Q) => {
-        let id_2 : <R>(z : R) => R = (z : R) => {
-            let z = z;
-            return z;
-        };
-        let y = y;
         return id_2(y);
     }
     return id_1(x);
 };
 
 ---
+
+(source_file
+  (const_decl
+    (var_pattern (NameDecl))
+    (type_params (var_type (TypeVariableName)))
+    (fun_type (TypeName) (TypeName))
+    (lambda
+      (fun_arg (var_pattern (NameDecl)) (TypeName))
+      (body
+        (block_statement
+          (const_decl (var_pattern (NameDecl))
+          (type_params (var_type (TypeVariableName)))
+          (fun_type (TypeName) (TypeName))
+          (lambda
+            (fun_arg (var_pattern (NameDecl)) (TypeName))
+            (body
+              (block_statement
+                (return_statement
+                  (apply (Name) (Name)))))))
+          (return_statement
+            (apply (Name) (Name))))))))

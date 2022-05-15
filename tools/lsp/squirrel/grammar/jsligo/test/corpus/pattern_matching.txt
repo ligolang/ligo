@@ -35,10 +35,9 @@ let weird_length = (v : list<int>) : int =>
                 (Int)
                 (apply
                   (Name)
-                  (arguments
-                    (apply
-                      (Name)
-                      (arguments (Name)))))))))))))
+                  (apply
+                    (Name)
+                    (Name)))))))))))
 
 =========
 pattern-matching: constructors

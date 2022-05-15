@@ -65,13 +65,10 @@ let x : int = foo(bar(baz(1)))
     (TypeName)
     (apply
       (Name)
-      (arguments
-        (apply
-          (Name)
-          (arguments
-            (apply
-              (Name)
-              (arguments (Int)))))))))
+      (apply
+        (Name)
+          (apply
+            (Name) (Int))))))
 
 =========
 module access function call
@@ -87,10 +84,9 @@ let x : int = int(List.List.List.length(x))
     (TypeName)
     (apply
       (Name)
-      (arguments
-        (apply
-          (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName))
-          (arguments (Name)))))))
+      (apply
+        (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName))
+        (Name)))))
 
 =========
 automatic semicolon insertion

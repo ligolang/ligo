@@ -10,9 +10,7 @@ let x = (foo (42))
   (let_decl
     (var_pattern (NameDecl))
     (paren_expr
-      (apply
-        (Name)
-        (arguments (Int))))))
+      (apply (Name) (Int)))))
 
 =========
 tuple

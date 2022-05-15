@@ -86,9 +86,9 @@ module.exports = grammar({
 
     unary_call: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
 
-    apply: $ => prec.right(2, seq(field("function", $._apply), $.arguments)),
+    apply: $ => prec.right(2, seq(field("function", $._apply), $._arguments)),
 
-    arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
+    _arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
 
     _apply: $ => prec(5, choice($.apply, $._member_expr)),
 
