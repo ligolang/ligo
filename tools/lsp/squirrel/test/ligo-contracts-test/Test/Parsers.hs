@@ -92,6 +92,8 @@ okayTests =
       , "negative" </> "modules_access_not_open1.mligo"
       , "negative" </> "modules_access_not_open2.ligo"
       , "negative" </> "modules_access_not_open2.mligo"
+      , "negative" </> "switch_jsligo" </> "break_outside_case2.jsligo"
+      , "negative" </> "switch_jsligo" </> "empty_switch.jsligo"
       ]
     , tdIgnoreDirs = []
     }

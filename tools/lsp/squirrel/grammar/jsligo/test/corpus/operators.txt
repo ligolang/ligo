@@ -26,8 +26,9 @@ let x = () => { x += 2; return x };
   (var_pattern (NameDecl))
   (lambda
     (body
-      (assignment_operator (Name) (Int))
-      (return_statement (Name))))))
+      (block_statement
+        (assignment_operator (Name) (Int))
+        (return_statement (Name)))))))
 
 =========
 binary operator - ||

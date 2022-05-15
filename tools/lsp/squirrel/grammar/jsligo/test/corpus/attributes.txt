@@ -141,12 +141,12 @@ let bar = (b : int) : int => {
         (TypeName))
       (TypeName)
       (body
-        (attr) (attr)
-        (let_decl 
-          (var_pattern (NameDecl))
-          (Int))
-        (return_statement
-          (Name))))))
+        (block_statement
+          (attr) (attr)
+          (let_decl
+            (var_pattern (NameDecl))
+            (Int))
+          (return_statement (Name)))))))
 
 =========
 const expr
@@ -169,12 +169,12 @@ const bar = (b : int) : int => {
         (TypeName))
       (TypeName)
       (body
-        (attr) (attr)
-        (const_decl 
-          (var_pattern (NameDecl))
-          (Int))
-        (return_statement
-          (Name))))))
+        (block_statement
+          (attr) (attr)
+          (const_decl
+            (var_pattern (NameDecl))
+            (Int))
+          (return_statement (Name)))))))
 
 =========
 const decl

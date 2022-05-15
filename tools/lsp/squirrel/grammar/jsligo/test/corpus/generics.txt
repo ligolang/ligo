@@ -47,3 +47,19 @@ type x_y_z_typ = my_typ<X, yield, Z>
   (type_decl (TypeName)
     (app_type
       (TypeName) (TypeName) (TypeName) (TypeName))))
+
+=========
+nested generic functions
+=========
+
+const id : <P>(x : P) => P = (x : P) => {
+    const id_1 : <Q>(y : Q) => Q = (y : Q) => {
+        let id_2 : <R>(z : R) => R = (z : R) => {
+            let z = z;
+            return z;
+        };
+        let y = y;
+        return id_2(y);
+    }
+    return id_1(x);
+};

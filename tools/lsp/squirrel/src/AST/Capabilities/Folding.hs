@@ -33,6 +33,8 @@ foldingAST = execWriter . visit' handlers
           Seq {} -> tell [r]
           Lambda {} -> tell [r]
           ForLoop {} -> tell [r]
+          ForOfLoop {} -> tell [r]
+          WhileLoop {} -> tell [r]
           ForBox {} -> tell [r]
           _ -> pure ()
       ]

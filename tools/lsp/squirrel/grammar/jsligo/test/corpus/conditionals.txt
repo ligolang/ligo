@@ -19,15 +19,16 @@ let x = () => {
     (var_pattern (NameDecl))
     (lambda
       (body
-        (if_statement
-          (True_kwd)
-          (block_statement
-            (comment)
+        (block_statement
+          (if_statement
+            (True_kwd)
+              (block_statement
+                (comment)
+                (return_statement
+                    (False_kwd))))
+            (ocaml_comment)
             (return_statement
-              (False_kwd))))
-        (ocaml_comment)
-        (return_statement
-          (True_kwd))))))
+                (True_kwd)))))))
 
 =========
 conditional: if else
@@ -48,12 +49,13 @@ let x = () => {
     (var_pattern (NameDecl))
     (lambda
       (body
-        (if_else_statement
-          (True_kwd)
-          (block_statement
-            (return_statement (False_kwd)))
-          (block_statement
-            (return_statement (True_kwd))))))))
+        (block_statement
+          (if_else_statement
+            (True_kwd)
+            (block_statement
+              (return_statement (False_kwd)))
+            (block_statement
+              (return_statement (True_kwd)))))))))
 
 =========
 conditional: if else if else
@@ -76,16 +78,17 @@ let x = () => {
     (var_pattern (NameDecl))
     (lambda
       (body
-        (if_else_statement
-          (binary_call (Int) (Int))
-          (block_statement
-            (return_statement (False_kwd)))
+        (block_statement
           (if_else_statement
             (binary_call (Int) (Int))
             (block_statement
               (return_statement (False_kwd)))
-            (block_statement
-              (return_statement (False_kwd)))))))))
+            (if_else_statement
+              (binary_call (Int) (Int))
+              (block_statement
+                (return_statement (False_kwd)))
+              (block_statement
+                (return_statement (False_kwd))))))))))
 
 =========
 conditional: switch = case + default
@@ -112,16 +115,17 @@ let x = (x : string) => {
         (var_pattern (NameDecl))
         (TypeName))
       (body
-        (switch_statement
-          (Name)
-          (case
-            (String)
-            (block_statement
-              (break_statement)))
-          (default_case
-            (block_statement
-              (return_statement
-                (False_kwd)))))))))
+        (block_statement
+          (switch_statement
+            (Name)
+            (case
+              (String)
+              (block_statement
+                (break_statement)))
+            (default_case
+              (block_statement
+                (return_statement
+                  (False_kwd))))))))))
 
 =========
 conditional: switch = case
@@ -145,13 +149,14 @@ let x = (x : string) => {
         (var_pattern (NameDecl))
         (TypeName))
       (body
-        (switch_statement
-          (Name)
-          (case
-            (String)
-            (block_statement
-              (return_statement
-                (False_kwd)))))))))
+        (block_statement
+          (switch_statement
+            (Name)
+            (case
+              (String)
+              (block_statement
+                (return_statement
+                  (False_kwd))))))))))
 
 =========
 conditional: switch = default
@@ -175,9 +180,10 @@ let x = (x : string) => {
         (var_pattern (NameDecl))
         (TypeName))
       (body
-        (switch_statement
-          (Name)
-          (default_case
-            (block_statement
-              (return_statement
-                (False_kwd)))))))))
+        (block_statement
+          (switch_statement
+            (Name)
+            (default_case
+              (block_statement
+                (return_statement
+                  (False_kwd))))))))))
