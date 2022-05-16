@@ -35,9 +35,7 @@ module.exports = grammar({
       '}'
     )),
 
-    _statement: $ => prec.right(1, field("statement", choice($._base_statement, $.if_statement))),
-
-    if_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._statement)),
+    _statement: $ => field("statement", $._base_statement),
 
     _base_statement: $ => prec(5, choice(
       $._expr_statement,
@@ -422,7 +420,9 @@ module.exports = grammar({
 
     _case_statements: $ => seq(':', optional(field("body", $._statements))),
 
-    if_else_statement: $ => seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), 'else', field("else", $._statement)),
+    if_else_statement: $ => prec.right(seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), optional($._else_branch))),
+
+    _else_branch: $ => seq('else', field("else", $._statement)),
 
     for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), field("body", $._statement)),
 

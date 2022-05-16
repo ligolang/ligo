@@ -75,7 +75,7 @@ let gcd = (x: nat, y: nat): nat => {
               (var_pattern (NameDecl))
               (var_pattern (NameDecl)))
             (tuple (Name) (Name)))
-          (if_statement
+          (if_else_statement
             (binary_call (Name) (Name))
             (block_statement
               (const_decl

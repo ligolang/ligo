@@ -20,7 +20,7 @@ let x = () => {
     (lambda
       (body
         (block_statement
-          (if_statement
+          (if_else_statement
             (True_kwd)
               (block_statement
                 (comment)

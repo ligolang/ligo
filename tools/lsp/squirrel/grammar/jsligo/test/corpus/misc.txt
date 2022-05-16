@@ -24,7 +24,7 @@ let a = (x: bool): bool => {
         (let_decl
           (var_pattern (NameDecl))
           (Int))
-        (if_statement
+        (if_else_statement
           (binary_call (Name) (True_kwd))
           (block_statement
             (assignment_operator (Name) (Int))
