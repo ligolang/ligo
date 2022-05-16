@@ -84,7 +84,7 @@ let reveal = ((p, s): (reveal, storage)) : return => {
   }
   else { (); };
   let commit_ : commit =
-    switch (Big_map.find_opt(sender, s.commits)) {
+    switch (Big_map.find_opt(Tezos.sender, s.commits)) {
     | Some (c) => c
     | None =>
        (failwith("You have not made a commitment to hash against yet."): commit)
