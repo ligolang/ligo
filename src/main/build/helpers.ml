@@ -23,3 +23,19 @@ let internalize_core (ds : Ast_core.module_) =
     | _ -> d in
   let f (d : _ Ast_core.location_wrap) = Simple_utils.Location.map f d in
   List.map ~f ds
+
+
+(* LanguageMap are used to cache compilation of standard libs across :
+   - multiple imports (#imports)
+   - multiple compilation of contract in "ligo test"
+*)
+module LanguageMap = Simple_utils.Map.Make(struct
+  type t = Syntax_types.t * Environment.Protocols.t * bool
+  let compare (sa,pa,ta) (sb,pb,tb) = Int.( abs (Syntax_types.compare sa sb) + abs (Environment.Protocols.compare pa pb) + abs (compare_bool ta tb) )
+end)
+type cache = (Ast_typed.module_ * Ast_core.module_) LanguageMap.t
+let std_lib_cache = ref (LanguageMap.empty : cache)
+let test_lib_cache = ref (LanguageMap.empty : cache)
+let build_key ~options syntax = 
+  let open Compiler_options in
+  (syntax, options.middle_end.protocol_version, options.middle_end.test)
