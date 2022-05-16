@@ -7,7 +7,10 @@ let internalize_typed (ds : Ast_typed.program) =
     | Declaration_type { type_binder ; type_expr ; type_attr = _ } ->
        let type_attr = { public = false ; hidden = true } in
        Declaration_type { type_binder ; type_expr ; type_attr }
-    | _ -> d in
+    | Declaration_constant x ->
+      let attr : known_attributes = { x.attr with inline = true ; hidden = true } in
+      Declaration_constant { x with attr }
+  in
   let f (d : _ Ast_typed.location_wrap) = Simple_utils.Location.map f d in
   List.map ~f ds
 

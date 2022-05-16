@@ -119,6 +119,7 @@ depends: [
   "ocamlfind" {= "1.9.3"}
   "ocamlgraph" {= "2.0.0"}
   "ocplib-endian" {= "1.2"}
+  "ocp-ocamlres" {= "0.4"}
   "octavius" {= "1.2.2"}
   "odoc" {= "2.1.0"}
   "odoc-parser" {= "1.0.0"}

@@ -4,4 +4,12 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries main_errors preprocessing simple-utils tezos-utils ligo_compile
-   BuildSystem))
+   BuildSystem ocplib-ocamlres))
+
+(rule
+ (target loaded_libs.ml)
+ (action
+   (run ocp-ocamlres -format ocaml -subformat mligo raw -o %{target} lib))
+ (deps (source_tree lib))
+ (mode promote-until-clean) ; this promotes the file so that it becomes available in the work-tree (ease debug, is .gitignored)
+)
