@@ -11,5 +11,5 @@
  (action
    (run ocp-ocamlres -format ocaml -subformat mligo raw -o %{target} lib))
  (deps (source_tree lib))
- (mode promote-until-clean) ; this promotes the file so that it becomes available in the work-tree (ease debug, is .gitignored)
+ ; (mode promote-until-clean) ; this promotes the file so that it becomes available in the work-tree (ease debug, is .gitignored)
 )
