@@ -32,6 +32,7 @@ depends: [
   "bos" {= "0.2.1"}
   "ca-certs" {= "0.2.2"}
   "cmdliner" {= "1.1.0"}
+  "crunch" {= "3.2.0" }
   "cohttp" {= "5.0.0"}
   "cohttp-lwt" {= "5.0.0"}
   "cohttp-lwt-unix" {= "5.0.0"}
@@ -119,7 +120,6 @@ depends: [
   "ocamlfind" {= "1.9.3"}
   "ocamlgraph" {= "2.0.0"}
   "ocplib-endian" {= "1.2"}
-  "ocp-ocamlres" {= "0.4"}
   "octavius" {= "1.2.2"}
   "odoc" {= "2.1.0"}
   "odoc-parser" {= "1.0.0"}

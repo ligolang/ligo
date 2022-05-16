@@ -55,7 +55,7 @@ depends: [
   "pure-splitmix"
   "resto-cohttp-self-serving-client"
   "tezos-rust-libs"
-  "ocp-ocamlres"
+  "crunch"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

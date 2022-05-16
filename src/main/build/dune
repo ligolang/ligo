@@ -1,15 +1,17 @@
 (library
  (name build)
  (public_name ligo.build)
+ (flags (:standard \ -open Core)) ; crunch use Core.String :/
  (instrumentation
   (backend bisect_ppx))
  (libraries main_errors preprocessing simple-utils tezos-utils ligo_compile
-   BuildSystem ocplib-ocamlres))
+   BuildSystem crunch))
+
 
 (rule
  (target loaded_libs.ml)
  (action
-   (run ocp-ocamlres -format ocaml -subformat mligo raw -o %{target} lib))
+   (run %{bin:ocaml-crunch} --mode plain -o %{target} lib))
  (deps (source_tree lib))
- ; (mode promote-until-clean) ; this promotes the file so that it becomes available in the work-tree (ease debug, is .gitignored)
+ ; (mode promote-until-clean) ; promotes the file so that it becomes available in the work-tree (ease debug, is .gitignored in case)
 )

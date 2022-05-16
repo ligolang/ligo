@@ -252,7 +252,7 @@ let testlib ~options syntax =
        let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
        failwith ("Error compiling the testlib: " ^ error_msg)
 
-module LanguageMap = Simple_utils.Map.Make(struct type t = Syntax_types.t * bool let compare (t, b) (t', b') = match Syntax_types.compare t t' with 0 -> compare_bool b b' | c -> c end)
+module LanguageMap = Simple_utils.Map.Make(struct type t = Syntax_types.t * bool let compare (t, b) (t', b') = match Syntax_types.compare t t' with 0 -> Bool.compare b b' | c -> c end)
 let cached = ref LanguageMap.empty
 
 let typed ~options syntax =
