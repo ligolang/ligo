@@ -118,6 +118,11 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
+    { tdRoot = testDir </> "error-recovery" </> "simple" </> "jsligo" </> "original"
+    , tdIgnoreFiles = []
+    , tdIgnoreDirs = []
+    }
+  , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
@@ -129,6 +134,11 @@ okayTests =
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "cameligo" </> "original"
+    , tdIgnoreFiles = []
+    , tdIgnoreDirs = []
+    }
+  , TestDir
+    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "jsligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
@@ -162,9 +172,11 @@ badTests =
       [ "fuzzing" </> "cameligo" </> "original"
       , "fuzzing" </> "pascaligo" </> "original"
       , "fuzzing" </> "reasonligo" </> "original"
+      , "fuzzing" </> "jsligo" </> "original"
       , "simple" </> "cameligo" </> "original"
       , "simple" </> "pascaligo" </> "original"
       , "simple" </> "reasonligo" </> "original"
+      , "simple" </> "jsligo" </> "original"
       ]
     }
   , TestDir

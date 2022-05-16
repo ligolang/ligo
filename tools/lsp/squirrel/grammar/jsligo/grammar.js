@@ -18,7 +18,8 @@ module.exports = grammar({
     [$._binding_pattern, $._list_item_pattern],
     [$._member_expr, $._binding_pattern],
     [$.Name, $.NameDecl],
-    [$.Name, $.FieldName]
+    [$.Name, $.FieldName],
+    [$.tuple, $.list_pattern]
   ],
 
   rules: {
@@ -169,7 +170,7 @@ module.exports = grammar({
       $.tuple,
     ),
 
-    tuple: $ => common.brackets(common.sepBy1(',', field("item", $._annot_expr))),
+    tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
 
     paren_expr: $ => common.par(field("expr", $._annot_expr)),
 
