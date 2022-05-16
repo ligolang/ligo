@@ -768,9 +768,10 @@ instance LPP1 'Js Expr where
     Lambda    ps ty b    -> foldr (<+>) empty
       [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
-    ForOfLoop _ _ _      -> error "todo pretty print"
-    -- AssignOp
-    -- While
+    ForOfLoop v c b      -> "for" <+> "(const" <+> v <+> "of" <+> c <+> ") {" `indent` lpp b `above` "}"
+    AssignOp l o r       -> l <+> o <+> r
+    WhileLoop f b        -> "while (" <+> f <+> ") {" `indent` lpp b `above` "}"
+    SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where
@@ -782,18 +783,18 @@ instance LPP1 'Js Alt where
 
 instance LPP1 'Js FieldAssignment where
   lpp1 = \case
-    FieldAssignment n e -> lpp n <+> "=" <+> lpp e
+    FieldAssignment n e -> lpp n <+> ":" <+> lpp e
     Spread n -> "..." <.> n
     Capture n -> lpp n
 
 instance LPP1 'Js Constant where
   lpp1 = \case
     Int           z   -> lpp z
-    Nat           z   -> lpp z
+    Nat           z   -> lpp z <+> "as nat"
     String        z   -> lpp z
     Float         z   -> lpp z
     Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    Tez           z   -> lpp z <+> "as tez"
 
 instance LPP1 'Js Pattern where
   lpp1 = \case
@@ -803,29 +804,26 @@ instance LPP1 'Js Pattern where
     IsWildcard             -> "_"
     IsSpread     n         -> "..." <.> lpp n
     IsList       l         -> brackets $ train "," l
-    IsTuple      t         -> train "," t
+    IsTuple      t         -> brackets $ train "," t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
-    IsParen      x         -> parens x
     pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
 
 instance LPP1 'Js RecordFieldPattern where
   lpp1 = \case
-    IsRecordField name body -> name <+> "=" <+> body
+    IsRecordField name body -> name <+> ":" <+> body
     IsRecordCapture name -> name
 
 instance LPP1 'Js TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
--- error 
 instance LPP1 'Js MapBinding where
-  lpp1 = \case
-    MapBinding k v -> lpp k <+> "->" <+> lpp v
+  lpp1 = error "unexpected `MapBinding` node"
 
 instance LPP1 'Js CaseOrDefaultStm where
   lpp1 = \case
-    CaseStm _ _  -> error "unexpected `CaseStm` node"
-    DefaultStm _ -> error "unexpected `DefaultStm` node"
+    CaseStm c  b -> "case " <+> c <+> ": " <+> lpp b
+    DefaultStm b -> "default: " <+> lpp b
 
 ----------------------------------------------------------------------------
 -- Caml
