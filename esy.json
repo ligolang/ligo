@@ -261,6 +261,7 @@
       "@opam/tezos-protocol-environment": "git:https://github.com/ligolang/tezos-ligo:src/lib_protocol_environment/tezos-protocol-environment.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
       "@opam/tezos-proxy": "git:https://github.com/ligolang/tezos-ligo:src/lib_proxy/tezos-proxy.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
       "@opam/tezos-context": "git:https://github.com/ligolang/tezos-ligo:src/lib_context/tezos-context.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
+      "@opam/tezos-hacl-glue-unix": "git:https://github.com/ligolang/tezos-ligo:src/lib_hacl_glue/unix/tezos-hacl-glue-unix.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
       "@opam/tezos-mockup-registration": "git:https://github.com/ligolang/tezos-ligo:src/lib_mockup/tezos-mockup-registration.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
       "@opam/tezos-p2p": "git:https://github.com/ligolang/tezos-ligo:src/lib_p2p/tezos-p2p.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
       "@opam/tezos-mockup": "git:https://github.com/ligolang/tezos-ligo:src/lib_mockup/tezos-mockup.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
