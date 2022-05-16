@@ -194,7 +194,8 @@ recognise (SomeRawTree dialect rawTree)
         "tuple_type"       -> TProduct <$> fields "element"
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
-        "var_type"         -> TVariable <$> field "name"
+        "var_type"         -> TVariable <$> field  "name"
+        "arguments"        -> TProduct  <$> fields "ctor_argument" 
         _                  -> fallthrough
 
     -- Module access:
@@ -207,8 +208,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Variant
   , Descent do
       boilerplate $ \case
-        "variant" -> Variant <$> field "constructor" <*> fieldOpt "arguments"
-        _         -> fallthrough
+        "variant"   -> Variant  <$> field  "constructor" <*> fieldOpt "arguments"
+        _           -> fallthrough
 
     -- TField
   , Descent do

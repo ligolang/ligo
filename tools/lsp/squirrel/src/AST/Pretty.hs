@@ -147,6 +147,9 @@ train sep' = fsep . punctuate sep' . map (lpp @dialect)
 tuple :: forall dialect p . LPP dialect p => [p] -> Doc
 tuple = parens . train @dialect @p ","
 
+tupleJsLIGO :: forall dialect p . LPP dialect p => [p] -> Doc
+tupleJsLIGO = brackets . train @dialect @p ","
+
 braces :: Doc -> Doc
 braces p = "{" <+> p <+> "}"
 
@@ -226,6 +229,7 @@ instance Pretty1 Expr where
     Break                -> "break"
     ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
     ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
+    ForOfLoop v c b      -> sexpr "for_of" [v, c, b]
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
     Block     es         -> sexpr "block" es
@@ -234,9 +238,8 @@ instance Pretty1 Expr where
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
-    SwitchStm _ _        -> error "todo sexp"
-    AssignOp  _ _ _      -> error "todo sexp"
-    ForOfLoop _ _ _      -> error "todo sexp"
+    SwitchStm s cs        -> error "switch" (s : cs)
+    AssignOp  l o r      -> sop l (ppToText o) [r]
 
 instance Pretty1 PatchableExpr where
   pp1 = \case
@@ -707,7 +710,8 @@ instance LPP1 'Js AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
-    TProduct  elements  -> tuple elements
+    TProduct  (element:[]) -> element
+    TProduct  elements  -> tupleJsLIGO elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
     TApply    f xs      -> f <+> tuple xs
@@ -724,7 +728,7 @@ instance LPP1 'Js Binding where
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
       [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
-    BAttribute    name          -> brackets ("@" <.> name)
+    BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
@@ -732,12 +736,12 @@ instance LPP1 'Js Binding where
 
 instance LPP1 'Js TypeParams where
   lpp1 = \case
-    TypeParam  t  -> parens t
-    TypeParams ts -> tuple ts
+    TypeParam  t  -> "<" <.> pp t <.> ">"
+    TypeParams ts -> "<" <.> train "," ts <.> ">"
 
 instance LPP1 'Js Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor ty -> ctor <+> parens (lpp ty)
+    Variant ctor ty -> brackets ("\"" <.> lpp ctor <.> "\"" <.> "," <+> lpp ty)
 
 instance LPP1 'Js Expr where
   lpp1 = \case
@@ -813,6 +817,7 @@ instance LPP1 'Js TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
+-- error 
 instance LPP1 'Js MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v

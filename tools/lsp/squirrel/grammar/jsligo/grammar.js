@@ -284,7 +284,7 @@ module.exports = grammar({
     variant: $ => common.withAttrs($, common.brackets(
       choice(
         field("constructor", $.String),
-        seq(field("constructor", $.String), ',', field("arguments", common.sepBy1(',', $._type_expr)))
+        seq(field("constructor", $.String), ',', field("arguments", common.sepBy1(',', field("ctor_argument", $._type_expr))))
       )
     )),
 
