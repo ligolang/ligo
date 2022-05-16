@@ -197,7 +197,7 @@ let first_name_component: string = full_name[0];
   (let_decl
     (var_pattern (NameDecl))
     (TypeName)
-    (data_projection
+    (indexing
       (Name)
       (Int))))
 
@@ -212,6 +212,6 @@ let x = y[0][1][2]
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (data_projection 
-      (data_projection 
-        (data_projection (Name) (Int)) (Int)) (Int))))
+    (indexing 
+      (indexing 
+        (indexing (Name) (Int)) (Int)) (Int))))

@@ -226,7 +226,7 @@ const fst = (p: [nat, nat]): nat => p[0];
         (tuple_type (TypeName) (TypeName)))
         (TypeName)
         (body
-          (data_projection
+          (indexing
             (Name)
             (Int))))))
 

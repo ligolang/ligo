@@ -162,6 +162,7 @@ module.exports = grammar({
       $.Unit_kwd,
       $.ctor_expr,
       $.data_projection,
+      $.indexing,
       $.michelson_interop,
       $.paren_expr,
       $.module_access,
@@ -176,10 +177,9 @@ module.exports = grammar({
 
     ctor_args: $ => common.par(common.sepBy(',', $._expr)),
 
-    data_projection: $ => choice(
-      seq(field("field", $._member_expr), common.brackets(field("accessor", $._expr))),
-      seq(field("field", $._member_expr), '.', $._accessor_chain)
-    ),
+    data_projection: $ => seq(field("field", $._member_expr), '.', $._accessor_chain),
+
+    indexing: $ => prec(5, seq(field("box", $._member_expr), common.brackets(field("index", $._expr)))),
 
     _accessor_chain: $ => prec.right(common.sepBy1('.', field("accessor", $.Name))),
 

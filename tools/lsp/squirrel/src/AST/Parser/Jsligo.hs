@@ -43,6 +43,7 @@ recognise (SomeRawTree dialect rawTree)
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
         "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "body"
+        "indexing"            -> ListAccess <$> field  "box"         <*> fields "index"
         _                     -> fallthrough
 
     -- Case & Default

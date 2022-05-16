@@ -745,17 +745,16 @@ instance LPP1 'Js Variant where
 
 instance LPP1 'Js Expr where
   lpp1 = \case
-    Let       decl body  -> "let" `indent` decl `above` "in" <+> body
     Apply     f xs       -> f <+> tuple xs
     Ident     qname      -> qname
     BinOp     l o r      -> l <+> o <+> r
     UnOp        o r      -> lpp o <+> lpp r
     Op          o        -> lpp o
     Record    az         -> "{" `indent` blockWith (<.> ",") az `above` "}"
-    If        b t e      -> "if" <+> b <+> braces (lpp t) <+> "else" <+> lpp e -- TODO: primitive return values should be enclosed in braces
+    If        b t e      -> "if" <+> parens b <+> braces (lpp t) <+> "else" <+> braces (lpp e)
     List      l          -> lpp l
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
-    Tuple     l          -> tuple l
+    Tuple     l          -> tupleJsLIGO l
     Annot     n t        -> parens (n <+> ":" <+> t)
     Case      s az       -> foldr (<+>) empty
       [ "match("
@@ -765,20 +764,21 @@ instance LPP1 'Js Expr where
       , foldr above empty $ lpp <$> az
       , "\n}"
       ]
-    Seq       es         -> train " " es
+    Seq       es         -> train ";" es
     Lambda    ps ty b    -> foldr (<+>) empty
       [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     ForOfLoop _ _ _      -> error "todo pretty print"
+    -- AssignOp
+    -- While
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where
   lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
 
--- change this
 instance LPP1 'Js Alt where
   lpp1 = \case
-    Alt p b -> "|" <+> lpp p <+> "=>" <+> lpp b
+    Alt p b -> "(" <+> lpp p <+> ")" <+> "=>" <+> lpp b <+> ","
 
 instance LPP1 'Js FieldAssignment where
   lpp1 = \case
