@@ -1,4 +1,5 @@
-module Language.LIGO.Debugger.Handlers
+-- | Implementation of DAP handlers.
+module Language.LIGO.Debugger.Handlers.Impl
   ( LIGO
   ) where
 
@@ -33,8 +34,8 @@ import System.Directory (doesFileExist)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 
+import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson (dummyMapper)
-import Language.LIGO.Debugger.Types
 import Util (groupByKey)
 
 data LIGO

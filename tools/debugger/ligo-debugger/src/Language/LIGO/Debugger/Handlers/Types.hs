@@ -1,4 +1,5 @@
-module Language.LIGO.Debugger.Types
+-- | Types related to debugger.
+module Language.LIGO.Debugger.Handlers.Types
   ( LigoLaunchRequest (..)
   , LigoLaunchRequestArguments (..)
   , LigoInitializeLoggerRequest (..)

@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2aaf82d3618f2e912a6c6acf67b3ee05edf51b2fff1d29a70080a678ce2ba324
+-- hash: b1f800731bdecdcdcbd28a22a10624f4116195e6674c4a2c0904a111da8d6a73
 
 name:           ligo-debugger
 version:        0.0.0
@@ -16,9 +16,9 @@ library
   exposed-modules:
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
-      Language.LIGO.Debugger.Handlers
+      Language.LIGO.Debugger.Handlers.Impl
+      Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
-      Language.LIGO.Debugger.Types
       Prelude
       Util
   other-modules:
