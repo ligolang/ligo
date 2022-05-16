@@ -727,11 +727,13 @@ instance LPP1 'Js Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
-      [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
+      [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ]
     BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    BModuleDecl   mname body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
+    BModuleAlias  mname alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Js TypeParams where
@@ -746,7 +748,6 @@ instance LPP1 'Js Variant where
 instance LPP1 'Js Expr where
   lpp1 = \case
     Apply     f xs       -> f <+> tuple xs
-    Ident     qname      -> qname
     BinOp     l o r      -> l <+> o <+> r
     UnOp        o r      -> lpp o <+> lpp r
     Op          o        -> lpp o
@@ -772,6 +773,8 @@ instance LPP1 'Js Expr where
     AssignOp l o r       -> l <+> o <+> r
     WhileLoop f b        -> "while (" <+> f <+> ") {" `indent` lpp b `above` "}"
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
+    RecordUpd s fs       -> lpp s <+> train "," fs
+    Michelson c t _      -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")" 
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where
