@@ -104,9 +104,8 @@ reasonLIGOKeywords = HashSet.fromList
 
 jsLIGOKeywords :: HashSet Text
 jsLIGOKeywords = HashSet.fromList
-  [ "else", "if", "let", "const", "??or", "??then", "type", "return", "switch",
-    "case", "default", "as", "break", "namespace", "import", "export", "while",
-    "for", "of"
+  [ "else", "if", "let", "const", "type", "return", "switch", "case", "default"
+  , "as", "break", "namespace", "import", "export", "while", "for", "of"
   ]
 
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
