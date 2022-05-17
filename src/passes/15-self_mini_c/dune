@@ -3,7 +3,7 @@
  (public_name ligo.self_mini_c)
  (instrumentation
   (backend bisect_ppx))
- (libraries mini_c tezos-hacl-glue-unix bls12-381-unix)
+ (libraries mini_c tezos-hacl)
  (inline_tests)
  (preprocess
   (pps ppx_expect ppx_poly_constructor))

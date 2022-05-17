@@ -13,10 +13,19 @@ interface DeployBody {
   entrypoint: string;
   storage: string;
   network: string;
+  protocol: string;
 }
 
-const Tezos = (network: string) =>
-  new TezosToolkit(`https://${network}.api.tez.ie`);
+const Tezos = (network: string) => {
+  switch (network) {
+    case "mainnet":
+      return new TezosToolkit(`https://mainnet.api.tez.ie`);
+    case "ithacanet":   
+      return new TezosToolkit(`https://ithacanet.ecadinfra.com`);
+    default : 
+      return new TezosToolkit("empty");
+  }
+}
 
 const validateRequest = (body: any): { value: DeployBody; error?: any } => {
   return joi
@@ -25,6 +34,7 @@ const validateRequest = (body: any): { value: DeployBody; error?: any } => {
       code: joi.string().required(),
       entrypoint: joi.string().required(),
       storage: joi.string().required(),
+      protocol: joi.string().required(),
       network: joi.string().required(),
     })
     .validate(body);
@@ -40,7 +50,8 @@ export async function deployHandler(req: Request, res: Response) {
         body.syntax,
         body.code,
         body.entrypoint,
-        'json'
+        'json',
+        body.protocol
       );
 
       const michelsonStorage = await new LigoCompiler().compileStorage(
@@ -48,7 +59,8 @@ export async function deployHandler(req: Request, res: Response) {
         body.code,
         body.entrypoint,
         'json',
-        body.storage
+        body.storage,
+        body.protocol
       );
 
       const TezosNetwork = Tezos(body.network);

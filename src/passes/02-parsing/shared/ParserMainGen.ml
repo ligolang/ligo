@@ -19,6 +19,10 @@ module Tree         = Cst_shared.Tree
 
 (* The functor *)
 
+(* Warning handling *)
+module type Warning = sig
+  val add_warning : Main_warnings.all -> unit
+end
 module type PRINTER =
   sig
     type tree
@@ -48,7 +52,9 @@ module Make
                                 and type tree = CST.t)
          (Print       : PRINTER with type tree = CST.t)
          (Pretty      : PRETTY with type tree = CST.t)
-         (CLI         : ParserLib.CLI.S) =
+         (CLI         : ParserLib.CLI.S)
+         (Warning     : Warning) =
+
   struct
     (* Instantiating the lexer *)
 
@@ -59,6 +65,7 @@ module Make
                         (Token)
                         (Lexer_CLI : LexerLib.CLI.S)
                         (Self_tokens)
+                        (Warning)
     (* Other CLIs *)
 
     module Preprocessor_CLI = Lexer_CLI.Preprocessor_CLI

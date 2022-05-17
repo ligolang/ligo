@@ -10,6 +10,7 @@ interface DryRunBody {
   entrypoint: string;
   parameters: string;
   storage: string;
+  protocol: string;
 }
 
 const validateRequest = (body: any): { value: DryRunBody; error?: any } => {
@@ -19,6 +20,7 @@ const validateRequest = (body: any): { value: DryRunBody; error?: any } => {
       code: joi.string().required(),
       entrypoint: joi.string().required(),
       parameters: joi.string().required(),
+      protocol: joi.string().required(),
       storage: joi.string().required()
     })
     .validate(body);
@@ -36,7 +38,8 @@ export async function dryRunHandler(req: Request, res: Response) {
         body.code,
         body.entrypoint,
         body.parameters,
-        body.storage
+        body.storage,
+        body.protocol
       );
 
       res.send({ output: output });

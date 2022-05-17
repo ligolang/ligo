@@ -59,7 +59,6 @@ module Free_type_variables = struct
        let arguments = List.map ~f:self arguments in
        unions arguments
     | T_variable v when List.mem type_env v ~equal:(fun v1 v2 -> TypeVar.compare v1 v2 = 0) -> VarSet.empty
-    | T_variable v when TypeVar.is_generalizable v  -> VarSet.singleton v
     | T_variable _ -> VarSet.empty
     | T_module_accessor _ -> VarSet.empty
        (* self element *)

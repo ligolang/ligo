@@ -12,6 +12,9 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
 
   let rec find_scopes' = fun (i,all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
+    | E_let_in { let_result ; attr= { hidden = true ; _ } ; _ } -> (
+      find_scopes' (i,all_defs,env,scopes,let_result.location) bindings let_result
+    )
     | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
       let (i,all_defs,_, scopes) = find_scopes' (i,all_defs,env,scopes,e.location) bindings rhs in
       let def = make_v_def_option_type bindings var ascr (Ast_core.ValueVar.get_location var) rhs.location in
@@ -111,6 +114,12 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
       let scopes = add_scope (lastloc, env) scopes in
       (i,all_defs,env,scopes)
     )
+    | E_assign { binder ; expression ; _ } -> (
+      let def = make_v_def_option_type bindings binder.var binder.ascr (Ast_typed.ValueVar.get_location binder.var) expression.location in
+      let (i,env) = add_shadowing_def (i, get_binder_name binder.var) def env in
+      let all_defs = merge_defs env all_defs in
+      find_scopes' (i,all_defs,env,scopes,expression.location) bindings expression
+    )
   and find_scopes (i,top_lvl_defs,scopes,loc) bindings  e =
     let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (i,defs,scopes)
@@ -159,6 +168,9 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
         | None -> partials
       in
       match decl.wrap_content with
+      | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> (
+        ( i, top_def_map, inner_def_map, scopes , partials )
+      )
       | Declaration_constant { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
         let (i,new_inner_def_map,scopes) = find_scopes (i,top_def_map,scopes,decl.location) partials.bindings expr in
         let inner_def_map = merge_defs new_inner_def_map inner_def_map in
@@ -166,9 +178,15 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
         let (i,top_def_map) = add_shadowing_def (i,get_binder_name var) def top_def_map in
         ( i, top_def_map, inner_def_map, scopes , partials )
       )
+      | Declaration_type {type_attr={hidden = true; _} ; _} -> (
+        ( i, top_def_map, inner_def_map, scopes, partials )
+      )
       | Declaration_type {type_binder; type_expr ; type_attr=_} -> (
         let def = make_t_def (get_type_binder_name type_binder) decl.location type_expr in
         let (i,top_def_map) = add_shadowing_def (i,get_type_binder_name type_binder) def top_def_map in
+        ( i, top_def_map, inner_def_map, scopes, partials )
+      )
+      | Declaration_module {module_attr={hidden = true; _} ; _} -> (
         ( i, top_def_map, inner_def_map, scopes, partials )
       )
       | Declaration_module {module_binder; module_ ; module_attr=_} -> (

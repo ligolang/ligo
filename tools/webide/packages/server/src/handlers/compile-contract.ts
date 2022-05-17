@@ -9,6 +9,7 @@ interface CompileBody {
   code: string;
   entrypoint: string;
   format?: string;
+  protocol: string;
 }
 
 const validateRequest = (body: any): { value: CompileBody; error?: any } => {
@@ -18,6 +19,7 @@ const validateRequest = (body: any): { value: CompileBody; error?: any } => {
       code: joi.string().required(),
       entrypoint: joi.string().required(),
       format: joi.string().optional(),
+      protocol: joi.string().required(),
     })
     .validate(body);
 };
@@ -33,7 +35,8 @@ export async function compileContractHandler(req: Request, res: Response) {
         body.syntax,
         body.code,
         body.entrypoint,
-        body.format || 'text'
+        body.format || 'text',
+        body.protocol
       );
 
       res.send({ result: michelsonCode });

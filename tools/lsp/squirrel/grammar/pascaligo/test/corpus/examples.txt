@@ -13,7 +13,7 @@ function add (const a : int ; const b : int) : int is
     (param_decl (var_pattern (NameDecl)) (TypeName))
     (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
-    (let_expr
+    (block_with
       (block (skip))
       (Int)
     )
@@ -38,12 +38,11 @@ function main() : int is
   (fun_decl
     (NameDecl)
     (TypeName)
-    (let_expr
+    (block_with
       (block
         (var_decl (var_pattern (NameDecl)) (TypeName) (Int))
         (assignment (Name) (binop (Name) (adder) (Int)))
-        (assignment (Name) (binop (Name) (adder) (Int)))
-      )
+        (assignment (Name) (binop (Name) (adder) (Int))))
       (Name)
     )
   )
@@ -89,5 +88,5 @@ const uno : storage = EURO.one
   (module_alias (ModuleName) (ModuleName))
   (type_decl (TypeName) (module_TypeName (ModuleName) (TypeName)))
   (const_decl (var_pattern (NameDecl)) (TypeName)
-    (module_access (ModuleName) (FieldName)))
+    (module_access (ModuleName) (Name)))
 )

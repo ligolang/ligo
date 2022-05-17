@@ -5,8 +5,8 @@ open Main_errors
 
 type ('a,'err) sdata = {
   erroneous_source_file : string ;
-  preproc :raise:'err raise -> string -> Buffer.t * (string * string) list;
-  parser : raise:'err raise -> Buffer.t -> 'a
+  preproc : raise:'err raise -> string -> Buffer.t * (string * string) list;
+  parser  : add_warning:(Main_warnings.all -> unit) -> raise:'err raise -> Buffer.t -> 'a
 }
 
 let pascaligo_sdata = {
@@ -17,8 +17,8 @@ let pascaligo_sdata = {
     fun ~raise -> Trace.from_result ~raise @@
     Preprocessing.Pascaligo.preprocess_string [] s);
   parser =
-    fun ~raise buffer -> trace ~raise parser_tracer @@
-      fun ~raise -> Parsing.Pascaligo.parse_expression buffer ~raise
+    fun ~add_warning ~raise buffer -> trace ~raise parser_tracer @@
+      Parsing.Pascaligo.parse_expression buffer ~add_warning
 }
 
 let cameligo_sdata = {
@@ -29,8 +29,8 @@ let cameligo_sdata = {
     fun ~raise -> Trace.from_result ~raise @@
     Preprocessing.Cameligo.preprocess_string [] s);
   parser =
-    fun ~raise buffer -> trace ~raise parser_tracer (
-    Parsing.Cameligo.parse_expression buffer)
+    fun ~add_warning ~raise buffer -> trace ~raise parser_tracer @@
+      Parsing.Cameligo.parse_expression buffer ~add_warning
 }
 
 let reasonligo_sdata = {
@@ -41,8 +41,8 @@ let reasonligo_sdata = {
     fun ~raise -> Trace.from_result ~raise @@
     Preprocessing.Reasonligo.preprocess_string [] s);
   parser =
-    fun ~raise buffer -> trace ~raise parser_tracer (
-    Parsing.Reasonligo.parse_expression buffer)
+    fun ~add_warning ~raise buffer -> trace ~raise parser_tracer @@
+      Parsing.Reasonligo.parse_expression buffer ~add_warning
 }
 
 let get_exp_as_string filename =
@@ -56,12 +56,12 @@ let get_exp_as_string filename =
     In_channel.close chan;
     List.rev !lines
 
-let assert_syntax_error ~raise sdata () =
+let assert_syntax_error ~raise ~add_warning sdata () =
   let aux entry =
     Format.printf "Entry : <%s>%!\n" entry ;
     let c_unit,_ = sdata.preproc ~raise entry in
-    Assert.assert_fail ~raise (test_internal __LOC__) @@ 
-      sdata.parser c_unit;
+    Assert.assert_fail ~raise (test_internal __LOC__) @@
+      sdata.parser ~add_warning c_unit;
     Format.printf "Parsed%!\n" ;
     ()
   in
@@ -73,9 +73,9 @@ let () =
   Printexc.record_backtrace true ;
   run_test @@ test_suite "LIGO" [
     test_suite "Parser negative tests" [
-      test "pascaligo"  @@ assert_syntax_error pascaligo_sdata ;
-      test "cameligo"   @@ assert_syntax_error cameligo_sdata ;
-      test "reasonligo" @@ assert_syntax_error reasonligo_sdata ;
+      test_w "pascaligo"  @@ assert_syntax_error pascaligo_sdata ;
+      test_w "cameligo"   @@ assert_syntax_error cameligo_sdata ;
+      test_w "reasonligo" @@ assert_syntax_error reasonligo_sdata ;
     ]
   ] ;
   ()

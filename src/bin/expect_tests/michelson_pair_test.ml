@@ -112,6 +112,15 @@ let%expect_test _ =
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
 
+    File "../../test/contracts/michelson_pair_tree.jsligo", line 8, character 0 to line 11, character 1:
+      7 |
+      8 | let main = ([action, store] : [unit, storage]) : return_ => {
+      9 |   let foo = [3, [1, 2 as nat]];
+     10 |   return [list([]) as list<operation>, foo as storage]
+     11 | };
+
+    Toplevel let declaration are silently change to const declaration.
+
     { parameter unit ;
       storage (pair (int %three) (pair %four (int %one) (nat %two))) ;
       code { DROP ;

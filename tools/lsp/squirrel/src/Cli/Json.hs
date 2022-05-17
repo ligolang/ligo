@@ -6,6 +6,7 @@
 module Cli.Json
   ( LigoError (..)
   , LigoErrorContent (..)
+  , LigoMessages (..)
   , LigoScope (..)
   , LigoDefinitions (..)
   , LigoDefinitionsInner (..)
@@ -36,11 +37,12 @@ import Data.Foldable (asum, toList)
 import Data.Function
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
+import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text (unpack)
-import Data.Word (Word32)
 import GHC.Generics
+import Language.LSP.Types qualified as J
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
@@ -80,11 +82,27 @@ data LigoErrorContent = LigoErrorContent
   }
   deriving stock (Eq, Generic, Show)
 
+-- | The output for 'ligo info get-scope' may return with a list of errors and a
+-- list of warnings.
+data LigoMessages = LigoMessages
+  { -- | `"errors"`
+    _lmErrors :: NonEmpty LigoError
+    -- | `"warnings"`
+  , _lmWarnings :: [LigoError]
+  }
+  deriving stock (Eq, Generic, Show)
+
 -- | Whole successfull ligo `get-scope` output
 data LigoDefinitions = LigoDefinitions
-  { -- | All the definitions
+  { -- | Errors produced by LIGO
+    -- `"errors"`
+    _ldErrors :: Maybe [LigoError]
+    -- | Warnings produced by LIGO
+    -- `"warnings"`
+  , _ldWarnings :: Maybe [LigoError]
+    -- | All the definitions
     -- `"definitions"`
-    _ldDefinitions :: LigoDefinitionsInner
+  , _ldDefinitions :: LigoDefinitionsInner
     -- | Scopes
     -- `"scopes"`
   , _ldScopes :: [LigoScope]
@@ -280,8 +298,8 @@ data LigoRange
 -- ```
 data LigoRangeInner = LigoRangeInner
   { _lriByte :: LigoByte
-  , _lriPointNum :: Word32
-  , _lriPointBol :: Word32
+  , _lriPointNum :: J.UInt
+  , _lriPointBol :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
 
@@ -291,9 +309,9 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
-  , _lbPosLnum :: Word32
-  , _lbPosBol :: Word32
-  , _lbPosCnum :: Word32
+  , _lbPosLnum :: J.UInt
+  , _lbPosBol :: J.UInt
+  , _lbPosCnum :: J.UInt
   }
   deriving stock (Eq, Generic, Show)
 
@@ -309,6 +327,9 @@ instance FromJSON LigoError where
 
 instance ToJSON LigoError where
   toJSON = genericToJSON defaultOptions {fieldLabelModifier = prepareField 2}
+
+instance FromJSON LigoMessages where
+  parseJSON = genericParseJSON defaultOptions {fieldLabelModifier = prepareField 2}
 
 instance FromJSON LigoErrorContent where
   parseJSON = asum . (parsers ??)
@@ -563,7 +584,7 @@ parseLigoRangeString = flip withText safeExtract
           }
         }
 
-    parseRange :: [String] -> Either String (FilePath, Word32, Word32, Word32)
+    parseRange :: [String] -> Either String (FilePath, J.UInt, J.UInt, J.UInt)
     parseRange = \case
         [_, file, line, colStart, colStop] -> do
           let fp = file
@@ -615,13 +636,19 @@ instance Pretty LigoError where
 ----------------------------------------------------------------------------
 
 -- | Convert ligo error to its corresponding internal representation.
-fromLigoErrorToMsg :: LigoError -> Msg
+fromLigoErrorToMsg :: LigoError -> Message
 fromLigoErrorToMsg LigoError
   { _leContent = LigoErrorContent
       { _lecMessage = err
       , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
-  } = (fromMaybe (point 0 0) at, Error (err :: Text) [])
+  , _leStatus
+  } = Message err status (fromMaybe (point 0 0) at)
+  where
+    status = case _leStatus of
+      "error"   -> SeverityError
+      "warning" -> SeverityWarning
+      _         -> SeverityError
 
 -- | Helper function that converts qualified field to its JSON counterpart.
 --
@@ -631,7 +658,7 @@ prepareField :: Int -> String -> String
 prepareField dropAmount = Prelude.drop (dropAmount + 2) . concatMap process
   where
     process c
-      | isUpper c = "_" <> [toLower c]
+      | isUpper c = ['_', toLower c]
       | otherwise = [c]
 
 -- | Splits an array onto chunks of n elements, throws error otherwise.
@@ -779,7 +806,8 @@ fromLigoTypeFull = enclose . \case
     fromLigoRecordField name LigoRecordField {..} = do
       st <- get
       n <- fromLigoPrimitive name
-      return $ make' (st, TField n (fromLigoTypeFull _lrfAssociatedType))
+      -- FIXME: Type annotation is optional.
+      return $ make' (st, TField n (Just $ fromLigoTypeFull _lrfAssociatedType))
 
     mkErr = gets . flip mkLigoError
 

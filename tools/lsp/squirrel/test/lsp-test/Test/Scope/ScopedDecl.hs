@@ -19,6 +19,6 @@ unit_access_field :: Assertion
 unit_access_field = do
   let tspec =
         TypeDeclSpecifics stubRange
-          (RecordType [TypeField "stupid-name" stubTspec])
+          (RecordType [TypeField "stupid-name" $ Just stubTspec])
       accessor = Right "stupid-name"
   accessField tspec accessor `shouldBe` Just stubTspec

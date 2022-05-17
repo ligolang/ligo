@@ -31,5 +31,5 @@ const big_map1 : big_map (int,int) = big_map [23 -> 0; 42 -> 0]
 function mutimaps (const m : foo; var n : foo) : foo is block {
   var bar : foo := m;
   bar[42] := 0;
-  n[42] := get_force (42, bar)
+  n[42] := Big_map.find (42, bar)
 } with n

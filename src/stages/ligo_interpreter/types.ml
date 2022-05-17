@@ -1,7 +1,7 @@
 include Ast_aggregated.Types
 
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 
 module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
 module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
@@ -22,6 +22,11 @@ and func_val = {
     arg_binder : expression_variable ;
     body : Ast_aggregated.expression ;
     env : env ;
+  }
+
+and thunk_val = {
+    value : Ast_aggregated.expression ;
+    context : env ;
   }
 
 and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggregated.type_expression }
@@ -68,6 +73,7 @@ and value =
   | V_Michelson of michelson_code
   | V_Mutation of mutation
   | V_Func_val of func_val
+  | V_Thunk of thunk_val
 
 and calltrace = Location.t list
 
