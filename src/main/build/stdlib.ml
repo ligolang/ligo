@@ -1,5 +1,5 @@
 let get_lib : Environment.Protocols.t -> Syntax_types.t -> string = fun protocol stx ->
-  Scanf.unescaped @@
+  (* Scanf.unescaped @@ *)
   match (protocol , stx) with
   | Environment.Protocols.Jakarta , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_jakarta
   | Environment.Protocols.Ithaca , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_ithaca
