@@ -1,3 +1,6 @@
+type test_exec_error = unit ;
+type test_exec_result = ["Success" , nat ] | ["Fail" , test_exec_error ] ;
+
 let test_foo = (x : test_exec_result) : string => {
   match(x, {
     Fail: (_ : test_exec_error) => "",
