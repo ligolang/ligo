@@ -78,7 +78,7 @@ newtype ProjectSettings = ProjectSettings
 
 instance Default ProjectSettings where
   def = ProjectSettings
-    { psIgnorePaths = Just []
+    { psIgnorePaths = Nothing
     }
 
 newtype RIO a = RIO
@@ -110,4 +110,7 @@ instance KatipContext RIO where
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) S.getConfig
 
-$(deriveJSON defaultOptions{fieldLabelModifier = over _head toLower . drop 2} ''ProjectSettings)
+$(deriveJSON defaultOptions
+  { fieldLabelModifier = over _head toLower . drop 2, omitNothingFields = True
+  }
+  ''ProjectSettings)

@@ -9,7 +9,7 @@ module RIO.Indexing
   ) where
 
 import Control.Lens (view)
-import Control.Monad (void)
+import Control.Monad (void, when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks)
 import Data.Aeson (eitherDecodeFileStrict', encodeFile)
@@ -22,6 +22,7 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
+import System.IO (IOMode (ReadMode), hFileSize, withFile)
 import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
 import UnliftIO.Environment (lookupEnv)
 import UnliftIO.Exception (displayException, tryIO)
@@ -51,6 +52,10 @@ prettyIndexOptions = \case
 
 ligoProjectName :: FilePath
 ligoProjectName = ".ligoproject"
+
+projectIndexingMarkdownLink :: String
+projectIndexingMarkdownLink =
+  "[docs/project-indexing.md](https://gitlab.com/serokell/ligo/ligo/-/tree/tooling/tools/lsp/vscode-plugin/docs/project-indexing.md)"
 
 -- | If there is a LIGO project file and the user has provided ignored paths,
 -- then this function will return it.
@@ -86,6 +91,13 @@ decodeProjectSettings projectDir = do
         { psIgnorePaths = canonicalizedPaths
         }
 
+upgradeProjectSettingsFormat :: FilePath -> RIO ()
+upgradeProjectSettingsFormat projectPath = do
+  size <- liftIO $ withFile projectPath ReadMode hFileSize
+  when (size == 0) do
+    sendInfo [Log.i|Found an old version of #{ligoProjectName}, upgrading to a new version. For more information, see #{projectIndexingMarkdownLink}.|]
+    liftIO $ encodeFile projectPath $ def @ProjectSettings
+
 -- FIXME: The user choice is not updated right away due to a limitation in LSP.
 -- Check the comment in `askForIndexDirectory` for more information.
 getIndexDirectory :: FilePath -> RIO IndexOptions
@@ -96,6 +108,7 @@ getIndexDirectory contractDir = do
       indexOptsM <- tryReadMVar =<< asks reIndexOpts
       maybe (askForIndexDirectory contractDir) pure indexOptsM
     Just ligoProjectDir -> do
+      upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
       projectSettings <- decodeProjectSettings ligoProjectDir
       let indexOpts = FromLigoProject ligoProjectDir projectSettings
       indexOptsVar <- asks reIndexOpts
@@ -173,7 +186,7 @@ askForIndexDirectory contractDir = do
     mkRequest :: [IndexOptions] -> J.ShowMessageRequestParams
     mkRequest suggestions = J.ShowMessageRequestParams
       { _xtype = J.MtInfo
-      , _message = "Choose a directory to index LIGO files. See [docs/project-indexing.md](https://gitlab.com/serokell/ligo/ligo/-/tree/tooling/tools/lsp/vscode-plugin/docs/project-indexing.md) for more details."
+      , _message = [Log.i|Choose a directory to index LIGO files. See #{projectIndexingMarkdownLink} for more details.|]
       , _actions = Just $ J.MessageActionItem . T.pack . prettyIndexOptions <$> suggestions
       }
 
