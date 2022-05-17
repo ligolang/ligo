@@ -125,5 +125,36 @@ let const_or_var: Core.regexp = {
   emacs    = "\\\\b\\\\(const\\\\|var\\\\)\\\\b";
   textmate = "\\b(const|var)\\b";
   vim      = "\\<\\(const\\|var\\)\\>"
+}
 
+(* TODO: add regexps for emacs & vim later *)
+
+let attributes_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "(/\\s*@.*\\s*|/\\*\\s*@.*\\*/)";
+  vim      = ""
+}
+
+let let_binding_match1_jsligo: Core.regexp = {
+  emacs    = ""; 
+  textmate = "\\b(let|const)\\b\\s*";
+  vim      = "";
+}
+
+let let_binding_match2_jsligo: Core.regexp = {
+  emacs    = ""; 
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
+  vim      = "";
+}
+
+let control_keywords_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(switch|case|default|if|else|for|of|while)\\b";
+  vim      = ""
+}
+
+let operators_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+";
+  vim      = ""
 }
