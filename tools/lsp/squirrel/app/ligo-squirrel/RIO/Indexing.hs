@@ -108,8 +108,8 @@ askForIndexDirectory contractDir = do
   gitDirectoryM <- mkGitDirectory
   let
     suggestions = ordNubOn indexOptionsPath $ catMaybes
-      [ FromRoot <$> rootDirectoryM
-      , FromGitProject <$> gitDirectoryM
+      [ FromGitProject <$> gitDirectoryM
+      , FromRoot <$> rootDirectoryM
       , Just DoNotIndex
       ]
 
