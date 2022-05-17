@@ -709,7 +709,7 @@ instance LPP1 'Js AST.Type where
   lpp1 = \case
     TArrow    dom codom -> dom <+> "=>" <+> codom
     TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
-    TProduct  (element:[]) -> element
+    TProduct  [element] -> element
     TProduct  elements  -> tupleJsLIGO elements
     TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
     TSum      []        -> error "malformed TSum type" -- never called
