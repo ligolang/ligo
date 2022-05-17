@@ -15,7 +15,6 @@ module AST.Pretty
   ) where
 
 import Data.Kind (Type)
-import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
@@ -603,11 +602,11 @@ instance LPP1 'Reason Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
-      [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
+      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason TypeParams where
@@ -642,7 +641,7 @@ instance LPP1 'Reason Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
@@ -727,11 +726,11 @@ instance LPP1 'Js Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
-      [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ]
+      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ]
     BAttribute    name          -> "/* @" <.> name <.> " */"
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
     BModuleDecl   mname body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
     BModuleAlias  mname alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
@@ -767,7 +766,7 @@ instance LPP1 'Js Expr where
       ]
     Seq       es         -> train ";" es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     ForOfLoop v c b      -> "for" <+> "(const" <+> v <+> "of" <+> c <+> ") {" `indent` lpp b `above` "}"
     AssignOp l o r       -> l <+> o <+> r
@@ -866,7 +865,7 @@ instance LPP1 'Caml Binding where
         , ["rec" | isRec]
         , [name]
         , params
-        , [if isJust ty then ":" <+> lpp ty else empty]
+        , [maybe empty ((":" <+>) . lpp) ty]
         , ["=", body]
         ]
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
@@ -902,7 +901,7 @@ instance LPP1 'Caml Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=>", lpp b ]
+      [ train "," ps, maybe "" ((":" <+>) . lpp) ty, "=>", lpp b ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
