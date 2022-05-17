@@ -147,9 +147,6 @@ train sep' = fsep . punctuate sep' . map (lpp @dialect)
 tuple :: forall dialect p . LPP dialect p => [p] -> Doc
 tuple = parens . train @dialect @p ","
 
-tupleJsLIGO :: forall dialect p . LPP dialect p => [p] -> Doc
-tupleJsLIGO = brackets . train @dialect @p ","
-
 braces :: Doc -> Doc
 braces p = "{" <+> p <+> "}"
 
@@ -705,6 +702,9 @@ instance LPP1 'Reason CaseOrDefaultStm where
 ----------------------------------------------------------------------------
 -- Js
 ----------------------------------------------------------------------------
+
+tupleJsLIGO :: forall p . LPP 'Js p => [p] -> Doc
+tupleJsLIGO = brackets . train @'Js @p ","
 
 instance LPP1 'Js AST.Type where
   lpp1 = \case

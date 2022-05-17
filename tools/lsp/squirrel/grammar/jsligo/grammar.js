@@ -503,7 +503,6 @@ module.exports = grammar({
     False_kwd: $ => 'false',
     True_kwd: $ => 'true',
     wildcard: $ => '_',
-    wildcard_pattern: $ => '_',
     Let_kwd: $ => 'let',
     Const_kwd: $ => 'const',
   }
