@@ -9,29 +9,31 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> string = fun protocol
 let stdlib ~options syntax =
   let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax in
   match Simple_utils.Trace.to_stdlib_result @@
-          Ligo_compile.Utils.type_contract_string ~add_warning:(fun _ -> ()) ~options CameLIGO lib with
+          Ligo_compile.Utils.type_program_string ~add_warning:(fun _ -> ()) ~options CameLIGO lib with
   | Ok s -> s
   | Error e ->
      let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
      failwith ("Error compiling the stdlib: " ^ error_msg)
 
-module LanguageMap = Simple_utils.Map.Make(struct type t = Syntax_types.t let compare = Syntax_types.compare end)
-let cached = ref LanguageMap.empty
 
-let typed ~options syntax =
-  Helpers.internalize_typed @@
-    match LanguageMap.find_opt syntax @@ ! cached with
+let typed ~options (syntax : Syntax_types.t) =
+  let open Helpers in
+  let k = build_key ~options syntax in
+  internalize_typed @@
+    match LanguageMap.find_opt k @@ ! std_lib_cache with
     | None ->
        let typed, core = stdlib ~options syntax in
-       cached := LanguageMap.add syntax (typed, core) @@ ! cached;
+       std_lib_cache := LanguageMap.add k (typed, core) @@ !std_lib_cache;
        typed
     | Some (typed, _) -> typed
 
-let core ~options syntax =
-  Helpers.internalize_core @@
-    match LanguageMap.find_opt syntax @@ ! cached with
+let core ~options (syntax : Syntax_types.t) =
+  let open Helpers in
+  let k = build_key ~options syntax in
+  internalize_core @@
+    match LanguageMap.find_opt k @@ ! std_lib_cache with
     | None ->
        let typed, core = stdlib ~options syntax in
-       cached := LanguageMap.add syntax (typed, core) @@ ! cached;
+       std_lib_cache := LanguageMap.add k (typed, core) @@ ! std_lib_cache;
        core
     | Some (_, core) -> core
