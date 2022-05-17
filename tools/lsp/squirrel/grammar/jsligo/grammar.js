@@ -125,7 +125,7 @@ module.exports = grammar({
     ),
 
     list_case: $ => seq(
-      field("pattern", common.par(seq($._binding_pattern, optional($._type_annotation)))),
+      field("pattern", common.par(seq($._binding_pattern, $._type_annotation))),
       '=>',
       field("expr", $.body)
     ),
@@ -170,7 +170,7 @@ module.exports = grammar({
 
     tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
 
-    paren_expr: $ => common.par(field("expr", $._annot_expr)),
+    paren_expr: $ => common.par(field("expr", $._expr)),
 
     ctor_expr: $ => seq(field("ctor", $.ConstrName), field("args", $.ctor_args)),
 
@@ -229,6 +229,8 @@ module.exports = grammar({
     ),
 
     _statements: $ => common.sepEndBy1(optional($._semicolon), $._statement),
+
+    _statements_strict_semicolon: $ => common.sepEndBy1($._semicolon, $._statement),
 
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
@@ -418,7 +420,7 @@ module.exports = grammar({
 
     default_case: $ => seq('default', $._case_statements),
 
-    _case_statements: $ => seq(':', optional(field("body", $._statements))),
+    _case_statements: $ => seq(':', optional(field("body", $._statements_strict_semicolon))),
 
     if_else_statement: $ => prec.right(seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), optional($._else_branch))),
 
