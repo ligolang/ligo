@@ -221,7 +221,7 @@ const fst = (p: [nat, nat]): nat => p[0];
   (const_decl
     (var_pattern (NameDecl))
     (lambda
-      (fun_arg 
+      (fun_arg
         (var_pattern (NameDecl))
         (tuple_type (TypeName) (TypeName)))
         (TypeName)

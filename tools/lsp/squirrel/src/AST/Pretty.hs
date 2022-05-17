@@ -773,7 +773,7 @@ instance LPP1 'Js Expr where
     WhileLoop f b        -> "while (" <+> f <+> ") {" `indent` lpp b `above` "}"
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
     RecordUpd s fs       -> lpp s <+> train "," fs
-    Michelson c t _      -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")" 
+    Michelson c t _      -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where

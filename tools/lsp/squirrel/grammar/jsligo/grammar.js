@@ -104,11 +104,11 @@ module.exports = grammar({
     ),
 
     pattern_match: $ => seq(
-      'match', 
+      'match',
       common.par(
         seq(
-          field("subject", $._member_expr), 
-          ',', 
+          field("subject", $._member_expr),
+          ',',
           choice($._list_cases, $._ctor_cases)
         )
       )
@@ -143,7 +143,7 @@ module.exports = grammar({
       '=>',
       field("expr", $.body)
     ),
-    
+
     constr_pattern: $ => seq(
       field("constructor", $.ConstrName),
       ':',
@@ -221,9 +221,9 @@ module.exports = grammar({
       )
     ),
 
-    body: $ => prec.right(3, 
+    body: $ => prec.right(3,
       choice(
-        $.block_statement, 
+        $.block_statement,
         $._expr_statement
       )
     ),
@@ -253,8 +253,8 @@ module.exports = grammar({
     _record_field: $ => choice($.record_field, $.capture),
 
     record_field: $ => seq(
-      field("accessor", $.property_name), 
-      ':', 
+      field("accessor", $.property_name),
+      ':',
       field("value", $._expr)
     ),
 
@@ -341,14 +341,14 @@ module.exports = grammar({
     const_decl: $ => $._binding_initializer,
 
     _binding_initializer: $ => seq(
-      field("binding", $._binding_pattern), 
+      field("binding", $._binding_pattern),
       optional(
         seq(
-          optional($.type_params), 
+          optional($.type_params),
           field("type", $._type_annotation)
         )
-      ), 
-      '=', 
+      ),
+      '=',
       field("value", $._expr)
     ),
 
@@ -402,12 +402,12 @@ module.exports = grammar({
 
     spread_pattern: $ => seq('...', field("expr", $._list_item_pattern)),
 
-    tuple_pattern: $ => common.brackets(common.sepBy1(',', field("pattern", $._binding_pattern))), 
+    tuple_pattern: $ => common.brackets(common.sepBy1(',', field("pattern", $._binding_pattern))),
 
     switch_statement: $ => prec.left(seq(
-      'switch', 
-      common.par(field("selector", $._expr)), 
-      common.block($._cases), 
+      'switch',
+      common.par(field("selector", $._expr)),
+      common.block($._cases),
       optional($._semicolon)
     )),
 

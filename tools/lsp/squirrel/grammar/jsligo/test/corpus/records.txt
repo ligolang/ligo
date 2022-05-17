@@ -109,7 +109,7 @@ let alice : user = {
 record desctructuring
 =========
 
-let { a , b } = x ; 
+let { a , b } = x ;
 
 ---
 
@@ -212,6 +212,6 @@ let x = y[0][1][2]
 (source_file
   (let_decl
     (var_pattern (NameDecl))
-    (indexing 
-      (indexing 
+    (indexing
+      (indexing
         (indexing (Name) (Int)) (Int)) (Int))))

@@ -180,7 +180,7 @@ data Expr it
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
   | Break
-  | SwitchStm it [it]  -- (Expr) [CaseOrDefaultStm] 
+  | SwitchStm it [it]  -- (Expr) [CaseOrDefaultStm]
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)

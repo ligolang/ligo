@@ -38,8 +38,8 @@ type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
       (app_type
         (TypeName)
         (tuple_type
-          (TypeName) 
-          (string_type (String)) 
+          (TypeName)
+          (string_type (String))
           (TypeName)
           (string_type (String))))))
 
@@ -56,8 +56,8 @@ type y_or = michelson_or<[unit, "y", x_and, "other"]>;
     (TypeName)
       (app_type
         (TypeName)
-        (tuple_type 
-          (TypeName) 
-          (string_type (String)) 
+        (tuple_type
+          (TypeName)
+          (string_type (String))
           (TypeName)
           (string_type (String))))))

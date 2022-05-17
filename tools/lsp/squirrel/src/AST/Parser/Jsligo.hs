@@ -196,7 +196,7 @@ recognise (SomeRawTree dialect rawTree)
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field  "name"
-        "arguments"        -> TProduct  <$> fields "ctor_argument" 
+        "arguments"        -> TProduct  <$> fields "ctor_argument"
         _                  -> fallthrough
 
     -- Module access:
