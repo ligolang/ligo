@@ -1,5 +1,4 @@
 let get_lib : stub:bool -> Syntax_types.t -> string = fun ~stub stx ->
-  (* Scanf.unescaped @@ *)
   match (stub , stx) with
   | false , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Testlib.test_uncurry
   | false , ( CameLIGO ) -> Ligo_lib.Ligo_Testlib.test_curry
