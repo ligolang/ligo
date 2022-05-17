@@ -59,13 +59,13 @@ module.exports = grammar({
       $.binary_call,
       $.unary_call,
       $.apply,
-      $.list,
+      $.list_literal,
       $._member_expr,
       $.pattern_match,
       $.type_as_annotation,
     ),
 
-    list: $ => seq('list', common.par($.list_literal)),
+    list_literal: $ => seq('list', common.par($._list_elements)),
 
     assignment_operator: $ => prec.right(2,
       seq(field("lhs", $._expr_statement),
@@ -200,7 +200,7 @@ module.exports = grammar({
       field("field", $.FieldName),
     ),
 
-    list_literal: $ => common.brackets(common.sepBy(',', field("element", $._list_item))),
+    _list_elements: $ => common.brackets(common.sepBy(',', field("element", $._list_item))),
 
     _list_item: $ => choice($._annot_expr, $.spread),
 
@@ -412,13 +412,13 @@ module.exports = grammar({
     )),
 
     _cases: $ => choice(
-      seq(repeat1(field("case", $.case)), optional(field("case", $.default_case))),
-      field("case", $.default_case)
+      seq(repeat1(field("case", $.case_statement)), optional(field("case", $.default_statement))),
+      field("case", $.default_statement)
     ),
 
-    case: $ => seq('case', field("selector_value", $._expr), $._case_statements),
+    case_statement: $ => seq('case', field("selector_value", $._expr), $._case_statements),
 
-    default_case: $ => seq('default', $._case_statements),
+    default_statement: $ => seq('default', $._case_statements),
 
     _case_statements: $ => seq(':', optional(field("body", $._statements_strict_semicolon))),
 

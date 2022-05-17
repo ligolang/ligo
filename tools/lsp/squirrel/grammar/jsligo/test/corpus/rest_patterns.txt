@@ -10,10 +10,9 @@ let larger_list: list<int> = list([5, ...my_list]);
   (let_decl
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
-    (list
-      (list_literal
-        (Int)
-        (spread (Name))))))
+    (list_literal
+      (Int)
+      (spread (Name)))))
 
 =========
 rest-pattern: object rest

@@ -29,7 +29,7 @@ recognise (SomeRawTree dialect rawTree)
         "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"        <*> field "rhs"
         "apply"               -> Apply      <$> field  "function"    <*> fields   "argument"
         "block_statement"     -> Seq        <$> fields "statement"
-        "list"                -> List       <$> fields "element"
+        "list_literal"        -> List       <$> fields "element"
         "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
         "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then"      <*> fieldOpt "else"
         "if_statement"        -> If         <$> field  "selector"    <*> field    "then"      <*> pure Nothing
@@ -49,8 +49,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Case & Default
   , Descent do
       boilerplate $ \case
-        "case"         -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
-        "default_case" -> DefaultStm <$> fieldOpt "body"
+        "case_statement"    -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
+        "default_statement" -> DefaultStm <$> fieldOpt "body"
         _              -> fallthrough
 
     -- Pattern

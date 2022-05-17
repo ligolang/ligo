@@ -1,0 +1,66 @@
+ERROR:  
+      ../../../src/test/error-recovery/fuzzing/jsligo/2super-counter.jsligo:                                         FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/8eq_bool.jsligo:                                               FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/2counter.jsligo:                                               FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/4if_if_return.jsligo:                                          FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/4balance_constant.jsligo:                                      FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/8assert.jsligo:                                                FAIL
+      ../../../src/test/error-recovery/simple/jsligo/extra_arrow_in_lambda.jsligo:                                   FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_comma_in_list_pat.jsligo:                               FAIL
+      ../../../src/test/error-recovery/simple/jsligo/extra_eq_in_func_decl.jsligo:                                   FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_par_in_if_condition.jsligo:                             FAIL (0.02s)
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code10.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code04.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code06.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_int.jsligo:                                             FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_colon_in_record_expr.jsligo:                            FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_comma_in_record_decl.jsligo:                            FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code05.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_eq_in_type_decl.jsligo:                                 FAIL
+      ../../../src/test/error-recovery/simple/jsligo/triple_eq_in_if_condition.jsligo:                               FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code07.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code01.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code03.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/extra_colon_in_return_type.jsligo:                              FAIL (0.01s)
+      ../../../src/test/error-recovery/simple/jsligo/missing_comma_in_arguments.jsligo:                              FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_expr_parenthesesL.jsligo:                               FAIL
+      ../../../src/test/error-recovery/simple/jsligo/switch_with_missing_colon.jsligo:                               FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_argument_bracketR.jsligo:                               FAIL (0.01s)
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code00.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code02.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code08.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unreadable_symbol.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_dots_in_list_pat.jsligo:                                FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_par_in_call.jsligo:                                     FAIL
+      ../../../src/test/error-recovery/simple/jsligo/switch_with_not_last_default.jsligo:                            FAIL (0.03s)
+      ../../../src/test/error-recovery/simple/jsligo/missing_arrow_in_lambda_in_match.jsligo:                        FAIL
+      ../../../src/test/error-recovery/simple/jsligo/unfinished_code11.jsligo:                                       FAIL
+      ../../../src/test/error-recovery/fuzzing/jsligo/2if_if_return.jsligo:                                          FAIL
+
+
+
+TOFIX: 
+      ../../../src/test/error-recovery/fuzzing/jsligo/8recursion.jsligo:                                             FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_semicolon_before_return_on_same_line.jsligo:            FAIL
+      ../../../src/test/error-recovery/simple/jsligo/var_kw_instead_of_let_kw.jsligo:                                FAIL
+      ../../../src/test/error-recovery/simple/jsligo/using_then_in_if_expr.jsligo:                                   FAIL
+
+FIXED:
+      ../../../src/test/error-recovery/simple/jsligo/missing_type_annotation_in_lambda_in_match.jsligo:              FAIL
+      ../../../src/test/error-recovery/simple/jsligo/switch_with_missing_semicolon.jsligo:                           FAIL
+      ../../../src/test/error-recovery/simple/jsligo/missing_arrow_in_lambda_expr.jsligo:                            FAIL
+
+
+---------------
+
+
+issues:
+- if then else
+- ( input > 0 );
+
+TODO:
+- Figure out what's wrong with parser tests (ligo-contract-tests)
+- Address review comments
+- Read about syntax highlighting
+- Generate syntax highting grammar & config file for vscode
+- Write lsp test (Find...)

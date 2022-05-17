@@ -123,9 +123,8 @@ let my_list: list<int> = list([1, 2, 2]);
   (let_decl
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
-    (list (list_literal)))
+    (list_literal))
   (let_decl
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
-    (list
-      (list_literal (Int) (Int) (Int)))))
+    (list_literal (Int) (Int) (Int))))

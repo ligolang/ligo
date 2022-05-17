@@ -118,11 +118,11 @@ let x = (x : string) => {
         (block_statement
           (switch_statement
             (Name)
-            (case
+            (case_statement
               (String)
               (block_statement
                 (break_statement)))
-            (default_case
+            (default_statement
               (block_statement
                 (return_statement
                   (False_kwd))))))))))
@@ -152,7 +152,7 @@ let x = (x : string) => {
         (block_statement
           (switch_statement
             (Name)
-            (case
+            (case_statement
               (String)
               (block_statement
                 (return_statement
@@ -183,7 +183,7 @@ let x = (x : string) => {
         (block_statement
           (switch_statement
             (Name)
-            (default_case
+            (default_statement
               (block_statement
                 (return_statement
                   (False_kwd))))))))))
