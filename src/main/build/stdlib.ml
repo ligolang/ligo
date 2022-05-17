@@ -1,11 +1,10 @@
 let get_lib : Environment.Protocols.t -> Syntax_types.t -> string = fun protocol stx ->
-  let get s = match Loaded_libs.read s with Some x -> x | None -> failwith "ligo compile-time went wrong: please report to devs" in
   Scanf.unescaped @@
   match (protocol , stx) with
-  | Environment.Protocols.Jakarta , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> get "std_uncurry_jakarta.mligo"
-  | Environment.Protocols.Ithaca , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> get "std_uncurry_ithaca.mligo"
-  | Environment.Protocols.Jakarta , CameLIGO -> get "std_curry_jakarta.mligo"
-  | Environment.Protocols.Ithaca  , CameLIGO -> get "std_curry_ithaca.mligo"
+  | Environment.Protocols.Jakarta , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_jakarta
+  | Environment.Protocols.Ithaca , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_ithaca
+  | Environment.Protocols.Jakarta , CameLIGO -> Ligo_lib.Ligo_Stdlib.std_curry_jakarta
+  | Environment.Protocols.Ithaca  , CameLIGO -> Ligo_lib.Ligo_Stdlib.std_curry_ithaca
 
 let stdlib ~options syntax =
   let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax in
