@@ -56,6 +56,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_never -> "never"
     | TB_chest -> "chest"
     | TB_chest_key -> "chest_key"
+    | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
     in
   fprintf ppf "%s" s
 

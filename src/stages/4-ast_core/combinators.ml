@@ -43,7 +43,7 @@ let t__type_ ?loc ?sugar t : type_expression = t_constant ?loc ?sugar _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket"))]
 
 let t__type_ ?loc ?sugar t t' : type_expression = t_constant ?loc ?sugar _type_ [t; t']
-[@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
+[@@map (_type_, ("map", "big_map", "typed_address"))]
 
 let t_mutez = t_tez
 

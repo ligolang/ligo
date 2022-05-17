@@ -257,7 +257,9 @@ function withdraw (const param : parameter; var s : storage) is {
     | None -> 0mutez
     ];
   if @balance < @amount then failwith ("Insufficient balance");
-  const new_balance = @balance - @amount;
+  const new_balance = case (@balance - @amount) of [
+    | Some (x) -> x
+    | None -> (failwith ("Insufficient balance") : tez) ] ;
   const op = Tezos.transaction (Unit, @amount, beneficiary);
   s.balances [beneficiary_addr] := new_balance
 } with (list [op], s)
@@ -278,10 +280,10 @@ let withdraw (param, s : parameter * storage) =
     match (Map.find_opt beneficiary_addr s.balances) with
       Some v -> v
     | None -> 0mutez in
-  let new_balance =
-    if (@balance >= @amount)
-    then @balance - @amount
-    else (failwith "Insufficient balance" : tez) in
+  let new_balance = match @balance - @amount with
+    | Some x -> x
+    | None -> (failwith "Insufficient balance" : tez)
+  in
   let op = Tezos.transaction () @amount beneficiary in
   let new_balances =
     Map.update beneficiary_addr (Some new_balance) s.balances in
@@ -304,12 +306,9 @@ let withdraw = ((param, s): (parameter, storage)) => {
     | Some (v) => v
     | None => 0mutez
     };
-  let new_balance =
-    if (@balance >= @amount) {
-      @balance - @amount
-    } else {
-      (failwith("Insufficient balance") : tez)
-    };
+  let new_balance = switch (@balance - @amount) {
+    | Some (x) => x
+    | None => (failwith ("Insufficient balance") : tez) } ;
   let op = Tezos.transaction((), @amount, beneficiary);
   let new_balances =
     Map.update(beneficiary_addr, (Some new_balance), s.balances);

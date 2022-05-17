@@ -18,22 +18,12 @@ let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v -> v
 
 let compile_constant' : AST.constant' -> constant' = function
-  | C_INT -> C_INT
   | C_UNIT -> C_UNIT
-  | C_NEVER -> C_NEVER
   | C_NIL -> C_NIL
-  | C_NOW -> C_NOW
-  | C_IS_NAT -> C_IS_NAT
   | C_SOME -> C_SOME
   | C_NONE -> C_NONE
   | C_UNOPT -> C_UNOPT
   | C_UNOPT_WITH_ERROR -> C_UNOPT_WITH_ERROR
-  | C_ASSERTION -> C_ASSERTION
-  | C_ASSERTION_WITH_ERROR -> C_ASSERTION_WITH_ERROR
-  | C_ASSERT_SOME -> C_ASSERT_SOME
-  | C_ASSERT_SOME_WITH_ERROR -> C_ASSERT_SOME_WITH_ERROR
-  | C_ASSERT_NONE -> C_ASSERT_NONE
-  | C_ASSERT_NONE_WITH_ERROR -> C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
   | C_FAILWITH -> C_FAILWITH
   | C_UPDATE -> C_UPDATE
@@ -47,11 +37,9 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_FOLD_RIGHT -> C_FOLD_RIGHT
   (* MATH *)
   | C_NEG -> C_NEG
-  | C_ABS -> C_ABS
   | C_ADD -> C_ADD
   | C_SUB -> C_SUB
   | C_MUL -> C_MUL
-  | C_EDIV -> C_EDIV
   | C_DIV -> C_DIV
   | C_MOD -> C_MOD
   | C_SUB_MUTEZ -> C_SUB_MUTEZ
@@ -70,10 +58,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LE -> C_LE
   | C_GE -> C_GE
   (* Bytes/ String *)
-  | C_SIZE -> C_SIZE
   | C_CONCAT -> C_CONCAT
-  | C_SLICE -> C_SLICE
-  | C_BYTES_PACK -> C_BYTES_PACK
   | C_BYTES_UNPACK -> C_BYTES_UNPACK
   | C_CONS -> C_CONS
   (* Pair *)
@@ -116,20 +101,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_MAP_ITER -> C_MAP_ITER
   | C_MAP_MAP -> C_MAP_MAP
   | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_MEM -> C_MAP_MEM
   | C_MAP_FIND -> C_MAP_FIND
   | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
   (* Big Maps *)
   | C_BIG_MAP -> C_BIG_MAP
   | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Crypto *)
-  | C_SHA256 -> C_SHA256
-  | C_SHA512 -> C_SHA512
-  | C_BLAKE2b -> C_BLAKE2b
-  | C_HASH_KEY -> C_HASH_KEY
-  | C_CHECK_SIGNATURE -> C_CHECK_SIGNATURE
-  | C_CHAIN_ID -> C_CHAIN_ID
   (* Blockchain *)
   | C_CALL -> C_CALL
   | C_CONTRACT -> C_CONTRACT
@@ -137,26 +114,12 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CONTRACT_OPT -> C_CONTRACT_OPT
   | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT -> C_AMOUNT
-  | C_BALANCE -> C_BALANCE
-  | C_SOURCE -> C_SOURCE
-  | C_SENDER -> C_SENDER
   | C_ADDRESS -> C_ADDRESS
   | C_SELF -> C_SELF
   | C_SELF_ADDRESS -> C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
   | C_SET_DELEGATE -> C_SET_DELEGATE
   | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_SHA3 -> C_SHA3
-  | C_KECCAK -> C_KECCAK
-  | C_LEVEL -> C_LEVEL
-  | C_VOTING_POWER -> C_VOTING_POWER
-  | C_TOTAL_VOTING_POWER -> C_TOTAL_VOTING_POWER
-  | C_TICKET -> C_TICKET
-  | C_READ_TICKET -> C_READ_TICKET
-  | C_SPLIT_TICKET -> C_SPLIT_TICKET
-  | C_JOIN_TICKET -> C_JOIN_TICKET
-  | C_PAIRING_CHECK -> C_PAIRING_CHECK
   | C_MAP_GET_AND_UPDATE -> C_MAP_GET_AND_UPDATE
   | C_BIG_MAP_GET_AND_UPDATE -> C_BIG_MAP_GET_AND_UPDATE
   | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
@@ -246,6 +209,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Pvss_key,        []) -> return (T_base TB_pvss_key)
     | (Chest,           []) -> return (T_base TB_chest)
     | (Chest_key,       []) -> return (T_base TB_chest_key)
+    | (Tx_rollup_l2_address, []) -> return (T_base TB_tx_rollup_l2_address)
     | (Baker_operation, []) -> return (T_base TB_baker_operation)
     | (Bls12_381_g1,    []) -> return (T_base TB_bls12_381_g1)
     | (Bls12_381_g2,    []) -> return (T_base TB_bls12_381_g2)
@@ -272,8 +236,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Big_map, [k; v]) ->
       let kv' = Pair.map ~f:compile_type (k, v) in
       return (T_big_map kv')
-    | (Map_or_big_map, _) ->
-      raise.raise @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
     | (List, [t]) ->
       let t' = compile_type t in
       return (T_list t')
@@ -299,7 +261,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Set          | Tez       | Michelson_pair       |
       Never        | Chest_key |
       Typed_address| Mutation  | Bytes                |
-      List         | External _), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
@@ -357,7 +319,7 @@ let internal_error loc msg =
 (* todo: refactor handling of recursive functions *)
 let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.matching_content_record) =
   let record =
-    trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+    trace_option ~raise (corner_case ~loc:__LOC__ "compile_record_matching: getting lr tree") @@
     get_t_record_opt tv in
   match record.layout with
   (* TODO unify with or simplify other case below? *)
@@ -371,7 +333,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
             (corner_case ~loc:__LOC__ ("missing label in record"))
             (LMap.find_opt l fields)
           in
-          (compile_variable @@ fst x, t)
+          (compile_variable @@ x.var, t)
         )
         record_fields
     in
@@ -387,7 +349,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (corner_case ~loc:__LOC__ ("missing label in record"))
           (LMap.find_opt l fields)
         in
-        let var = compile_variable @@ fst x in
+        let var = compile_variable @@ x.var in
         return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
@@ -414,7 +376,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
   | E_type_in {type_binder=_; rhs=_; let_result} ->
     let result' = self let_result in
     result'
@@ -670,7 +632,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
             let (t , f) = Pair.map ~f:self (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
           | _ -> (
-              let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+              let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "compile_expression: getting lr tree") @@
                 get_t_sum_opt tv in
               let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
               let rec aux top t =
@@ -735,12 +697,13 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | _ ->
           raise.raise (raw_michelson_must_be_seq ae.location code)
     )
+    | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
 
 and compile_lambda ~raise l fun_type =
   let { binder ; result } : AST.lambda = l in
   let result' = compile_expression ~raise result in
   let fun_type = compile_type ~raise fun_type in
-  let binder = compile_variable binder in
+  let binder = compile_variable binder.var in
   let closure = E_closure { binder; body = result'} in
   Combinators.Expression.make_tpl ~loc:result.location (closure , fun_type)
 
@@ -748,7 +711,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> expression * expression_variable list = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;result} ->
-      let binder   = compile_variable binder in
+      let binder   = compile_variable binder.var in
       let (body,l) = map_lambda  fun_name loop_type result in
       (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
     | _  ->
@@ -758,11 +721,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   and replace_callback ~raise : AST.expression_variable -> type_expression -> bool -> AST.expression -> expression = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       | E_let_in li ->
-        let shadowed = shadowed || AST.ValueVar.equal li.let_binder fun_name in
+        let shadowed = shadowed || AST.ValueVar.equal li.let_binder.var fun_name in
         let let_result = replace_callback ~raise fun_name loop_type shadowed li.let_result in
         let rhs = compile_expression ~raise li.rhs in
         let ty  = compile_type ~raise li.rhs.type_expression in
-        let let_binder = compile_variable li.let_binder in
+        let let_binder = compile_variable li.let_binder.var in
         e_let_in let_binder ty li.attr.inline rhs let_result
       | E_matching m ->
         let ty = compile_type ~raise e.type_expression in
@@ -837,7 +800,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
           let (t , f) = Pair.map ~f:self (match_true, match_false) in
           return @@ E_if_bool (expr', t, f)
         | _ -> (
-            let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "getting lr tree") @@
+            let record_ty = trace_option ~raise (corner_case ~loc:__LOC__ "compile_recursive: getting lr tree") @@
               get_t_sum_opt tv in
             let tree = Layout.match_variant_to_tree ~raise ~layout:record_ty.layout ~compile_type:(compile_type ~raise) record_ty.content in
             let rec aux top t =
@@ -877,11 +840,11 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
   let loop_type = t_union (None, input_type) (None, output_type) in
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
-  let binder = compile_variable lambda.binder :: binder in
+  let binder = compile_variable lambda.binder.var :: binder in
   let loc = Ast_typed.ValueVar.get_location fun_name in
   let binder = match binder with hd::[] -> hd | _ -> raise.raise @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder, input_type), body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder.var, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type
 
 let compile_program ~raise : AST.expression -> Mini_c.expression = fun p ->

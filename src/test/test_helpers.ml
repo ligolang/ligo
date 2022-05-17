@@ -9,9 +9,9 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let options = 
-  Compiler_options.make 
-    ~raw_options:Compiler_options.default_raw_options 
+let options =
+  Compiler_options.make
+    ~raw_options:Compiler_options.default_raw_options
     ~protocol_version:Environment.Protocols.Ithaca ()
 
 let test_format : 'a Simple_utils.Display.format = {
@@ -138,7 +138,7 @@ let pack_payload ~raise (program:Ast_typed.program) (payload:Ast_imperative.expr
     let sugar     = Ligo_compile.Of_imperative.compile_expression ~raise payload in
     let core      = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
     let typed      = Ligo_compile.Of_core.compile_expression ~raise ~add_warning:(fun _ -> ()) ~options ~init_prog:program core in
-    let aggregated = Ligo_compile.Of_typed.compile_expression ~raise typed in
+    let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end typed in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let payload_ty = code.expr_ty in
@@ -180,7 +180,7 @@ let sha_256_hash pl =
 
 let typed_program_to_michelson ~raise (program, env) =
   ignore env;
-  let aggregated = Ligo_compile.Of_typed.compile_expression ~raise program in
+  let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end program in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let michelson = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let michelson = Ligo_compile.Of_michelson.build_contract ~disable_typecheck:false michelson in
@@ -194,7 +194,7 @@ let typed_program_with_imperative_input_to_michelson ~raise (program : Ast_typed
   let typed_app        = Ligo_compile.Of_core.compile_expression ~raise ~add_warning:(fun _ -> ()) ~options ~init_prog:program app in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let program = Ligo_compile.Of_typed.compile_program ~raise program in
-  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_app program in
+  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_app program in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c, aggregated.type_expression
 
@@ -240,7 +240,7 @@ let expect_eq_core ~raise ?options program entry_point input expected =
 
 let expect_evaluate ~raise (program : Ast_typed.program) entry_point expecter =
   trace ~raise (test_run_tracer entry_point) @@
-  let aggregated      = Ligo_compile.Of_typed.apply_to_entrypoint ~raise program entry_point in
+  let aggregated      = Ligo_compile.Of_typed.apply_to_entrypoint ~raise ~options:options.middle_end program entry_point in
   let mini_c          = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let michelson_value = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let res_michelson   = Ligo_run.Of_michelson.run_no_failwith ~raise michelson_value.expr michelson_value.expr_ty in
@@ -337,7 +337,7 @@ let expect_eq_b_bool a b c =
   expect_eq_b a b (fun bool -> e_bool (c bool))
 
 let compile_main ~raise ~add_warning f () =
-  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise (get_program ~raise ~add_warning f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
+  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end (get_program ~raise ~add_warning f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
   let mini_c    = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : _ Tezos_utils.Michelson.michelson =

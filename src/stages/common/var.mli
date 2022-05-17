@@ -9,16 +9,17 @@ module type VAR = sig
    (* Create a compiler generated variable *)
    val reset_counter : unit -> unit
    val fresh : ?loc:Location.t -> ?name:string -> unit -> t
-   val fresh_like : t -> t
+   val fresh_like : ?loc:Location.t -> t -> t
    (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically
       generated variables, use `fresh`. Take care not to cause
       shadowing/capture except as the user intended. *)
-   val of_input_var : ?loc:Location.t -> string -> t
+   val of_input_var : ?mutable_:bool -> ?loc:Location.t -> string -> t
    (* Warning : do not use *)
    val to_name_exn : t -> string
 
    val get_location : t -> Location.t
+   val set_location : Location.t -> t -> t
 
    val is_generated     : t -> bool
    (* Prints vars as %s or %s#%d *)
@@ -27,18 +28,23 @@ end
 
 module ValueVar : sig
    include VAR
+   val is_mutable : t -> bool
+   val is_name    : t -> string -> bool
+
+   (* Maybe bad *)
    val internal_get_name_and_counter : t -> (string * int)
-   val add_prefix                    : string -> t -> t
-   val is_name                       : t -> string -> bool
+   val add_prefix : string -> t -> t
 end
 
 module TypeVar : sig
    include VAR
    val is_name          : t -> string -> bool
+   (* Will disapear when redesigning polymorphism *)
    val is_generalizable : t -> bool
 end
 
 module ModuleVar : sig
    include VAR
+   (* Maybe bad *)
    val add_prefix : string -> t -> t
 end

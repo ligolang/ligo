@@ -5,10 +5,10 @@ open Simple_utils.Trace
 module ModResHelpers = Preprocessor.ModRes.Helpers
 
 let get_declarations_core core_prg =
-  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
      the absolute file path, and the REPL prints an absolute file path which is confusing
      So we ignore the module declarations which which have their module_binder as some absolute path.
-     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     The imported module name will still be printed by the REPL as it is added as a module alias.
      Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
@@ -22,10 +22,10 @@ let get_declarations_core core_prg =
   func_declarations @ type_declarations @ mod_declarations
 
 let get_declarations_typed typed_prg =
-  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is 
+  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
      the absolute file path, and the REPL prints an absolute file path which is confusing
      So we ignore the module declarations which which have their module_binder as some absolute path.
-     The imported module name will still be printed by the REPL as it is added as a module alias. 
+     The imported module name will still be printed by the REPL as it is added as a module alias.
      Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
@@ -111,7 +111,7 @@ let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~add_warning ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
-  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
+  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp module_ in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
   let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
@@ -134,7 +134,7 @@ let try_declaration ~raise ~raw_options state s =
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s in
+        Ligo_compile.Utils.type_program_string ~raise ~add_warning ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
@@ -155,7 +155,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
-    let prg = Build.build_context ~raise ~add_warning ~options file_name in
+    let prg = Build.merge_and_type_libraries ~raise ~add_warning ~options file_name in
     Simple_utils.Location.wrap (Ast_typed.M_struct prg)
   in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
@@ -168,7 +168,7 @@ let use_file ~raise ~raw_options state file_name =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.build_context ~raise ~add_warning ~options file_name in
+  let module' = Build.merge_and_type_libraries ~raise ~add_warning ~options file_name in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'

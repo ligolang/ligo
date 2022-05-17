@@ -56,6 +56,10 @@ module Ne = struct
   let map f (hd, tl : _ t) = f hd, List.map ~f tl
   let fold_left ~f ~init (hd, tl : _ t) = List.fold_left ~f ~init:(f init hd) tl
   let fold_right ~f ~init (hd, tl : _ t) = f hd (List.fold_right ~f ~init tl)
+  let fold_map ~f ~init (hd, tl : _ t) =
+    let init,hd = f init hd in
+    let init,tl = (List.fold_map ~f ~init tl) in
+    init,(hd,tl)
   let hd_map : _ -> 'a t -> 'a t = fun f (hd , tl) -> (f hd , tl)
   let mapi f (hd, tl : _ t) =
     let lst = List.mapi ~f (hd::tl) in

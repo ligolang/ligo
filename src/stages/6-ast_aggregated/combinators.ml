@@ -42,7 +42,7 @@ let t__type_ ?loc t : type_expression = t_constant ?loc _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket"))]
 
 let t__type_ ?loc t t' : type_expression = t_constant ?loc _type_ [t; t']
-[@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
+[@@map (_type_, ("map", "big_map", "typed_address"))]
 
 let t_mutez = t_tez
 
@@ -171,7 +171,6 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
@@ -182,7 +181,6 @@ let get_t_typed_address (t:type_expression) : (type_expression * type_expression
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Big_map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with
@@ -225,7 +223,6 @@ let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; argument
 [@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; arguments=[e]}
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
@@ -277,7 +274,6 @@ let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
 let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_pack e = make_e (e_pack e) (t_bytes ())
 let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =

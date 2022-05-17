@@ -35,7 +35,8 @@ let mutate_ast (raw_options : Compiler_options.raw) source_file display_format s
     buffer
 
 let mutate_cst (raw_options : Compiler_options.raw) source_file display_format seed () =
-  format_result ~display_format (Parsing.Formatter.ppx_format) (fun () -> []) @@
+  Trace.warning_with @@ fun add_warning get_warnings ->
+  format_result ~display_format (Parsing.Formatter.ppx_format) get_warnings @@
     fun ~raise ->
     let generator = generator_to_variant ~raise raw_options.generator in
     let get_module = match generator with
@@ -53,7 +54,7 @@ let mutate_cst (raw_options : Compiler_options.raw) source_file display_format s
          let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
          let raw =
            trace ~raise Main_errors.parser_tracer @@
-             Parsing.Cameligo.parse_file c_unit source_file in
+             Parsing.Cameligo.parse_file ~add_warning c_unit source_file in
          let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
          let buffer = (Parsing.Cameligo.pretty_print mutated_prg) in
          buffer
@@ -63,7 +64,7 @@ let mutate_cst (raw_options : Compiler_options.raw) source_file display_format s
            let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
            let raw =
              trace ~raise Main_errors.parser_tracer @@
-               Parsing.Reasonligo.parse_file c_unit source_file in
+               Parsing.Reasonligo.parse_file ~add_warning c_unit source_file in
            let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
            let buffer = (Parsing.Reasonligo.pretty_print mutated_prg) in
            buffer
@@ -73,7 +74,7 @@ let mutate_cst (raw_options : Compiler_options.raw) source_file display_format s
            let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
            let raw =
              trace ~raise Main_errors.parser_tracer @@
-              Parsing.Pascaligo.parse_file c_unit source_file in
+              Parsing.Pascaligo.parse_file ~add_warning c_unit source_file in
            let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
            let buffer = (Parsing.Pascaligo.pretty_print mutated_prg) in
            buffer
@@ -83,7 +84,7 @@ let mutate_cst (raw_options : Compiler_options.raw) source_file display_format s
            let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
            let raw =
             trace ~raise Main_errors.parser_tracer @@
-              Parsing.Jsligo.parse_file c_unit source_file in
+              Parsing.Jsligo.parse_file ~add_warning c_unit source_file in
            let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
            let buffer = (Parsing.Jsligo.pretty_print mutated_prg) in
            buffer

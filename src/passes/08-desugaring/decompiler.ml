@@ -173,6 +173,9 @@ let rec decompile_expression : O.expression -> I.expression =
       let type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
     | O.E_module_accessor ma -> return @@ E_module_accessor ma
+    | O.E_assign a ->
+      let a = assign self self_type a in
+      return @@ I.E_assign a
 
 and decompile_lambda : _ O.lambda -> _ I.lambda =
   fun {binder=b;output_type;result}->

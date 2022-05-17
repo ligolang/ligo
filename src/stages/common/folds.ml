@@ -65,7 +65,7 @@ let lambda : ('acc -> 'a -> 'acc) -> ('acc -> 'c -> 'acc) -> 'acc -> ('a,'c) lam
   let acc = f acc result in
   acc
 
-let type_abs : ('acc -> 'a -> 'acc) -> 'acc -> 'a type_abs -> 'acc 
+let type_abs : ('acc -> 'a -> 'acc) -> 'acc -> 'a type_abs -> 'acc
 = fun f acc {type_binder=_;result}->
   let acc = f acc result in
   acc
@@ -145,11 +145,12 @@ let conditional : ('acc -> 'a -> 'acc) -> 'acc -> 'a conditional -> 'acc
   let acc = f acc else_clause in
    acc
 
-let assign : ('acc -> 'a -> 'acc) -> 'acc -> 'a assign -> 'acc
-= fun f acc {variable=_; access_path; expression} ->
+let assign : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) assign -> 'acc
+= fun f g acc {binder=b; access_path; expression} ->
+  let acc = binder g acc b in
   let acc = path f acc access_path in
   let acc = f acc expression in
-   acc
+  acc
 
 let for_ : ('acc -> 'a -> 'acc) -> 'acc -> 'a for_ -> 'acc
 = fun f acc {binder=_;start;final;incr;f_body} ->

@@ -4,7 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils tezos-utils proto-alpha-utils ligo_coq_ocaml predefined self_michelson
-   environment tezos-hacl-glue-unix bls12-381-unix)
+   environment tezos-hacl)
  (inline_tests)
  (preprocess
   (pps ppx_inline_test ppx_expect ppx_poly_constructor)))

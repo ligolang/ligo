@@ -37,7 +37,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -46,7 +47,8 @@ let%expect_test _ =
               "name": "nat",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -136,7 +138,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -145,7 +148,8 @@ let%expect_test _ =
               "name": "nat",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -235,7 +239,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -244,7 +249,8 @@ let%expect_test _ =
               "name": "nat",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -334,7 +340,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -343,7 +350,8 @@ let%expect_test _ =
               "name": "bytes",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -433,7 +441,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -467,7 +476,8 @@ let%expect_test _ =
                     }
                   }
                 ],
-                "generated": false
+                "generated": false,
+                "mutable_": false
               },
               "arguments": [
                 {
@@ -477,7 +487,8 @@ let%expect_test _ =
                       "name": "address",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -598,7 +609,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -632,7 +644,8 @@ let%expect_test _ =
                     }
                   }
                 ],
-                "generated": false
+                "generated": false,
+                "mutable_": false
               },
               "arguments": [
                 {
@@ -642,7 +655,8 @@ let%expect_test _ =
                       "name": "bytes",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -680,7 +694,8 @@ let%expect_test _ =
                       "name": "addr_set",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -801,7 +816,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -835,7 +851,8 @@ let%expect_test _ =
                     }
                   }
                 ],
-                "generated": false
+                "generated": false,
+                "mutable_": false
               },
               "arguments": [
                 {
@@ -845,7 +862,8 @@ let%expect_test _ =
                       "name": "address",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -883,7 +901,8 @@ let%expect_test _ =
                       "name": "nat",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -1004,7 +1023,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1019,7 +1039,8 @@ let%expect_test _ =
                        "name": "state_hash",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1062,7 +1083,8 @@ let%expect_test _ =
                        "name": "threshold",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1105,7 +1127,8 @@ let%expect_test _ =
                        "name": "max_proposal",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1148,7 +1171,8 @@ let%expect_test _ =
                        "name": "max_message_size",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1191,7 +1215,8 @@ let%expect_test _ =
                        "name": "addr_set",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1234,7 +1259,8 @@ let%expect_test _ =
                        "name": "message_store",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1277,7 +1303,8 @@ let%expect_test _ =
                        "name": "proposal_counters",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -1401,7 +1428,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1414,7 +1442,8 @@ let%expect_test _ =
                     "name": "bytes",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -1477,7 +1506,8 @@ let%expect_test _ =
                           }
                         }
                       ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     },
                     "arguments": [
                       {
@@ -1487,7 +1517,8 @@ let%expect_test _ =
                             "name": "operation",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -1636,7 +1667,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1645,7 +1677,8 @@ let%expect_test _ =
               "name": "message",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -1735,7 +1768,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1744,7 +1778,8 @@ let%expect_test _ =
               "name": "message",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -1834,7 +1869,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1843,7 +1879,8 @@ let%expect_test _ =
               "name": "unit",
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
-              "generated": false
+              "generated": false,
+              "mutable_": false
             }
           ],
           "location": [
@@ -1933,7 +1970,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -1973,7 +2011,8 @@ let%expect_test _ =
                           }
                         }
                       ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     },
                     "arguments": [
                       {
@@ -1983,7 +2022,8 @@ let%expect_test _ =
                             "name": "operation",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -2050,7 +2090,8 @@ let%expect_test _ =
                     "name": "storage",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -2168,7 +2209,8 @@ let%expect_test _ =
               }
             }
           ],
-          "generated": false
+          "generated": false,
+          "mutable_": false
         },
         "type_expr": {
           "type_content": [
@@ -2183,7 +2225,8 @@ let%expect_test _ =
                        "name": "send_pt",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -2226,7 +2269,8 @@ let%expect_test _ =
                        "name": "withdraw_pt",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -2269,7 +2313,8 @@ let%expect_test _ =
                        "name": "default_pt",
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
-                       "generated": false
+                       "generated": false,
+                       "mutable_": false
                      }
                    ],
                    "location": [
@@ -2394,7 +2439,8 @@ let%expect_test _ =
                 }
               }
             ],
-            "generated": false
+            "generated": false,
+            "mutable_": false
           },
           "ty": {
             "type_content": [
@@ -2411,7 +2457,8 @@ let%expect_test _ =
                             "name": "send_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -2449,7 +2496,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -2491,7 +2539,8 @@ let%expect_test _ =
                       "name": "return",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -2536,7 +2585,8 @@ let%expect_test _ =
                   "name": "parameters",
                   "counter": 2,
                   "location": [ "Virtual", "dummy" ],
-                  "generated": true
+                  "generated": true,
+                  "mutable_": false
                 },
                 "ty": {
                   "type_content": [
@@ -2549,7 +2599,8 @@ let%expect_test _ =
                             "name": "send_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -2587,7 +2638,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -2631,7 +2683,8 @@ let%expect_test _ =
                     "name": "return",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -2671,7 +2724,8 @@ let%expect_test _ =
                           "name": "parameters",
                           "counter": 2,
                           "location": [ "Virtual", "dummy" ],
-                          "generated": true
+                          "generated": true,
+                          "mutable_": false
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -2714,7 +2768,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2723,7 +2778,8 @@ let%expect_test _ =
                                       "name": "send_pt",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -2790,7 +2846,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2799,7 +2856,8 @@ let%expect_test _ =
                                       "name": "storage",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -2902,7 +2960,8 @@ let%expect_test _ =
                                                               }
                                                             ],
                                                             "generated":
-                                                              false
+                                                              false,
+                                                            "mutable_": false
                                                           }
                                                         ],
                                                         "element": {
@@ -2945,7 +3004,8 @@ let%expect_test _ =
                                                               }
                                                             }
                                                           ],
-                                                          "generated": false
+                                                          "generated": false,
+                                                          "mutable_": false
                                                         }
                                                       }
                                                     ],
@@ -3029,6 +3089,8 @@ let%expect_test _ =
                                                                     }
                                                                   ],
                                                                   "generated":
+                                                                    false,
+                                                                  "mutable_":
                                                                     false
                                                                 }
                                                               ],
@@ -3074,6 +3136,8 @@ let%expect_test _ =
                                                                   }
                                                                 ],
                                                                 "generated":
+                                                                  false,
+                                                                "mutable_":
                                                                   false
                                                               }
                                                             }
@@ -3166,6 +3230,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                   }
                                                                 ],
@@ -3381,7 +3447,8 @@ let%expect_test _ =
                                                     }
                                                   }
                                                 ],
-                                                "generated": false
+                                                "generated": false,
+                                                "mutable_": false
                                               }
                                             ],
                                             "location": [
@@ -3578,7 +3645,8 @@ let%expect_test _ =
                                             }
                                           }
                                         ],
-                                        "generated": false
+                                        "generated": false,
+                                        "mutable_": false
                                       },
                                       "ty": {
                                         "type_content": [
@@ -3589,7 +3657,8 @@ let%expect_test _ =
                                             "location": [
                                               "Virtual", "dummy"
                                             ],
-                                            "generated": false
+                                            "generated": false,
+                                            "mutable_": false
                                           }
                                         ],
                                         "location": [
@@ -3655,7 +3724,8 @@ let%expect_test _ =
                                               }
                                             }
                                           ],
-                                          "generated": false
+                                          "generated": false,
+                                          "mutable_": false
                                         }
                                       ],
                                       "location": [
@@ -3721,7 +3791,8 @@ let%expect_test _ =
                                                   }
                                                 }
                                               ],
-                                              "generated": false
+                                              "generated": false,
+                                              "mutable_": false
                                             },
                                             "ty": {
                                               "type_content": [
@@ -3732,7 +3803,8 @@ let%expect_test _ =
                                                   "location": [
                                                     "Virtual", "dummy"
                                                   ],
-                                                  "generated": false
+                                                  "generated": false,
+                                                  "mutable_": false
                                                 }
                                               ],
                                               "location": [
@@ -3814,7 +3886,8 @@ let%expect_test _ =
                                                               }
                                                             }
                                                           ],
-                                                          "generated": false
+                                                          "generated": false,
+                                                          "mutable_": false
                                                         }
                                                       ],
                                                       "element": {
@@ -3857,7 +3930,8 @@ let%expect_test _ =
                                                             }
                                                           }
                                                         ],
-                                                        "generated": false
+                                                        "generated": false,
+                                                        "mutable_": false
                                                       }
                                                     }
                                                   ],
@@ -3924,7 +3998,8 @@ let%expect_test _ =
                                                           }
                                                         }
                                                       ],
-                                                      "generated": false
+                                                      "generated": false,
+                                                      "mutable_": false
                                                     }
                                                   ],
                                                   "location": [
@@ -4054,6 +4129,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -4100,6 +4177,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -4188,6 +4267,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -4319,6 +4400,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -4497,6 +4580,8 @@ let%expect_test _ =
                                                                     }
                                                                   ],
                                                                   "generated":
+                                                                    false,
+                                                                  "mutable_":
                                                                     false
                                                                 }
                                                               ],
@@ -4744,7 +4829,8 @@ let%expect_test _ =
                                                               }
                                                             }
                                                           ],
-                                                          "generated": false
+                                                          "generated": false,
+                                                          "mutable_": false
                                                         },
                                                         "ty": {
                                                           "type_content": [
@@ -4758,6 +4844,8 @@ let%expect_test _ =
                                                                 "dummy"
                                                               ],
                                                               "generated":
+                                                                false,
+                                                              "mutable_":
                                                                 false
                                                             }
                                                           ],
@@ -4903,6 +4991,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -4949,6 +5039,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -5041,6 +5133,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -5132,6 +5226,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -5353,6 +5449,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     },
                                                                     "ty":
@@ -5422,6 +5520,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -5468,6 +5568,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -5562,6 +5664,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -5608,6 +5712,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -5696,6 +5802,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -5865,6 +5973,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -5907,7 +6016,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -5961,6 +6077,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -6067,6 +6185,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -6113,6 +6233,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -6218,6 +6340,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -6264,6 +6388,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -6358,6 +6484,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -6404,6 +6532,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -6496,6 +6626,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -6800,6 +6932,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7053,6 +7187,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
@@ -7095,7 +7230,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -7151,6 +7293,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7197,6 +7341,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -7291,6 +7437,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7337,6 +7485,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -7425,6 +7575,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7615,6 +7767,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -7657,7 +7810,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -7711,6 +7871,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7817,6 +7979,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -7863,6 +8027,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -7968,6 +8134,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -8014,6 +8182,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -8108,6 +8278,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -8154,6 +8326,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -8246,6 +8420,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -8550,6 +8726,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -8763,6 +8941,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "new_store",
                                                                     "counter":
@@ -8805,7 +8984,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -8861,6 +9047,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -8907,6 +9095,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -9126,6 +9316,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     },
                                                                     "ty": {
@@ -9141,6 +9333,8 @@ let%expect_test _ =
                                                                     "dummy"
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -9237,6 +9431,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -9283,6 +9479,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -9377,6 +9575,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -9423,6 +9623,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -9515,6 +9717,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -9747,6 +9951,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -9838,6 +10044,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10016,6 +10224,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10277,6 +10487,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     },
                                                                     "ty": {
@@ -10326,6 +10538,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     },
                                                                     "arguments": [
@@ -10342,6 +10556,8 @@ let%expect_test _ =
                                                                     "dummy"
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10541,6 +10757,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10587,6 +10805,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -10675,6 +10895,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10806,6 +11028,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -10943,6 +11167,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -10985,7 +11210,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -11039,6 +11271,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11143,6 +11377,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11234,6 +11470,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11451,6 +11689,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "ret_ops",
                                                                     "counter":
@@ -11493,7 +11732,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -11547,6 +11793,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11638,6 +11886,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11814,6 +12064,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -11856,7 +12107,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -11910,6 +12168,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -11976,6 +12236,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12022,6 +12284,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -12116,6 +12380,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12162,6 +12428,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -12258,6 +12526,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12391,6 +12661,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12680,6 +12952,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     },
                                                                     [
@@ -12727,6 +13001,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ]
@@ -12781,6 +13057,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12928,6 +13206,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -12974,6 +13254,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -13066,6 +13348,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13153,6 +13437,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13279,6 +13565,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -13321,7 +13608,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -13375,6 +13669,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13479,6 +13775,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13570,6 +13868,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13668,6 +13968,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -13886,6 +14188,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -14243,6 +14547,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -14285,7 +14590,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -14339,6 +14651,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -14443,6 +14757,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -14530,6 +14846,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -14621,6 +14939,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -14919,6 +15239,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -15006,6 +15328,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -15397,7 +15721,8 @@ let%expect_test _ =
                 }
               }
             ],
-            "generated": false
+            "generated": false,
+            "mutable_": false
           },
           "ty": {
             "type_content": [
@@ -15414,7 +15739,8 @@ let%expect_test _ =
                             "name": "withdraw_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -15452,7 +15778,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -15494,7 +15821,8 @@ let%expect_test _ =
                       "name": "return",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -15539,7 +15867,8 @@ let%expect_test _ =
                   "name": "parameters",
                   "counter": 3,
                   "location": [ "Virtual", "dummy" ],
-                  "generated": true
+                  "generated": true,
+                  "mutable_": false
                 },
                 "ty": {
                   "type_content": [
@@ -15552,7 +15881,8 @@ let%expect_test _ =
                             "name": "withdraw_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -15590,7 +15920,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -15634,7 +15965,8 @@ let%expect_test _ =
                     "name": "return",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -15674,7 +16006,8 @@ let%expect_test _ =
                           "name": "parameters",
                           "counter": 3,
                           "location": [ "Virtual", "dummy" ],
-                          "generated": true
+                          "generated": true,
+                          "mutable_": false
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -15717,7 +16050,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -15726,7 +16060,8 @@ let%expect_test _ =
                                       "name": "withdraw_pt",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -15793,7 +16128,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -15802,7 +16138,8 @@ let%expect_test _ =
                                       "name": "storage",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -15873,7 +16210,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -15882,7 +16220,8 @@ let%expect_test _ =
                                       "name": "message",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -15948,7 +16287,8 @@ let%expect_test _ =
                                         }
                                       }
                                     ],
-                                    "generated": false
+                                    "generated": false,
+                                    "mutable_": false
                                   }
                                 ],
                                 "location": [
@@ -16014,7 +16354,8 @@ let%expect_test _ =
                                             }
                                           }
                                         ],
-                                        "generated": false
+                                        "generated": false,
+                                        "mutable_": false
                                       },
                                       "ty": {
                                         "type_content": [
@@ -16025,7 +16366,8 @@ let%expect_test _ =
                                             "location": [
                                               "Virtual", "dummy"
                                             ],
-                                            "generated": false
+                                            "generated": false,
+                                            "mutable_": false
                                           }
                                         ],
                                         "location": [
@@ -16097,7 +16439,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "element": {
@@ -16130,7 +16473,8 @@ let%expect_test _ =
                                                       }
                                                     }
                                                   ],
-                                                  "generated": false
+                                                  "generated": false,
+                                                  "mutable_": false
                                                 }
                                               }
                                             ],
@@ -16195,7 +16539,8 @@ let%expect_test _ =
                                                     }
                                                   }
                                                 ],
-                                                "generated": false
+                                                "generated": false,
+                                                "mutable_": false
                                               }
                                             ],
                                             "location": [
@@ -16317,6 +16662,8 @@ let%expect_test _ =
                                                                     }
                                                                   ],
                                                                   "generated":
+                                                                    false,
+                                                                  "mutable_":
                                                                     false
                                                                 }
                                                               ],
@@ -16452,6 +16799,8 @@ let%expect_test _ =
                                                                   }
                                                                 ],
                                                                 "generated":
+                                                                  false,
+                                                                "mutable_":
                                                                   false
                                                               }
                                                             ],
@@ -16574,7 +16923,8 @@ let%expect_test _ =
                                                               }
                                                             ],
                                                             "generated":
-                                                              false
+                                                              false,
+                                                            "mutable_": false
                                                           },
                                                           "ty": null,
                                                           "const_or_var":
@@ -16629,6 +16979,8 @@ let%expect_test _ =
                                                                 }
                                                               ],
                                                               "generated":
+                                                                false,
+                                                              "mutable_":
                                                                 false
                                                             },
                                                             "ty": {
@@ -16644,6 +16996,8 @@ let%expect_test _ =
                                                                     "dummy"
                                                                   ],
                                                                   "generated":
+                                                                    false,
+                                                                  "mutable_":
                                                                     false
                                                                 }
                                                               ],
@@ -16740,6 +17094,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -16786,6 +17142,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -16880,6 +17238,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -16926,6 +17286,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -17014,6 +17376,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17206,6 +17570,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17252,6 +17618,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -17340,6 +17708,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17473,6 +17843,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17519,6 +17891,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -17607,6 +17981,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17734,6 +18110,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -17776,7 +18153,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -17830,6 +18214,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17936,6 +18322,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -17982,6 +18370,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -18074,6 +18464,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -18178,6 +18570,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -18224,6 +18618,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -18318,6 +18714,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -18364,6 +18762,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -18456,6 +18856,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -18800,6 +19202,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19158,6 +19562,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19204,6 +19610,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     }
@@ -19292,6 +19700,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19465,6 +19875,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -19507,7 +19918,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -19561,6 +19979,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19665,6 +20085,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19756,6 +20178,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -19969,6 +20393,7 @@ let%expect_test _ =
                                                                     "E_assign",
                                                                     {
                                                                     "variable": {
+                                                                    "var": {
                                                                     "name":
                                                                     "s",
                                                                     "counter":
@@ -20011,7 +20436,14 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
+                                                                    },
+                                                                    "ty":
+                                                                    null,
+                                                                    "const_or_var":
+                                                                    "var"
                                                                     },
                                                                     "access_path":
                                                                     [],
@@ -20065,6 +20497,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -20169,6 +20603,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -20256,6 +20692,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -20347,6 +20785,8 @@ let%expect_test _ =
                                                                     }
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                     }
                                                                     ],
@@ -20805,6 +21245,8 @@ let%expect_test _ =
                                                                 }
                                                               ],
                                                               "generated":
+                                                                false,
+                                                              "mutable_":
                                                                 false
                                                             },
                                                             "arguments": [
@@ -20821,6 +21263,8 @@ let%expect_test _ =
                                                                     "dummy"
                                                                     ],
                                                                     "generated":
+                                                                    false,
+                                                                    "mutable_":
                                                                     false
                                                                   }
                                                                 ],
@@ -20968,7 +21412,8 @@ let%expect_test _ =
                                                           }
                                                         }
                                                       ],
-                                                      "generated": false
+                                                      "generated": false,
+                                                      "mutable_": false
                                                     }
                                                   ],
                                                   "location": [
@@ -21191,7 +21636,8 @@ let%expect_test _ =
                 }
               }
             ],
-            "generated": false
+            "generated": false,
+            "mutable_": false
           },
           "ty": {
             "type_content": [
@@ -21208,7 +21654,8 @@ let%expect_test _ =
                             "name": "default_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -21246,7 +21693,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -21288,7 +21736,8 @@ let%expect_test _ =
                       "name": "return",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -21333,7 +21782,8 @@ let%expect_test _ =
                   "name": "parameters",
                   "counter": 5,
                   "location": [ "Virtual", "dummy" ],
-                  "generated": true
+                  "generated": true,
+                  "mutable_": false
                 },
                 "ty": {
                   "type_content": [
@@ -21346,7 +21796,8 @@ let%expect_test _ =
                             "name": "default_pt",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -21384,7 +21835,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -21428,7 +21880,8 @@ let%expect_test _ =
                     "name": "return",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -21468,7 +21921,8 @@ let%expect_test _ =
                           "name": "parameters",
                           "counter": 5,
                           "location": [ "Virtual", "dummy" ],
-                          "generated": true
+                          "generated": true,
+                          "mutable_": false
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -21511,7 +21965,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": true
+                                  "generated": true,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -21520,7 +21975,8 @@ let%expect_test _ =
                                       "name": "default_pt",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -21587,7 +22043,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -21596,7 +22053,8 @@ let%expect_test _ =
                                       "name": "storage",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -21704,7 +22162,8 @@ let%expect_test _ =
                                                 }
                                               }
                                             ],
-                                            "generated": false
+                                            "generated": false,
+                                            "mutable_": false
                                           },
                                           "arguments": [
                                             {
@@ -21716,7 +22175,8 @@ let%expect_test _ =
                                                   "location": [
                                                     "Virtual", "dummy"
                                                   ],
-                                                  "generated": false
+                                                  "generated": false,
+                                                  "mutable_": false
                                                 }
                                               ],
                                               "location": [
@@ -21841,7 +22301,8 @@ let%expect_test _ =
                                         }
                                       }
                                     ],
-                                    "generated": false
+                                    "generated": false,
+                                    "mutable_": false
                                   }
                                 ],
                                 "location": [
@@ -21998,7 +22459,8 @@ let%expect_test _ =
                 }
               }
             ],
-            "generated": false
+            "generated": false,
+            "mutable_": false
           },
           "ty": {
             "type_content": [
@@ -22015,7 +22477,8 @@ let%expect_test _ =
                             "name": "parameter",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -22053,7 +22516,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -22095,7 +22559,8 @@ let%expect_test _ =
                       "name": "return",
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
-                      "generated": false
+                      "generated": false,
+                      "mutable_": false
                     }
                   ],
                   "location": [
@@ -22140,7 +22605,8 @@ let%expect_test _ =
                   "name": "parameters",
                   "counter": 6,
                   "location": [ "Virtual", "dummy" ],
-                  "generated": true
+                  "generated": true,
+                  "mutable_": false
                 },
                 "ty": {
                   "type_content": [
@@ -22153,7 +22619,8 @@ let%expect_test _ =
                             "name": "parameter",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -22191,7 +22658,8 @@ let%expect_test _ =
                             "name": "storage",
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
-                            "generated": false
+                            "generated": false,
+                            "mutable_": false
                           }
                         ],
                         "location": [
@@ -22235,7 +22703,8 @@ let%expect_test _ =
                     "name": "return",
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
-                    "generated": false
+                    "generated": false,
+                    "mutable_": false
                   }
                 ],
                 "location": [
@@ -22275,7 +22744,8 @@ let%expect_test _ =
                           "name": "parameters",
                           "counter": 6,
                           "location": [ "Virtual", "dummy" ],
-                          "generated": true
+                          "generated": true,
+                          "mutable_": false
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -22318,7 +22788,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -22327,7 +22798,8 @@ let%expect_test _ =
                                       "name": "parameter",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -22394,7 +22866,8 @@ let%expect_test _ =
                                       }
                                     }
                                   ],
-                                  "generated": false
+                                  "generated": false,
+                                  "mutable_": false
                                 },
                                 "ty": {
                                   "type_content": [
@@ -22403,7 +22876,8 @@ let%expect_test _ =
                                       "name": "storage",
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
-                                      "generated": false
+                                      "generated": false,
+                                      "mutable_": false
                                     }
                                   ],
                                   "location": [
@@ -22476,7 +22950,8 @@ let%expect_test _ =
                                         }
                                       }
                                     ],
-                                    "generated": false
+                                    "generated": false,
+                                    "mutable_": false
                                   }
                                 ],
                                 "location": [
@@ -22545,7 +23020,8 @@ let%expect_test _ =
                                               }
                                             }
                                           ],
-                                          "generated": false
+                                          "generated": false,
+                                          "mutable_": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -22589,7 +23065,8 @@ let%expect_test _ =
                                                   }
                                                 }
                                               ],
-                                              "generated": false
+                                              "generated": false,
+                                              "mutable_": false
                                             }
                                           ],
                                           "location": [
@@ -22657,7 +23134,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [
@@ -22721,7 +23199,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [
@@ -22850,7 +23329,8 @@ let%expect_test _ =
                                               }
                                             }
                                           ],
-                                          "generated": false
+                                          "generated": false,
+                                          "mutable_": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -22894,7 +23374,8 @@ let%expect_test _ =
                                                   }
                                                 }
                                               ],
-                                              "generated": false
+                                              "generated": false,
+                                              "mutable_": false
                                             }
                                           ],
                                           "location": [
@@ -22962,7 +23443,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [
@@ -23026,7 +23508,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [
@@ -23155,7 +23638,8 @@ let%expect_test _ =
                                               }
                                             }
                                           ],
-                                          "generated": false
+                                          "generated": false,
+                                          "mutable_": false
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -23199,7 +23683,8 @@ let%expect_test _ =
                                                   }
                                                 }
                                               ],
-                                              "generated": false
+                                              "generated": false,
+                                              "mutable_": false
                                             }
                                           ],
                                           "location": [
@@ -23267,7 +23752,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [
@@ -23331,7 +23817,8 @@ let%expect_test _ =
                                                         }
                                                       }
                                                     ],
-                                                    "generated": false
+                                                    "generated": false,
+                                                    "mutable_": false
                                                   }
                                                 ],
                                                 "location": [

@@ -114,6 +114,12 @@ let scopes ~add_warning  : with_types:bool -> options:Compiler_options.middle_en
       let scopes = add_scope (lastloc, env) scopes in
       (i,all_defs,env,scopes)
     )
+    | E_assign { binder ; expression ; _ } -> (
+      let def = make_v_def_option_type bindings binder.var binder.ascr (Ast_typed.ValueVar.get_location binder.var) expression.location in
+      let (i,env) = add_shadowing_def (i, get_binder_name binder.var) def env in
+      let all_defs = merge_defs env all_defs in
+      find_scopes' (i,all_defs,env,scopes,expression.location) bindings expression
+    )
   and find_scopes (i,top_lvl_defs,scopes,loc) bindings  e =
     let (i,defs,_,scopes) = find_scopes' (i,top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (i,defs,scopes)
