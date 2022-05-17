@@ -16,4 +16,8 @@ It's expected that `.ligoproject` is commited and pushed to repositories contain
 
 ## Specification of `.ligoproject`
 
-For now, the `.ligoproject` file only serves as a marker and no data is read or written to it, meaning it's an empty file by default, but this might change in the future.
+The `.ligoproject` file represents a JSON object which, for now, only contains one optional field, but this might change in the future.
+
+|Key|Optional|Type|Default value|Description|
+|-|
+|`ignorePaths`|Yes|string list|`[]`|A list of relative or absolute paths to be ignored by the indexing mechanism. For better portability, we recommend using relative paths.|

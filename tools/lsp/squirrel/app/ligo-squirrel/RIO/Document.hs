@@ -65,7 +65,7 @@ import Log qualified
 import Parser (Message (..), emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
-import RIO.Indexing (getIndexDirectory, indexOptionsPath)
+import RIO.Indexing (getIndexDirectory, indexOptionsPath, tryGetIgnoredPaths)
 import RIO.Types (Contract (..), IndexOptions (..), RIO, RioEnv (..))
 import Util.Graph (forAMConcurrently, traverseAMConcurrently, wcc)
 
@@ -206,15 +206,18 @@ tryLoadWithoutScopes =
 -- The downside is that momentarily, various files will be present in memory. In
 -- the future, we can consider only keeping the line markers and building the
 -- graph from this.
-loadDirectory :: FilePath -> FilePath -> RIO (Includes Source, Map Source [Message])
-loadDirectory root rootFileName = do
-  includes <- tryReadMVar =<< asks reIncludes
+loadDirectory
+  :: FilePath
+  -> FilePath
+  -> Includes ParsedContractInfo
+  -> RIO (Includes Source, Map Source [Message])
+loadDirectory root rootFileName includes = do
   temp <- getTempPath root
   let
     lookupOrLoad src = maybe
       (loadPreprocessed temp src)
       (pure . (_cFile &&& _cMsgs) . _getContract)
-      (lookupContract (srcPath src) =<< includes)
+      (lookupContract (srcPath src) includes)
 
   buildGraphM <- tryReadMVar =<< asks reBuildGraph
   S.withProgress "Indexing directory" S.NotCancellable \reportProgress -> if
@@ -224,6 +227,7 @@ loadDirectory root rootFileName = do
       progressVar <- newMVar 0
 
       msgsVar <- newMVar Map.empty
+      -- We index a file even if it was ignored by the indexing mechanism.
       loaded <- forAMConcurrently group \fp -> do
         progress <- withMVar progressVar $ pure . succ
         reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
@@ -232,10 +236,19 @@ loadDirectory root rootFileName = do
         pure src
       (Includes loaded, ) <$> readMVar msgsVar
     | otherwise -> do
+      ignoredPathsM <- tryGetIgnoredPaths
+      let
+        notTemporary = not . any (tempDirTemplate `isPrefixOf`) . splitDirectories
+        notIgnored = case ignoredPathsM of
+          Just ignore
+            | not (null ignore) -> not . (`HashSet.member` HashSet.fromList ignore)
+          _ -> const True
+        filePredicate = (&&) <$> notTemporary <*> notIgnored
+
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        (not . any (tempDirTemplate `isPrefixOf`) . splitDirectories)
+        filePredicate
         root
       (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
 
@@ -246,7 +259,7 @@ getInclusionsGraph
 getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes normFp
   includesVar <- asks reIncludes
-  modifyMVar includesVar \(Includes includes) -> do
+  modifyMVar includesVar \includes'@(Includes includes) -> do
     let rootFileName = contractFile rootContract
     let groups = Includes <$> wcc includes
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
@@ -254,7 +267,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
       Nothing -> do
         let fp = J.fromNormalizedFilePath normFp
         $(Log.debug) [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
-        (Includes paths, msgs) <- loadDirectory root rootFileName
+        (Includes paths, msgs) <- loadDirectory root rootFileName includes'
 
         let buildGraph = Includes $ G.gmap srcPath paths
         buildGraphVar <- asks reBuildGraph
@@ -330,10 +343,14 @@ load uri = Log.addNamespace "load" do
   revUri <- reverseUriMap ?? uri
   let
     Just revNormFp = J.uriToNormalizedFilePath revUri  -- FIXME: non-exhaustive
+    revFp = J.fromNormalizedFilePath revNormFp
     loadDefault temp = addShallowScopes @parser temp noProgress =<< loadWithoutScopes revNormFp
 
+  -- | We're trying to load an ignored file. OK, load it, but don't index
+  -- anything else.
+  shouldIndexFile <- maybe True (revFp `notElem`) <$> tryGetIgnoredPaths
   case rootM of
-    Just root | dirExists -> do
+    Just root | dirExists, shouldIndexFile -> do
       time <- ASTMap.getTimestamp
 
       revRoot <- if revUri == uri
