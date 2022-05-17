@@ -17,13 +17,13 @@ recognise (SomeRawTree dialect rawTree)
   $ map usingScope
   [ -- Contract
     Descent do
-      boilerplate $ \case
+      boilerplate \case
         "source_file" -> RawContract <$> fields "toplevel"
         _ -> fallthrough
 
     -- Expr
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "unary_call"          -> UnOp       <$> field  "negate"      <*> field    "arg"
         "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"        <*> field "right"
         "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"        <*> field "rhs"
@@ -48,19 +48,19 @@ recognise (SomeRawTree dialect rawTree)
 
     -- Case & Default
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "case_statement"    -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
         "default_statement" -> DefaultStm <$> fieldOpt "body"
         _              -> fallthrough
 
     -- Pattern
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "tuple_pattern"          -> IsTuple  <$> fields "pattern"
         "list_pattern"           -> IsList   <$> fields "pattern"
         "spread_pattern"         -> IsSpread <$> field  "expr"
         "var_pattern"            -> IsVar    <$> field  "var"
-        "wildcard"               -> return IsWildcard
+        "wildcard"               -> pure IsWildcard
         "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
         "annot_pattern"          -> IsAnnot  <$> field  "subject"     <*> field    "type"
         "record_pattern"         -> IsRecord <$> fields "field"
@@ -68,7 +68,7 @@ recognise (SomeRawTree dialect rawTree)
 
     -- RecordFieldPattern
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "record_field_pattern"   -> IsRecordField   <$> field "name" <*> field "body"
         "record_capture_pattern" -> IsRecordCapture <$> field "name"
         "record_rest_pattern"    -> IsRecordCapture <$> field "name"
@@ -76,14 +76,14 @@ recognise (SomeRawTree dialect rawTree)
 
     -- Alt
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "list_case" -> Alt <$> field "pattern" <*> field "expr"
         "ctor_case" -> Alt <$> field "pattern" <*> field "expr"
         _           -> fallthrough
 
     -- Record fields
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "capture"           -> Capture         <$> fields "accessor"
         "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread"            -> Spread          <$> field  "name"
@@ -98,53 +98,53 @@ recognise (SomeRawTree dialect rawTree)
     -- ProcessorCommand
   , Descent do
       boilerplate' \case
-        ("p_if"      , rest) -> return $ PreprocessorCommand $ "#if "      <> rest
-        ("p_error"   , rest) -> return $ PreprocessorCommand $ "#error "   <> rest
-        ("p_define"  , rest) -> return $ PreprocessorCommand $ "#define "  <> rest
+        ("p_if"      , rest) -> pure $ PreprocessorCommand $ "#if "      <> rest
+        ("p_error"   , rest) -> pure $ PreprocessorCommand $ "#error "   <> rest
+        ("p_define"  , rest) -> pure $ PreprocessorCommand $ "#define "  <> rest
         _                    -> fallthrough
 
   , Descent do
-      boilerplate' $ \case
-        ("||", _)     -> return $ Op "||"
-        ("&&", _)     -> return $ Op "&&"
-        ("<", _)      -> return $ Op "<"
-        ("<=", _)     -> return $ Op "<="
-        (">", _)      -> return $ Op ">"
-        (">=", _)     -> return $ Op ">="
-        ("==", _)     -> return $ Op "=="
-        ("!=", _)     -> return $ Op "!="
-        ("+", _)      -> return $ Op "+"
-        ("-", _)      -> return $ Op "-"
-        ("*", _)      -> return $ Op "*"
-        ("/", _)      -> return $ Op "/"
-        ("%", _)      -> return $ Op "%"
-        ("=", _)      -> return $ Op "="
-        ("*=", _)     -> return $ Op "*="
-        ("/=", _)     -> return $ Op "/="
-        ("%=", _)     -> return $ Op "%="
-        ("+=", _)     -> return $ Op "+="
-        ("-=", _)     -> return $ Op "-="
-        ("negate", n) -> return $ Op n
+      boilerplate' \case
+        ("||", _)     -> pure $ Op "||"
+        ("&&", _)     -> pure $ Op "&&"
+        ("<", _)      -> pure $ Op "<"
+        ("<=", _)     -> pure $ Op "<="
+        (">", _)      -> pure $ Op ">"
+        (">=", _)     -> pure $ Op ">="
+        ("==", _)     -> pure $ Op "=="
+        ("!=", _)     -> pure $ Op "!="
+        ("+", _)      -> pure $ Op "+"
+        ("-", _)      -> pure $ Op "-"
+        ("*", _)      -> pure $ Op "*"
+        ("/", _)      -> pure $ Op "/"
+        ("%", _)      -> pure $ Op "%"
+        ("=", _)      -> pure $ Op "="
+        ("*=", _)     -> pure $ Op "*="
+        ("/=", _)     -> pure $ Op "/="
+        ("%=", _)     -> pure $ Op "%="
+        ("+=", _)     -> pure $ Op "+="
+        ("-=", _)     -> pure $ Op "-="
+        ("negate", n) -> pure $ Op n
         _             -> fallthrough
 
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "data_projection" -> QualifiedName <$> field "expr" <*> fields "accessor"
         _                 -> fallthrough
 
     -- Literal
   , Descent do
-      boilerplate' $ \case
-        ("Int",    i) -> return $ Int i
-        ("Nat",    i) -> return $ Nat i
-        ("Bytes",  i) -> return $ Bytes i
-        ("String", i) -> return $ String i
-        ("Tez",    i) -> return $ Tez i
+      boilerplate' \case
+        ("Int",    i) -> pure $ Int i
+        ("Nat",    i) -> pure $ Nat i
+        ("Bytes",  i) -> pure $ Bytes i
+        ("String", i) -> pure $ String i
+        ("Tez",    i) -> pure $ Tez i
         _             -> fallthrough
 
     -- Declaration
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "let_decl"            -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
         "const_decl"          -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
         "type_decl"           -> BTypeDecl    <$> field "type_name"  <*> fieldOpt "params" <*> field "type_value"
@@ -164,30 +164,30 @@ recognise (SomeRawTree dialect rawTree)
     -- MichelsonCode
   , Descent do
       boilerplate' \case
-        ("michelson_code", code) -> return $ MichelsonCode code
+        ("michelson_code", code) -> pure $ MichelsonCode code
         _                        -> fallthrough
 
     -- Name
   , Descent do
-      boilerplate' $ \case
-        ("Name", n) -> return $ Name n
+      boilerplate' \case
+        ("Name", n) -> pure $ Name n
         _           -> fallthrough
 
     -- NameDecl
   , Descent do
-      boilerplate' $ \case
-        ("NameDecl", n) -> return $ NameDecl n
+      boilerplate' \case
+        ("NameDecl", n) -> pure $ NameDecl n
         _               -> fallthrough
 
     -- ModuleName
   , Descent do
-      boilerplate' $ \case
-        ("ModuleName", n) -> return $ ModuleName n
+      boilerplate' \case
+        ("ModuleName", n) -> pure $ ModuleName n
         _                 -> fallthrough
 
     -- Type
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "string_type"      -> TString  <$> field  "value"
         "fun_type"         -> TArrow   <$> field  "domain"  <*> field "codomain"
         "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
@@ -201,27 +201,27 @@ recognise (SomeRawTree dialect rawTree)
 
     -- Module access:
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "module_access_t" -> ModuleAccess <$> fields "path" <*> field "type"
         "module_access"   -> ModuleAccess <$> fields "path" <*> field "field"
         _                 -> fallthrough
 
     -- Variant
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "variant"   -> Variant  <$> field  "constructor" <*> fieldOpt "arguments"
         _           -> fallthrough
 
     -- TField
   , Descent do
-      boilerplate $ \case
+      boilerplate \case
         "field_decl" -> TField <$> field "field_name" <*> fieldOpt "field_type"
         _            -> fallthrough
 
     -- TypeName
   , Descent do
-      boilerplate' $ \case
-        ("TypeName", name) -> return $ TypeName name
+      boilerplate' \case
+        ("TypeName", name) -> pure $ TypeName name
         _                  -> fallthrough
 
     -- TypeVariableName
@@ -232,17 +232,17 @@ recognise (SomeRawTree dialect rawTree)
 
     -- FieldName
   , Descent do
-      boilerplate' $ \case
-        ("FieldName", name) -> return $ FieldName name
+      boilerplate' \case
+        ("FieldName", name) -> pure $ FieldName name
         _                   -> fallthrough
 
     -- Ctor
   , Descent do
-      boilerplate' $ \case
-        ("ConstrName", name)   -> return $ Ctor name
-        ("True_kwd", _)        -> return $ Ctor "True"
-        ("False_kwd", _)       -> return $ Ctor "False"
-        ("Unit_kwd", _)        -> return $ Ctor "Unit"
+      boilerplate' \case
+        ("ConstrName", name)   -> pure $ Ctor name
+        ("True_kwd", _)        -> pure $ Ctor "True"
+        ("False_kwd", _)       -> pure $ Ctor "False"
+        ("Unit_kwd", _)        -> pure $ Ctor "Unit"
         _                      -> fallthrough
 
   -- Err
