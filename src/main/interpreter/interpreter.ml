@@ -773,26 +773,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
        let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_ORIGINATE , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) -> (
-       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-       let>> param = Eval (loc, param, param_ty) in
-       match param with
-       | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> res = External_call (loc,calltrace,contract,param,amt) in
-          return_contract_exec_exn res
-       | _ -> fail @@ Errors.generic_error loc "Error typing param"
-    )
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) -> (
-       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-       let>> param = Eval (loc, param, param_ty) in
-       match param with
-       | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> res = External_call (loc,calltrace,contract,param,amt) in
-          return_contract_exec res
-       | _ -> fail @@ Errors.generic_error loc "Error typing param"
-    )
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
       let n = Z.to_int n in
       let* parameter_ty', storage_ty' = monad_option (Errors.generic_error loc "Expected typed address") @@

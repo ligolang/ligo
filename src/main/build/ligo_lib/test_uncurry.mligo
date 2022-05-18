@@ -16,8 +16,6 @@ module Test = struct
   let set_baker (a : address) : unit = [%external "TEST_SET_BAKER"] a
   let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
   let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
-  let transfer_to_contract (type p) ((a, s, t) : p contract * p * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_CONTRACT"] a s t
-  let transfer_to_contract_exn (type p) ((a, s, t) : p contract * p * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN"] a s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
   let michelson_equal ((m1, m2) : michelson_program * michelson_program) : bool = [%external "TEST_MICHELSON_EQUAL"] m1 m2
@@ -61,4 +59,12 @@ module Test = struct
       let s : michelson_program = get_storage_of_address a in
       let s : s = decompile s in
       s
+  let transfer_to_contract (type p) ((c, s, t) : p contract * p * tez) : test_exec_result =
+      let a : address = [%external "ADDRESS"] c in
+      let s : michelson_program = eval s in
+      transfer (a, s, t)
+  let transfer_to_contract_exn (type p) ((c, s, t) : p contract * p * tez) : nat =
+      let a : address = [%external "ADDRESS"] c in
+      let s : michelson_program = eval s in
+      transfer_exn (a, s, t)
 end

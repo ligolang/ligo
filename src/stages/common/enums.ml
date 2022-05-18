@@ -170,8 +170,6 @@ type constant' =
   | C_TEST_GET_BALANCE [@only_interpreter]
   | C_TEST_SET_SOURCE [@only_interpreter]
   | C_TEST_SET_BAKER [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
   | C_TEST_MICHELSON_EQUAL [@only_interpreter]
