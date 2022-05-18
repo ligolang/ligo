@@ -7,7 +7,7 @@ let larger_list: list<int> = list([5, ...my_list]);
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list_literal
@@ -24,24 +24,23 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
         (tuple_pattern (var_pattern (NameDecl)) (var_pattern (NameDecl)))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
-      (body
-        (paren_expr
-          (record_update
-            (spread (Name))
-            (record_field
-              (property_name (Name))
-              (binary_call
-                (data_projection (Name) (Name))
-                (data_projection (Name) (Name))))
-            (record_field
-              (property_name (Name))
-              (binary_call
-                (data_projection (Name) (Name))
-                (data_projection (Name) (Name))))))))))
+      (paren_expr
+        (record_update
+          (spread (Name))
+          (record_field
+            (property_name (Name))
+            (binary_call
+              (data_projection (Name) (Name))
+              (data_projection (Name) (Name))))
+          (record_field
+            (property_name (Name))
+            (binary_call
+              (data_projection (Name) (Name))
+              (data_projection (Name) (Name)))))))))

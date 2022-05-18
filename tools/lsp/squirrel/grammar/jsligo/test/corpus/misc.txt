@@ -14,14 +14,13 @@ let a = (x: bool): bool => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
       (TypeName)
-      (body
       (block_statement
-        (let_or_const
+        (binding
           (var_pattern (NameDecl))
           (Int))
         (if_else_statement
@@ -30,4 +29,4 @@ let a = (x: bool): bool => {
             (assignment_operator (Name) (Int))
             (comment)
             (return_statement (True_kwd))))
-        (return_statement (False_kwd)))))))
+        (return_statement (False_kwd))))))

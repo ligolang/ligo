@@ -98,7 +98,7 @@ let decl
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -113,7 +113,7 @@ let decl twice
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (attr)
     (attr)
     (var_pattern (NameDecl))
@@ -133,20 +133,19 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
         (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
-      (body
         (block_statement
-          (let_or_const
+          (binding
             (attr) (attr)
             (var_pattern (NameDecl))
             (Int))
-          (return_statement (Name)))))))
+          (return_statement (Name))))))
 
 =========
 const expr
@@ -161,20 +160,19 @@ const bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
         (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
-      (body
-        (block_statement
-          (let_or_const
-            (attr) (attr)
-            (var_pattern (NameDecl))
-            (Int))
-          (return_statement (Name)))))))
+      (block_statement
+        (binding
+          (attr) (attr)
+          (var_pattern (NameDecl))
+          (Int))
+        (return_statement (Name))))))
 
 =========
 const decl
@@ -185,7 +183,7 @@ const decl
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -200,7 +198,7 @@ const decl twice
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (attr)
     (attr)
     (var_pattern (NameDecl))
@@ -217,7 +215,7 @@ const fst = (p: [nat, nat]): nat => p[0];
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (attr)
     (var_pattern (NameDecl))
     (lambda
@@ -225,10 +223,9 @@ const fst = (p: [nat, nat]): nat => p[0];
         (var_pattern (NameDecl))
         (tuple_type (TypeName) (TypeName)))
         (TypeName)
-        (body
-          (indexing
-            (Name)
-            (Int))))))
+        (indexing
+          (Name)
+          (Int)))))
 
 =========
 variant type layout:comb annotation

@@ -14,9 +14,9 @@ type my_typ<A,B,C> =
     (TypeName)
       (type_params (var_type (TypeVariableName)) (var_type (TypeVariableName)) (var_type (TypeVariableName)))
       (sum_type
-        (variant (String) (TypeName))
-        (variant (String) (TypeName))
-        (variant (String) (TypeName)))))
+        (variant (String) (ctor_arguments (TypeName)))
+        (variant (String) (ctor_arguments (TypeName)))
+        (variant (String) (ctor_arguments (TypeName))))))
 
 =========
 generic function
@@ -27,13 +27,13 @@ let id : <T>((x : T) => T) = x => x;
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (fun_type (TypeName) (TypeName))
     (lambda
       (Name)
-      (body (Name)))))
+      (Name))))
 
 =========
 type application
@@ -62,22 +62,20 @@ const id : <P>(x : P) => P = (x : P) => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (fun_type (TypeName) (TypeName))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
-      (body
-        (block_statement
-          (let_or_const (var_pattern (NameDecl))
-          (type_params (var_type (TypeVariableName)))
-          (fun_type (TypeName) (TypeName))
-          (lambda
-            (fun_arg (var_pattern (NameDecl)) (TypeName))
-            (body
-              (block_statement
-                (return_statement
-                  (apply (Name) (Name)))))))
-          (return_statement
-            (apply (Name) (Name))))))))
+      (block_statement
+        (binding (var_pattern (NameDecl))
+        (type_params (var_type (TypeVariableName)))
+        (fun_type (TypeName) (TypeName))
+        (lambda
+          (fun_arg (var_pattern (NameDecl)) (TypeName))
+          (block_statement
+            (return_statement
+              (apply (Name) (Name))))))
+        (return_statement
+          (apply (Name) (Name)))))))

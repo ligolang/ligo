@@ -34,7 +34,7 @@ let alice : user = {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (TypeName)
     (record
@@ -57,7 +57,7 @@ let alice_admin: bool = alice.is_admin;
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (TypeName)
     (data_projection (Name) (Name))))
@@ -75,7 +75,7 @@ let alice : user = {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern
       (NameDecl))
       (TypeName)
@@ -97,7 +97,7 @@ let alice : user = {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (TypeName)
     (record_update
@@ -114,7 +114,7 @@ let { a , b } = x ;
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (record_pattern
       (record_capture_pattern (NameDecl))
       (record_capture_pattern (NameDecl)))
@@ -142,7 +142,7 @@ let full_name: full_name = ["Alice", "Johnson"];
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (TypeName)
     (tuple
@@ -158,7 +158,7 @@ let [first_name, last_name]: full_name = full_name;
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (tuple_pattern
       (var_pattern (NameDecl))
       (var_pattern (NameDecl)))
@@ -174,7 +174,7 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
       (lambda
         (fun_arg
@@ -183,7 +183,7 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
             (wildcard))
           (TypeName))
       (TypeName)
-      (body (Name)))))
+      (Name))))
 
 =========
 tuple access elements
@@ -194,7 +194,7 @@ let first_name_component: string = full_name[0];
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (TypeName)
     (indexing
@@ -210,7 +210,7 @@ let x = y[0][1][2]
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (indexing
       (indexing

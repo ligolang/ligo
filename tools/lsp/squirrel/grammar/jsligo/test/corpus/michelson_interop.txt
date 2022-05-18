@@ -8,21 +8,20 @@ let michelson_add = (n: [nat, nat]): nat =>
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
         (var_pattern (NameDecl))
         (tuple_type (TypeName) (TypeName)))
       (TypeName)
-      (body
-        (apply
-          (michelson_interop
-            (michelson_code)
-            (fun_type
-              (tuple_type (TypeName) (TypeName))
-              (TypeName)))
-          (Name))))))
+      (apply
+        (michelson_interop
+          (michelson_code)
+          (fun_type
+            (tuple_type (TypeName) (TypeName))
+            (TypeName)))
+        (Name)))))
 
 =========
 michelson pair

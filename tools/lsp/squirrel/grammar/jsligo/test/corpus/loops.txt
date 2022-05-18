@@ -13,27 +13,26 @@ let sum_list = (l: list<int>): int => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
         (var_pattern (NameDecl))
         (app_type (TypeName) (TypeName)))
       (TypeName)
-      (body
-        (block_statement
-          (let_or_const
-            (var_pattern (NameDecl))
-            (TypeName)
-            (Int))
-          (for_of_statement
-            (Name)
-            (Name)
-            (block_statement
-              (assignment_operator
-                (Name)
-                (binary_call (Name) (Name)))))
-          (return_statement (Name)))))))
+      (block_statement
+        (binding
+          (var_pattern (NameDecl))
+          (TypeName)
+          (Int))
+        (for_of_statement
+          (Name)
+          (Name)
+          (block_statement
+            (assignment_operator
+              (Name)
+              (binary_call (Name) (Name)))))
+        (return_statement (Name))))))
 
 =========
 loops: while loop
@@ -57,7 +56,7 @@ let gcd = (x: nat, y: nat): nat => {
 ---
 
 (source_file
-  (let_or_const
+  (binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -67,34 +66,33 @@ let gcd = (x: nat, y: nat): nat => {
         (var_pattern (NameDecl))
         (TypeName))
       (TypeName)
-      (body
-        (block_statement
-          (let_or_const
-            (tuple_pattern
-              (var_pattern (NameDecl))
-              (var_pattern (NameDecl)))
-            (tuple (Name) (Name)))
-          (if_else_statement
-            (binary_call (Name) (Name))
-            (block_statement
-              (let_or_const
-                (var_pattern (NameDecl))
-                (TypeName)
-                (Name))
-              (assignment_operator (Name) (Name))
-              (assignment_operator (Name) (Name))))
-          (let_or_const
+      (block_statement
+        (binding
+          (tuple_pattern
             (var_pattern (NameDecl))
-            (TypeName)
-            (Nat))
-          (while_statement
-            (binary_call
-              (Name)
-              (paren_expr
-                (Nat)))
-            (block_statement
-              (assignment_operator (Name) (binary_call (Name) (Name)))
-              (assignment_operator (Name) (Name))
-              (assignment_operator (Name) (Name))))
-          (return_statement
-            (Name)))))))
+            (var_pattern (NameDecl)))
+          (tuple (Name) (Name)))
+        (if_else_statement
+          (binary_call (Name) (Name))
+          (block_statement
+            (binding
+              (var_pattern (NameDecl))
+              (TypeName)
+              (Name))
+            (assignment_operator (Name) (Name))
+            (assignment_operator (Name) (Name))))
+        (binding
+          (var_pattern (NameDecl))
+          (TypeName)
+          (Nat))
+        (while_statement
+          (binary_call
+            (Name)
+            (paren_expr
+              (Nat)))
+          (block_statement
+            (assignment_operator (Name) (binary_call (Name) (Name)))
+            (assignment_operator (Name) (Name))
+            (assignment_operator (Name) (Name))))
+        (return_statement
+          (Name))))))

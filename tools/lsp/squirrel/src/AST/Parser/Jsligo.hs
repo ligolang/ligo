@@ -24,7 +24,6 @@ recognise (SomeRawTree dialect rawTree)
     -- Expr
   , Descent do
       boilerplate \case
-        "let_or_const"        -> Seq        <$> fields "binding"
         "unary_call"          -> UnOp       <$> field  "negate"      <*> field    "arg"
         "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"        <*> field "right"
         "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"        <*> field "rhs"
@@ -148,7 +147,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "binding"             -> BConst       <$> field "binding_pattern"  <*> fieldOpt "type"   <*> fieldOpt "value"
+        "binding"             -> BConst       <$> field "binding_pattern"  <*> fieldOpt "type_annot"   <*> fieldOpt "value"
         "type_decl"           -> BTypeDecl    <$> field "type_name"        <*> fieldOpt "params" <*> field "type_value"
         "p_include"           -> BInclude     <$> field "filename"
         "p_import"            -> BImport      <$> field "filename"         <*> field "alias"
@@ -198,7 +197,6 @@ recognise (SomeRawTree dialect rawTree)
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field  "name"
-        "arguments"        -> TProduct  <$> fields "ctor_argument"
         _                  -> fallthrough
 
     -- Module access:
@@ -211,8 +209,14 @@ recognise (SomeRawTree dialect rawTree)
     -- Variant
   , Descent do
       boilerplate \case
-        "variant"   -> Variant  <$> field  "constructor" <*> fieldOpt "arguments"
+        "variant"   -> Variant  <$> field  "constructor" <*> fieldOpt "ctor_arguments"
         _           -> fallthrough
+
+    -- Variant args
+  , Descent do
+      boilerplate \case
+        "ctor_arguments" -> TProduct  <$> fields "ctor_argument"
+        _                -> fallthrough
 
     -- TField
   , Descent do
@@ -245,6 +249,7 @@ recognise (SomeRawTree dialect rawTree)
         ("True_kwd", _)        -> pure $ Ctor "True"
         ("False_kwd", _)       -> pure $ Ctor "False"
         ("Unit_kwd", _)        -> pure $ Ctor "Unit"
+        ("constructor", c)     -> pure $ Ctor c
         _                      -> fallthrough
 
   -- Err
