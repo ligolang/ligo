@@ -173,7 +173,6 @@
         "source": "git:https://github.com/ligolang/tezos-ligo:src/lib_crypto/tezos-crypto.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
         "override": {
           "dependencies": {
-            "@opam/bls12-381-unix": "*",
             "@opam/tezos-error-monad": "*"
           }
         }
@@ -182,12 +181,9 @@
         "source": "git:https://github.com/ligolang/tezos-ligo:src/lib_protocol_compiler/tezos-protocol-compiler.opam#6cbc3fa24e7416dead661774056ce5127918a6ed",
         "override": {
           "build": [
-            "sed -i -e 's/tezos-base.unix/tezos-base.unix bls12-381-unix/g' dune",
+            "sed -i -e 's/tezos-base.unix/tezos-base.unix/g' dune",
             "dune build -j 4 -p tezos-protocol-compiler"
-          ],
-          "dependencies": {
-            "@opam/bls12-381-unix": "*"
-          }
+          ]
         }
       },
       "@opam/tezos-event-logging": {
@@ -221,7 +217,7 @@
               "#{@opam/tezos-protocol-compiler.lib}/tezos-protocol-compiler/dune_protocol.template.v1",
               "dune",
               "#{@opam/tezos-protocol-compiler.lib}/tezos-protocol-compiler/final_protocol_versions",
-              "012_PtJakart"
+              "013_PtJakart"
             ],
             ["dune", "build", "-p", "tezos-protocol-013-PtJakart", "-j", "4"]
           ]
