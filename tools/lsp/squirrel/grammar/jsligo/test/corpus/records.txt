@@ -39,13 +39,13 @@ let alice : user = {
     (TypeName)
     (record
       (record_field
-        (property_name (Name))
+        (Name)
         (Nat))
       (record_field
-        (property_name (Name))
+        (Name)
         (True_kwd))
       (record_field
-        (property_name (Name))
+        (Name)
         (String)))))
 
 =========
@@ -103,7 +103,7 @@ let alice : user = {
     (record_update
       (spread (Name))
       (capture (Name))
-      (record_field (property_name (Name)) (String)))))
+      (record_field (Name) (String)))))
 
 =========
 record desctructuring

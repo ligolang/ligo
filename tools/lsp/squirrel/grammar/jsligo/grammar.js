@@ -254,7 +254,7 @@ module.exports = grammar({
     _record_field: $ => choice($.record_field, $.capture),
 
     record_field: $ => seq(
-      field("accessor", $.property_name),
+      field("accessor", choice($.Int, $.String, $.ConstrName, $.Name)),
       ':',
       field("value", $._expr)
     ),
@@ -269,7 +269,7 @@ module.exports = grammar({
 
     spread: $ => seq('...', field("name", $._expr_statement)),
 
-    property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
+    // property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
 
     _type_expr: $ => choice(
       $.fun_type,
