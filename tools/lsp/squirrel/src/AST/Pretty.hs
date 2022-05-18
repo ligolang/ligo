@@ -235,7 +235,7 @@ instance Pretty1 Expr where
     RecordUpd r up       -> sexpr "update" (r : up)
     Michelson c t args   -> sexpr "%Michelson" (c : t : args)
     Paren     e          -> "(" <> pp e <> ")"
-    SwitchStm s cs        -> error "switch" (s : cs)
+    SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
 
 instance Pretty1 PatchableExpr where

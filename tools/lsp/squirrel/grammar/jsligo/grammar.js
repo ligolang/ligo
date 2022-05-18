@@ -229,8 +229,6 @@ module.exports = grammar({
 
     _statements: $ => common.sepEndBy1(optional($._semicolon), $._statement),
 
-    _statements_strict_semicolon: $ => common.sepEndBy1($._semicolon, $._statement),
-
     _type_annotation: $ => seq(':', seq(optional($.type_params), field("type", $._type_expr))),
 
     fun_arg: $ => seq(field("argument", $._binding_pattern), ':', optional($.type_params), field("type", $._type_expr)),
@@ -392,20 +390,18 @@ module.exports = grammar({
     switch_statement: $ => prec.left(seq(
       'switch',
       common.par(field("selector", $._expr)),
-      common.block($._cases),
+      common.block(
+        choice(
+          seq(repeat1(field("case", $.case_statement)), optional(field("case", $.default_statement))),
+          field("case", $.default_statement)
+        )
+      ),
       optional($._semicolon)
     )),
 
-    _cases: $ => choice(
-      seq(repeat1(field("case", $.case_statement)), optional(field("case", $.default_statement))),
-      field("case", $.default_statement)
-    ),
+    case_statement: $ => seq('case', field("selector_value", $._expr), ':', optional(common.sepEndBy1($._semicolon, $._statement))),
 
-    case_statement: $ => seq('case', field("selector_value", $._expr), $._case_statements),
-
-    default_statement: $ => seq('default', $._case_statements),
-
-    _case_statements: $ => seq(':', optional(field("body", $._statements_strict_semicolon))),
+    default_statement: $ => seq('default', ':', optional(common.sepEndBy1($._semicolon, $._statement))),
 
     if_else_statement: $ => prec.right(seq('if', common.par(field("selector", $._expr)), field("then", $._base_statement), optional($._else_branch))),
 

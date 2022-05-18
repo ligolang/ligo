@@ -225,8 +225,8 @@ data Alt it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data CaseOrDefaultStm it
-  = CaseStm it (Maybe it) -- (Expr) (Expr)
-  | DefaultStm (Maybe it) -- (Expr)
+  = CaseStm it [it] -- (Expr) [Expr]
+  | DefaultStm [it] -- [Expr]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data MapBinding it
@@ -480,7 +480,7 @@ instance Eq1 Pattern where
 
 instance Eq1 CaseOrDefaultStm where
   liftEq f (CaseStm c s) (CaseStm c' s') =
-    f c c' && liftEqMaybe f s s'
+    f c c' && liftEq f s s'
   liftEq f (DefaultStm s) (DefaultStm s') =
-    liftEqMaybe f s s'
+    liftEq f s s'
   liftEq _ _ _ = False

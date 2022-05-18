@@ -51,8 +51,8 @@ recognise (SomeRawTree dialect rawTree)
     -- Case & Default
   , Descent do
       boilerplate \case
-        "case_statement"    -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
-        "default_statement" -> DefaultStm <$> fieldOpt "body"
+        "case_statement"    -> CaseStm    <$> field    "selector_value" <*> fields "statement"
+        "default_statement" -> DefaultStm <$> fields "statement"
         _                   -> fallthrough
 
     -- Pattern
