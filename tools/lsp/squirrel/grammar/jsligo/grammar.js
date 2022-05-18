@@ -177,11 +177,9 @@ module.exports = grammar({
 
     paren_expr: $ => common.par(field("expr", $._expr)),
 
-    data_projection: $ => seq(field("field", $._member_expr), '.', $._accessor_chain),
+    data_projection: $ => prec.right(seq(field("expr", $._member_expr), '.', common.sepBy1('.', field("accessor", $.Name)))),
 
     indexing: $ => prec(5, seq(field("box", $._member_expr), common.brackets(field("index", $._expr)))),
-
-    _accessor_chain: $ => prec.right(common.sepBy1('.', field("accessor", $.Name))),
 
     michelson_interop: $ => seq(
       '(Michelson',
@@ -413,7 +411,7 @@ module.exports = grammar({
 
     _else_branch: $ => seq('else', field("else", $._statement)),
 
-    for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), field("body", $._statement)),
+    for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), $._statement),
 
     _index_kind: $ => choice($._Let_kwd, $._Const_kwd),
 

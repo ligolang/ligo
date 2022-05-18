@@ -41,7 +41,7 @@ recognise (SomeRawTree dialect rawTree)
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
-        "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "body"
+        "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "statement"
         "break_statement"     -> pure Break
         "return_statement"    -> Return     <$> fieldOpt "expr"
         "indexing"            -> ListAccess <$> field  "box"         <*> fields   "index"
