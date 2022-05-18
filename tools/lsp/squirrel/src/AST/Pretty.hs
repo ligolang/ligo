@@ -222,6 +222,7 @@ instance Pretty1 Expr where
     -- Indexing  a j        -> sexpr "index" [a, j]
     Case      s az       -> sexpr "case" (s : az)
     Skip                 -> "skip"
+    Return    e          -> sexpr "return" [pp e]
     Break                -> "break"
     ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
     ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
@@ -772,6 +773,7 @@ instance LPP1 'Js Expr where
     AssignOp l o r       -> l <+> o <+> r
     WhileLoop f b        -> "while (" <+> f <+> ") {" `indent` lpp b `above` "}"
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
+    Return    e          -> "return " <+> lpp e
     RecordUpd s fs       -> lpp s <+> train "," fs
     Michelson c t _      -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node

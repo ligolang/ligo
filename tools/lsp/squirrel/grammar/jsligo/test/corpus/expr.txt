@@ -128,3 +128,22 @@ let my_list: list<int> = list([1, 2, 2]);
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list_literal (Int) (Int) (Int))))
+
+=========
+constructor expr
+=========
+
+let u : user = Admin(1000 as nat);
+let g : user = Guest();
+
+---
+
+(source_file
+  (let_decl
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply (ConstrName) (Nat)))
+  (let_decl
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply (ConstrName))))

@@ -19,14 +19,15 @@ module.exports = grammar({
     [$._member_expr, $._binding_pattern],
     [$.Name, $.NameDecl],
     [$.Name, $.FieldName],
-    [$.tuple, $.list_pattern]
+    [$.tuple, $.list_pattern],
+    [$.ConstrName, $.ModuleName]
   ],
 
   rules: {
     source_file: $ =>
       common.sepEndBy(optional($._semicolon), field("toplevel", $._statement_or_namespace_or_preprocessor)),
 
-    _statement_or_namespace_or_preprocessor: $ => choice($._statement, $.namespace_statement, $.preprocessor),
+    _statement_or_namespace_or_preprocessor: $ => choice(field("statement", $._statement), $.namespace_statement, $.preprocessor),
 
     namespace_statement: $ => prec.left(2, seq(
       optional(field("export", 'export')), 'namespace', field("moduleName", $.ModuleName),
@@ -159,7 +160,7 @@ module.exports = grammar({
       $.Tez,
       $._Bool,
       $.Unit_kwd,
-      $.ctor_expr,
+      $.ConstrName,
       $.data_projection,
       $.indexing,
       $.michelson_interop,
@@ -171,10 +172,6 @@ module.exports = grammar({
     tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
 
     paren_expr: $ => common.par(field("expr", $._expr)),
-
-    ctor_expr: $ => seq(field("ctor", $.ConstrName), field("args", $.ctor_args)),
-
-    ctor_args: $ => common.par(common.sepBy(',', $._expr)),
 
     data_projection: $ => seq(field("field", $._member_expr), '.', $._accessor_chain),
 

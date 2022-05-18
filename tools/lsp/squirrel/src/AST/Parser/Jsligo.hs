@@ -32,7 +32,6 @@ recognise (SomeRawTree dialect rawTree)
         "list_literal"        -> List       <$> fields "element"
         "annot_expr"          -> Annot      <$> field  "subject"     <*> field    "type"
         "if_else_statement"   -> If         <$> field  "selector"    <*> field    "then"      <*> fieldOpt "else"
-        "if_statement"        -> If         <$> field  "selector"    <*> field    "then"      <*> pure Nothing
         "record"              -> Record     <$> fields "assignment"
         "record_update"       -> RecordUpd  <$> field  "subject"     <*> fields   "field"
         "paren_expr"          -> Paren      <$> field  "expr"
@@ -43,7 +42,10 @@ recognise (SomeRawTree dialect rawTree)
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
         "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "body"
-        "indexing"            -> ListAccess <$> field  "box"         <*> fields "index"
+        "break_statement"     -> pure Break
+        "return_statement"    -> Return     <$> fieldOpt "expr"
+        "indexing"            -> ListAccess <$> field  "box"         <*> fields   "index"
+        "type_as_annotation"  -> Annot      <$> field  "subject"     <*> field    "type"
         _                     -> fallthrough
 
     -- Case & Default
@@ -51,7 +53,7 @@ recognise (SomeRawTree dialect rawTree)
       boilerplate \case
         "case_statement"    -> CaseStm    <$> field    "selector_value" <*> fieldOpt "body"
         "default_statement" -> DefaultStm <$> fieldOpt "body"
-        _              -> fallthrough
+        _                   -> fallthrough
 
     -- Pattern
   , Descent do

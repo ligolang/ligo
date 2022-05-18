@@ -64,3 +64,8 @@ TODO:
 - Read about syntax highlighting
 - Generate syntax highting grammar & config file for vscode
 - Write lsp test (Find...)
+
+runNoLoggingT $ toParseTree Js =<< pathToSrc "PATH"
+
+FindContract _ ligo _ <- runNoLoggingT $ parsePreprocessed =<< pathToSrc "PATH TO FILE"
+collectTreeErrors ligo
