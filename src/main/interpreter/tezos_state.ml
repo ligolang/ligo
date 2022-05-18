@@ -178,6 +178,13 @@ let unwrap_baker ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contrac
   fun x ->
     Trace.trace_option ~raise (generic_error loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
 
+let baker_policy ~raise ~loc baker_policy =
+  let open Tezos_alpha_test_helpers.Block in
+  match baker_policy with
+  | `By_round i -> By_round i
+  | `By_account a -> By_account (unwrap_baker ~raise ~loc a)
+  | `Excluding l -> Excluding (List.map ~f:(unwrap_baker ~raise ~loc) l)
+
 let unwrap_source ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
   fun x ->
     let _ = Trace.trace_option ~raise (generic_error loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in

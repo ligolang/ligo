@@ -6,8 +6,8 @@ type test_exec_error = Rejected of michelson_program * address
 type test_exec_result = Success of nat | Fail of test_exec_error
 type test_baker_policy =
   | By_round of int
-  | By_account of key_hash
-  | Excluding of key_hash list
+  | By_account of address
+  | Excluding of address list
 module Test = struct
   [@private] let failwith (type a) (v : a) : a external_failwith = [%external "FAILWITH"] v
   type ('a, 'b) typed_address = unit
