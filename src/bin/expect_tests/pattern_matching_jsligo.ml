@@ -3,22 +3,22 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match1.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/pattern_match1.jsligo", line 5, character 11 to line 7, character 4:
-      4 | let test_foo = (x : test_exec_result) : string => {
-      5 |   match(x, {
-      6 |     Fail: (_ : test_exec_error) => "",
-      7 |   });
-      8 | }
+    File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 11 to line 4, character 4:
+      1 | let test_foo = (x : test_exec_result) : string => {
+      2 |   match(x, {
+      3 |     Fail: (_ : test_exec_error) => "",
+      4 |   });
+      5 | }
 
     Pattern matching anomaly (redundant, or non exhaustive). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative/pattern_match2.jsligo", line 6, characters 13-15:
-      5 |   match(x, {
-      6 |     Success: () => "",
-      7 |     Fail: (_ : test_exec_error) => ""
+    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 13-15:
+      2 |   match(x, {
+      3 |     Success: () => "",
+      4 |     Fail: (_ : test_exec_error) => ""
 
     Variant pattern argument is expected of type nat but is of type unit. |}]
 
@@ -64,14 +64,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
   [%expect{xxx|
-    type test_exec_error = unit[@private]
-    type test_exec_result = sum[Fail -> unit , Success -> nat][@private]
     const test_foo =
-      lambda (x : sum[Fail -> unit , Success -> nat]) return  match x with
-                                                               | Fail _#3 ->
-                                                                 ""
-                                                               | Success _#2 ->
-                                                                 ""[@private] |xxx}]
+      lambda (x : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( unit * address )] , Success -> nat]) return
+       match x with
+        | Fail _#3 ->
+          "" | Success _#2 ->
+               ""[@private] |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "interpret" ; "t2([Nil(), Nil()])" ; "--init-file" ; (test "/deep_pattern_matching/pm_test.jsligo") ] ;
