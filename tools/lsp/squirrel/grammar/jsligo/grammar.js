@@ -115,23 +115,24 @@ module.exports = grammar({
         seq(
           field("subject", $._member_expr),
           ',',
-          choice($._list_cases, $._ctor_cases)
-        )
-      )
-    ),
-
-    _list_cases: $ => seq('list',
-      common.par(
-        common.brackets(
-          common.sepBy1(',',
-            field("alt", $.list_case)
+          choice(
+            seq('list',
+              common.par(
+                common.brackets(
+                  common.sepBy1(',',
+                    field("alt", $.list_case)
+                  )
+                )
+              )
+            ), 
+            $._ctor_cases
           )
         )
       )
     ),
 
     list_case: $ => seq(
-      field("pattern", common.par(seq($._binding_pattern, $._type_annotation))),
+      common.par(seq(field("pattern", $.list_pattern), ':', $._type_expr)),
       '=>',
       field("expr", $._body)
     ),
