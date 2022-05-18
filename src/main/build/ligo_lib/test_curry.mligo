@@ -18,7 +18,6 @@ module Test = struct
   let transfer_exn (a : address) (s : michelson_program) (t : tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
-  let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = [%external "TEST_MICHELSON_EQUAL"] m1 m2
   let log (type a) (v : a) : unit = [%external "TEST_LOG"] v
   let reset_state (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] n l
   let get_voting_power (kh : key_hash) : nat = [%external "TEST_GET_VOTING_POWER"] kh
@@ -67,4 +66,5 @@ module Test = struct
       let a : address = [%external "ADDRESS"] c in
       let s : michelson_program = eval s in
       transfer_exn a s t
+  let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
 end

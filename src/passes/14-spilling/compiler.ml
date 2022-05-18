@@ -137,7 +137,6 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
       | C_TEST_GET_STORAGE_OF_ADDRESS
       | C_TEST_GET_BALANCE
-      | C_TEST_MICHELSON_EQUAL
       | C_TEST_LOG
       | C_TEST_GET_NTH_BS
       | C_TEST_STATE_RESET

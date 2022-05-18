@@ -626,10 +626,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> balance = Get_balance (loc, calltrace, addr) in
       return balance
     | ( C_TEST_GET_BALANCE , _  ) -> fail @@ error_type
-    | ( C_TEST_MICHELSON_EQUAL , [ a ; b ] ) ->
-      let>> b = Michelson_equal (loc,a,b) in
-      return_ct (C_bool b)
-    | ( C_TEST_MICHELSON_EQUAL , _  ) -> fail @@ error_type
     | ( C_TEST_LOG , [ v ]) ->
       let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
       return_ct C_unit

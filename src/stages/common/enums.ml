@@ -172,7 +172,6 @@ type constant' =
   | C_TEST_SET_BAKER [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
-  | C_TEST_MICHELSON_EQUAL [@only_interpreter]
   | C_TEST_GET_NTH_BS [@only_interpreter]
   | C_TEST_LOG [@only_interpreter]
   | C_TEST_STATE_RESET [@only_interpreter]
