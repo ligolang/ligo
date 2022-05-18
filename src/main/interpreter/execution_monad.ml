@@ -326,7 +326,8 @@ module Command = struct
       ((), {ctxt with internals = { ctxt.internals with source }})
     | Set_baker baker ->
       let baker = trace_option ~raise (corner_case ()) @@ LC.get_address baker in
-      ((), {ctxt with internals = { ctxt.internals with baker }})
+      let baker = Tezos_state.unwrap_baker ~raise ~loc:Location.generated baker in
+      ((), {ctxt with internals = { ctxt.internals with baker_policy = By_account baker }})
     | Get_voting_power (loc, calltrace, key_hash) ->
       let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in
       ((LT.V_Ct (LT.C_nat (Z.of_int64 vp))), ctxt)
