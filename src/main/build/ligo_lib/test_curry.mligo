@@ -18,7 +18,6 @@ module Test = struct
   let transfer_exn (a : address) (s : michelson_program) (t : tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
   let transfer_to_contract (type p) (a : p contract) (s : p) (t : tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_CONTRACT"] a s t
   let transfer_to_contract_exn (type p) (a : p contract) (s : p) (t : tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_CONTRACT_EXN"] a s t
-  let get_storage (type a b) (t : (a, b) typed_address) : b = [%external "TEST_GET_STORAGE"] t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = [%external "TEST_MICHELSON_EQUAL"] m1 m2
@@ -56,4 +55,10 @@ module Test = struct
   let constant_to_michelson_program (s : string) : michelson_program = [%external "TEST_CONSTANT_TO_MICHELSON"] s
   let restore_context (u : unit) : unit = [%external "TEST_POP_CONTEXT"] u
   let save_context (u : unit) : unit = [%external "TEST_PUSH_CONTEXT"] u
+  let get_storage (type p s) (t : (p, s) typed_address) : s =
+      let c : p contract = to_contract t in
+      let a : address = [%external "ADDRESS"] c in
+      let s : michelson_program = get_storage_of_address a in
+      let s : s = decompile s in
+      s
 end

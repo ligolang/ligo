@@ -764,14 +764,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> v = Decompile (code, code_ty, expr_ty) in
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
-    | ( C_TEST_GET_STORAGE , [ addr ] ) ->
-       let* typed_address_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let storage_ty = match AST.get_t_typed_address typed_address_ty with
-         | Some (_, storage_ty) -> storage_ty
-         | _ -> failwith "Expecting typed_address" in
-       let>> value = Get_storage(loc, calltrace, addr, storage_ty) in
-       return value
-    | ( C_TEST_GET_STORAGE , _  ) -> fail @@ error_type
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in

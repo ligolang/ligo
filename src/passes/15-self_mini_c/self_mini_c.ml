@@ -105,7 +105,6 @@ let is_pure_constant : constant' -> bool =
   | C_VIEW
   (* Test - ligo interpreter, should never end up here *)
   | C_TEST_ORIGINATE
-  | C_TEST_GET_STORAGE
   | C_TEST_GET_STORAGE_OF_ADDRESS
   | C_TEST_GET_BALANCE
   | C_TEST_SET_SOURCE
