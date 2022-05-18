@@ -40,7 +40,7 @@ recognise (SomeRawTree dialect rawTree)
         "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"       <*> pure []
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
-        "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "body"
+        "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "statement"
         "for_of_statement"    -> ForOfLoop  <$> field  "key"         <*> field    "collection" <*> field "statement"
         "break_statement"     -> pure Break
         "return_statement"    -> Return     <$> fieldOpt "expr"
@@ -197,6 +197,7 @@ recognise (SomeRawTree dialect rawTree)
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable <$> field  "name"
+        "domain"           -> TProduct <$> fields "type"
         _                  -> fallthrough
 
     -- Module access:

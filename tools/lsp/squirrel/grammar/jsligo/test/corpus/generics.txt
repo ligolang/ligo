@@ -30,7 +30,7 @@ let id : <T>((x : T) => T) = x => x;
   (binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
-    (fun_type (TypeName) (TypeName))
+    (fun_type (domain (TypeName)) (TypeName))
     (lambda
       (Name)
       (Name))))
@@ -65,13 +65,13 @@ const id : <P>(x : P) => P = (x : P) => {
   (binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
-    (fun_type (TypeName) (TypeName))
+    (fun_type (domain (TypeName)) (TypeName))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
       (block_statement
         (binding (var_pattern (NameDecl))
         (type_params (var_type (TypeVariableName)))
-        (fun_type (TypeName) (TypeName))
+        (fun_type (domain (TypeName)) (TypeName))
         (lambda
           (fun_arg (var_pattern (NameDecl)) (TypeName))
           (block_statement

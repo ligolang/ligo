@@ -87,7 +87,9 @@ module.exports = grammar({
       prec.left(13, seq(field("left", $._expr_statement), field("op", choice('*', '/', '%')), field("right", $._expr_statement)))
     ),
 
-    unary_call: $ => prec.right(15, seq(field("negate", choice('-', '!')), field("arg", $._expr_statement))),
+    unary_call: $ => prec.right(seq(field("negate", $.negate), field("arg", $._expr_statement))),
+    
+    negate: $ => choice('-', '!'),
 
     apply: $ => prec.right(2, seq(field("function", $._apply), $._arguments)),
 
@@ -265,17 +267,15 @@ module.exports = grammar({
 
     spread: $ => seq('...', field("name", $._expr_statement)),
 
-    // property_name: $ => choice($.Int, $.String, $.ConstrName, $.Name),
-
     _type_expr: $ => choice(
       $.fun_type,
       $.sum_type,
       $._core_type
     ),
 
-    fun_type: $ => seq(field("domain", common.par(common.sepBy(',', $._fun_param))), '=>', field("codomain", $._type_expr)),
+    fun_type: $ => seq(field("domain", $.domain), '=>', field("codomain", $._type_expr)),
 
-    _fun_param: $ => seq($._Name, field("type", $._type_annotation)),
+    domain: $ => common.par(common.sepBy(',', seq($._Name, ':', field("type", $._type_expr)))),
 
     sum_type: $ => common.withAttrs($, seq(optional('|'), common.sepBy1('|', field("variant", $.variant)))),
 
@@ -411,7 +411,7 @@ module.exports = grammar({
 
     _index_kind: $ => choice($._Let_kwd, $._Const_kwd),
 
-    while_statement: $ => seq('while', field("breaker", common.par($._expr)), field("body", $._statement)),
+    while_statement: $ => seq('while', common.par(field("breaker", $._expr)), $._statement),
 
     /// PREPROCESSOR
 

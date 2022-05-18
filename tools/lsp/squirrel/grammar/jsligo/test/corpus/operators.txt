@@ -55,4 +55,4 @@ let x = - 1;
   (binding
     (var_pattern
       (NameDecl))
-    (unary_call (Int))))
+    (unary_call (negate) (Int))))
