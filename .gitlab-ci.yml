@@ -209,6 +209,7 @@ webide-backend-build-and-push-backend:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -312,6 +313,7 @@ deploy-handoff-feature:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 deploy-handoff:
@@ -356,6 +358,7 @@ build-preview-ligo-webide-front-end:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
@@ -377,4 +380,5 @@ build-ligo-webide-front-end:
     - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always

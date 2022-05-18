@@ -2067,9 +2067,8 @@ let%expect_test _ =
 
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
-      code { DUP ;
-             CAR ;
-             IF_LEFT { SWAP ; DROP ; NEVER } { SWAP ; CDR ; ADD } ;
+      code { UNPAIR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { ADD } ;
              NIL operation ;
              PAIR } } |}]
 

@@ -178,11 +178,27 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
 let alice = first_name_fun(full_name);
 ```
 
-Notice that we use the underscore to indicate that we ignore the last element
-of the tuple.
+> note: the underscore to indicate that we ignore the last element of the tuple.
+
+and within a code block:
+
+```jsligo group=tuple
+let destruct_tuple = (x : [ int , [int , nat] ]) : nat => {
+  let [a,[b,c]] = x ;
+  c
+};
+```
+
+```jsligo group=tuple
+let destruct_record = (x : { a : int , b : string }) : int => {
+  let { a , b } = x ;
+  a
+};
+```
+
+> note: nested patterns in record destructuring are not yet available
 
 </Syntax>
-
 
 ### Accessing Components
 
