@@ -602,9 +602,23 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
       let let_result = return ?returned_effect @@ e_unit () in
       return @@ E_let_in {let_binder;rhs;let_result;attr}
 
+let rec silent_cast_top_level_var_to_const ~add_warning e =
+  let self = silent_cast_top_level_var_to_const ~add_warning in
+  match e.expression_content with
+    E_let_in {let_binder;rhs;let_result;attr} ->
+    let let_result = self let_result in
+    (match let_binder.attributes.const_or_var with
+      Some `Var -> add_warning @@ `Jsligo_deprecated_toplevel_let (ValueVar.get_location let_binder.var)
+    | _ -> ()
+    );
+    let let_binder = {let_binder with attributes={const_or_var = Some `Const}} in
+    let expression_content = E_let_in {let_binder;rhs;let_result;attr} in
+    {e with expression_content}
+  | _ -> e
 
-
-let expression e =
+let expression ~add_warning e =
+  (* Pretreatement especialy for JSLigo replace top-level let to const *)
+  let e = silent_cast_top_level_var_to_const ~add_warning e in
   let e = Deduplicate_binders.program e in
   (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in

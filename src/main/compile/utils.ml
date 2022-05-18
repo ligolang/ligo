@@ -59,7 +59,7 @@ let compile_contract_input ~raise ~add_warning ~options parameter storage syntax
   let sugar      = Of_imperative.compile_expression ~raise imperative in
   let core       = Of_sugar.compile_expression ~raise sugar in
   let typed      = Of_core.compile_expression ~raise ~add_warning ~options ~init_prog core in
-  let aggregated = Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed aggregated_prg  in
+  let aggregated = Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed aggregated_prg  in
   let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
   let compiled   = Of_mini_c.compile_expression ~raise ~options mini_c in
   compiled

@@ -1997,16 +1997,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "never.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/never.jsligo", line 8, character 0 to line 15, character 1:
+    File "../../test/contracts/never.jsligo", line 8, characters 4-8:
       7 |
       8 | let main = ([action, store] : [parameter, storage]) : [list<operation>, storage] => {
       9 |   return [
-     10 |    (list([]) as list <operation>),
-     11 |    (match (action, {
-     12 |     Increment: (n : int) => store + n,
-     13 |     Extend: (k : never) => (Tezos.never(k) as storage)}))
-     14 |   ]
-     15 | };
 
     Toplevel let declaration are silently change to const declaration.
 
@@ -2133,18 +2127,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 0-14:
-      1 | let dog = 1;
-      2 | let dog = true;
-
-    Toplevel let declaration are silently change to const declaration.
-
-    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 1, characters 0-11:
-      1 | let dog = 1;
-      2 | let dog = true;
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 10-14:
       1 | let dog = 1;
       2 | let dog = true;
@@ -2154,15 +2136,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_block.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 1, character 0 to line 5, character 1:
-      1 | let foo = (): int => {
-      2 |     let x = 2;
-      3 |     let x = 2;
-      4 |     return x;
-      5 | }
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 3, characters 8-13:
       2 |     let x = 2;
       3 |     let x = 2;
@@ -2214,19 +2187,6 @@ let%expect_test _ =
       Type "foo" not found. |}];
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_const.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 0-15:
-        4 |
-        5 | let a = Bar.foo;
-
-      Toplevel let declaration are silently change to const declaration.
-
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 2, characters 4-15:
-        1 | namespace Bar {
-        2 |     let foo = 2
-        3 | }
-
-      Toplevel let declaration are silently change to const declaration.
-
       File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 8-15:
         4 |
         5 | let a = Bar.foo;
@@ -2234,13 +2194,6 @@ let%expect_test _ =
       Variable "foo" not found. |}];
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_namespace.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 3, characters 8-17:
-        2 |     namespace Foo {
-        3 |         let a = 2;
-        4 |     }
-
-      Toplevel let declaration are silently change to const declaration.
-
       File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 17-20:
         6 |
         7 | import Foo = Bar.Foo
@@ -2708,23 +2661,23 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "y" ; "--init-file" ; contract "extend_builtin.jsligo" ] ;
   [%expect{|
-File "../../test/contracts/extend_builtin.jsligo", line 6, characters 0-24:
-  5 |
-  6 | let y = Tezos.f(Tezos.x);
+File "../../test/contracts/extend_builtin.jsligo", line 2, characters 13-14:
+  1 | namespace Tezos {
+  2 |   export let x = 42;
+  3 |   export let f = (x  : int) : int => x + 2;
 
 Toplevel let declaration are silently change to const declaration.
 
-File "../../test/contracts/extend_builtin.jsligo", line 3, characters 9-42:
+File "../../test/contracts/extend_builtin.jsligo", line 3, characters 13-14:
   2 |   export let x = 42;
   3 |   export let f = (x  : int) : int => x + 2;
   4 | }
 
 Toplevel let declaration are silently change to const declaration.
 
-File "../../test/contracts/extend_builtin.jsligo", line 2, characters 9-19:
-  1 | namespace Tezos {
-  2 |   export let x = 42;
-  3 |   export let f = (x  : int) : int => x + 2;
+File "../../test/contracts/extend_builtin.jsligo", line 6, characters 4-5:
+  5 |
+  6 | let y = Tezos.f(Tezos.x);
 
 Toplevel let declaration are silently change to const declaration.
 
