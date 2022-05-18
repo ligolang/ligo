@@ -138,7 +138,7 @@ module.exports = grammar({
     ),
 
     _ctor_cases: $ => common.block(
-      common.sepBy1(',',
+      common.sepEndBy1(',',
         field("alt", $.ctor_case)
       )
     ),

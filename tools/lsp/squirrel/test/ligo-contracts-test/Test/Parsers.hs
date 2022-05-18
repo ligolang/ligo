@@ -90,10 +90,14 @@ okayTests =
       , "negative" </> "error_syntax.ligo"
       , "negative" </> "modules_access_not_open1.ligo"
       , "negative" </> "modules_access_not_open1.mligo"
+      , "negative" </> "modules_access_not_open1.jsligo"
       , "negative" </> "modules_access_not_open2.ligo"
       , "negative" </> "modules_access_not_open2.mligo"
+      , "negative" </> "modules_access_not_open2.jsligo"
       , "negative" </> "switch_jsligo" </> "break_outside_case2.jsligo"
       , "negative" </> "switch_jsligo" </> "empty_switch.jsligo"
+      , "negative" </> "switch_jsligo" </> "default_in_between.jsligo"
+      , "negative" </> "switch_jsligo" </> "more_than_one_default.jsligo"
       ]
     , tdIgnoreDirs = []
     }
