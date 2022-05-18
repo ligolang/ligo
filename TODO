@@ -62,7 +62,7 @@ TODO:
 - Figure out what's wrong with parser tests (ligo-contract-tests)
 - Address review comments
 - Read about syntax highlighting
-- Generate syntax highting grammar & config file for vscode
+- [DONE] [NEED_TO_TEST] Generate syntax highting grammar & config file for vscode
 - Write lsp test (Find...)
 
 runNoLoggingT $ toParseTree Js =<< pathToSrc "PATH"

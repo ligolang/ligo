@@ -98,8 +98,8 @@ let decl
 ---
 
 (source_file
-  (attr)
-  (let_decl
+  (let_or_const
+    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -113,9 +113,9 @@ let decl twice
 ---
 
 (source_file
-  (attr)
-  (attr)
-  (let_decl
+  (let_or_const
+    (attr)
+    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -133,7 +133,7 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -142,8 +142,8 @@ let bar = (b : int) : int => {
       (TypeName)
       (body
         (block_statement
-          (attr) (attr)
-          (let_decl
+          (let_or_const
+            (attr) (attr)
             (var_pattern (NameDecl))
             (Int))
           (return_statement (Name)))))))
@@ -161,7 +161,7 @@ const bar = (b : int) : int => {
 ---
 
 (source_file
-  (const_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -170,8 +170,8 @@ const bar = (b : int) : int => {
       (TypeName)
       (body
         (block_statement
-          (attr) (attr)
-          (const_decl
+          (let_or_const
+            (attr) (attr)
             (var_pattern (NameDecl))
             (Int))
           (return_statement (Name)))))))
@@ -185,8 +185,8 @@ const decl
 ---
 
 (source_file
-  (attr)
-  (const_decl
+  (let_or_const
+    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -200,9 +200,9 @@ const decl twice
 ---
 
 (source_file
-  (attr)
-  (attr)
-  (const_decl
+  (let_or_const
+    (attr)
+    (attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)))
@@ -217,8 +217,8 @@ const fst = (p: [nat, nat]): nat => p[0];
 ---
 
 (source_file
-  (attr)
-  (const_decl
+  (let_or_const
+    (attr)
     (var_pattern (NameDecl))
     (lambda
       (fun_arg

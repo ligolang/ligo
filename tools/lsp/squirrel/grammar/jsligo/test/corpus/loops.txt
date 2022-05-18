@@ -13,7 +13,7 @@ let sum_list = (l: list<int>): int => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -22,7 +22,7 @@ let sum_list = (l: list<int>): int => {
       (TypeName)
       (body
         (block_statement
-          (let_decl
+          (let_or_const
             (var_pattern (NameDecl))
             (TypeName)
             (Int))
@@ -58,7 +58,7 @@ let gcd = (x: nat, y: nat): nat => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -70,7 +70,7 @@ let gcd = (x: nat, y: nat): nat => {
       (TypeName)
       (body
         (block_statement
-          (let_decl
+          (let_or_const
             (tuple_pattern
               (var_pattern (NameDecl))
               (var_pattern (NameDecl)))
@@ -78,13 +78,13 @@ let gcd = (x: nat, y: nat): nat => {
           (if_else_statement
             (binary_call (Name) (Name))
             (block_statement
-              (const_decl
+              (let_or_const
                 (var_pattern (NameDecl))
                 (TypeName)
                 (Name))
               (assignment_operator (Name) (Name))
               (assignment_operator (Name) (Name))))
-          (let_decl
+          (let_or_const
             (var_pattern (NameDecl))
             (TypeName)
             (Nat))

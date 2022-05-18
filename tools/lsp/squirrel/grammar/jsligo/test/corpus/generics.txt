@@ -27,7 +27,7 @@ let id : <T>((x : T) => T) = x => x;
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (fun_type (TypeName) (TypeName))
@@ -62,7 +62,7 @@ const id : <P>(x : P) => P = (x : P) => {
 ---
 
 (source_file
-  (const_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (fun_type (TypeName) (TypeName))
@@ -70,7 +70,7 @@ const id : <P>(x : P) => P = (x : P) => {
       (fun_arg (var_pattern (NameDecl)) (TypeName))
       (body
         (block_statement
-          (const_decl (var_pattern (NameDecl))
+          (let_or_const (var_pattern (NameDecl))
           (type_params (var_type (TypeVariableName)))
           (fun_type (TypeName) (TypeName))
           (lambda

@@ -15,7 +15,7 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (body
@@ -45,7 +45,7 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (body
@@ -74,7 +74,7 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (body
@@ -108,7 +108,7 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -142,7 +142,7 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -173,7 +173,7 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg

@@ -14,14 +14,14 @@ let a = (x: bool): bool => {
 ---
 
 (source_file
-  (let_decl
+  (let_or_const
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
       (TypeName)
       (body
       (block_statement
-        (let_decl
+        (let_or_const
           (var_pattern (NameDecl))
           (Int))
         (if_else_statement

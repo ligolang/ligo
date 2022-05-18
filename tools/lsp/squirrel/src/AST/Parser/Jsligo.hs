@@ -24,6 +24,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Expr
   , Descent do
       boilerplate \case
+        "let_or_const"        -> Seq        <$> fields "binding"
         "unary_call"          -> UnOp       <$> field  "negate"      <*> field    "arg"
         "binary_call"         -> BinOp      <$> field  "left"        <*> field    "op"        <*> field "right"
         "assignment_operator" -> AssignOp   <$> field  "lhs"         <*> field    "op"        <*> field "rhs"
@@ -147,14 +148,13 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "let_decl"            -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
-        "const_decl"          -> BConst       <$> field "binding"    <*> fieldOpt "type"   <*> fieldOpt "value"
-        "type_decl"           -> BTypeDecl    <$> field "type_name"  <*> fieldOpt "params" <*> field "type_value"
+        "binding"             -> BConst       <$> field "binding_pattern"  <*> fieldOpt "type"   <*> fieldOpt "value"
+        "type_decl"           -> BTypeDecl    <$> field "type_name"        <*> fieldOpt "params" <*> field "type_value"
         "p_include"           -> BInclude     <$> field "filename"
-        "p_import"            -> BImport      <$> field "filename"   <*> field "alias"
-        "fun_arg"             -> BParameter   <$> field "argument"   <*> fieldOpt "type"
-        "namespace_statement" -> BModuleDecl  <$> field "moduleName" <*> fields "declaration"
-        "import_statement"    -> BModuleAlias <$> field "moduleName" <*> fields "module"
+        "p_import"            -> BImport      <$> field "filename"         <*> field "alias"
+        "fun_arg"             -> BParameter   <$> field "argument"         <*> fieldOpt "type"
+        "namespace_statement" -> BModuleDecl  <$> field "moduleName"       <*> fields "declaration"
+        "import_statement"    -> BModuleAlias <$> field "moduleName"       <*> fields "module"
         _                     -> fallthrough
 
     -- TypeParams

@@ -25,27 +25,31 @@ module.exports = grammar({
 
   rules: {
     source_file: $ =>
-      common.sepEndBy(optional($._semicolon), field("toplevel", $._statement_or_namespace_or_preprocessor)),
+      common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
-    _statement_or_namespace_or_preprocessor: $ => choice(field("statement", $._statement), $.namespace_statement, $.preprocessor),
+    _toplevel: $ => choice(
+      seq(optional('export'), $.let_or_const), 
+      seq(optional('export'), $.type_decl),
+      seq(optional('export'), $.namespace_statement),
+      $.import_statement,
+      $.preprocessor
+    ),
 
     namespace_statement: $ => prec.left(2, seq(
-      optional(field("export", 'export')), 'namespace', field("moduleName", $.ModuleName),
+      'namespace', field("moduleName", $.ModuleName),
       '{',
-      common.sepEndBy($._semicolon, field("declaration", $._statement_or_namespace_or_preprocessor)),
+      common.sepEndBy($._semicolon, field("declaration", $._toplevel)),
       '}'
     )),
 
     _statement: $ => field("statement", $._base_statement),
 
     _base_statement: $ => prec(5, choice(
+      $.let_or_const,
       $._expr_statement,
       $.return_statement,
       $.block_statement,
       $.switch_statement,
-      $.import_statement,
-      $.export_statement,
-      $._declaration_statement,
       $.if_else_statement,
       $.for_of_statement,
       $.while_statement,
@@ -315,12 +319,8 @@ module.exports = grammar({
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    export_statement: $ => seq(field("export", 'export'), $._declaration_statement),
-
-    _declaration_statement: $ => choice(
-      $._let_decls,
-      $._const_decls,
-      $.type_decl
+    let_or_const: $ => common.withAttrs($, 
+      seq(choice('let', 'const'), common.sepBy1(',', field("binding", $._binding_initializer)))
     ),
 
     type_decl: $ => seq("type", field("type_name", $.TypeName), optional(field("params", $.type_params)), '=', field("type_value", $._type_expr)),
@@ -329,16 +329,8 @@ module.exports = grammar({
 
     var_type: $ => field("name", $.TypeVariableName),
 
-    _let_decls: $ => common.withAttrs($, seq('let', common.sepBy1(',', $.let_decl))),
-
-    _const_decls: $ => common.withAttrs($, seq('const', common.sepBy1(',', $.const_decl))),
-
-    let_decl: $ => $._binding_initializer,
-
-    const_decl: $ => $._binding_initializer,
-
     _binding_initializer: $ => seq(
-      field("binding", $._binding_pattern),
+      field("binding_pattern", $._binding_pattern),
       optional(
         seq(
           optional($.type_params),
