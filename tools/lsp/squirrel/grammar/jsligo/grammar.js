@@ -140,7 +140,7 @@ module.exports = grammar({
       )
     ),
 
-    ctor_param: $ => seq(field("subject", $._binding_pattern), field("type", $._type_annotation)),
+    ctor_param: $ => seq(field("subject", $._binding_pattern), ':', field("type", $._type_expr)),
 
     ctor_case: $ => seq(
       field("pattern", $.constr_pattern),
@@ -151,7 +151,7 @@ module.exports = grammar({
     constr_pattern: $ => seq(
       field("constructor", $.ConstrName),
       ':',
-      field("arg", common.par(optional($.ctor_param)))
+      common.par(optional(field("arg", $.ctor_param)))
     ),
 
     _member_expr: $ => choice(
@@ -161,7 +161,8 @@ module.exports = grammar({
       $.String,
       $.Nat,
       $.Tez,
-      $._Bool,
+      $.False_kwd, 
+      $.True_kwd,
       $.Unit_kwd,
       $.ConstrName,
       $.data_projection,
@@ -408,7 +409,7 @@ module.exports = grammar({
 
     _case_statements: $ => seq(':', optional(field("body", $._statements_strict_semicolon))),
 
-    if_else_statement: $ => prec.right(seq('if', field("selector", common.par($._expr)), field("then", $._base_statement), optional($._else_branch))),
+    if_else_statement: $ => prec.right(seq('if', common.par(field("selector", $._expr)), field("then", $._base_statement), optional($._else_branch))),
 
     _else_branch: $ => seq('else', field("else", $._statement)),
 
@@ -483,7 +484,6 @@ module.exports = grammar({
     _NameCapital: $ => /[A-Z][a-zA-Z0-9_]*/,
     TypeWildcard: $ => '_',
     Keyword: $ => /[A-Za-z][a-z]*/,
-    _Bool: $ => choice($.False_kwd, $.True_kwd),
 
     Unit_kwd: $ => 'unit',
     False_kwd: $ => 'false',
