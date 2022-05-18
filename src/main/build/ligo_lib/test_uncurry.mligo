@@ -8,6 +8,11 @@ type test_exec_error =
 
 type test_exec_result = Success of nat | Fail of test_exec_error
 
+type test_baker_policy =
+  | By_round of int
+  | By_account of key_hash
+  | Excluding of key_hash list
+
 module Test = struct
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
   let originate_from_file ((fn, e, v, s, t) : string * string * string list * michelson_program * tez) : address * michelson_program * int = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v s t
