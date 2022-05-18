@@ -758,14 +758,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
        let>> code = Run (loc, f, v) in
        return code
     | ( C_TEST_RUN , _  ) -> fail @@ error_type
-    | ( C_TEST_EVAL , [ v ] )
-    | ( C_TEST_COMPILE_META_VALUE , [ v ] ) ->
-       let* () = check_value v in
-       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let>> code = Eval (loc, v, value_ty) in
-       return code
-    | ( C_TEST_EVAL , _  ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_META_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
       let* loc = monad_option (Errors.generic_error loc "Could not recover locations") @@ List.nth locs 0 in
       let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq (ast_ty, expr_ty) in

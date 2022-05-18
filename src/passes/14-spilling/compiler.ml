@@ -148,7 +148,6 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_NTH_BOOTSTRAP_CONTRACT
       | C_TEST_LAST_ORIGINATIONS
       | C_TEST_RUN
-      | C_TEST_EVAL
       | C_TEST_COMPILE_CONTRACT
       | C_TEST_DECOMPILE
       | C_TEST_TO_CONTRACT
@@ -158,7 +157,6 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_SET_BIG_MAP
       | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
       | C_TEST_ORIGINATE_FROM_FILE
-      | C_TEST_COMPILE_META_VALUE
       | C_TEST_MUTATE_VALUE
       | C_TEST_MUTATION_TEST
       | C_TEST_MUTATION_TEST_ALL
