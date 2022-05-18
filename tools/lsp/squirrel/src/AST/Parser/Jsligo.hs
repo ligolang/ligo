@@ -193,7 +193,7 @@ recognise (SomeRawTree dialect rawTree)
         "string_type"      -> TString  <$> field  "value"
         "fun_type"         -> TArrow   <$> field  "domain"  <*> field "codomain"
         "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
-        "record_type"      -> TRecord  <$> fields "field"
+        "record_type"      -> TRecord  <$> fields "field_decl"
         "tuple_type"       -> TProduct <$> fields "element"
         "sum_type"         -> TSum     <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard

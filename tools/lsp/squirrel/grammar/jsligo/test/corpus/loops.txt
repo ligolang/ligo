@@ -27,7 +27,6 @@ let sum_list = (l: list<int>): int => {
             (TypeName)
             (Int))
           (for_of_statement
-            (Const_kwd)
             (Name)
             (Name)
             (block_statement
