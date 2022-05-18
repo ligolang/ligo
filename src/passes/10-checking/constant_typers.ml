@@ -468,10 +468,8 @@ module Constant_types = struct
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
                     of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
                     of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
-                    of_type C_TEST_GET_STORAGE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> b);
                     of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
-                    of_type C_TEST_MICHELSON_EQUAL O.(t_michelson_code () ^-> t_michelson_code () ^-> t_bool ());
                     of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_address ());
                     of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
                     of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
@@ -486,12 +484,8 @@ module Constant_types = struct
                     of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
                     of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));
                     of_type C_TEST_RUN O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> a ^-> t_michelson_code ());
-                    of_type C_TEST_EVAL O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
-                    of_type C_TEST_COMPILE_META_VALUE O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
                     of_type C_TEST_DECOMPILE O.(for_all "a" @@ fun a -> t_michelson_code () ^-> a);
                     of_type C_TEST_TO_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> t_contract a ^-> t_typed_address a b));
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_test_exec_result ());
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_nat ());
                     of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
                     of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_nat ());
                     of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_int () ^-> t_big_map a b ^-> t_unit ());

@@ -626,10 +626,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> balance = Get_balance (loc, calltrace, addr) in
       return balance
     | ( C_TEST_GET_BALANCE , _  ) -> fail @@ error_type
-    | ( C_TEST_MICHELSON_EQUAL , [ a ; b ] ) ->
-      let>> b = Michelson_equal (loc,a,b) in
-      return_ct (C_bool b)
-    | ( C_TEST_MICHELSON_EQUAL , _  ) -> fail @@ error_type
     | ( C_TEST_LOG , [ v ]) ->
       let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
       return_ct C_unit
@@ -758,28 +754,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
        let>> code = Run (loc, f, v) in
        return code
     | ( C_TEST_RUN , _  ) -> fail @@ error_type
-    | ( C_TEST_EVAL , [ v ] )
-    | ( C_TEST_COMPILE_META_VALUE , [ v ] ) ->
-       let* () = check_value v in
-       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let>> code = Eval (loc, v, value_ty) in
-       return code
-    | ( C_TEST_EVAL , _  ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_META_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_DECOMPILE , [ V_Michelson (Ty_code { code_ty ; code ; ast_ty }) ] ) ->
       let* loc = monad_option (Errors.generic_error loc "Could not recover locations") @@ List.nth locs 0 in
       let () = trace_option ~raise (Errors.generic_error loc @@ Format.asprintf "This Michelson value has assigned type '%a', which does not coincide with expected type '%a'." AST.PP.type_expression ast_ty AST.PP.type_expression expr_ty) @@ AST.Helpers.assert_type_expression_eq (ast_ty, expr_ty) in
       let>> v = Decompile (code, code_ty, expr_ty) in
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
-    | ( C_TEST_GET_STORAGE , [ addr ] ) ->
-       let* typed_address_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let storage_ty = match AST.get_t_typed_address typed_address_ty with
-         | Some (_, storage_ty) -> storage_ty
-         | _ -> failwith "Expecting typed_address" in
-       let>> value = Get_storage(loc, calltrace, addr, storage_ty) in
-       return value
-    | ( C_TEST_GET_STORAGE , _  ) -> fail @@ error_type
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -789,26 +769,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
        let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
     | ( C_TEST_ORIGINATE , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , [ (V_Ct (C_contract contract)) ; param ; V_Ct ( C_mutez amt ) ] ) -> (
-       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-       let>> param = Eval (loc, param, param_ty) in
-       match param with
-       | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> res = External_call (loc,calltrace,contract,param,amt) in
-          return_contract_exec_exn res
-       | _ -> fail @@ Errors.generic_error loc "Error typing param"
-    )
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , [ (V_Ct (C_contract contract)) ; param; V_Ct ( C_mutez amt ) ] ) -> (
-       let* param_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-       let>> param = Eval (loc, param, param_ty) in
-       match param with
-       | V_Michelson (Ty_code { code = param ; _ }) ->
-          let>> res = External_call (loc,calltrace,contract,param,amt) in
-          return_contract_exec res
-       | _ -> fail @@ Errors.generic_error loc "Error typing param"
-    )
-    | ( C_TEST_EXTERNAL_CALL_TO_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
       let n = Z.to_int n in
       let* parameter_ty', storage_ty' = monad_option (Errors.generic_error loc "Expected typed address") @@

@@ -188,9 +188,10 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
   let input_michelson =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings input_michelson in
+  let tezos_context = Option.map ~f:(fun ({ tezos_context ; _ } : options) -> tezos_context) options in
   let input =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
-    Memory_proto_alpha.parse_michelson_data input_michelson input_ty
+    Memory_proto_alpha.parse_michelson_data ?tezos_context input_michelson input_ty
   in
   let ty_stack_before = Script_typed_ir.Item_t (input_ty, Bot_t) in
   let ty_stack_after = Script_typed_ir.Item_t (output_ty, Bot_t) in
