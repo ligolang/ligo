@@ -28,9 +28,9 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional('export'), $.let_or_const), 
-      seq(optional('export'), $.type_decl),
-      seq(optional('export'), $.namespace_statement),
+      seq(optional($._Expor_kwd), $.let_or_const), 
+      seq(optional($._Expor_kwd), $.type_decl),
+      seq(optional($._Expor_kwd), $.namespace_statement),
       $.import_statement,
       $.preprocessor
     ),
@@ -320,7 +320,7 @@ module.exports = grammar({
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
     let_or_const: $ => common.withAttrs($, 
-      seq(choice('let', 'const'), common.sepBy1(',', field("binding", $._binding_initializer)))
+      seq(choice($._Let_kwd, $._Const_kwd), common.sepBy1(',', field("binding", $._binding_initializer)))
     ),
 
     type_decl: $ => seq("type", field("type_name", $.TypeName), optional(field("params", $.type_params)), '=', field("type_value", $._type_expr)),
@@ -417,7 +417,7 @@ module.exports = grammar({
 
     for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), field("body", $._statement)),
 
-    _index_kind: $ => choice($.Let_kwd, $.Const_kwd),
+    _index_kind: $ => choice($._Let_kwd, $._Const_kwd),
 
     while_statement: $ => seq('while', field("breaker", common.par($._expr)), field("body", $._statement)),
 
@@ -492,7 +492,8 @@ module.exports = grammar({
     False_kwd: $ => 'false',
     True_kwd: $ => 'true',
     wildcard: $ => '_',
-    Let_kwd: $ => 'let',
-    Const_kwd: $ => 'const',
+    _Let_kwd: $ => 'let',
+    _Const_kwd: $ => 'const',
+    _Expor_kwd: $ => 'export',
   }
 })
