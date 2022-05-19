@@ -7,8 +7,6 @@ import AST.Skeleton
 
 import Duplo.Tree
 
-import Data.Text qualified as T
-
 import ParseTree
 import Parser
 
@@ -254,7 +252,7 @@ recognise (SomeRawTree dialect rawTree)
         ("False_kwd", _)       -> pure $ Ctor "False"
         ("Unit_kwd", _)        -> pure $ Ctor "Unit"
         ("constructor", c)     -> pure $ Ctor c
-        ("ConstrNameType", n)  -> pure $ Ctor (T.filter (/= '"') n)
+        ("ConstrNameType", n)  -> pure $ Ctor n
         _                      -> fallthrough
 
   -- Err

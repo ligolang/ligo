@@ -28,7 +28,7 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional($._Expor_kwd), $.binding), 
+      seq(optional($._Expor_kwd), $.binding),
       seq(optional($._Expor_kwd), $.type_decl),
       seq(optional($._Expor_kwd), $.namespace_statement),
       $.import_statement,
@@ -89,7 +89,7 @@ module.exports = grammar({
     ),
 
     unary_call: $ => prec.right(seq(field("negate", $.negate), field("arg", $._expr_statement))),
-    
+
     negate: $ => choice('-', '!'),
 
     apply: $ => prec.right(2, seq(field("function", $._apply), $._arguments)),
@@ -125,7 +125,7 @@ module.exports = grammar({
                   )
                 )
               )
-            ), 
+            ),
             $._ctor_cases
           )
         )
@@ -145,7 +145,7 @@ module.exports = grammar({
     ),
 
     ctor_params: $ => common.sepBy1(',', field("ctor_param", $.ctor_param)),
-    
+
     ctor_param: $ => seq(field("subject", $._binding_pattern), ':', field("type", $._type_expr)),
 
     ctor_case: $ => seq(
@@ -167,7 +167,7 @@ module.exports = grammar({
       $.String,
       $.Nat,
       $.Tez,
-      $.False_kwd, 
+      $.False_kwd,
       $.True_kwd,
       $.Unit_kwd,
       $.ConstrName,
@@ -286,7 +286,7 @@ module.exports = grammar({
     variant: $ => prec(5, common.withAttrs($, common.brackets(
       choice(
         field("constructor", $.ConstrNameType),
-        seq(field("constructor", $.ConstrNameType), ',', $.ctor_arguments)
+        seq(field("constructor", $.ConstrNameType), ',', field("ctor_arguments", $.ctor_arguments))
       )
     ))),
 
@@ -321,7 +321,7 @@ module.exports = grammar({
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    binding: $ => common.withAttrs($, 
+    binding: $ => common.withAttrs($,
       seq(
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
