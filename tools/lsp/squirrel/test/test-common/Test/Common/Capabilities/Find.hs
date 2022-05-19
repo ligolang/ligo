@@ -266,6 +266,12 @@ invariants =
     , driDef = Just (interval 1 9 12)
     , driRefs = [interval 2 30 33]
     }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.jsligo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 5 8)
+    , driRefs = [interval 5 16 19]
+    }
 
   -- FIXME:
   -- * Does not pass because we have troubles with recursive functions

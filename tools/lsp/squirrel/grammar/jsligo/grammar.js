@@ -241,7 +241,7 @@ module.exports = grammar({
 
     return_statement: $ => prec.right(seq('return', optional(field("expr", $._expr)))),
 
-    block_statement: $ => prec.left(2, seq('{', $._statements, '}')),
+    block_statement: $ => prec.left(seq('{', $._statements, '}')),
 
     _record_expr: $ => choice($.record, $.record_update),
 
@@ -409,9 +409,13 @@ module.exports = grammar({
 
     default_statement: $ => seq('default', ':', optional(common.sepEndBy1($._semicolon, $._statement))),
 
-    if_else_statement: $ => prec.right(seq('if', common.par(field("selector", $._expr)), field("then", $._base_statement), optional($._else_branch))),
-
-    _else_branch: $ => seq('else', field("else", $._statement)),
+    if_else_statement: $ => prec.right(
+      seq('if', 
+        common.par(field("selector", $._expr)), 
+        field("then_branch", $._base_statement), 
+        optional(seq('else', field("else_branch", $._base_statement)))
+      )
+    ),
 
     for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), $._statement),
 
