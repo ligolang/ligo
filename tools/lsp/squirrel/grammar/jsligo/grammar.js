@@ -310,11 +310,11 @@ module.exports = grammar({
 
     module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.Name)),
 
-    record_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', $.field_decl))),
+    record_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
 
     field_decl: $ => common.withAttrs($, choice(
       field("field_name", $.FieldName),
-      seq(field("field_name", $.FieldName), field("field_type", $._type_annotation))
+      seq(field("field_name", $.FieldName), ':', field("field_type", $._type_expr))
     )),
 
     app_type: $ => prec(3, seq(field("functor", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
@@ -328,7 +328,7 @@ module.exports = grammar({
         choice($._Let_kwd, $._Const_kwd),
         field("binding_pattern", $._binding_pattern),
         optional(
-          field("type", $._type_annotation)
+          seq(':', optional($.type_params), field("type_annot", $._type_expr))
         ),
         '=',
         field("value", $._expr)

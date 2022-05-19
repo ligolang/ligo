@@ -255,6 +255,18 @@ invariants =
     , driRefs = []
     }
   , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.jsligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.jsligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 20 23)
@@ -300,6 +312,12 @@ invariants =
     { driFile = contractsDir </> "type-constructor.religo"
     , driDesc = "Increment, type constructor"
     , driDef = Just (interval 2 5 14)
+    , driRefs = [interval 5 18 27]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-constructor.jsligo"
+    , driDesc = "Increment, type constructor"
+    , driDef = Just (interval 2 4 15)
     , driRefs = [interval 5 18 27]
     }
   ]
