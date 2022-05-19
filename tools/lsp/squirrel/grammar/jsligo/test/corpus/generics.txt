@@ -14,9 +14,9 @@ type my_typ<A,B,C> =
     (TypeName)
       (type_params (var_type (TypeVariableName)) (var_type (TypeVariableName)) (var_type (TypeVariableName)))
       (sum_type
-        (variant (String) (ctor_arguments (TypeName)))
-        (variant (String) (ctor_arguments (TypeName)))
-        (variant (String) (ctor_arguments (TypeName))))))
+        (variant (ConstrNameType) (ctor_arguments (TypeName)))
+        (variant (ConstrNameType) (ctor_arguments (TypeName)))
+        (variant (ConstrNameType) (ctor_arguments (TypeName))))))
 
 =========
 generic function

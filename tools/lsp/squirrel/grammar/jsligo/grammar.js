@@ -19,7 +19,8 @@ module.exports = grammar({
     [$.Name, $.NameDecl],
     [$.Name, $.FieldName],
     [$.tuple, $.list_pattern],
-    [$.ConstrName, $.ModuleName]
+    [$.ConstrName, $.ModuleName],
+    [$.ConstrNameType, $.String]
   ],
 
   rules: {
@@ -284,8 +285,8 @@ module.exports = grammar({
 
     variant: $ => prec(5, common.withAttrs($, common.brackets(
       choice(
-        field("constructor", $.String),
-        seq(field("constructor", $.String), ',', $.ctor_arguments)
+        field("constructor", $.ConstrNameType),
+        seq(field("constructor", $.ConstrNameType), ',', $.ctor_arguments)
       )
     ))),
 
@@ -299,7 +300,7 @@ module.exports = grammar({
       $.module_access_t,
       $.record_type,
       $.app_type,
-      common.withAttrs($, $.tuple_type),
+      $.tuple_type,
       common.par($._type_expr)
     ),
 
@@ -316,7 +317,7 @@ module.exports = grammar({
 
     app_type: $ => prec(3, seq(field("functor", $.TypeName), common.chev(common.sepBy1(',', field("argument", $._type_expr))))),
 
-    tuple_type: $ => common.brackets(common.sepBy1(',', field("element", $._type_expr))),
+    tuple_type: $ => common.withAttrs($, common.brackets(common.sepBy1(',', field("element", $._type_expr)))),
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
@@ -459,6 +460,7 @@ module.exports = grammar({
     _semicolon: $ => choice(';', $._automatic_semicolon),
 
     ConstrName: $ => $._NameCapital,
+    ConstrNameType: $ => /\"(\\.|[^"])*\"/,
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
     TypeName: $ => choice($._Name, $._NameCapital),

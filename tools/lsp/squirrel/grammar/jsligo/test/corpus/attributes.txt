@@ -12,9 +12,9 @@ type foo = /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (String))
+          (ConstrNameType))
         (variant
-          (String)))))
+          (ConstrNameType)))))
 
 =========
 sum
@@ -29,8 +29,8 @@ type foo = /* @boom */ | ["True"] | ["False"]
     (TypeName)
       (sum_type
         (attr)
-        (variant (String))
-        (variant (String)))))
+        (variant (ConstrNameType))
+        (variant (ConstrNameType)))))
 
 =========
 constr with bar
@@ -46,9 +46,9 @@ type foo = | /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (String))
+          (ConstrNameType))
         (variant
-          (String)))))
+          (ConstrNameType)))))
 
 =========
 record
@@ -243,9 +243,9 @@ type animal =
   (type_decl (TypeName)
   (sum_type
     (attr)
-    (variant (String))
-    (variant (String))
-    (variant (String)))))
+    (variant (ConstrNameType))
+    (variant (ConstrNameType))
+    (variant (ConstrNameType)))))
 
 =========
 recod type layout:comb annotation
@@ -285,9 +285,9 @@ type animal =
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (String))
-      (variant (attr) (String))
-      (variant (attr) (String)))))
+      (variant (attr) (ConstrNameType))
+      (variant (attr) (ConstrNameType))
+      (variant (attr) (ConstrNameType)))))
 
 =========
 record type @annot
