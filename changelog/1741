@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \nUsing crunch to load standard libraries at compile-time
+merge_request: '1741'
+title: Using crunch to load library at compile-time
+type: internal

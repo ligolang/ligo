@@ -124,7 +124,7 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage int ;
-      code { DROP ; PUSH int 1 ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+      code { PUSH int 1 ; PUSH int 1 ; ADD ; SWAP ; DROP ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;
@@ -327,7 +327,7 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; (test "use_rec.jsligo") ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value 55. |}]
+    - test exited with value 51. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;

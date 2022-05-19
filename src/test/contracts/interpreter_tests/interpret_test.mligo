@@ -317,7 +317,7 @@ let test_add_mutez =
 let test_sub_mutez =
   let m = 10tez in
   let n = 1tez in
-  assert (m - n = 9tez)
+  assert (m - n = Some 9tez)
 
 let test_div_mutez =
   let a = 1tez/2tez in

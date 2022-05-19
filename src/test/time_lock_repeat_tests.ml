@@ -39,7 +39,7 @@ let early_call ~raise ~add_warning () =
   expect_string_failwith ~raise ~options program "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
 
-let fake_decompiled_empty_message = e_string "[lambda of type: (lambda %execute unit (list operation)) ]"
+let fake_decompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance ~raise ~add_warning () =
