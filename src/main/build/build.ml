@@ -54,7 +54,7 @@ module M (Params : Params) =
       let options = Compiler_options.set_init_env options env in
       let stdlib = Stdlib.typed ~options meta.syntax in
       let testlib = Testlib.typed ~options meta.syntax in
-      let options = Compiler_options.set_init_env options (Environment.append testlib (Environment.append stdlib env)) in
+      let options = Compiler_options.set_init_env options (Environment.append stdlib (Environment.append testlib env)) in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
       let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
       ast_typed
@@ -93,7 +93,7 @@ module Infer (Params : Params) = struct
     let stdlib =  Stdlib.core ~options meta.syntax in
     let testlib = Testlib.core ~options meta.syntax in
     let module_ = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-    stdlib @ testlib @ module_
+    testlib @ stdlib @ module_
 
 end
 
@@ -169,8 +169,8 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_
       | None ->
          let stdlib   = Stdlib.typed ~options syntax in
          let testlib  = Testlib.typed ~options syntax in
-         let contract = Ligo_compile.Of_typed.compile_program ~raise (stdlib @ testlib) in
-         (stdlib @ testlib, contract)
+         let contract = Ligo_compile.Of_typed.compile_program ~raise (testlib @ stdlib) in
+         (testlib @ stdlib, contract)
     in
     let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options syntax expression contract in
     let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp aggregated_prg in
