@@ -917,6 +917,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
   = fun term calltrace env ->
     let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
+    let unthunk = function
+      | V_Thunk v -> eval_ligo v.value calltrace v.context
+      | v -> return v in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
     match term.expression_content with
     | E_type_inst _ ->
@@ -924,6 +927,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_application {lamb = f; args} -> (
         let* f' = eval_ligo f calltrace env in
         let* args' = eval_ligo args calltrace env in
+        let* args' = unthunk args' in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
@@ -994,6 +998,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       let* arguments' = Monad.bind_map_list
         (fun (ae:AST.expression) ->
           let* value = eval_ligo ae calltrace env in
+          let* value = unthunk value in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
       apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
