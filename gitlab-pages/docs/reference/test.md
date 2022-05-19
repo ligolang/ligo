@@ -145,7 +145,8 @@ let to_entrypoint = (entrypoint: string, account: typed_address &lt;&apos;param,
 Get the contract corresponding to an entrypoint of a typed address:
 the contract parameter in the result will be the type of the
 entrypoint, it needs to be annotated, entrypoint string should omit
-the prefix "%".
+the prefix "%", but if passed a string starting with "%", it will be
+removed (and a warning emitted).
 
 <SyntaxTitle syntax="pascaligo">
 val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_program * int
