@@ -39,13 +39,13 @@ let alice : user = {
     (TypeName)
     (record
       (record_field
-        (Name)
+        (FieldName)
         (Nat))
       (record_field
-        (Name)
+        (FieldName)
         (True_kwd))
       (record_field
-        (Name)
+        (FieldName)
         (String)))))
 
 =========
@@ -60,7 +60,7 @@ let alice_admin: bool = alice.is_admin;
   (binding
     (var_pattern (NameDecl))
     (TypeName)
-    (data_projection (Name) (Name))))
+    (data_projection (Name) (FieldName))))
 
 =========
 record field punning
@@ -80,9 +80,9 @@ let alice : user = {
       (NameDecl))
       (TypeName)
       (record
-        (capture (Name))
-        (capture (Name))
-        (capture (Name)))))
+        (capture (FieldName))
+        (capture (FieldName))
+        (capture (FieldName)))))
 
 =========
 record update & punning
@@ -102,8 +102,8 @@ let alice : user = {
     (TypeName)
     (record_update
       (spread (Name))
-      (capture (Name))
-      (record_field (Name) (String)))))
+      (capture (FieldName))
+      (record_field (FieldName) (String)))))
 
 =========
 record desctructuring

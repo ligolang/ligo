@@ -20,7 +20,8 @@ module.exports = grammar({
     [$.Name, $.FieldName],
     [$.tuple, $.list_pattern],
     [$.ConstrName, $.ModuleName],
-    [$.ConstrNameType, $.String]
+    [$.ConstrNameType, $.String],
+    [$.FieldName, $.NameDecl]
   ],
 
   rules: {
@@ -183,7 +184,7 @@ module.exports = grammar({
 
     paren_expr: $ => common.par(field("expr", $._expr)),
 
-    data_projection: $ => prec.right(seq(field("expr", $._member_expr), '.', common.sepBy1('.', field("accessor", $.Name)))),
+    data_projection: $ => prec.right(seq(field("expr", $._member_expr), '.', common.sepBy1('.', field("accessor", $.FieldName)))),
 
     indexing: $ => prec(5, seq(field("box", $._member_expr), common.brackets(field("index", $._expr)))),
 
@@ -256,12 +257,12 @@ module.exports = grammar({
     _record_field: $ => choice($.record_field, $.capture),
 
     record_field: $ => seq(
-      field("accessor", choice($.Int, $.String, $.ConstrName, $.Name)),
+      field("accessor", choice($.Int, $.String, $.ConstrName, $.FieldName)),
       ':',
       field("value", $._expr)
     ),
 
-    capture: $ => field("accessor", $.Name),
+    capture: $ => field("accessor", $.FieldName),
 
     record_update: $ => common.block(seq(
       field("subject", $.spread),
@@ -308,7 +309,7 @@ module.exports = grammar({
 
     string_type: $ => field("value", $.String),
 
-    module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.Name)),
+    module_access_t: $ => seq(common.sepBy1('.', field("path", $.ModuleName)), '.', field("type", $.TypeName)),
 
     record_type: $ => common.withAttrs($, common.block(common.sepEndBy(',', field("field_decl", $.field_decl)))),
 

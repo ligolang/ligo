@@ -273,6 +273,18 @@ invariants =
     , driRefs = []
     }
   , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.jsligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.jsligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 20 23)

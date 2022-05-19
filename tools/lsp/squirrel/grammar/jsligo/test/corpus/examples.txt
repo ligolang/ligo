@@ -40,7 +40,7 @@ let foo = x as my_typ;
     (TypeName)
     (module_access_t
       (ModuleName)
-      (Name)))
+      (TypeName)))
   (binding
     (var_pattern (NameDecl))
     (TypeName)
@@ -109,7 +109,7 @@ let foo = () : int => 1
   (import_statement (ModuleName) (ModuleName))
   (type_decl
     (TypeName)
-    (module_access_t (ModuleName) (Name)))
+    (module_access_t (ModuleName) (TypeName)))
   (binding
     (var_pattern (NameDecl))
     (TypeName)

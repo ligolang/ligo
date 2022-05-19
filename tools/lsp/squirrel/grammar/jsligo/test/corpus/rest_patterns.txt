@@ -35,12 +35,12 @@ let xy_translate = ([p, vec]: [point, vector]): point =>
         (record_update
           (spread (Name))
           (record_field
-            (Name)
+            (FieldName)
             (binary_call
-              (data_projection (Name) (Name))
-              (data_projection (Name) (Name))))
+              (data_projection (Name) (FieldName))
+              (data_projection (Name) (FieldName))))
           (record_field
-            (Name)
+            (FieldName)
             (binary_call
-              (data_projection (Name) (Name))
-              (data_projection (Name) (Name)))))))))
+              (data_projection (Name) (FieldName))
+              (data_projection (Name) (FieldName)))))))))
