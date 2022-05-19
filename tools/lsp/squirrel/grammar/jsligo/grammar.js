@@ -143,6 +143,8 @@ module.exports = grammar({
       )
     ),
 
+    ctor_params: $ => common.sepBy1(',', field("ctor_param", $.ctor_param)),
+    
     ctor_param: $ => seq(field("subject", $._binding_pattern), ':', field("type", $._type_expr)),
 
     ctor_case: $ => seq(
@@ -154,7 +156,7 @@ module.exports = grammar({
     constr_pattern: $ => seq(
       field("constructor", $.ConstrName),
       ':',
-      common.par(optional(field("arg", $.ctor_param)))
+      common.par(optional(field("arg", $.ctor_params)))
     ),
 
     _member_expr: $ => choice(

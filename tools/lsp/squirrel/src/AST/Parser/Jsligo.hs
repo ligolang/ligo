@@ -64,6 +64,7 @@ recognise (SomeRawTree dialect rawTree)
         "var_pattern"            -> IsVar    <$> field  "var"
         "wildcard"               -> pure IsWildcard
         "constr_pattern"         -> IsConstr <$> field  "constructor" <*> fieldOpt "arg"
+        "ctor_params"            -> IsTuple  <$> fields "ctor_param"
         "ctor_param"             -> IsAnnot  <$> field  "subject"     <*> field    "type"
         "record_pattern"         -> IsRecord <$> fields "field"
         _                        -> fallthrough
