@@ -114,7 +114,7 @@ module.exports = grammar({
       'match',
       common.par(
         seq(
-          field("subject", $._member_expr),
+          field("subject", $._expr_statement),
           ',',
           choice(
             seq('list',
