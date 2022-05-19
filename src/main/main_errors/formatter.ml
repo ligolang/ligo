@@ -68,7 +68,7 @@ let rec error_ppformat : display_format:string display_format ->
           generator
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf f
-        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', or 'reasonligo'. @]"
+        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', 'reasonligo', or 'jsligo'. @]"
           syntax
     | `Main_invalid_dialect_name syntax ->
       Format.fprintf f
@@ -85,7 +85,7 @@ let rec error_ppformat : display_format:string display_format ->
         actual
     | `Main_invalid_extension extension ->
       Format.fprintf f
-        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.@]"
+        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.@]"
         extension
 
     | `Main_unparse_tracer errs ->
