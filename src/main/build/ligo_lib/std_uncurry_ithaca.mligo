@@ -50,7 +50,7 @@ module Bitwise = struct
 end
 
 module Big_map = struct
-  let empty (type k v) : (k, v) big_map = [%external "BIG_MAP_EMPTY"]
+  [@thunk] let empty (type k v) : (k, v) big_map = [%external "BIG_MAP_EMPTY"]
   let mem (type k v) ((k, m) : k * (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
   let add (type k v) ((k, v, m) : k * v * (k, v) big_map) : (k, v) big_map = [%external "MAP_ADD"] k v m
   let remove (type k v) ((k, m) : k * (k, v) big_map) : (k, v) big_map = [%external "MAP_REMOVE"] k m
