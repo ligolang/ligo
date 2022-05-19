@@ -1924,69 +1924,6 @@ let%expect_test _ =
       storage int ;
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
-(* warning unused variables example *)
-let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_unused.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
-     10 |   let x = s.x + 3 in
-     11 |   let x = foo x in
-     12 |   let x = bar s.x in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    { parameter int ;
-      storage (pair (int %x) (int %y)) ;
-      code { CDR ;
-             PUSH int 3 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
-             CAR ;
-             ADD ;
-             DROP ;
-             PUSH int 3 ;
-             PUSH int 9 ;
-             DUP 3 ;
-             CAR ;
-             MUL ;
-             ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
-             NIL operation ;
-             PAIR } } |}]
-
-(* warning non-duplicable variable used examples *)
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
-      1 | module Foo = struct
-      2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
-      3 | end
-    :
-    Warning: variable "Foo.x" cannot be used more than once.
-
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
-
-
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate2.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
-      1 | let x = Tezos.create_ticket 42n 42n
-      2 | let x = (x, x)
-    :
-    Warning: variable "x" cannot be used more than once.
-
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ] ;
@@ -2014,6 +1951,7 @@ let%expect_test _ =
 
     (Left 42)
   |}]
+
 
 (* never test for PascaLIGO *)
 let%expect_test _ =
@@ -2733,26 +2671,7 @@ let%expect_test _ =
   CONS ;
   PAIR } |}]
 
-(* some check about the warnings of the E_constructor cases *)
-let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo" ] ;
-  [%expect{|
-File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
-  8 | (* here we expect a warning because both A constructor have the same parameter type *)
-  9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
 
-Warning: The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
-Hint: You might want to add a type annotation.
-
-{ parameter unit ;
-  storage (or (int %a) (nat %b)) ;
-  code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
-
-  run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
-  [%expect{|
-{ parameter unit ;
-  storage (or (nat %a) (nat %b)) ;
-  code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
 
 (* extend built-in modules *)
 let%expect_test _ =
@@ -2812,3 +2731,14 @@ let%expect_test _ =
              IF_NONE { UNIT } {} ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "shadowed_sum_type.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/shadowed_sum_type.mligo", line 13, characters 8-12:
+     12 |
+     13 | let x = A 42
+     14 |
+
+    Constructor "A" not found.
+  |}]
