@@ -19,6 +19,7 @@ module Test = struct
   let originate (type p s) ((_f, _s, _t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_program * int) = failwith "TEST MODE"
   let set_source (_a : address) : unit = failwith "TEST MODE"
   let set_baker (_a : address) : unit = failwith "TEST MODE"
+  let set_baker_policy (_bp : test_baker_policy) : unit = failwith "TEST MODE"
   let transfer ((_a, _s, _t) : address * michelson_program * tez) : test_exec_result = failwith "TEST MODE"
   let transfer_exn ((_a, _s, _t) : address * michelson_program * tez) : nat = failwith "TEST MODE"
   let transfer_to_contract (type p) ((_a, _s, _t) : p contract * p * tez) : test_exec_result = failwith "TEST MODE"

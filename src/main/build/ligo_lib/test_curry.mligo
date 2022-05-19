@@ -71,5 +71,6 @@ module Test = struct
       let s : michelson_program = eval s in
       transfer_exn a s t
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
-  let set_baker (a : address) : unit = [%external "TEST_SET_BAKER"] (By_account a)
+  let set_baker_policy (bp : test_baker_policy) : unit = [%external "TEST_SET_BAKER"] bp
+  let set_baker (a : address) : unit = set_baker_policy (By_account a)
 end
