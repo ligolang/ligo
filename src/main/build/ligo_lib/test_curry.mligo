@@ -43,7 +43,6 @@ module Test = struct
   let register_constant (m : michelson_program) : string = [%external "TEST_REGISTER_CONSTANT"] m
   let cast_address (type a b) (a : address) : (a, b) typed_address = [%external "TEST_CAST_ADDRESS"] a
   let to_typed_address (type a b) (c : a contract) : (a, b) typed_address = [%external "TEST_TO_TYPED_ADDRESS"] c
-  let to_entrypoint (type a b c) (s : string) (t : (a, b) typed_address) : c contract = [%external "TEST_TO_ENTRYPOINT"] s t
   let set_big_map (type a b) (i : int) (m : (a, b) big_map) : unit = [%external "TEST_SET_BIG_MAP"] i m
   let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external "TEST_CREATE_CHEST"] b n
   let create_chest_key (c : chest) (n : nat) : chest_key = [%external "TEST_CREATE_CHEST_KEY"] c n
@@ -67,4 +66,12 @@ module Test = struct
       let s : michelson_program = eval s in
       transfer_exn a s t
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
+  let to_entrypoint (type a b c) (s : string) (t : (a, b) typed_address) : c contract =
+    let s = if String.length s > 0n then
+              if String.sub 0n 1n s = "%" then
+                let () = log "WARNING: Test.to_entrypoint: automatically removing starting %" in
+                String.sub 1n (abs (String.length s - 1)) s
+	      else s
+	    else s in
+    [%external "TEST_TO_ENTRYPOINT"] s t
 end
