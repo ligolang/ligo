@@ -193,6 +193,7 @@ instance Pretty1 AST.Type where
     TString   t         -> sexpr "TSTRING" [pp t]
     TWildcard           -> "_"
     TVariable v         -> sexpr "'" [v]
+    TParen    t         -> sexpr "par" [t]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -442,6 +443,7 @@ instance LPP1 'Pascal AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Pascal TypeVariableName where
   lpp1 = \case
@@ -594,6 +596,7 @@ instance LPP1 'Reason AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Reason TypeVariableName where
   lpp1 = \case
@@ -718,6 +721,7 @@ instance LPP1 'Js AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Js TypeVariableName where
   lpp1 = \case
@@ -849,6 +853,7 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Caml TypeVariableName where
   lpp1 = \case

@@ -145,6 +145,7 @@ data Type it
   | TString   it       -- ^ (TString)
   | TWildcard
   | TVariable it       -- ^ (TypeVariableName)
+  | TParen    it       -- ^ (Type)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it
@@ -447,6 +448,7 @@ instance Eq1 Type where
   liftEq f (TString x) (TString y) = f x y
   liftEq _ TWildcard TWildcard = True
   liftEq f (TVariable a) (TVariable b) = f a b
+  liftEq f (TParen a) (TParen b) = f a b
   liftEq _ _ _ = False
 
 instance Eq1 Variant where

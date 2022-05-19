@@ -148,13 +148,13 @@ recognise (SomeRawTree dialect rawTree)
     -- Declaration
   , Descent do
       boilerplate \case
-        "binding"             -> BConst       <$> field "binding_pattern"  <*> fieldOpt "type_annot"   <*> fieldOpt "value"
-        "type_decl"           -> BTypeDecl    <$> field "type_name"        <*> fieldOpt "params" <*> field "type_value"
+        "binding"             -> BConst       <$> field "binding_pattern" <*> fieldOpt "type_annot" <*> fieldOpt "value"
+        "type_decl"           -> BTypeDecl    <$> field "type_name"       <*> fieldOpt "params"     <*> field    "type_value"
         "p_include"           -> BInclude     <$> field "filename"
-        "p_import"            -> BImport      <$> field "filename"         <*> field "alias"
-        "fun_arg"             -> BParameter   <$> field "argument"         <*> fieldOpt "type"
-        "namespace_statement" -> BModuleDecl  <$> field "moduleName"       <*> fields "declaration"
-        "import_statement"    -> BModuleAlias <$> field "moduleName"       <*> fields "module"
+        "p_import"            -> BImport      <$> field "filename"        <*> field "alias"
+        "fun_arg"             -> BParameter   <$> field "argument"        <*> fieldOpt "type"
+        "namespace_statement" -> BModuleDecl  <$> field "moduleName"      <*> fields "declaration"
+        "import_statement"    -> BModuleAlias <$> field "moduleName"      <*> fields "module"
         _                     -> fallthrough
 
     -- TypeParams
@@ -190,15 +190,16 @@ recognise (SomeRawTree dialect rawTree)
     -- Type
   , Descent do
       boilerplate \case
-        "string_type"      -> TString  <$> field  "value"
-        "fun_type"         -> TArrow   <$> field  "domain"  <*> field "codomain"
-        "app_type"         -> TApply   <$> field  "functor" <*> fields "argument"
-        "record_type"      -> TRecord  <$> fields "field_decl"
-        "tuple_type"       -> TProduct <$> fields "element"
-        "sum_type"         -> TSum     <$> fields "variant"
+        "string_type"      -> TString        <$> field  "value"
+        "fun_type"         -> TArrow         <$> field  "domain"     <*> field  "codomain"
+        "app_type"         -> TApply         <$> field  "functor"    <*> fields "argument"
+        "record_type"      -> TRecord        <$> fields "field_decl"
+        "tuple_type"       -> TProduct       <$> fields "element"
+        "sum_type"         -> TSum           <$> fields "variant"
         "TypeWildcard"     -> pure TWildcard
-        "var_type"         -> TVariable <$> field  "name"
-        "domain"           -> TProduct <$> fields "type"
+        "var_type"         -> TVariable      <$> field  "name"
+        "domain"           -> TProduct       <$> fields "type"
+        "paren_type"       -> TParen         <$> field  "type"
         _                  -> fallthrough
 
     -- Module access:
@@ -211,7 +212,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Variant
   , Descent do
       boilerplate \case
-        "variant"   -> Variant  <$> field  "constructor" <*> fieldOpt "ctor_arguments"
+        "variant"   -> Variant  <$> field "constructor" <*> fieldOpt "ctor_arguments"
         _           -> fallthrough
 
     -- Variant args

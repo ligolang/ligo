@@ -301,8 +301,10 @@ module.exports = grammar({
       $.record_type,
       $.app_type,
       $.tuple_type,
-      common.par($._type_expr)
+      $.paren_type
     ),
+
+    paren_type: $ => common.par(field("type", $._type_expr)),
 
     string_type: $ => field("value", $.String),
 
