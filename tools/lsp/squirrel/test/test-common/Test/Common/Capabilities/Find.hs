@@ -219,6 +219,12 @@ invariants =
     , driRefs = [interval 3 3 6]
     }
   , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-tuple.jsligo"
+    , driDesc = "tuple member"
+    , driDef = Just (interval 2 13 16)
+    , driRefs = [interval 3 10 13]
+    }
+  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes-in-rec.mligo"
     , driDesc = "counter, type attribute"
     , driDef = Nothing  -- type attributes don't have a declaration
