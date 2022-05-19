@@ -67,9 +67,11 @@ module Test = struct
       transfer_exn (a, s, t)
   let michelson_equal ((m1, m2) : michelson_program * michelson_program) : bool = m1 = m2
   let to_entrypoint (type a b c) ((s, t) : string * (a, b) typed_address) : c contract =
-    let s = if String.sub 0n 1n s = "%" then
-              let () = log "WARNING: Test.to_entrypoint: automatically removing first %" in
-              String.sub 1n (abs (String.length s - 1)) s
+    let s = if String.length s > 0n then
+              if String.sub 0n 1n s = "%" then
+                let () = log "WARNING: Test.to_entrypoint: automatically removing starting %" in
+                String.sub 1n (abs (String.length s - 1)) s
+	      else s
 	    else s in
     [%external "TEST_TO_ENTRYPOINT"] s t
 end
