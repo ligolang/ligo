@@ -8,12 +8,16 @@ type test_exec_error =
 
 type test_exec_result = Success of nat | Fail of test_exec_error
 
+type test_baker_policy =
+  | By_round of int
+  | By_account of address
+  | Excluding of address list
+
 module Test = struct
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
   let originate_from_file (fn : string) (e : string) (v : string list) (s : michelson_program)  (t : tez) : address * michelson_program * int = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v s t
   let originate (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_program * int) = [%external "TEST_ORIGINATE"] f s t
   let set_source (a : address) : unit = [%external "TEST_SET_SOURCE"] a
-  let set_baker (a : address) : unit = [%external "TEST_SET_BAKER"] a
   let transfer (a : address) (s : michelson_program) (t : tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
   let transfer_exn (a : address) (s : michelson_program) (t : tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
@@ -67,4 +71,6 @@ module Test = struct
       let s : michelson_program = eval s in
       transfer_exn a s t
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
+  let set_baker_policy (bp : test_baker_policy) : unit = [%external "TEST_SET_BAKER"] bp
+  let set_baker (a : address) : unit = set_baker_policy (By_account a)
 end
