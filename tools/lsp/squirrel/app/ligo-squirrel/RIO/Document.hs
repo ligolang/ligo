@@ -62,7 +62,7 @@ import Parser (Message (..), emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
 import RIO.Indexing (getIndexDirectory, indexOptionsPath)
-import RIO.Types (Contract (..), RIO, RioEnv (..))
+import RIO.Types (Contract (..), IndexOptions (..), RIO, RioEnv (..))
 import Util.Graph (forAMConcurrently, traverseAMConcurrently, wcc)
 
 -- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
@@ -298,7 +298,8 @@ load
   -> RIO Contract
 load uri = Log.addNamespace "load" do
   let Just normFp = J.uriToNormalizedFilePath uri  -- FIXME: non-exhaustive
-  rootM <- indexOptionsPath <$> getIndexDirectory (takeDirectory $ J.fromNormalizedFilePath normFp)
+  rootIndex <- getIndexDirectory (takeDirectory $ J.fromNormalizedFilePath normFp)
+  let rootM = indexOptionsPath rootIndex
   dirExists <- maybe (pure False) doesDirectoryExist rootM
 
   -- Here we try to handle the case when the current root path ceased to exist
@@ -340,7 +341,9 @@ load uri = Log.addNamespace "load" do
 
       pure $ Contract result nuris
     _ -> do
-      $(Log.warning) [Log.i|Directory to load #{rootM} doesn't exist or was not set.|]
+      case rootIndex of
+        IndexChoicePending -> $(Log.debug) [Log.i|Indexing directory has not been specified yet.|]
+        _ -> pure ()
       Contract <$> loadDefault <*> pure [revUri]
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
