@@ -6,7 +6,7 @@ collectTreeErrors ligo
 
 TODO:
 - Fix 4 parsing tests (make grammar little strict)
-- Add Completion & SignatureHelp tests
+- [DONE] Add Completion & SignatureHelp tests
 - [DONE] Test syntax highligting grammar by building & loading extionsion
 - Add some lsp-handler tests (References & Definition)
 
