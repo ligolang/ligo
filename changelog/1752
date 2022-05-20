@@ -1,5 +1,0 @@
-author: er433
-description: ''
-merge_request: '1752'
-title: 'Flip purify and mono: add E_assign and E_lambda cases'
-type: internal
