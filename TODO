@@ -8,7 +8,7 @@ TODO:
 - Fix 4 parsing tests (make grammar little strict)
 - [DONE] Add Completion & SignatureHelp tests
 - [DONE] Test syntax highligting grammar by building & loading extionsion
-- Add some lsp-handler tests (References & Definition)
+- [DONE] Add some lsp-handler tests
 
 
 stack install --fast --local-bin-path ../vscode-plugin/bin
