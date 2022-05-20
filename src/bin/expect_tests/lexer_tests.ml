@@ -1,6 +1,22 @@
 open Cli_expect
 
 let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-typed" ; "../../test/lexer/add_semi.jsligo" ] ;
+  [%expect {|
+    const x = 1[@private]
+    module Foo =
+      struct
+      const y = x[@private]
+      const z = 2
+      module Bar = struct
+                   const w = 1[@private]
+                   end[@private]
+      module Do = struct
+                  const r = 1
+                  end[@private]
+      end |}]
+
+let%expect_test _ =
     run_ligo_bad [ "compile" ; "contract" ; "../../test/lexer/broken_string.ligo" ] ;
   [%expect {|
 File "../../test/lexer/broken_string.ligo", line 1, characters 18-19:
