@@ -97,8 +97,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 5, characters 4-15:
-      4 |   match x with
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 6, characters 4-13:
       5 |   | Some_fake x -> x
       6 |   | None_fake -> 1
 
@@ -109,23 +108,24 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail7.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.mligo", line 6, characters 9-10:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.mligo", line 5, characters 9-14:
+      4 |   match x with
       5 |   | A -> "hey"
       6 |   | B -> 2
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 19, characters 22-31:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 18, characters 8-15:
+     17 |         let f = fun (b:int) -> b + a in
      18 |         f (b+1)
      19 |       | Cons (a,b) -> "invalid"
-     20 |     in
 
     Invalid type(s).
-    Expected: "int", but got: "string". |}]
+    Expected: "string", but got: "int". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
