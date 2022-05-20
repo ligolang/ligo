@@ -168,8 +168,8 @@ let syntax_highlighting =
         name = Name.module_access;
         kind = Match {
           match_     = [
-            (Regexp.module_match1, Some Structure);
-            (Regexp.module_match2, Some Identifier)
+            (Regexp.module_match1_jsligo, Some Structure);
+            (Regexp.module_match2_jsligo, Some Identifier)
           ];
           match_name = None
         }

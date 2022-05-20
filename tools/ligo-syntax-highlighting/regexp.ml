@@ -182,3 +182,15 @@ let module_declaration_match2_jsligo: Core.regexp = {
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
   vim      = ""
 }
+
+let module_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.";
+  vim      = ""
+}
+
+let module_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "([a-zA-Z0-9_$]*)";
+  vim      = ""
+}
