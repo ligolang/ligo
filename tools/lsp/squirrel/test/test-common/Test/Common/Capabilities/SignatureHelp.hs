@@ -207,6 +207,33 @@ caseInfos =
       ]
     , tiActiveParamNo = 1
     }
+  , TestInfo
+    { tiContract = "all-okay.jsligo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-params.jsligo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "active-parameter-is-2nd.jsligo"
+    , tiCursor = point 3 38
+    , tiFunction = "bar"
+    , tiLabel = "let foo = (a: int, b: int)"
+    , tiParameters =
+      [ ParameterBinding (IsVar "a") (Just $ AliasType "int")
+      , ParameterBinding (IsVar "b") (Just $ AliasType "int")
+      ]
+    , tiActiveParamNo = 1
+    }
   ]
 
 simpleFunctionCallDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
