@@ -16,7 +16,9 @@
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#module" }
+    { "include": "#moduleaccess " },
+    { "include": "#modulealias" },
+    { "include": "#moduledeclaration" }
   ],
   "repository": {
     "string": {
@@ -64,7 +66,8 @@
     },
     "controlkeywords": {
       "name": "keyword.control.jsligo",
-      "match": "\\b(switch|case|default|if|else|for|of|while)\\b",
+      "match":
+        "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b",
       "captures": {}
     },
     "numericliterals": {
@@ -82,11 +85,25 @@
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\s+",
       "captures": { "1": { "name": "variable.other.enummember.jsligo" } }
     },
-    "module": {
+    "moduleaccess ": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.jsligo" },
         "1": { "name": "storage.class.jsligo" }
+      }
+    },
+    "modulealias": {
+      "match": "\\b(import)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.class.jsligo" },
+        "1": { "name": "keyword.control.jsligo" }
+      }
+    },
+    "moduledeclaration": {
+      "match": "\\b(namespace)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.class.jsligo" },
+        "1": { "name": "keyword.other.jsligo" }
       }
     }
   }

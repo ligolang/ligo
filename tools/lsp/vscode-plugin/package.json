@@ -101,7 +101,7 @@
             },
             {
                 "language": "jsligo",
-                "scopeName": "source.religo",
+                "scopeName": "source.jsligo",
                 "path": "./syntaxes/jsligo.tmLanguage.json"
             }
         ],

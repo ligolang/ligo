@@ -149,12 +149,36 @@ let let_binding_match2_jsligo: Core.regexp = {
 
 let control_keywords_match_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b(switch|case|default|if|else|for|of|while)\\b";
+  textmate = "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b";
   vim      = ""
 }
 
 let operators_match_jsligo: Core.regexp = {
   emacs    = "";
   textmate = "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+";
+  vim      = ""
+}
+
+let module_alias_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(import)\\b\\s*";
+  vim      = ""
+}
+
+let module_alias_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  vim      = ""
+}
+
+let module_declaration_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(namespace)\\b\\s*";
+  vim      = ""
+}
+
+let module_declaration_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
   vim      = ""
 }
