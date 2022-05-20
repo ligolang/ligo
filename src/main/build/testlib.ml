@@ -1,9 +1,11 @@
 let get_lib : stub:bool -> Syntax_types.t -> string = fun ~stub stx ->
-  match (stub , stx) with
-  | false , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Testlib.test_uncurry
-  | false , ( CameLIGO ) -> Ligo_lib.Ligo_Testlib.test_curry
-  | true , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Testlib.test_uncurry_stub
-  | true , ( CameLIGO ) -> Ligo_lib.Ligo_Testlib.test_curry_stub
+  let stdlib = Stdlib.get_lib Environment.Protocols.in_use CameLIGO in
+  let testlib = match (stub , stx) with
+    | false , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Testlib.test_uncurry
+    | false , ( CameLIGO ) -> Ligo_lib.Ligo_Testlib.test_curry
+    | true , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Testlib.test_uncurry_stub
+    | true , ( CameLIGO ) -> Ligo_lib.Ligo_Testlib.test_curry_stub in
+  stdlib ^ "\n" ^ testlib
 
 let testlib ~options syntax =
   if options.Compiler_options.middle_end.test then
