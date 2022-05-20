@@ -20,8 +20,7 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "--entry-point"; "f"];
   [%expect {|
-    File "../../test/contracts/negative/error_function_annotation_3.mligo", line 8, characters 14-20:
-      7 |   match s with
+    File "../../test/contracts/negative/error_function_annotation_3.mligo", line 9, characters 14-20:
       8 |   | Add si -> Add si
       9 |   | Sub si -> Sub si
 
@@ -234,10 +233,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_contract_type_inference.mligo" ] ;
   [%expect {|
-      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 8, characters 12-69:
+      File "../../test/contracts/negative/error_contract_type_inference.mligo", line 7, characters 21-29:
+        6 |   match (Tezos.get_entrypoint_opt "%add" addr) with
         7 |     Some contract -> contract
         8 |   | None -> (failwith "The entrypoint does not exist" : int contract)
-        9 |
   
       Invalid type(s).
-      Expected: "contract ('a)", but got: "contract (int)". |}]
+      Expected: "contract (int)", but got: "contract ('a)". |}]
