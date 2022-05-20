@@ -407,4 +407,20 @@ Missing break.
 Hint: Insert some space.
 |test}];
 
+    (* Add semi-colon *)
+
+    run_ligo_good [ "print" ; "ast-typed" ; "../../test/lexer/add_semi.jsligo" ] ;
+    [%expect {|
+    const x = 1[@private]
+    module Foo =
+      struct
+      const y = x[@private]
+      const z = 2
+      module Bar = struct
+                   const w = 1[@private]
+                   end[@private]
+      module Do = struct
+                  const r = 1
+                  end[@private]
+      end |}]
   end
