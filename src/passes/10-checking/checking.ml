@@ -507,27 +507,22 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~add_warning ~options (app_context, context) matchee in
-    (* Note: This is not necessary, it done in order to maintain compatibility with
-       with the current way of how pattern type check, this can be removed later,
-       By removing this the typer will ask for type annotations in case of bool & option *)
-    let cases = match O.get_t_sum matchee'.type_expression with 
-      Some _ when Option.is_some (O.get_t_option matchee'.type_expression) ->
-        List.sort cases ~compare:Stage_common.Helpers.compare_option_patterns
-    | Some _ when Option.is_some (O.get_t_bool matchee'.type_expression) ->
-        List.sort cases ~compare:Stage_common.Helpers.compare_bool_patterns
-    | Some _ | None -> cases
+    let cases = List.mapi ~f:(fun i x -> (i,x)) cases in (* index the cases to keep the order in which they are written *)
+    let type_cases = fun ~raise (cases : (int * (S.expression, S.type_expression) S.match_case) list) ->
+      List.fold_map cases ~init:tv_opt ~f:(fun tv_opt (i,{pattern;body}) -> 
+        let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
+        match tv_opt with
+          Some tv_opt -> 
+           let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
+           Some tv_opt, ([(pattern,matchee'.type_expression)],body,i)
+        | None ->
+           let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
+           Some body.type_expression, ([(pattern,matchee'.type_expression)],body,i))
     in
-    let _, eqs = List.fold_map cases ~init:tv_opt ~f:(fun tv_opt {pattern;body} -> 
-      let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
-      match tv_opt with
-        Some tv_opt -> 
-          let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
-          Some tv_opt, ([(pattern,matchee'.type_expression)],body)
-      | None ->
-          let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
-          Some body.type_expression, ([(pattern,matchee'.type_expression)],body)
-    ) in
-
+    let eqs =
+      let _,infered_eqs = try_with (type_cases cases) (fun _ -> let cases = match cases with hd::tl -> tl @ [hd] | _ -> cases in type_cases ~raise cases) in
+      List.map ~f:(fun (x,y,_) -> (x,y)) @@ List.sort infered_eqs ~compare:(fun (_,_,a) (_,_,b) -> Int.compare a b)
+    in
     match matchee.expression_content with
     | E_variable matcheevar ->
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
