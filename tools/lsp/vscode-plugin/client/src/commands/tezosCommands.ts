@@ -9,7 +9,17 @@ import { executeCompileContract, executeCompileStorage } from './ligoCommands';
 import { getLastContractPath, ligoOutput } from './common';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
-const Tezos = (network: string) => new TezosToolkit(`https://${network}.api.tez.ie`);
+const Tezos = (network: string) => {
+  switch (network) {
+    case 'mainnet':
+      return new TezosToolkit('https://mainnet.api.tez.ie');
+    case 'ithacanet':
+      return new TezosToolkit('https://ithacanet.ecadinfra.com');
+    default:
+      vscode.window.showWarningMessage(`Currently extension does not support deployment on ${network} testnet`)
+      return new TezosToolkit('empty');
+  }
+}
 
 export async function fetchRandomPrivateKey(network: string): Promise<string> {
   const URL = `https://api.tez.ie/keys/${network}/`;
@@ -48,8 +58,8 @@ export async function executeDeploy() {
     title: 'Network',
     placeHolder: 'Choose a network to deploy contract to',
     rememberingKey: 'network',
-    defaultValue: 'hangzhounet',
-  })
+    defaultValue: 'ithacanet',
+  });
 
   if (!network) {
     return undefined;
@@ -139,12 +149,12 @@ export async function executeGenerateDeployScript() {
       title: 'Network',
       placeHolder: 'Choose a network to deploy contract to',
       rememberingKey: 'network',
-      defaultValue: 'hangzhounet',
+      defaultValue: 'ithacanet',
     });
+
     if (!network) {
       return undefined;
     }
-
     const contractInfo = getLastContractPath()
     const name = basename(contractInfo.path).split('.')[0]
 
@@ -156,7 +166,6 @@ export async function executeGenerateDeployScript() {
       },
       async (progress) => {
         const TezosNetwork = Tezos(network)
-
         progress.report({
           message: 'Generating key',
         })
@@ -173,6 +182,7 @@ export async function executeGenerateDeployScript() {
         });
 
         const sourceAccount = vscode.workspace.getConfiguration().get<string>('ligoLanguageServer.tezos_source_account');
+
         ligoOutput.appendLine(`Generated deploy script for '${name}' contract:`);
         const res = [
           'tezos-client',
