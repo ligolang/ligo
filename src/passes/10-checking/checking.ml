@@ -514,14 +514,15 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
         match tv_opt with
           Some tv_opt -> 
            let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
-           Some tv_opt, ([(pattern,matchee'.type_expression)],body,i)
+           Some tv_opt, (pattern,matchee'.type_expression,body,i)
         | None ->
            let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
-           Some body.type_expression, ([(pattern,matchee'.type_expression)],body,i))
+           Some body.type_expression, (pattern,matchee'.type_expression,body,i))
     in
     let eqs =
+      (* here, we try to type to cases in multiple order: [ B1 ; B2 ; B3 ] [ B2 ; B3 ; B1 ] [ B3 ; B1 ; B2 ] *)
       let _,infered_eqs = try_with (type_cases cases) (fun _ -> let cases = match cases with hd::tl -> tl @ [hd] | _ -> cases in type_cases ~raise cases) in
-      List.map ~f:(fun (x,y,_) -> (x,y)) @@ List.sort infered_eqs ~compare:(fun (_,_,a) (_,_,b) -> Int.compare a b)
+      List.map ~f:(fun (p,p_ty,body,_) -> (p,p_ty,body)) @@ List.sort infered_eqs ~compare:(fun (_,_,_,a) (_,_,_,b) -> Int.compare a b)
     in
     match matchee.expression_content with
     | E_variable matcheevar ->

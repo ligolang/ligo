@@ -396,7 +396,8 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
   )
   | [] -> raise.raise @@ corner_case __LOC__
 
-let compile_matching ~raise ~err_loc matchee (eqs:equations) =
+let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression O.pattern * O.type_expression * O.expression) list) =
+  let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (O.Literal_string Stage_common.Backends.fw_partial_match)) (O.t_string ()) in
     O.e_failwith fs
