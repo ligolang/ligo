@@ -30,3 +30,33 @@ let a = (x: bool): bool => {
             (comment)
             (return_statement (True_kwd))))
         (return_statement (False_kwd))))))
+
+=========
+misc: local type decl
+=========
+
+let local_type = (_ : unit) : int => {
+	type toto = int;
+	let titi : toto = 1;
+	let titi2 = titi + 2;
+	return titi2
+};
+
+---
+
+(source_file
+  (binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (wildcard) (TypeName))
+      (TypeName)
+      (block_statement
+        (type_decl (TypeName) (TypeName))
+        (binding
+          (var_pattern (NameDecl))
+          (TypeName)
+          (Int))
+        (binding
+          (var_pattern (NameDecl))
+          (binary_call (Name) (Int)))
+        (return_statement (Name))))))

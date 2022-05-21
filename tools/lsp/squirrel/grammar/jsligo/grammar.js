@@ -47,6 +47,7 @@ module.exports = grammar({
 
     _base_statement: $ => prec(5, choice(
       $.binding,
+      $.type_decl,
       $._expr_statement,
       $.return_statement,
       $.block_statement,
