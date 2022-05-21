@@ -1,4 +1,4 @@
 let a = "broken
-over 
+over
 multiple
 lines";
