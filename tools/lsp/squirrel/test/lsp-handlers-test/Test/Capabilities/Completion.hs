@@ -1,4 +1,4 @@
-module Test.Capabilities.Completion 
+module Test.Capabilities.Completion
   ( unit_completion
   , unit_completion_jsligo
   ) where

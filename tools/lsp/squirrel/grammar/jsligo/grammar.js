@@ -411,9 +411,9 @@ module.exports = grammar({
     default_statement: $ => seq('default', ':', optional(common.sepEndBy1($._semicolon, $._statement))),
 
     if_else_statement: $ => prec.right(
-      seq('if', 
-        common.par(field("selector", $._expr)), 
-        field("then_branch", $._base_statement), 
+      seq('if',
+        common.par(field("selector", $._expr)),
+        field("then_branch", $._base_statement),
         optional(seq('else', field("else_branch", $._base_statement)))
       )
     ),

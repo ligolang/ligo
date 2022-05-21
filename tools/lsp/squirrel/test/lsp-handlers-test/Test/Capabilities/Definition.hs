@@ -1,6 +1,6 @@
 module Test.Capabilities.Definition
   ( unit_definition
-  , unit_definition_jsligo 
+  , unit_definition_jsligo
   ) where
 
 import System.Directory (makeAbsolute)

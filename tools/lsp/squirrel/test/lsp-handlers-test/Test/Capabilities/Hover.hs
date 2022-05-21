@@ -1,5 +1,5 @@
-module Test.Capabilities.Hover 
-  ( unit_hover 
+module Test.Capabilities.Hover
+  ( unit_hover
   , unit_hover_jsligo
   ) where
 

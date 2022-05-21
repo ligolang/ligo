@@ -195,7 +195,7 @@ caseInfos =
       , CompletionKeyword (NameCompletion "const")
       ]
     }
-    
+
   , TestInfo
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)

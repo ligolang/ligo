@@ -1,4 +1,4 @@
-module Test.Capabilities.Folding 
+module Test.Capabilities.Folding
   ( unit_folding_range
   , unit_folding_range_jsligo
   ) where
