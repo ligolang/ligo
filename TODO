@@ -1,17 +1,5 @@
-
-runNoLoggingT $ toParseTree Js =<< pathToSrc "PATH"
-
-FindContract _ ligo _ <- runNoLoggingT $ parsePreprocessed =<< pathToSrc "PATH TO FILE"
-collectTreeErrors ligo
-
 TODO:
-- Fix 4 parsing tests (make grammar little strict)
+- [DONE] Fix 4 parsing tests (make grammar little strict)
 - [DONE] Add Completion & SignatureHelp tests
 - [DONE] Test syntax highligting grammar by building & loading extionsion
 - [DONE] Add some lsp-handler tests
-
-
-stack install --fast --local-bin-path ../vscode-plugin/bin
-cd ../vscode-plugin
-npm run package
-code --install-extension ligo-vscode-0.4.11.vsix 

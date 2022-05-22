@@ -220,7 +220,7 @@ module.exports = grammar({
       )
     ),
 
-    _body: $ => prec.right(3,
+    _body: $ => prec.right(
       choice(
         $.block_statement,
         $._expr

@@ -167,8 +167,8 @@ data Expr it
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
-  | Assign    it it -- (LHS) (Expr)
-  | AssignOp  it it it --- (LHS) Text (Expr)
+  | Assign    it it    -- (Name) (Expr)
+  | AssignOp  it it it -- (Name) Text (Expr)
   | List      [it] -- [Expr]
   | ListAccess it [it] -- (Name) [Indexes]
   | Set       [it] -- [Expr]
