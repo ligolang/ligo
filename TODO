@@ -1,5 +1,0 @@
-TODO:
-- [DONE] Fix 4 parsing tests (make grammar little strict)
-- [DONE] Add Completion & SignatureHelp tests
-- [DONE] Test syntax highligting grammar by building & loading extionsion
-- [DONE] Add some lsp-handler tests
