@@ -14,7 +14,8 @@ module.exports = grammar({
     [$.tuple, $.list_pattern],
     [$.ConstrName, $.ModuleName],
     [$.ConstrNameType, $.String],
-    [$.FieldName, $.NameDecl]
+    [$.FieldName, $.NameDecl],
+    [$.FieldName, $.Name]
   ],
 
   rules: {
@@ -61,7 +62,7 @@ module.exports = grammar({
       $.apply,
       $.list_literal,
       $.pattern_match,
-      $.Unit_kwd,
+      $._member_expr,
     ),
 
     list_literal: $ => seq('list', common.par($._list_elements)),
@@ -92,7 +93,7 @@ module.exports = grammar({
 
     _apply: $ => prec(5, choice($.apply, $._member_expr)),
 
-    _expr: $ => choice($._member_expr, $._expr_statement, $._record_expr),
+    _expr: $ => choice($._expr_statement, $._record_expr),
 
     _annot_expr: $ => choice(
       $.annot_expr,
@@ -163,6 +164,8 @@ module.exports = grammar({
       $.Tez,
       $.False_kwd,
       $.True_kwd,
+      $.Unit_kwd,
+      $.Else_kwd, // Note: this is a hack to not allow broken if-else statements
       $.ConstrName,
       $.data_projection,
       $.indexing,
@@ -472,7 +475,7 @@ module.exports = grammar({
 
     attr: $ => $._js_ligo_attribute,
 
-    String: $ => /\"(\\.|[^"])*\"/,
+    String: $ => /\"(\\.|[^"\n])*\"/,
     _Int: $ => /-?([1-9][0-9_]*|0)/,
     Int: $ => $._Int,
     Nat: $ => seq($._Int, 'as', 'nat'),
@@ -491,5 +494,6 @@ module.exports = grammar({
     _Let_kwd: $ => 'let',
     _Const_kwd: $ => 'const',
     _Expor_kwd: $ => 'export',
+    Else_kwd: $ => 'else',
   }
 })
