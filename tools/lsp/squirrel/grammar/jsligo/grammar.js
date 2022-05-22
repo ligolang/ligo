@@ -9,15 +9,8 @@ module.exports = grammar({
 
   conflicts: $ => [
     [$.variant],
-    [$.module_access],
-    [$._expr_statement, $.data_projection],
-    [$.annot_expr, $.fun_arg],
-    [$._member_expr, $.Nat, $.Tez],
     [$.Int, $.Nat, $.Tez],
-    [$._binding_pattern, $._list_item_pattern],
-    [$._member_expr, $._binding_pattern],
     [$.Name, $.NameDecl],
-    [$.Name, $.FieldName],
     [$.tuple, $.list_pattern],
     [$.ConstrName, $.ModuleName],
     [$.ConstrNameType, $.String],
@@ -67,40 +60,39 @@ module.exports = grammar({
       $.unary_call,
       $.apply,
       $.list_literal,
-      $._member_expr,
       $.pattern_match,
-      $.type_as_annotation,
+      $.Unit_kwd,
     ),
 
     list_literal: $ => seq('list', common.par($._list_elements)),
 
-    assignment_operator: $ => prec.right(2,
-      seq(field("lhs", $._expr_statement),
+    assignment_operator: $ => prec.right(
+      seq(field("lhs", $._expr),
       field("op", choice('=', '*=', '/=', '%=', '+=', '-=')),
-      field("rhs", $._expr_statement))
+      field("rhs", $._expr))
     ),
 
-    type_as_annotation: $ => seq(field("subject", $._expr_statement), 'as', field("type", $._core_type)),
+    type_as_annotation: $ => seq(field("subject", $._expr), 'as', field("type", $._core_type)),
 
     binary_call: $ => choice(
-      prec.left(4,  seq(field("left", $._expr_statement), field("op", '||'), field("right", $._expr_statement))),
-      prec.left(5,  seq(field("left", $._expr_statement), field("op", '&&'), field("right", $._expr_statement))),
-      prec.left(10, seq(field("left", $._expr_statement), field("op", choice('<', '<=', '>', '>=', '==', '!=')), field("right", $._expr_statement))),
-      prec.left(12, seq(field("left", $._expr_statement), field("op", choice('+', '-')),      field("right", $._expr_statement))),
-      prec.left(13, seq(field("left", $._expr_statement), field("op", choice('*', '/', '%')), field("right", $._expr_statement)))
+      prec.left(4,  seq(field("left", $._expr), field("op", '||'), field("right", $._expr))),
+      prec.left(5,  seq(field("left", $._expr), field("op", '&&'), field("right", $._expr))),
+      prec.left(10, seq(field("left", $._expr), field("op", choice('<', '<=', '>', '>=', '==', '!=')), field("right", $._expr))),
+      prec.left(12, seq(field("left", $._expr), field("op", choice('+', '-')),      field("right", $._expr))),
+      prec.left(13, seq(field("left", $._expr), field("op", choice('*', '/', '%')), field("right", $._expr)))
     ),
 
-    unary_call: $ => prec.right(seq(field("negate", $.negate), field("arg", $._expr_statement))),
+    unary_call: $ => prec.right(seq(field("negate", $.negate), field("arg", $._expr))),
 
     negate: $ => choice('-', '!'),
 
-    apply: $ => prec.right(2, seq(field("function", $._apply), $._arguments)),
+    apply: $ => prec.right(seq(field("function", $._apply), $._arguments)),
 
     _arguments: $ => common.par(common.sepBy(',', field("argument", $._annot_expr))),
 
     _apply: $ => prec(5, choice($.apply, $._member_expr)),
 
-    _expr: $ => choice($._expr_statement, $._record_expr),
+    _expr: $ => choice($._member_expr, $._expr_statement, $._record_expr),
 
     _annot_expr: $ => choice(
       $.annot_expr,
@@ -116,7 +108,7 @@ module.exports = grammar({
       'match',
       common.par(
         seq(
-          field("subject", $._expr_statement),
+          field("subject", $._expr),
           ',',
           choice(
             seq('list',
@@ -171,7 +163,6 @@ module.exports = grammar({
       $.Tez,
       $.False_kwd,
       $.True_kwd,
-      $.Unit_kwd,
       $.ConstrName,
       $.data_projection,
       $.indexing,
@@ -179,6 +170,7 @@ module.exports = grammar({
       $.paren_expr,
       $.module_access,
       $.tuple,
+      $.type_as_annotation,
     ),
 
     tuple: $ => common.brackets(common.sepBy(',', field("item", $._annot_expr))),
@@ -231,7 +223,7 @@ module.exports = grammar({
     _body: $ => prec.right(3,
       choice(
         $.block_statement,
-        $._expr_statement
+        $._expr
       )
     ),
 
@@ -271,7 +263,7 @@ module.exports = grammar({
       common.sepEndBy1(',', field("field", $._record_field)),
     )),
 
-    spread: $ => seq('...', field("name", $._expr_statement)),
+    spread: $ => seq('...', field("name", $._expr)),
 
     _type_expr: $ => choice(
       $.fun_type,
@@ -285,12 +277,12 @@ module.exports = grammar({
 
     sum_type: $ => common.withAttrs($, seq(optional('|'), common.sepBy1('|', field("variant", $.variant)))),
 
-    variant: $ => prec(5, common.withAttrs($, common.brackets(
+    variant: $ => common.withAttrs($, common.brackets(
       choice(
         field("constructor", $.ConstrNameType),
         seq(field("constructor", $.ConstrNameType), ',', field("ctor_arguments", $.ctor_arguments))
       )
-    ))),
+    )),
 
     ctor_arguments: $ => common.sepBy1(',', field("ctor_argument", $._type_expr)),
 
@@ -343,14 +335,14 @@ module.exports = grammar({
 
     var_type: $ => field("name", $.TypeVariableName),
 
-    _binding_pattern: $ => choice(
+    _binding_pattern: $ => prec(1,choice(
       $.var_pattern,
       $.wildcard,
       $.record_pattern,
       $.list_pattern,
       $.tuple_pattern,
       $.Unit_kwd
-    ),
+    )),
 
     var_pattern: $ => field("var", $.NameDecl),
 
@@ -419,7 +411,7 @@ module.exports = grammar({
       )
     ),
 
-    for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr_statement))), $._statement),
+    for_of_statement: $ => seq('for', common.par(seq($._index_kind, field("key", $.Name), 'of', field("collection", $._expr))), $._statement),
 
     _index_kind: $ => choice($._Let_kwd, $._Const_kwd),
 
@@ -471,7 +463,7 @@ module.exports = grammar({
     ConstrNameType: $ => /\"(\\.|[^"])*\"/,
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
-    TypeName: $ => choice($._Name, $._NameCapital),
+    TypeName: $ => prec(1, choice($._Name, $._NameCapital)),
     TypeVariableName: $ => choice($._Name, $._NameCapital),
     Name: $ => $._Name,
     NameDecl: $ => $._Name,

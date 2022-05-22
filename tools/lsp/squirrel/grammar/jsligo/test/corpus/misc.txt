@@ -60,3 +60,39 @@ let local_type = (_ : unit) : int => {
           (var_pattern (NameDecl))
           (binary_call (Name) (Int)))
         (return_statement (Name))))))
+
+=========
+misc: function last statement unit
+=========
+
+let aux = (unit : unit) : unit => {
+  let _x : int = 42 * (42 as nat) ;
+  let _y : int = (23 as nat) * 23 ;
+  let _z : int = 144 * 144 ;
+  let _w : nat = (7 as nat) * (7 as nat) ;
+  unit
+}
+
+---
+
+(source_file
+  (binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (Unit_kwd) (TypeName)) (TypeName)
+      (block_statement
+        (binding (var_pattern (NameDecl)) (TypeName)
+          (binary_call (Int) (paren_expr (Nat))))
+        (binding (var_pattern (NameDecl)) (TypeName)
+          (binary_call
+            (paren_expr (Nat))
+            (Int)))
+        (binding
+          (var_pattern (NameDecl)) (TypeName)
+          (binary_call (Int) (Int)))
+        (binding
+          (var_pattern (NameDecl)) (TypeName)
+          (binary_call
+            (paren_expr (Nat))
+            (paren_expr (Nat))))
+        (Unit_kwd)))))
