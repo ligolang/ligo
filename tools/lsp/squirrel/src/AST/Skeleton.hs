@@ -242,12 +242,12 @@ data FieldAssignment it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Constant it
-  = Int     Text
-  | Nat     Text
-  | String  Text
-  | Float   Text
-  | Bytes   Text
-  | Tez     Text
+  = CInt     Text
+  | CNat     Text
+  | CString  Text
+  | CFloat   Text
+  | CBytes   Text
+  | CTez     Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Pattern it
@@ -399,12 +399,12 @@ instance Eq1 FieldAssignment where
   liftEq _ _ _ = False
 
 instance Eq1 Constant where
-  liftEq _ (Int a) (Int b) = a == b
-  liftEq _ (Nat a) (Nat b) = a == b
-  liftEq _ (String a) (String b) = a == b
-  liftEq _ (Float a) (Float b) = a == b
-  liftEq _ (Bytes a) (Bytes b) = a == b
-  liftEq _ (Tez a) (Tez b) = a == b
+  liftEq _ (CInt a) (CInt b) = a == b
+  liftEq _ (CNat a) (CNat b) = a == b
+  liftEq _ (CString a) (CString b) = a == b
+  liftEq _ (CFloat a) (CFloat b) = a == b
+  liftEq _ (CBytes a) (CBytes b) = a == b
+  liftEq _ (CTez a) (CTez b) = a == b
   liftEq _ _ _ = False
 
 -- FIXME: Missing a lot of comparisons!

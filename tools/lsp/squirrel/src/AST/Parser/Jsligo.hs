@@ -140,11 +140,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Literal
   , Descent do
       boilerplate' \case
-        ("Int",    i) -> pure $ Int i
-        ("Nat",    i) -> pure $ Nat i
-        ("Bytes",  i) -> pure $ Bytes i
-        ("String", i) -> pure $ String i
-        ("Tez",    i) -> pure $ Tez i
+        ("Int",    i) -> pure $ CInt i
+        ("Nat",    i) -> pure $ CNat i
+        ("Bytes",  i) -> pure $ CBytes i
+        ("String", i) -> pure $ CString i
+        ("Tez",    i) -> pure $ CTez i
         _             -> fallthrough
 
     -- Declaration

@@ -269,12 +269,12 @@ instance Pretty1 FieldAssignment where
 
 instance Pretty1 Constant where
   pp1 = \case
-    Int           z   -> pp z
-    Nat           z   -> pp z
-    String        z   -> pp z
-    Float         z   -> pp z
-    Bytes         z   -> pp z
-    Tez           z   -> pp z
+    CInt           z   -> pp z
+    CNat           z   -> pp z
+    CString        z   -> pp z
+    CFloat         z   -> pp z
+    CBytes         z   -> pp z
+    CTez           z   -> pp z
 
 instance Pretty1 ModuleAccess where
   pp1 = \case
@@ -544,12 +544,12 @@ instance LPP1 'Pascal FieldAssignment where
 
 instance LPP1 'Pascal Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Pascal Pattern where
   lpp1 = \case
@@ -664,12 +664,12 @@ instance LPP1 'Reason FieldAssignment where
 
 instance LPP1 'Reason Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Reason Pattern where
   lpp1 = \case
@@ -797,12 +797,12 @@ instance LPP1 'Js FieldAssignment where
 
 instance LPP1 'Js Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z <+> "as nat"
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z <+> "as tez"
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z <+> "as nat"
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z <+> "as tez"
 
 instance LPP1 'Js Pattern where
   lpp1 = \case
@@ -928,12 +928,12 @@ instance LPP1 'Caml FieldAssignment where
 
 instance LPP1 'Caml Constant where
   lpp1 = \case
-    Int           z   -> lpp z
-    Nat           z   -> lpp z
-    String        z   -> lpp z
-    Float         z   -> lpp z
-    Bytes         z   -> lpp z
-    Tez           z   -> lpp z
+    CInt           z   -> lpp z
+    CNat           z   -> lpp z
+    CString        z   -> lpp z
+    CFloat         z   -> lpp z
+    CBytes         z   -> lpp z
+    CTez           z   -> lpp z
 
 instance LPP1 'Caml Pattern where
   lpp1 = \case

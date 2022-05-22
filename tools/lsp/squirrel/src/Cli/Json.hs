@@ -46,7 +46,7 @@ import Language.LSP.Types qualified as J
 import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
-import AST.Skeleton hiding (String)
+import AST.Skeleton hiding (CString)
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
 import Duplo.Lattice
 import Duplo.Pretty
