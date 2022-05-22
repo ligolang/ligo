@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1580'
+title: 'Self_tokens: add semi-colon before export and namespace'
+type: fixed

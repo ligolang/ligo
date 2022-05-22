@@ -44,9 +44,9 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage mutez ;
-      code { PUSH mutez 1000000 ;
+      code { CDR ;
+             PUSH mutez 1000000 ;
              SWAP ;
-             CDR ;
              SUB_MUTEZ ;
              IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
              NIL operation ;
@@ -93,11 +93,13 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.jsligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{xxx|
     const sub =
-      lambda (gen#2 : ( tez * tez )) return let store = gen#2.0 in let delta = gen#2.1 in C_POLYMORPHIC_SUB(store ,
-      delta)
+      lambda (gen#2 : ( tez * tez )) return  match gen#2 with
+                                              | ( store , delta ) ->
+                                              C_POLYMORPHIC_SUB(store , delta)
     const main =
-      lambda (gen#4 : ( unit * tez )) return let _#3 = gen#4.0 in let store = gen#4.1 in
-      ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) ) |xxx}]
+      lambda (gen#4 : ( unit * tez )) return  match gen#4 with
+                                               | ( _#3 , store ) ->
+                                               ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) ) |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (test "sub_mutez_new.ligo") ] ;
@@ -136,13 +138,13 @@ let%expect_test _ =
   [%expect{|
     const sub =
       rec (sub:( tez * tez ) -> option (tez) => lambda (gen#2 : ( tez * tez )) : option (tez) return
-      let store = gen#2.0 in
-      let delta = gen#2.1 in C_POLYMORPHIC_SUB(store , delta) )
+       match gen#2 with
+        | (store,delta) -> C_POLYMORPHIC_SUB(store , delta) )
     const main =
       rec (main:( unit * tez ) -> ( list (operation) * tez ) => lambda (gen#4 :
-      ( unit * tez )) : ( list (operation) * tez ) return let _#3 = gen#4.0 in
-                                                          let store = gen#4.1 in
-                                                          ( LIST_EMPTY() : list (operation) ,
-                                                            (Option.unopt)@(
-                                                            (sub)@(( store ,
-                                                                     1000000mutez ))) ) ) |}]
+      ( unit * tez )) : ( list (operation) * tez ) return  match gen#4 with
+                                                            | (_#3,store) ->
+                                                            ( LIST_EMPTY() : list (operation) ,
+                                                              (Option.unopt)@(
+                                                              (sub)@(( store ,
+                                                                       1000000mutez ))) ) ) |}]

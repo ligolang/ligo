@@ -179,15 +179,9 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         List.fold ~f:aux ~init lst'
       )
-    | (Ticket, [ty]) -> (
-      let (v,amt) =
-        trace_option ~raise (wrong_mini_c_value t v) @@
-        get_ticket v
-      in
-      let v = self v ty in
-      let amt = self amt (AST.t_nat ()) in
-      return (E_constant {cons_name=C_TICKET;arguments=[v;amt]})
-    )
+    | (Ticket, [_ty]) ->
+      (* TODO: should we use a Michelson insertion? *)
+      raise.raise @@ bad_decompile v
     | (Contract, _)  ->
       raise.raise @@ bad_decompile v
     | ((Michelson_pair | Michelson_or),_) ->
