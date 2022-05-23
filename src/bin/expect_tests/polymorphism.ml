@@ -379,7 +379,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
   [%expect{|
-    File "./cases_annotation.mligo", line 4, characters 28-30:
+    File "./cases_annotation.mligo", line 4, characters 20-22:
       3 | let f (b : bool) (str : string) =
       4 |   let k = if b then k1 else k2 in
       5 |   k str (40 + 2)

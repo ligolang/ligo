@@ -53,10 +53,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.ligo", line 6, characters 4-13:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.ligo", line 5, characters 4-17:
+      4 |   case x of [
       5 |   | Some_fake (x) -> x
       6 |   | None_fake -> 1
-      7 |   ]
 
     Pattern not of the expected type option (int) |}]
 
@@ -65,24 +65,24 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail7.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.ligo", line 5, characters 9-14:
-      4 |   case x of [
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.ligo", line 6, characters 9-10:
       5 |   | A -> "hey"
       6 |   | B -> 2
+      7 |   ]
 
     Invalid type(s).
-    Expected: "int", but got: "string". |}]
+    Expected: "string", but got: "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.ligo", line 22, characters 17-24:
-     21 |             const f = function (const b:int) is b + a ;
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.ligo", line 23, characters 24-33:
      22 |           } with f (b+1)
      23 |         | Cons (a,b) -> "invalid"
+     24 |         ] ;
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)

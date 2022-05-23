@@ -53,10 +53,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.religo", line 6, characters 4-13:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.religo", line 5, characters 4-16:
+      4 |   switch(x) {
       5 |   | Some_fake(x) => x
       6 |   | None_fake    => 1
-      7 |   }
 
     Pattern not of the expected type option (int) |}]
 
@@ -70,24 +70,24 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail7.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.religo", line 5, characters 9-14:
-      4 |   switch(x) {
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.religo", line 6, characters 9-10:
       5 |   | A => "hey"
       6 |   | B => 2
+      7 |   }
 
     Invalid type(s).
-    Expected: "int", but got: "string". |}]
+    Expected: "string", but got: "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 19, characters 8-15:
-     18 |         let f = (b:int) => b + a;
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 20, characters 24-33:
      19 |         f (b+1)
      20 |       | Cons ((a,b)) => "invalid"
+     21 |       };
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)

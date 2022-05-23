@@ -508,20 +508,24 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~add_warning ~options (app_context, context) matchee in
     let cases = List.mapi ~f:(fun i x -> (i,x)) cases in (* index the cases to keep the order in which they are written *)
-    let type_cases = fun ~raise (cases : (int * (S.expression, S.type_expression) S.match_case) list) ->
-      List.fold_map cases ~init:tv_opt ~f:(fun tv_opt (i,{pattern;body}) -> 
-        let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
-        match tv_opt with
-          Some tv_opt -> 
-           let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
-           Some tv_opt, (pattern,matchee'.type_expression,body,i)
-        | None ->
-           let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
-           Some body.type_expression, (pattern,matchee'.type_expression,body,i))
+    let type_cases = fun ~raise (cases : (int * (S.expression, S.type_expression) S.match_case) List.Ne.t) ->
+      let cases = List.Ne.to_list cases in
+      List.fold_map cases ~init:tv_opt
+        ~f:(fun tv_opt (i,{pattern;body}) -> 
+          let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
+          match tv_opt with
+          | Some tv_opt -> 
+            let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
+            Some tv_opt, (pattern,matchee'.type_expression,body,i)
+          | None ->
+            let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
+            Some body.type_expression, (pattern,matchee'.type_expression,body,i)
+        )
     in
     let eqs =
-      (* here, we try to type to cases in multiple order: [ B1 ; B2 ; B3 ] [ B2 ; B3 ; B1 ] [ B3 ; B1 ; B2 ] *)
-      let _,infered_eqs = try_with (type_cases cases) (fun _ -> let cases = match cases with hd::tl -> tl @ [hd] | _ -> cases in type_cases ~raise cases) in
+      (* here, we try to type-check cases bodies in multiple orders: [ B1 ; B2 ; B3 ] [ B2 ; B3 ; B1 ] [ B3 ; B1 ; B2 ] *)
+      let permutations = List.Ne.(head_permute (of_list cases)) in
+      let _,infered_eqs = Helpers.first_success ~raise type_cases permutations in
       List.map ~f:(fun (p,p_ty,body,_) -> (p,p_ty,body)) @@ List.sort infered_eqs ~compare:(fun (_,_,_,a) (_,_,_,b) -> Int.compare a b)
     in
     match matchee.expression_content with
