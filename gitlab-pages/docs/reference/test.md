@@ -122,6 +122,12 @@ type test_baker_policy =
 
 A test baking policy as used by the underlying testing helpers. The
 case `By_account` is the standard one, as used by `Test.set_baker`.
+Policies to select the next baker (taken from test helpers documentation):
+
+- `By_round r` selects the baker at round `r`
+- `By_account pkh` selects the first slot for baker `pkh`
+- `Excluding pkhs` selects the first baker that doesn't belong to `pkhs`
+
 
 <SyntaxTitle syntax="pascaligo">
 type typed_address (param, storage)
