@@ -27,7 +27,7 @@ let id : <T>((x : T) => T) = x => x;
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (paren_type (fun_type (domain (TypeName)) (TypeName)))
@@ -62,7 +62,7 @@ const id : <P>(x : P) => P = (x : P) => {
 ---
 
 (source_file
-  (const_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (type_params (var_type (TypeVariableName)))
     (fun_type (domain (TypeName)) (TypeName))

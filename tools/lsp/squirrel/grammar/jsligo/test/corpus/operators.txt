@@ -7,7 +7,7 @@ let x = 1 + 2;
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern
       (NameDecl))
     (binary_call (Int) (Int))))
@@ -22,7 +22,7 @@ let x = () => { x += 2; return x };
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
   (var_pattern (NameDecl))
   (lambda
     (block_statement
@@ -38,7 +38,7 @@ let x = true || false;
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern
       (NameDecl))
     (binary_call (True_kwd) (False_kwd))))
@@ -52,7 +52,7 @@ let x = - 1;
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern
       (NameDecl))
     (unary_call (negate) (Int))))

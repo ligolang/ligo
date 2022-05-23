@@ -13,7 +13,7 @@ let sum_list = (l: list<int>): int => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -56,7 +56,7 @@ let gcd = (x: nat, y: nat): nat => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg

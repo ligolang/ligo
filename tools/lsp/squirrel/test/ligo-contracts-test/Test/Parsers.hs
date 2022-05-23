@@ -203,14 +203,17 @@ badTests =
     { tdRoot = testDir </> "lexer"
     , tdIgnoreFiles =
       [ --LIGO-475
-        "broken_string.ligo"
-      , "negative_byte_sequence.religo"
-      , "invalid_character_in_string.religo"
+        "negative_byte_sequence.religo"
       , "negative_byte_sequence.ligo"
       , "reserved_name.religo"
       , "negative_byte_sequence.mligo"
-      , "broken_string.religo"
-      , "invalid_character_in_string.ligo"
+       -- Lexer cases
+      , "LexerLib" </> "invalid_character_in_string.ligo"
+      , "LexerLib" </> "invalid_character_in_string.jsligo"
+      , "LexerLib" </> "invalid_character_in_string.religo"
+      , "Style"    </> "odd_lengthed_bytes.ligo"
+      , "Lexing"   </> "underflow_mutez.ligo"
+      , "Lexing"   </> "overflow_mutez.ligo"
       ]
     , tdIgnoreDirs = []
     }

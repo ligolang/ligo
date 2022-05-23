@@ -98,7 +98,7 @@ let decl
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -113,7 +113,7 @@ let decl twice
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (attr)
     (attr)
     (var_pattern (NameDecl))
@@ -133,7 +133,7 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -160,7 +160,7 @@ const bar = (b : int) : int => {
 ---
 
 (source_file
-  (const_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -183,7 +183,7 @@ const decl
 ---
 
 (source_file
-  (const_binding
+  (toplevel_binding
     (attr)
     (var_pattern (NameDecl))
     (TypeName)
@@ -198,7 +198,7 @@ const decl twice
 ---
 
 (source_file
-  (const_binding
+  (toplevel_binding
     (attr)
     (attr)
     (var_pattern (NameDecl))
@@ -215,7 +215,7 @@ const fst = (p: [nat, nat]): nat => p[0];
 ---
 
 (source_file
-  (const_binding
+  (toplevel_binding
     (attr)
     (var_pattern (NameDecl))
     (lambda

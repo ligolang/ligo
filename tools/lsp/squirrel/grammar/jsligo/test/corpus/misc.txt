@@ -14,7 +14,7 @@ let a = (x: bool): bool => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
@@ -45,7 +45,7 @@ let local_type = (_ : unit) : int => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (wildcard) (TypeName))
@@ -76,7 +76,7 @@ let aux = (unit : unit) : unit => {
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (Unit_kwd) (TypeName)) (TypeName)

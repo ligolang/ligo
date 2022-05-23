@@ -22,16 +22,16 @@ let foo = x as my_typ;
 (source_file
   (namespace_statement (ModuleName)
     (type_decl (TypeName) (TypeName))
-    (let_binding
+    (toplevel_binding
       (var_pattern (NameDecl))
       (TypeName)
       (Nat))
     (namespace_statement (ModuleName)
-      (let_binding
+      (toplevel_binding
         (var_pattern (NameDecl))
         (TypeName)
         (Nat))
-      (let_binding
+      (toplevel_binding
         (var_pattern (NameDecl))
         (TypeName)
         (Nat))))
@@ -41,11 +41,11 @@ let foo = x as my_typ;
     (module_access_t
       (ModuleName)
       (TypeName)))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (module_access (ModuleName) (FieldName)))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (type_as_annotation (Name) (TypeName))))
 
@@ -58,7 +58,7 @@ let x : int = foo(bar(baz(1)))
 ----
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (apply
@@ -77,7 +77,7 @@ let x : int = int(List.List.List.length(x))
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (apply
@@ -110,11 +110,11 @@ let foo = () : int => 1
   (type_decl
     (TypeName)
     (module_access_t (ModuleName) (TypeName)))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (module_access (ModuleName) (FieldName)))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (lambda
       (TypeName)

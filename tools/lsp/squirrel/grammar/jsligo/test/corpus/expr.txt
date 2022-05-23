@@ -7,7 +7,7 @@ let x = (foo (42))
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (paren_expr
       (apply (Name) (Int)))))
@@ -21,7 +21,7 @@ let x = [1, "foo", 3]
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (tuple
       (Int)
@@ -37,7 +37,7 @@ let x = (1);
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (paren_expr
       (Int))))
@@ -52,14 +52,14 @@ let y = [(1), ("foo"), 3];
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (paren_expr
       (tuple
         (Int)
         (String)
         (Int))))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (tuple
       (paren_expr (Int))
@@ -75,7 +75,7 @@ let n : unit = unit;
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (Unit_kwd)))
@@ -89,7 +89,7 @@ let n = 1 as nat
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (Nat)))
 
@@ -103,10 +103,10 @@ let m = 2 as mutez
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (Tez))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (Tez)))
 
@@ -120,11 +120,11 @@ let my_list: list<int> = list([1, 2, 2]);
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list_literal))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (app_type (TypeName) (TypeName))
     (list_literal (Int) (Int) (Int))))
@@ -139,11 +139,11 @@ let g : user = Guest();
 ---
 
 (source_file
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (apply (ConstrName) (Nat)))
-  (let_binding
+  (toplevel_binding
     (var_pattern (NameDecl))
     (TypeName)
     (apply (ConstrName))))
