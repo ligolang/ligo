@@ -148,3 +148,16 @@ let%expect_test _ =
                                                               (Option.unopt)@(
                                                               (sub)@(( store ,
                                                                        1000000mutez ))) ) ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "sub_mutez_new.mligo") ; "--protocol" ; "jakarta" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage mutez ;
+      code { CDR ;
+             PUSH mutez 1000000 ;
+             SWAP ;
+             SUB_MUTEZ ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
+             NIL operation ;
+             PAIR } } |}]
