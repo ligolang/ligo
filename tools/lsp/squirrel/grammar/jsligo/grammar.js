@@ -23,8 +23,7 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional($._Expor_kwd), $.let_binding),
-      seq(optional($._Expor_kwd), $.const_binding),
+      seq(optional($._Expor_kwd), $.toplevel_binding),
       seq(optional($._Expor_kwd), $.type_decl),
       seq(optional($._Expor_kwd), $.namespace_statement),
       $.import_statement,
@@ -321,6 +320,18 @@ module.exports = grammar({
     tuple_type: $ => common.withAttrs($, common.brackets(common.sepBy1(',', field("element", $._type_expr)))),
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
+
+    toplevel_binding:  $ => common.withAttrs($,
+      seq(
+        choice($._Let_kwd, $._Const_kwd),
+        field("binding_pattern", $._binding_pattern),
+        optional(
+          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+        ),
+        '=',
+        field("value", $._expr)
+      )
+    ),
 
     let_binding: $ => common.withAttrs($,
       seq(

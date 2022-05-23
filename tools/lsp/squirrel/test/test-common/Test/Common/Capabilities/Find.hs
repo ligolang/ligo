@@ -221,7 +221,7 @@ invariants =
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes-tuple.jsligo"
     , driDesc = "tuple member"
-    , driDef = Just (interval 2 13 16)
+    , driDef = Just (interval 2 15 18)
     , driRefs = [interval 3 10 13]
     }
   , DefinitionReferenceInvariant
