@@ -255,7 +255,7 @@ recognise (SomeRawTree dialect rawTree)
         ("False_kwd", _)       -> pure $ Ctor "False"
         ("Unit_kwd", _)        -> pure $ Ctor "Unit"
         ("constructor", c)     -> pure $ Ctor c
-        ("ConstrNameType", n)  -> pure $ Ctor (T.filter (/= '"') n)
+        ("ConstrNameType", n)  -> pure $ Ctor (T.init $ T.tail n)
         _                      -> fallthrough
 
   -- Err

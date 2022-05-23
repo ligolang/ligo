@@ -962,6 +962,7 @@ instance LPP1 'Caml CaseOrDefaultStm where
   lpp1 = \case
     CaseStm _ _  -> error "unexpected `CaseStm` node"
     DefaultStm _ -> error "unexpected `DefaultStm` node"
+
 type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc

@@ -166,6 +166,7 @@ completeFromTSpec TypeDeclSpecifics {_tdsInit} = case _tdsInit of
   AliasType _ -> CiVariable
   ArrowType _ _ -> CiFunction
   VariableType _ -> CiTypeParameter
+  ParenType t -> completeFromTSpec t
 
 defCompletionItem :: Text -> CompletionItem
 defCompletionItem label = CompletionItem

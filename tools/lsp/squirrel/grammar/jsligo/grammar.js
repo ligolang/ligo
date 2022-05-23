@@ -463,7 +463,7 @@ module.exports = grammar({
     _semicolon: $ => choice(';', $._automatic_semicolon),
 
     ConstrName: $ => $._NameCapital,
-    ConstrNameType: $ => /\"(\\.|[^"])*\"/,
+    ConstrNameType: $ => /\"(\\.|[^"])+\"/,
     FieldName: $ => $._Name,
     ModuleName: $ => $._NameCapital,
     TypeName: $ => prec(1, choice($._Name, $._NameCapital)),
