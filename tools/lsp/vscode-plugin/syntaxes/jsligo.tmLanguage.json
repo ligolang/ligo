@@ -1,0 +1,110 @@
+{
+  "foldingStartMarker": "{",
+  "foldingStopMarker": "}",
+  "name": "JsLIGO",
+  "scopeName": "source.jsligo",
+  "fileTypes": [ "jsligo" ],
+  "patterns": [
+    { "include": "#string" },
+    { "include": "#block_comment" },
+    { "include": "#line_comment" },
+    { "include": "#attribute" },
+    { "include": "#macro" },
+    { "include": "#letbinding" },
+    { "include": "#typedefinition" },
+    { "include": "#controlkeywords" },
+    { "include": "#numericliterals" },
+    { "include": "#operators" },
+    { "include": "#identifierconstructor" },
+    { "include": "#moduleaccess " },
+    { "include": "#modulealias" },
+    { "include": "#moduledeclaration" }
+  ],
+  "repository": {
+    "string": {
+      "name": "string.quoted.double.jsligo",
+      "begin": "\\\"",
+      "end": "\\\"",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
+    },
+    "block_comment": {
+      "name": "comment.block.jsligo",
+      "begin": "/\\*",
+      "end": "\\*\\/",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
+    },
+    "line_comment": {
+      "name": "comment.block.jsligo",
+      "match": "\\/\\/.*$",
+      "captures": {}
+    },
+    "attribute": {
+      "name": "keyword.control.attribute.jsligo",
+      "match": "(/\\s*@.*\\s*|/\\*\\s*@.*\\*/)",
+      "captures": {}
+    },
+    "macro": {
+      "name": "meta.preprocessor.jsligo",
+      "match": "^\\#[a-zA-Z]+",
+      "captures": {}
+    },
+    "letbinding": {
+      "match": "\\b(let|const)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "captures": {
+        "2": { "name": "entity.name.function.jsligo" },
+        "1": { "name": "keyword.other.jsligo" }
+      }
+    },
+    "typedefinition": {
+      "name": "entity.name.type.jsligo",
+      "match": "\\b(type)\\b",
+      "captures": {}
+    },
+    "controlkeywords": {
+      "name": "keyword.control.jsligo",
+      "match":
+        "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b",
+      "captures": {}
+    },
+    "numericliterals": {
+      "name": "constant.numeric.jsligo",
+      "match": "(\\+|\\-)?[0-9]+(n|tz|tez|mutez|)\\b",
+      "captures": {}
+    },
+    "operators": {
+      "name": "keyword.operator.jsligo",
+      "match":
+        "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+",
+      "captures": {}
+    },
+    "identifierconstructor": {
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\s+",
+      "captures": { "1": { "name": "variable.other.enummember.jsligo" } }
+    },
+    "moduleaccess ": {
+      "match": "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.([a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.var.jsligo" },
+        "1": { "name": "storage.class.jsligo" }
+      }
+    },
+    "modulealias": {
+      "match": "\\b(import)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.class.jsligo" },
+        "1": { "name": "keyword.control.jsligo" }
+      }
+    },
+    "moduledeclaration": {
+      "match": "\\b(namespace)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "captures": {
+        "2": { "name": "storage.class.jsligo" },
+        "1": { "name": "keyword.other.jsligo" }
+      }
+    }
+  }
+}

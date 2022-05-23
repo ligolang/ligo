@@ -94,7 +94,7 @@
                    tree-sitter test
                    cd ..
                  '';
-                 dialects = ["camligo" "reasonligo" "pascaligo"];
+                 dialects = ["camligo" "reasonligo" "pascaligo" "jsligo"];
              in pkgs.lib.strings.concatStrings (map testDialect dialects)
                 + "touch $out";
         };
