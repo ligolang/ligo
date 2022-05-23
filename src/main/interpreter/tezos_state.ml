@@ -41,7 +41,7 @@ and transduced = {
 }
 and internals = {
   protocol_version : Environment.Protocols.t ;
-  baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* baker to be used for the next transfer/origination *)
+  baker_policy : Tezos_alpha_test_helpers.Block.baker_policy ; (* baker to be used for the next transfer/origination *)
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* source to be used for the next transfer/origination *)
   next_bootstrapped_contracts : bootstrap_contract list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
   next_baker_accounts : baker_account list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
@@ -177,6 +177,13 @@ let get_alpha_context ~raise ctxt =
 let unwrap_baker ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_crypto.Signature.Public_key_hash.t  =
   fun x ->
     Trace.trace_option ~raise (generic_error loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
+
+let baker_policy ~raise ~loc baker_policy =
+  let open Tezos_alpha_test_helpers.Block in
+  match baker_policy with
+  | `By_round i -> By_round i
+  | `By_account a -> By_account (unwrap_baker ~raise ~loc a)
+  | `Excluding l -> Excluding (List.map ~f:(unwrap_baker ~raise ~loc) l)
 
 let unwrap_source ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
   fun x ->
@@ -377,11 +384,10 @@ let get_consumed_gas x =
 let bake_ops : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> (Tezos_alpha_test_helpers.Incremental.t -> tezos_op) list -> add_operation_outcome =
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
-    let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
     (* First check if baker is going to be successfully selected *)
-    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:(By_account baker) ctxt.raw) in
+    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:ctxt.internals.baker_policy ctxt.raw) in
     let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-                 Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw in
+                 Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw in
     let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
     match List.fold_result ~f:aux ~init:incr operation with
     | Ok incr ->
@@ -398,11 +404,7 @@ let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> te
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
   let open Tezos_alpha_test_helpers in
-  let policy = match Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit ctxt.internals.baker with
-    | Some x -> Some (Block.By_account x)
-    | None -> None
-  in
-  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end ?policy n ctxt.raw in
+  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end ~policy:ctxt.internals.baker_policy n ctxt.raw in
   { ctxt with raw }
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
@@ -592,8 +594,9 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   let init_raw_ctxt = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r in
   match acclst with
   | baker::source::_ ->
+    let baker = unwrap_baker ~raise ~loc baker in
     let transduced = { last_originations = [] ; bigmaps= [] } in
-    let internals = { protocol_version ; baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
+    let internals = { protocol_version ; baker_policy = By_account baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->
     raise.raise (bootstrap_not_enough loc)
