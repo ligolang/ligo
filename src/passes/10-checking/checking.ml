@@ -254,7 +254,6 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       | Some tv' -> assert_type_expression_eq ~raise e.location (tv' , tv) in
     let location = e.location in
     make_e ~location expr tv in
-  let protocol_version = options.protocol_version in
   let return_e (expr : O.expression) = return expr.expression_content expr.type_expression in
   trace ~raise (expression_tracer e) @@
   fun ~raise -> match e.expression_content with
@@ -346,6 +345,9 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     in
     let c_arg = type_expression' ~raise ~add_warning ~options (app_context, context) element in
     let table = Inference.infer_type_application ~raise ~loc:element.location avs Inference.TMap.empty c_arg_t c_arg.type_expression in
+    let () = if Option.is_none tv_opt then trace_option ~raise (not_annotated e.location) @@
+      if (List.for_all avs ~f:(fun v -> O.Helpers.TMap.mem v table)) then Some () else None
+    in
     let c_t = Ast_typed.Helpers.psubst_type table c_arg_t in
     let sum_t = Ast_typed.Helpers.psubst_type table sum_t in
     let () = assert_type_expression_eq ~raise c_arg.location (c_t, c_arg.type_expression) in
@@ -471,51 +473,17 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let tv_val = get_type val' in
       let tv = match tv_opt with
           Some tv -> tv
-        | None -> t_map_or_big_map tv_key tv_val
+        | None -> t_map tv_key tv_val
       in
-      let map' =  type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv map in
+      let map' = try_with (type_expression' ~add_warning ~options (app_context, context) ~tv_opt:tv map)
+               (fun _ -> let tv = match tv_opt with
+                             Some tv -> tv
+                           | None -> t_big_map tv_key tv_val
+                         in type_expression' ~raise ~add_warning ~options (app_context, context) ~tv_opt:tv map) in
       let tv_map = get_type map' in
       let tv_lst = [tv_key;tv_val;tv_map] in
       let (name', tv) = type_constant ~raise ~options cst e.location tv_lst tv_opt in
       return (E_constant {cons_name=name';arguments=[key';val';map']}) tv
-  | E_constant {cons_name = C_POLYMORPHIC_ADD;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
-      let tv_lst = List.map ~f:get_type lst' in
-      let decide = function
-        | {O.expression_content = E_literal (Literal_string _); _ } -> Some S.C_CONCAT
-        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } -> Some C_ADD
-        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } -> Some C_CONCAT
-        | {expression_content = E_constant {cons_name = C_SLICE; _ }; _ } -> Some C_CONCAT
-        | {expression_content = E_literal (Literal_int _); _ } -> Some C_ADD
-        | {expression_content = E_record_accessor {record; path}; _ } ->
-            (let x = get_record_field_type record.type_expression path in
-            match x with
-            Some s when is_t_string s ->
-              Some C_CONCAT
-            | _ -> None )
-        | {expression_content = E_variable _; type_expression = texpr ; location = _} ->
-            if is_t_string texpr then
-              Some C_CONCAT
-            else
-              None
-        | _ -> None in
-      let cst =
-        Option.value ~default:S.C_ADD @@ List.find_map lst' ~f:decide in
-      let (name', tv) =
-        type_constant ~raise ~options cst e.location tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=lst'}) tv
-  | E_constant {cons_name = C_POLYMORPHIC_SUB;arguments} ->
-      let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
-      let tv_lst = List.map ~f:get_type lst' in
-      let decide = function
-        | Environment.Protocols.Ithaca, O.{ type_expression ; _ } when is_t_mutez type_expression ->
-          Some S.C_SUB_MUTEZ
-        | _ -> None in
-      let cst =
-        Option.value ~default:S.C_SUB @@ List.find_map lst' ~f:(fun e -> decide (protocol_version, e)) in
-      let (name', tv) =
-        type_constant ~raise ~options cst e.location tv_lst tv_opt in
-      return (E_constant {cons_name=name';arguments=lst'}) tv
   | E_constant {cons_name;arguments} ->
       let lst' = List.map ~f:(type_expression' ~raise ~add_warning ~options (app_context, context)) arguments in
       let tv_lst = List.map ~f:get_type lst' in
@@ -539,19 +507,35 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let matchee' = type_expression' ~raise ~add_warning ~options (app_context, context) matchee in
-    let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * typing_context)) =
-      fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,context))
+    let cases = List.mapi ~f:(fun i x -> (i,x)) cases in (* index the cases to keep the order in which they are written *)
+    let type_cases = fun ~raise (cases : (int * (S.expression, S.type_expression) S.match_case) List.Ne.t) ->
+      let cases = List.Ne.to_list cases in
+      List.fold_map cases ~init:tv_opt
+        ~f:(fun tv_opt (i,{pattern;body}) -> 
+          let context,pattern = type_pattern ~raise pattern matchee'.type_expression context in
+          match tv_opt with
+          | Some tv_opt -> 
+            let body = type_expression' ~raise ~add_warning ~options (App_context.create (Some tv_opt), context) ~tv_opt body in
+            Some tv_opt, (pattern,matchee'.type_expression,body,i)
+          | None ->
+            let body = type_expression' ~raise ~add_warning ~options (App_context.create None, context) body in
+            Some body.type_expression, (pattern,matchee'.type_expression,body,i)
+        )
     in
-    let eqs = List.map ~f:aux cases in
-    let aux = fun ~raise context ?tv_opt i -> type_expression' ~raise ~add_warning ~options (App_context.create tv_opt, context) ?tv_opt i in
+    let eqs =
+      (* here, we try to type-check cases bodies in multiple orders: [ B1 ; B2 ; B3 ] [ B2 ; B3 ; B1 ] [ B3 ; B1 ; B2 ] *)
+      let permutations = List.Ne.(head_permute (of_list cases)) in
+      let _,infered_eqs = Helpers.first_success ~raise type_cases permutations in
+      List.map ~f:(fun (p,p_ty,body,_) -> (p,p_ty,body)) @@ List.sort infered_eqs ~compare:(fun (_,_,_,a) (_,_,_,b) -> Int.compare a b)
+    in
     match matchee.expression_content with
     | E_variable matcheevar ->
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       return case_exp.expression_content case_exp.type_expression
     | _ ->
       let matcheevar = I.ValueVar.fresh () in
-      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location ~type_f:aux ~body_t:(tv_opt) matcheevar eqs in
+      let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
       let x = O.E_let_in { let_binder = {var=matcheevar;ascr=None;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; thunk = false ; hidden = false } } in
       return x case_exp.type_expression
@@ -646,6 +630,61 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let () = assert_type_expression_eq ~raise e.location (variable_type,expression_type) in
     return (E_assign {binder; access_path; expression}) @@ O.t_unit ()
 
+and type_pattern ~raise (pattern : I.type_expression I.pattern) (expected_typ : O.type_expression) context = 
+  match pattern.wrap_content, expected_typ.type_content with
+    I.P_unit , O.T_constant { injection = Stage_common.Constant.Unit ; _ } -> context, (Location.wrap ~loc:pattern.location O.P_unit)
+  | I.P_unit , _ -> 
+    raise.raise (wrong_type_for_unit_pattern pattern.location expected_typ)
+  | I.P_var v , _ -> 
+    Context.Typing.add_value context v.var expected_typ, (Location.wrap ~loc:pattern.location (O.P_var {v with ascr=Some expected_typ}))
+  | I.P_list (I.Cons (hd, tl)) , O.T_constant { injection = Stage_common.Constant.List ; parameters ; _ } ->
+    let list_elt_typ = List.hd_exn parameters in (* TODO: dont use _exn*)
+    let list_typ = expected_typ in
+    let context,hd = type_pattern ~raise hd list_elt_typ context in
+    let context,tl = type_pattern ~raise tl list_typ context in
+    context, (Location.wrap ~loc:pattern.location (O.P_list (O.Cons (hd, tl))))
+  | I.P_list (I.List lst) , O.T_constant { injection = Stage_common.Constant.List ; parameters ; _ } ->
+    let list_elt_typ = List.hd_exn parameters in (* TODO: dont use _exn*)
+    let context, lst = List.fold_right lst ~init:(context,[]) 
+      ~f:(fun pattern (context,lst) -> 
+            let context, p = type_pattern ~raise pattern list_elt_typ context in
+            context, p::lst
+    ) in
+    context, (Location.wrap ~loc:pattern.location (O.P_list (O.List lst)))
+  | I.P_variant (label,pattern') , O.T_sum sum_type ->
+    let label_map = sum_type.content in
+    let c = O.LMap.find_opt label label_map in
+    let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+    let sum_typ = c.associated_type in
+    let context,pattern = type_pattern ~raise pattern' sum_typ context in
+    context, (Location.wrap ~loc:pattern.location (O.P_variant (label,pattern)))
+  | I.P_tuple tupl , O.T_record record_type ->
+    let label_map = record_type.content in
+    if O.LMap.cardinal label_map <> List.length tupl 
+    then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
+    else
+    let _, context, elts = List.fold_left tupl ~init:(0, context, []) ~f:(fun (idx,context,elts) pattern' -> 
+      let c = O.LMap.find_opt (Label (string_of_int idx)) label_map in
+      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+      let tupl_elt_typ = c.associated_type in
+      let context, elt = type_pattern ~raise pattern' tupl_elt_typ context in 
+      idx+1, context, elt::elts) in
+    let elts = List.rev elts in
+    context, (Location.wrap ~loc:pattern.location (O.P_tuple elts))
+  | I.P_record (labels,patterns) , O.T_record record_type ->
+    let label_map = record_type.content in
+    if O.LMap.cardinal label_map <> List.length labels 
+    then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
+    else
+    let label_patterns = List.zip_exn labels patterns in (* TODO: dont use _exn*)
+    let context,patterns = List.fold_right label_patterns ~init:(context,[]) ~f:(fun (label,pattern') (context,patterns) ->
+      let c = O.LMap.find_opt label label_map in
+      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+      let field_typ = c.associated_type in
+      let context,pattern = type_pattern ~raise pattern' field_typ context in 
+      context, pattern::patterns) in
+    context, (Location.wrap ~loc:pattern.location (O.P_record (labels,patterns)))
+  | _ -> raise.raise @@ pattern_do_not_conform_type pattern expected_typ
 
 and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; output_type ; result } =
       let top_i_t , top_o_t = match tv_opt with

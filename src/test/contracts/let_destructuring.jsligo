@@ -1,0 +1,18 @@
+let t1_ = (x : { a : int , b : string }) : int => {
+  let { a , b } = x ;
+  a
+};
+let t1 = t1_  ({a :1 , b : "two"})
+
+let t2_ = (x : [ int , string ]) : int => {
+  let [a,b] = x ;
+  a
+};
+let t2 = t2_ ([ 1 , "two"])
+
+
+let t3_ = (x : [ int , [int , nat] ]) : nat => {
+  let [a,[b,c]] = x ;
+  c
+};
+let t3 = t3_ ([1,[2,3 as nat]])

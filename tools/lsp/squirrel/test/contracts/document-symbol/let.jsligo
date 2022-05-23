@@ -1,0 +1,3 @@
+let a : int = 1;
+let [b,      c] : [int, int] = [2,3];
+let [d, e] = [2,3];

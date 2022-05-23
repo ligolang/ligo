@@ -154,7 +154,6 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
         List.fold_right ~f:aux ~init big_map'
       )
-    | (Map_or_big_map, _)  -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
     | (List, [ty])  -> (
         let lst =
           trace_option ~raise (wrong_mini_c_value t v) @@
@@ -180,15 +179,9 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         let init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
         List.fold ~f:aux ~init lst'
       )
-    | (Ticket, [ty]) -> (
-      let (v,amt) =
-        trace_option ~raise (wrong_mini_c_value t v) @@
-        get_ticket v
-      in
-      let v = self v ty in
-      let amt = self amt (AST.t_nat ()) in
-      return (E_constant {cons_name=C_TICKET;arguments=[v;amt]})
-    )
+    | (Ticket, [_ty]) ->
+      (* TODO: should we use a Michelson insertion? *)
+      raise.raise @@ bad_decompile v
     | (Contract, _)  ->
       raise.raise @@ bad_decompile v
     | ((Michelson_pair | Michelson_or),_) ->
@@ -199,7 +192,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program |
                           String               | Typed_address   | Mutation | List              | Chest            |
         Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp        |
-        Operation       | External _), _) ->
+        Operation       | External _ | Tx_rollup_l2_address), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.raise @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )

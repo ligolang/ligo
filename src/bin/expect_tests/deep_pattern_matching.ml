@@ -119,13 +119,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 18, characters 8-15:
-     17 |         let f = fun (b:int) -> b + a in
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 19, characters 22-31:
      18 |         f (b+1)
      19 |       | Cons (a,b) -> "invalid"
+     20 |     in
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
@@ -442,40 +442,40 @@ const t1 =
 const t2 =
   lambda (x : sum[Cons -> ( int * int ) , Nil -> unit]) return lambda (y :
   sum[Cons -> ( int * int ) , Nil -> unit]) return  match x with
-                                                     | Cons ctor_proj#30 ->
-                                                        match ctor_proj#30 with
+                                                     | Cons ctor_proj#35 ->
+                                                        match ctor_proj#35 with
                                                          | ( a , b ) ->
                                                          let old_b = b in let b =
                                                           match y with
-                                                           | Cons ctor_proj#33 ->
+                                                           | Cons ctor_proj#34 ->
                                                              ADD(a ,
                                                              b)
-                                                           | Nil unit_proj#32 ->
+                                                           | Nil unit_proj#33 ->
                                                              let f = lambda (b : int) return ADD(a ,
                                                              b) in (f)@(ADD(b ,
                                                              1)) in ADD(ADD(a ,
                                                          old_b) , b)
-                                                     | Nil unit_proj#34 ->
+                                                     | Nil unit_proj#37 ->
                                                         match y with
-                                                         | Cons ctor_proj#35 ->
-                                                            match ctor_proj#35 with
+                                                         | Cons ctor_proj#30 ->
+                                                            match ctor_proj#30 with
                                                              | ( _a , b ) ->
                                                              let a = "a" in ADD((int@{nat})@((String.length)@(a)) ,
                                                              b)
-                                                         | Nil unit_proj#37 ->
+                                                         | Nil unit_proj#32 ->
                                                            1
 const t3 =
   lambda (x : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]]) return
    match x with
-    | One ctor_proj#38 ->
-       match ctor_proj#38 with
+    | One ctor_proj#41 ->
+       match ctor_proj#41 with
         | Cons ctor_proj#43 ->
-           match ctor_proj#38 with
-            | Cons ctor_proj#39 ->
-               match ctor_proj#39 with
+           match ctor_proj#41 with
+            | Cons ctor_proj#38 ->
+               match ctor_proj#38 with
                 | ( a , b ) ->
                 ADD(a , b)
-            | Nil unit_proj#41 ->
+            | Nil unit_proj#40 ->
               2
         | Nil unit_proj#42 ->
           1
@@ -487,36 +487,36 @@ const t2_3 =
   lambda (x : sum[Cons -> ( int * int ) , Nil -> unit]) return lambda (y :
   sum[Cons -> ( int * int ) , Nil -> unit]) return lambda (x2 : sum[One -> sum[Cons -> ( int * int ) , Nil -> unit] , Two -> record[a -> int , b -> nat , c -> string]]) return let t2 =
    match x with
-    | Cons ctor_proj#46 ->
-       match ctor_proj#46 with
+    | Cons ctor_proj#52 ->
+       match ctor_proj#52 with
         | ( a , b ) ->
         let old_b = b in let b =  match y with
-                                   | Cons ctor_proj#48 ->
-                                      match ctor_proj#48 with
+                                   | Cons ctor_proj#49 ->
+                                      match ctor_proj#49 with
                                        | ( a , b ) ->
                                        ADD(a , b)
-                                   | Nil unit_proj#50 ->
+                                   | Nil unit_proj#51 ->
                                      let f = lambda (b : int) return ADD(a ,
                                      b) in (f)@(ADD(b ,
                                      1)) in ADD(ADD(a ,
         old_b) , b)
-    | Nil unit_proj#51 ->
+    | Nil unit_proj#54 ->
        match y with
-        | Cons ctor_proj#52 ->
-           match ctor_proj#52 with
+        | Cons ctor_proj#46 ->
+           match ctor_proj#46 with
             | ( _a , b ) ->
             let a = "a" in ADD((int@{nat})@((String.length)@(a)) , b)
-        | Nil unit_proj#54 ->
+        | Nil unit_proj#48 ->
           1 in let t3 =  match x2 with
-                          | One ctor_proj#55 ->
-                             match ctor_proj#55 with
+                          | One ctor_proj#58 ->
+                             match ctor_proj#58 with
                               | Cons ctor_proj#60 ->
-                                 match ctor_proj#55 with
-                                  | Cons ctor_proj#56 ->
-                                     match ctor_proj#56 with
+                                 match ctor_proj#58 with
+                                  | Cons ctor_proj#55 ->
+                                     match ctor_proj#55 with
                                       | ( a , b ) ->
                                       ADD(a , b)
-                                  | Nil unit_proj#58 ->
+                                  | Nil unit_proj#57 ->
                                     2
                               | Nil unit_proj#59 ->
                                 1
@@ -625,10 +625,10 @@ const t10 =
                      (fl)@(ys)
 const t11 =
   lambda (x : sum[Consi -> option (int) , Nili -> unit]) return lambda (y :
-  sum[Consi -> option (int) , Nili -> unit]) return let gen#121[@var] =
-  ( x , y ) in  match gen#121 with
-                 | ( tuple_proj#122 , ys ) ->
-                  match tuple_proj#122 with
+  sum[Consi -> option (int) , Nili -> unit]) return let gen#122[@var] =
+  ( x , y ) in  match gen#122 with
+                 | ( tuple_proj#123 , ys ) ->
+                  match tuple_proj#123 with
                    | Consi ctor_proj#138 ->
                       match ys with
                        | Consi ctor_proj#136 ->
@@ -637,7 +637,7 @@ const t11 =
                               match ctor_proj#138 with
                                | Some a ->
                                  a
-                               | None unit_proj#128 ->
+                               | None unit_proj#121 ->
                                  ADD((fo)@(ctor_proj#138) ,
                                  (fo)@(ctor_proj#136))
                            | Some _a ->
@@ -646,7 +646,7 @@ const t11 =
                                   match ctor_proj#138 with
                                    | Some a ->
                                      a
-                                   | None unit_proj#128 ->
+                                   | None unit_proj#121 ->
                                      ADD((fo)@(ctor_proj#138) ,
                                      (fo)@(ctor_proj#136))
                                | Consi ctor_proj#130 ->
@@ -655,14 +655,14 @@ const t11 =
                                       match ctor_proj#138 with
                                        | Some a ->
                                          a
-                                       | None unit_proj#128 ->
+                                       | None unit_proj#121 ->
                                          ADD((fo)@(ctor_proj#138) ,
                                          (fo)@(ctor_proj#136))
                                    | Some b ->
                                      let a = 1 in ADD(a ,
                                      b)
                        | Nili unit_proj#135 ->
-                         (fl)@(tuple_proj#122)
+                         (fl)@(tuple_proj#123)
                    | Nili unit_proj#137 ->
                      (fl)@(ys)
 const t12 =

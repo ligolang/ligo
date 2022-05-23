@@ -2,6 +2,8 @@ import * as vscode from 'vscode'
 import { extname, basename } from 'path';
 import { execFileSync } from 'child_process';
 
+import { extensions } from '../common'
+
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
 let lastContractPath;
@@ -16,6 +18,7 @@ function extToDialect(ext : string) {
     case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.religo': return 'reasonligo'
+    case '.jsligo': return 'jsligo'
     default:
       console.error('Unknown dialect');
       return undefined
@@ -62,7 +65,7 @@ export type ContractFileData = {
 export function getLastContractPath() {
   let path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
-  if (ext !== '.ligo' && ext !== '.mligo' && ext !== '.religo') {
+  if (!extensions.includes(ext)) {
     if (!lastContractPath) {
       return undefined;
     }

@@ -22,7 +22,6 @@ type t =
   | Contract
   | Michelson_or
   | Michelson_pair
-  | Map_or_big_map
   | Baker_hash
   | Pvss_key
   | Sapling_transaction
@@ -39,6 +38,7 @@ type t =
   | Chest
   | Chest_key
   | Chest_opening_result
+  | Tx_rollup_l2_address 
   | External of string
   [@@deriving ord, eq]
 
@@ -64,7 +64,6 @@ let to_string = function
   | Contract             -> "contract"
   | Michelson_or         -> "michelson_or"
   | Michelson_pair       -> "michelson_pair"
-  | Map_or_big_map       -> "map_or_big_map"
   | Baker_hash           -> "baker_hash"
   | Pvss_key             -> "pvss_key"
   | Sapling_transaction  -> "sapling_transaction"
@@ -81,6 +80,7 @@ let to_string = function
   | Chest                -> "chest"
   | Chest_key            -> "chest_key"
   | Chest_opening_result -> "chest_opening_result"
+  | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
 
   let of_string = function
@@ -105,7 +105,6 @@ let to_string = function
   | "contract"             -> Contract
   | "michelson_or"         -> Michelson_or
   | "michelson_pair"       -> Michelson_pair
-  | "map_or_big_map"       -> Map_or_big_map
   | "baker_hash"           -> Baker_hash
   | "pvss_key"             -> Pvss_key
   | "sapling_transaction"  -> Sapling_transaction
@@ -122,6 +121,7 @@ let to_string = function
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
+  | "tx_rollup_l2_address" -> Tx_rollup_l2_address
   | "external_failwith"    -> External "failwith"
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
@@ -149,7 +149,6 @@ let set                  = Set
 let contract             = Contract
 let michelson_or         = Michelson_or
 let michelson_pair       = Michelson_pair
-let map_or_big_map       = Map_or_big_map
 let baker_hash           = Baker_hash
 let pvss_key             = Pvss_key
 let sapling_transaction  = Sapling_transaction
@@ -166,6 +165,7 @@ let mutation             = Mutation
 let chest                = Chest
 let chest_key            = Chest_key
 let chest_opening_result = Chest_opening_result
+let tx_rollup_l2_address = Tx_rollup_l2_address
 let external_failwith    = External "failwith"
 let external_int         = External "int"
 let external_ediv        = External "ediv"
@@ -193,7 +193,6 @@ let v_set                  : type_variable = TypeVar.of_input_var (to_string Set
 let v_contract             : type_variable = TypeVar.of_input_var (to_string Contract)
 let v_michelson_or         : type_variable = TypeVar.of_input_var (to_string Michelson_or)
 let v_michelson_pair       : type_variable = TypeVar.of_input_var (to_string Michelson_pair)
-let v_map_or_big_map       : type_variable = TypeVar.of_input_var (to_string Map_or_big_map)
 let v_baker_hash           : type_variable = TypeVar.of_input_var (to_string Baker_hash)
 let v_pvss_key             : type_variable = TypeVar.of_input_var (to_string Pvss_key)
 let v_sapling_trasaction   : type_variable = TypeVar.of_input_var (to_string Sapling_transaction)
@@ -210,6 +209,7 @@ let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mut
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
+let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
 let v_external_failwith    : type_variable = TypeVar.of_input_var (to_string @@ External "failwith")
 let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
 let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")

@@ -111,7 +111,7 @@ let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.set_init_env options state.env in
   let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~add_warning ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
-  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise typed_exp module_ in
+  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp module_ in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
   let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
@@ -134,7 +134,7 @@ let try_declaration ~raise ~raw_options state s =
   try
     try_with (fun ~raise ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_contract_string ~raise ~add_warning ~options:options state.syntax s in
+        Ligo_compile.Utils.type_program_string ~raise ~add_warning ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))

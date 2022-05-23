@@ -154,7 +154,6 @@ recognise (SomeRawTree dialect rawTree)
         -- TODO: We forget "rec" field in let
         "let_decl"  -> BConst     <$> field "binding"   <*> fieldOpt "type"    <*> fieldOpt "value"
         "type_decl" -> BTypeDecl  <$> field "type_name" <*> fieldOpt "params"  <*> field "type_value"
-        "attr_decl" -> BAttribute <$> field "name"
         "p_include" -> BInclude   <$> field "filename"
         "p_import"  -> BImport    <$> field "filename" <*> field "alias"
         "fun_arg"   -> BParameter <$> field "argument" <*> fieldOpt "type"

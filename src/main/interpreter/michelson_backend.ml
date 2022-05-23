@@ -3,7 +3,8 @@ module Var      = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
 
-module Tezos_protocol = Tezos_protocol_012_Psithaca
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
@@ -172,6 +173,11 @@ let compile_type ~raise type_exp =
   let open Ligo_compile in
   let ty = Of_aggregated.compile_type ~raise type_exp in
   Of_mini_c.compile_type ty
+
+let entrypoint_of_string x =
+  match Tezos_raw_protocol.Entrypoint_repr.of_annot_lax_opt (Tezos_raw_protocol.Non_empty_string.of_string_exn x) with
+  | Some x -> x
+  | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
 let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let open Ligo_compile in
@@ -405,18 +411,19 @@ let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
 let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in
-  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~loc arg arg_ty in
+  let { code = arg ; code_ty = arg_ty ; _ } = compile_simple_value ~raise ~options ~ctxt ~loc arg arg_ty in
   let func_ty = compile_type ~raise func_ty in
   let func = match code with
   | Seq (_, s) ->
      Tezos_utils.Michelson.(seq ([i_push arg_ty arg] @ s))
   | _ ->
      raise.raise (Errors.generic_error Location.generated "Could not parse") in
-  match Ligo_run.Of_michelson.run_expression ~raise func func_ty with
+  let options = make_options ~raise (Some ctxt) in
+  match Ligo_run.Of_michelson.run_expression ~raise ~options func func_ty with
   | Success (ty, value) ->
-      Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
-  | Fail _ ->
-     raise.raise (Errors.generic_error loc "Could not execute Michelson function")
+     Result.return @@ Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
+  | Fail f ->
+     Result.fail f
 
 let parse_code ~raise code =
   let open Tezos_micheline in

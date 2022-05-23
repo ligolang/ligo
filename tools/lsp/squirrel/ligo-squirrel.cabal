@@ -27,6 +27,7 @@ library
       AST.Includes
       AST.Parser
       AST.Parser.Camligo
+      AST.Parser.Jsligo
       AST.Parser.Pascaligo
       AST.Parser.Reasonligo
       AST.Pretty

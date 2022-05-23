@@ -34,7 +34,7 @@ let all_contract ~raise main_name prg =
     contract_type = contract_type ;
     main_name = main_name ;
     } in
-  let all_p = List.map ~f:(fun pass -> Helpers.fold_map_module pass data) @@ contract_passes ~raise in
+  let all_p = List.map ~f:(fun pass -> Ast_typed.Helpers.fold_map_module pass data) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
   let prg = Contract_passes.remove_unused ~raise data prg in
   prg

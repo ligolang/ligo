@@ -81,13 +81,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 19, characters 8-15:
-     18 |         let f = (b:int) => b + a;
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 20, characters 24-33:
      19 |         f (b+1)
      20 |       | Cons ((a,b)) => "invalid"
+     21 |       };
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)

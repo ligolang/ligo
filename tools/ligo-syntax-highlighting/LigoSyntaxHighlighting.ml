@@ -98,6 +98,8 @@ let output: string -> string -> string -> string -> _ Term.ret = fun vscode_dire
     let* _ = vscode_syntax_highlighting vscode_directory "religo.tmLanguage.json" "religo.configuration.json" "religo" ReasonLIGO.syntax_highlighting in
     let* _ = textmate_syntax_highlighting textmate_directory "religo.tmLanguage.json" "religo" ReasonLIGO.syntax_highlighting in
     let* _ = vim_syntax_highlighting vim_directory "religo.vim" ReasonLIGO.syntax_highlighting in
+    let* _ = vscode_syntax_highlighting vscode_directory "jsligo.tmLanguage.json" "jsligo.configuration.json" "jsligo" JsLIGO.syntax_highlighting in
+    let* _ = textmate_syntax_highlighting textmate_directory "jsligo.tmLanguage.json" "jsligo" JsLIGO.syntax_highlighting in
     let* _ = emacs_syntax_highlighting emacs_directory [("ligo", PascaLIGO.syntax_highlighting);
                                                         ("mligo", CameLIGO.syntax_highlighting);
                                                         ("religo", ReasonLIGO.syntax_highlighting)]

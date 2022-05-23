@@ -70,4 +70,11 @@ let%expect_test _ =
     Pattern not of the expected type record[a -> int , b -> int] |}] ;
   run_ligo_bad ["run"; "interpret" ; "type t = {a:int;b:int} in let x = {a=2;b=3} in let {a ; b ; c} = x in a" ; "--syntax" ; "cameligo" ] ;
   [%expect{|
-    Pattern not of the expected type record[a -> int , b -> int] |}]
+    Pattern not of the expected type record[a -> int , b -> int] |}];
+
+  run_ligo_good ["run"; "interpret" ; "t1" ; "--init-file";(test "let_destructuring.jsligo") ] ;
+  [%expect{| 1 |}] ;
+  run_ligo_good ["run"; "interpret" ; "t2" ; "--init-file";(test "let_destructuring.jsligo") ] ;
+  [%expect{| 1 |}] ;
+  run_ligo_good ["run"; "interpret" ; "t3" ; "--init-file";(test "let_destructuring.jsligo") ] ;
+  [%expect{| +3 |}] ;

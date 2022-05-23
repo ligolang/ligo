@@ -3,6 +3,7 @@ module Test.Capabilities.DocumentSymbol
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
   , unit_document_symbols_example_let_religo
+  , unit_document_symbols_example_let_jsligo
   ) where
 
 import AST.Scope (Fallback)
@@ -21,3 +22,6 @@ unit_document_symbols_example_let_camligo = documentSymbolsExampleLetCamligoDriv
 
 unit_document_symbols_example_let_religo :: Assertion
 unit_document_symbols_example_let_religo = documentSymbolsExampleLetReligoDriver @Fallback
+
+unit_document_symbols_example_let_jsligo :: Assertion
+unit_document_symbols_example_let_jsligo = documentSymbolsExampleLetJsligoDriver @Fallback
