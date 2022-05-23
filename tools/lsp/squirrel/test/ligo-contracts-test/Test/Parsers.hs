@@ -185,7 +185,7 @@ badTests =
       , "simple" </> "jsligo" </> "missing_expr_parenthesesR.jsligo"
       , "simple" </> "jsligo" </> "switch_with_missing_case_value.jsligo"
 
-        -- Fix this later 
+        -- Fix this later
       , "simple" </> "jsligo" </> "missing_semicolon_before_return_on_same_line.jsligo"
       ]
     , tdIgnoreDirs =
