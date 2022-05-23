@@ -96,6 +96,34 @@ A test execution result:
  - The "Fail reason" case means something went wrong. Its argument encode the causes of the failure (see type `test_exec_error`)
 
 <SyntaxTitle syntax="pascaligo">
+type test_baker_policy =
+  | By_round of int
+  | By_account of address
+  | Excluding of list (address)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type test_baker_policy =
+  | By_round of int
+  | By_account of address
+  | Excluding of address list
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type test_baker_policy =
+    By_round of int
+  | By_account of address
+  | Excluding of list (address)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type test_baker_policy =
+    ["By_round", int]
+  | ["By_account", address]
+  | ["Excluding", list&lt;address&gt;]
+</SyntaxTitle>
+
+A test baking policy as used by the underlying testing helpers. The
+case `By_account` is the standard one, as used by `Test.set_baker`.
+
+<SyntaxTitle syntax="pascaligo">
 type typed_address (param, storage)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -228,6 +256,21 @@ let set_source = (source: address) => unit
 Set the source for `Test.transfer` and `Test.originate`.
 
 <SyntaxTitle syntax="pascaligo">
+val set_baker_policy : test_baker_policy -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val set_baker_policy : test_baker_policy -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let set_baker_policy: test_baker_policy => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let set_baker_policy = (policy: test_baker_policy) => unit
+</SyntaxTitle>
+Force the baking policy for `Test.transfer` and `Test.originate`. By
+default, the first bootstrapped account.
+
+<SyntaxTitle syntax="pascaligo">
 val set_baker : address -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -239,7 +282,9 @@ let set_baker: address => unit
 <SyntaxTitle syntax="jsligo">
 let set_baker = (source: address) => unit
 </SyntaxTitle>
-Force the baker for `Test.transfer` and `Test.originate`. By default, the first bootstrapped account.
+Force the baker for `Test.transfer` and `Test.originate`, implemented
+using `Test.set_baker_policy` with `By_account`. By default, the first
+bootstrapped account.
 
 <SyntaxTitle syntax="pascaligo">
 val transfer : address -> michelson_program -> tez -> test_exec_result
