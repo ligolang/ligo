@@ -8,7 +8,7 @@ let michelson_add = (n: [nat, nat]): nat =>
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg

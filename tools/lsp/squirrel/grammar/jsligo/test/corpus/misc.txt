@@ -14,13 +14,13 @@ let a = (x: bool): bool => {
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (var_pattern (NameDecl)) (TypeName))
       (TypeName)
       (block_statement
-        (binding
+        (let_binding
           (var_pattern (NameDecl))
           (Int))
         (if_else_statement
@@ -45,18 +45,18 @@ let local_type = (_ : unit) : int => {
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (wildcard) (TypeName))
       (TypeName)
       (block_statement
         (type_decl (TypeName) (TypeName))
-        (binding
+        (let_binding
           (var_pattern (NameDecl))
           (TypeName)
           (Int))
-        (binding
+        (let_binding
           (var_pattern (NameDecl))
           (binary_call (Name) (Int)))
         (return_statement (Name))))))
@@ -76,21 +76,21 @@ let aux = (unit : unit) : unit => {
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg (Unit_kwd) (TypeName)) (TypeName)
       (block_statement
-        (binding (var_pattern (NameDecl)) (TypeName)
+        (let_binding (var_pattern (NameDecl)) (TypeName)
           (binary_call (Int) (paren_expr (Nat))))
-        (binding (var_pattern (NameDecl)) (TypeName)
+        (let_binding (var_pattern (NameDecl)) (TypeName)
           (binary_call
             (paren_expr (Nat))
             (Int)))
-        (binding
+        (let_binding
           (var_pattern (NameDecl)) (TypeName)
           (binary_call (Int) (Int)))
-        (binding
+        (let_binding
           (var_pattern (NameDecl)) (TypeName)
           (binary_call
             (paren_expr (Nat))

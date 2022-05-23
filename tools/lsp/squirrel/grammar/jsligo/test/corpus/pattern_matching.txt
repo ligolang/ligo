@@ -11,7 +11,7 @@ let weird_length = (v : list<int>) : int =>
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg
@@ -50,7 +50,7 @@ let int_of_color = (c : color) : int =>
 ---
 
 (source_file
-  (binding
+  (let_binding
     (var_pattern (NameDecl))
     (lambda
       (fun_arg

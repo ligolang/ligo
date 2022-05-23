@@ -23,7 +23,8 @@ module.exports = grammar({
       common.sepEndBy(optional($._semicolon), field("toplevel", $._toplevel)),
 
     _toplevel: $ => choice(
-      seq(optional($._Expor_kwd), $.binding),
+      seq(optional($._Expor_kwd), $.let_binding),
+      seq(optional($._Expor_kwd), $.const_binding),
       seq(optional($._Expor_kwd), $.type_decl),
       seq(optional($._Expor_kwd), $.namespace_statement),
       $.import_statement,
@@ -40,7 +41,8 @@ module.exports = grammar({
     _statement: $ => field("statement", $._base_statement),
 
     _base_statement: $ => prec(5, choice(
-      $.binding,
+      $.let_binding,
+      $.const_binding,
       $.type_decl,
       $._expr_statement,
       $.return_statement,
@@ -320,9 +322,21 @@ module.exports = grammar({
 
     import_statement: $ => seq('import', field("moduleName", $.ModuleName), '=', common.sepBy1('.', field("module", $.ModuleName))),
 
-    binding: $ => common.withAttrs($,
+    let_binding: $ => common.withAttrs($,
       seq(
-        choice($._Let_kwd, $._Const_kwd),
+        $._Let_kwd,
+        field("binding_pattern", $._binding_pattern),
+        optional(
+          seq(':', optional($.type_params), field("type_annot", $._type_expr))
+        ),
+        '=',
+        field("value", $._expr)
+      )
+    ),
+
+    const_binding: $ => common.withAttrs($,
+      seq(
+        $._Const_kwd,
         field("binding_pattern", $._binding_pattern),
         optional(
           seq(':', optional($.type_params), field("type_annot", $._type_expr))
