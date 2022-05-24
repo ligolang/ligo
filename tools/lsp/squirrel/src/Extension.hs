@@ -23,6 +23,7 @@ data ElimExt a = ElimExt
   { eePascal :: a
   , eeCaml   :: a
   , eeReason :: a
+  , eeJs     :: a
   }
 
 newtype UnsupportedExtension = UnsupportedExtension String
@@ -41,6 +42,7 @@ getExt path =
     ".religo" -> return Reason
     ".ligo"   -> return Pascal
     ".mligo"  -> return Caml
+    ".jsligo" -> return Js
     ext       -> throwError $ UnsupportedExtension ext
 
 isLigoFile :: FilePath -> Bool
@@ -52,6 +54,7 @@ onExt ee path =
     Pascal -> eePascal ee
     Caml   -> eeCaml   ee
     Reason -> eeReason ee
+    Js     -> eeJs     ee
 
 supportedExtensions :: [FilePath]
-supportedExtensions = [".ligo", ".mligo", ".religo"]
+supportedExtensions = [".ligo", ".mligo", ".religo", ".jsligo"]

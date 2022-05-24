@@ -33,7 +33,7 @@ let type_expression_string ~add_warning ~raise ~options syntax expression init_p
   let typed_exp         = Of_core.compile_expression ~add_warning ~raise ~options ~init_prog core_exp in
   typed_exp
 
-let type_contract_string ~raise ~add_warning ~options syntax expression =
+let type_program_string ~raise ~add_warning ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
   let c_unit, _     = Of_source.compile_string_without_preproc expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
@@ -59,7 +59,7 @@ let compile_contract_input ~raise ~add_warning ~options parameter storage syntax
   let sugar      = Of_imperative.compile_expression ~raise imperative in
   let core       = Of_sugar.compile_expression ~raise sugar in
   let typed      = Of_core.compile_expression ~raise ~add_warning ~options ~init_prog core in
-  let aggregated = Of_typed.compile_expression_in_context ~raise typed aggregated_prg  in
+  let aggregated = Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed aggregated_prg  in
   let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
   let compiled   = Of_mini_c.compile_expression ~raise ~options mini_c in
   compiled

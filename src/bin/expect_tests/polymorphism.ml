@@ -120,6 +120,13 @@ let%expect_test _ =
     { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "identity.jsligo") ] ;
+  [%expect{|
+    { parameter unit ;
+      storage int ;
+      code { PUSH int 1 ; PUSH int 1 ; ADD ; SWAP ; DROP ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;
   [%expect{|
     File "./comb.jsligo", line 36, characters 0-90:
@@ -320,7 +327,7 @@ let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; (test "use_rec.jsligo") ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value 55. |}]
+    - test exited with value 51. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "lambda.mligo") ] ;
@@ -372,7 +379,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "f" ; "--init-file" ; (test "cases_annotation.mligo") ] ;
   [%expect{|
-    File "./cases_annotation.mligo", line 4, characters 28-30:
+    File "./cases_annotation.mligo", line 4, characters 20-22:
       3 | let f (b : bool) (str : string) =
       4 |   let k = if b then k1 else k2 in
       5 |   k str (40 + 2)

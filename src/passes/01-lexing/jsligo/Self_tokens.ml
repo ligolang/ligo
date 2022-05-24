@@ -66,19 +66,25 @@ let automatic_semicolon_insertion tokens =
     inner (t :: result) rest
   | (_ as semi) :: (LineCom _ as t) :: rest
   | (_ as semi) :: (BlockCom _ as t) :: rest
+  | (SEMI _ as semi) :: (Namespace _ as t)  :: rest
+  | (SEMI _ as semi) :: (Export _ as t)  :: rest
   | (SEMI _ as semi) :: (Let _ as t)  :: rest
   | (SEMI _ as semi) :: (Const _ as t)  :: rest
   | (SEMI _ as semi) :: (Type _ as t)  :: rest
   | (SEMI _ as semi) :: (Return _ as t)  :: rest
+  | (LBRACE _ as semi) :: (Namespace _ as t)  :: rest
+  | (LBRACE _ as semi) :: (Export _ as t)  :: rest
   | (LBRACE _ as semi) :: (Let _ as t)  :: rest
   | (LBRACE _ as semi) :: (Const _ as t)  :: rest
   | (LBRACE _ as semi) :: (Type _ as t)  :: rest
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest ->
     inner (t:: semi :: result) rest
+  | token :: (Namespace _ as t) :: rest
+  | token :: (Export _ as t) :: rest
+  | token :: (Let _ as t) :: rest
   | token :: (Const _ as t) :: rest
   | token :: (Type _ as t) :: rest
-  | token :: (Return _ as t) :: rest
-  | token :: (Let _ as t) :: rest ->
+  | token :: (Return _ as t) :: rest ->
     let (r, _) = Token.proj_token token in
     let (r2, _) = Token.proj_token t in
     if r#stop#line < r2#start#line  then (

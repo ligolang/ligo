@@ -52,13 +52,15 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_signature          , t_signature                          ()) ;
     (v_key                , t_key                                ()) ;
     (v_key_hash           , t_key_hash                           ()) ;
+    (v_chest              , t_chest                              ()) ;
+    (v_chest_key          , t_chest_key                          ()) ;
+    (v_chest_opening_result , t_chest_opening_result             ()) ;  
     (v_timestamp          , t_timestamp                          ()) ;
     (v_list               , t_abstraction1 List                star) ;
     (v_big_map            , t_abstraction2 Big_map        star star) ;
     (v_map                , t_abstraction2 Map            star star) ;
     (v_set                , t_abstraction1 Set                 star) ;
     (v_contract           , t_abstraction1 Contract            star) ;
-    (v_map_or_big_map     , t_abstraction2 Map_or_big_map star star) ;
     (v_michelson_or       , t_abstraction2 Michelson_or   star star) ;
     (v_michelson_pair     , t_abstraction2 Michelson_pair star star) ;
     (v_chain_id           , t_chain_id                           ()) ;
@@ -78,13 +80,12 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_external_u_ediv    , t_abstraction2 (External "u_ediv")     star star) ;
 ]
 
-let hangzhou_extra : (type_variable * type_expression) list = [
-  (v_chest , t_chest ());
-  (v_chest_key , t_chest_key ());
-  (v_chest_opening_result , t_chest_opening_result ());
+let jakarta_extra : (type_variable * type_expression) list = [
+    (v_tx_rollup_l2_address, t_tx_rollup_l2_address ())
 ]
 
-let hangzhou_types = basic_types @ michelson_base @ hangzhou_extra
+let base = basic_types @ michelson_base
+let jakarta_types = base @ jakarta_extra
 
 let meta_ligo_types : (type_variable * type_expression) list -> (type_variable * type_expression) list =
   fun proto_types ->
@@ -97,9 +98,9 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}})
 
 let default : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type hangzhou_types
-  | Protocols.Hangzhou -> of_list_type hangzhou_types
+  | Protocols.Ithaca -> of_list_type base
+  | Protocols.Jakarta -> of_list_type jakarta_types
 
 let default_with_test : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type (meta_ligo_types hangzhou_types)
-  | Protocols.Hangzhou -> of_list_type (meta_ligo_types hangzhou_types)
+  | Protocols.Ithaca -> of_list_type (meta_ligo_types base)
+  | Protocols.Jakarta -> of_list_type (meta_ligo_types jakarta_types)

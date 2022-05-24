@@ -447,7 +447,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1801n , 2165n , 2165n). |}]
+    - test exited with value (1802n , 1985n , 1985n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -469,13 +469,13 @@ let%expect_test _ =
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
     3800011000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
     3800022000000mutez
-    666n
+    4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -483,26 +483,26 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    950038000000mutez
-    166n
+    950000000000mutez
+    0n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950049000000mutez
-    166n
+    950011000000mutez
+    0n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950060000000mutez
-    166n
+    950022000000mutez
+    0n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -560,7 +560,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
@@ -686,13 +686,13 @@ let%expect_test _ =
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
-    16n |}]
+    100000000000n |}]
 
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
      16 |       | None -> ()
@@ -706,14 +706,15 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
-run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" ; "hangzhou" ] ;
+run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 13, characters 8-9:
+   12 | let test =
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
-   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
-   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Invalid call to Test primitive. |}]
+  Expected address but got typed_address (unit ,
+  unit) |}]
 
 let () = Sys.chdir pwd
 
@@ -731,9 +732,9 @@ let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1JSxHPaoZTCEFVfK5Y1xwjtB8chWFSUyTN(None). |}]
+    - test exited with value KT1BxaPaFE2YDn8Toh2u2SJ18P6zf24oqbzZ(None). |}]
 
 let () = Sys.chdir pwd

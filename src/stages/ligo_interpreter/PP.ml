@@ -12,8 +12,8 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_timestamp t -> Format.fprintf ppf "timestamp(%a)" Z.pp_print t
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
-  | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.pp c
-  | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_012_Psithaca.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
+  | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.pp c
+  | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
   | C_mutez n -> Format.fprintf ppf "%smutez" (Z.to_string n)
   | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
   | C_key c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key.pp c

@@ -92,6 +92,18 @@ caseInfos =
       , CompletionKeyword (NameCompletion "switch")
       ]
     }
+  , TestInfo
+    { tiContract = "type-attribute.jsligo"
+    , tiPosition = (13, 33)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "if")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "while")
+      , CompletionKeyword (NameCompletion "import")
+      ]
+    }
 
   , TestInfo
     { tiContract = "type-constructor.ligo"
@@ -109,6 +121,13 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "type-constructor.religo"
+    , tiPosition = (5, 19)
+    , tiExpected =
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
+      ]
+    }
+  , TestInfo
+    { tiContract = "type-constructor.jsligo"
     , tiPosition = (5, 19)
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
@@ -163,6 +182,20 @@ caseInfos =
       , CompletionKeyword (NameCompletion "lsr")
       ]
     }
+  , TestInfo
+    { tiContract = "nested-fields.jsligo"
+    , tiPosition = (18, 35)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "as")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "namespace")
+      , CompletionKeyword (NameCompletion "case")
+      , CompletionKeyword (NameCompletion "else")
+      , CompletionKeyword (NameCompletion "const")
+      ]
+    }
+
   , TestInfo
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)

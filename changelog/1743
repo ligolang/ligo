@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: '- Testing framework: fix a potential bug where the current context wasn''t
+  used to evaluate Michelson code'
+merge_request: '1743'
+title: Improve running time after perfing
+type: fixed

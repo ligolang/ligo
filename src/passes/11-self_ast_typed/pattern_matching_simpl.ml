@@ -37,7 +37,7 @@
 *)
 
 open Errors
-let fold_map_expression = Helpers.fold_map_expression
+let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed

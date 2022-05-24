@@ -707,8 +707,12 @@ and scan_string delimiter thread state = parse
   nl     { fail thread#opening Broken_string }
 | eof    { fail thread#opening Unterminated_string }
 | ['\t' '\r' '\b']
-         { let {region; _} = state#sync lexbuf
-           in fail region Invalid_character_in_string }
+         { let {region; _} = state#sync lexbuf in
+           fail region Invalid_character_in_string }
+| ['\000' - '\031'] | ['\128' - '\255']
+           (* Control characters and 8-bit ASCII *)
+         { let {region; _} = state#sync lexbuf in
+           fail region Invalid_character_in_string }
 | '"'    {
   if Char.(=) delimiter '"' then
     let {state; _} = state#sync lexbuf
@@ -725,7 +729,7 @@ and scan_string delimiter thread state = parse
     let {state; _} = state#sync lexbuf in
            scan_string delimiter (thread#push_char '\'') state lexbuf
 
-}
+  }
 | esc    { let {lexeme; state; _} = state#sync lexbuf in
            let thread = thread#push_string lexeme
            in scan_string delimiter thread state lexbuf }

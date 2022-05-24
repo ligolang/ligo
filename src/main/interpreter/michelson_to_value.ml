@@ -239,7 +239,6 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux big_map in
         V_Map big_map'
       )
-    | (Map_or_big_map, _) -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
     | (List, [ty]) -> (
         let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
         let lst' =
@@ -260,7 +259,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
         Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
         Bls12_381_fr | Never         | Ticket                                                        | Chest        |
-        Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _), _) -> v
+        Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _       | Tx_rollup_l2_address), _) -> v
   )
   | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> (
     let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in

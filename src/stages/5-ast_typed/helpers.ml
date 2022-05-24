@@ -200,3 +200,127 @@ let rec psubst_type t (u : type_expression) =
                        {associated_type = self associated_type; michelson_annotation;decl_pos}) content in
      { u with type_content = T_record {content; layout} }
   | _ -> u
+
+open Stage_common
+module Pair = Simple_utils.Pair
+
+type 'a fold_mapper = 'a -> expression -> bool * 'a * expression
+let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * expression = fun f a e ->
+  let self = fold_map_expression f in
+  let (continue, init,e') = f a e in
+  if (not continue) then (init,e')
+  else
+  let return expression_content = { e' with expression_content } in
+  match e'.expression_content with
+  | E_matching {matchee=e;cases} -> (
+      let (res, e') = self init e in
+      let (res,cases') = fold_map_cases f res cases in
+      (res, return @@ E_matching {matchee=e';cases=cases'})
+    )
+  | E_record_accessor {record; path} -> (
+      let (res, record) = self init record in
+      (res, return @@ E_record_accessor {record; path})
+    )
+  | E_record m -> (
+    let (res,m') = LMap.fold_map ~f:(fun _ e res -> self res e) ~init m in
+    (res, return @@ E_record m')
+  )
+  | E_record_update {record; path; update} -> (
+    let (res, record) = self init record in
+    let (res, update) = self res update in
+    (res, return @@ E_record_update {record;path;update})
+  )
+  | E_constructor c -> (
+      let (res,e') = self init c.element in
+      (res, return @@ E_constructor {c with element = e'})
+  )
+  | E_application {lamb;args} -> (
+      let ab = (lamb, args) in
+      let (res,(a,b)) = Pair.fold_map ~f:self ~init ab in
+      (res, return @@ E_application {lamb=a;args=b})
+    )
+  | E_let_in { let_binder ; rhs ; let_result; attr } -> (
+      let (res,rhs) = self init rhs in
+      let (res,let_result) = self res let_result in
+      (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
+    )
+  | E_type_in { type_binder ; rhs ; let_result} -> (
+      let (res,let_result) = self init let_result in
+      (res, return @@ E_type_in { type_binder ; rhs ; let_result })
+    )
+  | E_mod_in { module_binder ; rhs ; let_result } -> (
+    let (res,let_result) = self init let_result in
+    let (res,rhs) = fold_map_expression_in_module_expr f res rhs in
+    (res, return @@ E_mod_in { module_binder ; rhs ; let_result })
+  )
+  | E_type_inst { forall ; type_ } -> (
+    let (res, forall) = self init forall in
+    ( res, return @@ E_type_inst { forall ; type_ })
+  )
+  | E_lambda { binder ; result } -> (
+      let (res,result) = self init result in
+      ( res, return @@ E_lambda { binder ; result })
+    )
+  | E_type_abstraction ta -> (
+      let res, ta = Fold_maps.type_abs self init ta in
+      res, return @@ E_type_abstraction ta
+    )
+  | E_recursive { fun_name; fun_type; lambda={binder;result}} -> (
+      let (res,result) = self init result in
+      (res, return @@ E_recursive {fun_name; fun_type; lambda={binder;result}})
+    )
+  | E_constant c -> (
+      let (res,args) = List.fold_map ~f:self ~init c.arguments in
+      (res, return @@ E_constant {c with arguments=args})
+    )
+  | E_raw_code {language;code} -> (
+    let (res,code) = self init code in
+    (res, return @@ E_raw_code { language ; code }))
+  | E_assign a ->
+    let (res,a) = Fold_maps.assign self (fun a b -> a,b) init a in
+    (res, return @@ E_assign a)
+  | E_literal _ | E_variable _  | E_module_accessor _ as e' -> (init, return e')
+
+and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
+  match m with
+  | Match_variant {cases ; tv} -> (
+      let aux init {constructor ; pattern ; body} =
+        let (init, body) = fold_map_expression f init body in
+        (init, {constructor; pattern ; body})
+      in
+      let (init,cases) = List.fold_map ~f:aux ~init cases in
+      (init, Match_variant {cases ; tv})
+    )
+  | Match_record { fields; body; tv } ->
+      let (init, body) = fold_map_expression f init body in
+      (init, Match_record { fields ; body ; tv })
+
+and fold_map_module : 'a fold_mapper -> 'a -> module_ -> 'a * module_ = fun m init p ->
+  let aux = fun acc (x : declaration) ->
+    match Location.unwrap x with
+    | Declaration_constant {binder ; expr ; attr } -> (
+      let (acc', expr) = fold_map_expression m acc expr in
+      let wrap_content = Declaration_constant {binder ; expr ; attr} in
+      (acc', {x with wrap_content})
+    )
+    | Declaration_type t -> (
+      let wrap_content = Declaration_type t in
+      (acc, {x with wrap_content})
+    )
+    | Declaration_module {module_binder; module_; module_attr} -> (
+      let (acc', module_) = fold_map_expression_in_module_expr m acc module_ in
+      let wrap_content = Declaration_module {module_binder; module_; module_attr} in
+      (acc', {x with wrap_content})
+    )
+  in
+  let (a,p) = List.fold_map ~f:aux ~init p in
+  (a, p)
+
+and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 'a * module_expr = fun fold_mapper acc x ->
+  let return r wrap_content = (r, { x with wrap_content }) in
+  match x.wrap_content with
+  | M_struct decls ->
+    let res,decls = fold_map_module fold_mapper acc decls in
+    return res (M_struct decls)
+  | M_module_path _ as x -> return acc x
+  | M_variable _ as x -> return acc x
