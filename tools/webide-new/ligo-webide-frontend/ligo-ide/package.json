@@ -32,8 +32,7 @@
     "_dev:main": "webpack --config webpack.main.config.js && electron ./dev/index.js",
     "_prepare:main": "electron-rebuild && electron-builder install-app-deps",
     "_dist": "yarn build && electron-builder -c.extraMetadata.main=build/main/index.js",
-    "_pack": "yarn build && electron-builder --dir",
-    "_prepare": "husky install"
+    "_pack": "yarn build && electron-builder --dir"
   },
   "dependencies": {
     "crypto-browserify": "^3.12.0",
@@ -88,7 +87,6 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.27.1",
     "eslint-plugin-react-hooks": "^4.3.0",
-    "husky": "^7.0.4",
     "immutable": "^4.0.0-rc.12",
     "import-sort-cli": "^6.0.0",
     "import-sort-parser-babylon": "^6.0.0",
