@@ -4,7 +4,7 @@
   "description": "Start a process in electron",
   "author": "Phil <qft.gtr@gmail.com>",
   "license": "GPL-3.0",
-  "main": "main/index.js",
+  "main": "src/index.js",
   "scripts": {},
   "dependencies": {
     "default-shell": "^1.0.1",

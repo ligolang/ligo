@@ -1,1 +1,0 @@
-exports.FileTreeChannel = require('./FileTreeChannel')

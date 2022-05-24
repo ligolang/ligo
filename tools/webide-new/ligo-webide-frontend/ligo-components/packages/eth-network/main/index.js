@@ -1,1 +1,0 @@
-exports.InstanceManager = require('./InstanceManager')

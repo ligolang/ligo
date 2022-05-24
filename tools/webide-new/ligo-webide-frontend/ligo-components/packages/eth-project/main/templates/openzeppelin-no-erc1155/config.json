@@ -1,8 +1,0 @@
-{
-  "main": "./contracts/GLDToken.sol",
-  "deploy": "./build/contracts/GLDToken.json",
-  "framework": "#framework",
-  "compilers": {
-    "solc": "0.6.12"
-  }
-}

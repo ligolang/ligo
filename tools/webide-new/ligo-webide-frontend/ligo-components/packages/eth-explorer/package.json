@@ -5,11 +5,10 @@
   "author": "Phil <qft.gtr@gmail.com>",
   "license": "GPL-3.0",
   "source": "src/index.js",
-  "main": "main/index.js",
+  "main": "src/index.js",
   "browser": "dist/index.es.js",
   "files": [
-    "dist",
-    "main"
+    "dist"
   ],
   "scripts": {
     "start": "rollup -c -w",

@@ -1,8 +1,0 @@
-{
-  "main": "./contracts/Coin.sol",
-  "deploy": "./build/contracts/Coin.json",
-  "framework": "#framework",
-  "compilers": {
-    "solc": "0.6.12"
-  }
-}

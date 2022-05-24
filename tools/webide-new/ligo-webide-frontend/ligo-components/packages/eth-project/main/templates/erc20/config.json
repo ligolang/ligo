@@ -1,8 +1,0 @@
-{
-  "main": "./contracts/ERC20.sol",
-  "deploy": "./build/contracts/ERC20.json",
-  "framework": "#framework",
-  "compilers": {
-    "solc": "0.8.0"
-  }
-}
