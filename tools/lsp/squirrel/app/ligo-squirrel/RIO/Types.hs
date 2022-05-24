@@ -44,6 +44,7 @@ data IndexOptions
   -- ^ Index from the directory where the first `.ligoproject` file is found, if
   -- it exists. This option has precedence over all others, and if this file is
   -- present, all other options will be ignored.
+  deriving stock (Show, Eq)
 
 -- | Stores information about the current language server environment, such as
 -- loaded files, files in the project, etc. This is meant to be used inside a
