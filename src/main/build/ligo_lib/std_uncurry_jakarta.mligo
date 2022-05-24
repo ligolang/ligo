@@ -92,8 +92,8 @@ end
 module List = struct
   let length (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
   let size (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
-  let head_opt (type a) (xs : a list) : a option = [%external "LIST_HEAD_OPT"] xs
-  let tail_opt (type a) (xs : a list) : (a list) option = [%external "LIST_TAIL_OPT"] xs
+  let head_opt (type a) (xs : a list) : a option = match xs with | [] -> None | (x :: _) -> Some x
+  let tail_opt (type a) (xs : a list) : (a list) option = match xs with | [] -> None | (_ :: xs) -> Some xs
   let map (type a b) ((f, xs) : (a -> b) * a list) : b list = [%external "LIST_MAP"] f xs
   let iter (type a) ((f, xs) : (a -> unit) * a list): unit = [%external "LIST_ITER"] f xs
   let fold (type a b) ((f, xs, i) : (b * a -> b) * a list * b) : b = [%external "LIST_FOLD"] f xs i

@@ -482,16 +482,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         )
         init elts
     | ( C_LIST_FOLD_RIGHT , _  ) -> fail @@ error_type
-    | ( C_LIST_HEAD_OPT , [ V_List elts ] ) ->
-      (match (List.hd elts) with
-      | Some v -> return @@ v_some v
-      | None   -> return @@ v_none ())
-    | ( C_LIST_HEAD_OPT , _  ) -> fail @@ error_type
-    | ( C_LIST_TAIL_OPT , [ V_List elts ] ) ->
-      (match (List.tl elts) with
-      | Some v -> return @@ v_some (V_List v)
-      | None   -> return @@ v_none ())
-    | ( C_LIST_TAIL_OPT , _  ) -> fail @@ error_type
     | ( C_BIG_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_BIG_MAP_EMPTY , _  ) -> fail @@ error_type
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
