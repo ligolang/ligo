@@ -4,6 +4,7 @@ module Test.Util
   ( ShowThroughBuild (..)
   , TestBuildable (..)
   , (@?=)
+  , inContractsDir
   , HUnit.testCase
   , HUnit.testCaseSteps
   , HUnit.assertFailure
@@ -11,9 +12,13 @@ module Test.Util
   ) where
 
 import Fmt (Buildable (..), blockListF', pretty)
+import System.FilePath ((</>))
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
 import Text.Show qualified
+
+inContractsDir :: FilePath -> FilePath
+inContractsDir path = "test" </> "contracts" </> path
 
 newtype ShowThroughBuild a = STB
   { unSTB :: a

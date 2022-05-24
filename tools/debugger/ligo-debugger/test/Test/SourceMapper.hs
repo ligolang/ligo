@@ -8,7 +8,6 @@ import Data.IntMap qualified as IntMap
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
 import Morley.Michelson.Typed qualified as T
-import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 
 import Morley.Debugger.Core (InstrNo (..), SourceLocation (..), SourceMapper (..))
@@ -51,7 +50,7 @@ unknownSrcPos = SrcPos (Pos 0) (Pos 0)
 test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
-      let file = ".." </> "src-mapper" </> "simple-ops.mligo"
+      let file = inContractsDir "simple-ops.mligo"
       ligoMapper <- compileLigoContractDebug file
       (SourceMapper srcMapper, T.SomeContract contract) <-
         case readLigoMapper ligoMapper of

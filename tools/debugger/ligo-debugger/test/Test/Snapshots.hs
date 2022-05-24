@@ -8,7 +8,6 @@ import Data.Singletons.Decide (decideEquality)
 import Data.Typeable ((:~:) (Refl))
 import Fmt (Buildable, pretty)
 import Morley.Michelson.Typed qualified as T
-import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
@@ -93,7 +92,7 @@ pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
   [ testCaseSteps "noop.mligo contract" \step -> do
-      let file = ".." </> "src-mapper" </> "noop.mligo"
+      let file = inContractsDir "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
             , crdParam = ()
