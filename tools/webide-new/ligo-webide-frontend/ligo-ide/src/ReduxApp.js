@@ -1,8 +1,7 @@
 import '@/menu';
 
 import { GlobalModals, autoUpdater } from '@obsidians/global';
-import React, { Component, Suspense, lazy } from 'react';
-import Welcome, { checkDependencies } from '@obsidians/welcome';
+import React, { Component, lazy } from 'react';
 import { config, updateStore } from '@/redux';
 import redux, { Provider } from '@obsidians/redux';
 
@@ -19,49 +18,25 @@ const Header = lazy(() =>
 
 export default class ReduxApp extends Component {
   state = {
-    loaded: false,
-    dependencies: false,
+    loaded: false
   };
 
   async componentDidMount() {
     await redux.init(config, updateStore).then(onReduxLoaded);
-    this.refresh();
-  }
-
-  refresh = async () => {
-    const dependencies = await checkDependencies();
-    this.setState({ loaded: true, dependencies });
+    this.setState({ loaded: true });
     autoUpdater.check();
-  };
-
-  skip = () => {
-    this.setState({ loaded: true, dependencies: true });
-  };
+  }
 
   render() {
     if (!this.state.loaded) {
       return <LoadingScreen />;
     }
 
-    if (!this.state.dependencies) {
-      return (
-        <Suspense fallback={<LoadingScreen />}>
-          <Welcome
-            isReady={checkDependencies}
-            onGetStarted={this.skip}
-            truffleSubtitle={`The library used to create and compile a project.`}
-            enableTutorial={false}
-          />
-          <NotificationSystem />
-          <GlobalModals icon={icon} />
-        </Suspense>
-      );
-    }
     return (
       <Provider store={redux.store}>
         <div
           className="body"
-          style={{ paddingTop: this.state.dependencies ? '49px' : '0' }}
+          style={{ paddingTop: '49px' }}
         >
           <Routes>
             <Header history={this.props.history} />

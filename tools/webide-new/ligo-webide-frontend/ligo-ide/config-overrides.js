@@ -89,7 +89,6 @@ const overrides = [
     'react-highlight': path.resolve(__dirname, 'node_modules/react-highlight'),
     '@solidity-parser/parser': '@solidity-parser/parser/dist/index.cjs.js',
     '@': path.resolve(__dirname, 'src/lib'),
-    '@obsidians/welcome': `@obsidians/${process.env.BUILD}-welcome`,
     '@obsidians/header': `@obsidians/${process.env.BUILD}-header`,
     '@obsidians/bottombar': `@obsidians/${process.env.BUILD}-bottombar`,
     '@obsidians/compiler': `@obsidians/${process.env.BUILD}-compiler`,
