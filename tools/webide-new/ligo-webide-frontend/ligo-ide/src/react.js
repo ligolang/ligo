@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import platform from '@obsidians/platform'
 import fileOps from '@obsidians/file-ops'
 
 import './scss/index.scss'

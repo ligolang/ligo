@@ -88,7 +88,6 @@ const overrides = [
     crypto: 'crypto-browserify',
     'react-highlight': path.resolve(__dirname, 'node_modules/react-highlight'),
     '@solidity-parser/parser': '@solidity-parser/parser/dist/index.cjs.js',
-    '@': path.resolve(__dirname, 'src/lib'),
     '@obsidians/header': `@obsidians/${process.env.BUILD}-header`,
     '@obsidians/bottombar': `@obsidians/${process.env.BUILD}-bottombar`,
     '@obsidians/compiler': `@obsidians/${process.env.BUILD}-compiler`,
@@ -98,10 +97,6 @@ const overrides = [
     '@obsidians/network': `@obsidians/${process.env.BUILD}-network`,
     '@obsidians/node': `@obsidians/${process.env.BUILD}-node`,
     '@obsidians/sdk': `@obsidians/${process.env.BUILD}-sdk`,
-    '@obsidians/premium-editor': path.resolve(
-      __dirname,
-      process.env.PREMIUM_EDITOR || 'empty.js'
-    ),
   }),
   overrideProcessEnv({
     CDN: JSON.stringify(!!process.env.CDN),

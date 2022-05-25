@@ -1,3 +1,0 @@
-.js, .jsx, .es6, .es, .mjs, .ts, .tsx:
-  style: 'eslint'
-  parser: 'babylon'

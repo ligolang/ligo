@@ -3,7 +3,6 @@ import redux from '@obsidians/redux'
 
 import { ProjectManager, BaseProjectManager } from '@obsidians/workspace'
 import { modelSessionManager } from '@obsidians/code-editor'
-import premiumEditor from '@obsidians/premium-editor'
 
 import { networkManager } from '@obsidians/eth-network'
 import compilerManager, { CompilerManager } from '@obsidians/compiler'
@@ -57,25 +56,7 @@ function makeProjectManager(Base) {
     }
 
     lint() {
-      if (!premiumEditor.solidity || !modelSessionManager.currentFilePath.endsWith('.sol')) {
-        return
-      }
-      const currentCode = modelSessionManager._editor.getValue()
-      const linter = this.projectSettings.get('linter') || 'solhint'
-      const solcVersion = this.projectSettings.get('compilers.solc')
-      const lintResult = premiumEditor.solidity.lint(currentCode, { linter, solcVersion })
-      const { currentFilePath } = modelSessionManager
-      const newValue = lintResult.length !== 0 ?
-        lintResult.reduce((prev, cur) => {
-          prev.push({
-            ...cur,
-            text: cur.text,
-            from: 'linter',
-            filePath: currentFilePath
-          })
-          return prev
-        }, []) : []
-      modelSessionManager.updateDecorations(newValue, currentFilePath)
+      return
     }
 
     async compile(sourceFile, finalCall) {

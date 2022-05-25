@@ -1,8 +1,6 @@
-import '@/menu';
-
 import { GlobalModals, autoUpdater } from '@obsidians/global';
 import React, { Component, lazy } from 'react';
-import { config, updateStore } from '@/redux';
+import { config, updateStore } from './lib/redux';
 import redux, { Provider } from '@obsidians/redux';
 
 import Auth from '@obsidians/auth';

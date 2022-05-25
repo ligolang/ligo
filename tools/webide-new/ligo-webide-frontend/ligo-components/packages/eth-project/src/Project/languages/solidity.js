@@ -4,8 +4,6 @@ import { registerRulesForLanguage } from 'monaco-ace-tokenizer'
 import prettier from 'prettier/standalone'
 import solidityPlugin from 'prettier-plugin-solidity'
 
-import premiumEditor from '@obsidians/premium-editor'
-
 import SolidityHighlightRules from './SolidityHighlightRules'
 
 export default function () {
@@ -31,10 +29,6 @@ export default function () {
     ]
   })
   registerRulesForLanguage('solidity', new SolidityHighlightRules())
-
-  if (premiumEditor.solidity) {
-    premiumEditor.solidity.installSupport()
-  }
 
   monaco.languages.registerDocumentFormattingEditProvider('solidity', {
     async provideDocumentFormattingEdits(model) {
