@@ -4,97 +4,11 @@ open Ast_typed
 
 module Typing = struct
 
-  let global_id = ref 0
   module Types = struct
 
-    (* An [IdMap] is a [Map] augmented with an [id] field (which is wrapped around the map [value] field).
-      Using a map instead of a list makes shadowed modules inaccessible,
-      since they are overwritten from the map when adding the shadower, whilst they were kept when using lists.
-      The [id] field in the map values is used to infer the type to which a constructor belong when they are not annotated
-      e.g. we need to keep the declaration order to infer that 'c' has type z in:
-
-        type x = A of int | B
-        module M = struct
-          type y = A of int
-        end
-        type z = A of int | AA
-
-        let c = A 2
-    *)
-    module IdMap = struct
-      module type OrderedType = Caml.Map.OrderedType
-
-      module type IdMapSig = sig
-        type key
-        type 'a t
-        type 'a kvi_list = (key * 'a * int) list
-
-        val empty : 'a t
-        val add : 'a t -> key -> 'a -> 'a t
-        (* In case of merge conflict between two values with same keys, this merge function keeps the value with the highest id.
-           This follows the principle that this map always keeps the latest value in case of conflict *)
-        val merge : 'a t -> 'a t -> 'a t
-        (* Converts the map into an unsorted (key * value * id) 3-uple *)
-        val to_kvi_list : 'a t -> (key * 'a * int) list
-        (* Converts the kvi_list into a id-sorted kv_list *)
-        val sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list
-        val to_kv_list : 'a t -> (key * 'a) list
-      end (* of module type S *)
-
-      module Make (Ord : OrderedType) : IdMapSig with type key = Ord.t = struct
-        module Map = Simple_utils.Map.Make(Ord)
-
-        type key = Ord.t
-
-        type 'a id_wrapped = {
-          id : int; (* This is is used in [filter_values], to return a list of matching values in chronological order *)
-          value : 'a
-        }
-        type 'a t = ('a id_wrapped) Map.t
-        type 'a kvi_list = (key * 'a * int) list
-
-        let empty = Map.empty
-
-        let add : 'a t -> key -> 'a -> 'a t =
-          fun map key value ->
-            global_id := !global_id + 1;
-            let id = !global_id in
-            let id_value = { id ; value } in
-            Map.add key id_value map
-
-        let merge : 'a t -> 'a t -> 'a t =
-          fun m1 m2 ->
-            let merger : key -> 'a id_wrapped option -> 'a id_wrapped option -> 'a id_wrapped option =
-              fun _ v1 v2 ->
-                match (v1, v2) with
-                | None,   None   -> None
-                | Some v, None   -> Some v
-                | None,   Some v -> Some v
-                | Some v1, Some v2 ->
-                  if v1.id > v2.id then Some v1 else Some v2
-            in
-            Map.merge merger m1 m2
-
-        let to_kvi_list : 'a t -> (key * 'a * int) list =
-          fun map ->
-            List.map ~f:(fun (key, value) -> (key, value.value, value.id)) @@ Map.to_kv_list map
-
-        let sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list =
-          fun list ->
-            let sorted_list = List.sort list ~compare:(fun (_, _, id1) (_, _, id2) -> Int.compare id2 id1) in
-            List.map ~f:(fun (k, v, _) -> (k, v)) sorted_list
-
-        let to_kv_list : 'a t -> (key * 'a) list =
-          fun map ->
-            sort_to_kv_list @@ to_kvi_list map
-
-      end (* of module IdMap.Make*)
-
-    end (* of module IdMap *)
-
-    module ValueMap  = IdMap.Make(ValueVar)
-    module TypeMap   = IdMap.Make(TypeVar)
-    module ModuleMap = IdMap.Make(ModuleVar)
+    module ValueMap  = Simple_utils.Map.Make(ValueVar)
+    module TypeMap   = Ast_typed.Helpers.IdMap.Make(TypeVar)
+    module ModuleMap = Ast_typed.Helpers.IdMap.Make(ModuleVar)
 
     type values  = type_expression ValueMap.t
     type types   = type_expression TypeMap.t
@@ -147,7 +61,7 @@ module Typing = struct
     let rec module_binding ppf (mod_var,type_) =
       fprintf ppf "%a => %a" module_variable mod_var context type_
 
-    and context ppf ({values;types;modules} : Types.context) =
+    and context ppf {values;types;modules} =
       fprintf ppf "{[ %a; @; %a; %a; ]}"
         (list_sep_scope value_binding ) (ValueMap.to_kv_list  values)
         (list_sep_scope type_binding  ) (TypeMap.to_kv_list   types)
@@ -158,7 +72,15 @@ module Typing = struct
 
   (* Not commutative as a shadows b*)
   let union : t -> t -> t = fun a b ->
-    Types.{values = ValueMap.merge a.values b.values; types = TypeMap.merge a.types b.types ; modules = ModuleMap.merge a.modules b.modules}
+    let merger : Types.ValueMap.key -> 'a option -> 'a option -> 'a option =
+      fun _ v1 v2 ->
+        match (v1, v2) with
+        | None,   None   -> None
+        | Some v, None   -> Some v
+        | None,   Some v -> Some v
+        | Some v1, Some _ -> Some v1 (* not commutative : a shadows b *)
+    in
+    Types.{values = ValueMap.merge merger a.values b.values; types = TypeMap.merge a.types b.types ; modules = ModuleMap.merge a.modules b.modules}
 
   (* TODO: generate *)
   let get_types  : t -> Types.types  = fun { values=_ ; types ; modules=_ } -> types
@@ -168,7 +90,7 @@ module Typing = struct
 
   (* TODO: generate : these are now messy, clean them up. *)
   let add_value : t -> Ast_typed.expression_variable -> Ast_typed.type_expression -> t = fun c ev te ->
-    let values = Types.ValueMap.add c.values ev te in
+    let values =  Types.ValueMap.add ev te c.values in
     {c with values}
 
   let add_type : t -> Ast_typed.type_variable -> Ast_typed.type_expression -> t = fun c tv te ->
@@ -275,63 +197,8 @@ module Typing = struct
         in
         (* Fetch all types declared in current module and its submodules *)
         let module_types = Types.get_module_types ctxt in
-        (*  Also add the shadowed t_sum types nested in the fetched types.
-
-            So far, [get_modules_types] gave us the ctxt types, i.e. all types declared current scope and submodules.
-            There is no shadowed type in ctxt types (since ctxt is a map, shadowed types are removed when adding the shadower).
-            However we want shadowed types when they are nested in another type :
-              type a = Foo of int | Bar of string
-              type a = a list
-            Here, we want [Foo of int | Bar of string] to be found
-            But we want to add nested t_sum types _only_ if they are shadowed, we don't want to add them in that case for example :
-              type foo_variant = Foo of int | Bar of string
-              type foo_record = { foo : foo_variant ; bar : foo_variant}
-            Because [foo_variant] would appear three times in the list instead of one.
-
-            NOTE : We could append nested types on top of the [module_types] list we have so far,
-            but having a final list with all nested-types before toplevel types triggers some errors.
-
-            NOTE : We can't just do a final id-sort of the list to have everything in declarartion order
-            because the fetched nested types don't have id, only the ones retrieved from the ctxt do.
-
-            So, if we have ctxt types :
-              [t1; t2; t3]
-            After adding the shadowed t_sums, we want the final list :
-              [t1; tsum_shadowed_by_t1; t2; tsum_shadowed_by_t2; t3; tsum_shadowed_by_t3]
-
-            NOTE : When [fold_type_expression] is used on t1, it will add tsum types nested in t1,
-            but it might also add t1 (or not), we don't know.
-            However, we want to make sure t1 is in the final list *exactly once*.
-             - If it's not here, we'll lose a type and have incorrect "type [t1] not found" errors
-             - If it's here more than once, we'll have a false "warning, [t1] inferred but could also be of type [t1]"
-            To ensure [t1] appears once exactly, we tweak the fold function by passing a [is_top] boolean
-            to ensure it will fold over all nested type in [t1] but not the toplevel one (i.e. [t1]),
-            we then add [t1] manually to the list.
-        *)
-        let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
-          let add_if_shadowed_t_sum :
-            type_variable -> (type_variable * type_expression) list * bool -> type_expression -> (type_variable * type_expression) list * bool =
-            fun shadower_tv (accu, is_top) te ->
-              let ret x = (x, false) in
-              match (te.type_content, te.orig_var) with
-              | T_sum _, Some tv -> (
-                  if (TypeVar.equal tv shadower_tv) && (not is_top)
-                  then ret ((tv, te) :: accu)
-                  else ret accu
-                )
-              | T_sum _, None -> ret accu (* TODO : What should we do with those sum types with no binder ? *)
-              | _ -> ret accu
-
-          in
-          let (nested_t_sums, _) : (type_variable * type_expression) list * bool =
-            Ast_typed.Helpers.fold_type_expression
-            te
-            ~init:(tsum_list, true)
-            ~f:(add_if_shadowed_t_sum tv)
-          in
-          (tv, te) :: nested_t_sums
-        in
-        let module_types = List.fold (List.rev module_types) ~init:[] ~f:add_shadowed_nested_t_sum in
+        (*  Also add the shadowed t_sum types nested in the fetched types. *)
+        let module_types = List.fold (List.rev module_types) ~init:[] ~f:Ast_typed.Helpers.add_shadowed_nested_t_sum in
         (* For all types found, pick only the T_sum, and make 4-uple out of them  *)
         let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
         let general_type_opt = List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum in
