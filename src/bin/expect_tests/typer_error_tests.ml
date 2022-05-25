@@ -165,6 +165,48 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/id.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative/id.mligo", line 101, characters 27-39:
+    100 | let skip (p,s: unit * storage) =
+    101 |   let void: unit = assert (Tezos.amount = storage.2.1) in
+    102 |   let identities, last_id, prices = storage in
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/negative/id.mligo", line 74, characters 70-82:
+     73 |       match current_id_details with
+     74 |       | Some id_details -> (Tezos.sender = id_details.controller) || (Tezos.sender = id_details.owner)
+     75 |       | None -> failwith ("No such ID " + id)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/negative/id.mligo", line 74, characters 28-40:
+     73 |       match current_id_details with
+     74 |       | Some id_details -> (Tezos.sender = id_details.controller) || (Tezos.sender = id_details.owner)
+     75 |       | None -> failwith ("No such ID " + id)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/negative/id.mligo", line 54, characters 7-19:
+     53 |   let is_allowed: bool =
+     54 |     if Tezos.sender = current_id_details.owner
+     55 |     then true
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/negative/id.mligo", line 39, characters 12-24:
+     38 |   let new_id_details: id_details = {
+     39 |     owner = Tezos.sender ;
+     40 |     controller = controller ;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/negative/id.mligo", line 35, characters 14-26:
+     34 |     | Some addr -> addr
+     35 |     | None -> Tezos.sender
+     36 |   in
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/negative/id.mligo", line 29, characters 27-39:
+     28 | let buy (parameter, storage: (bytes * address option) * storage) =
+     29 |   let void: unit = assert (Tezos.amount = storage.2.0) in
+     30 |   let profile, initial_controller = parameter in
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
     File "../../test/contracts/negative/id.mligo", line 45, characters 4-18:
      44 |   let updated_identities: (id, id_details) big_map =
      45 |     Big_map.update new_id new_id_details identities

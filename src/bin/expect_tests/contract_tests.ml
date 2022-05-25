@@ -9,25 +9,235 @@ let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
-  [%expect{| 1175 bytes |}] ;
+  [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    1175 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
-  [%expect{| 583 bytes |}] ;
+  [%expect{|
+    File "../../test/contracts/multisig.ligo", line 41, characters 49-63:
+     40 |     const packed_payload : bytes =
+     41 |       Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
+     42 |     var valid : nat := 0n;
+
+    Warning: the constant Tezos.chain_id is soon to be deprecated. Use instead Tezos.get_chain_id : unit -> chain_id.
+    583 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
-  [%expect{| 1653 bytes |}] ;
+  [%expect{|
+    File "../../test/contracts/multisig-v2.ligo", line 121, characters 32-44:
+    120 |           then s.proposal_counters[Tezos.sender] :=
+    121 |                  abs (Map.find (Tezos.sender, s.proposal_counters) - 1n)
+    122 |           else skip;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 120, characters 35-47:
+    119 |           if Set.cardinal (voters) =/= Set.cardinal (new_set)
+    120 |           then s.proposal_counters[Tezos.sender] :=
+    121 |                  abs (Map.find (Tezos.sender, s.proposal_counters) - 1n)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 114, characters 49-61:
+    113 |           // The message is stored
+    114 |           const new_set : addr_set = Set.remove (Tezos.sender, voters);
+    115 |
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 81, characters 16-28:
+     80 |     var sender_proposal_counter : nat :=
+     81 |       Map.find (Tezos.sender, s.proposal_counters);
+     82 |
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 74, characters 31-43:
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     74 |              new_store := set [Tezos.sender]
+     75 |         }
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 73, characters 23-35:
+     72 |           s.proposal_counters[Tezos.sender] :=
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     74 |              new_store := set [Tezos.sender]
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-42:
+     71 |           // the message has never been received before
+     72 |           s.proposal_counters[Tezos.sender] :=
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 67, characters 39-51:
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     67 |                  new_store := Set.add (Tezos.sender,voters)
+     68 |         }
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 66, characters 27-39:
+     65 |           else s.proposal_counters[Tezos.sender] :=
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     67 |                  new_store := Set.add (Tezos.sender,voters)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 65, characters 35-47:
+     64 |           then skip
+     65 |           else s.proposal_counters[Tezos.sender] :=
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 63, characters 22-34:
+     62 |              associated with the message. *)
+     63 |           if Set.mem (Tezos.sender, voters)
+     64 |           then skip
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 40, characters 20-32:
+     39 |
+     40 |     if not Set.mem (Tezos.sender, s.authorized_addresses)
+     41 |     then failwith("Unauthorized address")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    1653 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
-  [%expect{| 430 bytes |}] ;
+  [%expect{|
+    File "../../test/contracts/vote.mligo", line 36, characters 13-25:
+     35 |      let _ = assert (now >= store.start_time && store.finish_time > now) in *)
+     36 |   let addr = Tezos.sender in
+     37 |   (* let _ = assert (not Set.mem addr store.voters) in *)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    430 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
-  [%expect{| (Left (Left 1)) |}] ;
+  [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    (Left (Left 1)) |}] ;
 
   run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
-  [%expect{| (Pair (Pair {} {}) 3) |}] ;
+  [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
     Invalid command line argument.
     The provided storage does not have the correct type for the contract.
     File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -44,6 +254,36 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "parameter" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
   [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
     Invalid command line argument.
     The provided parameter does not have the correct type for the given entrypoint.
     File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
@@ -63,6 +303,7 @@ let%expect_test _ =
 let%expect_test _  =
   run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
+    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
@@ -79,11 +320,46 @@ let%expect_test _  =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
+    File "../../test/contracts/timestamp.ligo", line 4, characters 59-68:
+      3 | function main (const p : unit; const s : storage_) :
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
+
+    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "coase.ligo" ] ;
   [%expect{|
+    File "../../test/contracts/coase.ligo", line 117, characters 21-33:
+    116 |     cards[s.next_id] := record [
+    117 |       card_owner   = Tezos.sender;
+    118 |       card_pattern = action.card_to_buy
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 108, characters 15-27:
+    107 |       card_pattern.coefficient * (card_pattern.quantity + 1n);
+    108 |     if price > Tezos.amount then failwith ("Not enough money") else skip;
+    109 |     // Increase quantity
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/coase.ligo", line 89, characters 36-48:
+     88 |     const receiver : contract (unit) =
+     89 |       case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+     90 |         Some (contract) -> contract
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 72, characters 27-39:
+     71 |       ];
+     72 |     if card.card_owner =/= Tezos.sender
+     73 |     then failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/coase.ligo", line 56, characters 27-39:
+     55 |       ];
+     56 |     if card.card_owner =/= Tezos.sender then
+     57 |       failwith ("This card doesn't belong to you")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
     { parameter
         (or (or (nat %buy_single) (nat %sell_single))
             (pair %transfer_single (nat %card_to_transfer) (address %destination))) ;
@@ -307,6 +583,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
   [%expect{|
+    File "../../test/contracts/multisig.ligo", line 41, characters 49-63:
+     40 |     const packed_payload : bytes =
+     41 |       Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
+     42 |     var valid : nat := 0n;
+
+    Warning: the constant Tezos.chain_id is soon to be deprecated. Use instead Tezos.get_chain_id : unit -> chain_id.
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
               (list %signatures (pair key_hash signature))) ;
@@ -406,6 +688,78 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig-v2.ligo" ] ;
   [%expect{|
+    File "../../test/contracts/multisig-v2.ligo", line 121, characters 32-44:
+    120 |           then s.proposal_counters[Tezos.sender] :=
+    121 |                  abs (Map.find (Tezos.sender, s.proposal_counters) - 1n)
+    122 |           else skip;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 120, characters 35-47:
+    119 |           if Set.cardinal (voters) =/= Set.cardinal (new_set)
+    120 |           then s.proposal_counters[Tezos.sender] :=
+    121 |                  abs (Map.find (Tezos.sender, s.proposal_counters) - 1n)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 114, characters 49-61:
+    113 |           // The message is stored
+    114 |           const new_set : addr_set = Set.remove (Tezos.sender, voters);
+    115 |
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 81, characters 16-28:
+     80 |     var sender_proposal_counter : nat :=
+     81 |       Map.find (Tezos.sender, s.proposal_counters);
+     82 |
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 74, characters 31-43:
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     74 |              new_store := set [Tezos.sender]
+     75 |         }
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 73, characters 23-35:
+     72 |           s.proposal_counters[Tezos.sender] :=
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     74 |              new_store := set [Tezos.sender]
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 72, characters 30-42:
+     71 |           // the message has never been received before
+     72 |           s.proposal_counters[Tezos.sender] :=
+     73 |              Map.find (Tezos.sender, s.proposal_counters) + 1n;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 67, characters 39-51:
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     67 |                  new_store := Set.add (Tezos.sender,voters)
+     68 |         }
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 66, characters 27-39:
+     65 |           else s.proposal_counters[Tezos.sender] :=
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+     67 |                  new_store := Set.add (Tezos.sender,voters)
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 65, characters 35-47:
+     64 |           then skip
+     65 |           else s.proposal_counters[Tezos.sender] :=
+     66 |                  Map.find (Tezos.sender, s.proposal_counters) + 1n;
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 63, characters 22-34:
+     62 |              associated with the message. *)
+     63 |           if Set.mem (Tezos.sender, voters)
+     64 |           then skip
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/multisig-v2.ligo", line 40, characters 20-32:
+     39 |
+     40 |     if not Set.mem (Tezos.sender, s.authorized_addresses)
+     41 |     then failwith("Unauthorized address")
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
     { parameter
         (or (or (unit %default) (lambda %send bytes (list operation)))
             (lambda %withdraw bytes (list operation))) ;
@@ -825,6 +1179,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "vote.mligo" ] ;
   [%expect {|
+File "../../test/contracts/vote.mligo", line 36, characters 13-25:
+ 35 |      let _ = assert (now >= store.start_time && store.finish_time > now) in *)
+ 36 |   let addr = Tezos.sender in
+ 37 |   (* let _ = assert (not Set.mem addr store.voters) in *)
+
+Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
 { parameter
     (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
         (or %vote (unit %nay) (unit %yea))) ;
@@ -915,6 +1275,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
   [%expect {|
+File "../../test/contracts/ticket_wallet.mligo", line 45, characters 16-28:
+ 44 |       | Send send -> begin
+ 45 |         assert (Tezos.sender = manager) ;
+ 46 |         let (ticket, tickets) = Big_map.get_and_update send.ticketer (None : unit ticket option) tickets in
+
+Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+File "../../test/contracts/ticket_wallet.mligo", line 26, characters 12-24:
+ 25 |   begin
+ 26 |     assert (Tezos.amount = 0mutez);
+ 27 |     let (p,storage) = arg in
+
+Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
 { parameter
     (or (ticket %receive unit)
         (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
@@ -1010,6 +1382,24 @@ File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
 Warning: unused variable "ticket".
 Hint: replace it by "_ticket" to prevent this warning.
 
+File "../../test/contracts/ticket_builder.mligo", line 35, characters 16-28:
+ 34 |       begin
+ 35 |         assert (Tezos.sender = s.admin);
+ 36 |         let ticket = Tezos.create_ticket () mint.amount in
+
+Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+File "../../test/contracts/ticket_builder.mligo", line 30, characters 27-45:
+ 29 |         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
+ 30 |         assert (ticketer = Tezos.self_address);
+ 31 |         (([] : operation list), s)
+
+Warning: the constant Tezos.self_address is soon to be deprecated. Use instead Tezos.get_self_address : unit -> address.
+File "../../test/contracts/ticket_builder.mligo", line 24, characters 12-24:
+ 23 |   begin
+ 24 |     assert (Tezos.amount = 0mutez);
+ 25 |     let (p,s) = arg in
+
+Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
 { parameter
     (or (ticket %burn unit)
         (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
@@ -1120,6 +1510,18 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
+    File "../../test/contracts/amount_lambda.mligo", line 8, characters 20-32:
+      7 | let f2 (x : unit) : unit -> tez =
+      8 |   fun (x : unit) -> Tezos.amount
+      9 |
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
+    File "../../test/contracts/amount_lambda.mligo", line 3, characters 18-30:
+      2 | let f1 (x : unit) : unit -> tez =
+      3 |   let amt : tez = Tezos.amount in
+      4 |   fun (x : unit) -> amt
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
@@ -2292,6 +2694,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
   [%expect{|
+    File "../../test/contracts/ticket_wallet.mligo", line 45, characters 16-28:
+     44 |       | Send send -> begin
+     45 |         assert (Tezos.sender = manager) ;
+     46 |         let (ticket, tickets) = Big_map.get_and_update send.ticketer (None : unit ticket option) tickets in
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+    File "../../test/contracts/ticket_wallet.mligo", line 26, characters 12-24:
+     25 |   begin
+     26 |     assert (Tezos.amount = 0mutez);
+     27 |     let (p,storage) = arg in
+
+    Warning: the constant Tezos.amount is soon to be deprecated. Use instead Tezos.get_amount : unit -> tez.
     { parameter
         (or (ticket %receive unit)
             (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
@@ -2705,6 +3119,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "voting.mligo" ] ;
   [%expect{|
+File "../../test/contracts/voting.mligo", line 5, characters 10-34:
+  4 |   let x = Tezos.voting_power (Crypto.hash_key p) in
+  5 |   let y = Tezos.total_voting_power in
+  6 |   ([] : operation list), (x,y)
+
+Warning: the constant Tezos.total_voting_power is soon to be deprecated. Use instead Tezos.get_total_voting_power : unit -> nat.
 { parameter key ;
   storage (pair nat nat) ;
   code { CAR ;
@@ -2720,6 +3140,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "cbo" ; "--init-file" ; contract "get_contract_with_error.ligo" ] ;
   [%expect{|
+File "../../test/contracts/get_contract_with_error.ligo", line 11, characters 62-74:
+ 10 |   block {
+ 11 |     const c : contract (unit) = Tezos.get_contract_with_error(Tezos.sender, "contract not found")
+ 12 |   } with (list [Tezos.transaction (unit, 0tez, c)], s)
+
+Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
+File "../../test/contracts/get_contract_with_error.ligo", line 5, characters 61-73:
+  4 | function cb (const s : storage) : return is block {
+  5 |   const c : contract (unit) = Tezos.get_contract_with_error (Tezos.sender, "error")
+  6 | } with (list [Tezos.transaction (unit, 0tez, c)], s)
+
+Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
 { PUSH string "contract not found" ;
   SENDER ;
   CONTRACT unit ;
@@ -2803,6 +3235,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "call_view_impure.mligo" ] ;
   [%expect{|
+    File "../../test/contracts/call_view_impure.mligo", line 2, characters 40-52:
+      1 | let main ((_, _) : unit * unit) : operation list * unit =
+      2 |   let u = match (Tezos.call_view "foo" (Tezos.sender) ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit option) with
+      3 |     | Some x -> x
+
+    Warning: the constant Tezos.sender is soon to be deprecated. Use instead Tezos.get_sender : unit -> address.
     { parameter unit ;
       storage unit ;
       code { DROP ;
