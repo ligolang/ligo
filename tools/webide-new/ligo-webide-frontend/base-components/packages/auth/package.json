@@ -18,6 +18,5 @@
     "immutable": "^4.0.0-rc.12"
   },
   "devDependencies": {
-    "electron-is-dev": "^1.2.0"
   }
 }

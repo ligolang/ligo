@@ -6,7 +6,7 @@ on:
 env:
   owner: ObsidianLabs
   own_components: eth-components
-  share_components: electron-components
+  share_components: base-components
   project_build: eth
   project_project: eth
   project_name: Black IDE

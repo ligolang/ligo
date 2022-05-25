@@ -15,7 +15,6 @@
     "trash": "^7.0.0"
   },
   "peerDependencies": {
-    "aws-sdk": "^2.830.0",
-    "electron": "*"
+    "aws-sdk": "^2.830.0"
   }
 }

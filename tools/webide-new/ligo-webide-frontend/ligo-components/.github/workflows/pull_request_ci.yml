@@ -3,7 +3,7 @@ on:
   pull_request:
 
 env:
-  share_components: electron-components
+  share_components: base-components
   owner: ObsidianLabs
 
 jobs:

@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react'
 
 import { Modal } from '@obsidians/ui-components'
 import fileOps from '@obsidians/file-ops'
-import platform from '@obsidians/platform'
 
 import globalModalManager from './globalModalManager'
 
@@ -27,18 +26,7 @@ export default class AboutModal extends PureComponent {
   }
 
   handleClick () {
-    if (platform.isWeb) {
-      return
-    }
-    if (this.state.debugCounter > 20) {
-      try {
-        console.info('Dev Tools Toggled')
-        window.require('electron').BrowserWindow.getFocusedWindow().toggleDevTools()
-      } catch (e) {}
-      this.setState({ debugCounter: 0 })
-    } else {
-      this.setState({ debugCounter: this.state.debugCounter + 1 })
-    }
+    return
   }
 
   render () {

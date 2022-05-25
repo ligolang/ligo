@@ -1,4 +1,3 @@
-import ElectronFileOps from './ElectronFileOps'
 import WebFileOps from './WebFileOps'
 
 class FileOpsManager {
@@ -9,11 +8,7 @@ class FileOpsManager {
   }
 
   set fsType (fsType) {
-    if (fsType === 'electron') {
-      this._fsType = fsType
-      this._fileOps = new ElectronFileOps()
-      return
-    } else if (fsType === 'web') {
+    if (fsType === 'web') {
       this._fsType = fsType
       this._fileOps = this.web
       return

@@ -19,8 +19,7 @@
     "@obsidians/file-ops": "^0.3.0",
     "@obsidians/ipc": "^0.3.0",
     "@obsidians/platform": "^0.3.0",
-    "@obsidians/ui-components": "^0.3.0",
-    "electron-updater": "^4.6.1"
+    "@obsidians/ui-components": "^0.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.7.5",

@@ -7,26 +7,20 @@ export default class WebFileOps extends FileOps {
     const fs = new AwsS3Fs()
     super(fs, path)
 
-    this.electron = {}
-
     this.homePath = '/'
     this.workspace = path.join(this.homePath, process.env.PROJECT_NAME)
   }
 
   onFocus (handler) {
-    // this.electron.ipcRenderer.on('on-focus', handler)
   }
 
   offFocus (handler) {
-    // this.electron.ipcRenderer.on('off-focus', handler)
   }
 
   async openNewFile (defaultPath = this.workspace) {
-    // TODO
   }
 
   async chooseFolder (defaultPath = this.workspace) {
-    // TODO
   }
 
   async listFolder (folderPath) {

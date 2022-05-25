@@ -43,7 +43,6 @@
     "rollup-plugin-postcss": "^2.3.0"
   },
   "peerDependencies": {
-    "electron": "*",
     "immutable": "^4.0.0-rc.12",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"

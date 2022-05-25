@@ -49,7 +49,6 @@
     "rollup-plugin-postcss": "^2.3.0"
   },
   "peerDependencies": {
-    "electron": "*",
     "moment": "*",
     "react": "*",
     "react-dom": "*",

@@ -1,13 +1,12 @@
 {
-  "name": "@obsidians/electron-components",
+  "name": "@obsidians/base-components",
   "license": "GPL-3.0",
   "private": true,
   "engines": {
     "node": ">=16"
   },
   "scripts": {
-    "build": "node init.js",
-    "_postinstall": "electron-rebuild"
+    "build": "node init.js"
   },
   "dependencies": {
     "keytar": "7.7.0",
@@ -15,8 +14,6 @@
   },
   "devDependencies": {
     "danger": "^11.0.2",
-    "electron": "^16.0.2",
-    "electron-rebuild": "^3.2.5",
     "standard": "^16.0.4",
     "standard-react": "^4.0.0"
   },
