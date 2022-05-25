@@ -1,6 +1,6 @@
 import { BaseUserHomepage } from '@obsidians/user';
 import { connect } from '@obsidians/redux';
-import { networkManager } from '@obsidians/network';
+import { networkManager } from '@obsidians/eth-network';
 
 BaseUserHomepage.defaultProps = {
   enableTutorial: true,

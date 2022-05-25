@@ -1,4 +1,4 @@
-import Network from '@obsidians/network'
+import Network from '@obsidians/eth-network'
 
 Network.defaultProps = {
   minerKey: true,

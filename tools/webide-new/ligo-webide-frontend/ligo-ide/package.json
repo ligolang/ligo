@@ -109,7 +109,6 @@
     "webpack-merge": "^4.2.2"
   },
   "resolutions": {
-    "@solidity-parser/parser": "^0.12.1",
     "node-abi": "3.5.0",
     "node-sass": "npm:sass",
     "sass-loader": "10.2.0",

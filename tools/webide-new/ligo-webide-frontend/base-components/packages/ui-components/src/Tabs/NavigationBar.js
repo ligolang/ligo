@@ -5,7 +5,7 @@ import {
   Input
 } from 'reactstrap'
 import ToolbarButton from '../buttons/ToolbarButton'
-import { utils } from '@obsidians/sdk'
+import { utils } from '@obsidians/eth-sdk'
 export default class NavigationBar extends PureComponent {
   constructor(props) {
     super(props)

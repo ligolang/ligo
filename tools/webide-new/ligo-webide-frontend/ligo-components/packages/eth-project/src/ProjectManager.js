@@ -5,7 +5,7 @@ import { ProjectManager, BaseProjectManager } from '@obsidians/workspace'
 import { modelSessionManager } from '@obsidians/code-editor'
 
 import { networkManager } from '@obsidians/eth-network'
-import compilerManager, { CompilerManager } from '@obsidians/compiler'
+import compilerManager, { CompilerManager } from '@obsidians/eth-compiler'
 import queue from '@obsidians/eth-queue'
 
 import debounce from 'lodash/debounce'

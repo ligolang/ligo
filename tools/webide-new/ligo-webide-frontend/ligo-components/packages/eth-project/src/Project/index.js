@@ -1,7 +1,7 @@
 import Workspace from '@obsidians/workspace'
 import fileOps from '@obsidians/file-ops'
 import { useBuiltinCustomTabs, modelSessionManager, defaultModeDetector } from '@obsidians/code-editor'
-import compilerManager, { CompilerTerminal } from '@obsidians/compiler'
+import compilerManager, { CompilerTerminal } from '@obsidians/eth-compiler'
 import platform from '@obsidians/platform'
 import ProjectManager from '../ProjectManager'
 

@@ -7,7 +7,7 @@ import {
 
 import notification from '@obsidians/notification'
 import keypairManager from './keypairManager'
-import { utils } from '@obsidians/sdk'
+import { utils } from '@obsidians/eth-sdk'
 export default class KeypairInputSelector extends PureComponent {
   constructor(props) {
     super(props)

@@ -1,1 +1,1 @@
-export { default } from '@obsidians/explorer'
+export { default } from '@obsidians/eth-explorer'

@@ -1,1 +1,1 @@
-export { default } from '@obsidians/contract'
+export { default } from '@obsidians/eth-contract'

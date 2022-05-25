@@ -18,7 +18,7 @@ export default {
     }
   ],
   external: [
-    '@obsidians/sdk',
+    '@obsidians/eth-sdk',
     'react-router-cache-route',
     ...Object.keys(pkg.dependencies),
     ...Object.keys(pkg.peerDependencies),

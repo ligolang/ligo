@@ -16,7 +16,7 @@ import {
 
 import notification from '@obsidians/notification'
 import { DockerImageInputSelector } from '@obsidians/docker'
-import compilerManager from '@obsidians/compiler'
+import compilerManager from '@obsidians/eth-compiler'
 
 import NewProjectModal from '../../components/NewProjectModal'
 

@@ -1,1 +1,1 @@
-export { default } from '@obsidians/bottombar'
+export { default } from '@obsidians/eth-bottombar'

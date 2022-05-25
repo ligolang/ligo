@@ -18,7 +18,7 @@ export default {
     }
   ],
   external: [
-    '@obsidians/compiler',
+    '@obsidians/eth-compiler',
     ...Object.keys(pkg.dependencies),
     ...Object.keys(pkg.peerDependencies),
   ],
