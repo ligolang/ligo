@@ -345,12 +345,18 @@ load uri = Log.addNamespace "load" do
     Just revNormFp = J.uriToNormalizedFilePath revUri  -- FIXME: non-exhaustive
     revFp = J.fromNormalizedFilePath revNormFp
     loadDefault temp = addShallowScopes @parser temp noProgress =<< loadWithoutScopes revNormFp
+    loadWithoutIndexing = do
+      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
+      Contract <$> loadDefault temp <*> pure [revUri]
 
-  -- | We're trying to load an ignored file. OK, load it, but don't index
+  -- If we're trying to load an ignored file, then load it, but don't index
   -- anything else.
-  shouldIndexFile <- maybe True (revFp `notElem`) <$> tryGetIgnoredPaths
-  case rootM of
-    Just root | dirExists, shouldIndexFile -> do
+  shouldIgnoreFile <- maybe False (revFp `elem`) <$> tryGetIgnoredPaths
+  if
+    | shouldIgnoreFile -> do
+      sendWarning [Log.i|Opening an ignored file. It will not be indexed and cross-file operations may not work as inteded. Change your .ligoproject file to index this file.|]
+      loadWithoutIndexing
+    | Just root <- rootM, dirExists -> do
       time <- ASTMap.getTimestamp
 
       revRoot <- if revUri == uri
@@ -377,12 +383,11 @@ load uri = Log.addNamespace "load" do
         ASTMap.insert nuri (Contract contract nuris) time tmap
 
       pure $ Contract result nuris
-    _ -> do
+    | otherwise -> do
       case rootIndex of
         IndexChoicePending -> $(Log.debug) [Log.i|Indexing directory has not been specified yet.|]
         _ -> pure ()
-      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
-      Contract <$> loadDefault temp <*> pure [revUri]
+      loadWithoutIndexing
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
 handleLigoFileChanged nfp = \case
