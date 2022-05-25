@@ -197,6 +197,17 @@ tryLoadWithoutScopes :: J.NormalizedFilePath -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes =
   fmap (either (const Nothing) Just) . tryIO . (insertPreprocessorRanges <=< loadWithoutScopes)
 
+getFilePredicate :: RIO (FilePath -> Bool)
+getFilePredicate = do
+  ignoredPathsM <- tryGetIgnoredPaths
+  let
+    notTemporary = not . any (tempDirTemplate `isPrefixOf`) . splitDirectories
+    notIgnored = case ignoredPathsM of
+      Just ignore
+        | not (null ignore) -> not . (`HashSet.member` HashSet.fromList ignore)
+      _ -> const True
+  pure $ (&&) <$> notTemporary <*> notIgnored
+
 -- | Loads the contracts of the directory, without parsing anything.
 --
 -- The pipeline will cause the preprocessor to run on each contract (if
@@ -219,16 +230,19 @@ loadDirectory root rootFileName includes = do
       (pure . (_cFile &&& _cMsgs) . _getContract)
       (lookupContract (srcPath src) includes)
 
+  shouldIndexFile <- getFilePredicate
+
   buildGraphM <- tryReadMVar =<< asks reBuildGraph
   S.withProgress "Indexing directory" S.NotCancellable \reportProgress -> if
     | Just (Includes buildGraph) <- buildGraphM
     , Just group <- find (G.hasVertex rootFileName) (wcc buildGraph) -> do
-      let total = G.vertexCount group
+      let
+        group' = G.induce shouldIndexFile group
+        total = G.vertexCount group'
       progressVar <- newMVar 0
 
       msgsVar <- newMVar Map.empty
-      -- We index a file even if it was ignored by the indexing mechanism.
-      loaded <- forAMConcurrently group \fp -> do
+      loaded <- forAMConcurrently group' \fp -> do
         progress <- withMVar progressVar $ pure . succ
         reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
         (src, msg) <- lookupOrLoad =<< pathToSrc fp
@@ -236,21 +250,14 @@ loadDirectory root rootFileName includes = do
         pure src
       (Includes loaded, ) <$> readMVar msgsVar
     | otherwise -> do
-      ignoredPathsM <- tryGetIgnoredPaths
-      let
-        notTemporary = not . any (tempDirTemplate `isPrefixOf`) . splitDirectories
-        notIgnored = case ignoredPathsM of
-          Just ignore
-            | not (null ignore) -> not . (`HashSet.member` HashSet.fromList ignore)
-          _ -> const True
-        filePredicate = (&&) <$> notTemporary <*> notIgnored
-
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        filePredicate
+        shouldIndexFile
         root
-      (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
+      Includes graph <- includesGraph' (map fst loaded)
+      let filtered = G.induce (shouldIndexFile . srcPath) graph
+      pure (Includes filtered, Map.fromListWith (<>) loaded)
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -259,6 +266,7 @@ getInclusionsGraph
 getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes normFp
   includesVar <- asks reIncludes
+  shouldIndexFile <- getFilePredicate
   modifyMVar includesVar \includes'@(Includes includes) -> do
     let rootFileName = contractFile rootContract
     let groups = Includes <$> wcc includes
@@ -307,7 +315,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
           iwither
             (\n (_, fp) -> do
               reportProgress $ S.ProgressAmount (Just $ n % numNewContracts) (Just [Log.i|Loading #{fp}|])
-              lookupOrLoad fp)
+              bool (pure Nothing) (lookupOrLoad fp) (shouldIndexFile fp))
             includeEdges
         let
           newSet = Set.fromList newIncludes
