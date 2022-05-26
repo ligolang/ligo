@@ -35,7 +35,7 @@ let main = ((p, s): (parameter, storage)) => {
         (nop, transfer(src, dst, amount_, s))
       }
   | SetPaused paused =>
-      if (Tezos.sender != s.owner) {
+      if (Tezos.get_sender () != s.owner) {
         (failwith("Access denied") : (list(operation), storage))
       } else {
         (nop, {...s, paused: paused})
