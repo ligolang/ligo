@@ -26,17 +26,17 @@ be to deter people from doing it just to chew up address space.
 *)
 
 let buy (parameter, storage: (bytes * address option) * storage) =
-  let void: unit = assert (Tezos.amount = storage.2.0) in
+  let void: unit = assert (Tezos.get_amount () = storage.2.0) in
   let profile, initial_controller = parameter in
   let identities, last_id, prices = storage in
   let controller: address =
     match initial_controller with
     | Some addr -> addr
-    | None -> Tezos.sender
+    | None -> Tezos.get_sender ()
   in
   let new_id: id = last_id + 1 in
   let new_id_details: id_details = {
-    owner = Tezos.sender ;
+    owner = Tezos.get_sender () ;
     controller = controller ;
     profile = profile ;
   }
@@ -51,7 +51,7 @@ let update_owner (parameter, storage: (id * address) * storage) =
   let identities, last_id, prices = storage in
   let current_id_details = Bip_map.find_opt id identities in
   let is_allowed: bool =
-    if Tezos.sender = current_id_details.owner
+    if Tezos.get_sender () = current_id_details.owner
     then true
     else failwith "You are not the owner of the ID " ^ (string_of_int id)
   in
@@ -71,7 +71,7 @@ let update_details (parameter, storage: (id * bytes option * address option) * s
   let is_allowed: bool =
     if
       match current_id_details with
-      | Some id_details -> (Tezos.sender = id_details.controller) || (Tezos.sender = id_details.owner)
+      | Some id_details -> (Tezos.get_sender () = id_details.controller) || (Tezos.get_sender () = id_details.owner)
       | None -> failwith ("No such ID " + id)
     then true
     else failwith ("You are not the owner or controller of the ID " ^ id)
@@ -98,7 +98,7 @@ let update_details (parameter, storage: (id * bytes option * address option) * s
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (p,s: unit * storage) =
-  let void: unit = assert (Tezos.amount = storage.2.1) in
+  let void: unit = assert (Tezos.get_amount () = storage.2.1) in
   let identities, last_id, prices = storage in
   ([]: instruction), (identities, last_id + 1, prices)
 

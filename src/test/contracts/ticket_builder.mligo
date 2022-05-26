@@ -27,7 +27,7 @@ let main (arg : parameter * storage) : operation list * storage =
     | Burn ticket ->
       begin
         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
-        assert (ticketer = Tezos.self_address);
+        assert (ticketer = Tezos.get_self_address ());
         (([] : operation list), s)
       end
     | Mint mint ->

@@ -1029,17 +1029,11 @@ let%expect_test _ =
 File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
  28 |       begin
  29 |         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
- 30 |         assert (ticketer = Tezos.self_address);
+ 30 |         assert (ticketer = Tezos.get_self_address ());
 :
 Warning: unused variable "ticket".
 Hint: replace it by "_ticket" to prevent this warning.
 
-File "../../test/contracts/ticket_builder.mligo", line 30, characters 27-45:
- 29 |         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
- 30 |         assert (ticketer = Tezos.self_address);
- 31 |         (([] : operation list), s)
-
-Warning: the constant Tezos.self_address is soon to be deprecated. Use instead Tezos.get_self_address : unit -> address.
 { parameter
     (or (ticket %burn unit)
         (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
@@ -2735,12 +2729,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "voting.mligo" ] ;
   [%expect{|
-File "../../test/contracts/voting.mligo", line 5, characters 10-34:
-  4 |   let x = Tezos.voting_power (Crypto.hash_key p) in
-  5 |   let y = Tezos.total_voting_power in
-  6 |   ([] : operation list), (x,y)
-
-Warning: the constant Tezos.total_voting_power is soon to be deprecated. Use instead Tezos.get_total_voting_power : unit -> nat.
 { parameter key ;
   storage (pair nat nat) ;
   code { CAR ;

@@ -12,7 +12,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
   in
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock in
   (* We won't sell tacos if the amount is not correct *)
-  let () = if Tezos.amount <> current_purchase_price then
+  let () = if Tezos.get_amount () <> current_purchase_price then
     failwith "Sorry, the taco you are trying to purchase has a different price"
   in
   (* Update the storage decreasing the stock by 1n *)
