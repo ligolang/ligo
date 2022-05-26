@@ -12,9 +12,9 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebuggerState (..), Direction (..), SourceMapper (..), SourceType (..), curSnapshot, frozen,
-  move, moveTill, tsAfterInstrs)
-import Morley.Debugger.DAP.Types.Morley (mkDebuggerState)
+  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation, SourceType (..),
+  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs)
+import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -38,10 +38,10 @@ data ContractRunData =
 -- | Make snapshots history for simple contract.
 mkSnapshotsFor
   :: HasCallStack
-  => ContractRunData -> IO (SourceMapper, InterpretHistory InterpretSnapshot)
+  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
 mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
   ligoMapper <- compileLigoContractDebug file
-  (srcMapper, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
+  (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
       Left err -> assertFailure $ pretty err
@@ -50,15 +50,19 @@ mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
   Refl <- sing @st' `decideEquality` sing @(T.ToT st)
     & maybe (assertFailure "Storage type mismatch") pure
   let his = collectInterpretSnapshots file contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
-  return (srcMapper, his)
+  return (allLocs, his)
 
 testWithSnapshots
   :: ContractRunData
   -> StateT (DebuggerState InterpretSnapshot) IO ()
   -> Assertion
 testWithSnapshots runData@ContractRunData{ crdProgram = file } action = do
-  (srcMapper, his) <- mkSnapshotsFor runData
-  let st = mkDebuggerState (SourcePath file) srcMapper his
+  (allLocs, his) <- mkSnapshotsFor runData
+  let st = DebuggerState
+        { _dsSourceOrigin = SourcePath file
+        , _dsSnapshots = playInterpretHistory his
+        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
+        }
   evalStateT action st
 
 (@?==)

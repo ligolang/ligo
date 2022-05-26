@@ -12,12 +12,12 @@ import Control.Monad.Except (MonadError (..), liftEither)
 import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
-  (SourceLocation (..), SourceType (..), curSnapshot, dsSourceOrigin, frozen, runSourceMapper)
+  (DebugSource (..), DebuggerState (..), SourceType (..), curSnapshot, frozen, groupSourceLocations,
+  playInterpretHistory)
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
   RIO, RioContext (..), StopEventDesc (..), dsDebuggerState, dsVariables, pushMessage)
-import Morley.Debugger.DAP.Types.Morley (mkDebuggerState)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
@@ -80,10 +80,6 @@ instance HasSpecificMessages LIGO where
         , DAP.totalFramesStackTraceResponseBody = length frames
         }
       }
-
-    posM <- frozen . runSourceMapper . sfInstrNo $ head (isStackFrames snap)
-    whenJust posM \pos ->
-      dsSourceOrigin .= _slPath pos
     where
       toDAPStackFrames snap =
         let frames = toList $ isStackFrames snap
@@ -128,7 +124,7 @@ instance HasSpecificMessages LIGO where
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
 
-  reportLogs _ = pass
+  reportContractLogs _ = pass
 
   getStopEventInfo Proxy = curSnapshot <&> \snap -> case isStatus snap of
     InterpretRunning event ->
@@ -206,7 +202,7 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
   --     • Couldn't match type ‘a0’ with ‘()’
   --         ‘a0’ is untouchable
   do
-    (sourceMapper, SomeContract (contract@Contract{} :: Contract cp st)) <-
+    (allLocs, SomeContract (contract@Contract{} :: Contract cp st)) <-
       readLigoMapper ligoDebugInfo
       & first (DAP.mkErrorMessage "Failed to process contract: " . pretty)
       & liftEither
@@ -226,7 +222,12 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
           & either (throwError . DAP.mkErrorMessage "Storage does not typecheck") pure
 
         let his = collectInterpretSnapshots program contract epc arg storage dummyContractEnv
-        pure $ DAPSessionState (mkDebuggerState (SourcePath program) sourceMapper his) mempty program
+            ds = DebuggerState
+              { _dsSourceOrigin = SourcePath program
+              , _dsSnapshots = playInterpretHistory his
+              , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
+              }
+        pure $ DAPSessionState ds mempty program
 
 checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a

@@ -14,7 +14,6 @@ module Language.LIGO.Debugger.Snapshots
 
     -- * Lenses
   , sfNameL
-  , sfInstrNoL
   , sfLocL
   , sfStackL
 
@@ -35,6 +34,7 @@ import Data.List.NonEmpty qualified as NE
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Fmt (Buildable (..), genericF)
+import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
@@ -46,7 +46,7 @@ import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, move,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (InstrNo (..), InterpretHistory (..))
+import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Types
@@ -71,8 +71,6 @@ instance Buildable StackItem where
 data StackFrame = StackFrame
   { sfName :: Text
     -- ^ Stack frame name.
-  , sfInstrNo :: InstrNo
-    -- ^ Reference to the place related to the current snapshot.
   , sfLoc :: LigoRange
     -- ^ Source location related to the current snapshot
     -- (and referred by 'sfInstrNo').
@@ -155,11 +153,16 @@ instance Buildable InterpretSnapshot where
   build = genericF
 
 instance NavigableSnapshot InterpretSnapshot where
-  getExecutedInstrNo = Just . sfInstrNo . head . isStackFrames <$> curSnapshot
-  getLastExecutedInstrNo = unfreezeLocally do
+  getExecutedPosition =
+    -- TODO: this conversion will be replaced after morley-debugger#44
+    let toSrcPos range =
+          let LigoPosition{..} = lrStart range
+          in SrcPos (Pos $ fromIntegral lpLine) (Pos $ fromIntegral lpCol - 1)
+    in Just . toSrcPos . sfLoc . head . isStackFrames <$> curSnapshot
+  getLastExecutedPosition = unfreezeLocally do
     move Backward >>= \case
       ReachedBoundary -> return Nothing
-      _ -> frozen getExecutedInstrNo
+      _ -> frozen getExecutedPosition
 
   pickSnapshotEdgeStatus is = case isStatus is of
     InterpretStarted -> SnapshotAtStart
@@ -223,9 +226,9 @@ runInstrCollect = \case
   other -> runInstrImpl runInstrCollect other
   where
     -- What is done upon executing instruction.
-    preExecutedStage (instrNo, LigoIndexedInfo{..}) stack = do
+    preExecutedStage LigoIndexedInfo{..} stack = do
       whenJust liiLocation \loc -> do
-        recordSnapshot (instrNo, loc) EventExpressionPreview
+        recordSnapshot loc EventExpressionPreview
 
       whenJust liiEnvironment \env -> do
         -- Here stripping occurs, as the second list keeps the entire stack,
@@ -239,12 +242,12 @@ runInstrCollect = \case
         -- recordSnapshot (instrNo, _) EventFacedStatement
 
     -- What is done right after the instruction is executed.
-    postExecutedStage (instrNo, LigoIndexedInfo{..}) _oldStack newStack = do
+    postExecutedStage LigoIndexedInfo{..} _oldStack newStack = do
       whenJust liiLocation \loc -> do
         -- `location` point to instructions that end expression evaluation,
         -- we can record the computed value
         let evaluatedVal = safeHead newStack
-        recordSnapshot (instrNo, loc) (EventExpressionEvaluated evaluatedVal)
+        recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
 
     -- Save a snapshot.
     --
@@ -252,11 +255,10 @@ runInstrCollect = \case
     -- location, but that's a sanity check: if an event is not associated with
     -- some location, then it is likely not worth recording.
     recordSnapshot
-      :: (InstrNo, LigoRange)
+      :: LigoRange
       -> InterpretEvent
       -> CollectingEvalOp ()
-    recordSnapshot (instrNo, loc) event = do
-      csActiveStackFrameL . sfInstrNoL .= instrNo
+    recordSnapshot loc event = do
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
@@ -326,7 +328,6 @@ collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
       , csStackFrames = one StackFrame
           { sfName = "main"
           , sfStack = []
-          , sfInstrNo = InstrNo (-1)
           , sfLoc = LigoRange
             { lrFile = mainFile
             , lrStart = LigoPosition 1 0

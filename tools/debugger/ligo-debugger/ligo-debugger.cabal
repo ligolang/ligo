@@ -4,7 +4,7 @@ cabal-version: 2.0
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 77ca29d8d3771a31169b06383d5e7711925cb553810e8a941a140a4aa06ef6ee
+-- hash: 309a1ad70ba854381ee310e32c4279eeae82589d53103bac1be23bc602393dee
 
 name:           ligo-debugger
 version:        0.0.0
@@ -82,9 +82,9 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.DebugInfo
       Test.LigoCall
       Test.Snapshots
-      Test.SourceMapper
       Test.Util
       Paths_ligo_debugger
   hs-source-dirs:
