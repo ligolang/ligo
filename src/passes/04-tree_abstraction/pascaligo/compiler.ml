@@ -203,7 +203,10 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     fun args ->
       let par, loc = r_split args in
       let lst = List.map ~f:self (Utils.sepseq_to_list par.inside)
-      in e_tuple ~loc lst
+      in match lst with
+           [] -> e_unit ~loc ()
+         | [expr] -> expr
+         | args -> e_tuple ~loc args
   in
   let compile_tuple_expression : CST.expr CST.tuple -> AST.expression = fun tuple_expr ->
     let (lst, loc) = r_split tuple_expr in
@@ -462,17 +465,18 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       let params = Utils.sepseq_map compile_param params.inside in
       let body = self return in
       let ret_ty = Option.map ~f:(compile_type_expression ~raise <@ snd ) ret_type in
-(*      match params with
-      | (binder, []) ->
-        let expr = e_lambda ~loc binder ret_ty body in
-        let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b) (Option.bind_pair (binder.ascr,ret_ty)) in
-        (expr, ty_opt)
-      | (hd,tl) ->
-        let params = hd::(List.map ~f:snd tl) in *)
-      let params =
-        match params with
-          None -> []
-        | Some params -> Utils.nsepseq_to_list params in
+      let params = Utils.sepseq_to_list params in
+      match params with
+        [] ->
+          let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b)
+                                  (Option.bind_pair (None, ret_ty))
+          in (e_unit ~loc (), ty_opt)
+      | [param] ->
+        let expr = e_lambda ~loc param ret_ty body in
+        let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b)
+                                (Option.bind_pair (param.ascr,ret_ty))
+        in (expr, ty_opt)
+      | params ->
         let input_tuple_ty =
           (* TODOpoly: polymorphism should give some leeway (using Option.all feels wrong) *)
           let in_tys_opt = Option.all @@ List.map ~f:(fun b -> b.ascr) params in
