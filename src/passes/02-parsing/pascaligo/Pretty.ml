@@ -1037,7 +1037,7 @@ and print_E_Fun (node : fun_expr reg) =
   and ret_type    = node.ret_type
   and ret_expr    = print_expr node.return
   in
-  let thread   = string "function " in
+  let thread   = string "function" in
   let thread   = print_type_params thread type_params in
   let thread   = group (thread ^^ nest 2 (break 1 ^^ parameters)) in
   let thread   = print_opt_type thread ret_type in
