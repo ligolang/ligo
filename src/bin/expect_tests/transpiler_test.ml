@@ -57,7 +57,8 @@ let%expect_test _ =
                    : card)
               ];
 
-            if Operator.neq (card.card_owner, Tezos.sender)
+            if Operator.neq
+                 (card.card_owner, Tezos.get_sender (unit))
             then failwith ("This card doesn't belong to you")
             else skip;
 
@@ -82,7 +83,8 @@ let%expect_test _ =
                   (failwith ("sell_single: No card.") : card)
               ];
 
-            if Operator.neq (card.card_owner, Tezos.sender)
+            if Operator.neq
+                 (card.card_owner, Tezos.get_sender (unit))
             then failwith ("This card doesn't belong to you")
             else skip;
 
@@ -118,7 +120,8 @@ let%expect_test _ =
                 (card_pattern.coefficient, card_pattern.quantity);
 
             const receiver : contract (unit)
-            = case (Tezos.get_contract_opt (Tezos.sender)
+            = case (Tezos.get_contract_opt
+                      (Tezos.get_sender (unit))
                     : option (contract (unit)))
               of [
                 Some (contract) -> contract
@@ -152,7 +155,7 @@ let%expect_test _ =
                 (card_pattern.coefficient,
                  Operator.add (card_pattern.quantity, 1n));
 
-            if Operator.gt (price, Tezos.amount)
+            if Operator.gt (price, Tezos.get_amount (unit))
             then failwith ("Not enough money")
             else skip;
 
@@ -175,7 +178,7 @@ let%expect_test _ =
               Map.add
                 (s.next_id,
                  record [
-                   card_owner = Tezos.sender;
+                   card_owner = Tezos.get_sender (unit);
                    card_pattern = action.card_to_buy
                  ], cards);
 
@@ -241,7 +244,7 @@ let%expect_test _ =
                | None () ->
                    (failwith "transfer_single: No card." : card) in
              begin
-               if (card.card_owner <> Tezos.sender)
+               if (card.card_owner <> Tezos.get_sender unit)
                then failwith "This card doesn't belong to you"
                else ();
                begin
@@ -276,7 +279,7 @@ let%expect_test _ =
                | None () ->
                    (failwith "sell_single: No card." : card) in
              begin
-               if (card.card_owner <> Tezos.sender)
+               if (card.card_owner <> Tezos.get_sender unit)
                then failwith "This card doesn't belong to you"
                else ();
                let [@var] card_pattern : card_pattern =
@@ -323,7 +326,7 @@ let%expect_test _ =
                             * card_pattern.quantity) in
                          let receiver : unit contract =
                            match (Tezos.get_contract_opt
-                                    Tezos.sender
+                                    (Tezos.get_sender unit)
                                   : unit contract option)
                            with
                              Some contract -> contract
@@ -359,7 +362,7 @@ let%expect_test _ =
                (card_pattern.coefficient
                 * (card_pattern.quantity + 1n)) in
              begin
-               if (price > Tezos.amount)
+               if (price > Tezos.get_amount unit)
                then failwith "Not enough money"
                else ();
                begin
@@ -386,7 +389,7 @@ let%expect_test _ =
                        let [@var] cards =
                          (Map.add
                             (s.next_id)
-                            ({card_owner = Tezos.sender;
+                            ({card_owner = Tezos.get_sender unit;
                               card_pattern = action.card_to_buy})
                             (cards)) in
                        ();
@@ -463,7 +466,7 @@ let transfer_single
                (failwith("transfer_single: No card.") : card)
            };
          {
-           if(((card.card_owner) != (Tezos.sender))) {
+           if(((card.card_owner) != (Tezos.get_sender(unit)))) {
              failwith("This card doesn't belong to you")
            } else {
 
@@ -502,7 +505,7 @@ let sell_single: (action_sell_single, storage) => return =
                (failwith("sell_single: No card.") : card)
            };
          {
-           if(((card.card_owner) != (Tezos.sender))) {
+           if(((card.card_owner) != (Tezos.get_sender(unit)))) {
              failwith("This card doesn't belong to you")
            } else {
 
@@ -552,7 +555,8 @@ let sell_single: (action_sell_single, storage) => return =
                            quantity));
                      let receiver: contract(unit) =
                        switch (
-                         Tezos.get_contract_opt(Tezos.sender)
+                         Tezos.get_contract_opt(
+                           Tezos.get_sender(unit))
                          : option(contract(unit))) {
                        | Some contract => contract
                        | None() =>
@@ -591,7 +595,7 @@ let buy_single: (action_buy_single, storage) => return =
            ((card_pattern.coefficient) * (((card_pattern.
                  quantity) + (1n))));
          {
-           if(((price) > (Tezos.amount))) {
+           if(((price) > (Tezos.get_amount(unit)))) {
              failwith("Not enough money")
            } else {
 
@@ -624,7 +628,8 @@ let buy_single: (action_buy_single, storage) => return =
                      (
                       Map.add((s.next_id),
                          ({
-                           card_owner: Tezos.sender,
+                           card_owner:
+                             Tezos.get_sender(unit),
                            card_pattern: action.card_to_buy}),
                          (cards)));
                    ();

@@ -28,7 +28,7 @@ let commit (p, s : bytes * storage) : return =
   let commit : commit =
     {date = Tezos.now + 86_400; salted_hash = p} in
   let updated_map: commit_set =
-    Big_map.update Tezos.sender (Some commit) s.commits in
+    Big_map.update (Tezos.get_sender ()) (Some commit) s.commits in
   let s = {s with commits = updated_map}
   in ([] : operation list), s
 
@@ -38,7 +38,7 @@ let reveal (p, s : reveal * storage) : return =
     (failwith "This contract has already been used." : return)
   else
     let commit : commit =
-      match Big_map.find_opt Tezos.sender s.commits with
+      match Big_map.find_opt (Tezos.get_sender ()) s.commits with
     | Some c -> c
     | None ->
        (failwith "You have not made a commitment to hash against yet."
@@ -49,7 +49,7 @@ let reveal (p, s : reveal * storage) : return =
       (failwith "It has not been 24 hours since your commit yet.": return)
     else
       let salted =
-        Crypto.sha256 (Bytes.concat p.hashable (Bytes.pack Tezos.sender)) in
+        Crypto.sha256 (Bytes.concat p.hashable (Bytes.pack (Tezos.get_sender ()))) in
       if salted <> commit.salted_hash
       then
         (failwith "This reveal does not match your commitment.": return)

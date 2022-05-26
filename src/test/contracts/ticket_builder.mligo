@@ -21,7 +21,7 @@ type storage =
 
 let main (arg : parameter * storage) : operation list * storage =
   begin
-    assert (Tezos.amount = 0mutez);
+    assert (Tezos.get_amount () = 0mutez);
     let (p,s) = arg in
     match p with
     | Burn ticket ->
@@ -32,7 +32,7 @@ let main (arg : parameter * storage) : operation list * storage =
       end
     | Mint mint ->
       begin
-        assert (Tezos.sender = s.admin);
+        assert (Tezos.get_sender () = s.admin);
         let ticket = Tezos.create_ticket () mint.amount in
         let op = Tezos.transaction ticket 0mutez mint.destination in
         ([op], s)

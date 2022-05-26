@@ -21,7 +21,7 @@ let donate = ((_,s): (unit, storage)) : (list(operation), storage) => {
 };
 
 let distribute = ((p,s): ((unit => list(operation)), storage)) : (list(operation), storage) => {
-  if (Tezos.sender == s) {
+  if (Tezos.get_sender () == s) {
     (p(),s);
   }
   else {

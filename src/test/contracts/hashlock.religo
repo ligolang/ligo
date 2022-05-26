@@ -26,7 +26,7 @@ type return = (list(operation), storage)
 
 let commit = ((p, s) : (bytes, storage)) : return => {
   let commit : commit = {date: Tezos.now + 86_400, salted_hash: p};
-  let updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit), s.commits);
+  let updated_map: commit_set = Big_map.update(Tezos.get_sender (), Some(commit), s.commits);
   let s = {...s, commits: updated_map};
   (([] : list(operation)), s);
 };
@@ -37,7 +37,7 @@ let reveal = ((p, s): (reveal, storage)) : return => {
   }
   else { (); };
   let commit_ : commit =
-    switch (Big_map.find_opt(Tezos.sender, s.commits)) {
+    switch (Big_map.find_opt(Tezos.get_sender (), s.commits)) {
     | Some (c) => c
     | None =>
        (failwith("You have not made a commitment to hash against yet."): commit)
@@ -48,7 +48,7 @@ let reveal = ((p, s): (reveal, storage)) : return => {
   else { (); };
   let salted : bytes =
     Crypto.sha256(
-      Bytes.concat(p.hashable, Bytes.pack(Tezos.sender))
+      Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender ()))
     );
   if (salted != commit_.salted_hash) {
     failwith("This reveal does not match your commitment.");
