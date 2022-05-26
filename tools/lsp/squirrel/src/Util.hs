@@ -6,13 +6,20 @@ module Util
   , toLocation
   , unionOrd
   , findKey
+  , mapJsonText
+  , traverseJsonText
 
   -- * Debugging utilities
   , validate
   ) where
 
+import Data.Aeson qualified as Aeson
+import Data.Bitraversable (bitraverse)
 import Data.Foldable (foldlM)
+import Data.Functor.Identity (Identity (..))
+import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Internal qualified as MI
+import Data.Text (Text)
 import Language.LSP.Types qualified as J
 import Witherable (ordNub)
 
@@ -62,6 +69,20 @@ findKey f x (MI.Bin _ k v l r) = case compare x (f k) of
   LT -> findKey f x l
   EQ -> Just (k, v)
   GT -> findKey f x r
+
+mapJsonText :: (Text -> Text) -> Aeson.Value -> Aeson.Value
+mapJsonText f = runIdentity . traverseJsonText (Identity . f)
+
+-- | Apply a transformation to every string in some JSON value.
+traverseJsonText :: Applicative f => (Text -> f Text) -> Aeson.Value -> f Aeson.Value
+traverseJsonText f = \case
+  Aeson.Object obj ->
+    Aeson.Object . HashMap.fromList <$> traverse (bitraverse f (traverseJsonText f)) (HashMap.toList obj)
+  Aeson.Array arr -> Aeson.Array <$> traverse (traverseJsonText f) arr
+  Aeson.String str -> Aeson.String <$> f str
+  n@(Aeson.Number _) -> pure n
+  b@(Aeson.Bool _) -> pure b
+  Aeson.Null -> pure Aeson.Null
 
 -- | Throws an error if the tree contains any subtrees such that the ranges are
 -- not smaller than its parent nodes, or returns the tree unmodified, otherwise.

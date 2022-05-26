@@ -26,8 +26,8 @@ import Util.Graph (traverseAMConcurrently)
 data Standard
 
 instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
-  scopeForest reportProgress pc = do
-    fbForest <- scopeForest @Fallback reportProgress pc
+  scopeForest tempSettings reportProgress graph = do
+    fbForest <- scopeForest @Fallback tempSettings reportProgress graph
     tryMergeWithFromCompiler fbForest `catches`
       [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) -> do
           -- catch only errors that we expect from ligo and try to use fallback parser
@@ -42,7 +42,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
       ]
     where
       tryMergeWithFromCompiler fbForest = do
-        lgForest <- scopeForest @FromCompiler reportProgress pc
+        lgForest <- scopeForest @FromCompiler tempSettings reportProgress graph
         merge lgForest fbForest
 
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do

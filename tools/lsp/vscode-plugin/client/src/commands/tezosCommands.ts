@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { LanguageClient } from 'vscode-languageclient/node'
 import { TezosToolkit } from '@taquito/taquito';
 import { importKey } from '@taquito/signer';
 
@@ -30,8 +31,9 @@ export async function fetchRandomPrivateKey(network: string): Promise<string> {
   return response.text();
 }
 
-export async function executeDeploy() {
+export async function executeDeploy(client: LanguageClient) {
   const code = await executeCompileContract(
+    client,
     undefined,
     'json',
     false,
@@ -43,6 +45,7 @@ export async function executeDeploy() {
   }
 
   const storage = await executeCompileStorage(
+    client,
     code.entrypoint,
     'json',
     undefined,
@@ -111,9 +114,10 @@ export async function executeDeploy() {
   return undefined
 }
 
-export async function executeGenerateDeployScript() {
+export async function executeGenerateDeployScript(client: LanguageClient) {
   try {
     const codeJson = await executeCompileContract(
+      client,
       undefined,
       'json',
       false,
@@ -124,6 +128,7 @@ export async function executeGenerateDeployScript() {
     }
 
     const storageJson = await executeCompileStorage(
+      client,
       codeJson.entrypoint,
       'json',
       undefined,
@@ -135,12 +140,12 @@ export async function executeGenerateDeployScript() {
       return undefined;
     }
 
-    const code = await executeCompileContract(codeJson.entrypoint, 'text')
+    const code = await executeCompileContract(client, codeJson.entrypoint, 'text')
     if (!code) {
       return undefined;
     }
 
-    const storage = await executeCompileStorage(storageJson.entrypoint, 'text', storageJson.storage)
+    const storage = await executeCompileStorage(client, storageJson.entrypoint, 'text', storageJson.storage)
     if (!storage) {
       return undefined;
     }

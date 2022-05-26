@@ -15,6 +15,9 @@ module RIO.Document
   , preload
   , load
 
+  , tempDirTemplate
+  , getTempPath
+
   , handleLigoFileChanged
   ) where
 
@@ -27,19 +30,20 @@ import Control.Monad.Reader (asks)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.HashSet qualified as HashSet
+import Data.List (isPrefixOf)
 import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (fromMaybe, isJust, isNothing)
 import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.VFS qualified as V
 import StmContainers.Map qualified as StmMap
-import System.FilePath (takeDirectory)
+import System.FilePath (splitDirectories, takeDirectory, (</>))
 import UnliftIO.Directory
-  ( Permissions (writable), doesDirectoryExist, doesFileExist, getPermissions
-  , setPermissions
+  ( Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist
+  , getPermissions, setPermissions
   )
 import UnliftIO.Exception (tryIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
@@ -55,7 +59,7 @@ import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRan
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
-import Cli (getLigoClientEnv)
+import Cli (TempDir (..), TempSettings (..), getLigoClientEnv)
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
 import Parser (Message (..), emptyParsedInfo)
@@ -168,12 +172,24 @@ preload normFp = Log.addNamespace "preload" do
     Just vf -> pure $ Source fin' (V.virtualFileText vf)
     Nothing -> pathToSrc fin'
 
+tempDirTemplate :: String
+tempDirTemplate = ".ligo-work"
+
+getTempPath :: FilePath -> RIO TempSettings
+getTempPath fallbackPath = do
+  optsM <- tryReadMVar =<< asks reIndexOpts
+  let path = fromMaybe fallbackPath (indexOptionsPath =<< optsM)
+  let tempDir = path </> tempDirTemplate
+  createDirectoryIfMissing False tempDir
+  pure $ TempSettings path $ UseDir tempDir
+
 loadWithoutScopes :: J.NormalizedFilePath -> RIO ContractInfo
 loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
   src <- preload normFp
   ligoEnv <- getLigoClientEnv
   $(Log.debug) [Log.i|running with env #{ligoEnv}|]
-  parsePreprocessed src
+  temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath normFp
+  parsePreprocessed temp src
 
 -- | Like 'loadWithoutScopes', but if an 'IOException' has ocurred, then it will
 -- return 'Nothing'.
@@ -193,9 +209,10 @@ tryLoadWithoutScopes =
 loadDirectory :: FilePath -> FilePath -> RIO (Includes Source, Map Source [Message])
 loadDirectory root rootFileName = do
   includes <- tryReadMVar =<< asks reIncludes
+  temp <- getTempPath root
   let
     lookupOrLoad src = maybe
-      (loadPreprocessed src)
+      (loadPreprocessed temp src)
       (pure . (_cFile &&& _cMsgs) . _getContract)
       (lookupContract (srcPath src) =<< includes)
 
@@ -218,6 +235,7 @@ loadDirectory root rootFileName = do
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+        (not . any (tempDirTemplate `isPrefixOf`) . splitDirectories)
         root
       (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
 
@@ -242,11 +260,12 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
         buildGraphVar <- asks reBuildGraph
         void $ swapMVar buildGraphVar buildGraph
 
+        temp <- getTempPath root
         connectedContractsE <-
           maybe
             -- User may have opened a file that's outside the indexing directory.
             -- Load it.
-            (fmap Left . loadPreprocessed =<< pathToSrc fp)
+            (fmap Left . loadPreprocessed temp =<< pathToSrc fp)
             (pure . Right)
           $ find (Map.member (_cFile $ _getContract rootContract) . G.adjacencyMap)
           $ wcc paths
@@ -311,7 +330,7 @@ load uri = Log.addNamespace "load" do
   revUri <- reverseUriMap ?? uri
   let
     Just revNormFp = J.uriToNormalizedFilePath revUri  -- FIXME: non-exhaustive
-    loadDefault = addShallowScopes @parser noProgress =<< loadWithoutScopes revNormFp
+    loadDefault temp = addShallowScopes @parser temp noProgress =<< loadWithoutScopes revNormFp
 
   case rootM of
     Just root | dirExists -> do
@@ -323,15 +342,16 @@ load uri = Log.addNamespace "load" do
 
       rawGraph <- getInclusionsGraph revRoot revNormFp
 
+      temp <- getTempPath root
       (Includes graph, result) <- S.withProgress "Scoping project" S.NotCancellable \reportProgress -> do
         let
-          addScopesWithProgress = addScopes @parser
+          addScopesWithProgress = addScopes @parser temp
             (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
         case J.uriToFilePath $ J.fromNormalizedUri revUri of
-          Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault
+          Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault temp
           Just fp -> do
             scoped <- addScopesWithProgress rawGraph
-            (scoped, ) <$> maybe loadDefault pure (lookupContract fp scoped)
+            (scoped, ) <$> maybe (loadDefault temp) pure (lookupContract fp scoped)
 
       let contracts = (id &&& J.toNormalizedUri . J.filePathToUri . contractFile) <$> G.vertexList graph
       let nuris = snd <$> contracts
@@ -344,7 +364,8 @@ load uri = Log.addNamespace "load" do
       case rootIndex of
         IndexChoicePending -> $(Log.debug) [Log.i|Indexing directory has not been specified yet.|]
         _ -> pure ()
-      Contract <$> loadDefault <*> pure [revUri]
+      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
+      Contract <$> loadDefault temp <*> pure [revUri]
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
 handleLigoFileChanged nfp = \case

@@ -134,8 +134,12 @@ addLigoErrsToMsg errs = getContract . cMsgs %~ (errs <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
-    :: ProgressCallback m
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ProgressCallback m
+    -- ^ A callback allowing reporting of the progress to the user.
     -> Includes ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
     -> m (Includes (FindFilepath ScopeForest))
 
 data Level = TermLevel | TypeLevel
@@ -323,12 +327,13 @@ addLocalScopes tree forest =
 addScopes
   :: forall impl m
    . HasScopeForest impl m
-  => ProgressCallback m
+  => TempSettings
+  -> ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
-addScopes reportProgress graph = do
+addScopes tempSettings reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl reportProgress graph
+  forestGraph <- scopeForest @impl tempSettings reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially
