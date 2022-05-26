@@ -14,12 +14,6 @@ let%expect_test _ =
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
   [%expect{|
-    File "../../test/contracts/multisig.ligo", line 41, characters 49-63:
-     40 |     const packed_payload : bytes =
-     41 |       Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
-     42 |     var valid : nat := 0n;
-
-    Warning: the constant Tezos.chain_id is soon to be deprecated. Use instead Tezos.get_chain_id : unit -> chain_id.
     583 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
@@ -79,7 +73,7 @@ let%expect_test _  =
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.get_now(unit))
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -87,16 +81,11 @@ let%expect_test _  =
     File "../../test/contracts/timestamp.ligo", line 3, characters 37-38:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.get_now(unit))
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/timestamp.ligo", line 4, characters 59-68:
-      3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
-
-    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
@@ -325,12 +314,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
   [%expect{|
-    File "../../test/contracts/multisig.ligo", line 41, characters 49-63:
-     40 |     const packed_payload : bytes =
-     41 |       Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
-     42 |     var valid : nat := 0n;
-
-    Warning: the constant Tezos.chain_id is soon to be deprecated. Use instead Tezos.get_chain_id : unit -> chain_id.
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
               (list %signatures (pair key_hash signature))) ;

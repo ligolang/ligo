@@ -1,12 +1,12 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
 PASS,1loop.ligo,93,583,317,213,23
 PASS,1loop7.ligo,25,166,14,5,2
-PASS,1multisig.ligo,46,258,52,25,6
+PASS,1multisig.ligo,49,271,59,30,6
 PASS,1recursion.ligo,3,54,34,21,5
 PASS,1set_arithmetic.ligo,22,134,52,32,11
 PASS,2condition.ligo,8,99,61,32,11
 PASS,2function-complex.ligo,11,60,56,36,2
-PASS,2hashlock.ligo,41,310,54,21,11
+PASS,2hashlock.ligo,49,341,81,36,11
 PASS,2lambda2.ligo,12,132,28,14,4
 PASS,2long_assign.ligo,67,678,204,129,32
 PASS,2long_remove.ligo,28,140,34,19,10
