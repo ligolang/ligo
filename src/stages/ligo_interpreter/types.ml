@@ -12,7 +12,7 @@ type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 type mutation = Location.t * Ast_aggregated.expression
 
 type env_item =
-  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool }
+  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool ; inline : bool }
 
 and env = env_item list
 
