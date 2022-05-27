@@ -792,7 +792,7 @@ function main (const a : int) : int is
 } with i
 
 const x : int
-= (function  (const i : int) : int is i + 1) (41)
+= (function (const i : int) : int is i + 1) (41)
 
 function main (const i : int) : int is
 {
