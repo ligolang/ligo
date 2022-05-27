@@ -543,6 +543,43 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_x exited with value (KT1AE9iae7b3xDWrzghqkPNmtVNNDvyncz8K , { parameter unit ;
+      storage
+        (pair (pair (big_map %metadata string bytes) (set %participants address))
+              (map %secrets address chest)) ;
+      code { CDR ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    DUP 3 ;
+                    CDR ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    EMPTY_MAP address bool ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             NIL operation ;
+             PAIR } } , 230). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
