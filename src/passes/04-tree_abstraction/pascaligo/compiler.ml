@@ -14,6 +14,11 @@ open AST
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
 let npseq_to_ne_list (hd, tl) = (hd, List.map ~f:snd tl)
+
+let pseq_to_list = function
+  None -> []
+| Some seq -> npseq_to_list seq
+
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
 
 
@@ -191,7 +196,18 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
     | T_Int _ | T_String _ -> raise.raise @@ unsupported_string_singleton te
 
 let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) : ?attr:CST.attribute list -> CST.expr -> AST.expr = fun ?(attr = []) e ->
-  let self = compile_expression ~raise in
+  let self = compile_expression ~raise
+  in
+  let compile_arguments
+    : (CST.expr, CST.comma) Utils.sepseq CST.par Region.reg -> AST.expression =
+    fun args ->
+      let par, loc = r_split args in
+      let lst = List.map ~f:self (Utils.sepseq_to_list par.inside)
+      in match lst with
+           [] -> e_unit ~loc ()
+         | [expr] -> expr
+         | args -> e_tuple ~loc args
+  in
   let compile_tuple_expression : CST.expr CST.tuple -> AST.expression = fun tuple_expr ->
     let (lst, loc) = r_split tuple_expr in
     let (hd,tl) = lst.inside in
@@ -272,11 +288,11 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     match constants var with
       Some const ->
       let (args, _) = r_split args in
-      let args = List.map ~f:self @@ npseq_to_list args.inside in
+      let args = List.map ~f:self @@ pseq_to_list args.inside in
       e_constant ~loc const args
     | None ->
       let func = e_variable_ez ~loc:loc_var var in
-      let args = compile_tuple_expression args in
+      let args = compile_arguments args in
       e_application ~loc func args
   )
   (*TODO: move to proper module*)
@@ -288,18 +304,18 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     match constants var with
     | Some const ->
        let (args, _) = r_split args in
-       let args = List.map ~f:self @@ npseq_to_list args.inside in
+       let args = List.map ~f:self @@ pseq_to_list args.inside in
        e_constant ~loc const args
     | None ->
        let ((func, args), loc) = r_split call in
        let func = self func in
-       let args = compile_tuple_expression args in
+       let args = compile_arguments args in
        e_application ~loc func args
   )
   | E_Call call ->
     let ((func, args), loc) = r_split call in
     let func = self func in
-    let args = compile_tuple_expression args in
+    let args = compile_arguments args in
     e_application ~loc func args
   | E_Tuple lst ->
     compile_tuple_expression lst
@@ -445,17 +461,22 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     in
     let loc = Location.lift region in
     let (lambda, fun_type) =
-      let (params, loc_par)  = r_split parameters in
-      let params = Utils.nsepseq_map compile_param params.inside in
+      let params, loc_par = r_split parameters in
+      let params = Utils.sepseq_map compile_param params.inside in
       let body = self return in
       let ret_ty = Option.map ~f:(compile_type_expression ~raise <@ snd ) ret_type in
+      let params = Utils.sepseq_to_list params in
       match params with
-      | (binder, []) ->
-        let expr = e_lambda ~loc binder ret_ty body in
-        let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b) (Option.bind_pair (binder.ascr,ret_ty)) in
-        (expr, ty_opt)
-      | (hd,tl) ->
-        let params = hd::(List.map ~f:snd tl) in
+        [] ->
+          let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b)
+                                  (Option.bind_pair (None, ret_ty))
+          in (e_unit ~loc (), ty_opt)
+      | [param] ->
+        let expr = e_lambda ~loc param ret_ty body in
+        let ty_opt = Option.map ~f:(fun (a,b) -> t_arrow ~loc a b)
+                                (Option.bind_pair (param.ascr,ret_ty))
+        in (expr, ty_opt)
+      | params ->
         let input_tuple_ty =
           (* TODOpoly: polymorphism should give some leeway (using Option.all feels wrong) *)
           let in_tys_opt = Option.all @@ List.map ~f:(fun b -> b.ascr) params in
@@ -729,7 +750,7 @@ and compile_parameters ~raise : CST.parameters -> (AST.type_expression AST.binde
       { var ; ascr ; attributes = Stage_common.Helpers.const_attribute }
   in
   let (params, _loc) = r_split params in
-  let params = npseq_to_list params.inside in
+  let params = pseq_to_list params.inside in
   List.map ~f:aux params
 
 and compile_path : (CST.selection, CST.dot) Utils.nsepseq -> AST.expression AST.access list =
