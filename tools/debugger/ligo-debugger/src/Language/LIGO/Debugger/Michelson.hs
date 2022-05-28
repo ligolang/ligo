@@ -89,13 +89,14 @@ fromExpressionToTyped expr = do
 
 -- Using proper content in this type is too inconvenient at the moment
 data EmbedError
-  = RemainingExtraEntries Builder
+  = RemainingExtraEntries Word
   | InsufficientEntries Builder
   deriving stock (Show, Eq)
 
 instance Buildable EmbedError where
   build = \case
-    RemainingExtraEntries msg -> build msg
+    RemainingExtraEntries num ->
+      [int||Too many debug entries left: #s{num}|]
     InsufficientEntries msg -> build msg
 
 -- | Embed data into typed instructions visiting them in DFS order.
@@ -109,8 +110,7 @@ embedInInstr metaTape instr = do
   (resInstr, tapeRest) <- runExcept $ usingStateT metaTape $
     dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } pure instr
   unless (null tapeRest) $
-    Left . RemainingExtraEntries $
-      [int||Too many left entries, remaining are: #s{tapeRest}|]
+    Left $ RemainingExtraEntries (Unsafe.fromIntegral @Int @Word $ length tapeRest)
   return resInstr
   where
     isActualInstr = \case
