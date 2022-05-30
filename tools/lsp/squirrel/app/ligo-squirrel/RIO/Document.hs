@@ -65,7 +65,7 @@ import Log qualified
 import Parser (Message (..), emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
-import RIO.Indexing (getIndexDirectory, indexOptionsPath)
+import RIO.Indexing (getIndexDirectory, indexOptionsPath, tryGetIgnoredPaths)
 import RIO.Types (Contract (..), IndexOptions (..), RIO, RioEnv (..))
 import Util.Graph (forAMConcurrently, traverseAMConcurrently, wcc)
 
@@ -197,6 +197,17 @@ tryLoadWithoutScopes :: J.NormalizedFilePath -> RIO (Maybe ParsedContractInfo)
 tryLoadWithoutScopes =
   fmap (either (const Nothing) Just) . tryIO . (insertPreprocessorRanges <=< loadWithoutScopes)
 
+getFilePredicate :: RIO (FilePath -> Bool)
+getFilePredicate = do
+  ignoredPathsM <- tryGetIgnoredPaths
+  let
+    notTemporary = not . any (tempDirTemplate `isPrefixOf`) . splitDirectories
+    notIgnored = case ignoredPathsM of
+      Just ignore
+        | not (null ignore) -> not . (`HashSet.member` HashSet.fromList ignore)
+      _ -> const True
+  pure $ (&&) <$> notTemporary <*> notIgnored
+
 -- | Loads the contracts of the directory, without parsing anything.
 --
 -- The pipeline will cause the preprocessor to run on each contract (if
@@ -206,25 +217,32 @@ tryLoadWithoutScopes =
 -- The downside is that momentarily, various files will be present in memory. In
 -- the future, we can consider only keeping the line markers and building the
 -- graph from this.
-loadDirectory :: FilePath -> FilePath -> RIO (Includes Source, Map Source [Message])
-loadDirectory root rootFileName = do
-  includes <- tryReadMVar =<< asks reIncludes
+loadDirectory
+  :: FilePath
+  -> FilePath
+  -> Includes ParsedContractInfo
+  -> RIO (Includes Source, Map Source [Message])
+loadDirectory root rootFileName includes = do
   temp <- getTempPath root
   let
     lookupOrLoad src = maybe
       (loadPreprocessed temp src)
       (pure . (_cFile &&& _cMsgs) . _getContract)
-      (lookupContract (srcPath src) =<< includes)
+      (lookupContract (srcPath src) includes)
+
+  shouldIndexFile <- getFilePredicate
 
   buildGraphM <- tryReadMVar =<< asks reBuildGraph
   S.withProgress "Indexing directory" S.NotCancellable \reportProgress -> if
     | Just (Includes buildGraph) <- buildGraphM
     , Just group <- find (G.hasVertex rootFileName) (wcc buildGraph) -> do
-      let total = G.vertexCount group
+      let
+        group' = G.induce shouldIndexFile group
+        total = G.vertexCount group'
       progressVar <- newMVar 0
 
       msgsVar <- newMVar Map.empty
-      loaded <- forAMConcurrently group \fp -> do
+      loaded <- forAMConcurrently group' \fp -> do
         progress <- withMVar progressVar $ pure . succ
         reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
         (src, msg) <- lookupOrLoad =<< pathToSrc fp
@@ -235,9 +253,11 @@ loadDirectory root rootFileName = do
       loaded <- parseContracts
         lookupOrLoad
         (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
-        (not . any (tempDirTemplate `isPrefixOf`) . splitDirectories)
+        shouldIndexFile
         root
-      (, Map.fromListWith (<>) loaded) <$> includesGraph' (map fst loaded)
+      Includes graph <- includesGraph' (map fst loaded)
+      let filtered = G.induce (shouldIndexFile . srcPath) graph
+      pure (Includes filtered, Map.fromListWith (<>) loaded)
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -246,7 +266,8 @@ getInclusionsGraph
 getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
   rootContract <- loadWithoutScopes normFp
   includesVar <- asks reIncludes
-  modifyMVar includesVar \(Includes includes) -> do
+  shouldIndexFile <- getFilePredicate
+  modifyMVar includesVar \includes'@(Includes includes) -> do
     let rootFileName = contractFile rootContract
     let groups = Includes <$> wcc includes
     join (,) <$> case find (isJust . lookupContract rootFileName) groups of
@@ -254,7 +275,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
       Nothing -> do
         let fp = J.fromNormalizedFilePath normFp
         $(Log.debug) [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
-        (Includes paths, msgs) <- loadDirectory root rootFileName
+        (Includes paths, msgs) <- loadDirectory root rootFileName includes'
 
         let buildGraph = Includes $ G.gmap srcPath paths
         buildGraphVar <- asks reBuildGraph
@@ -294,7 +315,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
           iwither
             (\n (_, fp) -> do
               reportProgress $ S.ProgressAmount (Just $ n % numNewContracts) (Just [Log.i|Loading #{fp}|])
-              lookupOrLoad fp)
+              bool (pure Nothing) (lookupOrLoad fp) (shouldIndexFile fp))
             includeEdges
         let
           newSet = Set.fromList newIncludes
@@ -330,10 +351,20 @@ load uri = Log.addNamespace "load" do
   revUri <- reverseUriMap ?? uri
   let
     Just revNormFp = J.uriToNormalizedFilePath revUri  -- FIXME: non-exhaustive
+    revFp = J.fromNormalizedFilePath revNormFp
     loadDefault temp = addShallowScopes @parser temp noProgress =<< loadWithoutScopes revNormFp
+    loadWithoutIndexing = do
+      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
+      Contract <$> loadDefault temp <*> pure [revUri]
 
-  case rootM of
-    Just root | dirExists -> do
+  -- If we're trying to load an ignored file, then load it, but don't index
+  -- anything else.
+  shouldIgnoreFile <- maybe False (revFp `elem`) <$> tryGetIgnoredPaths
+  if
+    | shouldIgnoreFile -> do
+      sendWarning [Log.i|Opening an ignored file. It will not be indexed and cross-file operations may not work as inteded. Change your .ligoproject file to index this file.|]
+      loadWithoutIndexing
+    | Just root <- rootM, dirExists -> do
       time <- ASTMap.getTimestamp
 
       revRoot <- if revUri == uri
@@ -360,12 +391,11 @@ load uri = Log.addNamespace "load" do
         ASTMap.insert nuri (Contract contract nuris) time tmap
 
       pure $ Contract result nuris
-    _ -> do
+    | otherwise -> do
       case rootIndex of
         IndexChoicePending -> $(Log.debug) [Log.i|Indexing directory has not been specified yet.|]
         _ -> pure ()
-      temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath revNormFp
-      Contract <$> loadDefault temp <*> pure [revUri]
+      loadWithoutIndexing
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
 handleLigoFileChanged nfp = \case
