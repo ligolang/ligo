@@ -389,7 +389,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "bar 0" ; "--init-file" ; (test "use_error.mligo") ] ;
   [%expect{|
-    An error occurred while evaluating an expression: Division by zero |}]
+    An error occurred while evaluating an expression: "Division by zero" |}]
 
 
 let () = Sys.chdir pwd

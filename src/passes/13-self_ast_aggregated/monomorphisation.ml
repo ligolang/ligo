@@ -238,7 +238,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
          let data, rhs = self data rhs in
          let rhs = evaluate_external_typer typed rhs in
          let rhs = { rhs with type_expression = typed } in
-         (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result attr, data) in
+         (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}, data) in
        let data, let_result = self data let_result in
        let instances, data = Data.instances_lookup_and_remove (Longident.of_variable let_binder.var) data in
        let expr, data = List.fold_right instances ~f:(build_let @@ Longident.of_variable let_binder.var) ~init:(let_result, data) in

@@ -325,6 +325,35 @@ let add_parameter read_effect read_effects effects_type rhs =
       e_recursive {fun_name;fun_type;lambda={binder=binder_eff;result}} fun_type
   | _ -> failwith "Add_parameters: not a function"
 
+let rec apply_for_all_on (binder : type_variable) (value : type_expression) (te : type_expression) =
+  let self = apply_for_all_on binder value in
+  let return tv' = make_t ~loc:te.location tv' in
+  match te.type_content with
+    T_variable var when TypeVar.equal binder var -> value
+  | T_variable  _ -> te
+  | T_constant  _ -> te
+  | T_singleton _ -> te
+  | T_arrow {type1;type2} ->
+      let type1 = self type1 in
+      let type2 = self type2 in
+      return @@ T_arrow {type1;type2}
+  | T_sum m -> (
+    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
+      let associated_type = self associated_type in
+      ({associated_type;michelson_annotation;decl_pos} : row_element)
+    in
+    return @@ T_sum { m with content = LMap.map aux m.content }
+  )
+  | T_record m -> (
+    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
+      let associated_type = self associated_type in
+      ({associated_type;michelson_annotation;decl_pos} : row_element)
+    in
+    return @@ T_sum { m with content = LMap.map aux m.content }
+  )
+  | T_for_all {ty_binder;kind;type_} ->
+    let type_ = self type_ in
+    return @@ T_for_all {ty_binder;kind;type_}
 
 let rec morph_function_application (effect : Effect.t) (e: expression) : _ * expression =
   let self = morph_function_application effect in
@@ -342,7 +371,9 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
           return returned_effect type2 @@ E_application {lamb=e;args=read_effects})
   | E_type_inst {forall;type_} ->
       let returned_effect,forall = self forall in
-      return returned_effect forall.type_expression @@ E_type_inst {forall;type_}
+      let {ty_binder;kind=_;type_=ty} = get_t_for_all_exn forall.type_expression in
+      let ty = apply_for_all_on ty_binder type_ ty in
+      return returned_effect ty @@ E_type_inst {forall;type_}
   | E_application {lamb;args} ->
       let returned_effect,lamb = self lamb in
       let {type1=_;type2} = get_t_arrow_exn lamb.type_expression in

@@ -1252,7 +1252,7 @@ let%expect_test _ =
     Warning: unused variable "ps".
     Hint: replace it by "_ps" to prevent this warning.
 
-    failwith("This contract always fails") |}]
+    failed with: "This contract always fails" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_in_lambda.mligo" ] ;
@@ -2165,15 +2165,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(false, ())"; "-e"; "with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(Some (): unit option)"; "-e"; "none_with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;

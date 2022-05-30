@@ -9,7 +9,7 @@ type test_baker_policy =
   | By_account of address
   | Excluding of address list
 module Test = struct
-  [@private] let failwith (type a) (v : a) : a external_failwith = [%external "FAILWITH"] v
+  [@private] let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
   type ('a, 'b) typed_address = unit
   type michelson_program = unit
   type test_exec_result = unit

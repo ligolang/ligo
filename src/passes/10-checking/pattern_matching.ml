@@ -400,6 +400,13 @@ let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression O.pattern 
   let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (O.Literal_string Stage_common.Backends.fw_partial_match)) (O.t_string ()) in
-    O.e_failwith fs
+    let t_fail =
+      let a = O.TypeVar.of_input_var "a" in
+      let b = O.TypeVar.of_input_var "b" in
+      O.t_for_all a O.Type (O.t_for_all b O.Type (O.t_arrow (O.t_variable a ()) (O.t_variable b ()) ()))
+    in
+    let lamb = (O.e_variable (O.ValueVar.of_input_var "failwith") t_fail) in
+    let args = fs in
+    O.E_application {lamb ; args }
   in
   match_ ~raise ~err_loc [matchee] eqs missing_case_default

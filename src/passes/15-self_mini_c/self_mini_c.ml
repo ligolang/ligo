@@ -67,7 +67,6 @@ let is_pure_constant : constant' -> bool =
   | C_ASSERT_INFERRED
   | C_MAP_FIND
   | C_CALL
-  | C_FAILWITH
   | C_ITER
   | C_LOOP_LEFT
   | C_FOLD
@@ -144,6 +143,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_REGISTER_FILE_CONSTANTS
   | C_TEST_PUSH_CONTEXT
   | C_TEST_POP_CONTEXT
+  | C_TEST_FAILWITH
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

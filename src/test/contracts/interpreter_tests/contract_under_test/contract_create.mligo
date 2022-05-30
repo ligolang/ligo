@@ -17,7 +17,7 @@ let main (action, store : parameter * storage) : return =
       (ops, (None: storage))
     | Two ->
       let x : operation * address = Tezos.create_contract
-        (fun (p, s : nat * string) -> (failwith 111: operation list * string))
+        (fun (_p, _s : nat * string) -> (failwith 111: operation list * string))
         (None: key_hash option) 
         1tz
         "un"

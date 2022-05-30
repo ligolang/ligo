@@ -664,6 +664,7 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
                    ] in
   let optimizers = List.map ~f:on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
+  let x = opt_tail_fail x in
   let x = opt_combine_drops x in
   let x = opt_strip_annots x in
   let x = use_lambda_instr x in

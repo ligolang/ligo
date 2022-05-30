@@ -89,7 +89,6 @@ module Tree_abstraction = struct
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
     | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
-    | C_FAILWITH                -> "Tezos.failwith"
     | C_CREATE_CONTRACT         -> "Tezos.create_contract"
     | C_CALL                    -> "Tezos.transaction"
     | C_SET_DELEGATE            -> "Tezos.set_delegate"
@@ -199,7 +198,6 @@ module Stacking = struct
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
     | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
