@@ -53,7 +53,7 @@ function transfer_single (const action : action_transfer_single;
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
       ];
-    if card.card_owner =/= Tezos.sender then
+    if card.card_owner =/= Tezos.get_sender() then
       failwith ("This card doesn't belong to you")
     else skip;
     card.card_owner := action.destination;
@@ -69,7 +69,7 @@ function sell_single (const action : action_sell_single;
         Some (card) -> card
       | None -> (failwith ("sell_single: No card.") : card)
       ];
-    if card.card_owner =/= Tezos.sender
+    if card.card_owner =/= Tezos.get_sender()
     then failwith ("This card doesn't belong to you")
     else skip;
     var card_pattern : card_pattern :=
@@ -86,7 +86,7 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
       ];
@@ -105,7 +105,7 @@ function buy_single (const action : action_buy_single;
       ];
     const price : tez =
       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    if price > Tezos.amount then failwith ("Not enough money") else skip;
+    if price > Tezos.get_amount() then failwith ("Not enough money") else skip;
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
     var card_patterns : card_patterns := s.card_patterns;
@@ -114,7 +114,7 @@ function buy_single (const action : action_buy_single;
     // Add card
     var cards : cards := s.cards;
     cards[s.next_id] := record [
-      card_owner   = Tezos.sender;
+      card_owner   = Tezos.get_sender();
       card_pattern = action.card_to_buy
     ];
     s.cards := cards;

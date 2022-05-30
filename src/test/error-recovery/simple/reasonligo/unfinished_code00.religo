@@ -15,9 +15,9 @@ type return = (list (operation), storage)
 
 let commit = (p, s : (bytes, storage)) : return =>
   let commit : commit =
-    { date : Tezos.now + 86400, salted_hash : p };
+    { date : Tezos.get_now () + 86400, salted_hash : p };
   let updated_map : commit_set =
-    Big_map.update(Tezos.sender, Some (commit), s.commits);
+    Big_map.update(Tezos.get_sender (), Some (commit), s.commits);
   let s = {...s, commits : updated_map};
   ([] : list(operation), s)
 
@@ -36,7 +36,7 @@ let reveal = (p, s : (reveal, storage)) : return =>
              ("You have not made a commitment to hash against yet.")
            : commit)
       };
-    if (Tezos.now < commit.date) {
+    if (Tezos.get_now () < commit.date) {
       (failwith
          ("It has not been 24 hours since your commit yet.")
        : return)

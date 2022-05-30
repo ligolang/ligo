@@ -20,7 +20,7 @@ block {
 
 function call_counter (const addr : address; const n : int) is
 block {
-  assert (Tezos.sender = Tezos.self_address);
+  assert (Tezos.get_sender() = Tezos.get_self_address());
   const callee_opt : option (contract (int)) = Tezos.get_contract_opt (addr);
   const callee =
       case callee_opt of [

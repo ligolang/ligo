@@ -5,7 +5,7 @@ type migrations = {
 
 let main = ((completed_migration, migrations): (int, migrations)) => {
   let st =
-    if (Tezos.sender != migrations.owner) {
+    if (Tezos.get_sender () != migrations.owner) {
       migrations
     } else {
       {...migrations, last_completed_migration: completed_migration }

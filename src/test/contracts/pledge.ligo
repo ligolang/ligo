@@ -21,7 +21,7 @@ function donate (const _: unit; const s: storage) : list(operation) * storage is
 function distribute (const p: (unit -> list(operation)); const s: storage) : list(operation) * storage is
   begin
     var result : list(operation) * storage := (p(unit),s);
-    if Tezos.sender = s
+    if Tezos.get_sender() = s
     then skip
     else result := (failwith("You're not the oracle for this distribution."):
                        list(operation) * storage)

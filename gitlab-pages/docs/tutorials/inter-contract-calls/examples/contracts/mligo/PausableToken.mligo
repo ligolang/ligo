@@ -27,6 +27,6 @@ let main (p, s : parameter * storage) =
          let src, dst, amount_ = arg in
          transfer (src, dst, amount_, s)
    | SetPaused paused ->
-       if Tezos.sender <> s.owner
+       if Tezos.get_sender () <> s.owner
        then (failwith "Access denied" : storage)
        else {s with paused = paused})

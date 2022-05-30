@@ -74,8 +74,8 @@ type return_ = [list<operation>, storage];
 /* We use hash-commit so that a baker can not steal */
 
 let commit = ([p, s] : [bytes, storage]) : return_ => {
-  let commit_ : commit = {date: Tezos.now + 86_400, salted_hash: p};
-  let updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit_), s.commits);
+  let commit_ : commit = {date: Tezos.get_now() + 86_400, salted_hash: p};
+  let updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit_), s.commits);
   let s_ = {...s, commits: updated_map};
   return [(list([]) as list<operation>), s_];
 };
@@ -86,18 +86,18 @@ let reveal = ([p, s]: [reveal, storage]) : return_ => {
   };
 
   let commit_ : commit =
-    match (Big_map.find_opt(Tezos.sender, s.commits), {
+    match (Big_map.find_opt(Tezos.get_sender(), s.commits), {
     Some: c => c,
     None: () =>
        (failwith("You have not made a commitment to hash against yet.") as commit)
     });
-  if (Tezos.now < commit_.date) {
+  if (Tezos.get_now() < commit_.date) {
     failwith("It has not been 24 hours since your commit yet.");
   };
 
   let salted : bytes =
     Crypto.sha256(
-      Bytes.concat(p.hashable, Bytes.pack(Tezos.sender))
+      Bytes.concat(p.hashable, Bytes.pack(Tezos.get_sender()))
     );
   if (salted != commit_.salted_hash) {
     failwith("This reveal does not match your commitment.");

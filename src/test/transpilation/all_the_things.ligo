@@ -42,17 +42,17 @@ type action is
 
 function transfer (const p : transfer; const s: storage) : list (operation) * storage is block {
    var new_allowances : allowances := Big_map.empty;
-  if Tezos.sender = p.address_from
+  if Tezos.get_sender() = p.address_from
   then { new_allowances := s.allowances; }
   else {
     var authorized_value : nat :=
-    case (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) of [
+    case (Big_map.find_opt ((Tezos.get_sender(),p.address_from), s.allowances)) of [
         Some (value) -> value
       |  None       -> 0n
     ];
     if (authorized_value < p.value)
     then { failwith("Not Enough Allowance")}
-    else { new_allowances := Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }
+    else { new_allowances := Big_map.update ((Tezos.get_sender(),p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }
   };
   var sender_balance : nat :=
      case (Big_map.find_opt (p.address_from, s.tokens)) of [
@@ -75,7 +75,7 @@ function transfer (const p : transfer; const s: storage) : list (operation) * st
 
 function approve (const p : approve; const s : storage) : list (operation) * storage is block {
   var previous_value : nat :=
-    case Big_map.find_opt ((p.spender, Tezos.sender), s.allowances) of [
+    case Big_map.find_opt ((p.spender, Tezos.get_sender()), s.allowances) of [
       Some (value) -> value
     | None -> 0n
     ];
@@ -83,7 +83,7 @@ function approve (const p : approve; const s : storage) : list (operation) * sto
   if previous_value > 0n and p.value > 0n
   then failwith ("Unsafe Allowance Change")
   else {
-    new_allowances := Big_map.update ((p.spender, Tezos.sender), (Some (p.value)), s.allowances);
+    new_allowances := Big_map.update ((p.spender, Tezos.get_sender()), (Some (p.value)), s.allowances);
   }
 } with ((nil: list (operation)), s with record [allowances = new_allowances])
 
@@ -192,7 +192,7 @@ type storage is tez
 type return is list (operation) * storage
 
 function main (const param : parameter; const store: storage) : return is
-  ((nil : list (operation)), Tezos.balance)
+  ((nil : list (operation)), Tezos.get_balance())
 type parameter is unit
 type storage is big_map (int, int) * unit
 type return is list (operation) * storage
@@ -255,7 +255,7 @@ function id_int (const p : int) : option (int) is block {
 function id_address (const p : address) : option (address) is block {
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (address))
-function chain_id (const tt : chain_id) : chain_id is Tezos.chain_id
+function chain_id (const tt : chain_id) : chain_id is Tezos.get_chain_id()
 function check_signature (const pk     : key;
                           const signed : signature;
                           const msg    : bytes) : bool
@@ -370,7 +370,7 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
       ];
@@ -615,14 +615,14 @@ type storage is unit
 type return is list (operation) * storage
 
 function cb (const s : storage) : return is block {
-  const c : contract (unit) = get_contract (Tezos.sender)
+  const c : contract (unit) = get_contract (Tezos.get_sender())
 } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 
 function cbo (const s : unit) : return is
   block {
     const c : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("contract not found") : contract (unit))
       ]
@@ -1396,7 +1396,7 @@ function send (const param : send_pt; var s : storage) : return is
   block {
     // check sender against the authorized addresses
 
-    if not Set.mem (Tezos.sender, s.authorized_addresses)
+    if not Set.mem (Tezos.get_sender(), s.authorized_addresses)
     then failwith("Unauthorized address")
     else skip;
 
@@ -1419,25 +1419,25 @@ function send (const param : send_pt; var s : storage) : return is
           (* The message is already stored.
              Increment the counter only if the sender is not already
              associated with the message. *)
-          if Set.mem (Tezos.sender, voters)
+          if Set.mem (Tezos.get_sender(), voters)
           then skip
-          else s.proposal_counters[Tezos.sender] :=
-                 get_force (Tezos.sender, s.proposal_counters) + 1n;
-                 new_store := Set.add (Tezos.sender,voters)
+          else s.proposal_counters[Tezos.get_sender()] :=
+                 get_force (Tezos.get_sender(), s.proposal_counters) + 1n;
+                 new_store := Set.add (Tezos.get_sender(),voters)
         }
     | None ->
         block {
           // the message has never been received before
           s.proposal_counters[sender] :=
-             get_force (Tezos.sender, s.proposal_counters) + 1n;
-             new_store := set [Tezos.sender]
+             get_force (Tezos.get_sender(), s.proposal_counters) + 1n;
+             new_store := set [Tezos.get_sender()]
         }
     ];
 
     // check sender counters against the maximum number of proposal
 
     var sender_proposal_counter : nat :=
-      get_force (Tezos.sender, s.proposal_counters);
+      get_force (Tezos.get_sender(), s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
     then failwith ("Maximum number of proposal reached")
@@ -1470,14 +1470,14 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
       Some (voters) ->
         block {
           // The message is stored
-          const new_set : addr_set = Set.remove (Tezos.sender, voters);
+          const new_set : addr_set = Set.remove (Tezos.get_sender(), voters);
 
           (* Decrement the counter only if the sender was already
              associated with the message *)
 
           if Set.cardinal (voters) =/= Set.cardinal (new_set)
-          then s.proposal_counters[Tezos.sender] :=
-                 abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
+          then s.proposal_counters[Tezos.get_sender()] :=
+                 abs (get_force (Tezos.get_sender(), s.proposal_counters) - 1n)
           else skip;
 
           (* If the message is left without any associated addresses,
@@ -1546,7 +1546,7 @@ function check_message (const param : check_message_pt;
     failwith ("Counters does not match")
   else {
     const packed_payload : bytes =
-      Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
+      Bytes.pack ((message, param.counter, s.id, Tezos.get_chain_id()));
     var valid : nat := 0n;
 
     var keys : authorized_keys := s.auth;
@@ -1677,7 +1677,7 @@ function main (const param : entry_point_t; const s : storage_t) :
     Change_address (p) -> change_address (p,s)
   | Pass_message (p)   -> pass_message (p,s)
   ]
-function main (const p : unit) : address is Tezos.self_address
+function main (const p : unit) : address is Tezos.get_self_address()
 type parameter is nat
 type storage is int
 type return is list (operation) * storage

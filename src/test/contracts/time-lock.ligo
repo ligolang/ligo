@@ -11,7 +11,7 @@ type entry_point_t is
 
 function call (const p : call_pt; const s : storage_t) : contract_return_t is
   block {
-    if s >= Tezos.now then failwith ("Contract is still time locked") else skip;
+    if s >= Tezos.get_now() then failwith ("Contract is still time locked") else skip;
     const message : message_t = p;
     const ret_ops : list (operation) = message (unit)
   } with (ret_ops, s)

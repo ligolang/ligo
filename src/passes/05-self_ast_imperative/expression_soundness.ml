@@ -49,7 +49,6 @@ let reserved_names = (* Part of names in that list would be caught by some synta
     "list_fold"; "list_fold_left"; "list_fold_right"; "list_map"; "map_iter"; "map_map"; "map_fold"; "map_remove"; "map_update"; "map_get"; "map_mem";
     "continue";  "gas"; "hash"; "stop"; "time";
     "continue"; "debugger"; "do";
-    "get_chain_id";
   ]
 let check_reserved ~raise ~loc binder =
   match List.find ~f:(fun reserved -> ValueVar.equal binder.var reserved) reserved_names with

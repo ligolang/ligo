@@ -13,7 +13,7 @@ module Operators = struct
 
 (** if transfer policy is Owner_or_operator_transfer *)
    let assert_authorisation (operators : t) (from_ : address) : unit = 
-      let sender_ = Tezos.sender in
+      let sender_ = Tezos.get_sender () in
       if (sender_ = from_) then ()
       else 
       let authorized = match Big_map.find_opt from_ operators with
@@ -22,7 +22,7 @@ module Operators = struct
       else failwith Errors.not_operator
 (** if transfer policy is Owner_transfer
    let assert_authorisation (operators : t) (from_ : address) : unit = 
-      let sender_ = Tezos.sender in
+      let sender_ = Tezos.get_sender () in
       if (sender_ = from_) then ()
       else failwith Errors.not_owner
 *)
@@ -33,10 +33,10 @@ module Operators = struct
 *)
 
    let assert_update_permission (owner : owner) : unit =
-      assert_with_error (owner = Tezos.sender) "The sender can only manage operators for his own token"
+      assert_with_error (owner = Tezos.get_sender ()) "The sender can only manage operators for his own token"
    (** For an administator
       let admin = tz1.... in
-      assert_with_error (Tezos.sender = admiin) "Only administrator can manage operators"
+      assert_with_error (Tezos.get_sender () = admiin) "Only administrator can manage operators"
    *)
 
    let add_operator (operators : t) (owner : owner) (operator : operator) : t =

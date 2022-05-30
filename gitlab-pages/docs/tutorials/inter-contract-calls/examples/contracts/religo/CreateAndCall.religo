@@ -16,7 +16,7 @@ let create_and_call =  (st: list(address)) => {
 };
 
 let call_counter = ((addr, n): (address, int)) => {
-    let u = assert(Tezos.sender == Tezos.self_address);
+    let u = assert(Tezos.get_sender () == Tezos.get_self_address ());
     let callee_opt: option(contract(int)) = 
         Tezos.get_contract_opt(addr);
     let callee = 

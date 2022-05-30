@@ -15,7 +15,7 @@ let main (p, s : parameter * storage) =
   let op =
     match p with
       Call op ->
-        if Set.mem Tezos.sender s.senders_whitelist
+        if Set.mem (Tezos.get_sender ()) s.senders_whitelist
         then op ()
         else (failwith "Sender is not whitelisted" : operation)
     | IsWhitelisted arg ->
