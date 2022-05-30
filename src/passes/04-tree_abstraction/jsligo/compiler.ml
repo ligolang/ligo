@@ -1287,7 +1287,8 @@ and compile_statements_to_expression ~add_warning ~raise : CST.statements -> AST
   let statement_result = compile_statements ~add_warning ~raise statements in
   statement_result_to_expression statement_result
 
-and compile_statement_to_declaration ~add_warning ~raise ?(top_level=false) ~export : CST.statement -> AST.declaration list = fun statement ->
+(* Note: [~top_level] let us treat all let-bindings as "Const" let-binding (needed so that purification works in the backend) *)
+and compile_statement_to_declaration ~add_warning ~raise ~export : top_level:bool -> CST.statement -> AST.declaration list = fun ~top_level statement ->
   match statement with
   | SType {value; region} ->
     let name = value.name in
@@ -1374,7 +1375,7 @@ and compile_statement_to_declaration ~add_warning ~raise ?(top_level=false) ~exp
     in
     let d = AST.Declaration_module { module_binder; module_ ; module_attr = [] } in
     [ Location.wrap ~loc:(Location.lift region) d ]
-  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~add_warning ~raise ~export:true s
+  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~add_warning ~raise ~export:true ~top_level:true s
   | _ ->
     raise.raise @@ statement_not_supported_at_toplevel statement
 
@@ -1392,7 +1393,7 @@ and compile_statements_to_program ~add_warning ~raise : CST.ast -> AST.module_ =
 
 and compile_namespace ~add_warning ~raise :CST.statements -> AST.module_ = fun statements ->
   let statements = Utils.nsepseq_to_list statements in
-  let declarations = List.map ~f:(compile_statement_to_declaration ~add_warning ~raise ~export:false) statements in
+  let declarations = List.map ~f:(compile_statement_to_declaration ~add_warning ~raise ~export:false ~top_level:true) statements in
   let lst = List.concat declarations in
   lst
 
