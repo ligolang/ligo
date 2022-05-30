@@ -1,5 +1,5 @@
 type z = Z.t [@@deriving ord]
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord, hash]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
@@ -15,7 +15,10 @@ let bytes_to_yojson b = `String (Bytes.to_string b)
 
 type layout =
   | L_comb
-  | L_tree
+  | L_tree [@@deriving hash]
+
+let hash_fold_bytes st b = Hash.fold_string st (Bytes.to_string b)
+let hash_fold_z st z = Hash.fold_int64 st (Z.to_int64 z)
 
 type literal =
   | Literal_unit
@@ -36,7 +39,7 @@ type literal =
   | Literal_bls12_381_fr of bytes
   | Literal_chest of bytes
   | Literal_chest_key of bytes
-[@@deriving yojson, ord]
+[@@deriving yojson, ord, hash]
 
 let literal_to_enum = function
   | Literal_unit        ->  1

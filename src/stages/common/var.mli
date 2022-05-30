@@ -1,7 +1,7 @@
 module Location = Simple_utils.Location
 
 module type VAR = sig
-   type t
+   type t [@@deriving hash]
    val equal : t -> t -> bool
    val compare  : t -> t -> int
    val to_yojson: t -> Yojson.Safe.t

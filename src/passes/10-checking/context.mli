@@ -1,5 +1,6 @@
 (* This file represente the context which give the association of values to types *)
 open Ast_typed
+
 module Typing : sig
   type t
   val  empty : t
@@ -24,6 +25,12 @@ module Typing : sig
 
   val get_record : type_expression row_element_mini_c label_map -> t -> (type_variable option * rows) option
   val get_sum    : label -> t -> (type_variable * type_variable list * type_expression * type_expression) list
+end
+
+module Hashes : sig
+  val set_context : Typing.t -> unit
+  val hash_types : unit -> unit
+  val find_type : type_expression -> (module_variable list * type_variable) option
 end
 
 module App : sig

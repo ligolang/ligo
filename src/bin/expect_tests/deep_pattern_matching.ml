@@ -25,7 +25,7 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern not of the expected type record[one -> int , two -> int] |}]
+    Pattern not of the expected type parameter |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -83,7 +83,7 @@ let%expect_test _ =
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -93,7 +93,7 @@ let%expect_test _ =
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;

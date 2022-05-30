@@ -40,7 +40,7 @@ type t =
   | Chest_opening_result
   | Tx_rollup_l2_address 
   | External of string
-  [@@deriving ord, eq]
+  [@@deriving ord, eq, hash]
 
 let to_string = function
   | Bool                 -> "bool"
