@@ -262,8 +262,10 @@ module Hashes = struct
       ()
     else
       let rec aux path (t : Typing.t) =
-        List.iter (List.rev t.types) ~f:(fun (v, t) -> HTBL.add hashtbl t (path, v)) ;
-        List.iter (List.rev t.modules) ~f:(fun (v, t) -> aux (path @ [v]) t) in
+        let types = Typing.Types.TypeMap.to_kv_list @@ Typing.get_types t in
+        let modules = Typing.Types.ModuleMap.to_kv_list @@ Typing.get_modules t in
+        List.iter (List.rev types) ~f:(fun (v, t) -> HTBL.add hashtbl t (path, v)) ;
+        List.iter (List.rev modules) ~f:(fun (v, t) -> aux (path @ [v]) t) in
       HTBL.clear hashtbl ;
       aux [] t ;
       context := (true, t)
