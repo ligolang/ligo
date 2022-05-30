@@ -12,6 +12,7 @@ module Monad = Execution_monad
 module ModResHelpers = Preprocessor.ModRes.Helpers
 
 type interpreter_error = Errors.interpreter_error
+let not_comparable_string = v_string "Not comparable"
 
 let check_value value =
   let open Monad in
@@ -35,7 +36,7 @@ let wrap_compare_result comp cmpres loc calltrace =
   | C_LE -> return (cmpres <= 0)
   | C_GT -> return (cmpres > 0)
   | C_GE -> return (cmpres >= 0)
-  | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+  | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
 let compare_constants c o1 o2 loc calltrace =
   let open Monad in
@@ -68,7 +69,7 @@ let compare_constants c o1 o2 loc calltrace =
         | C_LE -> return true
         | C_GT -> return false
         | C_GE -> return true
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
       in
       return @@ v_bool x
   | (comp, [V_Ct (C_string a'); V_Ct (C_string b')]) ->
@@ -94,7 +95,7 @@ let compare_constants c o1 o2 loc calltrace =
         match comp with
         | C_EQ -> return (cmpres = 0 && compare_opt_strings entr1 entr2)
         | C_NEQ -> return (cmpres <> 0 && compare_opt_strings entr1 entr2)
-        | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+        | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
       in
       return @@ v_bool x
   | (_, l) ->
@@ -103,7 +104,7 @@ let compare_constants c o1 o2 loc calltrace =
             "%a"
             (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
             l) ;
-      fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
 let rec apply_comparison :
     Location.t ->
@@ -131,7 +132,7 @@ let rec apply_comparison :
       match comp with
       | C_EQ  -> return @@ v_bool c
       | C_NEQ -> return @@ v_bool (not c)
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
     in
     return v
   | (comp, [V_Construct (ctor_a, args_a); V_Construct (ctor_b, args_b)]) -> (
@@ -146,7 +147,7 @@ let rec apply_comparison :
           else
             let* r = apply_comparison loc calltrace c [args_a; args_b] in
             Monad.return @@ v_bool @@ is_true r
-      | _ -> fail @@ Errors.meta_lang_eval loc calltrace "Not comparable")
+      | _ -> fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string)
   | (_, l) ->
     (* TODO: Don't know how to compare these *)
       (* V_Func_val *)
@@ -159,16 +160,18 @@ let rec apply_comparison :
             "%a"
             (PP_helpers.list_sep_d Ligo_interpreter.PP.pp_value)
             l) ;
-      fail @@ Errors.meta_lang_eval loc calltrace "Not comparable"
+      fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
+  ignore add_warning;
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~steps ~options in
+  let eval_ligo = eval_ligo ~raise ~add_warning ~steps ~options in
   let locs = List.map ~f:(fun (_, _, c) -> c) operands in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
   let error_type = Errors.generic_error loc "Type error." in
+  let div_by_zero_str = v_string "Dividing by zero" in
   let return_ct v = return @@ V_Ct v in
   let return_none () = return @@ v_none () in
   let return_some v = return @@ v_some v in
@@ -218,14 +221,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_UNOPT , [ v ] ) -> (
       match get_option v with
       | Some (Some value) -> return @@ value
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace "option is None"
+      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "option is None")
       | None -> fail @@ Errors.generic_error loc "Expected option type"
     )
     | ( C_UNOPT , _  ) -> fail @@ error_type
     | ( C_UNOPT_WITH_ERROR , [ v ; V_Ct (C_string s) ] ) -> (
       match get_option v with
       | Some (Some value) -> return @@ value
-      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace s
+      | Some None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string s)
       | None -> fail @@ Errors.generic_error loc "Expected option type"
     )
     | ( C_UNOPT_WITH_ERROR , _  ) -> fail @@ error_type
@@ -236,7 +239,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_MAP_FIND_OPT , _  ) -> fail @@ error_type
     | ( C_MAP_FIND , [ k ; V_Map l ] ) -> ( match List.Assoc.find ~equal:LC.equal_value l k with
       | Some v -> return @@ v
-      | None -> fail @@ Errors.meta_lang_eval loc calltrace (Predefined.Tree_abstraction.pseudo_module_to_string c)
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string @@ Predefined.Tree_abstraction.pseudo_module_to_string c)
     )
     | ( C_MAP_FIND , _  ) -> fail @@ error_type
     (* binary *)
@@ -248,7 +251,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_SUB    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_sub a' b' with
       | Some res -> return_ct @@ C_mutez res
-      | None -> fail (Errors.meta_lang_eval loc calltrace "Mutez underflow/overflow")
+      | None -> fail (Errors.meta_lang_eval loc calltrace (v_string "Mutez underflow/overflow"))
     )
     | ( C_SUB_MUTEZ    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_sub a' b' with
@@ -269,7 +272,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( C_ADD    , [ V_Ct (C_mutez a') ; V_Ct (C_mutez b') ] ) -> (
       match Michelson_backend.Tezos_eq.mutez_add a' b' with
       | Some res -> return_ct @@ C_mutez res
-      | None -> fail (Errors.meta_lang_eval loc calltrace "Mutez underflow/overflow")
+      | None -> fail (Errors.meta_lang_eval loc calltrace (v_string "Mutez underflow/overflow"))
     )
     | ( C_ADD    , [ V_Ct (C_bls12_381_g1 a) ; V_Ct (C_bls12_381_g1 b) ] ) -> let r = Bls12_381.G1.(add a b) in return_ct (C_bls12_381_g1 r)
     | ( C_ADD    , [ V_Ct (C_bls12_381_g2 a) ; V_Ct (C_bls12_381_g2 b) ] ) -> let r = Bls12_381.G2.(add a b) in return_ct (C_bls12_381_g2 r)
@@ -296,28 +299,28 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_int res
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_nat a')  ; V_Ct (C_nat b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_mutez b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_nat res
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       begin
         match a with
         | Some (res,_) -> return_ct @@ C_mutez res
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
       end
     | ( C_DIV , _  ) -> fail @@ error_type
     | ( C_MOD    , [ V_Ct (C_int a')    ; V_Ct (C_int b')    ] )
@@ -326,13 +329,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
     )
     | ( C_MOD    , [ V_Ct (C_nat a')    ; V_Ct (C_nat b')    ] ) -> (
       let a = Michelson_backend.Tezos_eq.int_ediv a' b' in
       match a with
       | Some (_,r) -> return_ct @@ C_nat r
-      | None -> fail @@ Errors.meta_lang_eval loc calltrace "Dividing by zero"
+      | None -> fail @@ Errors.meta_lang_eval loc calltrace div_by_zero_str
     )
     | ( C_MOD , _  ) -> fail @@ error_type
     | ( C_CONCAT , [ V_Ct (C_string a') ; V_Ct (C_string b') ] ) -> return_ct @@ C_string (a' ^ b')
@@ -354,7 +357,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       begin
         match v with
         | Some v -> return_ct @@ C_nat v
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Overflow"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow")
       end
     | ( C_LSL , _  ) -> fail @@ error_type
     | ( C_LSR    , [ V_Ct (C_nat a'  ) ; V_Ct (C_nat b'  ) ] ) ->
@@ -362,7 +365,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       begin
         match v with
         | Some v -> return_ct @@ C_nat v
-        | None -> fail @@ Errors.meta_lang_eval loc calltrace "Overflow"
+        | None -> fail @@ Errors.meta_lang_eval loc calltrace (v_string "Overflow")
       end
     | ( C_LSR , _  ) -> fail @@ error_type
     | ( C_LIST_EMPTY, []) -> return @@ V_List ([])
@@ -569,14 +572,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> value = Implicit_account (loc, kh) in
       return @@ value
     | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
-    | ( C_FAILWITH , [ a ] ) ->
-      fail @@ Errors.meta_lang_failwith loc calltrace a
-    | ( C_FAILWITH , _  ) -> fail @@ error_type
     (*
     >>>>>>>>
       Test operators
     >>>>>>>>
     *)
+    | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
+    | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
     | ( C_TEST_ORIGINATE_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ; storage ; V_Ct ( C_mutez amt ) ]) ->
       let>> mod_res = Get_mod_res () in
       let source_file = ModResHelpers.resolve_file_name source_file mod_res in
@@ -903,14 +905,14 @@ and eval_literal : AST.literal -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~add_warning ~steps ~options in
     let open Monad in
     let unthunk = function
       | V_Thunk v -> eval_ligo v.value calltrace v.context
       | v -> return v in
-    let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
+    let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel")) else return () in
     match term.expression_content with
     | E_type_inst _ ->
        fail @@ Errors.generic_error term.location "Polymorphism not supported: polymorphic expressions should be monomorphized before being interpreted. This could mean that the expression that you are trying to interpret is too generic, try adding a type annotation."
@@ -922,18 +924,29 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
-            eval_ligo body (term.location :: calltrace) f_env'
+            eval_ligo { body with location = term.location } (term.location :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda} ->
             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
-            eval_ligo body (term.location :: calltrace) f_env''
-          | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) ->
-             let>> ctxt = Get_state () in
-             (match Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression with
-             | Ok v -> return v
-             | Error (Failwith_string s) -> fail @@ Errors.meta_lang_eval term.location calltrace s
-             | Error _ -> fail @@ Errors.meta_lang_eval term.location calltrace "Failure")
+            eval_ligo { body with location = term.location } (term.location :: calltrace) f_env''
+          | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) -> (
+            let () = match code with
+              | Seq (_, [ Prim (_,"FAILWITH",_,_) ]) -> add_warning (`Use_meta_ligo term.location)
+              | _ -> ()
+            in
+            let>> ctxt = Get_state () in
+            match Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression with
+            | Ok v -> return v
+            | Error data -> (
+              let { type1 = data_t ; _ } = AST.get_t_arrow_exn f.type_expression in
+              let data_t = Michelson_backend.compile_type ~raise data_t in
+              let data_opt = to_option @@ Michelson_to_value.decompile_to_untyped_value ~bigmaps:[] (clean_locations data_t) (clean_locations data) in
+              match data_opt with
+              | Some data -> fail @@ Errors.meta_lang_eval term.location calltrace data
+              | None -> fail @@ Errors.target_lang_failwith term.location data
+            )
+          )
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
@@ -992,7 +1005,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
           let* value = unthunk value in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~add_warning ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
@@ -1086,11 +1099,11 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
       | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
-    | E_assign _ -> failwith "todo"
+    | E_assign _ -> raise.raise @@ Errors.generic_error term.location "Assignements should not reach interpreter"
 
-and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
+and try_eval ~raise ~add_warning ~steps ~options expr env state r = Monad.eval ~raise ~add_warning ~options (eval_ligo ~raise ~add_warning ~steps ~options expr [] env) state r
 
-let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~add_warning ~steps ~options : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1118,7 +1131,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
-  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
+  let value, _ = try_eval ~raise ~add_warning ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =

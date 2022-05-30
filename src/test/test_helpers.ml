@@ -222,8 +222,8 @@ let expect_string_failwith ~raise ?options program entry_point input expected_fa
   let err = Ligo_run.Of_michelson.run_failwith ~raise
     ?options michelson_program.expr michelson_program.expr_ty in
   match err with
-    | Runned_result.Failwith_string s when String.equal s expected_failwith -> ()
-    | _ -> raise.raise test_expected_to_fail
+  | String (_,str) when String.equal str expected_failwith -> ()
+  | _ -> raise.raise test_expected_to_fail
 
 let expect_eq ~raise ?options program entry_point input expected =
   let expected = expression_to_core ~raise expected in

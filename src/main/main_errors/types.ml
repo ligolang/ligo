@@ -16,9 +16,8 @@ type all =
  | `Main_typecheck_contract_tracer of int Tezos_utils.Michelson.michelson * tezos_alpha_error list
  | `Main_could_not_serialize of tezos_alpha_error list
  | `Check_typed_arguments_tracer of Simple_utils.Runned_result.check_type * all
- | `Main_unknown_failwith_type
  | `Main_unknown
- | `Main_execution_failed of Simple_utils.Runned_result.failwith
+ | `Main_execution_failed of (int, string) Tezos_micheline.Micheline.node
  | `Main_cannot_open_global_constants of string
  | `Main_cannot_parse_global_constants of string * string
 
@@ -52,9 +51,9 @@ type all =
  (* | `Main_interpreter of Interpreter.interpreter_error *)
  | `Main_interpret_test_entry_not_found of string
  | `Main_interpret_target_lang_error of Location.t * Location.t list * Tezos_error_monad__TzCore.error list
- | `Main_interpret_target_lang_failwith of Location.t * Simple_utils.Runned_result.failwith
+ | `Main_interpret_target_lang_failwith of Location.t * (int, string) Tezos_micheline.Micheline.node
  | `Main_interpret_boostrap_not_enough of Location.t
- | `Main_interpret_meta_lang_eval of Location.t * Location.t list * string
+ | `Main_interpret_meta_lang_eval of Location.t * Location.t list * Ligo_interpreter.Types.value
  | `Main_interpret_meta_lang_failwith of Location.t * Location.t list * Ligo_interpreter.Types.value
  | `Main_interpret_generic of Location.t * string
  | `Main_interpret_literal of Location.t * Ast_typed.literal

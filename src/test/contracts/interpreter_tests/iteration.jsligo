@@ -1,4 +1,4 @@
-let f_set = (xs : set<int>) : int => {
+const f_set = (xs : set<int>) : int => {
   let r = 0;
   for (const x of xs) {
     r = x;
@@ -6,9 +6,9 @@ let f_set = (xs : set<int>) : int => {
   return r;
 };
 
-let test_set = f_set(Set.add(3, Set.add(2, Set.add(2, Set.add(1, Set.empty as set<int>)))));
+const test_set = f_set(Set.add(3, Set.add(2, Set.add(2, Set.add(1, Set.empty as set<int>)))));
 
-let f_list = (xs : list<int>) : int => {
+const f_list = (xs : list<int>) : int => {
   let r = 0;
   for (const x of xs) {
     r = x;
@@ -16,4 +16,4 @@ let f_list = (xs : list<int>) : int => {
   return r;
 };
 
-let test_list = f_list(list([1,2,3]));
+const test_list = f_list(list([1,2,3]));

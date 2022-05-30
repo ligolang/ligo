@@ -217,7 +217,7 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract", "failwith"))]
+[@@map (_ct_, ("some", "contract_opt", "contract"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
 [@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]

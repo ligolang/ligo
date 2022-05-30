@@ -16,7 +16,7 @@ type all =
   | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
   | `Jsligo_deprecated_toplevel_let of Location.t
-
+  | `Use_meta_ligo of Location.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -31,6 +31,10 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Use_meta_ligo loc ->
+      Format.fprintf f "@[<hv>%a@ You are using Michelson failwith primitive (loaded from standard library).@.\
+      Consider using `Test.failwith` for throwing a testing framework failure.@.@]"
+        Snippet.pp loc
     | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) -> (
       let open Environment.Protocols in
       Format.fprintf f
@@ -98,6 +102,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Use_meta_ligo loc ->
+    let message = `String "You are using Michelson failwith primitive (loaded from standard library).\
+    Consider using `Test.failwith` for throwing a testing framework failure" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage:"Interpreter" ~content
   | `Michelson_typecheck_failed_with_different_protocol (user_proto,_) ->
     let open Environment.Protocols in
     let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in

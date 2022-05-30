@@ -27,8 +27,6 @@ let make_state ~raise ~(options : Compiler_options.t)  =
   let mod_res       = Option.bind ~f:ModRes.make options.frontend.project_root in
   { tezos_context ; mod_res }
 
-let add_warning _ = ()
-
 let clean_locations ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations ty)
 
 (* Command should _only_ contains instruction that needs or modify the tezos context *)
@@ -82,12 +80,13 @@ module Command = struct
   let eval
     : type a.
       raise:Errors.interpreter_error raise ->
+      add_warning: ( Main_warnings.all -> unit) ->
       options:Compiler_options.t ->
       a t ->
       state ->
       execution_trace ref option ->
       (a * Tezos_state.context)
-    = fun ~raise ~options command state _log ->
+    = fun ~raise ~add_warning ~options command state _log ->
     let ctxt = state.tezos_context in
     match command with
     | Set_big_map (id, kv, bigmap_ty) ->
@@ -431,29 +430,30 @@ type 'a t =
 let rec eval
   : type a.
     raise:Errors.interpreter_error raise ->
+    add_warning: (Main_warnings.all -> unit) ->
     options:Compiler_options.t ->  
     a t ->
     state ->
     execution_trace ref option ->
     a * Tezos_state.context
-  = fun ~raise ~options e state log ->
+  = fun ~raise ~add_warning ~options e state log ->
   match e with
   | Bind (e', f) ->
-    let (v, tezos_context) = eval ~raise ~options e' state log in
+    let (v, tezos_context) = eval ~raise ~add_warning ~options e' state log in
     let state = { state with tezos_context } in
-    eval ~raise ~options (f v) state log
-  | Call command -> Command.eval ~raise ~options command state log
+    eval ~raise ~add_warning ~options (f v) state log
+  | Call command -> Command.eval ~raise ~add_warning ~options command state log
   | Return v -> (v, state.tezos_context)
   | Fail_ligo err -> raise.raise err
   | Try_or (e', handler) ->
     try_with
-      (eval ~options e' state log)
+      (eval ~add_warning ~options e' state log)
       (function
             `Main_interpret_target_lang_error _
           | `Main_interpret_target_lang_failwith _
           | `Main_interpret_meta_lang_eval _
           | `Main_interpret_meta_lang_failwith _ ->
-            eval ~raise ~options handler state log
+            eval ~raise ~add_warning ~options handler state log
           | e -> raise.raise e)
 
 let fail err : 'a t = Fail_ligo err

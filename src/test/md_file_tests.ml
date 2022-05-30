@@ -136,7 +136,7 @@ let compile_groups ~raise filename grp_list =
         let testlib    = Build.Testlib.core ~options meta.syntax in
         let core = testlib @ stdlib @ core in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
-        let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
+        let _ = Interpreter.eval_test ~options ~raise ~add_warning ~steps:5000 typed in
         ()
       | Object ->
         let core = stdlib @ core in

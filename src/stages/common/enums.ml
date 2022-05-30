@@ -66,7 +66,6 @@ type constant' =
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
   | C_ASSERT_INFERRED
-  | C_FAILWITH
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -205,6 +204,7 @@ type constant' =
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
+  | C_TEST_FAILWITH [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE

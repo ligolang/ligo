@@ -122,7 +122,6 @@ let to_string = function
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
   | "tx_rollup_l2_address" -> Tx_rollup_l2_address
-  | "external_failwith"    -> External "failwith"
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
@@ -210,7 +209,6 @@ let v_chest                : type_variable = TypeVar.of_input_var (to_string Che
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
 let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
-let v_external_failwith    : type_variable = TypeVar.of_input_var (to_string @@ External "failwith")
 let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
 let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
 let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")

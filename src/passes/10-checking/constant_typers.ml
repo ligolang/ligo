@@ -330,7 +330,6 @@ module Constant_types = struct
                     of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
                     of_type C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
                     (* GLOBAL *)
-                    of_type C_FAILWITH O.(for_all "a" @@ fun a -> t_ext_failwith a);
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
                     of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
                     of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
@@ -499,6 +498,7 @@ module Constant_types = struct
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
                     of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
                     of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
+                    of_type C_TEST_FAILWITH (for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b));
                     of_type C_TEST_PUSH_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_POP_CONTEXT O.(t_unit () ^-> t_unit ());
                     (* SAPLING *)
@@ -544,8 +544,6 @@ end
 let external_typers ~raise ~options loc s =
   let typer =
     match s with
-    | "failwith" ->
-       Constant_types.failwith_typer
     | "int" ->
        Constant_types.int_typer
     | "ediv" ->

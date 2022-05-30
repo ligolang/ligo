@@ -1,8 +1,8 @@
 let cut = "./contract_under_test/views_contract.mligo"
 
 let test =
-  let baker = Test.nth_bootstrap_account 0 in
-  let src = Test.nth_bootstrap_account 1 in
+  let _baker = Test.nth_bootstrap_account 0 in
+  let _src = Test.nth_bootstrap_account 1 in
   let init_storage = Test.eval 0 in
   let (addr_v, _, _) =
     Test.originate_from_file cut "main_with_view" (["sto_plus_n"] : string list) init_storage 0tez
