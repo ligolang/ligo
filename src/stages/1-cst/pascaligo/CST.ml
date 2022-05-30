@@ -181,7 +181,7 @@ and const_decl = {
 
 and type_params = (variable, comma) nsepseq
 
-and parameters = param_decl reg tuple
+and parameters = (param_decl reg, comma) sepseq par reg
 
 and param_decl = {
   param_kind : [`Var of kwd_var | `Const of kwd_const];
@@ -235,6 +235,8 @@ and type_decl = {
   type_expr  : type_expr;
   terminator : semi option
 }
+
+and 'a tuple = ('a, comma) nsepseq par reg
 
 (* TYPE EXPRESSIONS *)
 
@@ -350,11 +352,9 @@ and assignment = {
 
 (* Procedure call *)
 
-and call = (expr * arguments) reg
+and call = (expr * call_args) reg
 
-and arguments = expr tuple
-
-and 'a tuple = ('a, comma) nsepseq par reg
+and call_args = (expr, comma) sepseq par reg
 
 (* Case *)
 
@@ -541,53 +541,53 @@ and typed_pattern = {
    add or modify some, please make sure they remain in order. *)
 
 and expr =
-  E_Add       of plus bin_op reg               (* x + y           *)
-| E_And       of kwd_and bin_op reg            (* x and y         *)
-| E_App       of (expr * arguments option) reg (* Foo (x,y)       *)
-| E_Attr      of (attribute * expr)            (* [@a] (x,y)      *)
+  E_Add       of plus bin_op reg                (* x + y           *)
+| E_And       of kwd_and bin_op reg             (* x and y         *)
+| E_App       of (expr * expr tuple option) reg (* Foo (x,y)       *)
+| E_Attr      of (attribute * expr)             (* [@a] (x,y)      *)
 | E_BigMap    of binding reg compound reg
 | E_Block     of block_with reg
-| E_Bytes     of (lexeme * Hex.t) wrap         (* 0xFFFA          *)
-| E_Call      of call                          (* M.f (x,y)       *)
+| E_Bytes     of (lexeme * Hex.t) wrap          (* 0xFFFA          *)
+| E_Call      of call                           (* M.f (x,y)       *)
 | E_Case      of expr case reg
-| E_Cat       of caret bin_op reg              (* "Hello" ^ world *)
+| E_Cat       of caret bin_op reg               (* "Hello" ^ world *)
 | E_CodeInj   of code_inj reg
-| E_Ctor      of ctor                          (* C               *)
+| E_Ctor      of ctor                           (* C               *)
 | E_Cond      of expr conditional reg
-| E_Cons      of sharp bin_op reg              (* head :: tail    *)
-| E_Div       of slash bin_op reg              (* x / y           *)
-| E_Equal     of equal bin_op reg              (* x = y           *)
-| E_Fun       of fun_expr reg                  (* fun x -> x      *)
-| E_Geq       of geq bin_op reg                (* x >= y          *)
-| E_Gt        of gt bin_op reg                 (* x > y           *)
-| E_Int       of (lexeme * Z.t) wrap           (* 42              *)
-| E_Leq       of leq bin_op reg                (* x <= y          *)
-| E_List      of expr compound reg             (* list [4;5]      *)
-| E_Lt        of lt bin_op reg                 (* x < y           *)
-| E_Map       of binding reg compound reg      (* map [3 -> "x"]  *)
-| E_MapLookup of map_lookup reg                (* M.m [i]         *)
-| E_Mod       of kwd_mod bin_op reg            (* x mod n         *)
-| E_ModPath   of expr module_path reg          (* M.N.x           *)
-| E_Mult      of times bin_op reg              (* x * y           *)
-| E_Mutez     of (lexeme * Int64.t) wrap       (* 5mutez          *)
-| E_Nat       of (lexeme * Z.t) wrap           (* 4n              *)
-| E_Neg       of minus un_op reg               (* -a              *)
-| E_Neq       of neq bin_op reg                (* x =/= y         *)
-| E_Nil       of kwd_nil                       (* nil             *)
-| E_Not       of kwd_not un_op reg             (* not x           *)
-| E_Or        of kwd_or bin_op reg             (* x or y          *)
-| E_Par       of expr par reg                  (* (x - M.y)       *)
-| E_Proj      of projection reg                (* e.x.1           *)
-| E_Record    of record_expr                   (* record [x=7]    *)
-| E_Set       of expr compound reg             (* set [x; 1]      *)
-| E_SetMem    of set_membership reg            (* x contains y    *)
-| E_String    of lexeme wrap                   (* "string"        *)
-| E_Sub       of minus bin_op reg              (* a - b           *)
-| E_Tuple     of expr tuple                    (* (1, x)          *)
-| E_Typed     of typed_expr par reg            (* (x : int)       *)
-| E_Update    of update reg                    (* x with y        *)
-| E_Var       of variable                      (* x               *)
-| E_Verbatim  of lexeme wrap                   (* {|foo|}         *)
+| E_Cons      of sharp bin_op reg               (* head :: tail    *)
+| E_Div       of slash bin_op reg               (* x / y           *)
+| E_Equal     of equal bin_op reg               (* x = y           *)
+| E_Fun       of fun_expr reg                   (* fun x -> x      *)
+| E_Geq       of geq bin_op reg                 (* x >= y          *)
+| E_Gt        of gt bin_op reg                  (* x > y           *)
+| E_Int       of (lexeme * Z.t) wrap            (* 42              *)
+| E_Leq       of leq bin_op reg                 (* x <= y          *)
+| E_List      of expr compound reg              (* list [4;5]      *)
+| E_Lt        of lt bin_op reg                  (* x < y           *)
+| E_Map       of binding reg compound reg       (* map [3 -> "x"]  *)
+| E_MapLookup of map_lookup reg                 (* M.m [i]         *)
+| E_Mod       of kwd_mod bin_op reg             (* x mod n         *)
+| E_ModPath   of expr module_path reg           (* M.N.x           *)
+| E_Mult      of times bin_op reg               (* x * y           *)
+| E_Mutez     of (lexeme * Int64.t) wrap        (* 5mutez          *)
+| E_Nat       of (lexeme * Z.t) wrap            (* 4n              *)
+| E_Neg       of minus un_op reg                (* -a              *)
+| E_Neq       of neq bin_op reg                 (* x =/= y         *)
+| E_Nil       of kwd_nil                        (* nil             *)
+| E_Not       of kwd_not un_op reg              (* not x           *)
+| E_Or        of kwd_or bin_op reg              (* x or y          *)
+| E_Par       of expr par reg                   (* (x - M.y)       *)
+| E_Proj      of projection reg                 (* e.x.1           *)
+| E_Record    of record_expr                    (* record [x=7]    *)
+| E_Set       of expr compound reg              (* set [x; 1]      *)
+| E_SetMem    of set_membership reg             (* x contains y    *)
+| E_String    of lexeme wrap                    (* "string"        *)
+| E_Sub       of minus bin_op reg               (* a - b           *)
+| E_Tuple     of expr tuple                     (* (1, x)          *)
+| E_Typed     of typed_expr par reg             (* (x : int)       *)
+| E_Update    of update reg                     (* x with y        *)
+| E_Var       of variable                       (* x               *)
+| E_Verbatim  of lexeme wrap                    (* {|foo|}         *)
 
 (* Map binding *)
 

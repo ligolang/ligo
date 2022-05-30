@@ -79,7 +79,8 @@ function transfer (const p : transfer; const s : storage)
     new_tokens :=
       Big_map.update
         (p.address_from,
-         (Some (abs (sender_balance - p.value))), s.tokens);
+         (Some (abs (sender_balance - p.value))),
+         s.tokens);
 
     var receiver_balance : nat
     := case (Big_map.find_opt (p.address_to, s.tokens)) of [
@@ -88,7 +89,8 @@ function transfer (const p : transfer; const s : storage)
 
     new_tokens :=
       Big_map.update
-        (p.address_to, (Some (receiver_balance + p.value)),
+        (p.address_to,
+         (Some (receiver_balance + p.value)),
          new_tokens)
   }
 } with
@@ -118,7 +120,8 @@ function approve (const p : approve; const s : storage)
     new_allowances :=
       Big_map.update
         ((p.spender, Tezos.get_sender (unit)),
-         (Some (p.value)), s.allowances)
+         (Some (p.value)),
+         s.allowances)
   }
 } with
     ((nil : list (operation)),
@@ -130,7 +133,8 @@ function getAllowance
 {
   var value : nat
   := case Big_map.find_opt
-           ((p.owner, p.spender), s.allowances)
+           ((p.owner, p.spender),
+            s.allowances)
     of [
       Some (value) -> value | None -> 0n
     ];
@@ -788,7 +792,7 @@ function main (const a : int) : int is
 } with i
 
 const x : int
-= (function  (const i : int) : int is i + 1) (41)
+= (function (const i : int) : int is i + 1) (41)
 
 function main (const i : int) : int is
 {
@@ -915,7 +919,8 @@ function insert (var h : heap; const e : heap_elt) : heap is
     if parent >= 1n
     then {
       if heap_elt_lt
-           (get_force (parent, h), get_force (i, h))
+           (get_force (parent, h),
+            get_force (i, h))
       then {
         largest := parent;
 
@@ -980,7 +985,8 @@ function pop (var h : heap) : heap * heap_elt * nat is
       if right <= s
       then {
         if heap_elt_lt
-             (get_force (right, h), get_force (i, h))
+             (get_force (right, h),
+              get_force (i, h))
         then {
           largest := right;
 
@@ -1831,7 +1837,8 @@ function send (const param : send_pt; var s : storage)
   : return is
 {
   if not Set.mem
-       (Tezos.get_sender (unit), s.authorized_addresses)
+       (Tezos.get_sender (unit),
+        s.authorized_addresses)
   then failwith ("Unauthorized address")
   else skip;
 
@@ -1853,7 +1860,8 @@ function send (const param : send_pt; var s : storage)
         else
           s.proposal_counters [Tezos.get_sender (unit)]  :=
             get_force
-              (Tezos.get_sender (unit), s.proposal_counters)
+              (Tezos.get_sender (unit),
+               s.proposal_counters)
             + 1n;
 
         new_store :=
@@ -1863,7 +1871,8 @@ function send (const param : send_pt; var s : storage)
       {
         s.proposal_counters [sender]  :=
           get_force
-            (Tezos.get_sender (unit), s.proposal_counters)
+            (Tezos.get_sender (unit),
+             s.proposal_counters)
           + 1n;
 
         new_store := set [Tezos.get_sender (unit)]
@@ -1872,7 +1881,8 @@ function send (const param : send_pt; var s : storage)
 
   var sender_proposal_counter : nat
   := get_force
-      (Tezos.get_sender (unit), s.proposal_counters);
+      (Tezos.get_sender (unit),
+       s.proposal_counters);
 
   if sender_proposal_counter > s.max_proposal
   then failwith ("Maximum number of proposal reached")
@@ -2003,7 +2013,9 @@ function check_message
             if pkh_sig.0 = Crypto.hash_key (key)
             then
               if Crypto.check
-                   (key, pkh_sig.1, packed_payload)
+                   (key,
+                    pkh_sig.1,
+                    packed_payload)
               then valid := valid + 1n
               else failwith ("Invalid signature")
           }

@@ -58,7 +58,8 @@ let%expect_test _ =
               ];
 
             if Operator.neq
-                 (card.card_owner, Tezos.get_sender (unit))
+                 (card.card_owner,
+                  Tezos.get_sender (unit))
             then failwith ("This card doesn't belong to you")
             else skip;
 
@@ -84,7 +85,8 @@ let%expect_test _ =
               ];
 
             if Operator.neq
-                 (card.card_owner, Tezos.get_sender (unit))
+                 (card.card_owner,
+                  Tezos.get_sender (unit))
             then failwith ("This card doesn't belong to you")
             else skip;
 
@@ -105,7 +107,9 @@ let%expect_test _ =
 
             card_patterns :=
               Map.add
-                (card.card_pattern, card_pattern, card_patterns);
+                (card.card_pattern,
+                 card_pattern,
+                 card_patterns);
 
             s := s.card_patterns with card_patterns;
 
@@ -117,7 +121,8 @@ let%expect_test _ =
 
             const price : tez
             = Operator.times
-                (card_pattern.coefficient, card_pattern.quantity);
+                (card_pattern.coefficient,
+                 card_pattern.quantity);
 
             const receiver : contract (unit)
             = case (Tezos.get_contract_opt
@@ -168,7 +173,9 @@ let%expect_test _ =
 
             card_patterns :=
               Map.add
-                (action.card_to_buy, card_pattern, card_patterns);
+                (action.card_to_buy,
+                 card_pattern,
+                 card_patterns);
 
             s := s.card_patterns with card_patterns;
 
@@ -180,7 +187,8 @@ let%expect_test _ =
                  record [
                    card_owner = Tezos.get_sender (unit);
                    card_pattern = action.card_to_buy
-                 ], cards);
+                 ],
+                 cards);
 
             s := s.cards with cards;
 
@@ -686,7 +694,8 @@ let%expect_test _ =
     } with
         Operator.add
           (Operator.add
-             (Operator.add (tuple.0, tuple.1. 0), tuple.1. 1. 0),
+             (Operator.add (tuple.0, tuple.1. 0),
+              tuple.1. 1. 0),
            tuple.1. 1. 1)
 
     type nested_record_t is
@@ -1154,7 +1163,9 @@ let%expect_test _ =
           then n_1
           else
             fibo
-              (Operator.sub (n, 1), Operator.add (n_1, n_0), n_1)
+              (Operator.sub (n, 1),
+               Operator.add (n_1, n_0),
+               n_1)
       ] |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
