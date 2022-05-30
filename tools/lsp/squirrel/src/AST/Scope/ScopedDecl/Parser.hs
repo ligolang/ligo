@@ -42,7 +42,14 @@ parseType node =
       , parseApplyType
       , parseArrowType
       , parseVariableType
+      , parseParenType
       ]
+
+parseParenType :: PPableLIGO info => LIGO info -> Maybe Type
+parseParenType node = do
+  LIGO.TParen typ <- layer node
+  let typ' = parseTypeDeclSpecifics typ
+  pure $ ParenType typ'
 
 parseArrowType :: PPableLIGO info => LIGO info -> Maybe Type
 parseArrowType node = do

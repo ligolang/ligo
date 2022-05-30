@@ -482,16 +482,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
         )
         init elts
     | ( C_LIST_FOLD_RIGHT , _  ) -> fail @@ error_type
-    | ( C_LIST_HEAD_OPT , [ V_List elts ] ) ->
-      (match (List.hd elts) with
-      | Some v -> return @@ v_some v
-      | None   -> return @@ v_none ())
-    | ( C_LIST_HEAD_OPT , _  ) -> fail @@ error_type
-    | ( C_LIST_TAIL_OPT , [ V_List elts ] ) ->
-      (match (List.tl elts) with
-      | Some v -> return @@ v_some (V_List v)
-      | None   -> return @@ v_none ())
-    | ( C_LIST_TAIL_OPT , _  ) -> fail @@ error_type
     | ( C_BIG_MAP_EMPTY , []) -> return @@ V_Map ([])
     | ( C_BIG_MAP_EMPTY , _  ) -> fail @@ error_type
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
@@ -917,6 +907,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
   = fun term calltrace env ->
     let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
+    let unthunk = function
+      | V_Thunk v -> eval_ligo v.value calltrace v.context
+      | v -> return v in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace "Out of fuel") else return () in
     match term.expression_content with
     | E_type_inst _ ->
@@ -924,6 +917,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_application {lamb = f; args} -> (
         let* f' = eval_ligo f calltrace env in
         let* args' = eval_ligo args calltrace env in
+        let* args' = unthunk args' in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
@@ -947,13 +941,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
       let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline=_ ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~no_mutation (rhs.type_expression,rhs'))
+      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
       eval_ligo (let_result) calltrace env
@@ -961,6 +955,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_literal l ->
       eval_literal l
     | E_variable var ->
+      let fst (a, _, _) = a in
       let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" AST.PP.expression_variable var)) in
       return v
     | E_record recmap ->
@@ -994,6 +989,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       let* arguments' = Monad.bind_map_list
         (fun (ae:AST.expression) ->
           let* value = eval_ligo ae calltrace env in
+          let* value = unthunk value in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
       apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'

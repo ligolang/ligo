@@ -40,6 +40,7 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
+    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -220,8 +221,6 @@ module Stacking = struct
     | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
     | C_LOOP_STOP          , _   -> Some (trivial_special "RIGHT")
     | C_LIST_EMPTY         , _   -> Some (trivial_special "NIL")
-    | C_LIST_HEAD_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
-    | C_LIST_TAIL_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
     | C_SET_EMPTY          , _   -> Some (trivial_special "EMPTY_SET")
     | C_MAP_EMPTY          , _   -> Some (trivial_special "EMPTY_MAP")
     | C_BIG_MAP_EMPTY      , _   -> Some (trivial_special "EMPTY_BIG_MAP")

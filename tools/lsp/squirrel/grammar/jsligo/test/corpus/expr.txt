@@ -7,12 +7,10 @@ let x = (foo (42))
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
+  (toplevel_binding
+    (var_pattern (NameDecl))
     (paren_expr
-      (call_expr
-        (lambda (Name))
-        (arguments (Int))))))
+      (apply (Name) (Int)))))
 
 =========
 tuple
@@ -23,9 +21,9 @@ let x = [1, "foo", 3]
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (array_literal
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (tuple
       (Int)
       (String)
       (Int))))
@@ -39,8 +37,8 @@ let x = (1);
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
+  (toplevel_binding
+    (var_pattern (NameDecl))
     (paren_expr
       (Int))))
 
@@ -54,16 +52,98 @@ let y = [(1), ("foo"), 3];
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
+  (toplevel_binding
+    (var_pattern (NameDecl))
     (paren_expr
-      (array_literal
+      (tuple
         (Int)
         (String)
         (Int))))
-  (let_decl
-    (var_pattern (Name))
-    (array_literal
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (tuple
       (paren_expr (Int))
       (paren_expr (String))
       (Int))))
+
+=========
+unit type & value
+=========
+
+let n : unit = unit;
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (Unit_kwd)))
+
+=========
+nat decl
+=========
+
+let n = 1 as nat
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (Nat)))
+
+=========
+tez decl
+=========
+
+let n = 1 as tez
+let m = 2 as mutez
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (Tez))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (Tez)))
+
+=========
+list literal
+=========
+
+let empty_list: list<int> = list([]);
+let my_list: list<int> = list([1, 2, 2]);
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (app_type (TypeName) (TypeName))
+    (list_literal))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (app_type (TypeName) (TypeName))
+    (list_literal (Int) (Int) (Int))))
+
+=========
+constructor expr
+=========
+
+let u : user = Admin(1000 as nat);
+let g : user = Guest();
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply (ConstrName) (Nat)))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply (ConstrName))))

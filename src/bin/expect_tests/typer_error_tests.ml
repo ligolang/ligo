@@ -218,8 +218,7 @@ let%expect_test _ =
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Invalid type(s).
-    Expected: "option", but got: "option ('a)". |} ]
+    Constructor "None" not found. |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;

@@ -125,5 +125,72 @@ let const_or_var: Core.regexp = {
   emacs    = "\\\\b\\\\(const\\\\|var\\\\)\\\\b";
   textmate = "\\b(const|var)\\b";
   vim      = "\\<\\(const\\|var\\)\\>"
+}
 
+(* TODO: add regexps for emacs & vim later *)
+
+let attributes_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "(/\\s*@.*\\s*|/\\*\\s*@.*\\*/)";
+  vim      = ""
+}
+
+let let_binding_match1_jsligo: Core.regexp = {
+  emacs    = ""; 
+  textmate = "\\b(let|const)\\b\\s*";
+  vim      = "";
+}
+
+let let_binding_match2_jsligo: Core.regexp = {
+  emacs    = ""; 
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
+  vim      = "";
+}
+
+let control_keywords_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b";
+  vim      = ""
+}
+
+let operators_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+";
+  vim      = ""
+}
+
+let module_alias_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(import)\\b\\s*";
+  vim      = ""
+}
+
+let module_alias_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  vim      = ""
+}
+
+let module_declaration_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(namespace)\\b\\s*";
+  vim      = ""
+}
+
+let module_declaration_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  vim      = ""
+}
+
+let module_match1_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.";
+  vim      = ""
+}
+
+let module_match2_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "([a-zA-Z0-9_$]*)";
+  vim      = ""
 }

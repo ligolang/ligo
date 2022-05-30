@@ -130,8 +130,6 @@ type constant' =
   | C_LIST_FOLD
   | C_LIST_FOLD_LEFT
   | C_LIST_FOLD_RIGHT
-  | C_LIST_HEAD_OPT
-  | C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY

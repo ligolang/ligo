@@ -1,4 +1,7 @@
-module Test.Capabilities.Definition( unit_definition ) where
+module Test.Capabilities.Definition
+  ( unit_definition
+  , unit_definition_jsligo
+  ) where
 
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
@@ -25,3 +28,15 @@ unit_definition = do
   filepath <- makeAbsolute (contractsDir </> filename)
   let uri = filePathToUri filepath
   eitherDefs `shouldBe` InL [Location uri (Range (Position 2 7) (Position 2 13))]
+
+unit_definition_jsligo :: Assertion
+unit_definition_jsligo = do
+  let filename = "increment.jsligo"
+
+  eitherDefs <- runHandlersTest contractsDir $ do
+    doc <- openLigoDoc filename
+    getDefinitions doc (Position 2 2)
+
+  filepath <- makeAbsolute (contractsDir </> filename)
+  let uri = filePathToUri filepath
+  eitherDefs `shouldBe` InL [Location uri (Range (Position 1 6) (Position 1 12))]

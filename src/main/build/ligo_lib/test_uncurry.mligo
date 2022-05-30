@@ -8,12 +8,16 @@ type test_exec_error =
 
 type test_exec_result = Success of nat | Fail of test_exec_error
 
+type test_baker_policy =
+  | By_round of int
+  | By_account of address
+  | Excluding of address list
+
 module Test = struct
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
   let originate_from_file ((fn, e, v, s, t) : string * string * string list * michelson_program * tez) : address * michelson_program * int = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v s t
   let originate (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_program * int) = [%external "TEST_ORIGINATE"] f s t
   let set_source (a : address) : unit = [%external "TEST_SET_SOURCE"] a
-  let set_baker (a : address) : unit = [%external "TEST_SET_BAKER"] a
   let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
   let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
@@ -43,7 +47,6 @@ module Test = struct
   let register_constant (m : michelson_program) : string = [%external "TEST_REGISTER_CONSTANT"] m
   let cast_address (type a b) (a : address) : (a, b) typed_address = [%external "TEST_CAST_ADDRESS"] a
   let to_typed_address (type a b) (c : a contract) : (a, b) typed_address = [%external "TEST_TO_TYPED_ADDRESS"] c
-  let to_entrypoint (type a b c) ((s, t) : string * (a, b) typed_address) : c contract = [%external "TEST_TO_ENTRYPOINT"] s t
   let set_big_map (type a b) ((i, m) : int * (a, b) big_map) : unit = [%external "TEST_SET_BIG_MAP"] i m
   let create_chest ((b, n) : bytes * nat) : chest * chest_key = [%external "TEST_CREATE_CHEST"] b n
   let create_chest_key ((c, n) : chest * nat) : chest_key = [%external "TEST_CREATE_CHEST_KEY"] c n
@@ -67,4 +70,14 @@ module Test = struct
       let s : michelson_program = eval s in
       transfer_exn (a, s, t)
   let michelson_equal ((m1, m2) : michelson_program * michelson_program) : bool = m1 = m2
+  let to_entrypoint (type a b c) ((s, t) : string * (a, b) typed_address) : c contract =
+    let s = if String.length s > 0n then
+              if String.sub 0n 1n s = "%" then
+                let () = log "WARNING: Test.to_entrypoint: automatically removing starting %" in
+                String.sub 1n (abs (String.length s - 1)) s
+	      else s
+	    else s in
+    [%external "TEST_TO_ENTRYPOINT"] s t
+  let set_baker_policy (bp : test_baker_policy) : unit = [%external "TEST_SET_BAKER"] bp
+  let set_baker (a : address) : unit = set_baker_policy (By_account a)
 end

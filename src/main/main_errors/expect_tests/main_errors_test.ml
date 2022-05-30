@@ -43,7 +43,7 @@ let%expect_test "main" =
   [%expect
     {|
       Invalid syntax option: 'foo'.
-      Use 'pascaligo', 'cameligo', or 'reasonligo'.|}] ;
+      Use 'pascaligo', 'cameligo', 'reasonligo', or 'jsligo'.|}] ;
     human_readable_error (`Main_invalid_dialect_name "foo") ;
   [%expect
     {|
@@ -53,7 +53,7 @@ let%expect_test "main" =
   [%expect
     {|
   Invalid file extension 'foo'.
-  Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.|}] ;
+  Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.|}] ;
   human_readable_error
     (`Main_unparse_tracer
       [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout]) ;

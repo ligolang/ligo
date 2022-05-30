@@ -134,7 +134,7 @@ let compile_groups ~raise filename grp_list =
         let options = Compiler_options.set_init_env options init_env in
         let options = Compiler_options.set_test_flag options true in
         let testlib    = Build.Testlib.core ~options meta.syntax in
-        let core = stdlib @ testlib @ core in
+        let core = testlib @ stdlib @ core in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()

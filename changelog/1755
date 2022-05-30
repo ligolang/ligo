@@ -1,0 +1,6 @@
+author: melwyn95
+description: '- `--protocol jakarta` now emits `SUB_MUTEZ` for subtraction `mutez`
+  values'
+merge_request: '1755'
+title: 'fix: --protocol jakarta emits `SUB` for mutez subtraction'
+type: fixed

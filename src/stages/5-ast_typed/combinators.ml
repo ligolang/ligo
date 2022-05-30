@@ -137,6 +137,8 @@ let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core [
   ]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Success" ,t_nat ()); ("Fail", t_test_exec_error ())]
+let t_test_baker_policy ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("By_round" ,t_int ()); ("By_account", t_address ()); ("Excluding", t_list (t_address ()))]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s

@@ -68,14 +68,14 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.ligo") ; "--protocol" ; "ithaca" ] ;
   [%expect{xxx|
     const sub =
-      lambda (parameters#2 : ( tez * tez )) return  match parameters#2 with
-                                                     | ( store , delta ) ->
-                                                     C_POLYMORPHIC_SUB(store ,
-                                                     delta)
+      lambda (parameters#156 : ( tez * tez )) return  match parameters#156 with
+                                                       | ( store , delta ) ->
+                                                       C_POLYMORPHIC_SUB(store ,
+                                                       delta)
     const main =
-      lambda (parameters#4 : ( unit * tez )) return  match parameters#4 with
-                                                      | ( _#3 , store ) ->
-                                                      ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) ) |xxx}]
+      lambda (parameters#158 : ( unit * tez )) return  match parameters#158 with
+                                                        | ( _#157 , store ) ->
+                                                        ( LIST_EMPTY() , (Option.unopt@{tez})@((sub)@(( store , 1000000mutez ))) ) |xxx}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "sub_mutez_new.religo") ; "--protocol" ; "ithaca" ] ;
@@ -148,3 +148,16 @@ let%expect_test _ =
                                                               (Option.unopt)@(
                                                               (sub)@(( store ,
                                                                        1000000mutez ))) ) ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; (test "sub_mutez_new.mligo") ; "--protocol" ; "jakarta" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage mutez ;
+      code { CDR ;
+             PUSH mutez 1000000 ;
+             SWAP ;
+             SUB_MUTEZ ;
+             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
+             NIL operation ;
+             PAIR } } |}]

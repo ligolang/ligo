@@ -309,8 +309,6 @@ module Constant_types = struct
                     of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_list a ^-> b ^-> b);
                     of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> b ^-> t_list a ^-> b);
                     of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_list a ^-> b ^-> b);
-                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option a);
-                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option (t_list a));
                     (* SET *)
                     of_type C_SET_EMPTY O.(for_all "a" @@ fun a -> t_set a);
                     of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
@@ -466,7 +464,7 @@ module Constant_types = struct
                     of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
                     of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
-                    of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_SET_BAKER O.(t_test_baker_policy () ^-> t_unit ());
                     of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
                     of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());

@@ -51,6 +51,7 @@ import Range
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
+foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
 data Source = Source
   { srcPath :: FilePath
@@ -101,6 +102,7 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
         Reason -> tree_sitter_ReasonLigo
+        Js     -> tree_sitter_JsLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     let src = Text.encodeUtf8 input

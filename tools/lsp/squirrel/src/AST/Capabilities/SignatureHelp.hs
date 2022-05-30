@@ -149,6 +149,8 @@ makeSignatureLabel Caml name params
   = "let " <> name <> " " <> Text.unwords params
 makeSignatureLabel Reason name params
   = "let " <> name <> " = (" <> Text.intercalate ", " params <> ")"
+makeSignatureLabel Js name params
+  = "let " <> name <> " = (" <> Text.intercalate ", " params <> ")"
 
 toLspParameters :: Lang -> [Parameter] -> [LSP.ParameterInformation]
 toLspParameters dialect = map (toLspParameter . ppToText . lppLigoLike dialect)
