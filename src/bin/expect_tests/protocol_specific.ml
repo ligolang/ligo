@@ -74,11 +74,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "min_block_time.mligo" ] ;
   [%expect{|
-    File "../../test/contracts/min_block_time.mligo", line 2, characters 6-26:
+    File "../../test/contracts/min_block_time.mligo", line 2, characters 6-30:
       1 | let main (_ : unit * nat ) : operation list * nat =
-      2 |   ([],Tezos.min_block_time ())
+      2 |   ([],Tezos.get_min_block_time ())
 
-    Variable "min_block_time" not found. |}];
+    Variable "get_min_block_time" not found. |}];
 
   run_ligo_good [ "compile" ; "contract" ; contract "min_block_time.mligo" ; "-p" ; "jakarta" ] ;
   [%expect{|

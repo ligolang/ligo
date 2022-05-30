@@ -22,6 +22,8 @@ let get_alternative t element =
     Some (t, ValueVar.of_input_var "get_chain_id", t_arrow (t_unit ()) (t_chain_id ()))
   else if ValueVar.(equal element @@ of_input_var "total_voting_power") && ModuleVar.(equal t @@ of_input_var "Tezos") then
     Some (t, ValueVar.of_input_var "get_total_voting_power", t_arrow (t_unit ()) (t_nat ()))
+  else if ValueVar.(equal element @@ of_input_var "min_block_time") && ModuleVar.(equal t @@ of_input_var "Tezos") then
+    Some (t, ValueVar.of_input_var "get_min_block_time", t_arrow (t_unit ()) (t_nat ()))
   else
     None
 
