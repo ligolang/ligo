@@ -1,0 +1,12 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
+    ],
+    "mkdir .cargo",
+    "mv cargo-config .cargo/config",
+    "cargo build --verbose --target-dir target --release"
+  ]
+}
