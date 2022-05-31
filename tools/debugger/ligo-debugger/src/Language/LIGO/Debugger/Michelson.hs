@@ -10,18 +10,16 @@ import Control.Monad.Except (Except, runExcept, throwError)
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
 import Data.Default (def)
-import Data.IntMap qualified as IntMap
 import Data.Set qualified as Set
 import Data.Text qualified as Text
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
 import Morley.Debugger.Core.Common (debuggerTcOptions)
-import Morley.Debugger.Core.Navigate (SourceLocation (..), SourceMapper (..), SourceType (..))
-import Morley.Debugger.Core.Snapshots (InstrNo (..))
+import Morley.Debugger.Core.Navigate (SourceLocation (..), SourceType (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos), mkPos)
+import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..), mkPos)
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
   (Contract' (..), CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..),
@@ -104,11 +102,10 @@ instance Buildable EmbedError where
 embedInInstr
   :: forall meta inp out.
      (Show meta, Typeable meta, NFData meta)
-  => (meta -> Bool)
-  -> [meta]
+  => [meta]
   -> Instr inp out
   -> Either EmbedError (Instr inp out)
-embedInInstr isNotEmpty metaTape instr = do
+embedInInstr metaTape instr = do
   (resInstr, tapeRest) <- runExcept $ usingStateT metaTape $
     dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } pure instr
   unless (null tapeRest) $
@@ -129,25 +126,17 @@ embedInInstr isNotEmpty metaTape instr = do
           [int||Insufficient number of entries, broke at #{oldInstr}|]
         (meta : rest) -> do
           put rest
-          mkNewInstr <&> if isNotEmpty meta then Meta (SomeMeta meta) else id
+          Meta (SomeMeta meta) <$> mkNewInstr
 
 -- | Read LIGO's debug output and produce
 --
--- 1. A mapper with locations of all important instructions
---    (@InstrNo → source location@ mapping).
--- 2. A contract with inserted @Meta (SomeMeta instrNo)@ wrappers that
---    enumerate certain instructions (@InstrNo ↔ instruction node@ association).
-
--- Note: eventually we don't really need the source mapper
--- after embedding LIGO's debug info into the contract.
---
--- Further (in snapshots collection and in DAP handlers)
--- we use the source mapper only because Morley debugger suggests this model.
--- (we could inline source locations whenever 'InstrNo's appear),
--- Consider going without the source mapper here and in morley-debugger?
+-- 1. All locations that may be worth attention. This is to be used
+--    in switching breakpoints.
+-- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
+--    wrappers that carry the debug info.
 readLigoMapper
   :: LigoMapper
-  -> Either DecodeError (SourceMapper, SomeContract)
+  -> Either DecodeError (Set SourceLocation, SomeContract)
 readLigoMapper ligoMapper = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
@@ -155,25 +144,24 @@ readLigoMapper ligoMapper = do
     forM indexes \i ->
       maybe (Left $ InsufficientMeta i) pure $
         lmLocations ligoMapper V.!? unTableEncodingIdx i
-  let iMetaPerInstr = zip (InstrNo <$> [0..]) metaPerInstr
 
   SomeContract contract <- fromExpressionToTyped (lmMichelsonCode ligoMapper)
   extendedContract <- first MetaEmbeddingError $
     (\code -> SomeContract contract{ cCode = code }) <$>
       embedInInstr @EmbeddedLigoMeta
-        (isJust . ligoInfoToSourceLoc . snd)
-        iMetaPerInstr
+        metaPerInstr
         (cCode contract)
 
-  let sourceMapper = SourceMapper $ IntMap.fromList do
-        (InstrNo i, meta) <- iMetaPerInstr
-        Just loc <- pure $ ligoInfoToSourceLoc meta
-        return (i, loc)
+  let allLocs =
+        -- We expect a lot of duplicates, stripping them via putting to Set
+        Set.fromList $
+        mapMaybe ligoInfoToSourceLoc $ toList $ lmLocations ligoMapper
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (sourceMapper, extendedContract)
+  return $! force (allLocs, extendedContract)
+
   where
     ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation
     ligoInfoToSourceLoc LigoIndexedInfo{..} = asum
