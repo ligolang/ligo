@@ -752,14 +752,19 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> v = Decompile (code, code_ty, expr_ty) in
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
-    | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
+    | ( C_TEST_COMPILE_CONTRACT , [ contract ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let>> code = Compile_contract (loc, contract, contract_ty) in
-       let>> storage = Eval (loc, storage, storage_ty) in
-       let>> size = Get_size code in
-       let>> addr  = Inject_script (loc, calltrace, code, storage, amt) in
-       return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", code) ; (Label "2", size) ])
+       return @@ code
+    | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
+       (* let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
+        * let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in *)
+       (* let>> code = Compile_contract (loc, contract, contract_ty) in
+        * let>> storage = Eval (loc, storage, storage_ty) in *)
+       let>> size = Get_size contract in
+       let>> addr  = Inject_script (loc, calltrace, contract, storage, amt) in
+       return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", contract) ; (Label "2", size) ])
     | ( C_TEST_ORIGINATE , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
       let n = Z.to_int n in
@@ -855,7 +860,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
          C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
-         C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_TEST_COMPILE_CONTRACT | C_GLOBAL_CONSTANT) , _ ) ->
+         C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
 

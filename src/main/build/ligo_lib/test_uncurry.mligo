@@ -17,7 +17,6 @@ module Test = struct
   let failwith (type a b) (v : a) : b = [%external "TEST_FAILWITH"] v
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
   let originate_from_file ((fn, e, v, s, t) : string * string * string list * michelson_program * tez) : address * michelson_program * int = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v s t
-  let originate (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_program * int) = [%external "TEST_ORIGINATE"] f s t
   let set_source (a : address) : unit = [%external "TEST_SET_SOURCE"] a
   let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
   let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
@@ -81,4 +80,10 @@ module Test = struct
     [%external "TEST_TO_ENTRYPOINT"] s t
   let set_baker_policy (bp : test_baker_policy) : unit = [%external "TEST_SET_BAKER"] bp
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
+  let originate (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_program * int) =
+    let f = [%external "TEST_COMPILE_CONTRACT"] f in
+    let s = eval s in
+    let (a, b, c) = [%external "TEST_ORIGINATE"] f s t in
+    let a : (p, s) typed_address = cast_address a in
+    (a, b, c)
 end
