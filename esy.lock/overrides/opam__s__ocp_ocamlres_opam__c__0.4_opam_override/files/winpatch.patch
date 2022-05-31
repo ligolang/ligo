@@ -1,0 +1,12 @@
+--- ./Makefile
++++ ./Makefile
+@@ -113,7 +113,7 @@
+           src/*ocplib-ocamlres-runtime.* \
+ 	  $(RUNLIB_CMI) $(RUNLIB_CMTI) $(RUNLIB_CMT) $(RUNLIB_MLI) $(RUNLIB_ML) \
+ 	  $(LIB_CMI) $(LIB_CMTI) $(LIB_CMT) $(LIB_MLI) $(LIB_ML)
+-	install ocp-ocamlres.asm $(BINDIR)/ocp-ocamlres
++	install ocp-ocamlres.asm $(BINDIR)/ocp-ocamlres$(EXE)
+ 	install ocp-ocamlres.byte $(BINDIR)/ocp-ocamlres.byte
+ 
+ uninstall:
+

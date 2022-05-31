@@ -1,0 +1,134 @@
+name: Build ligo
+
+on: push
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build image marigold-dev/ligo
+        run: docker build . -f ./docker/DevImage.Dockerfile -t marigold-dev/ligo
+      - name: Run container to copy the assets
+        run: docker container run -itd --name ligo-container marigold-dev/ligo
+      - name: Copy assets outside
+        run: docker cp ligo-container:/app/_release $PWD/_container_release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: _container_release/
+
+  non-linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest , windows-latest]
+    steps:
+      # Steps needed for esy
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - uses: actions/checkout@v1
+      - name: Install esy
+        run: npm install -g @esy-nightly/esy
+      - name: Install and build
+        run: |
+          esy
+          rm -Recurse -Force D:/.esy/3/b
+          esy release
+        if: runner.os == 'Windows'
+        env:
+          ESY__PREFIX: 'D:/.esy'
+      - name: Install and build
+        run: |
+          esy
+          esy release
+        if: runner.os != 'Windows'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.os }}
+          path: _release/
+
+  prepare-publish:
+    name: Prepare publish to npm
+    needs:
+      - non-linux
+      - linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+          ref: ${{ github.ref }}
+          submodules: true
+      # Download platform artifacts
+      - name: Download Linux release
+        uses: actions/download-artifact@v1
+        with:
+          name: linux
+      - name: Download Windows release
+        uses: actions/download-artifact@v1
+        with:
+          name: windows-latest
+      - name: Download macOS release
+        uses: actions/download-artifact@v1
+        with:
+          name: macOS-latest
+      # Move artifacts in place
+      - name: Move artifacts
+        run: |
+          mkdir -p _release/platform-linux
+          mkdir -p _release/platform-windows-x64
+          mkdir -p _release/platform-darwin
+          cp -a linux/. _release/platform-linux
+          cp -a windows-latest/. _release/platform-windows-x64
+          cp -a macOS-latest/. _release/platform-darwin
+      - name: Prepare package
+        run: node .github/workflows/bundle-release.js
+      # Create a npm package that can easily be published and tested
+      - name: npm pack
+        run: npm pack .
+        working-directory: _release
+      - name: move package
+        run: mv _release/*.tgz ligo.tgz
+      # Upload artifacts
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release
+          path: _release/
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-tarball
+          path: ligo.tgz
+      # - name: Publish packages
+      #   run: node .github/workflows/publish_to_npm.js
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+  test-platform:
+    name: Test installing ${{ matrix.os }}
+    needs: prepare-publish
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    steps:
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Download ${{ matrix.os }} release
+        uses: actions/download-artifact@v1
+        with:
+          name: release-tarball
+      - name: test install
+        run: npm -g install ./release-tarball/ligo.tgz
+      - name: test binary
+        run: |
+          ligo --help
