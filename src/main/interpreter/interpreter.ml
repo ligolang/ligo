@@ -757,10 +757,6 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
        return @@ code
     | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
-       (* let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-        * let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in *)
-       (* let>> code = Compile_contract (loc, contract, contract_ty) in
-        * let>> storage = Eval (loc, storage, storage_ty) in *)
        let>> size = Get_size contract in
        let>> addr  = Inject_script (loc, calltrace, contract, storage, amt) in
        return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", contract) ; (Label "2", size) ])
