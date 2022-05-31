@@ -15,7 +15,7 @@ let%expect_test _ =
   [%expect{| 583 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
-  [%expect{| 1639 bytes |}] ;
+  [%expect{| 1653 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
   [%expect{| 430 bytes |}] ;
@@ -336,6 +336,7 @@ let%expect_test _ =
                   DUP 3 ;
                   PAIR ;
                   PAIR ;
+                  PACK ;
                   UNIT ;
                   PUSH nat 0 ;
                   DUP 6 ;
@@ -359,7 +360,6 @@ let%expect_test _ =
                              COMPARE ;
                              EQ ;
                              IF { DUP 5 ;
-                                  PACK ;
                                   DIG 4 ;
                                   CDR ;
                                   DIG 2 ;
@@ -470,8 +470,10 @@ let%expect_test _ =
                          GET ;
                          IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                          ADD ;
-                         SOME ;
                          SENDER ;
+                         SWAP ;
+                         SOME ;
+                         SWAP ;
                          UPDATE ;
                          PAIR ;
                          PAIR ;
@@ -479,8 +481,9 @@ let%expect_test _ =
                          CAR ;
                          PAIR ;
                          EMPTY_SET address ;
-                         PUSH bool True ;
                          SENDER ;
+                         PUSH bool True ;
+                         SWAP ;
                          UPDATE ;
                          UNIT ;
                          DUG 2 ;
@@ -510,8 +513,10 @@ let%expect_test _ =
                               GET ;
                               IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                               ADD ;
-                              SOME ;
                               SENDER ;
+                              SWAP ;
+                              SOME ;
+                              SWAP ;
                               UPDATE ;
                               PAIR ;
                               PAIR ;
@@ -741,8 +746,10 @@ let%expect_test _ =
                           IF_NONE { PUSH string "MAP FIND" ; FAILWITH } {} ;
                           SUB ;
                           ABS ;
-                          SOME ;
                           SENDER ;
+                          SWAP ;
+                          SOME ;
+                          SWAP ;
                           UPDATE ;
                           PAIR ;
                           PAIR ;
@@ -1033,12 +1040,13 @@ Hint: replace it by "_ticket" to prevent this warning.
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              DUP ;
-             CAR ;
-             PUSH mutez 0 ;
-             DIG 2 ;
              CDR ;
              UNIT ;
              TICKET ;
+             SWAP ;
+             CAR ;
+             PUSH mutez 0 ;
+             DIG 2 ;
              TRANSFER_TOKENS ;
              SWAP ;
              NIL operation ;
@@ -1332,7 +1340,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#17. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#29. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1413,7 +1421,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#17. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#19. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#31. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -2059,9 +2067,8 @@ let%expect_test _ =
 
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
-      code { DUP ;
-             CAR ;
-             IF_LEFT { SWAP ; DROP ; NEVER } { SWAP ; CDR ; ADD } ;
+      code { UNPAIR ;
+             IF_LEFT { SWAP ; DROP ; NEVER } { ADD } ;
              NIL operation ;
              PAIR } } |}]
 

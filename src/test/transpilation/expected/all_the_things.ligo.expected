@@ -47,7 +47,8 @@ function transfer (const p : transfer; const s : storage)
   else {
     var authorized_value : nat
     := case (Big_map.find_opt
-              ((Tezos.sender, p.address_from), s.allowances))
+              ((Tezos.sender, p.address_from),
+               s.allowances))
       of [
         Some (value) -> value | None -> 0n
       ];
@@ -78,7 +79,8 @@ function transfer (const p : transfer; const s : storage)
     new_tokens :=
       Big_map.update
         (p.address_from,
-         (Some (abs (sender_balance - p.value))), s.tokens);
+         (Some (abs (sender_balance - p.value))),
+         s.tokens);
 
     var receiver_balance : nat
     := case (Big_map.find_opt (p.address_to, s.tokens)) of [
@@ -87,7 +89,8 @@ function transfer (const p : transfer; const s : storage)
 
     new_tokens :=
       Big_map.update
-        (p.address_to, (Some (receiver_balance + p.value)),
+        (p.address_to,
+         (Some (receiver_balance + p.value)),
          new_tokens)
   }
 } with
@@ -103,7 +106,8 @@ function approve (const p : approve; const s : storage)
 {
   var previous_value : nat
   := case Big_map.find_opt
-           ((p.spender, Tezos.sender), s.allowances)
+           ((p.spender, Tezos.sender),
+            s.allowances)
     of [
       Some (value) -> value | None -> 0n
     ];
@@ -115,7 +119,8 @@ function approve (const p : approve; const s : storage)
   else {
     new_allowances :=
       Big_map.update
-        ((p.spender, Tezos.sender), (Some (p.value)),
+        ((p.spender, Tezos.sender),
+         (Some (p.value)),
          s.allowances)
   }
 } with
@@ -128,7 +133,8 @@ function getAllowance
 {
   var value : nat
   := case Big_map.find_opt
-           ((p.owner, p.spender), s.allowances)
+           ((p.owner, p.spender),
+            s.allowances)
     of [
       Some (value) -> value | None -> 0n
     ];
@@ -786,7 +792,7 @@ function main (const a : int) : int is
 } with i
 
 const x : int
-= (function  (const i : int) : int is i + 1) (41)
+= (function (const i : int) : int is i + 1) (41)
 
 function main (const i : int) : int is
 {
@@ -912,7 +918,8 @@ function insert (var h : heap; const e : heap_elt) : heap is
     if parent >= 1n
     then {
       if heap_elt_lt
-           (get_force (parent, h), get_force (i, h))
+           (get_force (parent, h),
+            get_force (i, h))
       then {
         largest := parent;
 
@@ -977,7 +984,8 @@ function pop (var h : heap) : heap * heap_elt * nat is
       if right <= s
       then {
         if heap_elt_lt
-             (get_force (right, h), get_force (i, h))
+             (get_force (right, h),
+              get_force (i, h))
         then {
           largest := right;
 
@@ -1991,7 +1999,9 @@ function check_message
             if pkh_sig.0 = Crypto.hash_key (key)
             then
               if Crypto.check
-                   (key, pkh_sig.1, packed_payload)
+                   (key,
+                    pkh_sig.1,
+                    packed_payload)
               then valid := valid + 1n
               else failwith ("Invalid signature")
           }

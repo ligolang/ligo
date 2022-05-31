@@ -137,6 +137,8 @@ let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core [
   ]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Success" ,t_nat ()); ("Fail", t_test_exec_error ())]
+let t_test_baker_policy ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("By_round" ,t_int ()); ("By_account", t_address ()); ("Excluding", t_list (t_address ()))]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -285,7 +287,6 @@ let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; argument
 [@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; arguments=[e]}
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
@@ -338,7 +339,6 @@ let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
 let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_pack e = make_e (e_pack e) (t_bytes ())
 let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =

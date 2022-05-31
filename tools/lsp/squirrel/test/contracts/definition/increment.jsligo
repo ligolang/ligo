@@ -1,0 +1,5 @@
+const increment =  (start : nat) : nat => {
+  let result : nat = start;
+  result = result + (1 as nat);
+  return result;
+};

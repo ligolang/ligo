@@ -108,6 +108,9 @@ let apply_table_expr table (e : AST.expression) =
                   match e.expression_content with
                   | E_type_inst { forall ; type_ } ->
                      return @@ E_type_inst { forall ; type_ = apply_table_type type_ }
+                  | E_lambda { binder = { var ; ascr ; attributes } ; result } ->
+                     let ascr = Option.map ~f:apply_table_type ascr in
+                     return @@ E_lambda { binder = { var ; ascr ; attributes } ; result }
                   | E_recursive { fun_name ; fun_type ; lambda } ->
                      let fun_type = apply_table_type fun_type in
                      return @@ E_recursive { fun_name ; fun_type ; lambda }
@@ -116,7 +119,12 @@ let apply_table_expr table (e : AST.expression) =
                   | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
                      let fields = AST.LMap.map (fun (b : _ AST.binder) -> {b with ascr = Option.map ~f:apply_table_type b.ascr}) fields in
                      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = apply_table_type tv } }
-                  | _ -> return e.expression_content) () e in
+                  | E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression } ->
+                     let ascr = Option.map ~f:apply_table_type ascr in
+                     return @@ E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression }
+                  | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
+                  | E_let_in _ | E_type_in _ | E_raw_code _ | E_constructor _ | E_record _
+                  | E_record_accessor _ | E_record_update _ -> return e.expression_content) () e in
   e
 
 let rec subst_external_type et t (u : AST.type_expression) =
@@ -152,6 +160,9 @@ let subst_external_term et t (e : AST.expression) =
                   match e.expression_content with
                   | E_type_inst { forall ; type_ } ->
                      return @@ E_type_inst { forall ; type_ = subst_external_type et t type_ }
+                  | E_lambda { binder = { var ; ascr ; attributes } ; result } ->
+                     let ascr = Option.map ~f:(subst_external_type et t) ascr in
+                     return @@ E_lambda { binder = { var ; ascr ; attributes } ; result }
                   | E_recursive { fun_name ; fun_type ; lambda } ->
                      let fun_type =  subst_external_type et t fun_type in
                      return @@ E_recursive { fun_name ; fun_type ; lambda }
@@ -160,7 +171,12 @@ let subst_external_term et t (e : AST.expression) =
                   | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
                      let fields = AST.LMap.map (fun binder -> AST.{ binder with ascr = Option.map ~f:(subst_external_type et t) binder.ascr }) fields in
                      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv = subst_external_type et t tv } }
-                  | _ -> return e.expression_content) () e in
+                  | E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression } ->
+                     let ascr = Option.map ~f:(subst_external_type et t) ascr in
+                     return @@ E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression }
+                  | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
+                  | E_let_in _ | E_type_in _ | E_raw_code _ | E_constructor _ | E_record _
+                  | E_record_accessor _ | E_record_update _ -> return e.expression_content) () e in
   e
 
 (* A term might have remaining external typer usages around. If the

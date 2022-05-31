@@ -3,6 +3,7 @@ module Test.Common.Capabilities.DocumentSymbol
   , documentSymbolsExampleAccessDriver
   , documentSymbolsExampleLetCamligoDriver
   , documentSymbolsExampleLetReligoDriver
+  , documentSymbolsExampleLetJsligoDriver
   ) where
 
 import Control.Lens ((^.))
@@ -95,4 +96,18 @@ documentSymbolsExampleLetReligoDriver = do
 
     , ("const f", SkConstant, (3, 6), (3, 7))
     , ("const h", SkConstant, (3, 14), (3, 15))
+    ]
+
+documentSymbolsExampleLetJsligoDriver :: forall impl. ScopeTester impl => Assertion
+documentSymbolsExampleLetJsligoDriver = do
+  tree <- readContractWithScopes @impl (contractsDir </> "let.jsligo")
+  let symbols = extractDocumentSymbols (Uri "<test>") tree
+  map simplify symbols `shouldBe`
+    [ ("const a", SkConstant, (0, 4), (0, 5))
+
+    , ("const b", SkConstant, (1, 5), (1, 6))
+    , ("const c", SkConstant, (1, 13), (1, 14))
+
+    , ("const d", SkConstant, (2, 5), (2, 6))
+    , ("const e", SkConstant, (2, 8), (2, 9))
     ]

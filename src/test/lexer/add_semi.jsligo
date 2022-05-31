@@ -1,0 +1,11 @@
+let x = 1
+export namespace Foo {
+  let y = x
+  export let z = 2;
+  namespace Bar {
+    let w = 1
+  }
+  namespace Do {
+    export let r = 1;
+  }
+}

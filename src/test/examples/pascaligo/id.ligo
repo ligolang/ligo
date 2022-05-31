@@ -138,7 +138,7 @@ be to deter people from doing it just to chew up address space.
 
 function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
   begin
-    if amount = storage.name_price
+    if Tezos.amount = storage.name_price
     then skip
     else failwith("Incorrect amount paid.");
     const profile : bytes = parameter.profile;
@@ -148,11 +148,11 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
     const controller : address =
       case initial_controller of
         Some(addr) -> addr
-      | None -> sender
+      | None -> Tezos.sender
       end;
     const new_id_details: id_details =
       record [
-              owner = sender ;
+              owner = Tezos.sender ;
               controller = controller ;
               profile = profile ;
       ];
@@ -167,7 +167,7 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
 function update_owner (const parameter : update_owner; const storage : storage) :
          list(operation) * storage is
   begin
-    if (amount =/= 0mutez)
+    if (Tezos.amount =/= 0mutez)
     then
       begin
         failwith("Updating owner doesn't cost anything.");
@@ -182,7 +182,7 @@ function update_owner (const parameter : update_owner; const storage : storage) 
       | None -> (failwith("This ID does not exist."): id_details)
       end;
     var is_allowed : bool := False;
-    if sender = id_details.owner
+    if Tezos.sender = id_details.owner
     then is_allowed := True
     else failwith("You are not the owner of this ID.");
     id_details.owner := new_owner;
@@ -197,7 +197,7 @@ function update_owner (const parameter : update_owner; const storage : storage) 
 function update_details (const parameter : update_details; const storage : storage ) :
          list(operation) * storage is
   begin
-    if (amount =/= 0mutez)
+    if (Tezos.amount =/= 0mutez)
     then failwith("Updating details doesn't cost anything.")
     else skip;
     const id : int = parameter.id;
@@ -210,7 +210,7 @@ function update_details (const parameter : update_details; const storage : stora
       | None -> (failwith("This ID does not exist."): id_details)
       end;
     var is_allowed : bool := False;
-    if (sender = id_details.controller) or (sender = id_details.owner)
+    if (Tezos.sender = id_details.controller) or (Tezos.sender = id_details.owner)
     then is_allowed := True
     else failwith("You are not the owner or controller of this ID.");
     const owner: address = id_details.owner;
@@ -238,7 +238,7 @@ function update_details (const parameter : update_details; const storage : stora
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
   begin
-    if amount = storage.skip_price
+    if Tezos.amount = storage.skip_price
     then skip
     else failwith("Incorrect amount paid.");
   end with ((nil: list(operation)), record [

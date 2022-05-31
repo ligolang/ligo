@@ -111,13 +111,13 @@ let%expect_test _ =
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
-      code { PUSH int 0 ;
+      code { CDR ;
+             PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
              SWAP ;
-             CDR ;
              CDR ;
              SWAP ;
              PAIR ;
@@ -173,13 +173,13 @@ let%expect_test _ =
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
-      code { PUSH int 0 ;
+      code { CDR ;
+             PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
              SWAP ;
-             CDR ;
              CDR ;
              SWAP ;
              PAIR ;

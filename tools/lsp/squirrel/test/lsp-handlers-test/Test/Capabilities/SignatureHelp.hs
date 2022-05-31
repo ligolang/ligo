@@ -1,4 +1,7 @@
-module Test.Capabilities.SignatureHelp (unit_signature_help) where
+module Test.Capabilities.SignatureHelp
+  ( unit_signature_help
+  , unit_signature_help_jsligo
+  ) where
 
 import Control.Lens ((^.))
 import Language.LSP.Test
@@ -32,6 +35,22 @@ unit_signature_help = do
     { _label = "function bar (const i : int)"
     , _documentation = Just (SignatureHelpDocString "")
     , _parameters = Just (List [ParameterInformation {_label = ParameterLabelString "const i : int", _documentation = Nothing}])
+    , _activeParameter = Nothing
+    }]
+  signatureHelp ^. activeSignature `shouldBe` Just 0
+  signatureHelp ^. activeParameter `shouldBe` Just 0
+
+unit_signature_help_jsligo :: Assertion
+unit_signature_help_jsligo = do
+  let filename = "all-okay.jsligo"
+
+  signatureHelp <- runHandlersTest contractsDir $ do
+    doc <- openLigoDoc filename
+    getSignatureHelp doc (Position 2 34)
+  signatureHelp ^. signatures `shouldBe` List [SignatureInformation
+    { _label = "let bar = (i: int)"
+    , _documentation = Just (SignatureHelpDocString "")
+    , _parameters = Just (List [ParameterInformation {_label = ParameterLabelString "i: int", _documentation = Nothing}])
     , _activeParameter = Nothing
     }]
   signatureHelp ^. activeSignature `shouldBe` Just 0

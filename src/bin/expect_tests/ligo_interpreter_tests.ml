@@ -543,6 +543,43 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_x exited with value (KT1AE9iae7b3xDWrzghqkPNmtVNNDvyncz8K , { parameter unit ;
+      storage
+        (pair (pair (big_map %metadata string bytes) (set %participants address))
+              (map %secrets address chest)) ;
+      code { CDR ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    DUP 3 ;
+                    CDR ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    EMPTY_MAP address bool ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             NIL operation ;
+             PAIR } } , 230). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -560,7 +597,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
@@ -692,7 +729,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
-    Failed assertion
+    failed assertion
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
      16 |       | None -> ()
@@ -708,12 +745,13 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 13, characters 8-9:
+   12 | let test =
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
-   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
-   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Invalid call to Test primitive. |}]
+  Expected address but got typed_address (unit ,
+  unit) |}]
 
 let () = Sys.chdir pwd
 
@@ -734,6 +772,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1JSxHPaoZTCEFVfK5Y1xwjtB8chWFSUyTN(None). |}]
+    - test exited with value KT1BxaPaFE2YDn8Toh2u2SJ18P6zf24oqbzZ(None). |}]
 
 let () = Sys.chdir pwd

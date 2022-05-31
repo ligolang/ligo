@@ -40,7 +40,8 @@ let%expect_test _ =
 (* error is different just because jsligo has different set of tests *)
   run_ligo_bad [ "run" ; "interpret" ; "--syntax" ; "jsligo" ; "(( [x,x] : [int , int] ) : int => x)" ] ;
   [%expect{|
-    Cannot redeclare block-scoped variable. |}];
+    Repeated variable in pattern.
+    Hint: Change the name. |}];
 
   run_ligo_bad ["run"; "interpret" ; "yy"  ; "--init-file"; bad_test "linearity_pattern_matching.mligo" ] ;
   [%expect{|

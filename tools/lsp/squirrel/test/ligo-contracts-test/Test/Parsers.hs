@@ -90,8 +90,14 @@ okayTests =
       , "negative" </> "error_syntax.ligo"
       , "negative" </> "modules_access_not_open1.ligo"
       , "negative" </> "modules_access_not_open1.mligo"
+      , "negative" </> "modules_access_not_open1.jsligo"
       , "negative" </> "modules_access_not_open2.ligo"
       , "negative" </> "modules_access_not_open2.mligo"
+      , "negative" </> "modules_access_not_open2.jsligo"
+      , "negative" </> "switch_jsligo" </> "break_outside_case2.jsligo"
+      , "negative" </> "switch_jsligo" </> "empty_switch.jsligo"
+      , "negative" </> "switch_jsligo" </> "default_in_between.jsligo"
+      , "negative" </> "switch_jsligo" </> "more_than_one_default.jsligo"
       ]
     , tdIgnoreDirs = []
     }
@@ -116,6 +122,11 @@ okayTests =
     , tdIgnoreDirs = []
     }
   , TestDir
+    { tdRoot = testDir </> "error-recovery" </> "simple" </> "jsligo" </> "original"
+    , tdIgnoreFiles = []
+    , tdIgnoreDirs = []
+    }
+  , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "pascaligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
@@ -127,6 +138,11 @@ okayTests =
     }
   , TestDir
     { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "cameligo" </> "original"
+    , tdIgnoreFiles = []
+    , tdIgnoreDirs = []
+    }
+  , TestDir
+    { tdRoot = testDir </> "error-recovery" </> "fuzzing" </> "jsligo" </> "original"
     , tdIgnoreFiles = []
     , tdIgnoreDirs = []
     }
@@ -155,28 +171,49 @@ badTests =
         -- Accepted by LIGO's parser:
       , "simple" </> "pascaligo" </> "unfinished_code00.ligo"
       , "simple" </> "pascaligo" </> "unfinished_code04.ligo"
+      , "simple" </> "jsligo"    </> "missing_semicolon_in_top_level.jsligo"
+
+        -- Will be fixed when (MISSING) nodes will be handled
+      , "simple" </> "jsligo" </> "missing_curly_bracket_in_record_decl.jsligo"
+      , "simple" </> "jsligo" </> "lambda_with_missing_arguments.jsligo"
+      , "simple" </> "jsligo" </> "missing_ident_in_type_decl.jsligo"
+      , "simple" </> "jsligo" </> "extra_gt_zwsp.jsligo"
+      , "simple" </> "jsligo" </> "unfinished_code13.jsligo"
+      , "simple" </> "jsligo" </> "unfinished_code12.jsligo"
+      , "simple" </> "jsligo" </> "unfinished_code09.jsligo"
+      , "simple" </> "jsligo" </> "lambda_with_missing_arguments.jsligo"
+      , "simple" </> "jsligo" </> "missing_expr_parenthesesR.jsligo"
+      , "simple" </> "jsligo" </> "switch_with_missing_case_value.jsligo"
+
+        -- Fix this later 
+      , "simple" </> "jsligo" </> "missing_semicolon_before_return_on_same_line.jsligo"
       ]
     , tdIgnoreDirs =
       [ "fuzzing" </> "cameligo" </> "original"
       , "fuzzing" </> "pascaligo" </> "original"
       , "fuzzing" </> "reasonligo" </> "original"
+      , "fuzzing" </> "jsligo" </> "original"
       , "simple" </> "cameligo" </> "original"
       , "simple" </> "pascaligo" </> "original"
       , "simple" </> "reasonligo" </> "original"
+      , "simple" </> "jsligo" </> "original"
       ]
     }
   , TestDir
     { tdRoot = testDir </> "lexer"
     , tdIgnoreFiles =
       [ --LIGO-475
-        "broken_string.ligo"
-      , "negative_byte_sequence.religo"
-      , "invalid_character_in_string.religo"
+        "negative_byte_sequence.religo"
       , "negative_byte_sequence.ligo"
       , "reserved_name.religo"
       , "negative_byte_sequence.mligo"
-      , "broken_string.religo"
-      , "invalid_character_in_string.ligo"
+       -- Lexer cases
+      , "LexerLib" </> "invalid_character_in_string.ligo"
+      , "LexerLib" </> "invalid_character_in_string.jsligo"
+      , "LexerLib" </> "invalid_character_in_string.religo"
+      , "Style"    </> "odd_lengthed_bytes.ligo"
+      , "Lexing"   </> "underflow_mutez.ligo"
+      , "Lexing"   </> "overflow_mutez.ligo"
       ]
     , tdIgnoreDirs = []
     }

@@ -172,6 +172,14 @@ let get_bls12_381_fr : value -> Bls12_381.Fr.t option =
     | V_Ct (C_bls12_381_fr v) -> Some v
     | _ -> None
 
+let get_baker_policy : value -> _ option =
+  fun value ->
+    match value with
+    | V_Construct ("By_round", V_Ct (C_int round)) -> Some (`By_round (Z.to_int round))
+    | V_Construct ("By_account", V_Ct (C_address pkh)) -> Some (`By_account pkh)
+    | V_Construct ("Excluding", V_List l) -> Some (`Excluding (List.filter_map ~f:(function | V_Ct (C_address pkh) -> Some pkh | _ -> None) l))
+    | _ -> None
+
 let tag_constant_val : constant_val -> int = function
   | C_unit -> 0
   | C_bool _ -> 1

@@ -43,7 +43,7 @@ let%expect_test "main" =
   [%expect
     {|
       Invalid syntax option: 'foo'.
-      Use 'pascaligo', 'cameligo', or 'reasonligo'.|}] ;
+      Use 'pascaligo', 'cameligo', 'reasonligo', or 'jsligo'.|}] ;
     human_readable_error (`Main_invalid_dialect_name "foo") ;
   [%expect
     {|
@@ -53,7 +53,7 @@ let%expect_test "main" =
   [%expect
     {|
   Invalid file extension 'foo'.
-  Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.|}] ;
+  Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.|}] ;
   human_readable_error
     (`Main_unparse_tracer
       [`Tezos_alpha_error Tezos_error_monad.Error_monad.Timeout]) ;
@@ -172,27 +172,27 @@ let%expect_test "self_ast_imperative" =
   In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
   In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
   |}] ;
-  error (`Self_ast_imperative_bad_empty_arity (C_INT, expression)) ;
+  error (`Self_ast_imperative_bad_empty_arity (C_UNIT, expression)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
-   Ill-formed "INT" expression.
+
+  Ill-formed "UNIT" expression.
   No functions arguments are expected.
   |}] ;
-  error (`Self_ast_imperative_bad_single_arity (C_ASSERTION, expression)) ;
+  error (`Self_ast_imperative_bad_single_arity (C_BYTES_UNPACK, expression)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
 
-  Ill-formed "ASSERTION" expression
+  Ill-formed "BYTES_UNPACK" expression
   One function argument is expected.
   |}] ;
-  error (`Self_ast_imperative_bad_map_param_type (C_EDIV, expression)) ;
+  error (`Self_ast_imperative_bad_map_param_type (C_ADD, expression)) ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
-
-  Ill-formed "EDIV" expression.
+   Ill-formed "ADD" expression.
   A list of pair parameters is expected.
   |}] ;
   error (`Self_ast_imperative_bad_set_param_type (C_ITER, expression)) ;
@@ -732,8 +732,8 @@ let%expect_test "stacking" =
       Sorry, we don't have a proper error message for this error. Please report this use case so we can improve on this. |}] ;
   error (`Stacking_contract_entrypoint "xxx") ;
   [%expect {|contract entrypoint must be given as a literal string: xxx |}] ;
-  error (`Stacking_bad_iterator C_INT) ;
-  [%expect {|bad iterator: iter INT |}] ;
+  error (`Stacking_bad_iterator C_UNIT) ;
+  [%expect {|bad iterator: iter UNIT |}] ;
   error `Stacking_not_comparable_pair_struct ;
   [%expect
     {|Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
