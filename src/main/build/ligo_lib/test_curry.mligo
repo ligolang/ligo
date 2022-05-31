@@ -16,7 +16,6 @@ type test_baker_policy =
 module Test = struct
   let failwith (type a b) (v : a) : b = [%external "TEST_FAILWITH"] v
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
-  let originate_from_file (fn : string) (e : string) (v : string list) (s : michelson_program)  (t : tez) : address * michelson_program * int = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v s t
   let set_source (a : address) : unit = [%external "TEST_SET_SOURCE"] a
   let transfer (a : address) (s : michelson_program) (t : tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
   let transfer_exn (a : address) (s : michelson_program) (t : tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
@@ -86,4 +85,7 @@ module Test = struct
     let (a, b, c) = [%external "TEST_ORIGINATE"] f s t in
     let a : (p, s) typed_address = cast_address a in
     (a, b, c)
+  let originate_from_file (fn : string) (e : string) (v : string list) (s : michelson_program)  (t : tez) : address * michelson_program * int =
+    let f = [%external "TEST_ORIGINATE_FROM_FILE"] fn e v in
+    [%external "TEST_ORIGINATE"] f s t
 end
