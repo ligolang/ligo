@@ -1,10 +1,10 @@
 variables:
+  GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - esy
   - pretooling                      # changelog
   - docker-build                    # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
@@ -22,26 +22,10 @@ include:
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
 
-.submodule-clone:
-  before_script:
-    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
-    - git submodule sync --recursive
-    - git submodule update --init --recursive --remote
 .nix:
-  extends: .submodule-clone
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
-
-esy:
-  tags:
-    - windows
-  stage: esy
-  script:
-    - git config http.postBuffer 524288000
-    - npm i -g @esy-nightly/esy
-    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
-    - esy -vvv
 
 changelog:
   stage: pretooling
@@ -76,7 +60,6 @@ to_dos:
 
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
-  extends: .submodule-clone
   stage: docker-build
   dependencies:
     - changelog
