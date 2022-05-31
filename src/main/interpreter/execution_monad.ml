@@ -49,7 +49,7 @@ module Command = struct
     | Get_balance : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
-    | Compile_contract_from_file : string * string * string list -> (LT.value * LT.value) t
+    | Compile_contract_from_file : string * string * string list -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
@@ -58,7 +58,7 @@ module Command = struct
     | Check_storage_address : Location.t * Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression -> unit t
     | Inject_script : Location.t * Ligo_interpreter.Types.calltrace * LT.value * LT.value * Z.t -> LT.value t
     | Set_source : LT.value -> unit t
-    | Set_baker : LT.value -> unit t
+    | Set_baker : Location.t * LT.calltrace * LT.value -> unit t
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
@@ -231,7 +231,7 @@ module Command = struct
       ((), ctxt)
     | Get_size (contract_code) -> (
       match contract_code with
-      | LT.V_Michelson (LT.Contract contract_code) ->
+      | LT.V_Michelson_contract contract_code ->
          let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
          (LT.V_Ct (C_int (Z.of_int s)), ctxt)
       | _ -> raise.raise @@ Errors.generic_error Location.generated
@@ -243,13 +243,9 @@ module Command = struct
       let options = Compiler_options.set_test_flag options false in
       let contract_code =
         Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
-      let size =
-        let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
-        LT.V_Ct (C_int (Z.of_int s))
-      in
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
-      let contract = LT.V_Michelson (LT.Contract contract_code) in
-      ((contract,size), ctxt)
+      let contract = LT.V_Michelson_contract contract_code in
+      (contract, ctxt)
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env f.orig_lambda in
@@ -294,7 +290,7 @@ module Command = struct
       let storage_ty = clean_locations storage_ty in
       let expr = clean_locations compiled_expr in
       let contract = Michelson.contract param_ty storage_ty expr [] in
-      (LT.V_Michelson (Contract contract), ctxt)
+      (LT.V_Michelson_contract contract, ctxt)
     | Decompile (code, code_ty, ast_ty) ->
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in
       let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret ast_ty in
@@ -323,9 +319,9 @@ module Command = struct
     | Set_source source ->
       let source = trace_option ~raise (corner_case ()) @@ LC.get_address source in
       ((), {ctxt with internals = { ctxt.internals with source }})
-    | Set_baker baker_policy ->
+    | Set_baker (loc, calltrace, baker_policy) ->
       let baker_policy = trace_option ~raise (corner_case ()) @@ LC.get_baker_policy baker_policy in
-      let baker_policy = Tezos_state.baker_policy ~raise ~loc:Location.generated baker_policy in
+      let baker_policy = Tezos_state.baker_policy ~raise ~loc ~calltrace baker_policy in
       ((), {ctxt with internals = { ctxt.internals with baker_policy }})
     | Get_voting_power (loc, calltrace, key_hash) ->
       let vp = Tezos_state.get_voting_power ~raise ~loc ~calltrace ctxt key_hash in

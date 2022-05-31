@@ -165,6 +165,7 @@ type constant' =
   | C_OPEN_CHEST
   | C_VIEW
   (* Tests - ligo interpreter only *)
+  | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
   | C_TEST_GET_BALANCE [@only_interpreter]
@@ -187,7 +188,7 @@ type constant' =
   | C_TEST_DECOMPILE [@only_interpreter]
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
-  | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]

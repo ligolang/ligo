@@ -101,6 +101,7 @@ let is_pure_constant : constant' -> bool =
   | C_IMPLICIT_ACCOUNT
   | C_VIEW
   (* Test - ligo interpreter, should never end up here *)
+  | C_TEST_SIZE
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE_OF_ADDRESS
   | C_TEST_GET_BALANCE
@@ -126,7 +127,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_TO_TYPED_ADDRESS
   | C_TEST_RANDOM
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
-  | C_TEST_ORIGINATE_FROM_FILE
+  | C_TEST_COMPILE_CONTRACT_FROM_FILE
   | C_TEST_SET_BIG_MAP
   | C_TEST_CAST_ADDRESS
   | C_TEST_CREATE_CHEST

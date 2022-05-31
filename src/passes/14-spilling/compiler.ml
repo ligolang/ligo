@@ -85,7 +85,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
-        Ticket                     | Sapling_state       |
+        Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             |
         List            | External _), [])
@@ -95,7 +95,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
-      Baker_hash   | Pvss_key  |
+      Baker_hash   | Pvss_key  | Michelson_contract   |
       Chest        | Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
