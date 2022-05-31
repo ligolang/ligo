@@ -231,7 +231,7 @@ module Command = struct
       ((), ctxt)
     | Get_size (contract_code) -> (
       match contract_code with
-      | LT.V_Michelson (LT.Contract contract_code) ->
+      | LT.V_Michelson_contract contract_code ->
          let s = Ligo_compile.Of_michelson.measure ~raise contract_code in
          (LT.V_Ct (C_int (Z.of_int s)), ctxt)
       | _ -> raise.raise @@ Errors.generic_error Location.generated
@@ -244,7 +244,7 @@ module Command = struct
       let contract_code =
         Michelson_backend.compile_contract ~raise ~add_warning ~options source_file entry_point views in
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
-      let contract = LT.V_Michelson (LT.Contract contract_code) in
+      let contract = LT.V_Michelson_contract contract_code in
       (contract, ctxt)
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
@@ -290,7 +290,7 @@ module Command = struct
       let storage_ty = clean_locations storage_ty in
       let expr = clean_locations compiled_expr in
       let contract = Michelson.contract param_ty storage_ty expr [] in
-      (LT.V_Michelson (Contract contract), ctxt)
+      (LT.V_Michelson_contract contract, ctxt)
     | Decompile (code, code_ty, ast_ty) ->
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in
       let ret = Michelson_to_value.decompile_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret ast_ty in
