@@ -606,7 +606,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return_ct C_unit
     | ( C_TEST_SET_SOURCE , _  ) -> fail @@ error_type
     | ( C_TEST_SET_BAKER , [ addr ] ) ->
-      let>> () = Set_baker addr in
+      let>> () = Set_baker (loc, calltrace, addr) in
       return_ct C_unit
     | ( C_TEST_SET_BAKER , _  ) -> fail @@ error_type
     | ( C_TEST_GET_STORAGE_OF_ADDRESS , [ addr ] ) ->
