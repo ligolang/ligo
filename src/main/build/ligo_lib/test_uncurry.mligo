@@ -82,10 +82,13 @@ module Test = struct
   let originate (type p s) ((f, s, t) : (p * s -> operation list * s) * s * tez) : ((p, s) typed_address * michelson_program * int) =
     let f = [%external "TEST_COMPILE_CONTRACT"] f in
     let s = eval s in
-    let (a, b, c) = [%external "TEST_ORIGINATE"] f s t in
+    let (a, b) = [%external "TEST_ORIGINATE"] f s t in
+    let c = [%external "TEST_SIZE"] f in
     let a : (p, s) typed_address = cast_address a in
     (a, b, c)
   let originate_from_file ((fn, e, v, s, t) : string * string * string list * michelson_program * tez) : address * michelson_program * int =
     let f = [%external "TEST_COMPILE_CONTRACT_FROM_FILE"] fn e v in
-    [%external "TEST_ORIGINATE"] f s t
+    let (a, b) = [%external "TEST_ORIGINATE"] f s t in
+    let c = [%external "TEST_SIZE"] f in
+    (a, b, c)
 end

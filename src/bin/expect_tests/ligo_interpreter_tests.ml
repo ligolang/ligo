@@ -89,13 +89,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run"; "test" ; test "views_test.mligo" ] ;
   [%expect {|
-    File "./views_test.mligo", line 6, characters 6-18:
-      5 |   let _src = Test.nth_bootstrap_account 1 in
-      6 |   let init_storage = Test.eval 0 in
-      7 |   let (addr_v, _, _) =
-    :
-    Warning: variable "init_storage" cannot be used more than once.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -121,13 +114,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_fail_from_file.mligo" ] ;
   [%expect{|
-    File "test_fail_from_file.mligo", line 5, characters 6-11:
-      4 | let test =
-      5 |   let vunit = Test.compile_value () in
-      6 |   let _vfail = Test.run (fun () -> fail_data) () in
-    :
-    Warning: variable "vunit" cannot be used more than once.
-
     Everything at the top-level was executed.
     - test exited with value "my contract always fail". |}]
 
@@ -153,13 +139,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
   [%expect{|
-    File "test_example.mligo", line 37, characters 11-12:
-     36 |     | Rejected reject_data ->
-     37 |       let (v,addr) = reject_data in
-     38 |       let () = assert (addr = new_account2) in
-    :
-    Warning: variable "v" cannot be used more than once.
-
     Everything at the top-level was executed.
     - test exited with value 111.
     - test2 exited with value (). |}]
@@ -167,13 +146,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_example.mligo" ] ;
   [%expect{|
-    File "test_example.mligo", line 37, characters 11-12:
-     36 |     | Rejected reject_data ->
-     37 |       let (v,addr) = reject_data in
-     38 |       let () = assert (addr = new_account2) in
-    :
-    Warning: variable "v" cannot be used more than once.
-
     Everything at the top-level was executed.
     - test exited with value 111.
     - test2 exited with value (). |}]

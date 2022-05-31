@@ -101,6 +101,7 @@ let is_pure_constant : constant' -> bool =
   | C_IMPLICIT_ACCOUNT
   | C_VIEW
   (* Test - ligo interpreter, should never end up here *)
+  | C_TEST_SIZE
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE_OF_ADDRESS
   | C_TEST_GET_BALANCE

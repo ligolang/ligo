@@ -165,6 +165,7 @@ type constant' =
   | C_OPEN_CHEST
   | C_VIEW
   (* Tests - ligo interpreter only *)
+  | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
   | C_TEST_GET_BALANCE [@only_interpreter]
