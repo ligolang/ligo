@@ -8,10 +8,12 @@
     "es6": true
   },
   "plugins": [
-    "react"
+    "react",
+    "@typescript-eslint"
   ],
   "parserOptions": {
-    "sourceType": "module"
+    "sourceType": "module",
+    "parser": "@typescript-eslint/parser"
   },
   "rules": {
     // don't force es6 functions to include space before paren

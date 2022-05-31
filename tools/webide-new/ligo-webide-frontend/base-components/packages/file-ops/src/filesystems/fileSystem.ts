@@ -1,13 +1,13 @@
 export class fileSystem {
-    name: string
+    name!: string; // TODO remove !
     enabled: boolean
     available: boolean
     fs: any
     fsCallBack: any;
     hasWorkSpaces: boolean
     loaded: boolean
-    load: () => Promise<unknown>
-    test: () => Promise<unknown>
+    load!: () => Promise<unknown>; // TODO remove !
+    test!: () => Promise<unknown>; // TODO remove !
 
     constructor() {
         this.available = false
@@ -27,10 +27,12 @@ export class fileSystem {
 
     set = async () => {
         const w = (window as any)
-        if (!this.loaded) return false
-        w.remixFileSystem = this.fs
-        w.remixFileSystem.name = this.name
-        w.remixFileSystemCallback = this.fsCallBack
+        if (!this.loaded) {
+            return false
+        }
+        w.ligoIdeFileSystem = this.fs
+        w.ligoIdeFileSystem.name = this.name
+        w.ligoIdeFileSystemCallback = this.fsCallBack
         return true
     }
 }
@@ -57,14 +59,14 @@ export class fileSystems {
      * @param {string[]} names
      * @returns {Promise}
      */
-    setFileSystem = async (filesystems?: fileSystem[]): Promise<fileSystem> => {
+    setFileSystem = async (filesystems: fileSystem[]): Promise<void> => {
         for (const fs of filesystems) {
             if (fs && this.fileSystems[fs.name]) {
-                const result = await this.fileSystems[fs.name].set()
-                if (result) return this.fileSystems[fs.name]
+                await this.fileSystems[fs.name].set()
+                return
             }
         }
-        return null
+        throw new Error(`No file system.`)
     }
 }
 
