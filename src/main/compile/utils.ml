@@ -24,6 +24,13 @@ let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : A
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form core in
   typed
 
+let core_expression_string ~raise ~add_warning syntax expression =
+let meta                =  Of_source.make_meta_from_syntax syntax in
+  let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
+  let imperative_exp    = Of_c_unit.compile_expression ~add_warning ~raise ~meta c_unit_exp in
+  let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
+  Of_sugar.compile_expression ~raise sugar_exp  
+
 let type_expression_string ~add_warning ~raise ~options syntax expression init_prog =
   let meta              = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in

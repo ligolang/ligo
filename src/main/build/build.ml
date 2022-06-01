@@ -20,12 +20,13 @@ module M (Params : Params) =
     type module_name = string
     type compilation_unit = Buffer.t
     type meta_data = Ligo_compile.Helpers.meta
-    let preprocess : file_name -> compilation_unit * meta_data * (file_name * module_name) list =
-      fun file_name ->
+    let preprocess : options:Compiler_options.t -> file_name -> compilation_unit * meta_data * (file_name * module_name) list =
+      fun ~options file_name ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
       let meta = Ligo_compile.Of_source.extract_meta syntax in
       let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name in
       c_unit,meta,deps
+    let preprocess = preprocess ~options
     module AST = struct
       type declaration = Ast_typed.declaration
       type t = declaration list
@@ -56,8 +57,11 @@ module M (Params : Params) =
       let testlib = Testlib.typed ~options meta.syntax in
       let options = Compiler_options.set_init_env options (Environment.append stdlib (Environment.append testlib env)) in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
-      ast_typed
+      let ast_core =
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+        Helpers.inject_declaration ~options ~raise ~add_warning syntax ast_core
+      in
+      Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core
 
   end
 
@@ -93,6 +97,10 @@ module Infer (Params : Params) = struct
     let stdlib =  Stdlib.core ~options meta.syntax in
     let testlib = Testlib.core ~options meta.syntax in
     let module_ = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
+    let module_ =
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+      Helpers.inject_declaration ~options ~raise ~add_warning syntax module_
+    in
     testlib @ stdlib @ module_
 
 end
