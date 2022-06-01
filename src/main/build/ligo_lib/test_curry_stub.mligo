@@ -65,4 +65,5 @@ module Test = struct
   let read_contract_from_file (_fn : string) : michelson_contract = failwith "TEST_READ_CONTRACT_FROM_FILE"
   let compile_contract_from_file  (_fn : string) (_e : string) (_v : string list) : michelson_contract = failwith "TEST_COMPILE_CONTRACT_FROM_FILE"
   let compile_contract (type p s) (_f : p * s -> operation list * s) : michelson_contract = failwith "TEST_COMPILE_CONTRACT"
+  let originate_contract (_c : michelson_contract) (_s : michelson_program) (_t : tez) : address * michelson_program = failwith "TEST_ORIGINATE"
 end
