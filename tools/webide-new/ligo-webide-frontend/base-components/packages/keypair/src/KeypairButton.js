@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'react'
 import redux from '@obsidians/redux'
-import Auth from '@obsidians/auth'
-import notification from '@obsidians/notification'
 import { withRouter } from 'react-router'
 
 import keypairManager from './keypairManager'
@@ -18,13 +16,6 @@ class KeypairButton extends PureComponent {
   }
 
   openModal = () => {
-    const profileState = redux.getState().profile
-    const profile = profileState.toJS()
-    const providers = process.env.LOGIN_PROVIDERS ? process.env.LOGIN_PROVIDERS.split(',') : ['github']
-    if (!profile.userId) {
-      return Auth.login(this.props.history, providers[0])
-    }
-
     let chain
     if (this.props.chains) {
       const network = redux.getState().network
@@ -39,7 +30,7 @@ class KeypairButton extends PureComponent {
       mnemonic,
       secretName = 'Private Key',
       modifyNameDisabled,
-      deletionDisabled,
+      deletionDisabled
     } = this.props
 
     return <>

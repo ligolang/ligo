@@ -8,7 +8,6 @@ import {
 
 import debounce from 'lodash/debounce'
 import platform from '@obsidians/platform'
-import Auth from '@obsidians/auth'
 
 import actions from '../actions'
 
@@ -61,10 +60,6 @@ class DeleteButton extends PureComponent {
       return null
     }
 
-    if (!projectRoot.startsWith(`${Auth.username}/`)) {
-      return null
-    }
-
     return <>
       <h4 className='mt-4'>Others</h4>
       <Button color='danger' onClick={this.openDeleteProjectModal}>Delete Project</Button>
@@ -93,8 +88,8 @@ class DeleteButton extends PureComponent {
           value={this.state.name}
           onChange={this.changeVal}
         />
-        <div 
-          className='color-danger' 
+        <div
+          className='color-danger'
           hidden={(!this.state.name || (this.state.name && !this.state.confirmDisableStatus))}
           >
           Project name does not match

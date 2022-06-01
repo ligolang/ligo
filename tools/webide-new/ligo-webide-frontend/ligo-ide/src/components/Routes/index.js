@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react'
 import { Route, Redirect } from 'react-router-dom'
 import CacheRoute, { CacheSwitch } from 'react-router-cache-route'
 
-import Auth from '@obsidians/auth'
 import { Input, LoadingScreen, CenterScreen } from '@obsidians/ui-components'
 
 import BottomBar from './BottomBar'
@@ -30,7 +29,7 @@ export default function (props) {
           <Route
             exact
             path='/'
-            render={() => <Redirect to={`/${Auth.username || 'local'}`} />}
+            render={() => <Redirect to='/local' />}
           />
           <CacheRoute
             exact

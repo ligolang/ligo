@@ -16,7 +16,6 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/auth": "^0.3.0",
     "@obsidians/eth-network": "^0.3.0",
     "@obsidians/eth-project": "^0.3.0",
     "@obsidians/keypair": "^0.3.0",

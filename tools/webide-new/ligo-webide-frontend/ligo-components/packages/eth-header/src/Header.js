@@ -39,7 +39,6 @@ export default class Header extends PureComponent {
       // selectedAccount,
       // network,
       // networkList,
-      AuthModal,
       createProject,
       logo = null,
     } = this.props
@@ -186,7 +185,6 @@ export default class Header extends PureComponent {
         </Navbar>
         <NewProjectModal createProject={createProject} />
         <OpenProjectModal createProject={createProject} />
-        { AuthModal && <AuthModal /> }
       </>
     )
   }

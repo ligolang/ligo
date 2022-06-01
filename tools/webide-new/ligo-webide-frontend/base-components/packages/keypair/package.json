@@ -19,7 +19,6 @@
     "@obsidians/ipc": "^0.3.0",
     "@obsidians/notification": "^0.3.0",
     "@obsidians/redux": "^0.3.0",
-    "@obsidians/auth": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
     "keytar": "7.7.0"
   },

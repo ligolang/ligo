@@ -3,11 +3,10 @@ import React, { lazy, useEffect, useRef, useState } from 'react';
 import { config, updateStore } from './lib/redux';
 import redux, { Provider } from '@obsidians/redux';
 
-import Auth from '@obsidians/auth';
 import { LoadingScreen } from '@obsidians/ui-components';
 import { NotificationSystem } from '@obsidians/notification';
 import Routes from './components/Routes';
-import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from '@obsidians/file-ops';
+import { indexedDBFileSystem, fileSystems, fileSystem } from '@obsidians/file-ops';
 import icon from './components/icon.png';
 
 const Header = lazy(() =>
@@ -21,7 +20,7 @@ const ReduxApp = (props) => {
 
   useEffect(() => {
     async function loadStorage() {
-      await redux.init(config, updateStore).then(onReduxLoaded);
+      await redux.init(config, updateStore);
       await ligoIdeFileSystems.current.addFileSystem(indexedDB.current)
       await ligoIdeFileSystems.current.setFileSystem([indexedDB.current])
       // TODO in case of any changes in fs we should be able to migrate data
@@ -52,9 +51,3 @@ const ReduxApp = (props) => {
 }
 
 export default ReduxApp
-
-async function onReduxLoaded() {
-  Auth.restore();
-  const version = await fileOps.getAppVersion();
-  redux.dispatch('SET_VERSION', { version });
-}
