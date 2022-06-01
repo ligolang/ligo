@@ -65,9 +65,9 @@ module Command = struct
     | Get_bootstrap : Location.t * LT.value -> LT.value t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
-    | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
-    | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
+    | Add_account : Location.t * LT.calltrace * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
     | Baker_account : LT.value * LT.value -> unit t
     | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -361,9 +361,9 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
-    | Implicit_account (loc, kh) -> (
+    | Implicit_account (loc, calltrace, kh) -> (
       let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
-      let address = Tezos_state.implicit_account ~raise ~loc address in
+      let address = Tezos_state.implicit_account ~raise ~loc ~calltrace address in
       let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
       (v, ctxt)
     )
@@ -371,9 +371,9 @@ module Command = struct
       let check = Bls12_381.Pairing.pairing_check l in
       (LC.v_bool check, ctxt)
     )
-    | Add_account (loc, sk, pk) -> (
+    | Add_account (loc, calltrace, sk, pk) -> (
       let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
-      Tezos_state.add_account ~raise ~loc sk pk pkh;
+      Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;
       ((), ctxt)
     )
     | New_account () -> (

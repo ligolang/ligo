@@ -189,9 +189,9 @@ let unwrap_source ~raise ~loc ~calltrace : Memory_proto_alpha.Protocol.Alpha_con
   fun x ->
     let _ = Trace.trace_option ~raise (generic_error ~calltrace loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
     x
-let implicit_account ~raise ~loc : string -> Tezos_protocol.Protocol.Alpha_context.Contract.t  =
+let implicit_account ~raise ~loc ~calltrace : string -> Tezos_protocol.Protocol.Alpha_context.Contract.t  =
   fun x ->
-    Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error loc "Cannot convert to implicit account") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check x
+    Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error ~calltrace loc "Cannot convert to implicit account") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check x
 
 let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.Michelson.michelson) (storage : unit Tezos_utils.Michelson.michelson) : Tezos_protocol.Protocol.Alpha_context.Script.t  =
   let open! Tezos_protocol.Protocol.Alpha_context.Script in
@@ -455,9 +455,9 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
   let ctxt = List.fold_right ~f:aux ~init:ctxt constants in
   (hashes, ctxt)
 
-let add_account ~raise ~loc sk pk pkh : unit =
+let add_account ~raise ~loc ~calltrace sk pk pkh : unit =
   let open Tezos_alpha_test_helpers in
-  let sk = Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
+  let sk = Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error ~calltrace loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
   let account = Account.{ sk ; pk ; pkh } in
   Account.add_account account
 
@@ -588,7 +588,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
       bootstrapped_contracts
   in
   let baker_accounts = List.map ~f:(fun (sk, pk, amt) ->
-                            let sk =  Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
+                            let sk =  Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error ~calltrace loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
                             sk, pk, amt) baker_accounts in
   let r, acclst = init ~rng_state ~level:(Int32.of_int_exn 0) ~initial_balances ~baker_accounts n in
   let init_raw_ctxt = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r in
