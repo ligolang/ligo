@@ -712,6 +712,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source1.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
+      9 |   let () = Test.set_source addr in
+     10 |   let (_, _, _) = Test.originate main () 0tez in
+     11 |   ()
+
     The source address is not an implicit account
     KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
@@ -768,6 +773,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_register_delegate.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
+     18 |   let () = Test.set_baker a in
+     19 |   let (ta, _, _) = Test.originate main 41 5tez in
+     20 |
+
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez

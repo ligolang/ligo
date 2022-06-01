@@ -22,7 +22,8 @@ let generic_error ?(calltrace = []) : Location.t -> string -> interpreter_error 
       match Location.get_file loc with
       | Some r -> String.equal r#file ""
       | None -> true in
-  let loc = if not (is_dummy_location loc) || List.is_empty calltrace then loc else List.hd_exn calltrace in
+  let locs = List.filter ~f:(fun l -> not (is_dummy_location l)) @@ loc :: calltrace in
+  let loc = if List.is_empty locs then loc else List.hd_exn locs in
   `Main_interpret_generic (loc,desc)
 
 let not_enough_initial_accounts : Location.t -> Memory_proto_alpha.Protocol.Alpha_context.Tez.tez -> interpreter_error = fun loc max ->
