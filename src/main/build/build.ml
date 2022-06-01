@@ -20,13 +20,12 @@ module M (Params : Params) =
     type module_name = string
     type compilation_unit = Buffer.t
     type meta_data = Ligo_compile.Helpers.meta
-    let preprocess : options:Compiler_options.t -> file_name -> compilation_unit * meta_data * (file_name * module_name) list =
-      fun ~options file_name ->
+    let preprocess : file_name -> compilation_unit * meta_data * (file_name * module_name) list =
+      fun file_name ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
       let meta = Ligo_compile.Of_source.extract_meta syntax in
       let c_unit, deps = Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name in
       c_unit,meta,deps
-    let preprocess = preprocess ~options
     module AST = struct
       type declaration = Ast_typed.declaration
       type t = declaration list
