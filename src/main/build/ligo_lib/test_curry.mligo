@@ -79,16 +79,19 @@ module Test = struct
     [%external "TEST_TO_ENTRYPOINT"] s t
   let set_baker_policy (bp : test_baker_policy) : unit = [%external "TEST_SET_BAKER"] bp
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
+  let compile_contract (type p s) (f : p * s -> operation list * s) : michelson_contract = [%external "TEST_COMPILE_CONTRACT"] f
   let originate (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_program * int) =
-    let f = [%external "TEST_COMPILE_CONTRACT"] f in
+    let f = compile_contract f in
     let s = eval s in
     let (a, b) = [%external "TEST_ORIGINATE"] f s t in
     let c = [%external "TEST_SIZE"] f in
     let a : (p, s) typed_address = cast_address a in
     (a, b, c)
+  let compile_contract_from_file (fn : string) (e : string) (v : string list) : michelson_contract = [%external "TEST_COMPILE_CONTRACT_FROM_FILE"] fn e v
   let originate_from_file (fn : string) (e : string) (v : string list) (s : michelson_program)  (t : tez) : address * michelson_program * int =
-    let f = [%external "TEST_COMPILE_CONTRACT_FROM_FILE"] fn e v in
+    let f = compile_contract_from_file fn e v in
     let (a, b) = [%external "TEST_ORIGINATE"] f s t in
     let c = [%external "TEST_SIZE"] f in
     (a, b, c)
+  let read_contract_from_file (fn : string) : michelson_contract = [%external "TEST_READ_CONTRACT_FROM_FILE"] fn
 end
