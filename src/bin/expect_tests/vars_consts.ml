@@ -320,7 +320,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
   [%expect{|
-    const foo =
+    const foo[@var] =
       rec (foo:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
                                                                  | (x[@var],y[@var]) -> {
 
@@ -330,7 +330,7 @@ let%expect_test _ =
                                                                       C_POLYMORPHIC_ADD(x ,y)
                                                                    }
                                                                  } )[@@private]
-    const bar =
+    const bar[@var] =
       rec (bar:unit -> int => lambda (_#3 : unit) : int return  match (4 , 5) with
                                                                  | (x,y) ->
                                                                  let add[@var] = rec (add:unit -> int => lambda (_#4 : unit) : int return C_POLYMORPHIC_ADD(x ,y) )[@@private] in
