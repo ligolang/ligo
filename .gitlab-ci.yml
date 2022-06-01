@@ -45,7 +45,7 @@ esy:
   - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
     - git config http.postBuffer 524288000
-    - npm i -g esy@beta
+    - npm i -g esy@beta --force
     - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - esy -vvv
 
