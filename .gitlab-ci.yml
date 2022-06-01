@@ -51,6 +51,7 @@ esy:
     - npm i -g esy@beta --force
     - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - esy -vvv
+    - rm -Recurse -Force _esy
 
 changelog:
   stage: pretooling
