@@ -588,6 +588,12 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } , 230). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
