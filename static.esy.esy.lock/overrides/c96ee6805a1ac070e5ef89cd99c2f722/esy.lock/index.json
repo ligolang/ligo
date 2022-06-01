@@ -1,0 +1,15 @@
+{
+  "checksum": "0cc961f41dbf4ff5ab5654751a4ba36e",
+  "root": "esy-hidapi@link-dev:./esy.json",
+  "node": {
+    "esy-hidapi@link-dev:./esy.json": {
+      "id": "esy-hidapi@link-dev:./esy.json",
+      "name": "esy-hidapi",
+      "version": "link-dev:./esy.json",
+      "source": { "type": "link-dev", "path": ".", "manifest": "esy.json" },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}
