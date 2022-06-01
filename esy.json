@@ -47,6 +47,7 @@
     },
     "resolutions": {
       "ocaml": "4.12.0",
+      "@opam/crunch": "mirage/ocaml-crunch:crunch.opam#e18888ce1f30ed6559ba977d405af2084812cbca",
       "@opam/core": "opam:v0.14.1",
       "@opam/dune": "opam:2.9.2",
       "@opam/dune-configurator": "opam:2.9.1",
