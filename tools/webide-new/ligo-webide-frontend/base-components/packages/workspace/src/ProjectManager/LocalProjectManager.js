@@ -4,30 +4,60 @@ import { modelSessionManager } from '@obsidians/code-editor'
 
 import BaseProjectManager from './BaseProjectManager'
 import { sortFile } from './helper'
+import { getExamples } from './examples'
 
 export default class LocalProjectManager extends BaseProjectManager {
-  static async createProject(options, stage = '') {
-    return await BaseProjectManager.channel.invoke('post', stage, options)
+  static async createProject(name, template) {
+    return await this.processProject(name, undefined, template)
   }
 
-  constructor(project, projectRoot) {
-    super(project, projectRoot)
-
-    BaseProjectManager.channel.on('refresh-file', this.onRefreshFile.bind(this))
-    BaseProjectManager.channel.on('delete-file', this.onDeleteFile.bind(this))
+  static async openProject(obj, name) {
+    return await this.processProject(name, obj, undefined)
   }
 
-  dispose() {
-    BaseProjectManager.channel.off('refresh-file')
-    BaseProjectManager.channel.off('delete-file')
+  static async processProject(name, obj, template) {
+    const data = {
+      id: name,
+      author: 'local',
+      path: '.workspaces/' + name,
+      name: name
+    }
+
+    if (await fileOps.exists(data.path)) {
+      throw new Error('workspace already exists')
+    } else {
+      await fileOps.writeDirectory(data.path)
+    }
+
+    if (obj) {
+      for (const key of Object.keys(obj)) {
+        try {
+          await fileOps.writeFile(data.path + '/' + key, obj[key].content)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    } else if (template) {
+      const examples = getExamples(data.name, template)
+
+      for (const file in examples) {
+        try {
+          await fileOps.writeFile(examples[file].name, examples[file].content)
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
+
+    return data
   }
 
   get path() {
-    return fileOps.current.path
+    return fileOps.pathHelper
   }
 
   async prepareProject() {
-    if (!await fileOps.current.isDirectory(this.projectRoot)) {
+    if (!await fileOps.isDirectory(this.projectRoot)) {
       return { error: 'invalid project' }
     }
 
@@ -46,31 +76,40 @@ export default class LocalProjectManager extends BaseProjectManager {
   }
 
   pathForProjectFile(relativePath) {
-    return this.projectRoot ? fileOps.current.path.join(this.projectRoot, relativePath) : ''
+    return this.projectRoot ? fileOps.pathHelper.join(this.projectRoot, relativePath) : ''
   }
 
   pathInProject(filePath) {
-    return this.path.relative(this.projectRoot, filePath)
+    return fileOps.pathHelper.relative(this.projectRoot, filePath)
   }
 
-  async getDir(filePath) {
-    return await fileOps.current.getDirectory(filePath)
-  }
-  async listFolder(folderPath) {
-    return await fileOps.current.listFolder(folderPath)
+  async readDirectory(folderPath) {
+    return await fileOps.readDirectory(folderPath)
   }
 
   async loadRootDirectory() {
-    const rootResult = await BaseProjectManager.channel.invoke('loadTree', this.projectRoot)
-    const isHasFileREADME = rootResult.children.length === 0 ? false : rootResult.children.find(item => item.name === 'README.md')
-    !isHasFileREADME && this.createNewFile(this.projectRoot, 'README.md')
-    rootResult.children = sortFile(rootResult.children)
-    return rootResult
+    const result = await this.readDirectory(this.projectRoot)
+
+    const rawData = result.map(item => ({ ...item, pathInProject: `${this.projectName}/${item.name}` }))
+    return {
+      name: this.projectRoot,
+      root: true,
+      key: this.projectRoot,
+      title: this.projectRoot,
+      path: this.projectRoot,
+      pathInProject: this.projectRoot,
+      loading: false,
+      children: sortFile(rawData)
+    }
   }
 
   async loadDirectory(node) {
-    const fileNode = await BaseProjectManager.channel.invoke('loadDirectory', node.path)
-    return sortFile(fileNode)
+    const result = await this.readDirectory(node.path)
+    const rawData = result.map(item => ({
+      ...item,
+      pathInProject: this.pathInProject(item.path)
+    }))
+    return sortFile(rawData)
   }
 
   async readProjectSettings() {
@@ -92,7 +131,7 @@ export default class LocalProjectManager extends BaseProjectManager {
 
   async isMainValid() {
     try {
-      return await fileOps.current.isFile(this.mainFilePath)
+      return await fileOps.isFile(this.mainFilePath)
     } catch (e) {
       return false
     }
@@ -108,148 +147,149 @@ export default class LocalProjectManager extends BaseProjectManager {
   }
 
   async isFile(filePath) {
-    return await fileOps.current.isFile(filePath)
+    return await fileOps.isFile(filePath)
   }
 
   async ensureFile(filePath) {
-    return await fileOps.current.fs.ensureFile(filePath)
+    return await fileOps.fs.ensureFile(filePath)
   }
 
-  async readFile(filePath) {
-    return await fileOps.current.readFile(filePath)
+  async readFile(filePath, cb) {
+    return await fileOps.readFile(filePath, cb)
   }
 
   async saveFile(filePath, content) {
-    await fileOps.current.writeFile(filePath, content)
+    await fileOps.writeFile(filePath, content)
   }
 
-  onFileChanged() { }
+  // async copyFolderToJson (directory, visitFile, visitFolder) {
+  //   visitFile = visitFile || function () { /* do nothing. */ }
+  //   visitFolder = visitFolder || function () { /* do nothing. */ }
+  //   const regex = new RegExp(directory, 'g')
+  //   let json = await fileOps.copyFolderToJsonInternal(directory, ({ path, content }) => {
+  //     visitFile({ path: path.replace(regex, ''), content })
+  //   }, ({ path }) => {
+  //     visitFolder({ path: path.replace(regex, '') })
+  //   })
+  //   json = JSON.stringify(json).replace(regex, '')
+  //   return JSON.parse(json)
+  // }
 
   async createNewFile(basePath, name) {
-    const filePath = fileOps.current.path.join(basePath, name)
-    if (await fileOps.current.isFile(filePath)) {
+    const filePath = fileOps.pathHelper.join(basePath, name)
+    if (await fileOps.exists(filePath)) {
       throw new Error(`File <b>${filePath}</b> already exists.`)
     }
 
     try {
-      await this.ensureFile(filePath)
+      await fileOps.writeFile(filePath, '')
     } catch (e) {
-      if (e.code === 'EISDIR') {
-        throw new Error(`Folder <b>${filePath}</b> already exists.`)
-      } else {
-        throw new Error(`Fail to create the file <b>${filePath}</b>.`)
-      }
+      throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`)
     }
+
+    await this.refreshDirectory(basePath)
     return filePath
   }
 
-  async createNewFolder(basePath, name) {
-    const folderPath = fileOps.current.path.join(basePath, name)
-    if (await fileOps.current.isDirectory(folderPath)) {
+  async writeDirectory(basePath, name) {
+    const folderPath = fileOps.pathHelper.join(basePath, name)
+    if (await fileOps.exists(folderPath)) {
       throw new Error(`Folder <b>${folderPath}</b> already exists.`)
     }
 
     try {
-      await fileOps.current.fs.ensureDir(folderPath)
+      await fileOps.writeDirectory(folderPath)
     } catch (e) {
-      if (e.code === 'EISDIR') {
-        throw new Error(`File <b>${folderPath}</b> already exists.`)
-      } else {
-        throw new Error(`Fail to create the folder <b>${folderPath}</b>.`)
-      }
+      console.log(JSON.stringify(e))
+      throw new Error(`File <b>${JSON.stringify(e)}</b> already exists.`)
     }
+
+    await this.refreshDirectory(basePath)
   }
 
-  async copy(from, to) {
-    const { fs } = fileOps.current
-    try {
-      await fs.copy(from, to, { overwrite: false, errorOnExist: true });
-      return true;
-    } catch (error) {
-      return false
-    }
-  }
-  async checkExsist (path) {
-    const { fs } = fileOps.current
-    return !!(await fs.promises.stat(path).catch(() => false))
-  }
+  // TODO turn on drag events
 
-  async moveOps({ from, to }) {
-    const { path, fs } = fileOps.current
-    const toDir = await this.getDir(to)
-    const fromIsFile = await this.isFile(from)
-    const { name: fromName, ext: fromExt } = path.parse(from)
-    const dest = fromIsFile ? `${toDir}/${fromName}${fromExt}` : `${toDir}/${fromName}`
+  // async moveOps({ from, to }) {
+  //   const { path, fs } = fileOps
+  //   const toDir = await this.getDir(to)
+  //   const fromIsFile = await this.isFile(from)
+  //   const { name: fromName, ext: fromExt } = path.parse(from)
+  //   const dest = fromIsFile ? `${toDir}/${fromName}${fromExt}` : `${toDir}/${fromName}`
 
-    const exsist = await this.checkExsist(dest)
+  //   const exsist = await await fileOps.exists(path)
 
-    try {
-        if (exsist) {
-          const { response } = await fileOps.current.showMessageBox({
-            message: `A file or folder with the name '${fromName}' already exists. Do you want to replace it?`,
-            buttons: ['Replace', 'Cancel']
-          })
-          if (response === 0) {
-            await fs.move(from, dest, { overwrite: true })
-          }
-        } else {
-          await fs.move(from, dest)
-        }
-    } catch (e) {
-      throw new Error(`Fail to move <b>${dest}</b>.`)
-    }
-  }
+  //   try {
+  //     if (exsist) {
+  //       const { response } = await fileOps.showMessageBox({
+  //         message: `A file or folder with the name '${fromName}' already exists. Do you want to replace it?`,
+  //         buttons: ['Replace', 'Cancel']
+  //       })
+  //       if (response === 0) {
+  //         await fs.move(from, dest, { overwrite: true })
+  //       }
+  //     } else {
+  //       await fs.move(from, dest)
+  //     }
+  //   } catch (e) {
+  //     throw new Error(`Fail to move <b>${dest}</b>.`)
+  //   }
+  // }
 
-  async copyOps({ from, to }) {
-    const { path } = fileOps.current
-    const toDir = await this.getDir(to)
-    const fromIsFile = await this.isFile(from)
-    const { name: fromName, ext: fromExt } = path.parse(from)
-    let dest = !fromIsFile ? `${toDir}/${fromName}` : `${toDir}/${fromName}_copy1${fromExt}`
-    let safeCount = 0
+  // TODO turn on drag events
 
-    while (!await this.copy(from, dest) && safeCount < 10) {
-      const matched = dest.match(/(?<=copy)\d*(?=\.)/g)
-      safeCount++
-      if (matched) {
-        dest = dest.replace(/(?<=copy)\d*(?=\.)/g, Number(matched[0]) + 1)
-      }
-    }
-  }
+  // async copyOps({ from, to }) {
+  //   const { path } = fileOps
+  //   const toDir = await this.getDir(to)
+  //   const fromIsFile = await this.isFile(from)
+  //   const { name: fromName, ext: fromExt } = path.parse(from)
+  //   let dest = !fromIsFile ? `${toDir}/${fromName}` : `${toDir}/${fromName}_copy1${fromExt}`
+  //   let safeCount = 0
+
+  //   while (!await this.copy(from, dest) && safeCount < 10) {
+  //     const matched = dest.match(/(?<=copy)\d*(?=\.)/g)
+  //     safeCount++
+  //     if (matched) {
+  //       dest = dest.replace(/(?<=copy)\d*(?=\.)/g, Number(matched[0]) + 1)
+  //     }
+  //   }
+  // }
 
   async rename(oldPath, name) {
-    const { path, fs } = fileOps.current
+    const path = fileOps.pathHelper
     const { dir } = path.parse(oldPath)
     const newPath = path.join(dir, name)
 
     try {
-      await fs.rename(oldPath, newPath)
+      await fileOps.rename(oldPath, newPath)
       modelSessionManager.updateEditorAfterMovedFile(oldPath, newPath)
     } catch (e) {
+      console.log(e)
       throw new Error(`Fail to rename <b>${oldPath}</b>.`)
     }
 
+    await this.refreshDirectory(dir)
   }
 
   async deleteFile(node) {
-    const { response } = await fileOps.current.showMessageBox({
+    const { response } = await fileOps.showMessageBox({
       message: `Are you sure you want to delete ${node.path}?`,
       buttons: ['Move to Trash', 'Cancel']
     })
     if (response === 0) {
-      await fileOps.current.deleteFile(node.path)
+      if (node.children) {
+        await fileOps.deleteDirectory(node.path)
+      } else {
+        await fileOps.deleteFile(node.path)
+      }
     }
+
+    const { dir } = fileOps.pathHelper.parse(node.path)
+    await this.refreshDirectory(dir)
   }
 
-  onRefreshFile(data) {
-    modelSessionManager.refreshFile(data)
-    if (data.path === this.settingsFilePath) {
-      this.projectSettings?.update(data.content)
-    }
-  }
-
-  onDeleteFile(data) {
-    modelSessionManager.deleteFile(data.path)
+  async refreshDirectory (dir) {
+    const children = await this.loadDirectory({ path: dir })
+    BaseProjectManager.channel.trigger('refresh-directory', { path: dir, children })
   }
 
   toggleTerminal(terminal) {

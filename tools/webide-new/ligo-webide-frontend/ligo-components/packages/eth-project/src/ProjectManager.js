@@ -46,8 +46,8 @@ function makeProjectManager(Base) {
     }
 
     async readPackageJson() {
-      const packageJson = await this.readFile(this.pathForProjectFile('package.json'))
-      return JSON.parse(packageJson)
+      // const packageJson = await this.readFile(this.pathForProjectFile('package.json'))
+      return {} //JSON.parse(packageJson)
     }
 
     async executeInTerminal(cmd) {
@@ -143,14 +143,14 @@ function makeProjectManager(Base) {
       } else {
         stopCriteria = child => child.type === 'file' && child.name.endsWith('.json')
       }
-      const files = await this.listFolderRecursively(builtFolder, stopCriteria)
+      const files = await this.readDirectoryRecursively(builtFolder, stopCriteria)
       return files.map(f => ({ ...f, pathInProject: this.pathInProject(f.path) }))
     }
 
     async readProjectAbis() {
       const contracts = await this.getBuiltContracts()
       const abis = await Promise.all(contracts
-        .map(contract => this.readFile(contract.path, 'utf8')
+        .map(contract => this.readFile(contract.path)
           .then(content => ({
             contractPath: contract.path,
             pathInProject: this.pathInProject(contract.path),
@@ -327,5 +327,4 @@ function makeProjectManager(Base) {
 
 export default {
   Local: makeProjectManager(ProjectManager.Local),
-  Remote: makeProjectManager(ProjectManager.Remote),
 }

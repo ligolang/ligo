@@ -14,19 +14,13 @@ import {
   ProjectPath,
 } from '@obsidians/workspace'
 
-import notification from '@obsidians/notification'
-import { DockerImageInputSelector } from '@obsidians/docker'
-import compilerManager from '@obsidians/eth-compiler'
-
-import NewProjectModal from '../../components/NewProjectModal'
-
 export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
   static contextType = WorkspaceContext
 
   componentDidMount () {
     BaseProjectManager.channel.on('settings', this.debouncedUpdate)
   }
-  
+
   componentWillUnmount () {
     BaseProjectManager.channel.off('settings', this.debouncedUpdate)
   }
@@ -53,13 +47,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
   }
 
   render () {
-    const { noSolc } = this.props
     const { projectRoot, projectManager, projectSettings } = this.context
-    const framework = projectSettings?.get('framework')
     const readOnly = !projectManager.userOwnProject && projectManager.remote
-
-    const frameworks = Object.entries(NewProjectModal.defaultProps.FrameworkSelector.frameworkNames)
-      .map(([key, name]) => ({ key, name }))
 
     return (
       <div className='custom-tab bg2'>
@@ -87,7 +76,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
               placeholder={`Path to the built contract to deploy`}
               readOnly={readOnly}
             />
-            {
+            {/* {
               !projectManager.remote &&
               <FormGroup>
                 <Label>Framework</Label>
@@ -104,8 +93,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                   {frameworks.map(f => <option key={f.key} value={f.key}>{f.name}</option>)}
                 </CustomInput>
               </FormGroup>
-            }
-            {
+            } */}
+            {/* {
               !framework.endsWith('-docker') &&
               <FormGroup>
                 <Label>Npm client</Label>
@@ -121,9 +110,9 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                   <option value='cnpm'>cnpm</option>
                 </CustomInput>
               </FormGroup>
-            }
-            <h4 className='mt-4'>Compilers</h4>
-            {
+            } */}
+            {/* <h4 className='mt-4'>Compilers</h4> */}
+            {/* {
               !projectManager.remote && framework === 'truffle' &&
               <DockerImageInputSelector
                 channel={compilerManager.truffle}
@@ -136,8 +125,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 selected={projectSettings?.get(`compilers.${process.env.COMPILER_VERSION_KEY}`)}
                 onSelected={truffle => this.onChange(`compilers.${process.env.COMPILER_VERSION_KEY}`)(truffle)}
               />
-            }
-            {
+            } */}
+            {/* {
               !noSolc &&
               <DockerImageInputSelector
                 channel={compilerManager.solc}
@@ -154,8 +143,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 onSelected={solc => this.onChange('compilers.solc')(solc)}
                 readOnly={readOnly}
               />
-            }
-            <FormGroup>
+            } */}
+            {/* <FormGroup>
               <Label>EVM version</Label>
               <CustomInput
                 id='settings-evm-version'
@@ -174,8 +163,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='tangerineWhistle'>Tangerine Whistle</option>
                 <option value='homestead'>Homestead</option>
               </CustomInput>
-            </FormGroup>
-            <DebouncedFormGroup
+            </FormGroup> */}
+            {/* <DebouncedFormGroup
               label='Optimizer runs'
               className='bg-black'
               placeholder='Default: 0 (disabled)'
@@ -189,10 +178,10 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                   this.onChange('compilers.optimizer')({ enabled: false })
                 }
               }}
-            />
+            /> */}
 
-            <h4 className='mt-4'>Linter</h4>
-            <FormGroup>
+            {/* <h4 className='mt-4'>Linter</h4> */}
+            {/* <FormGroup>
               <CustomInput
                 id='settings-linter'
                 type='select'
@@ -204,9 +193,9 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='solhint'>Solhint</option>
                 <option value='solium'>Solium/Ethlint</option>
               </CustomInput>
-            </FormGroup>
+            </FormGroup> */}
 
-            <h4 className='mt-4'>Editor</h4>
+            {/* <h4 className='mt-4'>Editor</h4>
             <FormGroup>
               <Label>Font Family</Label>
               <CustomInput
@@ -220,8 +209,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='Hack'>Hack</option>
                 <option value='Fira Code'>Fira Code</option>
               </CustomInput>
-            </FormGroup>
-            <FormGroup>
+            </FormGroup> */}
+            {/* <FormGroup>
               <Label>Font Size</Label>
               <CustomInput
                 id='settings-font-size'
@@ -238,8 +227,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='15px'>15px</option>
                 <option value='16px'>16px</option>
               </CustomInput>
-            </FormGroup>
-            <FormGroup>
+            </FormGroup> */}
+            {/* <FormGroup>
               <Label>Font Ligatures</Label>
               <CustomInput
                 id='settings-ligatures'
@@ -252,7 +241,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='false'>Disabled</option>
                 <option value='true'>Enabled</option>
               </CustomInput>
-            </FormGroup>
+            </FormGroup> */}
 
             <AbstractProjectSettingsTab.DeleteButton context={this.context} />
             </form>
