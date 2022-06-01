@@ -1,10 +1,10 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 309a1ad70ba854381ee310e32c4279eeae82589d53103bac1be23bc602393dee
+-- hash: 55e2995c4168e9011ce68177d9b17348e94d2dd11d7ecef19ce9573e0afa0afe
 
 name:           ligo-debugger
 version:        0.0.0
@@ -15,6 +15,7 @@ build-type:     Simple
 library
   exposed-modules:
       Debug
+      Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.Handlers.Impl
@@ -50,6 +51,7 @@ library
     , nyan-interpolation
     , process
     , scientific
+    , singletons
     , stm
     , text
     , universum

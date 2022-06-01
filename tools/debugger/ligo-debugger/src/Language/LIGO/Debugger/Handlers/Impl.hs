@@ -7,13 +7,13 @@ import Debug qualified
 import Unsafe qualified
 
 import Control.Concurrent.STM (writeTChan)
-import Control.Lens (zoom, (.=))
+import Control.Lens (zoom, (.=), ix, (^?!))
 import Control.Monad.Except (MonadError (..), liftEither)
 import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), SourceType (..), curSnapshot, frozen, groupSourceLocations,
-  playInterpretHistory)
+  playInterpretHistory, tapeFocus)
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
@@ -35,6 +35,9 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
+
+import Language.LIGO.DAP.Variables
+import Morley.Debugger.Protocol.DAP (ScopesRequestArguments(frameIdScopesRequestArguments))
 
 data LIGO
 
@@ -102,16 +105,21 @@ instance HasSpecificMessages LIGO where
 
   handleScopesRequest DAP.ScopesRequest{..} = do
     -- We follow the implementation from morley-debugger
+    DAPSessionState{..} <- get
+    let stackItems = _dsSnapshots _dsDebuggerState
+          & tapeFocus
+          & isStackFrames
+          & flip (^?!) (ix (frameIdScopesRequestArguments argumentsScopesRequest - 1))
+          & sfStack
 
-    -- Lazily calculate tree of variables for the current scope and store it
-    -- for subsequent "variables" request.
-    -- TODO [LIGO-304]: fill with actual variables
-    dsVariables .= mempty
+    let (varReference, variables) = createVariables stackItems
+
+    dsVariables .= variables
 
     -- TODO [LIGO-304]: show detailed scopes
     let theScope = DAP.defaultScope
           { DAP.nameScope = "all variables"
-          , DAP.variablesReferenceScope = 1
+          , DAP.variablesReferenceScope = varReference
           }
     pushMessage $ DAPResponse $ ScopesResponse $ DAP.defaultScopesResponse
       { DAP.successScopesResponse = True
