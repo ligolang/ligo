@@ -50,6 +50,7 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_contract_from_file : string * string * string list -> LT.value t
+    | Read_contract_from_file : string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
@@ -246,6 +247,17 @@ module Command = struct
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
       let contract = LT.V_Michelson_contract contract_code in
       (contract, ctxt)
+    | Read_contract_from_file (source_file) ->
+      (try
+        let s = In_channel.(with_file source_file ~f:input_all) in
+        let t, _ =  Tezos_micheline.Micheline_parser.tokenize s in
+        let m, _ = Tezos_micheline.Micheline_parser.parse_expression t in
+        let contract_code = Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) m in
+        let contract = LT.V_Michelson_contract contract_code in
+        (contract, ctxt)
+       with
+        | Sys_error _ ->
+          raise.raise @@ generic_error Location.generated @@ "Could not open " ^ source_file ^ " for reading.")
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env f.orig_lambda in
