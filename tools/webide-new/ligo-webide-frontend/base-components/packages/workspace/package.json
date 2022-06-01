@@ -16,7 +16,6 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/auth": "^0.3.0",
     "@obsidians/code-editor": "^0.3.0",
     "@obsidians/file-ops": "^0.3.0",
     "@obsidians/filetree": "^0.3.0",
@@ -24,8 +23,8 @@
     "@obsidians/notification": "^0.3.0",
     "@obsidians/platform": "^0.3.0",
     "@obsidians/redux": "^0.3.0",
-    "@obsidians/terminal": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
+    "gists": "^2.0.0",
     "js-base64": "^3.6.0",
     "lodash": "^4.17.20"
   },
@@ -50,9 +49,9 @@
   },
   "peerDependencies": {
     "immutable": "^4.0.0-rc.12",
+    "node-sass": "^*",
     "react": "^17.0.0",
-    "react-dom": "^17.0.0",
-    "node-sass": "^*"
+    "react-dom": "^17.0.0"
   },
   "eslintConfig": {
     "extends": "react-app"

@@ -7,7 +7,6 @@ import {
   ToolbarButton
 } from '@obsidians/ui-components'
 
-import platform from '@obsidians/platform'
 import fileOps from '@obsidians/file-ops'
 import CodeEditorCollection from '@obsidians/code-editor'
 import FileTree from '@obsidians/filetree'

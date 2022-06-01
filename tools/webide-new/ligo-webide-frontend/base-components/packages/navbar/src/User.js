@@ -21,7 +21,7 @@ class User extends Component {
 
   componentDidMount() {
     const img = new Image()
-    img.src = this.props.profile.get('avatar')
+    img.src = null // this.props.profile.get('avatar')
     img.crossOrigin = true
     img.onload = () => {
       this.setState({ loaded: true})

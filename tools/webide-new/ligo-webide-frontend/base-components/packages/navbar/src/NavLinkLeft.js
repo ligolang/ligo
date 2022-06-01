@@ -8,7 +8,7 @@ import NavDropdown from './NavDropdown'
 
 class NavLinkLeft extends PureComponent {
   static defaultProps = {
-    onClickItem: () => { },
+    onClickItem: () => { }
   }
 
   onToggle = event => {

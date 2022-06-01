@@ -125,10 +125,10 @@ class ModelSessionManager {
     } else if (tab.text) {
       return tab.text
     } else if (tab.remote) {
-      const basename = fileOps.current.path.basename(tab.path)
+      const basename = fileOps.pathHelper.basename(tab.path)
       return <span key='cloud-icon'><i className='fas fa-cloud small text-muted mr-1' />{basename}</span>
     } else {
-      return fileOps.current.path.basename(tab.path)
+      return fileOps.pathHelper.basename(tab.path)
     }
   }
 
@@ -141,8 +141,8 @@ class ModelSessionManager {
   }
 
   openFile(filePath, remote = this.projectManager.remote) {
-    if (!fileOps.current.path.isAbsolute(filePath)) {
-      filePath = fileOps.current.path.join(this.projectRoot, filePath)
+    if (!fileOps.pathHelper.isAbsolute(filePath)) {
+      filePath = fileOps.pathHelper.join(this.projectRoot, filePath)
     }
     this._editorContainer.openTab({ key: filePath, path: filePath, remote })
   }

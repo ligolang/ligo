@@ -5,8 +5,8 @@ import { ToolbarButton, DropdownToolbarButton } from '@obsidians/ui-components'
 import { CompilerButton } from '@obsidians/eth-compiler'
 import keypairManager from '@obsidians/keypair'
 
-import DeployButton from './DeployButton'
-import ScriptsButton from './ScriptsButton'
+// import DeployButton from './DeployButton'
+// import ScriptsButton from './ScriptsButton'
 import SignRequestModal from './SignRequestModal'
 
 export default class ProjectToolbar extends PureComponent {
@@ -35,8 +35,8 @@ export default class ProjectToolbar extends PureComponent {
           readOnly={readOnly}
         />
       }
-      { !noDeploy && <DeployButton projectManager={projectManager} signer={signer} /> }
-      <ScriptsButton projectManager={projectManager} />
+      {/* { !noDeploy && <DeployButton projectManager={projectManager} signer={signer} /> } */}
+      {/* <ScriptsButton projectManager={projectManager} /> */}
       { <ExtraButtons projectManager={projectManager} signer={signer} /> }
       <div className='flex-1' />
       <ToolbarButton

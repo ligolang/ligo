@@ -16,14 +16,10 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/eth-network": "^0.3.0",
-    "@obsidians/eth-project": "^0.3.0",
-    "@obsidians/keypair": "^0.3.0",
     "@obsidians/navbar": "^0.3.0",
     "@obsidians/redux": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
-    "@obsidians/workspace": "^0.3.0",
-    "@obsidians/eth-sdk": "^0.3.0"
+    "@obsidians/workspace": "^0.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.7.5",

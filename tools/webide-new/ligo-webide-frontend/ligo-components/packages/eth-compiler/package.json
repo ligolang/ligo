@@ -20,16 +20,12 @@
     "@obsidians/docker": "^0.3.0",
     "@obsidians/eth-network": "^0.3.0",
     "@obsidians/file-ops": "^0.3.0",
-    "@obsidians/keypair": "^0.3.0",
     "@obsidians/notification": "^0.3.0",
     "@obsidians/platform": "^0.3.0",
     "@obsidians/terminal": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
     "@obsidians/workspace": "^0.3.0",
-    "@obsidians/code-editor": "^0.3.0",
-    "lodash": "^4.17.15",
-    "semver": "^7.3.2",
-    "strip-ansi": "^6.0.0"
+    "@obsidians/code-editor": "^0.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.7.5",

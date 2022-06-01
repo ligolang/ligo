@@ -21,7 +21,6 @@
     "@obsidians/notification": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
     "chalk": "^4.1.0",
-    "strip-ansi": "^6.0.0",
     "xterm": "^4.10.0",
     "xterm-addon-fit": "^0.4.0",
     "xterm-addon-search": "^0.8.0"

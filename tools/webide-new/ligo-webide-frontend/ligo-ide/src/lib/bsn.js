@@ -1,5 +1,3 @@
-import decode from 'jwt-decode'
-
 async function handleBsnCallback ({ location, history }) {
   const query = new URLSearchParams(location.search)
   const code = query.get('code')
@@ -19,7 +17,7 @@ async function handleBsnCallback ({ location, history }) {
     return
   }
 
-  const { username, avatar } = decode(token)
+  const { username, avatar } = token
   this.profile = { username, avatar }
   this.credentials = { token, awsCredential }
 

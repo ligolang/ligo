@@ -102,7 +102,7 @@ export default class Terminal extends PureComponent {
       theme: {
         foreground: color,
         background: bgColor,
-        cursor: this.props.interactive ? getColor('--color-text-muted') : bgColor,
+        cursor: this.props.interactive ? getColor('--color-text-muted') : bgColor
       }
     })
 
@@ -288,10 +288,10 @@ Terminal.propTypes = {
 }
 
 Terminal.defaultProps = {
-  cwd: fileOps.current.workspace,
+  cwd: fileOps.workspace,
   height: '100%',
   font: 'Hack, Menlo, monospace',
   className: '',
   Toolbar: null,
-  onLogReceived: message => message,
+  onLogReceived: message => message
 }

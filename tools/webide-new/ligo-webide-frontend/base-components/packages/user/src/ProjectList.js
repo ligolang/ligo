@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 
 import {
   DeleteButton,
-  IconButton,
+  IconButton
 } from '@obsidians/ui-components'
 
 import { Link } from 'react-router-dom'
@@ -70,7 +70,7 @@ export default class ProjectList extends PureComponent {
           className='text-muted'
           icon='fas fa-external-link-alt'
           tooltip='Open in Browser'
-          onClick={() => fileOps.current.openLink(`${process.env.PROJECT_WEB_URL}/${project.path}`)}
+          onClick={() => fileOps.openLink(`${process.env.PROJECT_WEB_URL}/${project.path}`)}
         />
       )
     }

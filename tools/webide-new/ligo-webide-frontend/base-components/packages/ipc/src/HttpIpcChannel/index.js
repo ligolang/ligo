@@ -4,12 +4,6 @@ export default class HttpIpcChannel {
     this.uid = uid
     this.listeners = {}
     this._onDataReceived = this._onDataReceived.bind(this)
-
-    const {
-      REACT_APP_SERVER_URL,
-      REACT_APP_IPC_SERVER_URL,
-    } = process.env
-    this.client.on(this.channelResponse, this._onDataReceived)
   }
 
   get channelName() {

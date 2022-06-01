@@ -87,7 +87,7 @@ export default class ListItemDocker extends PureComponent {
       case 'INSTALLED':
         if (process.env.OS_IS_LINUX) {
           return (
-            <Button color='primary' onClick={() => fileOps.current.openLink('https://docs.docker.com/engine/install/linux-postinstall')}>
+            <Button color='primary' onClick={() => fileOps.openLink('https://docs.docker.com/engine/install/linux-postinstall')}>
               Need Privileges
             </Button>
           )
@@ -104,12 +104,12 @@ export default class ListItemDocker extends PureComponent {
         return <Button color='secondary'>Started</Button>
     }
   }
-  
+
   installDocker = () => {
     if (process.env.OS_IS_LINUX) {
-      fileOps.current.openLink('https://docs.docker.com/engine/install/ubuntu')
+      fileOps.openLink('https://docs.docker.com/engine/install/ubuntu')
     } else {
-      fileOps.current.openLink('https://www.docker.com/products/docker-desktop')
+      fileOps.openLink('https://www.docker.com/products/docker-desktop')
     }
   }
 
@@ -123,7 +123,7 @@ export default class ListItemDocker extends PureComponent {
               <a
                 href='#'
                 className='text-white'
-                onClick={() => fileOps.current.openLink('https://www.docker.com/')}
+                onClick={() => fileOps.openLink('https://www.docker.com/')}
               >Docker</a>
             </h5>
             {this.renderSubtitle()}

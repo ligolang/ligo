@@ -7,7 +7,7 @@ import {
   ButtonDropdown,
   DropdownToggle,
   DropdownMenu,
-  DropdownItem,
+  DropdownItem
 } from '@obsidians/ui-components'
 
 export default class NavDropdown extends Component {
@@ -15,7 +15,7 @@ export default class NavDropdown extends Component {
     selected: PropTypes.string.isRequired,
     list: PropTypes.array.isRequired,
     onClickItem: PropTypes.func.isRequired,
-    icon: PropTypes.string,
+    icon: PropTypes.string
   }
 
   state = {
@@ -44,10 +44,10 @@ export default class NavDropdown extends Component {
       }
     }
 
-    if(this.props.disable) {
+    if (this.props.disable) {
       return
     }
-    
+
     this.setState({ dropdown: !this.state.dropdown })
   }
 
@@ -80,8 +80,8 @@ export default class NavDropdown extends Component {
           this.props.onClickItem(item)
         }}
         onContextMenu={event => {
-          const isLocalProject = listDropMenu.find((elem, elIndex) =>  elem?.header === 'local projects' && (elem['index'] = elIndex));
-          const isRemoteProject = listDropMenu.find((elem, elIndex) =>  elem?.header === 'remote projects' && (elem['index'] = elIndex));
+          const isLocalProject = listDropMenu.find((elem, elIndex) => elem?.header === 'local projects' && (elem['index'] = elIndex))
+          const isRemoteProject = listDropMenu.find((elem, elIndex) => elem?.header === 'remote projects' && (elem['index'] = elIndex))
           if (index < isLocalProject?.index || index > isRemoteProject?.index) {
             return null
           }
@@ -130,10 +130,10 @@ export default class NavDropdown extends Component {
         </DropdownMenu>
         {
           menus.length > 0 && <Menu animation={false} id={`nav-contextmenu-${this.props.route}`}>
-          {
+            {
             menus.map(item => item ? <Item key={item.text} onClick={() => item.onClick(this.state.activeItem)}>{item.text}</Item> : <Separator />)
           }
-        </Menu>
+          </Menu>
         }
       </ButtonDropdown>
     )

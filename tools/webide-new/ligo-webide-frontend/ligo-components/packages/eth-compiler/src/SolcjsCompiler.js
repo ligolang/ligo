@@ -20,7 +20,7 @@ export default class SolcjsCompiler {
     if (!this.worker) {
       const solcFile = (platform.isWeb || process.env.NODE_ENV === 'development')
         ? '/solc.js'
-        : fileOps.current.path.join(fileOps.current.appPath, `build/solc.js`)
+        : fileOps.pathHelper.join(fileOps.appPath, `build/solc.js`)
       this.worker = new Worker(solcFile)
       this.worker.onmessage = this.onMessage.bind(this)
     }

@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
-import platform from '@obsidians/platform'
 import { Tabs } from '@obsidians/ui-components'
 import fileOps from '@obsidians/file-ops'
-import { ClipBoardService } from '@obsidians/filetree';
+import { ClipBoardService } from '@obsidians/filetree'
 import classnames from 'classnames'
 
 import MonacoEditorContainer from './MonacoEditor/MonacoEditorContainer'
@@ -47,11 +46,7 @@ export default class CodeEditorCollection extends PureComponent {
       {
         text: 'Copy Path',
         onClick: this.copyPath
-      },
-      ...platform.isDesktop ? [{
-        text: 'Open Containing Folder',
-        onClick: this.showInFinder
-      }] : []
+      }
     ]
   }
 
@@ -72,15 +67,11 @@ export default class CodeEditorCollection extends PureComponent {
     this.tabs.current.updateTab({ unsaved })
   }
 
-  showInFinder = tab => {
-    fileOps.current.showItemInFolder(tab.path)
-  }
-  
   // NOTE: there is no pathInProject props return in the local project, while will return it in remote project
   // see: packages/workspace/src/ProjectManager/LocalProjectManager.js
   // see: packages/workspace/src/ProjectManager/RemoteProjectManager.js
   copyPath = ({ pathInProject, path}) => {
-    const filePath =  pathInProject || path
+    const filePath = pathInProject || path
     const clipboard = new ClipBoardService()
     clipboard.writeText(filePath)
   }
@@ -106,8 +97,8 @@ export default class CodeEditorCollection extends PureComponent {
 
   // MARK: may can define a batch delete in the Tabs component
   closeOtherFiles = currentTab => {
-    const { onCloseTab, allTabs } = this.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key);
+    const { onCloseTab, allTabs } = this.tabs.current
+    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key)
 
     shouldCloseTabs.forEach(tab => {
       onCloseTab(tab)
@@ -115,8 +106,8 @@ export default class CodeEditorCollection extends PureComponent {
   }
 
   closeSaved = () => {
-    const { onCloseTab, allTabs } = this.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => !tab.unsaved);
+    const { onCloseTab, allTabs } = this.tabs.current
+    const shouldCloseTabs = allTabs.filter(tab => !tab.unsaved)
 
     shouldCloseTabs.forEach(tab => {
       onCloseTab(tab)
@@ -149,7 +140,7 @@ export default class CodeEditorCollection extends PureComponent {
     //   clicked = response
     // }
 
-    const { response } = await fileOps.current.showMessageBox({
+    const { response } = await fileOps.showMessageBox({
       // title: `Do you want to save the changes you made for ${path}?`,
       message: 'Your changes will be lost if you close this item without saving.',
       buttons: ['Save', 'Cancel', `Don't Save`]
@@ -221,7 +212,7 @@ export default class CodeEditorCollection extends PureComponent {
       editorConfig,
       projectRoot,
       initialTab,
-      readOnly,
+      readOnly
     } = this.props
 
     modelSessionManager.tabsRef = this.tabs
@@ -236,7 +227,7 @@ export default class CodeEditorCollection extends PureComponent {
           initialSelected={initialTab}
           onSelectTab={this.onSelectTab}
           tryCloseTab={this.tryCloseTab}
-          createNewTab={platform.isDesktop ? () => fileOps.current.openNewFile(projectRoot) : undefined }
+          createNewTab={undefined}
           getTabText={tab => modelSessionManager.tabTitle(tab)}
           tabContextMenu={this.tabContextMenu}
         >

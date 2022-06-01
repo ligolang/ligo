@@ -23,7 +23,7 @@ export default class FaucetButton extends PureComponent {
       return
     }
 
-    fileOps.current.openLink(faucetUrl)
+    fileOps.openLink(faucetUrl)
   }
 
   render () {

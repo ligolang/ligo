@@ -22,14 +22,10 @@
     "analyze": "yarn build:web --stats && webpack-bundle-analyzer build/bundle-stats.json"
   },
   "dependencies": {
-    "crypto-browserify": "^3.12.0",
-    "fs-extra": "^9.1.0",
     "keytar": "7.7.0",
     "monaco-ace-tokenizer": "^0.2.1",
-    "node-pty": "0.10.0",
     "prettier": "^2.5.0",
     "prettier-plugin-solidity": "1.0.0-beta.10",
-    "socket.io-client": "^2.4.0",
     "solhint": "ObsidianLabs/solhint#obsidians",
     "solium": "ObsidianLabs/Ethlint",
     "solparse-exp-jb": "ObsidianLabs/solparse",
@@ -51,7 +47,6 @@
     "@types/node": "12.6.3",
     "@types/react": "16.8.23",
     "@types/react-dom": "16.8.4",
-    "aws-sdk": "^2.830.0",
     "babel-plugin-import": "^1.12.0",
     "bootstrap": "^4.6.0",
     "bundle-stats-webpack-plugin": "^3.2.4",

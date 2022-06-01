@@ -17,7 +17,7 @@ export default class AboutModal extends PureComponent {
 
   async componentDidMount () {
     globalModalManager.aboutModal = this
-    const appVersion = await fileOps.current.getAppVersion()
+    const appVersion = await fileOps.getAppVersion()
     this.setState({ appVersion })
   }
 
@@ -43,7 +43,7 @@ export default class AboutModal extends PureComponent {
           <p className='mt-3'><span className='h4'><b>{process.env.PROJECT_NAME}</b></span> v{appVersion}</p>
 
           <h5 className='small-caps mt-4'>contact us</h5>
-          <p>Website: <a href='#' onClick={() => fileOps.current.openLink('https://www.obsidians.io')}>https://www.obsidians.io</a></p>
+          <p>Website: <a href='#' onClick={() => fileOps.openLink('https://www.obsidians.io')}>https://www.obsidians.io</a></p>
           {this.props.children}
         </div>
       </Modal>

@@ -16,12 +16,7 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/file-ops": "^0.3.0",
-    "@obsidians/ipc": "^0.3.0",
-    "@obsidians/ui-components": "^0.3.0",
     "@obsidians/code-editor": "^0.3.0",
-    "chokidar": "^3.5.1",
-    "filehound": "^1.17.4",
     "lodash": "^4.17.20",
     "rc-tree": "^5.3.3",
     "react-contexify": "^5.0.0"

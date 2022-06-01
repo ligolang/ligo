@@ -1,1 +1,1 @@
-# `@obsidians/auth`
+# `@obsidians/user`

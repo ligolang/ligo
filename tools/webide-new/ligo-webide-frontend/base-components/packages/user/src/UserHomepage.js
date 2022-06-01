@@ -8,26 +8,25 @@ import {
   CenterScreen
 } from '@obsidians/ui-components'
 
-import PropTypes from 'prop-types'
 import platform from '@obsidians/platform'
 import redux, { connect } from '@obsidians/redux'
 import { HttpIpcChannel } from '@obsidians/ipc'
-import { actions, TutorialModal } from '@obsidians/workspace'
-import UserProfile from './UserProfile'
+import { actions } from '@obsidians/workspace'
+// import UserProfile from './UserProfile'
 import ProjectList from './ProjectList'
 
 const userChannel = new HttpIpcChannel('user')
 const projectChannel = new HttpIpcChannel('project')
-const {
-  PROJECT_GITHUB_REPO
-} = process.env
+// const {
+//   PROJECT_GITHUB_REPO
+// } = process.env
 
-const tutorialModalInfo = {
-  header: 'Welcome to Black IDE',
-  description: `Black IDE is a graphic IDE for developing smart contracts on the Ethereum blockchian. New here ? Don't worry.
-  Here is an instruction for a quick scan and details of each features.`,
-  nextPage: `${PROJECT_GITHUB_REPO}/blob/master/README.md`
-}
+// const tutorialModalInfo = {
+//   header: 'Welcome to Black IDE',
+//   description: `Black IDE is a graphic IDE for developing smart contracts on the Ethereum blockchian. New here ? Don't worry.
+//   Here is an instruction for a quick scan and details of each features.`,
+//   nextPage: `${PROJECT_GITHUB_REPO}/blob/master/README.md`
+// }
 
 class UserHomepage extends PureComponent {
   state = {
@@ -45,6 +44,7 @@ class UserHomepage extends PureComponent {
 
   componentDidMount() {
     const { username } = this.props.match.params
+    this.setState({remote: username !== 'local'})
     this.getProjectList(username)
     this.state.remote && this.checkIsNewUser()
   }
@@ -58,7 +58,7 @@ class UserHomepage extends PureComponent {
   }
 
   checkIsNewUser() {
-    if (!localStorage.getItem('hasMark') && this.isSelf() && this.props.enableTutorial) {
+    if (!localStorage.getItem('hasMark') && this.isSelf() && false) {
       localStorage.setItem('hasMark', 'true')
       this.modal.current.showModal()
     }
@@ -105,13 +105,13 @@ class UserHomepage extends PureComponent {
 
   isSelf = () => {
     const { profile, match } = this.props
-    return platform.isDesktop || match.params.username === profile.get('username')
+    return false // platform.isDesktop || match.params.username === profile.get('username')
   }
 
   renderCreateButton = () => {
-    if (!this.isSelf()) {
-      return null
-    }
+    // if (!this.isSelf()) {
+    //   return null
+    // }
     return (
       <Button
         color='success'
@@ -123,9 +123,9 @@ class UserHomepage extends PureComponent {
   }
 
   renderOpenButton = () => {
-    if (!this.isSelf()) {
-      return null
-    }
+    // if (!this.isSelf()) {
+    //   return null
+    // }
     return (
       <Button
         color='success'
@@ -162,7 +162,7 @@ class UserHomepage extends PureComponent {
   }
 
   renderActionButtons = () => {
-    if (platform.isDesktop) {
+    if (true) { // if (platform.isDesktop) {
       if (!this.state.remote) {
         return (
           <ButtonGroup>
@@ -203,7 +203,7 @@ class UserHomepage extends PureComponent {
     return (
       <div className='d-flex w-100 h-100' style={{ overflow: 'auto' }}>
         <div className='container py-5'>
-          <UserProfile profile={this.isSelf() ? profile.toJS() : user} />
+          {/* <UserProfile profile={this.isSelf() ? profile.toJS() : user} /> */}
           <div className='d-flex flex-row justify-content-between my-3'>
             {this.renderProjectListOptions()}
             {this.renderActionButtons()}
@@ -214,12 +214,6 @@ class UserHomepage extends PureComponent {
             ListItem={ProjectListItem}
           />
         </div>
-
-        <TutorialModal
-          ref={this.modal}
-          header={tutorialModalInfo.header}
-          nextPage={tutorialModalInfo.nextPage}
-          description={tutorialModalInfo.description} />
       </div>
     )
   }
@@ -231,9 +225,7 @@ export {
 }
 
 UserHomepage.propTypes = {
-  enableTutorial: PropTypes.boolean
 }
 
 UserHomepage.defaultProps = {
-  enableTutorial: false
 }

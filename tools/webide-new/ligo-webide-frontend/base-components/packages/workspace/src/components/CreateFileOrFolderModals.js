@@ -49,7 +49,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
       }, 500)
     } else if (this.state.type === 'folder') {
       try {
-        await this.props.projectManager.createNewFolder(basePath, name)
+        await this.props.projectManager.writeDirectory(basePath, name)
       } catch (e) {
         notification.error('Cannot Create Folder', e.message)
         return

@@ -1,4 +1,3 @@
-import Auth from '@obsidians/auth'
 import redux from '@obsidians/redux'
 import notification from '@obsidians/notification'
 
@@ -62,7 +61,7 @@ export class ProjectActions {
     const selected = redux.getState().projects.get('selected')
     if (selected && selected.get('id') === id) {
       redux.dispatch('SELECT_PROJECT', { project: undefined })
-      const author = Auth.username || 'local'
+      const author = 'local'
       this.history.replace(`/${author}`)
     }
     redux.dispatch('REMOVE_PROJECT', { id })

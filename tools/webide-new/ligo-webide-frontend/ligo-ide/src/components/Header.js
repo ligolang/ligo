@@ -3,22 +3,20 @@ import React, { PureComponent } from 'react'
 import { connect } from '@obsidians/redux'
 import { IpcChannel } from '@obsidians/ipc'
 
-import headerActions, { Header, NavGuard, AuthModal } from '@obsidians/eth-header'
-import { networkManager } from '@obsidians/eth-network'
+import headerActions, { Header, NavGuard } from '@obsidians/eth-header'
+// import { networkManager } from '@obsidians/eth-network'
 import { BaseProjectManager } from '@obsidians/workspace'
 import { actions } from '@obsidians/workspace'
 import { createProject } from '../lib/bsn'
-import keypairManager from '@obsidians/keypair'
+// import keypairManager from '@obsidians/keypair'
 
-import { List } from 'immutable'
-
-import EthSdk from '@obsidians/eth-sdk'
+// import EthSdk from '@obsidians/eth-sdk'
 // import BscSdk from '@obsidians/bsc-sdk'
 
-keypairManager.kp = EthSdk.kp
-networkManager.addSdk(EthSdk, EthSdk.networks)
+// keypairManager.kp = EthSdk.kp
+// networkManager.addSdk(EthSdk, EthSdk.networks)
 // networkManager.addSdk(BscSdk, BscSdk.networks)
-networkManager.addSdk(EthSdk, EthSdk.customNetworks)
+// networkManager.addSdk(EthSdk, EthSdk.customNetworks)
 
 class HeaderWithRedux extends PureComponent {
   state = {
@@ -33,71 +31,71 @@ class HeaderWithRedux extends PureComponent {
   }
 
   async refresh() {
-    if (process.env.DEPLOY === 'bsn') {
-      networkManager.networks = []
-      this.getNetworks()
-      clearInterval(this.state.interval)
-      const interval = setInterval(() => this.getNetworks(), 30 * 1000)
-      this.setState({ interval })
-    } else {
-      this.setState({ networkList: List(networkManager.networks) }, this.setNetwork)
-    }
+    // if (process.env.DEPLOY === 'bsn') {
+    //   // networkManager.networks = []
+    //   this.getNetworks()
+    //   clearInterval(this.state.interval)
+    //   const interval = setInterval(() => this.getNetworks(), 30 * 1000)
+    //   this.setState({ interval })
+    // } else {
+    //   this.setState({ networkList: List(networkManager.networks) }, this.setNetwork)
+    // }
   }
 
-  async getNetworks () {
-    try {
-      const ipc = new IpcChannel('bsn')
-      const projects = await ipc.invoke('projects', { chain: 'eth' })
-      const remoteNetworks = projects.map(project => {
-        const url = project.endpoints?.find(endpoint => endpoint.startsWith('http'))
-        return {
-          id: `bsn_${project.id}`,
-          group: 'BSN',
-          name: `${project.network.name}/${project.name}`,
-          // name: `${project.network.name}`,
-          fullName: `${project.network.name} - ${project.name}`,
-          icon: 'fas fa-globe',
-          notification: `Switched to <b>${project.network.name}</b>.`,
-          url,
-          chainId: project.id,
-          projectKey: project.key,
-          symbol: 'ETH',
-          raw: project
-        }
-      })
-      networkManager.addSdk(EthSdk, remoteNetworks)
-      this.setNetwork({ redirect: false, notify: false })
-    } catch (error) {
-      networkManager.networks = []
-    }
-  }
+  // async getNetworks () {
+  //   try {
+  //     const ipc = new IpcChannel('bsn')
+  //     const projects = await ipc.invoke('projects', { chain: 'eth' })
+  //     const remoteNetworks = projects.map(project => {
+  //       const url = project.endpoints?.find(endpoint => endpoint.startsWith('http'))
+  //       return {
+  //         id: `bsn_${project.id}`,
+  //         group: 'BSN',
+  //         name: `${project.network.name}/${project.name}`,
+  //         // name: `${project.network.name}`,
+  //         fullName: `${project.network.name} - ${project.name}`,
+  //         icon: 'fas fa-globe',
+  //         notification: `Switched to <b>${project.network.name}</b>.`,
+  //         url,
+  //         chainId: project.id,
+  //         projectKey: project.key,
+  //         symbol: 'ETH',
+  //         raw: project
+  //       }
+  //     })
+  //     networkManager.addSdk(EthSdk, remoteNetworks)
+  //     this.setNetwork({ redirect: false, notify: false })
+  //   } catch (error) {
+  //     networkManager.networks = []
+  //   }
+  // }
 
-  setNetwork (options) {
-    if (!networkManager.network && networkManager.networks.length) {
-      networkManager.setNetwork(networkManager.networks[0], options)
-    }
-  }
+  // setNetwork (options) {
+  //   if (!networkManager.network && networkManager.networks.length) {
+  //     networkManager.setNetwork(networkManager.networks[0], options)
+  //   }
+  // }
 
-  groupedNetworks = networksByGroup => {
-    const networkList = []
-    const groups = networksByGroup.toJS()
-    const keys = Object.keys(groups)
-    keys.forEach((key, index) => {
-      if (key !== 'default') {
-        networkList.push({ header: key })
-      }
-      groups[key].forEach(network => networkList.push(network))
-      if (index !== keys.length - 1) {
-        networkList.push({ divider: true })
-      }
-    })
-    return networkList
-  }
+  // groupedNetworks = networksByGroup => {
+  //   const networkList = []
+  //   const groups = networksByGroup.toJS()
+  //   const keys = Object.keys(groups)
+  //   keys.forEach((key, index) => {
+  //     if (key !== 'default') {
+  //       networkList.push({ header: key })
+  //     }
+  //     groups[key].forEach(network => networkList.push(network))
+  //     if (index !== keys.length - 1) {
+  //       networkList.push({ divider: true })
+  //     }
+  //   })
+  //   return networkList
+  // }
 
   setCreateProject = () => {
     const cp = async function (params) {
       return await createProject.call(this, {
-        networkManager,
+        networkManager: undefined,
         bsnChannel: new IpcChannel('bsn'),
         projectChannel: BaseProjectManager.channel
       }, params)
@@ -122,10 +120,10 @@ class HeaderWithRedux extends PureComponent {
 
     const selectedProject = projects.get('selected')?.toJS() || {}
 
-    const networkList = List(networkManager.networks)
-    const networkGroups = networkList.groupBy(n => n.group)
-    const groupedNetworks = this.groupedNetworks(networkGroups)
-    const selectedNetwork = networkList.find(n => n.id === network) || {}
+    // const networkList = List(networkManager.networks)
+    // const networkGroups = networkList.groupBy(n => n.group)
+    // const groupedNetworks = this.groupedNetworks(networkGroups)
+    // const selectedNetwork = networkList.find(n => n.id === network) || {}
 
     const browserAccounts = uiState.get('browserAccounts') || []
     const starred = accounts.getIn([network, 'accounts'])?.toJS() || []
@@ -143,9 +141,8 @@ class HeaderWithRedux extends PureComponent {
         starred={starred}
         starredContracts={starredContracts}
         browserAccounts={browserAccounts}
-        network={selectedNetwork}
-        networkList={groupedNetworks}
-        AuthModal={AuthModal}
+        // network={selectedNetwork}
+        // networkList={groupedNetworks}
         createProject={this.setCreateProject()}
         logo={this.renderLogo()}
       />

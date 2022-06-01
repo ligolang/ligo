@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react'
 import {
   Button,
   Badge,
-  ListGroupItem,
+  ListGroupItem
 } from '@obsidians/ui-components'
 
 import fileOps from '@obsidians/file-ops'
@@ -106,7 +106,7 @@ export default class ListItemDockerImage extends PureComponent {
     const {
       title,
       link,
-      subtitle,
+      subtitle
     } = this.props
 
     return (
@@ -118,7 +118,7 @@ export default class ListItemDockerImage extends PureComponent {
               <a
                 href='#'
                 className='text-white'
-                onClick={() => fileOps.current.openLink(link)}
+                onClick={() => fileOps.openLink(link)}
               >{title}</a>
             </h5>
             {this.renderSubtitle(subtitle)}

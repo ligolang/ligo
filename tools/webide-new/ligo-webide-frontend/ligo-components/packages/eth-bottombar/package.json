@@ -16,11 +16,6 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/auth": "^0.3.0",
-    "@obsidians/eth-contract": "^0.3.0",
-    "@obsidians/eth-network": "^0.3.0",
-    "@obsidians/eth-queue": "^0.3.0",
-    "@obsidians/keypair": "^0.3.0",
     "@obsidians/redux": "^0.3.0",
     "@obsidians/workspace": "^0.3.0"
   },

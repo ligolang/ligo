@@ -15,8 +15,8 @@ useBuiltinCustomTabs(['markdown'])
 modelSessionManager.registerCustomTab('settings', ProjectSettingsTab, 'Project Settings')
 modelSessionManager.registerModeDetector(filePath => {
     const { prefix, userId, projectId, settingsFilePath } = modelSessionManager.projectManager
-    const { base } = fileOps.current.path.parse(filePath)
-    const settingFilePath = platform.isDesktop ? settingsFilePath : `${prefix}/${userId}/${projectId}/config.json`
+    const { base } = fileOps.pathHelper.parse(filePath)
+    const settingFilePath = settingsFilePath // platform.isDesktop ? settingsFilePath : `${prefix}/${userId}/${projectId}/config.json`
     const isRoot = settingFilePath === filePath
 
     if (base === 'config.json' && isRoot) {

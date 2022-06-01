@@ -8,14 +8,6 @@
   "browser": "src/index.ts",
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.4.1",
-    "@obsidians/ipc": "^0.3.0",
-    "filehound": "^1.17.4",
-    "fs-extra": "^9.1.0",
-    "lodash": "^4.17.20",
-    "path-browserify": "^1.0.1",
-    "trash": "^7.0.0"
-  },
-  "peerDependencies": {
-    "aws-sdk": "^2.830.0"
+    "path-browserify": "^1.0.1"
   }
 }

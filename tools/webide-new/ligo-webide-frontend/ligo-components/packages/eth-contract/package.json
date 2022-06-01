@@ -18,7 +18,6 @@
   "dependencies": {
     "@obsidians/eth-network": "^0.3.0",
     "@obsidians/eth-queue": "^0.3.0",
-    "@obsidians/file-ops": "^0.3.0",
     "@obsidians/keypair": "^0.3.0",
     "@obsidians/notification": "^0.3.0",
     "@obsidians/redux": "^0.3.0",

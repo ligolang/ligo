@@ -16,8 +16,6 @@
     "prepare": "yarn build"
   },
   "dependencies": {
-    "@obsidians/auth": "^0.3.0",
-    "@obsidians/file-ops": "^0.3.0",
     "@obsidians/platform": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
     "react-contexify": "^5.0.0"

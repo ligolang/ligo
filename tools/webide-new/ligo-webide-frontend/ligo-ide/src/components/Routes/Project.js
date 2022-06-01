@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 
 import Project from '@obsidians/eth-project';
 import { connect } from '@obsidians/redux';
-import platform from '@obsidians/platform';
 
 class ProjectWithProps extends PureComponent {
   async componentDidMount() {
@@ -28,7 +27,7 @@ class ProjectWithProps extends PureComponent {
       projectRoot = selected.id ? `${username}/${project}` : undefined;
     }
 
-    return type === 'Local' && platform.isWeb ? null : (
+    return type === 'Local' && ( // type === 'Local' && platform.isWeb ? null
       <Project
         theme="obsidians"
         projectRoot={projectRoot}

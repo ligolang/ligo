@@ -29,13 +29,12 @@ function generateAnnotation ({ type, text, row = 1, column = 1, length = 0 }) {
       isWholeLine: true,
       minimap: type !== 'note',
       // className: EditorSession.decos.classNames[type],
-      glyphMarginClassName: decos.glyphMarginClassNames[type],
+      glyphMarginClassName: decos.glyphMarginClassNames[type]
       // hoverMessage: { value: text }
       // glyphMarginHoverMessage: { value: d.type }
     }
   }
 }
-
 
 export default class MonacoEditorModelSession {
   constructor (model, remote, CustomTab, decorations = []) {
@@ -58,7 +57,7 @@ export default class MonacoEditorModelSession {
     return this._model
   }
   get filePath () {
-    let filePath = decodeURIComponent(this._model.uri.toString().replace('file://', ''))
+    let filePath = decodeURIComponent(this._model.uri.toString().replace('file:///', ''))
     if (this._remote) {
       if (this._public === true) {
         filePath = filePath.replace(/^\/public/, 'public')
@@ -69,7 +68,7 @@ export default class MonacoEditorModelSession {
         this._model.uri.path = this._model.uri.path.replace(/^\/private/, 'private')
       }
     } else if (process.env.OS_IS_WINDOWS) {
-      filePath = fileOps.current.path.normalize(filePath.substr(1))
+      filePath = fileOps.pathHelper.normalize(filePath.substr(1))
       const [root, others] = filePath.split(':')
       filePath = `${root.toUpperCase()}:${others}`
     }
@@ -170,7 +169,7 @@ export default class MonacoEditorModelSession {
     if (!this._model) {
       return
     }
-    
+
     // const textLines = text.split('\n')
     // if (textLines.length === 4 || textLines.length === 3) {
     //   const [spaces, tildes] = textLines[2].split('^')
@@ -184,7 +183,7 @@ export default class MonacoEditorModelSession {
     //     endColumn = wordAtPosition.endColumn
     //   }
     // }
-    
+
     if (typeof row === 'number') {
       if (length) {
         return {
@@ -215,7 +214,7 @@ export default class MonacoEditorModelSession {
         startLineNumber: row,
         startColumn: word ? word.startColumn : column,
         endLineNumber: row,
-        endColumn: word ? word.startColumn : column + 1,
+        endColumn: word ? word.startColumn : column + 1
       }
     }
 

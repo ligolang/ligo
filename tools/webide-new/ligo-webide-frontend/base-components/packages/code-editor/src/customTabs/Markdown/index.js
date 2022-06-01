@@ -4,7 +4,7 @@ import fileOps from '@obsidians/file-ops'
 
 import {
   Modal,
-  Button,
+  Button
 } from '@obsidians/ui-components'
 
 import notification from '@obsidians/notification'
@@ -27,12 +27,12 @@ export default class Markdown extends Component {
     isPublic: false,
     togglePublicModal: React.createRef(),
     togglePublicSaved: true,
-    togglePublicToggling: false,
+    togglePublicToggling: false
   }
 
   componentDidMount () {
     this.setState({
-      isPublic: modelSessionManager.projectManager.prefix === "public",
+      isPublic: modelSessionManager.projectManager.prefix === 'public'
     })
     // this.getAvatar(this.props)
   }
@@ -81,9 +81,9 @@ export default class Markdown extends Component {
     )
   }
 
-  async togglePublic(){
+  async togglePublic() {
     let saved = true
-    for(let key in modelSessionManager.sessions) {
+    for (let key in modelSessionManager.sessions) {
       const session = modelSessionManager.sessions[key]
       if (session.saved) continue
       saved = false
@@ -94,22 +94,21 @@ export default class Markdown extends Component {
     })
   }
 
-  async confirmTogglePublic(){
-
-    if (!this.state.togglePublicSaved)  return this.state.togglePublicModal.current.closeModal()
+  async confirmTogglePublic() {
+    if (!this.state.togglePublicSaved) return this.state.togglePublicModal.current.closeModal()
 
     await this.setState({
-      togglePublicToggling: true,
+      togglePublicToggling: true
     })
     // if (save) await modelSessionManager.projectManager.project.saveAll()
     const isPublic = await modelSessionManager.projectManager.togglePublic(this.state.isPublic ? 'private' : 'public')
     modelSessionManager.currentModelSession._public = isPublic
     this.setState({
       isPublic,
-      togglePublicToggling: false,
+      togglePublicToggling: false
     })
     this.state.togglePublicModal.current.closeModal()
-    notification.success('Change Visibility Successful', 
+    notification.success('Change Visibility Successful',
     `This project is now <b>${isPublic ? 'public' : 'private'}</b> ${isPublic ? 'and visible to anyone with the link.' : 'and only visible to yourself.'}`)
   }
 
@@ -118,17 +117,17 @@ export default class Markdown extends Component {
     if (!modelSessionManager.projectManager.userOwnProject) return false
     if (!this.display) return false
     return (
-    <Button
-      color='primary'
-      size='sm'
-      className='ml-2'
-      onClick={this.togglePublic.bind(this)}
-      style={this.state.togglePublicToggling ? {background: 'var(--color-secondary)'} : this.state.isPublic ? {} : {background: 'var(--color-danger)'}}
+      <Button
+        color='primary'
+        size='sm'
+        className='ml-2'
+        onClick={this.togglePublic.bind(this)}
+        style={this.state.togglePublicToggling ? {background: 'var(--color-secondary)'} : this.state.isPublic ? {} : {background: 'var(--color-danger)'}}
     >
-      { this.state.togglePublicToggling && <span key='mode-toggling'><i className='fas fa-spinner fa-pulse' /> Toggling</span> }
-      { !this.state.togglePublicToggling && this.state.isPublic && <span key='mode-public'><i className='fas fa-eye' /> Public</span> }
-      { !this.state.togglePublicToggling && !this.state.isPublic && <span key='mode-private'><i className='fas fa-eye-slash'/> Private</span> }
-    </Button>
+        { this.state.togglePublicToggling && <span key='mode-toggling'><i className='fas fa-spinner fa-pulse' /> Toggling</span> }
+        { !this.state.togglePublicToggling && this.state.isPublic && <span key='mode-public'><i className='fas fa-eye' /> Public</span> }
+        { !this.state.togglePublicToggling && !this.state.isPublic && <span key='mode-private'><i className='fas fa-eye-slash' /> Private</span> }
+      </Button>
     )
   }
 
@@ -196,7 +195,7 @@ export default class Markdown extends Component {
   }
 
   openLink = link => {
-    fileOps.current.openLink(link)
+    fileOps.openLink(link)
   }
 
   scrollTo = id => {
@@ -235,7 +234,7 @@ export default class Markdown extends Component {
 
     let value = this.props.modelSession.value
     if (this.filePath.endsWith('contracts.md') || this.filePath.endsWith('contracts.md.in')) {
-      value = value.replace(/---/g, '```').replace(/\{\{(\S+)\}\}/g, '`$1`');
+      value = value.replace(/---/g, '```').replace(/\{\{(\S+)\}\}/g, '`$1`')
     }
 
     return (
@@ -282,12 +281,12 @@ export default class Markdown extends Component {
               ref={this.state.togglePublicModal}
               size='md'
               title={this.state.togglePublicSaved ? 'Change Project Visibility' : 'Some files are not saved'}
-              children={this.state.togglePublicSaved ? 
-              <span>Are you sure to change this project to 
+              children={this.state.togglePublicSaved ?
+                <span>Are you sure to change this project to
                 <b>{this.state.isPublic ? ' private' : ' public'}</b>
-                ? 
+                ?
                 {this.state.isPublic ? ' Private projects are only visible to your self.' : ' Public projects are visible to anyone with the link.'}
-                </span> 
+                </span>
               : 'You have unsaved files in this project. Please save before changing the project visibility.'}
               textConfirm={this.state.togglePublicSaved ? 'Confirm' : 'OK'}
               noCancel={this.state.togglePublicToggling || !this.state.togglePublicSaved}

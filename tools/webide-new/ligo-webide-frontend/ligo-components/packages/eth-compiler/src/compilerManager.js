@@ -1,7 +1,5 @@
 import { DockerImageChannel } from '@obsidians/docker'
 import notification from '@obsidians/notification'
-import fileOps from '@obsidians/file-ops'
-import stripAnsi from 'strip-ansi'
 import { modelSessionManager } from '@obsidians/code-editor'
 
 import SolcjsCompiler from './SolcjsCompiler'
@@ -120,7 +118,7 @@ export class CompilerManager {
           await projectManager.saveFile(contractJsonPath, contractJson)
         }
       }
-      projectManager.refreshDirectory()
+      projectManager.refreshDirectory(projectManager.pathForProjectFile(''))
       projectManager.refreshDirectory(projectManager.pathForProjectFile('build/contracts'))
     }
     const errorDecorations = []
@@ -151,80 +149,9 @@ export class CompilerManager {
   }
 
   async build(settings, projectManager, sourceFile) {
-    if (projectManager.remote) {
-      return await this.buildBySolcjs(projectManager)
-    }
-
-    const { framework, compilers = {} } = settings
-
-    const projectRoot = this.projectRoot
-    CompilerManager.button.setState({ building: 'checking' })
-
-    if (framework.endsWith('-docker')) {
-      if (!compilers || !compilers[process.env.COMPILER_VERSION_KEY]) {
-        notification.error(`No ${process.env.COMPILER_NAME} Version`, `Please select a version for ${process.env.COMPILER_NAME} in project settings.`)
-        CompilerManager.button.setState({ building: false })
-        throw new Error(`No ${process.env.COMPILER_NAME} version.`)
-      }
-      const allVersions = await this.truffle.versions()
-      if (!allVersions.find(v => v.Tag === compilers[process.env.COMPILER_VERSION_KEY])) {
-        notification.error(`${process.env.COMPILER_NAME} ${compilers[process.env.COMPILER_VERSION_KEY]} not Installed`, `Please install the version in <b>${process.env.COMPILER_NAME} Manager</b> or select another version in project settings.`)
-        CompilerManager.button.setState({ building: false })
-        throw new Error(`${process.env.COMPILER_NAME} version not installed`)
-      }
-    }
-
-    // if (!compilers.solc) {
-    //   notification.error('No Solc Version', `Please select a version for solc in project settings.`)
-    //   throw new Error('No solc version.')
+    // if (projectManager.remote) {
+    return await this.buildBySolcjs(projectManager)
     // }
-
-    const allSolcVersions = await this.solc.versions()
-    if (compilers.solc && compilers.solc !== 'default' && !allSolcVersions.find(v => v.Tag === compilers.solc)) {
-      notification.error(`Solc ${compilers.solc} not Installed`, `Please install the version in <b>Solc Manager</b> or select another version in project settings.`)
-      CompilerManager.button.setState({ building: false })
-      throw new Error('Solc version not installed')
-    }
-
-    CompilerManager.button.setState({ building: true })
-    CompilerManager.switchCompilerConsole('terminal')
-    if (!sourceFile) {
-      this.notification = notification.info(`Building Project`, `Building...`, 0)
-    } else {
-      this.notification = notification.info(`Building Contract File`, `Building <b>${sourceFile}</b>...`, 0)
-    }
-
-    const cmd = this.generateBuildCmd({ projectRoot, settings, sourceFile })
-    const result = await CompilerManager.terminal.exec(cmd)
-
-    CompilerManager.button.setState({ building: false })
-    this.notification.dismiss()
-    await CompilerManager.terminal.execAsChildProcess(`docker rm $(docker ps --filter status=exited --filter ancestor=ethereum/solc:${compilers.solc} -q)`)
-
-    if (result.code === 130) {
-      if (result.code === 130) {
-        notification.error('Build Terminated')
-        return { errors: [] }
-      }
-    }
-
-    const { errors, decorations } = this.parseBuildLogs(stripAnsi(result.logs))
-    if (result.code) {
-      if (errors.length) {
-        notification.error('Build Failed', errors[0])
-      } else {
-        notification.error('Build Failed', `Code has errors.`)
-      }
-      return { errors, decorations }
-    }
-
-    const buildFolder = projectManager.path.join(framework === 'hardhat' ? 'artifacts' : 'build', 'contracts')
-    if (!sourceFile) {
-      notification.success('Build Project Successful', `Please find the generated ABI and bytecode in the <b>${buildFolder}</b> folder.`)
-    } else {
-      notification.success('Build File Successful', `Please find the generated ABI and bytecode in the <b>${buildFolder}</b> folder.`)
-    }
-    return { decorations }
   }
 
   static async stop() {
@@ -306,41 +233,6 @@ export class CompilerManager {
       }
     })
     return { errors, decorations }
-  }
-
-  generateBuildCmd({ projectRoot, settings, sourceFile }) {
-    const { framework, npmClient, compilers } = settings
-    const projectDir = fileOps.current.getDockerMountPath(projectRoot)
-
-    if (!framework.endsWith('-docker')) {
-      const npmRun = npmClient === 'yarn' ? npmClient : `${npmClient} run`
-      return `${npmRun} build`
-    }
-
-    const cmd = [
-      `docker run -t --rm --name truffle-compile`,
-      `-v "${fileOps.current.homePath}/.config/truffle/compilers:/root/.config/truffle/compilers"`,
-      `-v "${projectDir}:${projectDir}"`,
-      `-w "${projectDir}"`,
-      `${process.env.DOCKER_IMAGE_COMPILER}:${compilers[process.env.COMPILER_VERSION_KEY]}`,
-      `${process.env.COMPILER_EXECUTABLE_NAME} compile`,
-    ]
-    if (compilers.solc && compilers.solc !== 'default') {
-      cmd.push(`--compilers.solc.version '${compilers.solc}'`)
-    }
-    if (compilers.evmVersion) {
-      cmd.push(`--compilers.solc.settings.evmVersion '${compilers.evmVersion}'`)
-    }
-    if (compilers.optimizer?.enabled) {
-      cmd.push(`--compilers.solc.settings.optimizer.enabled`)
-      cmd.push(`--compilers.solc.settings.optimizer.runs ${compilers.optimizer.runs}`)
-    }
-
-    if (sourceFile) {
-      cmd.push(`--contracts_directory '${sourceFile}*'`)
-    }
-
-    return cmd.join(' ')
   }
 }
 

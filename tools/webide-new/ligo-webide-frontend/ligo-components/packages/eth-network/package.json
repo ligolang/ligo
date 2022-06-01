@@ -25,7 +25,6 @@
     "@obsidians/notification": "^0.3.0",
     "@obsidians/platform": "^0.3.0",
     "@obsidians/redux": "^0.3.0",
-    "@obsidians/terminal": "^0.3.0",
     "@obsidians/ui-components": "^0.3.0",
     "semver": "^7.3.2"
   },
