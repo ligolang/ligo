@@ -1,0 +1,38 @@
+From 470de0c9a421f6008544dfa84e23d096c4c8c314 Mon Sep 17 00:00:00 2001
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Date: Sat, 8 Jan 2022 22:05:33 +0530
+Subject: [PATCH] Disable Unix APIs on Windows
+
+---
+ src/time_now_stubs.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/src/time_now_stubs.c b/src/time_now_stubs.c
+index e08d72c..e8b5a0e 100644
+--- a/src/time_now_stubs.c
++++ b/src/time_now_stubs.c
+@@ -5,6 +5,15 @@
+ 
+ #define NANOS_PER_SECOND 1000000000
+ 
++
++#if (defined(WIN32) || defined(_WIN32))
++CAMLprim value time_now_nanoseconds_since_unix_epoch_or_zero()
++{
++  caml_failwith("time_now_nanoseconds_since_unix_epoch_or_zero not implemented for win32");
++  return Val_unit;
++}
++#else
++
+ #if defined(JSC_POSIX_TIMERS)
+ 
+ /* Note: this is imported noalloc if (and only if) ARCH_SIXTYFOUR is defined.
+@@ -34,3 +43,5 @@ CAMLprim value time_now_nanoseconds_since_unix_epoch_or_zero()
+ }
+ 
+ #endif
++
++#endif
+-- 
+2.34.1.windows.1
+
