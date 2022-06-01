@@ -50,6 +50,7 @@ esy:
     - git config http.postBuffer 1048576000
     - npm i -g esy@beta --force
     - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
     - esy -vvv
     - rm -Recurse -Force _esy
 
