@@ -59,34 +59,4 @@ export default class IndexedLocalFs {
   async rename (oldPath: string, newPath: string): Promise<void> {
     await window.ligoIdeFileSystem.rename(oldPath, newPath)
   }
-
-  // async folderToJson (path, visitFile, visitFolder) {
-  //   visitFile = visitFile || function () { /* do nothing. */ }
-  //   visitFolder = visitFolder || function () { /* do nothing. */ }
-
-  //   const json = {}
-  //   if (await window.ligoIdeFileSystem.exists(path)) {
-  //     try {
-  //       const items = await window.ligoIdeFileSystem.readdir(path)
-  //       visitFolder({ path })
-  //       if (items.length !== 0) {
-  //         for (const item of items) {
-  //           const file = {}
-  //           const curPath = `${path}${path.endsWith('/') ? '' : '/'}${item}`
-  //           if ((await window.ligoIdeFileSystem.stat(curPath)).isDirectory()) {
-  //             file.children = await this.folderToJson(curPath, visitFile, visitFolder)
-  //           } else {
-  //             file.content = await window.ligoIdeFileSystem.readFile(curPath, 'utf8')
-  //             visitFile({ path: curPath, content: file.content })
-  //           }
-  //           json[curPath] = file
-  //         }
-  //       }
-  //     } catch (e) {
-  //       console.log(e)
-  //       throw new Error(e)
-  //     }
-  //   }
-  //   return json
-  // }
 }

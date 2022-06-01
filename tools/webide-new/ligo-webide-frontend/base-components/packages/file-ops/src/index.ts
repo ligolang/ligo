@@ -77,7 +77,7 @@ class FileManager {
     return [...folders, ...files]
   }
 
-  async readFile (path: string, cb: (error?: any, content?: string) => void) {
+  async readFile (path: string, cb?: (error?: any, content?: string) => void) {
     return await this.localFs.readFile(path).then(content => {
       if (cb) {
         cb(undefined, content)
@@ -164,15 +164,37 @@ class FileManager {
     window.open(href, '_blank')
   }
 
-  // async copyFolderToJsonInternal (path, visitFile, visitFolder) {
-  //   try {
-  //     return await this.localFs.folderToJson(path, visitFile, visitFolder)
-  //   } catch (e) {
-  //     console.log(e)
-  //     return {}
-  //   }
-  // }
+  async copyFolderToJsonInternal (path: string, visitFile, visitFolder) {
+    try {
+      await this.folderToJson(path, visitFile, visitFolder)
+    } catch (e) {
+      throw new Error(`Fail to convert workspace to JSON: <b>${JSON.stringify(e)}</b>.`)
+    }
+  }
 
+  async folderToJson (path: string, visitFile, visitFolder) {
+    visitFile = visitFile || function () { }
+    visitFolder = visitFolder || function () { }
+
+    if (await this.exists(path)) {
+      try {
+        const items = await this.readDirectory(path)
+        visitFolder({ path })
+        if (items.length !== 0) {
+          for (const item of items) {
+            const curPath = item.key
+            if (await this.isDirectory(curPath)) {
+              await this.folderToJson(curPath, visitFile, visitFolder)
+            } else {
+              visitFile({ path: curPath, content: await this.readFile(curPath) })
+            }
+          }
+        }
+      } catch (e) {
+        throw new Error(`Fail to convert workspace to JSON: <b>${JSON.stringify(e)}</b>.`)
+      }
+    }
+  }
 }
 
 export default new FileManager()

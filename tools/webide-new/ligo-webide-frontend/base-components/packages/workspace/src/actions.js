@@ -1,6 +1,4 @@
-import { Base64 } from 'js-base64'
 import Auth from '@obsidians/auth'
-import fileOps from '@obsidians/file-ops'
 import redux from '@obsidians/redux'
 import notification from '@obsidians/notification'
 
@@ -10,6 +8,7 @@ export class ProjectActions {
   constructor() {
     this.history = null
     this.newProjectModal = null
+    this.openProjectModal = null
     this.workspace = null
   }
 
@@ -17,40 +16,26 @@ export class ProjectActions {
     return this.workspace?.codeEditor?.current
   }
 
-  async newProject (remote) {
-    const created = await this.newProjectModal.openModal(remote)
-    const { _id, projectRoot, name } = created
-    const author = _id ? Auth.username : 'local'
-    const projectId = _id ? name : Base64.encode(projectRoot)
-    redux.dispatch('ADD_PROJECT', {
-      type: _id ? 'remote' : 'local',
-      project: {
-        id: projectId,
-        author,
-        name,
-        path: projectRoot,
-      }
-    })
-    this.history.push(`/${author}/${projectId}`)
+  async newProject () {
+    await this.processNewProject(this.newProjectModal)
   }
 
   async openProject () {
+    await this.processNewProject(this.openProjectModal)
+  }
+
+  async processNewProject (modal) {
     try {
-      const projectRoot = await fileOps.current.chooseFolder()
-      const { base } = fileOps.current.path.parse(projectRoot)
-      const author = 'local'
-      const projectId = Base64.encode(projectRoot)
+      const created = await modal.openModal()
+      const { id, author } = created
       redux.dispatch('ADD_PROJECT', {
         type: 'local',
-        project: {
-          id: projectId,
-          author,
-          path: projectRoot,
-          name: base,
-        }
+        project: created
       })
-      this.history.push(`/${author}/${projectId}`)
-    } catch (e) {}
+      this.history.push(`/${author}/${id}`)
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   newFile () {
@@ -72,6 +57,7 @@ export class ProjectActions {
     BaseProjectManager.instance?.toggleTerminal(true)
   }
 
+  // TODO remove project from local storage
   async removeProject ({ id, name, type }) {
     const selected = redux.getState().projects.get('selected')
     if (selected && selected.get('id') === id) {
@@ -80,11 +66,11 @@ export class ProjectActions {
       this.history.replace(`/${author}`)
     }
     redux.dispatch('REMOVE_PROJECT', { id })
-    let notificationTitle = 'Remove Project Successful';
-    let notificationDescription = `Project <b>${name}</b> is removed`;
+    let notificationTitle = 'Remove Project Successful'
+    let notificationDescription = `Project <b>${name}</b> is removed`
     if (type == 'delete') {
-      notificationTitle = 'Delete Project Successful';
-      notificationDescription = `You have permanently delete project <b>${name}</b>`;
+      notificationTitle = 'Delete Project Successful'
+      notificationDescription = `You have permanently delete project <b>${name}</b>`
     }
     notification.info(notificationTitle, notificationDescription)
   }

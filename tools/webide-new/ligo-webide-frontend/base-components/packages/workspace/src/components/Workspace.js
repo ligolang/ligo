@@ -19,6 +19,7 @@ import actions from '../actions'
 import contextMenu, { registerHandlers } from './contextMenu'
 
 import CreateFileOrFolderModals from './CreateFileOrFolderModals'
+import GistUploadModals from './GistUploadModals'
 import RenameModal from './RenameModal'
 
 const getSizeUpdate = SplitPane.getSizeUpdate
@@ -39,6 +40,7 @@ export default class Workspace extends Component {
     this.filetree = React.createRef()
     this.codeEditor = React.createRef()
     this.createModal = React.createRef()
+    this.uploadModal = React.createRef()
     this.renameModal = React.createRef()
     this.throttledDispatchResizeEvent = throttle(() => {
       window.dispatchEvent(new Event('resize'))
@@ -121,28 +123,33 @@ export default class Workspace extends Component {
 
   openCreateFileModal = node => {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode
-    const basePath = activeNode.children ? activeNode.path : fileOps.current.path.dirname(activeNode.path)
+    const basePath = activeNode.children ? activeNode.path : fileOps.pathHelper.dirname(activeNode.path)
     let baseName = basePath
-    if (platform.isWeb) {
-      baseName = activeNode.children ? activeNode.pathInProject : fileOps.current.path.dirname(activeNode.pathInProject)
-    }
+    // if (platform.isWeb) {
+    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    // }
     this.createModal.current.openCreateFileModal({ baseName, basePath })
+  }
+
+  gistUploadFileModal = () => {
+    const root = this.filetree.current.rootNode[0].name
+    this.uploadModal.current.gistUploadModal(root)
   }
 
   openCreateFolderModal = node => {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode
-    const basePath = activeNode.children ? activeNode.path : fileOps.current.path.dirname(activeNode.path)
+    const basePath = activeNode.children ? activeNode.path : fileOps.pathHelper.dirname(activeNode.path)
     let baseName = basePath
-    if (platform.isWeb) {
-      baseName = activeNode.children ? activeNode.pathInProject : fileOps.current.path.dirname(activeNode.pathInProject)
-    }
+    // if (platform.isWeb) {
+    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    // }
     this.createModal.current.openCreateFolderModal({ baseName, basePath })
   }
 
   openRenameModal = node => {
     const activeNode = node || this.filetree.current.activeNode
     const type = activeNode.children ? 'folder' : 'file'
-    const { base } = fileOps.current.path.parse(activeNode.path)
+    const { base } = fileOps.pathHelper.parse(activeNode.path)
     this.renameModal.current.openModal({ type, name: base, oldPath: activeNode.path })
   }
 
@@ -265,6 +272,13 @@ export default class Workspace extends Component {
               readOnly={readOnly}
               onClick={() => this.openCreateFileModal()}
             />
+            <ToolbarButton
+              id='gist'
+              icon='fab fa-github'
+              tooltip='Upload to gist'
+              readOnly={readOnly}
+              onClick={() => this.gistUploadFileModal()}
+            />
             <ProjectToolbar
               finalCall={this.updateTree}
               signer={signer} />
@@ -282,6 +296,10 @@ export default class Workspace extends Component {
       </SplitPane>
       <CreateFileOrFolderModals
         ref={this.createModal}
+        projectManager={this.context.projectManager}
+      />
+      <GistUploadModals
+        ref={this.uploadModal}
         projectManager={this.context.projectManager}
       />
       <RenameModal

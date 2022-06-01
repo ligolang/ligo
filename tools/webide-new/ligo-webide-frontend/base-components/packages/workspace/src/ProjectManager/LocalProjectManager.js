@@ -162,18 +162,16 @@ export default class LocalProjectManager extends BaseProjectManager {
     await fileOps.writeFile(filePath, content)
   }
 
-  // async copyFolderToJson (directory, visitFile, visitFolder) {
-  //   visitFile = visitFile || function () { /* do nothing. */ }
-  //   visitFolder = visitFolder || function () { /* do nothing. */ }
-  //   const regex = new RegExp(directory, 'g')
-  //   let json = await fileOps.copyFolderToJsonInternal(directory, ({ path, content }) => {
-  //     visitFile({ path: path.replace(regex, ''), content })
-  //   }, ({ path }) => {
-  //     visitFolder({ path: path.replace(regex, '') })
-  //   })
-  //   json = JSON.stringify(json).replace(regex, '')
-  //   return JSON.parse(json)
-  // }
+  async copyFolderToJson (directory, visitFile, visitFolder) {
+    visitFile = visitFile || function () { }
+    visitFolder = visitFolder || function () { }
+    const regex = new RegExp(directory, 'g')
+    await fileOps.copyFolderToJsonInternal(directory, ({ path, content }) => {
+      visitFile({ path: path.replace(regex, ''), content })
+    }, ({ path }) => {
+      visitFolder({ path: path.replace(regex, '') })
+    })
+  }
 
   async createNewFile(basePath, name) {
     const filePath = fileOps.pathHelper.join(basePath, name)
