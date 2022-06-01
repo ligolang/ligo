@@ -845,7 +845,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return @@ V_Ct C_unit
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
-      let>> contract = Read_contract_from_file (fn) in
+      let>> contract = Read_contract_from_file (loc, calltrace, fn) in
       return @@ contract
     | ( C_TEST_READ_CONTRACT_FROM_FILE , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
