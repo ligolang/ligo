@@ -1,4 +1,5 @@
 type michelson_program = unit
+type michelson_contract = unit
 type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
 type test_exec_error = Rejected of michelson_program * address
                      | Balance_too_low of test_exec_error_balance_too_low
@@ -61,4 +62,9 @@ module Test = struct
   let constant_to_michelson_program (_s : string) : michelson_program = failwith "TEST MODE"
   let restore_context (_u : unit) : unit = failwith "TEST_POP_CONTEXT"
   let save_context (_u : unit) : unit = failwith "TEST_PUSH_CONTEXT"
+  let read_contract_from_file (_fn : string) : michelson_contract = failwith "TEST_READ_CONTRACT_FROM_FILE"
+  let compile_contract_from_file  (_fn : string) (_e : string) (_v : string list) : michelson_contract = failwith "TEST_COMPILE_CONTRACT_FROM_FILE"
+  let compile_contract (type p s) (_f : p * s -> operation list * s) : michelson_contract = failwith "TEST_COMPILE_CONTRACT"
+  let originate_contract (_c : michelson_contract) (_s : michelson_program) (_t : tez) : address * michelson_program = failwith "TEST_ORIGINATE"
+  let size (_c : michelson_contract) : int = failwith "TEST_SIZE"
 end

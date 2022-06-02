@@ -569,7 +569,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return v
     | ( C_OPTION_MAP , _  ) -> fail @@ error_type
     | ( C_IMPLICIT_ACCOUNT, [ V_Ct (C_key_hash kh) ] )->
-      let>> value = Implicit_account (loc, kh) in
+      let>> value = Implicit_account (loc, calltrace, kh) in
       return @@ value
     | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
     (*
@@ -789,7 +789,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return_ct (C_address x)
     | ( C_TEST_CAST_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ] ) ->
-      let>> () = Add_account (loc, sk, pk) in
+      let>> () = Add_account (loc, calltrace, sk, pk) in
       return @@ v_unit ()
     | ( C_TEST_ADD_ACCOUNT , _ ) -> fail @@ error_type
     | ( C_TEST_NEW_ACCOUNT , [ V_Ct (C_unit) ] ) ->
@@ -844,6 +844,10 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> () = Pop_context () in
       return @@ V_Ct C_unit
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
+      let>> contract = Read_contract_from_file (loc, calltrace, fn) in
+      return @@ contract
+    | ( C_TEST_READ_CONTRACT_FROM_FILE , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
