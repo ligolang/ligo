@@ -274,3 +274,5 @@ let extract_map : expression -> (expression * expression) list option = fun e ->
     | _ -> [None]
   in
   Option.all @@ aux e
+
+let make_binder ?(ascr=None) ?(attributes={const_or_var = None}) var = { var ; ascr ; attributes }

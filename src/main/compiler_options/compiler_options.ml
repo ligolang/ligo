@@ -23,6 +23,7 @@ type tools = {
 
 type test_framework = {
   steps : int ;
+  cli_expr_inj : string option ;
 }
 
 type middle_end = {
@@ -84,6 +85,7 @@ let make :
       } in
       let test_framework = {
         steps = raw_options.steps;
+        cli_expr_inj = raw_options.cli_expr_inj;
       } in
       let middle_end = {
         test = raw_options.test;
