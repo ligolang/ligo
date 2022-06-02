@@ -4,8 +4,7 @@ module Test.Integrational.Diagnostics
   ) where
 
 import Test.Common.Diagnostics
-  ( DiagnosticSource (StandardSource), parseDiagnosticsDriver
-  , simpleTest, treeDoesNotContainNameTest
+  ( DiagnosticSource (..), parseDiagnosticsDriver, simpleTest, treeDoesNotContainNameTest
   )
 import Test.Common.FixedExpectations (HasCallStack)
 import Test.Tasty.HUnit (Assertion)
@@ -15,10 +14,10 @@ unit_bad_parse :: HasCallStack => Assertion
 unit_bad_parse = do
   simpleTest' <- simpleTest
   parseDiagnosticsDriver StandardSource simpleTest'
-  --parseDiagnosticsDriver CompilerSource simpleTest'  -- FIXME (LIGO-208)
+  parseDiagnosticsDriver CompilerSource simpleTest'
 
 unit_name_not_found :: HasCallStack => Assertion
 unit_name_not_found = do
   treeDoesNotContainNameTest' <- treeDoesNotContainNameTest
   parseDiagnosticsDriver StandardSource treeDoesNotContainNameTest'
-  --parseDiagnosticsDriver CompilerSource treeDoesNotContainNameTest'  -- FIXME (LIGO-208)
+  parseDiagnosticsDriver CompilerSource treeDoesNotContainNameTest'

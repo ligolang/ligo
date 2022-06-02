@@ -1,6 +1,8 @@
 module Test.Common.Capabilities.Find
   ( DefinitionReferenceInvariant (..)
 
+  , localTypeOf
+
   , findDefinitionAndGoToReferencesCorrespondence
   , definitionOfId
   , definitionOfLeft
@@ -26,7 +28,10 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
-import AST.Capabilities.Find (definitionOf, referencesOf, typeDefinitionAt)
+import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
+import AST.Scope.ScopedDecl
+  ( DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..)
+  )
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
@@ -387,6 +392,25 @@ referenceOfXInWildcard = checkIfReference @impl
   (contractsDir </> "wildcard.mligo")
   (interval 2 13 14)
   (interval 1 5 6)
+
+localTypeOf
+  :: forall impl. ScopeTester impl
+  => FilePath
+  -> Range
+  -> ValueDeclSpecifics
+  -> Assertion
+localTypeOf filepath mention typeOfMention = do
+  filepath' <- makeAbsolute filepath
+  mention' <- label filepath' mention
+  tree <- readContractWithScopes @impl filepath'
+  case findScopedDecl mention' tree of
+    Nothing -> expectationFailure "Should find a declaration"
+    Just decl -> do
+      let ValueSpec valueDeclSpec = _sdSpec decl
+      specRange <- traverse (label filepath') (_vdsInitRange valueDeclSpec)
+      definition' <- traverse (label filepath') (_vdsInitRange typeOfMention)
+      let typeOfMention' = typeOfMention{_vdsInitRange = definition'}
+      valueDeclSpec{_vdsInitRange = specRange} `shouldBe` typeOfMention'
 
 typeOf
   :: forall impl. ScopeTester impl

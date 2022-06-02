@@ -26,8 +26,6 @@ import Range
 
 data FromCompiler
 
--- FIXME: If one contract throws an exception, the entire thing will fail. Standard
--- scopes will use Fallback. (LIGO-208)
 instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
   scopeContract tempSettings (FindContract src (SomeLIGO dialect _) msgs) = do
     defs <- getLigoDefinitions tempSettings src
