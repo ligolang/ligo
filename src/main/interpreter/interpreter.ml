@@ -762,7 +762,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
     | ( C_TEST_SIZE , _  ) -> fail @@ error_type
     | ( C_TEST_ORIGINATE , [ contract ; storage ; V_Ct ( C_mutez amt ) ] ) ->
        let>> addr  = Inject_script (loc, calltrace, contract, storage, amt) in
-       return @@ V_Record (LMap.of_list [ (Label "0", addr) ; (Label "1", contract) ])
+       return @@ addr
     | ( C_TEST_ORIGINATE , _  ) -> fail @@ error_type
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , [ V_Ct (C_nat n) ] ) ->
       let n = Z.to_int n in
