@@ -210,7 +210,7 @@ let originate_from_file : string => string => list(string) => michelson_program 
 let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_contract, int]
 </SyntaxTitle>
 
-Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
+Originate a contract with a path to the contract file, an entrypoint, and a list of views, together with an initial storage and an initial balance.
 
 <Syntax syntax="pascaligo">
 
