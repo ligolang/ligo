@@ -10,3 +10,14 @@ let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Monomorphisation.mono_polymorphic_expr e in
   let e = Uncurry.uncurry_expression e in
   e
+
+let contract_passes ~raise = [
+  Contract_passes.self_typing ~raise ;
+  Contract_passes.entrypoint_typing ~raise ;
+]
+
+let all_contract ~raise parameter storage prg =
+  let contract_type : Contract_passes.contract_type = { parameter ; storage } in
+  let all_p = List.map ~f:(fun pass -> Helpers.fold_map_expression pass contract_type) @@ contract_passes ~raise in
+  let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
+  prg
