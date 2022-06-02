@@ -1,0 +1,6 @@
+author: prometheansacrifice
+description: Use [esy](https://esy.sh/) to build binary for :\n- Windows\n- Mac intel\n-
+  Mac m1
+merge_request: '1768'
+title: Ligo native multi-platform
+type: added
