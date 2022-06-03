@@ -86,7 +86,8 @@
     ],
     "Protocol Upgrades": [
       "protocol/hangzhou",
-      "protocol/ithaca"
+      "protocol/ithaca",
+      "protocol/jakarta"
     ]
   },
   "contributors-docs": {
