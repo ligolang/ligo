@@ -678,12 +678,15 @@ and type_pattern ~raise (pattern : I.type_expression I.pattern) (expected_typ : 
     then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
     else
     let label_patterns = List.zip_exn labels patterns in (* TODO: dont use _exn*)
-    let context,patterns = List.fold_right label_patterns ~init:(context,[]) ~f:(fun (label,pattern') (context,patterns) ->
-      let c = O.LMap.find_opt label label_map in
-      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
-      let field_typ = c.associated_type in
-      let context,pattern = type_pattern ~raise pattern' field_typ context in 
-      context, pattern::patterns) in
+    let label_patterns = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) label_patterns in
+    let context,labels,patterns = List.fold_right label_patterns ~init:(context,[],[]) 
+      ~f:(
+        fun (label,pattern') (context,labels,patterns) ->
+          let c = O.LMap.find_opt label label_map in
+          let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+          let field_typ = c.associated_type in
+          let context,pattern = type_pattern ~raise pattern' field_typ context in 
+          context, label::labels, pattern::patterns) in
     context, (Location.wrap ~loc:pattern.location (O.P_record (labels,patterns)))
   | _ -> raise.raise @@ pattern_do_not_conform_type pattern expected_typ
 
