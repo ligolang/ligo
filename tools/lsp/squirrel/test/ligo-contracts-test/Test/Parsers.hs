@@ -5,7 +5,7 @@ module Test.Parsers
 
 import AST (Fallback, scanContracts)
 
-import Data.List (isPrefixOf)
+import Data.HashSet qualified as HashSet
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
@@ -185,7 +185,7 @@ badTests =
       , "simple" </> "jsligo" </> "missing_expr_parenthesesR.jsligo"
       , "simple" </> "jsligo" </> "switch_with_missing_case_value.jsligo"
 
-        -- Fix this later 
+        -- Fix this later
       , "simple" </> "jsligo" </> "missing_semicolon_before_return_on_same_line.jsligo"
       ]
     , tdIgnoreDirs =
@@ -234,12 +234,8 @@ getContracts :: [TestContracts] -> IO [FilePath]
 getContracts = fmap concat . traverse go
   where
     go (TestDir dir ignoreContracts ignoreDirs) = do
-      allContracts <- scanContracts dir
-      let ignoreContracts' = map (dir </>) ignoreContracts
-      let ignoreDirs' = map (dir </>) ignoreDirs
-      pure
-        $ filter (\x -> not (any (`isPrefixOf` x) ignoreDirs') && x `notElem` ignoreContracts')
-          allContracts
+      let ignore = HashSet.fromList $ map (dir </>) (ignoreContracts <> ignoreDirs)
+      scanContracts (not . (`HashSet.member` ignore)) dir
     go (TestContract file) = pure [file]
 
 test_okayContracts :: IO TestTree

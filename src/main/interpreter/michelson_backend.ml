@@ -185,6 +185,9 @@ let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} } in_ty out_ty
     | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}}} in
+  let (parameter, storage) = trace_option ~raise (Errors.generic_error Location.generated "Trying to compile a non-contract?") @@
+                               Ast_aggregated.get_t_pair in_ty in
+  let aggregated_exp = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp in
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 

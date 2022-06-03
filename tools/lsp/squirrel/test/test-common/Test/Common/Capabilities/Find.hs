@@ -395,9 +395,10 @@ typeOf
   -> Range
   -> Assertion
 typeOf filepath mention definition = do
-  mention' <- label filepath mention
-  definition' <- label filepath definition
-  tree <- readContractWithScopes @impl filepath
+  filepath' <- makeAbsolute filepath
+  mention' <- label filepath' mention
+  definition' <- label filepath' definition
+  tree <- readContractWithScopes @impl filepath'
   case typeDefinitionAt mention' tree of
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'

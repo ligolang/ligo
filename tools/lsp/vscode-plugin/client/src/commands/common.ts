@@ -1,10 +1,12 @@
 import * as vscode from 'vscode'
+import { LanguageClient, RequestType } from 'vscode-languageclient/node'
 import { extname, basename } from 'path';
 import { execFileSync } from 'child_process';
 
 import { extensions } from '../common'
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
+
 let lastContractPath;
 
 type BinaryInfo = {
@@ -78,12 +80,13 @@ export function getLastContractPath() {
 export async function executeCommand(
   binary: BinaryInfo,
   command,
+  client: LanguageClient,
   commandArgs = CommandRequiredArguments.Path,
   showOutput = true,
   errorPrefix = undefined,
-) {
+): Promise<string | undefined> {
   const contractInfo = getLastContractPath()
-  const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, vscode.workspace.getConfiguration());
+  const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
 
   if (!ligoPath || ligoPath === '') {
     vscode.window.showWarningMessage('LIGO executable not found. Aborting ...');
@@ -109,7 +112,9 @@ export async function executeCommand(
       return undefined;
   }
   try {
-    const result = execFileSync(ligoPath, finalCommand)
+    const requestType = new RequestType<null, string | null, void>('indexDirectory')
+    const indexDirectory: string | null = await client.sendRequest(requestType, null)
+    const result = execFileSync(ligoPath, finalCommand, { cwd: indexDirectory }).toString()
     if (showOutput) {
       ligoOutput.appendLine(result)
       ligoOutput.show();

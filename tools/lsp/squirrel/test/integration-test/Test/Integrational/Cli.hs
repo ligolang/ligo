@@ -3,7 +3,7 @@ module Test.Integrational.Cli
   ) where
 
 import Data.Foldable (asum)
-import System.FilePath ((</>))
+import System.FilePath (takeDirectory, (</>))
 import UnliftIO.Exception (SomeException, fromException, tryJust)
 
 import Cli
@@ -24,7 +24,8 @@ filterException e = asum
 checkFile :: HasCallStack => FilePath -> TestTree
 checkFile path = testCase path do
   src <- pathToSrc path
-  tryJust filterException (runNoLoggingT $ getLigoDefinitions src) >>= \case
+  let temp = TempSettings (takeDirectory path) $ GenerateDir ".temp"
+  tryJust filterException (runNoLoggingT $ getLigoDefinitions temp src) >>= \case
     Left  _ -> pure ()
     Right _ -> expectationFailure "Expected contract to fail, but it has succeeded."
 

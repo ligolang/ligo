@@ -82,6 +82,12 @@ let dialect =
   let spec = optional_with_default Default_options.dialect string in
   flag ~doc ~aliases:["d";"dialect"] name spec
 
+let cli_expr_inj =
+  let open Command.Param in
+  let doc  = "EXPRESSION a expression passed to LIGO interpreter, accessible through variable 'cli_arg'" in
+  let spec = optional string in
+  flag ~doc "--arg" spec
+
 let req_syntax =
   let open Command.Param in
   let name = "SYNTAX" in
@@ -404,8 +410,8 @@ let mutate_group =
 
 (** Run commands *)
 let test =
-  let f source_file syntax steps protocol_version display_format show_warnings project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~test:true () in
+  let f source_file syntax steps cli_expr_inj protocol_version display_format show_warnings project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~cli_expr_inj ~test:true () in
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
@@ -416,7 +422,7 @@ let test =
                   procedure should rely on this sub-command alone."
   in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> steps <*> protocol_version <*> display_format <*> warn <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> syntax <*> steps <*> cli_expr_inj <*> protocol_version <*> display_format <*> warn <*> project_root <*> warn_unused_rec)
 
 let dry_run =
   let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
