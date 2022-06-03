@@ -213,7 +213,6 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
       let effect = Effect.add effect @@ self ~mut_var let_result in
       let effect = Effect.rm_var let_binder.var effect in
       return @@ effect
-  | E_type_in {type_binder=_;rhs=_;let_result} -> return @@ self let_result
   | E_raw_code {language=_;code=_} -> Effect.empty
   | E_type_inst {type_=_;forall} -> self forall
   | E_type_abstraction {type_binder=_;result} -> self result
@@ -515,9 +514,6 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
         let rhs = add_parameter read_effect read_effects returned_effect'.type_expression rhs in
         return @@ E_let_in {let_binder;rhs;let_result;attr}
       )
-  | E_type_in {type_binder;rhs;let_result} ->
-      let let_result = self ?returned_effect let_result in
-      return @@ E_type_in {type_binder;rhs;let_result}
   | E_type_inst {type_;forall} ->
       let forall = self ?returned_effect forall in
       return @@ E_type_inst {type_;forall}

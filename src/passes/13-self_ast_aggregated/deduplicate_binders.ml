@@ -142,11 +142,6 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
-  | E_type_in {type_binder;rhs;let_result} ->
-    let type_binder = swaper.type_ type_binder in
-    let rhs = self_type rhs in
-    let let_result = self let_result in
-    return @@ E_type_in {type_binder;rhs;let_result}
   | E_type_inst {forall; type_} ->
     let forall = self forall in
     let type_  = self_type type_ in
@@ -278,11 +273,6 @@ let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e
     let _,rhs = self rhs in
     let scope,let_result = self ~scope let_result in
     return ~scope @@ E_let_in {let_binder={var;ascr;attributes};rhs;let_result;attr}
-  | E_type_in {type_binder;rhs;let_result} ->
-    let scope,type_binder = Scope.new_type_var scope type_binder in
-    let rhs = self_type rhs in
-    let scope,let_result = self ~scope let_result in
-    return ~scope @@ E_type_in {type_binder;rhs;let_result}
   | E_type_inst {forall; type_} ->
     let _,forall = self forall in
     let type_  = self_type type_ in

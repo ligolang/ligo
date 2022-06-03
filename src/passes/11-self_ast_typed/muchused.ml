@@ -148,8 +148,6 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr record
   | E_record_update {record;update;_} ->
      muchuse_union (muchuse_of_expr record) (muchuse_of_expr update)
-  | E_type_in {let_result;_} ->
-     muchuse_of_expr let_result
   | E_mod_in {let_result;_} ->
      muchuse_of_expr let_result
   | E_type_inst {forall;_} ->
