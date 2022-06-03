@@ -262,6 +262,7 @@ runInstrCollect = \case
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
+
       lift $ C.yield InterpretSnapshot
         { isStatus = InterpretRunning event
         , ..

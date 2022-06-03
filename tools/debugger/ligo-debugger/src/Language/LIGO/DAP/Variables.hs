@@ -1,6 +1,9 @@
 -- This code is copypasted from Morley.Debugger.DAP.Variables
 module Language.LIGO.DAP.Variables
   ( createVariables
+  , runBuilder
+  , buildVariable
+  , insertToIndex
   ) where
 
 import Control.Lens
@@ -20,8 +23,8 @@ import Morley.Michelson.Typed
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: [StackItem] -> (Int, Map Int [DAP.Variable])
-createVariables st = runBuilder do
+createVariables :: [StackItem] -> VariableBuilder Int
+createVariables st = do
   topVarsMb <-
     forM st \(StackItem desc (SomeValue v)) -> do
       case desc of
@@ -38,6 +41,11 @@ runBuilder :: VariableBuilder a -> (a, Map Int [DAP.Variable])
 runBuilder act = (res, vars)
   where
     (res, (_, vars)) = usingState (1, mempty) act
+
+insertToIndex :: Int -> [DAP.Variable] -> VariableBuilder Int
+insertToIndex idx vars = do
+  _2 %= M.insertWith (<>) idx vars
+  pure idx
 
 insertVars :: [DAP.Variable] -> VariableBuilder Int
 insertVars vars = do

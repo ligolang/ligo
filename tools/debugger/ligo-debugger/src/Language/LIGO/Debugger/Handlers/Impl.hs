@@ -13,7 +13,7 @@ import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), SourceType (..), curSnapshot, frozen, groupSourceLocations,
-  playInterpretHistory, tapeFocus)
+  playInterpretHistory)
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
@@ -22,7 +22,7 @@ import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.TypeCheck (typeVerifyParameter, typeVerifyStorage)
-import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..))
+import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..), SomeConstrainedValue (SomeValue))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
@@ -105,14 +105,19 @@ instance HasSpecificMessages LIGO where
 
   handleScopesRequest DAP.ScopesRequest{..} = do
     -- We follow the implementation from morley-debugger
-    DAPSessionState{..} <- get
-    let stackItems = _dsSnapshots _dsDebuggerState
-          & tapeFocus
+    snap <- zoom dsDebuggerState $ frozen curSnapshot
+    let stackItems = snap
           & isStackFrames
           & flip (^?!) (ix (frameIdScopesRequestArguments argumentsScopesRequest - 1))
           & sfStack
 
-    let (varReference, variables) = createVariables stackItems
+    let builder =
+          case isStatus snap of
+            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) ->
+              createVariables stackItems >>= \idx -> buildVariable value "$it" >>= insertToIndex idx . (:[])
+            _ -> createVariables stackItems
+
+    let (varReference, variables) = runBuilder builder
 
     dsVariables .= variables
 
