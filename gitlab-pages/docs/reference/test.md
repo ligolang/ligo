@@ -472,6 +472,21 @@ and thus `Test.get_balance` can show a different amount to the one
 being set with `Test.reset_state`.
 
 <SyntaxTitle syntax="pascaligo">
+val reset_state : timestamp -> nat -> list (tez) -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val reset_state : timestamp -> nat -> tez list -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let reset_state: (timestamp, nat, list(tez)) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let reset_state = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
+</SyntaxTitle>
+
+Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
+
+<SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> tez option -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
