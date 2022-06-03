@@ -26,7 +26,7 @@ module Test = struct
   let reset_state_at (t:timestamp) (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET_AT"] t n l
   let get_voting_power (kh : key_hash) : nat = [%external "TEST_GET_VOTING_POWER"] kh
   [@thunk]
-  let get_total_voting_power : nat = [%external "TEST_GET_TOTAL_VOTING_POWER"]
+    let get_total_voting_power : nat = [%external "TEST_GET_TOTAL_VOTING_POWER"]
   let bootstrap_contract (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : unit = [%external "TEST_BOOTSTRAP_CONTRACT"] f s t
   let nth_bootstrap_contract (i : nat) : address = [%external "TEST_NTH_BOOTSTRAP_CONTRACT"] i
   let nth_bootstrap_account (i : int) : address = [%external "TEST_GET_NTH_BS"] i
