@@ -14,7 +14,7 @@ module TestProperty = struct
     fun (n : nat) ->
       match r n with
       | None -> ()
-      | Some x -> assert false
+      | Some _x -> assert false
 end
 
 (* This function is almost like identity... *)

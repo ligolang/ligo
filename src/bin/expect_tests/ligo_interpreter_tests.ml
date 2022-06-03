@@ -82,7 +82,7 @@ let%expect_test _ =
 let%expect_test _ =
   (* This tests a possible regression on the way modules are evaluated. It is possible that the number of element in the environment explodes. *)
   run_ligo_good ["run"; "test" ; test "imported_modules/test.mligo" ; "--format" ; "dev" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test1 exited with value (). |}]
 
@@ -160,7 +160,7 @@ let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
   [%expect {|
   Everything at the top-level was executed.
-  - test exited with value (). |}]
+  - test exited with value 0. |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage_from_file.mligo" ] ;
@@ -171,6 +171,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "nesting_modules.mligo" ] ;
   [%expect{|
+    File "./nesting_modules.mligo", line 15, characters 6-7:
+     14 | let foo () =
+     15 |   let x = 1 in
+     16 |   module Foo = struct
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
+
     111
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -263,7 +271,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_set exited with value 3.
     - test_list exited with value 3. |}]
@@ -288,7 +296,7 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_1.jsligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_1.jsligo" ; "--no-warn" ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test1 exited with value ().
@@ -311,7 +319,7 @@ let%expect_test _ =
     - test18 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_2.jsligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_2.jsligo" ; "--no-warn" ] ;
     [%expect{|
       Everything at the top-level was executed.
       - test1 exited with value ().
@@ -370,7 +378,7 @@ let%expect_test _ =
       - test54 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_part_3.jsligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "switch_case_part_3.jsligo" ; "--no-warn" ] ;
     [%expect{|
       Everything at the top-level was executed.
       - test1 exited with value ().
@@ -394,7 +402,7 @@ let%expect_test _ =
       - test19 exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; test "switch_case_if_else.jsligo" ] ;
+  run_ligo_good [ "run" ; "test" ; test "switch_case_if_else.jsligo" ; "--no-warn" ] ;
     [%expect{|
       Everything at the top-level was executed.
       - test_if_switch_break exited with value ().
@@ -447,7 +455,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value (1801n , 2165n , 2165n). |}]
+    - test exited with value (1802n , 1985n , 1985n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_implicit_account.jsligo" ] ;
@@ -469,13 +477,13 @@ let%expect_test _ =
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
     3800011000000mutez
-    666n
+    4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
     3800022000000mutez
-    666n
+    4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -483,26 +491,26 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_register_delegate.mligo" ] ;
   [%expect {|
     "STARTING BALANCE AND VOTING POWER"
-    950038000000mutez
-    166n
+    950000000000mutez
+    0n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950049000000mutez
-    166n
+    950011000000mutez
+    0n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950060000000mutez
-    166n
+    950022000000mutez
+    0n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ; "--protocol" ; "hangzhou" ] ;
-  [%expect {|
+  run_ligo_good [ "run"; "test" ; test "test_global_constant_2.mligo" ] ;
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -536,12 +544,55 @@ let%expect_test _ =
     - test_move exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; test "test_error_balance.jsligo" ] ;
+  run_ligo_good [ "run"; "test" ; test "test_error_balance.jsligo"; "--no-warn" ] ;
   [%expect {|
     100000000000000mutez
     3799997904750mutez
     Everything at the top-level was executed.
     - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_x exited with value (KT1AE9iae7b3xDWrzghqkPNmtVNNDvyncz8K , { parameter unit ;
+      storage
+        (pair (pair (big_map %metadata string bytes) (set %participants address))
+              (map %secrets address chest)) ;
+      code { CDR ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    DUP 3 ;
+                    CDR ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             PUSH bool True ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             CDR ;
+             ITER { SWAP ;
+                    EMPTY_MAP address bool ;
+                    DIG 2 ;
+                    GET ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
+             NIL operation ;
+             PAIR } } , 230). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd
@@ -551,25 +602,36 @@ let bad_test n = bad_test ("/interpreter_tests/"^n)
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
-    Test failed with "I am failing"
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
-      1 | let test =
-      2 |   failwith "I am failing" |}]
+      1 | let test : unit =
+      2 |   failwith "I am failing"
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
+      1 | let test : unit =
+      2 |   failwith "I am failing"
+
+    "I am failing" |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure2.mligo" ] ;
   [%expect {|
-    Failed assertion
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
-      2 |     assert false |}]
+      2 |     assert false
+
+    An uncaught error occured:
+    Failwith: "failed assertion" |}]
 
 let%expect_test _ =
   run_ligo_bad ["run"; "test" ; bad_test "bad_balances_reset.mligo" ] ;
   [%expect {|
-    baker account initial balance must at least reach 6000 tez |}]
+    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
+      1 | let test = Test.reset_state 2n [4000tez;4000tez]
+
+     baker account initial balance must at least reach 6000 tez |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure3.mligo" ] ;
@@ -584,32 +646,49 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace.mligo" ] ;
   [%expect {|
-    Test failed with "negative"
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
       4 |   else
 
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
+      2 |   if x < 0 then
+      3 |     (failwith "negative" : int)
+      4 |   else
+
+    "negative"
+    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 39-46 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace2.mligo" ] ;
   [%expect {|
-    An uncaught error occured:
-    Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
-    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 2, characters 6-7:
+      1 | let main (_, _ : unit * unit) : operation list * unit =
+      2 |   let v = (failwith "foo" : unit) in
+      3 |   ([] : operation list), ()
+    :
+    Warning: unused variable "v".
+    Hint: replace it by "_v" to prevent this warning.
+
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =
       6 |   let _ = Test.get_storage_of_address ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
       7 |   Test.transfer_to_contract_exn contr () 10tez
 
+    An uncaught error occured:
+    Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 12, characters 2-33 |}]
 
 let%expect_test _ =
@@ -621,23 +700,40 @@ let%expect_test _ =
       4 |     else
 
     Replacing by: 2.
-
-    Test failed with "Some mutation also passes the tests!"
-    Trace:
     File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
      16 |     | None -> ()
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
-     18 |                                     failwith "Some mutation also passes the tests!" |}]
+     18 |                                     failwith "Some mutation also passes the tests!"
+
+    You are using Michelson failwith primitive (loaded from standard library).
+    Consider using `Test.failwith` for throwing a testing framework failure.
+
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
+     16 |     | None -> ()
+     17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
+     18 |                                     failwith "Some mutation also passes the tests!"
+
+    "Some mutation also passes the tests!" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source1.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
+      9 |   let () = Test.set_source addr in
+     10 |   let (_, _, _) = Test.originate main () 0tez in
+     11 |   ()
+
     The source address is not an implicit account
     KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 10-52:
+      9 |   let () = Test.set_source addr in
+     10 |   let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
+     11 |   ()
+
     The source address is not an implicit account
     KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
 
@@ -683,37 +779,42 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_register_delegate.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
+     18 |   let () = Test.set_baker a in
+     19 |   let (ta, _, _) = Test.originate main 41 5tez in
+     20 |
+
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
-    16n |}]
+    100000000000n |}]
 
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
-    Failed assertion
-    Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 18-30:
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 19-31:
      16 |       | None -> ()
-     17 |       | Some x -> assert false
+     17 |       | Some _x -> assert false
      18 | end
 
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 29, characters 2-25 |}]
+    An uncaught error occured:
+    Failwith: "failed assertion" |}]
 
 let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 
 (* using typed_address in Bytes.pack *)
 let%expect_test _ =
-run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ; "--protocol" ; "hangzhou" ] ;
+run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
+  File "typed_addr_in_bytes_pack.mligo", line 13, characters 8-9:
+   12 | let test =
+   13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
-   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
-   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Invalid call to Test primitive. |}]
+  Expected address but got typed_address (unit ,
+  unit) |}]
 
 let () = Sys.chdir pwd
 
@@ -731,9 +832,9 @@ let pwd = Sys.getcwd ()
 let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--protocol" ; "hangzhou" ] ;
+  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1KVKQa2z9Mw3QgNK3Gr8mqsTsFH19TKzqy(None). |}]
+    - test exited with value KT1Xf7ZrYPUKgHXMnXW5M6qeHkk5ijPsXpAk(None). |}]
 
 let () = Sys.chdir pwd

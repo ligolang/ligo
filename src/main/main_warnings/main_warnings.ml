@@ -9,11 +9,14 @@ type all =
   | `Checking_ambiguous_contructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of Location.t * Stage_common.Types.TypeVar.t
+  | `Self_ast_imperative_warning_deprecated_constant of Location.t * Ast_imperative.expression * Ast_imperative.expression * Ast_imperative.type_expression
   | `Main_view_ignored of Location.t
   | `Pascaligo_deprecated_case of Location.t
   | `Pascaligo_deprecated_semi_before_else of Location.t
   | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
+  | `Jsligo_deprecated_toplevel_let of Location.t
+  | `Use_meta_ligo of Location.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -28,13 +31,17 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Use_meta_ligo loc ->
+      Format.fprintf f "@[<hv>%a@ You are using Michelson failwith primitive (loaded from standard library).@.\
+      Consider using `Test.failwith` for throwing a testing framework failure.@.@]"
+        Snippet.pp loc
     | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) -> (
       let open Environment.Protocols in
       Format.fprintf f
-        "@[<hv>Warning: Error(s) occurred while type checking the produced michelson contract:@.%a@. 
-        Note: You compiled your contract with protocol %s although we internally use protocol %s to typecheck the produced Michelson contract 
+        "@[<hv>Warning: Error(s) occurred while type checking the produced michelson contract:@.%a@.\
+        Note: You compiled your contract with protocol %s although we internally use protocol %s to typecheck the produced Michelson contract@.\
         so you might want to ignore this error if related to a breaking change in protocol %s@.@]"
-          (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+          (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
           (variant_to_string user_proto)
           (variant_to_string in_use)
           (variant_to_string in_use)
@@ -73,8 +80,18 @@ let pp : display_format:string display_format ->
         Format.fprintf f
           "@[<hv>%a@ Warning: %a is not recognize as a polymorphic variable anymore. If you want to make a polymorphic function, please consult the online documentation @.@]"
           Snippet.pp loc Stage_common.Types.TypeVar.pp name
+    | `Self_ast_imperative_warning_deprecated_constant (l, curr, alt, ty) ->
+       Format.fprintf f
+         "@[<hv>%a@ Warning: the constant %a is soon to be deprecated. Use instead %a : %a. @]"
+         Snippet.pp l
+         Ast_imperative.PP.expression curr
+         Ast_imperative.PP.expression alt
+         Ast_imperative.PP.type_expression ty
     | `Jsligo_deprecated_failwith_no_return loc ->
       Format.fprintf f "@[<hv>%a@.Deprecated `failwith` without `return`: `failwith` is just a function.@.Please add an explicit `return` before `failwith` if you meant the built-in `failwith`.@.For now, compilation proceeds adding such `return` automatically.@.@]"
+      Snippet.pp loc
+    | `Jsligo_deprecated_toplevel_let loc ->
+      Format.fprintf f "@[<hv>%a@.Toplevel let declaration are silently change to const declaration.@.@]"
       Snippet.pp loc
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
@@ -85,6 +102,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Use_meta_ligo loc ->
+    let message = `String "You are using Michelson failwith primitive (loaded from standard library).\
+    Consider using `Test.failwith` for throwing a testing framework failure" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage:"Interpreter" ~content
   | `Michelson_typecheck_failed_with_different_protocol (user_proto,_) ->
     let open Environment.Protocols in
     let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in
@@ -175,15 +201,33 @@ let to_json : all -> Yojson.Safe.t = fun a ->
     json_warning ~stage ~content
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
     let message = `String (Format.asprintf "Deprecated polymorphic var %a" Stage_common.Types.TypeVar.pp name) in
-     let stage   = "self_ast_imperative" in
+    let stage   = "self_ast_imperative" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
     ] in
     json_warning ~stage ~content
+  | `Self_ast_imperative_warning_deprecated_constant (l, _, _, _) ->
+    let message = `String "Constant soon to be deprecated." in
+    let stage   = "self_ast_imperative" in
+    let loc = `String (Format.asprintf "%a" Location.pp l) in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
   | `Jsligo_deprecated_failwith_no_return loc ->
     let message = `String "deprecated use of failwith without return" in
+    let stage   = "lexer" in
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
+  | `Jsligo_deprecated_toplevel_let loc ->
+    let message = `String "Toplevel let declarations are silently convert to const declarations" in
     let stage   = "lexer" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [

@@ -219,6 +219,12 @@ invariants =
     , driRefs = [interval 3 3 6]
     }
   , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-tuple.jsligo"
+    , driDesc = "tuple member"
+    , driDef = Just (interval 2 15 18)
+    , driRefs = [interval 3 10 13]
+    }
+  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-attributes-in-rec.mligo"
     , driDesc = "counter, type attribute"
     , driDef = Nothing  -- type attributes don't have a declaration
@@ -255,6 +261,30 @@ invariants =
     , driRefs = []
     }
   , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.jsligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes.jsligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.jsligo"
+    , driDesc = "counter, type attribute"
+    , driDef = Nothing  -- type attributes don't have a declaration
+    , driRefs = [interval 9 14 21, interval 7 35 42]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-attributes-in-rec.jsligo"
+    , driDesc = "counter, function"
+    , driDef = Just (interval 6 5 12)
+    , driRefs = []
+    }
+  , DefinitionReferenceInvariant
     { driFile = contractsDir </> "recursion.ligo"
     , driDesc = "sum"
     , driDef = Just (interval 1 20 23)
@@ -265,6 +295,12 @@ invariants =
     , driDesc = "sum"
     , driDef = Just (interval 1 9 12)
     , driRefs = [interval 2 30 33]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.jsligo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 5 8)
+    , driRefs = [interval 5 16 19]
     }
 
   -- FIXME:
@@ -294,6 +330,12 @@ invariants =
     { driFile = contractsDir </> "type-constructor.religo"
     , driDesc = "Increment, type constructor"
     , driDef = Just (interval 2 5 14)
+    , driRefs = [interval 5 18 27]
+    }
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "type-constructor.jsligo"
+    , driDesc = "Increment, type constructor"
+    , driDef = Just (interval 2 4 15)
     , driRefs = [interval 5 18 27]
     }
   ]
@@ -353,9 +395,10 @@ typeOf
   -> Range
   -> Assertion
 typeOf filepath mention definition = do
-  mention' <- label filepath mention
-  definition' <- label filepath definition
-  tree <- readContractWithScopes @impl filepath
+  filepath' <- makeAbsolute filepath
+  mention' <- label filepath' mention
+  definition' <- label filepath' definition
+  tree <- readContractWithScopes @impl filepath'
   case typeDefinitionAt mention' tree of
     Nothing -> expectationFailure "Should find type definition"
     Just range -> range{_rFile=_rFile mention'} `shouldBe` definition'

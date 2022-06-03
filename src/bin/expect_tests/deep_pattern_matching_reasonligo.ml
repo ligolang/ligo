@@ -38,7 +38,7 @@ let%expect_test _ =
       6 |   | (Nil , {a : a , b : b , c : c}) => 1
       7 |   | (xs  , Nil) => 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.religo") ] ;
@@ -48,7 +48,7 @@ let%expect_test _ =
       5 |   | (Nil , (a,b,c)) => 1
       6 |   | (xs  , Nil) => 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.religo") ] ;
@@ -63,7 +63,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    const t = lambda (x) return 0 |}]
+    const t = lambda (x : list (int)) return 0 |}]
 
 (* wrong body type *)
 
@@ -81,13 +81,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail8.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 19, characters 8-15:
-     18 |         let f = (b:int) => b + a;
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.religo", line 20, characters 24-33:
      19 |         f (b+1)
      20 |       | Cons ((a,b)) => "invalid"
+     21 |       };
 
     Invalid type(s).
-    Expected: "string", but got: "int". |}]
+    Expected: "int", but got: "string". |}]
 
 
 (* rendundancy detected while compiling the pattern matching *)
@@ -173,7 +173,7 @@ let%expect_test _ =
       6 |   | {one : _ , three : _} => 0
       7 |   }
 
-    Pattern not of the expected type record[one -> int , two -> int] |}]
+    Pattern not of the expected type parameter |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =

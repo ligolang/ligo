@@ -11,7 +11,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
     | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
-  let x : unit = if (Tezos.amount != current_purchase_price) {
+  let x : unit = if (Tezos.get_amount () != current_purchase_price) {
     failwith ("Sorry, the taco you are trying to purchase has a different price")
   } ;
   /* Update the storage decreasing the stock by 1n */

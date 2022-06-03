@@ -5,6 +5,7 @@ export enum Dialect {
   PASCALIGO,
   CAMELIGO,
   REASONLIGO,
+  JSLIGO
 }
 
 export function getExt(lang: Dialect): string {
@@ -15,6 +16,8 @@ export function getExt(lang: Dialect): string {
       return 'mligo'
     case Dialect.REASONLIGO:
       return 'religo'
+    case Dialect.JSLIGO:
+      return 'jsligo'
     default:
       throw new Error(`Unrecognized dialect: ${lang}`)
   }
@@ -28,6 +31,8 @@ export function getLang(lang: Dialect): string {
       return 'CameLIGO'
     case Dialect.REASONLIGO:
       return 'ReasonLIGO'
+    case Dialect.JSLIGO:
+      return 'JsLIGO'
     default:
       throw new Error(`Unrecognized dialect: ${lang}`)
   }

@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
@@ -26,6 +24,7 @@ import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log, i)
+import Parser (Message)
 import ParseTree (srcPath)
 import Progress (Progress (..), (%))
 import Range
@@ -36,22 +35,23 @@ data FromCompiler
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback. (LIGO-208)
 instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
-  scopeForest reportProgress (Includes graph) = Includes <$> do
+  scopeForest tempSettings reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
     -- 'StateT'. It's best to avoid using this class for stateful monads.
     counter <- newMVar 0
-    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msg) -> do
+    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msgs) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
-      (defs, _) <- getLigoDefinitions src
-      forest <- fromCompiler dialect defs
-      pure $ FindContract src forest msg
+      defs <- getLigoDefinitions tempSettings src
+      (forest, msgs') <- fromCompiler dialect defs
+      pure $ FindContract src forest (msgs <> msgs')
 
 -- | Extract `ScopeForest` from LIGO scope dump.
-fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m ScopeForest
-fromCompiler dialect (LigoDefinitions decls scopes) =
-    foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
+fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
+fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
+  let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
+  (, msgs) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.

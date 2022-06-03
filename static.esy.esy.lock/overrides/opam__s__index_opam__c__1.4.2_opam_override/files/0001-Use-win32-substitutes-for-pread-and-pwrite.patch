@@ -1,0 +1,102 @@
+From 2fd37f2351f0383668e0271bc0be99661e1fff4c Mon Sep 17 00:00:00 2001
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Date: Thu, 13 Jan 2022 08:56:37 +0530
+Subject: [PATCH] Use win32 substitutes for pread and pwrite
+
+---
+ src/unix/pread.c  | 22 ++++++++++++++++++++--
+ src/unix/pwrite.c | 16 ++++++++++++++--
+ 2 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/src/unix/pread.c b/src/unix/pread.c
+index 666d267..03e3686 100644
+--- a/src/unix/pread.c
++++ b/src/unix/pread.c
+@@ -4,6 +4,12 @@
+ #include <caml/signals.h>
+ #include <caml/unixsupport.h>
+ 
++#if defined(WIN32) || defined(_WIN32)
++#include <windows.h>
++#include <fileapi.h>
++#include <io.h>
++#endif
++
+ CAMLprim value caml_index_pread_int
+ (value v_fd, value v_fd_off, value v_buf, value v_buf_off, value v_len)
+ {
+@@ -16,9 +22,15 @@ CAMLprim value caml_index_pread_int
+   size_t len = Long_val(v_len);
+ 
+   size_t numbytes = (len > UNIX_BUFFER_SIZE) ? UNIX_BUFFER_SIZE : len;
++#if defined(WIN32) || defined(_WIN32)
++  HANDLE fh = _get_osfhandle(fd);
++  if (!ReadFile(fh, &Byte(v_buf, buf_off), numbytes, &ret, NULL)) {
++    uerror("read", Nothing);
++  }
++#else
+   ret = pread(fd, &Byte(v_buf, buf_off), numbytes, fd_off);
+-
+   if (ret == -1) uerror("read", Nothing);
++#endif
+ 
+   CAMLreturn(Val_long(ret));
+ }
+@@ -35,9 +47,15 @@ CAMLprim value caml_index_pread_int64
+   size_t len = Long_val(v_len);
+ 
+   size_t numbytes = (len > UNIX_BUFFER_SIZE) ? UNIX_BUFFER_SIZE : len;
++#if defined(WIN32) || defined(_WIN32)
++  HANDLE fh = _get_osfhandle(fd);
++  if (!ReadFile(fh, &Byte(v_buf, buf_off), numbytes, &ret, NULL)) {
++    uerror("read", Nothing);
++  }
++#else
+   ret = pread(fd, &Byte(v_buf, buf_off), numbytes, fd_off);
+-
+   if (ret == -1) uerror("read", Nothing);
++#endif
+ 
+   CAMLreturn(Val_long(ret));
+ }
+diff --git a/src/unix/pwrite.c b/src/unix/pwrite.c
+index e91b71c..df31965 100644
+--- a/src/unix/pwrite.c
++++ b/src/unix/pwrite.c
+@@ -16,9 +16,15 @@ CAMLprim value caml_index_pwrite_int
+   size_t len = Long_val(v_len);
+ 
+   size_t numbytes = (len > UNIX_BUFFER_SIZE) ? UNIX_BUFFER_SIZE : len;
++#if defined(WIN32) || defined(_WIN32)
++  HANDLE fh = _get_osfhandle(fd);
++  if (!WriteFile(fh, &Byte(v_buf, buf_off), numbytes, &ret, NULL)) {
++    uerror("write", Nothing);
++  }
++#else
+   ret = pwrite(fd, &Byte(v_buf, buf_off), numbytes, fd_off);
+-
+   if (ret == -1) uerror("write", Nothing);
++#endif
+ 
+   CAMLreturn(Val_long(ret));
+ }
+@@ -35,9 +41,15 @@ CAMLprim value caml_index_pwrite_int64
+   size_t len = Long_val(v_len);
+ 
+   size_t numbytes = (len > UNIX_BUFFER_SIZE) ? UNIX_BUFFER_SIZE : len;
++#if defined(WIN32) || defined(_WIN32)
++  HANDLE fh = _get_osfhandle(fd);
++  if (!WriteFile(fh, &Byte(v_buf, buf_off), numbytes, &ret, NULL)) {
++    uerror("write", Nothing);
++  }
++#else
+   ret = pwrite(fd, &Byte(v_buf, buf_off), numbytes, fd_off);
+-
+   if (ret == -1) uerror("write", Nothing);
++#endif
+ 
+   CAMLreturn(Val_long(ret));
+ }
+-- 
+2.34.1.windows.1
+

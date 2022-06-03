@@ -190,7 +190,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let code_block = make_e (e_string (Ligo_string.verbatim u)) (t_string ()) in
       let insertion = e_a_raw_code Stage_common.Backends.michelson code_block (t_arrow t_input t_output ()) in
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
-      let orig_lambda = e_a_lambda {binder=arg_binder; result=body} t_input t_output in
+      let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
   (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
    *   ignore addr;
@@ -239,7 +239,6 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux big_map in
         V_Map big_map'
       )
-    | (Map_or_big_map, _) -> raise.raise @@ corner_case ~loc:"unspiller" "TC_map_or_big_map t should not be present in mini-c"
     | (List, [ty]) -> (
         let lst = trace_option ~raise (wrong_mini_c_value t v) @@ get_list v in
         let lst' =
@@ -259,8 +258,8 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
         Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
-        Bls12_381_fr | Never         | Ticket                                                        | Chest        |
-        Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _), _) -> v
+        Bls12_381_fr | Never         | Ticket              | Michelson_contract                      | Chest        |
+        Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _       | Tx_rollup_l2_address), _) -> v
   )
   | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> (
     let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
@@ -291,7 +290,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
            | E_raw_code {code;language=_} ->
               let insertion = e_a_raw_code Stage_common.Backends.michelson code (t_arrow type1 type2 ()) in
               let body = e_a_application insertion (e_a_variable arg_binder type1) type2 in
-              let orig_lambda = e_a_lambda {binder=arg_binder; result=body} type1 type2 in
+              let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} type1 type2 in
               V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
            | _ -> v)
        | _ -> v)

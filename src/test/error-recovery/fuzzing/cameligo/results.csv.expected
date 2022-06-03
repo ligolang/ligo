@@ -5,9 +5,9 @@ PASS,1incr_decr.mligo,3,83,9,7,1
 PASS,1local_type_decl.mligo,10,70,30,13,3
 PASS,1match_bis.mligo,3,83,9,7,1
 PASS,1record.mligo,68,576,82,18,17
-PASS,1ticket_builder.mligo,41,352,38,15,9
-PASS,1ticket_wallet.mligo,148,906,100,37,18
-PASS,1voting.mligo,9,107,47,27,2
+PASS,1ticket_builder.mligo,43,358,52,27,9
+PASS,1ticket_wallet.mligo,148,910,108,45,18
+PASS,1voting.mligo,9,109,49,31,2
 PASS,2address.mligo,11,64,18,7,3
 PASS,2annotated_michelson_record_comb.mligo,64,504,60,16,13
 PASS,2let_destructuring.mligo,64,971,83,21,14
@@ -20,4 +20,4 @@ PASS,4fibo.mligo,30,203,53,13,8
 PASS,4k.mligo,22,148,28,11,3
 PASS,4michelson_or_tree.mligo,4,102,12,10,1
 PASS,4super-counter.mligo,17,125,43,9,4
-PASS,4ticket_wallet.mligo,152,913,209,67,38
+PASS,4ticket_wallet.mligo,152,917,217,75,38

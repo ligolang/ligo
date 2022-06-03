@@ -17,7 +17,7 @@ let main = ((p, s): (parameter, storage)) => {
     switch(p){
     | Call op =>
         {
-          if (Set.mem(Tezos.sender, s.senders_whitelist)) {
+          if (Set.mem(Tezos.get_sender (), s.senders_whitelist)) {
             op()
           } else {
             (failwith("Sender is not whitelisted") : operation)

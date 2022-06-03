@@ -39,7 +39,7 @@ block {
     failwith ("Counters does not match")
   else {
     const packed_payload : bytes =
-      Bytes.pack ((payload, p.counter, s.id, Tezos.chain_id));
+      Bytes.pack ((payload, p.counter, s.id, Tezos.get_chain_id()));
     var valid : nat := 0n;
 
     var pkh_sigs : signatures := p.signatures;

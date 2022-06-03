@@ -1,29 +1,31 @@
 module RIO.Types
   ( Contract (..)
   , IndexOptions (..)
+  , ProjectSettings (..)
   , RioEnv (..)
   , RIO (..)
-
-  , getCustomConfig
   ) where
 
+import Control.Lens (_head, over)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, mapReaderT)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, mapReaderT)
 import Control.Monad.Trans (lift)
-import Data.Default (def)
+import Data.Aeson (Options (..), defaultOptions)
+import Data.Aeson.TH (deriveJSON)
+import Data.Default (Default (def))
+import Data.Char (toLower)
 import Data.HashSet (HashSet)
 import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import StmContainers.Map qualified as StmMap
-import UnliftIO.MVar (MVar, tryReadMVar)
+import UnliftIO.MVar (MVar)
 
 import AST (ContractInfo', Includes, ParsedContractInfo)
 import ASTMap (ASTMap)
 import Cli (HasLigoClient (..), LigoClientEnv (..))
 import Config (Config (..))
 import Log (LogT)
-import Log qualified
 
 data Contract = Contract
   { cTree :: ContractInfo'
@@ -44,19 +46,17 @@ data IndexOptions
   | FromGitProject FilePath
   -- ^ Index the project from the output of `git rev-parse --show-toplevel`, if
   -- Git is set.
-  | FromLigoProject FilePath
+  | FromLigoProject FilePath ProjectSettings
   -- ^ Index from the directory where the first `.ligoproject` file is found, if
   -- it exists. This option has precedence over all others, and if this file is
   -- present, all other options will be ignored.
+  deriving stock (Eq, Show)
 
 -- | Stores information about the current language server environment, such as
 -- loaded files, files in the project, etc. This is meant to be used inside a
 -- `ReaderT`, and its internal `MVar`s updated as needed.
 data RioEnv = RioEnv
-  { reConfig :: MVar Config
-  -- ^ Contains the current configuration of the language server, such as the
-  -- path to LIGO.
-  , reCache :: ASTMap J.NormalizedUri Contract RIO
+  { reCache :: ASTMap J.NormalizedUri Contract RIO
   -- ^ Caches parsed and scoped contracts, as well as their include dependencies.
   -- Also contains metadata about contracts, such as when they were loaded, when
   -- they were invalidated, etc.
@@ -72,23 +72,14 @@ data RioEnv = RioEnv
   -- ^ Represents the build graph for all files that were looked up.
   }
 
--- TODO: The lsp library provides no way to update the Config in the LspM monad
--- manually. So we have to maintain our own config to store the result of
--- `workspace/configuration` requests. We should get this fixed by the
--- maintainers, if possible.
-getCustomConfig :: RIO Config
-getCustomConfig = Log.addNamespace "getCustomConfig" do
-  mConfig <- asks reConfig
-  contents <- tryReadMVar mConfig
-  case contents of
-    -- TODO: The lsp library only sends the `workspace/configuration` request
-    -- after initialization is complete, so during initialization, there is no
-    -- way to know the client configuration. We need to get this fixed by the
-    -- library maintainers, if possible.
-    Nothing -> do
-      $(Log.warning) "No config fetched yet, resorting to default"
-      pure def
-    Just config -> pure config
+newtype ProjectSettings = ProjectSettings
+  { psIgnorePaths :: Maybe [FilePath]
+  } deriving stock (Eq, Show)
+
+instance Default ProjectSettings where
+  def = ProjectSettings
+    { psIgnorePaths = Nothing
+    }
 
 newtype RIO a = RIO
   { unRio :: ReaderT RioEnv (S.LspT Config (LogT IO)) a
@@ -117,4 +108,9 @@ instance KatipContext RIO where
   localKatipNamespace f = RIO . mapReaderT (S.LspT . localKatipNamespace f . S.unLspT) . unRio
 
 instance HasLigoClient RIO where
-  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) getCustomConfig
+  getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) S.getConfig
+
+$(deriveJSON defaultOptions
+  { fieldLabelModifier = over _head toLower . drop 2, omitNothingFields = True
+  }
+  ''ProjectSettings)

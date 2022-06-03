@@ -8,7 +8,7 @@ block {
   const op
   = case p of [
       Call (op) ->
-        if Set.mem (Tezos.sender, s.senders_whitelist)
+        if Set.mem (Tezos.get_sender(), s.senders_whitelist)
         then op (Unit)
         else (failwith ("Sender is not whitelisted") : operation)
     | IsWhitelisted (addr_and_callback) ->

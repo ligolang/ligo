@@ -37,7 +37,7 @@
 *)
 
 open Errors
-let fold_map_expression = Helpers.fold_map_expression
+let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed
@@ -51,7 +51,8 @@ type simpl_map = ((label * expression_variable) list) SimplMap.t
 let is_generated_partial_match : expression -> bool =
   fun exp ->
     match exp.expression_content with
-    | E_constant {cons_name=C_FAILWITH ; arguments=[e]} -> (
+    (* This is bad, we probably need some constant for "internally generated failwith" ? *)
+    | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" ValueVar.pp v)-> (
       match get_a_string e with
       | Some fw -> String.equal fw (Ligo_string.extract Stage_common.Backends.fw_partial_match)
       | None -> false

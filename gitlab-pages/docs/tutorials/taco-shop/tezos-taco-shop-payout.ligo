@@ -22,7 +22,7 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
     const current_purchase_price : tez =
       taco_kind.max_price / taco_kind.current_stock;
 
-    if Tezos.amount =/= current_purchase_price then
+    if Tezos.get_amount() =/= current_purchase_price then
       // We won't sell tacos if the amount is not correct
       failwith ("Sorry, the taco you are trying to purchase has a different price");
 
@@ -44,10 +44,10 @@ function buy_taco (const taco_kind_index : nat; var taco_shop_storage : taco_sho
       | None  -> (failwith ("Not a contract") : contract (unit))
       ];
 
-    const donationAmount : tez = Tezos.amount / 10n;
+    const donationAmount : tez = Tezos.get_amount() / 10n;
 
     const operations : list (operation) = list [
-      Tezos.transaction (unit, Tezos.amount - donationAmount, receiver);
+      Tezos.transaction (unit, Tezos.get_amount() - donationAmount, receiver);
       Tezos.transaction (unit, donationAmount, donationReceiver);
     ]
   } with (operations, taco_shop_storage)

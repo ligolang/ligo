@@ -9,8 +9,8 @@ type storage = {
 type return = operation list * storage
 
 let main (_, store : parameter * storage) : return =
-  (* Multiple evaluations of Tezos.now give different values *)
-  let my_now : timestamp = Tezos.now in
+  (* Multiple evaluations of Tezos.get_now () give different values *)
+  let my_now : timestamp = Tezos.get_now () in
   if my_now > store.next_use
   then
     let store : storage =

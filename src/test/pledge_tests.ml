@@ -30,7 +30,7 @@ let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   empty_op_list
 
 
-let pledge  ~raise~add_warning f () =
+let pledge ~raise ~add_warning f () =
   let program = get_program  ~raise ~add_warning f () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
@@ -39,7 +39,7 @@ let pledge  ~raise~add_warning f () =
                   ~sender:oracle_contract
                   ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ())
   in
-  expect_eq  ~raise~options program "donate"
+  expect_eq ~raise ~add_warning ~options program "donate"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
@@ -51,7 +51,7 @@ let distribute ~raise ~add_warning f () =
                   ~env:(test_environment ())
                   ~sender:oracle_contract ())
   in
-  expect_eq ~raise ~options program "distribute"
+  expect_eq ~raise ~add_warning ~options program "distribute"
     (e_pair parameter storage)
     (e_pair (e_list []) storage)
 
@@ -63,7 +63,7 @@ let distribute_unauthorized ~raise ~add_warning f () =
                   ~env:(test_environment ())
                   ~sender:stranger_contract ())
   in
-  expect_string_failwith ~raise ~options program "distribute"
+  expect_string_failwith ~raise ~add_warning ~options program "distribute"
     (e_pair parameter storage)
     "You're not the oracle for this distribution."
 

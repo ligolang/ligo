@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \n- Fix a potential bug in standards libraries caching
+merge_request: '1735'
+title: fixing lib cache
+type: fixed

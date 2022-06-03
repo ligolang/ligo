@@ -4,7 +4,7 @@ module Test.Capabilities.SelectionRange
 
 import Control.Lens ((^.))
 import Data.Function ((&))
-import Data.Word (Word32)
+import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import Test.HUnit (Assertion)
 
@@ -19,7 +19,7 @@ import Test.Common.Util (readContract)
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "selection-range"
 
-data SimpleRange = SimpleRange (Word32, Word32) (Word32, Word32) FilePath
+data SimpleRange = SimpleRange (J.UInt, J.UInt) (J.UInt, J.UInt) FilePath
   deriving stock (Eq, Show)
 
 simplify :: Range -> SimpleRange

@@ -38,7 +38,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   | E_cond       c -> Folds.conditional self init c
   | E_recursive  r -> Folds.recursive self (fun a _ -> a) init r
   | E_sequence s -> Folds.sequence self init s
-  | E_assign a -> Folds.assign self init a
+  | E_assign a -> Folds.assign self (fun a _ -> a) init a
   | E_for f -> Folds.for_ self init f
   | E_for_each fe -> Folds.for_each self init fe
   | E_while w -> Folds.while_loop self init w
@@ -142,7 +142,7 @@ let rec map_expression : exp_mapper -> expression -> expression = fun f e ->
       return @@ E_sequence s
     )
   | E_assign a -> (
-      let a = Maps.assign self a in
+      let a = Maps.assign self (fun a -> a) a in
       return @@ E_assign a
   )
   | E_for f ->
@@ -322,7 +322,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> 'a *
       (res, return @@ E_sequence s)
     )
   | E_assign a ->
-      let res,a = Fold_maps.assign self init a in
+      let res,a = Fold_maps.assign self idle init a in
       (res, return @@ E_assign a)
   | E_for f ->
       let res,f = Fold_maps.for_ self init f in
@@ -417,11 +417,11 @@ module Free_variables :
       unions @@ [self condition; self then_clause; self else_clause]
     | E_sequence {expr1; expr2} ->
       VarSet.union (self expr1) (self expr2)
-    | E_assign {variable; access_path; expression} ->
+    | E_assign {binder; access_path; expression} ->
       let aux = function
         | Access_tuple _ | Access_record _ -> VarSet.empty
         | Access_map e -> self e in
-      unions @@ [VarSet.singleton variable; self expression] @ List.map ~f:aux access_path
+      unions @@ [VarSet.singleton binder.var; self expression] @ List.map ~f:aux access_path
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
     | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->

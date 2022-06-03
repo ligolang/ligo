@@ -23,6 +23,7 @@ module ParseTree
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.Functor.Classes (Show1 (..))
+import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
@@ -51,11 +52,15 @@ import Range
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
+foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
 data Source = Source
   { srcPath :: FilePath
   , srcText :: Text
   } deriving stock (Eq, Ord)
+
+instance MonadIO m => IsString (m Source) where
+  fromString = pathToSrc
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
@@ -101,6 +106,7 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
         Reason -> tree_sitter_ReasonLigo
+        Js     -> tree_sitter_JsLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     let src = Text.encodeUtf8 input
@@ -141,14 +147,14 @@ toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
             name     = if start2D == finish2D then "ERROR" else Text.pack ty
             range = Range
               { _rStart  =
-                  ( pointRow    start2D + 1
-                  , pointColumn start2D + 1
-                  , nodeStartByte node
+                  ( fromIntegral $ pointRow    start2D + 1
+                  , fromIntegral $ pointColumn start2D + 1
+                  , fromIntegral $ nodeStartByte node
                   )
               , _rFinish =
-                  ( pointRow    finish2D + 1
-                  , pointColumn finish2D + 1
-                  , nodeEndByte node
+                  ( fromIntegral $ pointRow    finish2D + 1
+                  , fromIntegral $ pointColumn finish2D + 1
+                  , fromIntegral $ nodeEndByte node
                   )
               , _rFile = fp
               }

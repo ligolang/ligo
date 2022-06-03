@@ -48,6 +48,9 @@ let rec is_dup (t : type_expression) =
     (* Test primitives are dup *)
     Typed_address       |
     Mutation            |
+    Tx_rollup_l2_address |
+    Michelson_contract  |
+    Michelson_program   |
     (* Externals are dup *)
     External _
   ); _} ->
@@ -73,8 +76,8 @@ let rec is_dup (t : type_expression) =
   | T_abstraction {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_for_all {type_;ty_binder=_;kind=_} -> is_dup type_
   | T_constant { injection=(
-                     Map              | Big_map              | List            |
-    Map_or_big_map | Set              | Michelson_program    | Michelson_or    |
+                     Map              | Big_map              | List               |
+                     Set              |                        Michelson_or       |
     Michelson_pair | Pvss_key         | Baker_operation      |
     Ticket         |                    Chest_opening_result | Baker_hash);_ }  -> false
   | T_singleton _
@@ -130,7 +133,7 @@ let rec muchuse_of_expr expr : muchuse =
      muchuse_of_expr result
   | E_let_in {let_binder;rhs;let_result;_} ->
      muchuse_union (muchuse_of_expr rhs)
-       (muchuse_of_binder let_binder rhs.type_expression
+       (muchuse_of_binder let_binder.var rhs.type_expression
           (muchuse_of_expr let_result))
   | E_recursive {fun_name;lambda;fun_type} ->
      muchuse_of_binder fun_name fun_type (muchuse_of_lambda fun_type lambda)
@@ -156,9 +159,11 @@ let rec muchuse_of_expr expr : muchuse =
     let name = V.of_input_var ~loc:expr.location @@
       pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
     (M.add name 1 M.empty,[])
+  | E_assign { binder=_; access_path=_; expression } ->
+    muchuse_of_expr expression
 
 and muchuse_of_lambda t {binder; result} =
-  muchuse_of_binder binder t (muchuse_of_expr result)
+  muchuse_of_binder binder.var t (muchuse_of_expr result)
 
 and muchuse_of_cases = function
   | Match_variant x -> muchuse_of_variant x
@@ -190,7 +195,7 @@ and muchuse_of_variant {cases;tv} =
 
 and muchuse_of_record {body;fields;_} =
   let typed_vars = LMap.to_list fields in
-  List.fold_left ~f:(fun (c,m) (v,t) -> muchuse_of_binder v t (c,m))
+  List.fold_left ~f:(fun (c,m) b -> muchuse_of_binder b.var (Option.value_exn b.ascr) (c,m))
     ~init:(muchuse_of_expr body) typed_vars
 
 let rec get_all_declarations (module_name : module_variable) : module_ ->

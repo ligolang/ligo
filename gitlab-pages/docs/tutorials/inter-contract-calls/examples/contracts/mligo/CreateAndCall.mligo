@@ -21,7 +21,7 @@ let create_and_call (st : address list) =
 // no-one is trying to abuse the %callback entrypoint to call
 // other contracts on our behalf.
 let call_counter (addr, n : address * int) =
-  let u = assert (Tezos.sender = Tezos.self_address) in
+  let u = assert (Tezos.get_sender () = Tezos.get_self_address ()) in
   let callee_opt : int contract option =
     Tezos.get_contract_opt addr in
   let callee =

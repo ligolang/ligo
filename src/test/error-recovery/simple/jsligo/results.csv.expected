@@ -23,7 +23,7 @@ PASS,missing_ident_in_type_decl.jsligo,2,2,2,2,0
 PASS,missing_int.jsligo,2,6,6,2,0
 PASS,missing_name_of_argument.jsligo,2,2,2,2,0
 PASS,missing_namespace_kw_in_namespace_decl.jsligo,18,142,24,6,1
-PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,0,0,0,0,0
+PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,20,145,13,4,1
 PASS,missing_par_in_call.jsligo,2,7,3,3,0
 PASS,missing_par_in_if_condition.jsligo,0,0,0,0,1
 PASS,missing_semicolon_before_return_on_same_line.jsligo,3,164,8,6,1
@@ -37,7 +37,7 @@ PASS,switch_with_not_last_default.jsligo,5,20,8,4,1
 PASS,triple_eq_in_if_condition.jsligo,2,17,3,2,0
 PASS,unfinished_code00.jsligo,3,6,6,5,0
 PASS,unfinished_code01.jsligo,2,2,2,2,0
-PASS,unfinished_code02.jsligo,18,168,62,47,2
+PASS,unfinished_code02.jsligo,18,174,64,49,2
 PASS,unfinished_code03.jsligo,4,13,11,12,2
 PASS,unfinished_code04.jsligo,2,25,23,23,0
 PASS,unfinished_code05.jsligo,2,8,8,5,0

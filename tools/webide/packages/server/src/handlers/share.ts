@@ -15,23 +15,28 @@ interface ShareBody {
   };
   compile: {
     entrypoint: string;
+    protocol: string;
   };
   dryRun: {
     entrypoint: string;
     parameters: string;
     storage: string;
+    protocol: string;
   };
   deploy: {
     entrypoint: string;
     storage: string;
     useTezBridge?: boolean;
+    protocol: string;
   };
   evaluateValue: {
     entrypoint: string;
+    protocol: string;
   };
   evaluateFunction: {
     entrypoint: string;
     parameters: string;
+    protocol: string;
   };
   generateDeployScript: {
     tool: string;
@@ -39,6 +44,7 @@ interface ShareBody {
     storage: string;
     originationAccount: string;
     burnCap: number;
+    protocol: string;
   };
 }
 
@@ -55,24 +61,29 @@ const validateRequest = (body: any): { value: ShareBody; error?: any } => {
         .required(),
       compile: joi.object({
         entrypoint: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       dryRun: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow(''),
         storage: joi.any().allow(''),
+        protocol: joi.string().required(),
       }),
       deploy: joi.object({
         entrypoint: joi.string().allow(''),
         storage: joi.any().allow(''),
         network: joi.string().allow(''),
         signer: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       evaluateValue: joi.object({
         entrypoint: joi.string().allow(''),
+        protocol: joi.string().required(),
       }),
       evaluateFunction: joi.object({
         entrypoint: joi.string().allow(''),
         parameters: joi.any().allow(''),
+        protocol: joi.string().required(),
       }),
       generateDeployScript: joi.object({
         tool: joi.string().allow(''),
@@ -80,6 +91,7 @@ const validateRequest = (body: any): { value: ShareBody; error?: any } => {
         storage: joi.any().allow(''),
         originationAccount: joi.string().allow(''),
         burnCap: joi.number().allow(''),
+        protocol: joi.string().required(),
       }),
     })
     .validate(body);

@@ -56,6 +56,10 @@ module Ne = struct
   let map f (hd, tl : _ t) = f hd, List.map ~f tl
   let fold_left ~f ~init (hd, tl : _ t) = List.fold_left ~f ~init:(f init hd) tl
   let fold_right ~f ~init (hd, tl : _ t) = f hd (List.fold_right ~f ~init tl)
+  let fold_map ~f ~init (hd, tl : _ t) =
+    let init,hd = f init hd in
+    let init,tl = (List.fold_map ~f ~init tl) in
+    init,(hd,tl)
   let hd_map : _ -> 'a t -> 'a t = fun f (hd , tl) -> (f hd , tl)
   let mapi f (hd, tl : _ t) =
     let lst = List.mapi ~f (hd::tl) in
@@ -73,5 +77,20 @@ module Ne = struct
     match cmp hd hd' with
       0 -> compare cmp tl tl'
     | c -> c
-
+  
+  let length = fun (_,tl) -> 1 + List.length tl
+  
+  (* [head_permute] [lst] : if lst == [A ; B ; C] returns [A ; B ; C] [B ; C ; A] [C ; A ; B] *)
+  let head_permute : 'a t -> 'a t t = fun lst ->
+    let rec aux (acc: 'a t t) (lst: 'a t) =
+      if length acc = length lst then acc
+      else (
+        let (hd,tl) = lst in
+        (* match lst with *)
+        (* | [] -> raise (Failure "List.head_permute") *)
+        (* | hd::tl -> *)
+          let p = append (of_list tl) (singleton hd) in aux (cons p acc) p
+      )
+    in
+    rev @@ aux (singleton lst) lst
 end

@@ -51,6 +51,7 @@ module Print =
 
 (* Finally... *)
 
+(* TODO: this run in dune build, make it run with dune runtest instead *)
 module Main = ParserMainGen.Make
                 (File)
                 (Comments)
@@ -63,5 +64,10 @@ module Main = ParserMainGen.Make
                 (Pretty)
                 (Parser_CLI)
 
-let () = Main.check_cli ()
-let () = Main.parse ()
+module None_warning = struct
+   let add_warning = fun _ -> ()
+end
+
+module Main_test = Main(None_warning)
+let () = Main_test.check_cli ()
+let () = Main_test.parse ()

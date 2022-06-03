@@ -16,13 +16,16 @@ import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
+import { extensions } from './common'
+
 let client: LanguageClient;
-let optionButton: vscode.StatusBarItem;
+let ligoOptionButton: vscode.StatusBarItem;
+let deployOptionButton: vscode.StatusBarItem;
 
 // Hides compilation button in case current active text editor is not .(m/re)ligo file
 // If currently active text window is not an opened file (terminal, explorer, etc.)
 // button will remain in it's previous state
-function updateLigoButton() {
+function updateLigoButton(button: vscode.StatusBarItem) {
   const path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
 
@@ -31,11 +34,37 @@ function updateLigoButton() {
     return;
   }
 
-  if (ext === '.ligo' || ext === '.mligo' || ext === '.religo') {
-    optionButton.show();
+  if (extensions.includes(ext)) {
+    button.show();
   } else {
-    optionButton.hide();
+    button.hide();
   }
+}
+
+/* eslint-disable no-param-reassign */
+function initializeStatusBarButton(
+  button: vscode.StatusBarItem,
+  context: vscode.ExtensionContext,
+  command: string,
+  title: string,
+  tooltip: string,
+) {
+  button.command = command;
+  button.text = title;
+  button.tooltip = tooltip;
+  context.subscriptions.push(button);
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(
+      () => updateLigoButton(button),
+    ),
+  );
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection(
+      () => updateLigoButton(button),
+    ),
+  );
+  updateLigoButton(button);
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -51,21 +80,12 @@ export async function activate(context: vscode.ExtensionContext) {
     },
   };
 
-  // This section adds 'LIGO Options' status bar button,
-  // which allows to execute different ligo commands from inside the extension.
-
+  // Initializes buttons, and command state
   initializeExtensionState();
-
-  const optionCommandId = 'ligo.chooseOption';
-  optionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
-  optionButton.command = optionCommandId;
-  optionButton.text = 'LIGO Options';
-  optionButton.tooltip = 'Display LIGO options';
-  context.subscriptions.push(optionButton);
-
-  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(updateLigoButton));
-  context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(updateLigoButton));
-  updateLigoButton();
+  ligoOptionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+  deployOptionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+  initializeStatusBarButton(ligoOptionButton, context, 'ligo.chooseOption', 'LIGO Options', 'Display LIGO options');
+  initializeStatusBarButton(deployOptionButton, context, 'tezos.chooseOption', 'Deploy LIGO', 'Deploy smart-contract');
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
@@ -74,6 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
       { scheme: 'file', language: 'ligo' },
       { scheme: 'file', language: 'mligo' },
       { scheme: 'file', language: 'religo' },
+      { scheme: 'file', language: 'jsligo' },
     ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace

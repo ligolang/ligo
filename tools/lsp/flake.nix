@@ -27,15 +27,15 @@
                 tree-sitter-prebuilt-tarballs = {
                   x86_64-linux = final.fetchurl {
                     url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.19.5/tree-sitter-linux-x64.gz";
+                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.20.6/tree-sitter-linux-x64.gz";
                     sha256 =
-                      "018b2inqf14gmmpfvh3g732ayvdj0bily5i5mnmibhrjpypxx1p2";
+                      "14c4070rxznidcy010i2qzv9hgi764mka8wh185prcicyh7il07p";
                   };
                   x86_64-darwin = final.fetchurl {
                     url =
-                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.19.5/tree-sitter-macos-x64.gz";
+                      "https://github.com/tree-sitter/tree-sitter/releases/download/v0.20.6/tree-sitter-macos-x64.gz";
                     sha256 =
-                      "0cmrvnlkjvia9c0aj0janqndc17yzw6qlhs35kbh3rrg6nc8sksj";
+                      "07pzp2hg6ldxq1mri5s5mb3iy59vh109g2m268hlxv97pcn8469p";
                   };
                 };
                 tree-sitter-prebuilt = builtins.mapAttrs (system: tarball:
@@ -94,7 +94,7 @@
                    tree-sitter test
                    cd ..
                  '';
-                 dialects = ["camligo" "reasonligo" "pascaligo"];
+                 dialects = ["camligo" "reasonligo" "pascaligo" "jsligo"];
              in pkgs.lib.strings.concatStrings (map testDialect dialects)
                 + "touch $out";
         };

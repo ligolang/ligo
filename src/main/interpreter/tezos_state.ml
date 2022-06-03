@@ -1,13 +1,13 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_012_Psithaca_test_helpers
+module Tezos_alpha_test_helpers = Tezos_013_PtJakart_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_012_Psithaca
-module Tezos_raw_protocol = Tezos_raw_protocol_012_Psithaca
-module Tezos_protocol_parameters = Tezos_protocol_012_Psithaca_parameters
+module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
 
 type r = Errors.interpreter_error raise
 
@@ -41,7 +41,7 @@ and transduced = {
 }
 and internals = {
   protocol_version : Environment.Protocols.t ;
-  baker : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* baker to be used for the next transfer/origination *)
+  baker_policy : Tezos_alpha_test_helpers.Block.baker_policy ; (* baker to be used for the next transfer/origination *)
   source : Memory_proto_alpha.Protocol.Alpha_context.Contract.t ; (* source to be used for the next transfer/origination *)
   next_bootstrapped_contracts : bootstrap_contract list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
   next_baker_accounts : baker_account list ; (* next contracts to be injected as boostrap accounts in the next state reset *)
@@ -60,7 +60,7 @@ let get_balance ~raise ~loc ~calltrace (ctxt :context) addr =
     Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 let contract_exists : context ->  Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> bool = fun ctxt contract ->
   let info = Lwt_main.run @@
-    Tezos_raw_protocol.Alpha_services.Contract.info Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
+    Tezos_raw_protocol.Alpha_services.Contract.info ~normalize_types:true Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw contract in
   Trace.tz_result_to_bool info
 
 let get_voting_power ~raise ~loc ~calltrace (ctxt :context) key_hash =
@@ -174,13 +174,20 @@ let get_alpha_context ~raise ctxt =
         ctxt.raw.context in
   alpha_context
 
-let unwrap_baker ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_crypto.Signature.Public_key_hash.t  =
+let unwrap_baker ~raise ~loc ~calltrace : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_crypto.Signature.Public_key_hash.t  =
   fun x ->
-    Trace.trace_option ~raise (generic_error loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
+    Trace.trace_option ~raise (generic_error ~calltrace loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
 
-let unwrap_source ~raise ~loc : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
+let baker_policy ~raise ~loc ~calltrace baker_policy =
+  let open Tezos_alpha_test_helpers.Block in
+  match baker_policy with
+  | `By_round i -> By_round i
+  | `By_account a -> By_account (unwrap_baker ~raise ~loc ~calltrace a)
+  | `Excluding l -> Excluding (List.map ~f:(unwrap_baker ~raise ~loc ~calltrace) l)
+
+let unwrap_source ~raise ~loc ~calltrace : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
   fun x ->
-    let _ = Trace.trace_option ~raise (generic_error loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
+    let _ = Trace.trace_option ~raise (generic_error ~calltrace loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
     x
 let implicit_account ~raise ~loc : string -> Tezos_protocol.Protocol.Alpha_context.Contract.t  =
   fun x ->
@@ -201,9 +208,9 @@ let extract_origination_from_result :
   let open Tezos_raw_protocol in
   match x with
   | Manager_operation_result { operation_result = Applied (Transaction_result _) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_operation_result) =
+    let aux (x:Apply_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
+      | Internal_manager_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
       | _ -> []
     in
     List.concat @@ List.map ~f:aux internal_operation_results
@@ -218,11 +225,11 @@ let extract_lazy_storage_diff_from_result :
   fun x ->
   let open Tezos_raw_protocol in
   match x with
-  | Manager_operation_result { operation_result = Applied (Transaction_result y) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_operation_result) =
+  | Manager_operation_result { operation_result = Applied (Transaction_result (Transaction_to_contract_result y)) ; internal_operation_results ; balance_updates=_ } ->
+    let aux (x:Apply_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
-      | Internal_operation_result ({source = _ ; _},Applied (Transaction_result x)) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (Transaction_result (Transaction_to_contract_result x))) -> [x.lazy_storage_diff]
       | _ -> []
     in
     (List.concat @@ List.map ~f:aux internal_operation_results) @ [y.lazy_storage_diff]
@@ -354,7 +361,8 @@ let get_single_tx_result (x : Tezos_raw_protocol.Apply_results.packed_operation_
   | Operation_metadata ({contents = Single_result y} : _ Tezos_raw_protocol.Apply_results.operation_metadata)  -> (
     match y with
     | Manager_operation_result { operation_result = Applied (
-          Transaction_result { consumed_gas ; _ }
+          Transaction_result (Transaction_to_contract_result { consumed_gas ; _ })
+        | Transaction_result (Transaction_to_tx_rollup_result { consumed_gas ; _ })
         | Origination_result { consumed_gas ; _ }
         | Delegation_result { consumed_gas ; _ }
         | Register_global_constant_result { consumed_gas ; _ } )
@@ -376,11 +384,10 @@ let get_consumed_gas x =
 let bake_ops : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> (Tezos_alpha_test_helpers.Incremental.t -> tezos_op) list -> add_operation_outcome =
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
-    let baker = unwrap_baker ~raise ~loc ctxt.internals.baker in
     (* First check if baker is going to be successfully selected *)
-    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:(By_account baker) ctxt.raw) in
+    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error ~calltrace loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:ctxt.internals.baker_policy ctxt.raw) in
     let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
-                 Incremental.begin_construction ~policy:Block.(By_account baker) ctxt.raw in
+                 Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw in
     let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
     match List.fold_result ~f:aux ~init:incr operation with
     | Ok incr ->
@@ -397,7 +404,7 @@ let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> te
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
   let open Tezos_alpha_test_helpers in
-  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end n ctxt.raw in
+  let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Block.bake_until_n_cycle_end ~policy:ctxt.internals.baker_policy n ctxt.raw in
   { ctxt with raw }
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
@@ -462,7 +469,7 @@ let new_account : unit -> string * Signature.public_key = fun () ->
 
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
-  let source = unwrap_source ~raise ~loc ctxt.internals.source in
+  let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
   let parameters = ligo_to_canonical ~raise ~loc ~calltrace parameter in
   let operation : Tezos_raw_protocol.Alpha_context.packed_operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     (* TODO: fee? *)
@@ -477,12 +484,12 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let contract = trace_option ~raise (corner_case ()) @@ get_michelson_contract contract in
     let { code = storage ; ast_ty = ligo_ty ; _ } = trace_option ~raise (corner_case ()) @@ get_michelson_expr storage in
     let open Tezos_alpha_test_helpers in
-    let source = unwrap_source ~raise ~loc ctxt.internals.source in
+    let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
     let amt = try Some (Test_tez.of_mutez_exn (Int64.of_int (Z.to_int amt))) with _ -> None in
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
+      Op.contract_origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success (ctxt,_) ->
@@ -497,7 +504,11 @@ let get_bootstrapped_contract ~raise (n : int) =
       0 -> e
     | k -> foldnat s (s e) (k - 1) in
   let open Tezos_raw_protocol.Contract_repr in
-  let origination_nonce = foldnat incr_origination_nonce (initial_origination_nonce (Tezos_crypto.Operation_hash.hash_bytes [Bytes.of_string "Un festival de GADT."])) n in
+  let origination_nonce =
+    let open Memory_proto_alpha.Protocol.Origination_nonce in
+    let initial = initial (Tezos_crypto.Operation_hash.hash_bytes [Bytes.of_string "Un festival de GADT."]) in
+    foldnat incr initial n
+  in
   let contract = to_b58check (originated_contract origination_nonce) in
   let contract = Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check contract in
   Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error Location.generated "Error parsing address") @@ contract
@@ -583,8 +594,9 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   let init_raw_ctxt = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r in
   match acclst with
   | baker::source::_ ->
+    let baker = unwrap_baker ~raise ~loc ~calltrace baker in
     let transduced = { last_originations = [] ; bigmaps= [] } in
-    let internals = { protocol_version ; baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
+    let internals = { protocol_version ; baker_policy = By_account baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->
     raise.raise (bootstrap_not_enough loc)

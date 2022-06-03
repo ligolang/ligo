@@ -27,7 +27,7 @@ module AST.Scope.Common
   , contractTree
   , contractMsgs
 
-  , addLigoErrToMsg
+  , addLigoErrsToMsg
 
   , cFile
   , cTree
@@ -100,7 +100,7 @@ data MarkerInfo = MarkerInfo
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.
-  , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
+  , _cMsgs :: [Message] -- ^ Messages produced by this contract.
   } deriving stock (Show)
     deriving Pretty via ShowPP (ParsedContract info)
 
@@ -123,19 +123,23 @@ contractFile (FindFilepath pc) = srcPath $ _cFile pc
 contractTree :: FindFilepath info -> info
 contractTree (FindFilepath pc) = _cTree pc
 
-contractMsgs :: FindFilepath info -> [Msg]
+contractMsgs :: FindFilepath info -> [Message]
 contractMsgs (FindFilepath pc) = _cMsgs pc
 
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
-addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
-addLigoErrToMsg err = getContract . cMsgs %~ (err :)
+addLigoErrsToMsg :: [Message] -> FindFilepath info -> FindFilepath info
+addLigoErrsToMsg errs = getContract . cMsgs %~ (errs <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
-    :: ProgressCallback m
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ProgressCallback m
+    -- ^ A callback allowing reporting of the progress to the user.
     -> Includes ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
     -> m (Includes (FindFilepath ScopeForest))
 
 data Level = TermLevel | TypeLevel
@@ -323,12 +327,13 @@ addLocalScopes tree forest =
 addScopes
   :: forall impl m
    . HasScopeForest impl m
-  => ProgressCallback m
+  => TempSettings
+  -> ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
-addScopes reportProgress graph = do
+addScopes tempSettings reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl reportProgress graph
+  forestGraph <- scopeForest @impl tempSettings reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially
@@ -355,7 +360,7 @@ addScopes reportProgress graph = do
 lookupContract :: FilePath -> Includes (FindFilepath a) -> Maybe (FindFilepath a)
 lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
 
-pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
+pattern FindContract :: Source -> info -> [Message] -> FindFilepath info
 pattern FindContract f t m = FindFilepath (ParsedContract f t m)
 {-# COMPLETE FindContract #-}
 

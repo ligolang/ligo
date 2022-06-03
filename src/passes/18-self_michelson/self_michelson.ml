@@ -821,13 +821,14 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
                    ] in
   let optimizers = List.map ~f:on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
+  let x = opt_tail_fail x in
   let x = opt_combine_drops x in
   let x = opt_strip_annots x in
   let x = use_lambda_instr x in
   x
-
-let rec optimize_with_types ~raise ~typer_oracle : Environment.Protocols.t -> 'l michelson -> 'l michelson =
-  fun proto contract ->
+(* :(_, _) node -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map) *)
+let rec optimize_with_types : type l. raise:_ -> typer_oracle:_ -> Environment.Protocols.t -> l michelson -> l michelson =
+  fun ~raise ~typer_oracle proto contract ->
   let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
                                    Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
   let canonical, locs = Tezos_micheline.Micheline.extract_locations contract in
@@ -838,7 +839,7 @@ let rec optimize_with_types ~raise ~typer_oracle : Environment.Protocols.t -> 'l
   match canonical with
     | Seq (l, parameter :: storage :: code :: rest) ->
        let map = typer_oracle canonical in
-       let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun (c, _) -> node_string_of_canonical c) l)) map in
+       let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun c -> node_string_of_canonical c) l)) map in
        let code = Tezos_micheline.Micheline.map_node (fun l -> l)
                     (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) code in
        let pre_type l = List.Assoc.find_exn type_map ~equal:Int.equal l in

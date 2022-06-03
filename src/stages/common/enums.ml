@@ -1,5 +1,5 @@
 type z = Z.t [@@deriving ord]
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord, hash]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
@@ -15,7 +15,10 @@ let bytes_to_yojson b = `String (Bytes.to_string b)
 
 type layout =
   | L_comb
-  | L_tree
+  | L_tree [@@deriving hash]
+
+let hash_fold_bytes st b = Hash.fold_string st (Bytes.to_string b)
+let hash_fold_z st z = Hash.fold_int64 st (Z.to_int64 z)
 
 type literal =
   | Literal_unit
@@ -36,7 +39,7 @@ type literal =
   | Literal_bls12_381_fr of bytes
   | Literal_chest of bytes
   | Literal_chest_key of bytes
-[@@deriving yojson, ord]
+[@@deriving yojson, ord, hash]
 
 let literal_to_enum = function
   | Literal_unit        ->  1
@@ -59,24 +62,13 @@ let literal_to_enum = function
   | Literal_chest_key _ -> 18
 
 type constant' =
-  | C_INT
   | C_UNIT
-  | C_NEVER
   | C_NIL
-  | C_NOW
-  | C_IS_NAT
   | C_SOME
   | C_NONE
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
-  | C_ASSERTION
-  | C_ASSERTION_WITH_ERROR
-  | C_ASSERT_SOME
-  | C_ASSERT_SOME_WITH_ERROR
-  | C_ASSERT_NONE
-  | C_ASSERT_NONE_WITH_ERROR
   | C_ASSERT_INFERRED
-  | C_FAILWITH
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -88,11 +80,9 @@ type constant' =
   | C_FOLD_RIGHT
   (* MATH *)
   | C_NEG
-  | C_ABS
   | C_ADD
   | C_SUB
   | C_MUL
-  | C_EDIV
   | C_DIV
   | C_MOD
   (* LOGIC *)
@@ -110,10 +100,7 @@ type constant' =
   | C_LE
   | C_GE
   (* Bytes/ String *)
-  | C_SIZE
   | C_CONCAT
-  | C_SLICE
-  | C_BYTES_PACK
   | C_BYTES_UNPACK
   | C_CONS
   (* Pair *)
@@ -142,8 +129,6 @@ type constant' =
   | C_LIST_FOLD
   | C_LIST_FOLD_LEFT
   | C_LIST_FOLD_RIGHT
-  | C_LIST_HEAD_OPT
-  | C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY
@@ -156,7 +141,6 @@ type constant' =
   | C_MAP_ITER
   | C_MAP_MAP
   | C_MAP_FOLD
-  | C_MAP_MEM
   | C_MAP_FIND
   | C_MAP_FIND_OPT
   | C_MAP_GET_AND_UPDATE
@@ -165,13 +149,6 @@ type constant' =
   | C_BIG_MAP_EMPTY
   | C_BIG_MAP_LITERAL
   | C_BIG_MAP_GET_AND_UPDATE
-  (* Crypto *)
-  | C_SHA256
-  | C_SHA512
-  | C_BLAKE2b
-  | C_HASH_KEY
-  | C_CHECK_SIGNATURE
-  | C_CHAIN_ID
   (* Blockchain *)
   | C_CALL
   | C_CONTRACT
@@ -179,10 +156,6 @@ type constant' =
   | C_CONTRACT_WITH_ERROR
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT
-  | C_AMOUNT
-  | C_BALANCE
-  | C_SOURCE
-  | C_SENDER
   | C_ADDRESS
   | C_SELF
   | C_SELF_ADDRESS
@@ -192,35 +165,30 @@ type constant' =
   | C_OPEN_CHEST
   | C_VIEW
   (* Tests - ligo interpreter only *)
+  | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
-  | C_TEST_GET_STORAGE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
   | C_TEST_GET_BALANCE [@only_interpreter]
   | C_TEST_SET_SOURCE [@only_interpreter]
   | C_TEST_SET_BAKER [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
-  | C_TEST_MICHELSON_EQUAL [@only_interpreter]
   | C_TEST_GET_NTH_BS [@only_interpreter]
   | C_TEST_LOG [@only_interpreter]
   | C_TEST_STATE_RESET [@only_interpreter]
   | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
-  | C_TEST_COMPILE_META_VALUE [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
   | C_TEST_MUTATION_TEST [@only_interpreter]
   | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
   | C_TEST_SAVE_MUTATION [@only_interpreter]
   | C_TEST_RUN [@only_interpreter]
-  | C_TEST_EVAL [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
   | C_TEST_DECOMPILE [@only_interpreter]
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
-  | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]
@@ -240,23 +208,13 @@ type constant' =
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
+  | C_TEST_FAILWITH [@only_interpreter]
   (* New with EDO*)
-  | C_SHA3
-  | C_KECCAK
-  | C_LEVEL
-  | C_VOTING_POWER
-  | C_TOTAL_VOTING_POWER
-  | C_TICKET
-  | C_READ_TICKET
-  | C_SPLIT_TICKET
-  | C_JOIN_TICKET
-  | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
-  (* New with Ithaca *)
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ
   | C_OPTION_MAP

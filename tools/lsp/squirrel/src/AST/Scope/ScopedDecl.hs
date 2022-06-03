@@ -101,6 +101,7 @@ data Type
   | AliasType Text
   | ArrowType Type Type
   | VariableType TypeVariable
+  | ParenType (TypeDeclSpecifics Type)
   deriving stock (Eq, Show)
 
 data TypeField = TypeField
@@ -195,6 +196,7 @@ instance IsLIGO Type where
   toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))
   toLIGO (ArrowType left right) = node (LIGO.TArrow (toLIGO left) (toLIGO right))
   toLIGO (VariableType var) = node (LIGO.TVariable (toLIGO var))
+  toLIGO (ParenType typ) = node (LIGO.TParen (toLIGO typ))
 
 instance IsLIGO TypeParams where
   toLIGO (TypeParam t) = node (LIGO.TypeParam (toLIGO t))

@@ -10,9 +10,9 @@ module Test.Common.Capabilities.CodeAction.ExtractTypeAlias
 import Control.Lens
 import Data.HashMap.Strict qualified as HM
 import Data.Text qualified as T
-import Data.Word (Word32)
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -30,7 +30,7 @@ data TestInfo = TestInfo
   , tiExpectedEdits :: [(Range, String)] -- [(range, newText)]
   }
 
-mkr :: Word32 -> Word32 -> Word32 -> Word32 -> Range
+mkr :: J.UInt -> J.UInt -> J.UInt -> J.UInt -> Range
 mkr sl sc rl rc = Range (sl, sc, 0) (rl, rc, 0) ""
 
 testInfos :: [TestInfo]
@@ -92,7 +92,7 @@ extractTextEdits action = unwrapEdits edits
 
 makeTest :: forall parser. ScopeTester parser => TestInfo -> Assertion
 makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
-  let contractPath = contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
+  contractPath <- makeAbsolute $ contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
   tree <- readContractWithScopes @parser contractPath
   let [action] = typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
   let resultingEdits = extractTextEdits action

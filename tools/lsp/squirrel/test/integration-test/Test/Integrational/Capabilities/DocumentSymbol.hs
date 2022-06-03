@@ -3,6 +3,7 @@ module Test.Integrational.Capabilities.DocumentSymbol
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
   , unit_document_symbols_example_let_religo
+  , unit_document_symbols_example_let_jsligo
   ) where
 
 import AST.Scope (Standard)
@@ -29,3 +30,7 @@ unit_document_symbols_example_let_religo :: Assertion
 unit_document_symbols_example_let_religo = do
   documentSymbolsExampleLetReligoDriver @Standard
   --documentSymbolsExampleLetReligoDriver @FromCompiler  -- FIXME (LIGO-208)
+
+unit_document_symbols_example_let_jsligo :: Assertion
+unit_document_symbols_example_let_jsligo = do
+  documentSymbolsExampleLetJsligoDriver @Standard

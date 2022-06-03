@@ -64,16 +64,30 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ] ;
-  [%expect {|
+  [%expect{|
+    File "../../test/contracts/unused_recursion.jsligo", line 3, characters 4-10:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 31, characters 4-8:
+     30 |
+     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     32 |   return [
+
+    Toplevel let declaration are silently change to const declaration.
+
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
-      code { PUSH int 0 ;
+      code { CDR ;
+             PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
              SWAP ;
-             CDR ;
              CDR ;
              SWAP ;
              PAIR ;
@@ -82,16 +96,30 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.jsligo" ; "--warn-unused-rec" ] ;
-  [%expect {|
+  [%expect{|
+    File "../../test/contracts/unused_recursion.jsligo", line 3, characters 4-10:
+      2 |
+      3 | let coucou = (storage : t) : t => {
+      4 |   let number = 2;
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 31, characters 4-8:
+     30 |
+     31 | let main = ([_, storage] : [unit, t]) : [list<operation>, t] => {
+     32 |   return [
+
+    Toplevel let declaration are silently change to const declaration.
+
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
-      code { PUSH int 0 ;
+      code { CDR ;
+             PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
              SWAP ;
-             CDR ;
              CDR ;
              SWAP ;
              PAIR ;

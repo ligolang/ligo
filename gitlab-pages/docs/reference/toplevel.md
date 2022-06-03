@@ -446,16 +446,16 @@ A helper to create a unit.
 
 <a name="failwith"></a>
 <SyntaxTitle syntax="pascaligo">
-val failwith&lt;a&gt; : a -> unit
+val failwith&lt;a&gt; : a -> b
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val failwith : 'a -> unit
+val failwith : 'a -> 'b
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let failwith: 'a => unit
+let failwith: 'a => 'b
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let failwith: (message: &apos;a) => unit
+let failwith: (message: &apos;a) => &apos;b
 </SyntaxTitle>
 
 Cause the contract to fail with an error message or integer. Other types are

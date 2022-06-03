@@ -23,6 +23,7 @@ type tools = {
 
 type test_framework = {
   steps : int ;
+  cli_expr_inj : string option ;
 }
 
 type middle_end = {
@@ -61,13 +62,13 @@ let warn_unused_rec ~syntax should_warn =
   | Some PascaLIGO _
   | None -> should_warn
 
-let make : 
+let make :
   raw_options : raw ->
   ?syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
   ?has_env_comments : bool ->
   unit -> t =
-  fun 
+  fun
     ~raw_options
     ?syntax
     ?(protocol_version = Protocols.current)
@@ -85,6 +86,7 @@ let make :
       } in
       let test_framework = {
         steps = raw_options.steps;
+        cli_expr_inj = raw_options.cli_expr_inj;
       } in
       let middle_end = {
         test = raw_options.test;
@@ -101,9 +103,9 @@ let make :
         constants = raw_options.constants ;
         file_constants = raw_options.file_constants ;
         has_env_comments = has_env_comments ;
-      } 
+      }
       in
-      { 
+      {
         frontend ;
         tools ;
         test_framework ;
@@ -111,7 +113,7 @@ let make :
         backend ;
       }
 
-let set_init_env opts init_env = 
+let set_init_env opts init_env =
   { opts with middle_end = { opts.middle_end with init_env } }
 
 let set_test_flag opts test =

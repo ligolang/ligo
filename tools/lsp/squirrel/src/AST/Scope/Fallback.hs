@@ -54,12 +54,12 @@ data TreeDoesNotContainName =
     Text -- ^ variable name
   deriving stock (Show)
 
-toMsg :: TreeDoesNotContainName -> Msg
+toMsg :: TreeDoesNotContainName -> Message
 toMsg (TreeDoesNotContainName tree range name) =
-  (range, Error [i|Expected to find a #{name}, but got `#{tree}`|] [])
+  Message [i|Expected to find a #{name}, but got `#{tree}`|] SeverityError range
 
 instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
-  scopeForest reportProgress (Includes graph) = Includes <$> do
+  scopeForest _ reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
     -- 'StateT'. It's best to avoid using this class for stateful monads.

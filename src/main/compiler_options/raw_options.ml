@@ -19,6 +19,7 @@ type raw = {
   test : bool ;
   steps : int ;
   generator : string ;
+  cli_expr_inj : string option ;
   
   (* Backend *)
   protocol_version : string ;
@@ -54,6 +55,7 @@ module Default_options = struct
   let test = false
   let steps = 1000000
   let generator = "random"
+  let cli_expr_inj = None
   
   (* Backend *)
   let protocol_version = "current"
@@ -77,6 +79,7 @@ let make
   ?(test = Default_options.test)
   ?(steps = Default_options.steps)
   ?(generator = Default_options.generator)
+  ?(cli_expr_inj = Default_options.cli_expr_inj)
   ?(protocol_version = Default_options.protocol_version)
   ?(disable_michelson_typechecking = Default_options.disable_michelson_typechecking)
   ?(enable_typed_opt = Default_options.enable_typed_opt)
@@ -106,6 +109,7 @@ let make
   test ;
   steps ;
   generator ;
+  cli_expr_inj ;
   
   (* Backend *)
   protocol_version ;
@@ -139,6 +143,7 @@ let default =
   test = Default_options.test ;
   steps = Default_options.steps ;
   generator = Default_options.generator ;
+  cli_expr_inj = Default_options.cli_expr_inj ;
   
   (* Backend *)
   protocol_version = Default_options.protocol_version ;

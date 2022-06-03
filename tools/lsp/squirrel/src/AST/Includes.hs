@@ -14,10 +14,9 @@ module AST.Includes
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
-import Control.Arrow (first)
 import Control.Lens (Lens', _1, to, view, (&), (+~), (-~), (.~), (^.))
 import Control.Monad (forM, join, when)
-import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.RWS.Strict (RWS, RWST, execRWS, execRWST, gets, modify, tell)
 import Data.Bifunctor (bimap)
 import Data.Bool (bool)
@@ -31,8 +30,8 @@ import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Word (Word32)
 import Duplo.Tree (Cofree ((:<)), fastMake)
+import Language.LSP.Types qualified as J
 import System.FilePath ((</>), takeDirectory)
 import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
@@ -46,7 +45,7 @@ import AST.Scope.Fallback (loopM, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
 
 import Parser
-  ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
+  ( Info, LineMarker (..), LineMarkerType (..), Message (..), ParsedInfo, emptyParsedInfo
   , parseLineMarkerText
   )
 import ParseTree (Source (..))
@@ -69,9 +68,8 @@ getMarkers ligo = toList $ snd $ execRWS (loopM_ collectMarkers ligo) () ()
     collectMarkers (info :< _) = for_ (getElem @[LineMarker] info) (tell . pure)
 
 -- | Extracts all file paths mentioned in line markers.
-extractIncludes :: forall m. (MonadIO m, MonadFail m) => Source -> m [LineMarker]
-extractIncludes src = do
-  let contents = srcText src
+extractIncludes :: forall m. MonadFail m => Text -> m [LineMarker]
+extractIncludes contents = do
   regex :: Regex <- makeRegexM source
   let
     matches = getAllTextMatches . match regex <$> Text.lines contents
@@ -93,8 +91,8 @@ extractIncludedFiles'
   => Bool  -- ^ Whether to only extract directly included files ('True') or all of them ('False').
   -> Source  -- ^ The contract to scan for includes.
   -> m (DList (FilePath, FilePath))
-extractIncludedFiles' directIncludes file =
-  fmap snd . getMarkerInfos directIncludes (takeDirectory $ srcPath file) =<< extractIncludes file
+extractIncludedFiles' directIncludes (Source file contents) =
+  fmap snd . getMarkerInfos directIncludes (takeDirectory file) =<< extractIncludes contents
 
 -- | Given a list of contracts, builds a graph that represents how they are
 -- included.
@@ -194,7 +192,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
   let
     -- We still want RawContract to start at line 1:
     ligo' = bool (modElem (startLine +~ 1) info :< tree) (info :< tree) (IntMap.null markerInfos)
-    msgs' = fmap (first (adjustRange markerInfos)) msgs
+    msgs' = map (\msg -> msg {mRange = adjustRange markerInfos (mRange msg)}) msgs
   pure (FindContract file (SomeLIGO dialect ligo') msgs', edges)
   where
     pwd :: FilePath
@@ -220,7 +218,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
         prev = IntMap.lookupLE (range ^. startLine . to fromIntegral) markers
         range = getRange i
 
-    adjustSide :: Lens' Range (Word32, Word32, Word32)
+    adjustSide :: Lens' Range (J.UInt, J.UInt, J.UInt)
                -> IntMap MarkerInfo
                -> Range
                -> Range
