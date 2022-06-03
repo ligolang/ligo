@@ -145,6 +145,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_PUSH_CONTEXT
   | C_TEST_POP_CONTEXT
   | C_TEST_FAILWITH
+  | C_TEST_READ_CONTRACT_FROM_FILE
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

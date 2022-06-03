@@ -27,6 +27,21 @@ type michelson_program
 A type for code that is compiled to Michelson.
 
 <SyntaxTitle syntax="pascaligo">
+type michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type michelson_contract
+</SyntaxTitle>
+
+A type for Michelson compiled contracts.
+
+<SyntaxTitle syntax="pascaligo">
 type test_exec_error_balance_too_low = record [ contract_too_low : address ; contract_balance : tez ; spend_request : tez ]
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -183,19 +198,19 @@ the prefix "%", but if passed a string starting with "%", it will be
 removed (and a warning emitted).
 
 <SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_contract * int
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_program * int
+val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_contract * int
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_program, int)
+let originate_from_file : string => string => list(string) => michelson_program => tez => (address, michelson_contract, int)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_program, int]
+let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;, init: michelson_program, balance: tez) => [address, michelson_contract, int]
 </SyntaxTitle>
 
-Originate a contract with a path to the contract file, an entrypoint, an initial storage and an initial balance.
+Originate a contract with a path to the contract file, an entrypoint, and a list of views, together with an initial storage and an initial balance.
 
 <Syntax syntax="pascaligo">
 
@@ -203,7 +218,7 @@ Originate a contract with a path to the contract file, an entrypoint, an initial
 const originated =
   Test.originate_from_file (testme_test, "main", nil : list (string), init_storage, 0tez)
 const addr = originated.0
-const program = originated.1
+const contract = originated.1
 const size = originated.2
 ```
 
@@ -211,7 +226,7 @@ const size = originated.2
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-let addr, program, size =
+let addr, contract, size =
   Test.originate_from_file testme_test "main" ([] : string list) init_storage 0tez
 ...
 ```
@@ -220,32 +235,107 @@ let addr, program, size =
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-let (addr, program, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
+let (addr, contract, size) = Test.originate_from_file(testme_test, "main", ([] : list(string)), init_storage, 0tez);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, program, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
+let [addr, contract, size] = Test.originate_from_file(testme_test, "main", (list([]) : list<string>), init_storage, 0 as tez);
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-val originate &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> storage -> tez -> typed_address (param, storage) * michelson_program * int
+val compile_contract_from_file : string -> string -> list (string) -> michelson_contract
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val originate : ('param * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_program * int)
+val compile_contract_from_file : string -> string -> string list -> michelson_contract
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let originate : (('param, 'storage) -> (list(operation), 'storage)) => 'storage => tez => (typed_address ('param, 'storage), michelson_program, int)
+let compile_contract_from_file : string => string => list(string) => michelson_contract
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_program, int]
+let compile_contract_from_file = (filepath: string, entrypoint: string, views: list&lt;string&gt;) => michelson_contract
+</SyntaxTitle>
+
+Compiles a contract with a path to the contract file, an entrypoint, and a list of views.
+
+<SyntaxTitle syntax="pascaligo">
+val originate &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> storage -> tez -> typed_address (param, storage) * michelson_contract * int
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate : ('param * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate : (('param, 'storage) -> (list(operation), 'storage)) => 'storage => tez => (typed_address ('param, 'storage), michelson_contract, int)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage), init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
 </SyntaxTitle>
 
 Originate a contract with an entrypoint function, initial storage and initial balance.
+
+<SyntaxTitle syntax="pascaligo">
+val compile_contract &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val compile_contract : ('param * 'storage -> operation list * 'storage) -> michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let compile_contract : (('param, 'storage) -> (list(operation), 'storage)) => michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let compile_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, &apos;storage)) => michelson_contract
+</SyntaxTitle>
+
+Compiles a contract from an entrypoint function.
+
+<SyntaxTitle syntax="pascaligo">
+val read_contract_from_file : string -> michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val read_contract_from_file : string -> michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let read_contract_from_file : string => michelson_contract
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let read_contract_from_file = (filepath: string) => michelson_contract
+</SyntaxTitle>
+
+Reads a contract from a `.tz` file.
+
+<SyntaxTitle syntax="pascaligo">
+val originate_contract : michelson_contract -> michelson_program -> tez -> address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_contract : michelson_contract -> michelson_program -> tez -> address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let originate_contract : michelson_contract => michelson_program => tez => address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let originate_contract = (contract: michelson_contract, init: michelson_program, balance: tez) => address
+</SyntaxTitle>
+
+Originate a contract with initial storage and initial balance.
+
+<SyntaxTitle syntax="pascaligo">
+val size : michelson_contract -> int
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val size : michelson_contract -> int
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let size : michelson_contract => int
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let size = (contract: michelson_contract) => int
+</SyntaxTitle>
+
+Measure the size of a contract.
 
 <SyntaxTitle syntax="pascaligo">
 val set_source : address -> unit

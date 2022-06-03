@@ -589,6 +589,13 @@ let%expect_test _ =
              PAIR } } , 230). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
+  [%expect {|
+    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV
+    Everything at the top-level was executed.
+    - test_foo exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
   [%expect {|
     Everything at the top-level was executed.
