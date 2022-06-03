@@ -142,6 +142,110 @@ let is_binary_op op : bool =
 let is_ternary_op op : bool =
   get_arity op |> Option.exists ~f:((=) 3)
 
+let is_injective : string -> bool = function
+ (* stack things *)
+ | "DIP" -> false
+ | "DROP" -> false
+ | "DUP" -> true
+ | "SWAP" -> true
+ | "DIG" -> true
+ | "DUG" -> true
+ (* control *)
+ | "FAILWITH" -> false
+ | "EXEC" -> false
+ | "IF" -> false
+ | "IF_CONS" -> false
+ | "IF_LEFT" -> false
+ | "IF_NONE" -> false
+ | "LOOP" -> false
+ | "MAP" -> false
+ | "ITER" -> false
+ | "LOOP_LEFT" -> false
+ (* internal ops *)
+ | "CREATE_ACCOUNT" -> true
+ | "CREATE_CONTRACT" -> false
+ | "TRANSFER_TOKENS" -> false
+ | "SET_DELEGATE" -> true
+ (* tez arithmetic (can fail) *)
+ | "ADD" -> false
+ | "MUL" -> false
+ | "SUB" -> false (* can fail for tez *)
+ (* etc *)
+ | "CONCAT" -> false (* sometimes 1, sometimes 2 :( *)
+ | "CAST" -> false
+ | "RENAME" -> true
+ (* stuff *)
+ | "PACK" -> false
+ | "UNPACK" -> true
+ | "BLAKE2B" -> true
+ | "SHA256" -> true
+ | "SHA512" -> true
+ | "ABS" -> true
+ | "AMOUNT" -> true
+ | "AND" -> false
+ | "BALANCE" -> true
+ | "CAR" -> false
+ | "CDR" -> false
+ | "CHECK_SIGNATURE" -> true
+ | "COMPARE" -> false
+ | "CONS" -> true
+ | "IMPLICIT_ACCOUNT" -> true
+ | "EDIV" -> false
+ | "EMPTY_MAP" -> true
+ | "EMPTY_SET" -> true
+ | "EQ" -> false
+ | "GE" -> false
+ | "GET" -> false
+ | "GT" -> false
+ | "HASH_KEY" -> true
+ | "INT" -> true
+ | "LAMBDA" -> true
+ | "LE" -> false
+ | "LEFT" -> true
+ | "LSL" -> true
+ | "LSR" -> true
+ | "LT" -> false
+ | "MEM" -> false
+ | "NEG" -> false
+ | "NEQ" -> false
+ | "NIL" -> true
+ | "NONE" -> true
+ | "NOT" -> false
+ | "NOW" -> true
+ | "OR" -> false
+ | "PAIR" -> true
+ | "PUSH" -> true
+ | "RIGHT" -> true
+ | "SIZE" -> false
+ | "SOME" -> true
+ | "SOURCE" -> true
+ | "SENDER" -> true
+ | "SELF" -> true
+ | "SLICE" -> true
+ | "STEPS_TO_QUOTA" -> true
+ | "UNIT" -> true
+ | "UPDATE" -> false
+ | "XOR" -> true
+ | "ADDRESS" -> false
+ | "CONTRACT" -> true
+ | "ISNAT" -> true
+ | "CHAIN_ID" -> true
+ | "EMPTY_BIG_MAP" -> true
+ | "APPLY" -> false
+ | _ -> false
+
+let eq_type ll lr =
+  let rec compare_list l r = match List.zip l r with
+    | List.Or_unequal_lengths.Unequal_lengths -> false
+    | Ok lr -> List.for_all ~f:(fun v -> Bool.equal true v) (List.map ~f:(fun (a, b) -> aux_eq a b) lr)
+  and aux_eq l r =
+    let open Tezos_micheline.Micheline in
+    match l, r with
+    | Prim (_, s, l, a), Prim (_, s', l', a') when String.equal s s' && List.equal String.equal a a' -> compare_list l l'
+    | Seq (_, l), Seq (_, l') -> compare_list l l'
+    | _, _ -> false in
+  compare_list ll lr
+
 let unseq : type meta. has_comment:(meta -> bool) -> meta michelson -> meta michelson list =
   fun ~has_comment ->
   function
@@ -238,6 +342,35 @@ let is_cond : string -> bool = function
   | "IF_CONS"
   | "IF_LEFT" -> true
   | _ -> false
+
+let rec last_is : (_ michelson -> _ michelson -> bool) -> (_ michelson -> bool) -> _ michelson -> _ option = fun eq pred ->
+  function
+  | Seq (_, []) -> None
+  | Seq (_, [arg]) -> last_is eq pred arg
+  | Seq (l, _ :: args) -> last_is eq pred (Seq (l, args))
+  | Prim (_, p, [bt; bf], _) when is_cond p ->
+    let (let+) v f = Option.bind v ~f in
+    let+ bt = last_is eq pred bt in
+    let+ bf = last_is eq pred bf in
+    if eq bt bf then Some bt else None
+  | Prim _ as prim when pred prim -> Some prim
+  | _ -> None
+
+let rec remove_last : (_ michelson -> bool) ->  _ michelson -> _ michelson = fun pred ->
+  function
+  | Seq (l, []) -> Seq (l, [])
+  | Seq (l, ls) ->
+     let (init, last) = List.drop_last_exn ls, List.last_exn ls in
+     let last = match last with
+       | Prim (l, p, [bt; bf], t) when is_cond p ->
+          let bt = remove_last pred bt in
+          let bf = remove_last pred bf in
+          [Prim (l, p, [bt; bf], t)]
+       | Prim _ as prim when pred prim ->
+          []
+       | _ -> [last] in
+     Seq (l, init @ last)
+  | t -> t
 
 let opt_drop2 : _ peep2 = function
   (* nullary_op ; DROP  ↦  *)
@@ -341,6 +474,29 @@ let opt_dip3 : _ peep3 = function
             proj2 ;
             Prim (l, "SWAP", [], []) ;
             proj1 ]
+  | _ -> None
+
+let opt_cond ?pre_type : _ peep1 = function
+  | Prim (l, p, [bt; bf], annot) when is_cond p -> (
+    let eq_type ll lr = match pre_type with | None -> true | Some pre_type -> eq_type (pre_type ll) (pre_type lr) in
+    let f = match pre_type with | Some _ -> (fun _ -> true) | None -> is_injective in
+    let force_nil = List.filter ~f ["SWAP"; "PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "UNIT"; "SOME"; "CONS"; "SIZE"; "UPDATE"; "ADD"; "SUB"; "MUL"; "EDIV"; "ABS"; "ISNAT"; "INT"; "NEG"; "LSL"; "LSR"; "OR"; "AND"; "XOR"; "NOT"; "COMPARE"; "EQ"; "NEQ"; "LT"; "GT"; "LE"; "GE"; "SLICE"; "CONCAT"; "PACK"; "SENDER"; "AMOUNT"; "ADDRESS"; "SOURCE"; "BALANCE"; "LEVEL"; "NOW"] in
+    let force_z = List.filter ~f ["PAIR"; "UNPAIR"; "CAR"; "CDR"; "DUP"; "DROP"; "DIG"; "DUG"; "UPDATE"] in
+    let no_force = List.filter ~f ["NIL"; "NONE"; "LEFT"; "RIGHT"] in
+    let pred = function
+        Prim (_, l, _, _) when List.mem ~equal:String.equal (force_nil @ force_z @ no_force) l -> true
+      | _ -> false in
+    let eq = fun m1 m2 -> match m1, m2 with
+        Prim (ll, l, [], _), Prim (lr, r, [], _) when List.mem ~equal:String.equal force_nil l && String.equal l r && eq_type ll lr -> true
+      | Prim (ll, l, _, _), Prim (lr, r, _, _) when List.mem ~equal:String.equal no_force l && String.equal l r && eq_type ll lr -> true
+      | Prim (ll, l, [Int (_, n)], _), Prim (lr, r, [Int (_, m)], _) when List.mem ~equal:String.equal force_z l && String.equal l r && Z.equal n m && eq_type ll lr -> true
+      | _ -> false in
+    match last_is eq pred bt, last_is eq pred bf with
+    | Some l_op, Some r_op when eq l_op r_op ->
+       let bt = remove_last pred bt in
+       let bf = remove_last pred bf in
+       Some [Prim (l, p, [bt; bf], annot); l_op]
+    | _ -> None)
   | _ -> None
 
 let opt_swap2 : _ peep2 = function
@@ -643,6 +799,7 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
                      peephole @@ peep3 opt_dip3 ;
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
+                     peephole @@ peep1 opt_cond ;
                      peephole @@ peep2 opt_swap2 ;
                      peephole @@ peep3 opt_beta3 ;
                      peephole @@ peep5 opt_beta5 ;
@@ -669,3 +826,28 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
   let x = opt_strip_annots x in
   let x = use_lambda_instr x in
   x
+
+let rec optimize_with_types : type l. raise:_ -> typer_oracle:((l, Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prim) node -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map)-> Environment.Protocols.t -> has_comment:(l -> bool) -> l michelson -> l michelson =
+  fun ~raise ~typer_oracle proto ~has_comment contract ->
+  let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
+                                   Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
+  let canonical, locs = Tezos_micheline.Micheline.extract_locations contract in
+  let recover_loc l = List.Assoc.find_exn locs ~equal:Int.equal l in
+  let canonical = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "Could not parse primitives from strings") @@
+            Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prims_of_strings canonical in
+  let map = typer_oracle @@ Tezos_micheline.Micheline.inject_locations (fun x -> recover_loc x) canonical in
+  let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun c -> node_string_of_canonical c) l)) map in
+  match Tezos_micheline.Micheline.inject_locations (fun x -> x) canonical with
+    | Seq (l, parameter :: storage :: code :: rest) ->
+       let pre_type l = List.Assoc.find_exn type_map ~equal:Int.equal l in
+       let code = Tezos_micheline.Micheline.map_node (fun x -> x)
+           (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) code in
+       let changed, code = on_seqs (peephole (peep1 @@ opt_cond ~pre_type)) code in
+       let code = Tezos_micheline.Micheline.map_node (fun x -> recover_loc x) (fun x -> x) code in
+       let code = if changed then optimize proto ~has_comment code else code in
+       let recover_locs node =
+         Tezos_micheline.Micheline.map_node recover_loc
+           (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) node in
+       let contract = Seq (recover_loc l, [recover_locs parameter ; recover_locs storage; code] @ (List.map ~f:recover_locs rest)) in
+       if changed then optimize_with_types ~raise ~typer_oracle proto ~has_comment contract else contract
+    | _ -> contract

@@ -835,6 +835,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1BxaPaFE2YDn8Toh2u2SJ18P6zf24oqbzZ(None). |}]
+    - test exited with value KT1Xf7ZrYPUKgHXMnXW5M6qeHkk5ijPsXpAk(None). |}]
 
 let () = Sys.chdir pwd

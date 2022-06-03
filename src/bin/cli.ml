@@ -132,6 +132,12 @@ let disable_michelson_typechecking =
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
   flag ~doc name no_arg
 
+let enable_michelson_typed_opt =
+  let open Command.Param in
+  let name = "--enable-michelson-typed-opt" in
+  let doc  = "Enable Michelson optimizations that work using typecking." in
+  flag ~doc name no_arg
+
 let without_run =
   let open Command.Param in
   let name = "--without-run" in
@@ -267,8 +273,8 @@ let (<$>) f a = Command.Param.return f <*> a
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking enable_typed_opt michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~enable_typed_opt ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -277,8 +283,7 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
-
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> enable_michelson_typed_opt <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
@@ -505,8 +510,8 @@ let list_declarations =
   (f <$> source_file <*> syntax <*> display_format)
 
 let measure_contract =
-  let f source_file entry_point views syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root ~warn_unused_rec () in
+  let f source_file entry_point views syntax protocol_version display_format enable_typed_opt show_warnings warning_as_error project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root ~warn_unused_rec ~enable_typed_opt () in
     return_result ~return ~show_warnings @@
     Api.Info.measure_contract raw_options source_file display_format
   in
@@ -514,7 +519,7 @@ let measure_contract =
   let readme () = "This sub-command compiles a source file and measures \
                   the contract's compiled size in bytes." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> warn <*> werror <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> enable_michelson_typed_opt <*> warn <*> werror <*> project_root <*> warn_unused_rec)
 
 let get_scope =
   let f source_file protocol_version libraries display_format with_types () =

@@ -24,6 +24,7 @@ type raw = {
   (* Backend *)
   protocol_version : string ;
   disable_michelson_typechecking : bool ;
+  enable_typed_opt : bool ;
   without_run : bool ;
   views : string list ;
   constants : string list ;
@@ -59,6 +60,7 @@ module Default_options = struct
   (* Backend *)
   let protocol_version = "current"
   let disable_michelson_typechecking = false
+  let enable_typed_opt = false
   let without_run = false
   let views = []
   let constants = []
@@ -80,6 +82,7 @@ let make
   ?(cli_expr_inj = Default_options.cli_expr_inj)
   ?(protocol_version = Default_options.protocol_version)
   ?(disable_michelson_typechecking = Default_options.disable_michelson_typechecking)
+  ?(enable_typed_opt = Default_options.enable_typed_opt)
   ?(without_run = Default_options.without_run)
   ?(views = Default_options.views)
   ?(constants = Default_options.constants)
@@ -111,6 +114,7 @@ let make
   (* Backend *)
   protocol_version ;
   disable_michelson_typechecking ;
+  enable_typed_opt ;
   without_run ;
   views ;
   constants ;
@@ -144,6 +148,7 @@ let default =
   (* Backend *)
   protocol_version = Default_options.protocol_version ;
   disable_michelson_typechecking = Default_options.disable_michelson_typechecking ;
+  enable_typed_opt = Default_options.enable_typed_opt ;
   without_run = Default_options.without_run ;
   views = Default_options.views ;
   constants = Default_options.constants ;
