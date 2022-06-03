@@ -23,6 +23,7 @@ module Test = struct
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
   let log (type a) (v : a) : unit = [%external "TEST_LOG"] v
   let reset_state ((n, l) : nat * tez list) : unit = [%external "TEST_STATE_RESET"] n l
+  let reset_state_at ((t, n, l) : timestamp * nat * tez list) : unit = [%external "TEST_STATE_RESET_AT"] t n l
   let get_voting_power (kh : key_hash) : nat = [%external "TEST_GET_VOTING_POWER"] kh
   [@thunk]
     let get_total_voting_power : nat = [%external "TEST_GET_TOTAL_VOTING_POWER"]

@@ -30,6 +30,7 @@ module Test = struct
   let michelson_equal ((_m1, _m2) : michelson_program * michelson_program) : bool = failwith "TEST MODE"
   let log (type a) (_v : a) : unit = failwith "TEST MODE"
   let reset_state ((_n, _l) : nat * tez list) : unit = failwith "TEST MODE"
+  let reset_state_at ((_t, _n, _l) : timestamp * nat * tez list) : unit = failwith "TEST MODE"
   let get_voting_power (_kh : key_hash) : nat = failwith "TEST MODE"
   [@thunk] let get_total_voting_power : nat = failwith "TEST MODE"
   let bootstrap_contract (type p s) ((_f, _s, _t) : (p * s -> operation list * s) * s * tez) : unit = failwith "TEST MODE"

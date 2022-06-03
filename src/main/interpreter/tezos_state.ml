@@ -517,7 +517,7 @@ let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = [])
     ?min_proposal_quorum ?bootstrap_contracts ?level ?cost_per_byte
     ?liquidity_baking_subsidy ?endorsing_reward_per_slot
     ?baking_reward_bonus_per_slot ?baking_reward_fixed_portion ?origination_size
-    ?blocks_per_cycle n =
+    ?blocks_per_cycle ?initial_timestamp n =
   let open Tezos_alpha_test_helpers in
   let accounts = Account.generate_accounts ?rng_state ~initial_balances n in
   let contracts =
@@ -547,10 +547,11 @@ let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = [])
     ?baking_reward_fixed_portion
     ?origination_size
     ?blocks_per_cycle
+    ?initial_timestamp
     accounts in
   (raw, contracts)
 
-let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?(baker_accounts = []) ?(n=2) protocol_version bootstrapped_contracts =
+let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balances=[]) ?initial_timestamp ?(baker_accounts = []) ?(n=2) protocol_version bootstrapped_contracts =
   let open Tezos_raw_protocol in
   let rng_state = Caml.Random.State.make (Caml.Array.make 1 0) in
   let () = (* check baker initial balance if the default amount is changed *)
@@ -561,22 +562,6 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
       if (Tez.(<) (Alpha_context.Tez.of_mutez_exn baker) max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
     )
   in
-  (* DEPRECATED FOR NOW, delegate should become optional and this argument must be passed to init
-     grep for DEPRECATED to find a commented test in ligo_interpreter_tests.ml
-  let bootstrap_contracts =
-    List.map
-      ~f:(
-        fun (mutez, contract, storage, _, _) : Alpha_context.Parameters.bootstrap_contract ->
-          let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
-          {
-            delegate = Signature.Public_key_hash.zero ;
-            amount = Alpha_context.Tez.of_mutez_exn (Int64.of_int mutez) ;
-            script ;
-          }
-      )
-      bootstrapped_contracts
-  in
-  *)
   let storage_tys =
     List.mapi
       ~f:(fun i (_, _, _, _, storage_ty) -> let contract = get_bootstrapped_contract ~raise i in (contract, storage_ty))
@@ -590,7 +575,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   let baker_accounts = List.map ~f:(fun (sk, pk, amt) ->
                             let sk =  Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error loc "Cannot parse secret key") @@ Tezos_crypto.Signature.Secret_key.of_b58check sk in
                             sk, pk, amt) baker_accounts in
-  let r, acclst = init ~rng_state ~level:(Int32.of_int_exn 0) ~initial_balances ~baker_accounts n in
+  let r, acclst = init ~rng_state ~level:(Int32.of_int_exn 0) ~initial_balances ~baker_accounts ?initial_timestamp n in
   let init_raw_ctxt = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r in
   match acclst with
   | baker::source::_ ->
