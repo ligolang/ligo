@@ -634,12 +634,12 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
        let>> address = Nth_bootstrap_contract n in
        return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_CONTRACT , _  ) -> fail @@ error_type
-    | ( C_TEST_STATE_RESET , [ (V_Ct (C_timestamp z)) ; n ; amts ] ) ->
+    | ( C_TEST_STATE_RESET , [ n ; amts ] ) ->
       let>> () = Reset_state (loc,None,calltrace,n,amts) in
       return_ct C_unit
     | ( C_TEST_STATE_RESET , _  ) -> fail @@ error_type
-    | ( C_TEST_STATE_RESET_AT , [ n ; amts ] ) ->
-      let>> () = Reset_state (loc,None,calltrace,n,amts) in
+    | ( C_TEST_STATE_RESET_AT , [ (V_Ct (C_timestamp z)) ; n ; amts ] ) ->
+      let>> () = Reset_state (loc,Some z,calltrace,n,amts) in
       return_ct C_unit
     | ( C_TEST_STATE_RESET_AT , _  ) -> fail @@ error_type
     | ( C_TEST_GET_NTH_BS , [ n ] ) ->

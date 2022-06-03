@@ -126,6 +126,7 @@ module Command = struct
       let ctxt = { ctxt with internals = { ctxt.internals with next_bootstrapped_contracts } } in
       ((),ctxt)
     | Reset_state (loc,initial_timestamp,calltrace,n,amts) ->
+      let initial_timestamp = Option.map initial_timestamp ~f:(fun x -> Proto_alpha_utils.Time.Protocol.of_seconds (Z.to_int64 x)) in
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts = List.map ~f:
         (fun x ->
@@ -137,7 +138,7 @@ module Command = struct
       let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
       let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let ctxt = Tezos_state.init_ctxt
-        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
+        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) ?initial_timestamp
         ctxt.internals.protocol_version bootstrap_contracts ~baker_accounts
       in
       ((),ctxt)

@@ -9,7 +9,8 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   | C_bool t -> Format.fprintf ppf "%b" t
   | C_int z -> Format.fprintf ppf "%s" (Z.to_string z)
   | C_nat n -> Format.fprintf ppf "%sn" (Z.to_string n)
-  | C_timestamp t -> Format.fprintf ppf "timestamp(%a)" Z.pp_print t
+  | C_timestamp t ->
+    Format.fprintf ppf "timestamp(%s)" Memory_proto_alpha.Protocol.Time_repr.(to_notation @@ of_seconds (Z.to_int64 t))
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
   | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.pp c
