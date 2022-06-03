@@ -121,7 +121,6 @@ library
     , bytestring
     , containers
     , data-default
-    , directory
     , dlist
     , duplo
     , fastsum

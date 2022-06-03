@@ -23,6 +23,7 @@ module ParseTree
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
 import Data.Functor.Classes (Show1 (..))
+import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
@@ -57,6 +58,9 @@ data Source = Source
   { srcPath :: FilePath
   , srcText :: Text
   } deriving stock (Eq, Ord)
+
+instance MonadIO m => IsString (m Source) where
+  fromString = pathToSrc
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]

@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
@@ -37,7 +35,7 @@ data FromCompiler
 -- FIXME: If one contract throws an exception, the entire thing will fail. Standard
 -- scopes will use Fallback. (LIGO-208)
 instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
-  scopeForest reportProgress (Includes graph) = Includes <$> do
+  scopeForest tempSettings reportProgress (Includes graph) = Includes <$> do
     let nContracts = G.vertexCount graph
     -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
     -- 'StateT'. It's best to avoid using this class for stateful monads.
@@ -45,7 +43,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
     forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msgs) -> do
       n <- modifyMVar counter (pure . (succ &&& id))
       reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
-      (defs, _) <- getLigoDefinitions src
+      defs <- getLigoDefinitions tempSettings src
       (forest, msgs') <- fromCompiler dialect defs
       pure $ FindContract src forest (msgs <> msgs')
 

@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Control.Arrow (first)
-import Control.Monad (unless)
+import Control.Monad (unless, (<=<))
 import Control.Monad.Trans (liftIO)
 import Data.Foldable (for_)
 import Duplo.Pretty (Pretty, pp, render)
@@ -72,9 +72,8 @@ main = withUtf8 do
     toPretty = fmap (first SomePretty . treeMsgs . _getContract)
     parser
       | psoWithScopes = toPretty . parseWithScopes @Fallback
-      | otherwise     = toPretty . parse
-  src <- pathToSrc psoContract
-  (tree, messages) <- runNoLoggingT $ parser src
+      | otherwise     = toPretty . runNoLoggingT . parse <=< pathToSrc
+  (tree, messages) <- parser psoContract
   liftIO do
     putStrLn (render (pp tree))
     unless (null messages) do

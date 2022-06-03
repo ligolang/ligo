@@ -16,6 +16,7 @@ import AST.Scope.Common as M
 import AST.Scope.Fallback as M
 import AST.Scope.FromCompiler as M
 import AST.Scope.Standard as M
+import Cli.Types (TempSettings)
 
 import Progress (ProgressCallback)
 
@@ -24,9 +25,10 @@ import Progress (ProgressCallback)
 addShallowScopes
   :: forall parser m
    . HasScopeForest parser m
-  => ProgressCallback m
+  => TempSettings
+  -> ProgressCallback m
   -> ContractInfo
   -> m ContractInfo'
-addShallowScopes reportProgress =
-  (fmap (head . G.vertexList) . addScopes @parser reportProgress . G.vertex)
+addShallowScopes tempSettings reportProgress =
+  (fmap (head . G.vertexList) . addScopes @parser tempSettings reportProgress . G.vertex)
   <=< insertPreprocessorRanges

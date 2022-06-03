@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Diagnostics
   ( DiagnosticSource (..)
   , simpleTest
@@ -6,14 +7,12 @@ module Test.Common.Diagnostics
   ) where
 
 import Data.List (nub)
-import System.FilePath ((</>))
-import System.Directory (makeAbsolute)
 import Language.LSP.Types qualified as J
+import System.FilePath ((</>))
+import UnliftIO.Directory (makeAbsolute)
 
 import AST.Parser (collectAllErrors, parseWithScopes)
 import AST.Scope (Fallback, FromCompiler, Standard)
-import Log (runNoLoggingT)
-import ParseTree (pathToSrc)
 import Parser
 import Range
 
@@ -73,7 +72,7 @@ inputDir = Util.contractsDir </> "diagnostic"
 mkRange :: (J.UInt, J.UInt) -> (J.UInt, J.UInt) -> FilePath -> Range
 mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)
 
--- Try to parse a file, and check that the proper error messages are generated
+-- | Try to parse a file, and check that the proper error messages are generated.
 parseDiagnosticsDriver
   :: forall impl
    . (HasCallStack, ScopeTester impl)
@@ -81,8 +80,7 @@ parseDiagnosticsDriver
   -> DiagnosticTest
   -> Assertion
 parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
-  src <- pathToSrc file
-  contract <- runNoLoggingT $ parseWithScopes @impl src
+  contract <- parseWithScopes @impl file
   let
     expectedMsgs = case source of
       CompilerSource -> fromCompiler
