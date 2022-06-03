@@ -3,7 +3,6 @@ open Tezos_utils
 open Proto_alpha_utils
 open Trace
 
-
 let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
   (* From Tezos changelog on views: 
     CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS cannot be used at the top-level of a
@@ -53,11 +52,12 @@ let dummy : Stacking.meta =
 let build_contract ~raise ~add_warning :
   protocol_version:Environment.Protocols.t ->
   ?enable_typed_opt:bool ->
+  ?has_env_comments:bool ->
   ?disable_typecheck:bool ->
   ?constants:string list ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ~protocol_version ?(enable_typed_opt= false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
+    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -111,7 +111,10 @@ let build_contract ~raise ~add_warning :
             let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
                            Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c in
             map in
-          Self_michelson.optimize_with_types ~raise ~typer_oracle protocol_version contract
+          let has_comment : Mini_c.meta -> bool =
+            fun { env; location = _; binder = _ } ->
+            has_env_comments && not (List.is_empty env) in
+          Self_michelson.optimize_with_types ~raise ~typer_oracle protocol_version ~has_comment contract
         else
           contract
 
