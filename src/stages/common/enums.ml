@@ -176,7 +176,6 @@ type constant' =
   | C_TEST_GET_NTH_BS [@only_interpreter]
   | C_TEST_LOG [@only_interpreter]
   | C_TEST_STATE_RESET [@only_interpreter]
-  | C_TEST_STATE_RESET_AT [@only_interpreter]
   | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]

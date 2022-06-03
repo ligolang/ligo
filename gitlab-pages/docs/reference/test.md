@@ -472,16 +472,16 @@ and thus `Test.get_balance` can show a different amount to the one
 being set with `Test.reset_state`.
 
 <SyntaxTitle syntax="pascaligo">
-val reset_state : timestamp -> nat -> list (tez) -> unit
+val reset_state_at : timestamp -> nat -> list (tez) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val reset_state : timestamp -> nat -> tez list -> unit
+val reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let reset_state: (timestamp, nat, list(tez)) => unit
+let reset_state_at: (timestamp, nat, list(tez)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let reset_state = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
+let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
 </SyntaxTitle>
 
 Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
