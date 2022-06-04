@@ -187,3 +187,15 @@ function t13 (const x:recordi ; const y:recordi) is
   | (record [ a=_;b=_]    , record [ a = Some ((hd#tl)) ; b = nil ]) -> hd
   | (record [ a=Some (a);b=_] , _) -> int ( List.length(a) )
   ]
+
+type a is A | B of int | C of int * int * int | D | E ;
+type r is record [ a : int; b : a ] ;
+
+function nested_record_pm (const a : r) : int is
+  case a of [
+  | record [ a = _    ; b = A        ] -> 1
+  | record [ b = B(_) ; a = _        ] -> 2
+  | record [ a = _    ; b = C(_,_,_) ] -> 3
+  | record [ b = D    ; a = _        ] -> 4
+  | record [ a = _    ; b = E        ] -> 5
+  ]
