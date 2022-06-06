@@ -639,7 +639,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return_ct C_unit
     | ( C_TEST_STATE_RESET , _  ) -> fail @@ error_type
     | ( C_TEST_GET_NTH_BS , [ n ] ) ->
-      let>> x = Get_bootstrap (loc,n) in
+      let>> x = Get_bootstrap (loc,calltrace,n) in
       return x
     | ( C_TEST_GET_NTH_BS , _  ) -> fail @@ error_type
     | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
