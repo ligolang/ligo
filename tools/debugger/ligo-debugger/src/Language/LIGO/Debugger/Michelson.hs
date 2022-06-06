@@ -125,8 +125,39 @@ embedInInstr metaTape instr = do
         [] -> throwError . InsufficientEntries $
           [int||Insufficient number of entries, broke at #{oldInstr}|]
         (meta : rest) -> do
-          put rest
+          -- We have to skip several metas due to difference between typed
+          -- representation and Micheline.
+          -- In Micheline every Seq is a separate node that has a corresponding
+          -- meta, and in our typed representation we tend to avoid 'Nested'
+          -- wrapper where Michelson's @{ }@ are mandatory.
+          -- I.e. @IF ADD (SWAP # SUB)@ in typed representation corresponds to
+          -- @Prim "IF" [ [Prim "ADD"], [Prim "SWAP", Prim "SUB"] ]@ in Micheline
+          -- and we have to account for these inner @[]@ manually.
+          let metasToDrop = michelsonInstrInnerBranches oldInstr
+          put $ drop (Unsafe.fromIntegral @Word @Int metasToDrop) rest
+
           Meta (SomeMeta meta) <$> mkNewInstr
+
+-- TODO: extract this to Morley
+-- | For Michelson instructions this returns how many sub-instructions this
+-- instruction directly contains. For non-Michelson instructions this returns 1.
+michelsonInstrInnerBranches :: Instr i o -> Word
+michelsonInstrInnerBranches = \case
+  IF{} -> 2
+  IF_NONE{} -> 2
+  IF_LEFT{} -> 2
+  IF_CONS{} -> 2
+
+  LOOP{} -> 1
+  LOOP_LEFT{} -> 1
+
+  MAP{} -> 1
+  ITER{} -> 1
+
+  DIP{} -> 1
+  DIPN{} -> 1
+
+  _ -> 0
 
 -- | Read LIGO's debug output and produce
 --
