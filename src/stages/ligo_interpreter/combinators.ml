@@ -1,10 +1,10 @@
 open Types
 
 let v_pair : value * value -> value =
-  fun (a,b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b)])
+  fun (a, b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b)])
 
 let v_triple : value * value * value -> value =
-  fun (a,b, c) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b) ; (Label "2", c)])
+  fun (a, b, c) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b) ; (Label "2", c)])
 
 let v_record : (string * value) list -> value =
   fun lst ->
