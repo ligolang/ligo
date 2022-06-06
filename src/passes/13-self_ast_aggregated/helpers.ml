@@ -51,9 +51,6 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       let res = self res let_result in
       res
     )
-  | E_type_in { type_binder=_; rhs = _ ; let_result} ->
-    let res = self init let_result in
-    res
   | E_assign a -> Folds.assign self (fun a _ -> a) init a
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m ->
@@ -105,10 +102,6 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
-  )
-  | E_type_in {type_binder; rhs; let_result} -> (
-    let let_result = self let_result in
-    return @@ E_type_in {type_binder; rhs; let_result}
   )
   | E_lambda { binder ; result } -> (
     let result = self result in
@@ -189,10 +182,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,rhs) = self init rhs in
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
-    )
-  | E_type_in { type_binder ; rhs ; let_result} -> (
-      let (res,let_result) = self init let_result in
-      (res, return @@ E_type_in { type_binder ; rhs ; let_result })
     )
   | E_type_inst { forall ; type_ } -> (
     let (res, forall) = self init forall in
@@ -283,8 +272,6 @@ module Free_variables :
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in
       VarSet.union (self rhs) fv2
-    | E_type_in {let_result} ->
-      self let_result
     | E_assign { binder=_; access_path=_; expression } ->
       self expression
 

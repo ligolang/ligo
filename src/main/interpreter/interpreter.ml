@@ -969,9 +969,6 @@ and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace 
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
-    | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
-      eval_ligo (let_result) calltrace env
-    )
     | E_literal l ->
       eval_literal l
     | E_variable var ->

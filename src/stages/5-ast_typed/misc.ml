@@ -36,7 +36,6 @@ module Free_variables = struct
       union
         (expression b' let_result)
         (self rhs)
-    | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
     | E_type_abstraction { type_binder=_; result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_raw_code _ -> empty
