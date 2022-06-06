@@ -244,10 +244,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
-  | E_type_in { type_binder ; rhs ; let_result} -> (
-      let (res,let_result) = self init let_result in
-      (res, return @@ E_type_in { type_binder ; rhs ; let_result })
-    )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
     let (res,let_result) = self init let_result in
     let (res,rhs) = fold_map_expression_in_module_expr f res rhs in

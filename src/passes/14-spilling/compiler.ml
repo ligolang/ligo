@@ -219,9 +219,6 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     let rhs' = self rhs in
     let result' = self let_result in
     return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
-  | E_type_in {type_binder=_; rhs=_; let_result} ->
-    let result' = self let_result in
-    result'
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (compile_variable name)

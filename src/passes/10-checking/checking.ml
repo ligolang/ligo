@@ -573,7 +573,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let rhs = evaluate_type ~raise context rhs in
     let e' = Typing_context.add_type context type_binder rhs in
     let let_result = type_expression' ~raise ~add_warning ~options (app_context, e') let_result in
-    return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
+    return let_result.expression_content let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
     let rhs_ctxt,rhs = type_module_expr ~raise ~add_warning ~options ~init_context:context rhs in
     let e' = Typing_context.add_module context module_binder rhs_ctxt in
