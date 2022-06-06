@@ -51,7 +51,7 @@ unknownSrcPos = SrcPos (Pos 0) (Pos 0)
 test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
-      let file = inContractsDir "simple-ops.mligo"
+      let file = contractsDir </> "simple-ops.mligo"
       ligoMapper <- compileLigoContractDebug file
       (allLocs, T.SomeContract contract) <-
         case readLigoMapper ligoMapper of

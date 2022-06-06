@@ -96,7 +96,7 @@ pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
   [ testCaseSteps "noop.mligo contract" \step -> do
-      let file = inContractsDir "noop.mligo"
+      let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
             , crdParam = ()
