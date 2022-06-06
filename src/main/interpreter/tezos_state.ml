@@ -461,6 +461,14 @@ let add_account ~raise ~loc ~calltrace sk pk pkh : unit =
   let account = Account.{ sk ; pk ; pkh } in
   Account.add_account account
 
+let get_account ~raise ~loc ~calltrace mc : string * Signature.public_key =
+  let open Tezos_alpha_test_helpers in
+  let pkh = Trace.trace_option ~raise (generic_error ~calltrace loc "The account is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit mc in
+  let account = Trace.trace_tzresult_lwt ~raise (fun _ -> Errors.generic_error ~calltrace loc "Cannot find account") @@ Account.find pkh in
+  let sk = Signature.Secret_key.to_b58check account.sk in
+  let pk = account.pk in
+  (sk, pk)
+
 let new_account : unit -> string * Signature.public_key = fun () ->
   let open Tezos_alpha_test_helpers.Account in
   let account = new_account () in
