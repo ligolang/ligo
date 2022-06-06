@@ -220,4 +220,25 @@ test_Snapshots = testGroup "Snapshots collection"
 
           ]
 
+  , testCaseSteps "pattern-match on option" \_step -> do
+      let file = contractsDir </> "match-on-some.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdParam = ()
+            , crdStorage = Just (5 :: Integer)
+            }
+
+      testWithSnapshots runData do
+        -- Skip starting snapshot
+        _ <- move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventExpressionPreview
+            , isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 3 16) (LigoPosition 3 21)
+                } :| []
+            } -> pass
+          sp -> unexpectedSnapshot sp
+
   ]
