@@ -80,6 +80,7 @@ library:
     - nyan-interpolation
     - process
     - scientific
+    - singletons
     - stm
     - text
     - unliftio
