@@ -23,7 +23,7 @@ buildNpmPackage {
     export XDG_CONFIG_HOME="$NIX_BUILD_TOP"
     export XDG_RUNTIME_DIR="$NIX_BUILD_TOP"
     export CONTRACTS_DIR="$NIX_BUILD_TOP/contracts"
-    cp ${../../../LICENSE.md} ./LICENSE.md
+    cp --remove-destination ${../../../LICENSE.md} ./LICENSE.md
     cp ${../squirrel/test/contracts} "$CONTRACTS_DIR" --no-preserve=all -r
     mkdir bin
     cp -Lr ${ligo-squirrel}/* .
