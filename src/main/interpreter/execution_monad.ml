@@ -63,6 +63,7 @@ module Command = struct
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.value -> LT.value t
+    | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -347,6 +348,9 @@ module Command = struct
       | Some x -> (LT.V_Ct (C_address x), ctxt)
       | None -> raise.raise (Errors.generic_error loc "This bootstrap account do not exist")
     )
+    | Sign (loc, calltrace, sk, data) ->
+      let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
+      (LT.V_Ct (LT.C_signature signature), ctxt)
     | Michelson_equal (loc,a,b) ->
       let { code ; _ } : LT.typed_michelson_code = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr a in
