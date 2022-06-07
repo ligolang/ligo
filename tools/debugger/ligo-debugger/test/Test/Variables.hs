@@ -3,7 +3,7 @@ module Test.Variables
   ) where
 
 import Data.Map qualified as M
-import Language.LIGO.DAP.Variables (createVariables)
+import Language.LIGO.DAP.Variables (createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI.Types
   (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry),
   LigoTypeRef (LigoTypeRef), LigoVariable (LigoVariable))
@@ -31,7 +31,7 @@ testOption :: TestTree
 testOption = testGroup "option"
   [ testCase "nothing" do
       let vNothingItem = mkStackItem (VOption @'TUnit Nothing) (Just "nothingVar")
-      snd (createVariables [vNothingItem]) @?=
+      snd (runBuilder $ createVariables [vNothingItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -50,7 +50,7 @@ testOption = testGroup "option"
           ]
   , testCase "contains unit" do
       let vUnitItem = mkStackItem (VOption $ Just VUnit) (Just "someUnit")
-      snd (createVariables [vUnitItem]) @?=
+      snd (runBuilder $ createVariables [vUnitItem]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -87,7 +87,7 @@ testList :: TestTree
 testList = testGroup "list"
   [ testCase "empty list" do
       let vList = mkStackItem (VList @'TUnit []) (Just "list")
-      snd (createVariables [vList]) @?=
+      snd (runBuilder $ createVariables [vList]) @?=
         M.fromList
           [ (1,
               [ Variable
@@ -106,7 +106,7 @@ testList = testGroup "list"
           ]
   , testCase "list of two units" do
       let vList = mkStackItem (VList [VUnit, VUnit]) (Just "list")
-      snd (createVariables [vList]) @?=
+      snd (runBuilder $ createVariables [vList]) @?=
         M.fromList
           [ (1,
               [ Variable
