@@ -601,6 +601,14 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_get_account.mligo" ] ;
+  [%expect {|
+    (tz1MBWU1WkszFfkEER2pgn4ATKXE9ng7x1sR , edpkusHqa6fxkGPPL9YpgbcakvSTvcTBcwnLAmCdcevmws4Mh2MdHB , "edsk41aRaPPBpidY7w5xu54edk76uJJtJ6myTwYDEWhAwNHce9gKNo")
+    3800000000000mutez
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
