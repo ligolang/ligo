@@ -475,6 +475,12 @@ let new_account : unit -> string * Signature.public_key = fun () ->
   let sk = Signature.Secret_key.to_b58check account.sk in
   (sk, account.pk)
 
+let sign_message ~raise ~loc ~calltrace (packed_payload : bytes) sk : Signature.t =
+  let open Tezos_crypto in
+  let sk = Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace) @@ Signature.Secret_key.of_b58check sk in
+  let signed_data = Signature.sign sk packed_payload in
+  signed_data
+
 let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt : add_operation_outcome =
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
