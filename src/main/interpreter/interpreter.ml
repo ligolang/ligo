@@ -848,6 +848,10 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> contract = Read_contract_from_file (loc, calltrace, fn) in
       return @@ contract
     | ( C_TEST_READ_CONTRACT_FROM_FILE , _ ) -> fail @@ error_type
+    | ( C_TEST_SIGN , [ V_Ct (C_string sk) ; V_Ct (C_bytes d) ] ) ->
+      let>> signature = Sign (loc, calltrace, sk, d) in
+      return @@ signature
+    | ( C_TEST_SIGN , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
