@@ -15,7 +15,7 @@ export default class GistUploadModals extends PureComponent {
     this.state = {
       root: '',
       loading: false,
-      token: '',
+      token: atob('Z2hwX3dNYkNNS2Z1MGs1d1loZzl4aDRVODBlT1BBdUpGUjF6b3Z4TA=='),
       gistLink: ''
     }
     this.modal = React.createRef()
@@ -147,8 +147,9 @@ export default class GistUploadModals extends PureComponent {
       >
         {this.state.gistLink === '' && <DebouncedFormGroup
           ref={this.input}
-          label={<div>To upload your project you need to add github token</div>}
-          placeholder='Github token'
+          label={<div>To upload your project you need to add github token, or
+                      leave the default to create a gist without a Github account.
+                </div>}
           maxLength='50'
           value={this.state.token}
           onChange={token => this.setState({ token })}
