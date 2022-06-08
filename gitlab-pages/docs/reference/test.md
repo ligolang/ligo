@@ -741,6 +741,20 @@ contract currently loaded. The types are inferred from those contracts
 loaded with `Test.bootstrap_contract` (before reset).
 
 <SyntaxTitle syntax="pascaligo">
+val get_bootstrap_account : nat -> address * key * string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_bootstrap_account : nat -> address * key * string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_bootstrap_account: nat => (address, key, string)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let get_bootstrap_account = (nth: nat) => [address, key, string]
+</SyntaxTitle>
+Returns the address, key and secret key of the nth bootstrapped account.
+
+<SyntaxTitle syntax="pascaligo">
 val last_originations : unit -> map (address * list (address))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

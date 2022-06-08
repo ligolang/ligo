@@ -62,7 +62,7 @@ module Command = struct
     | Set_baker : Location.t * LT.calltrace * LT.value -> unit t
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
-    | Get_bootstrap : Location.t * LT.value -> LT.value t
+    | Get_bootstrap : Location.t * LT.calltrace * LT.value -> LT.value t
     | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
@@ -342,10 +342,13 @@ module Command = struct
     | Get_total_voting_power (loc, calltrace) ->
       let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
       ((LT.V_Ct (LT.C_nat (Z.of_int64 tvp))), ctxt)
-    | Get_bootstrap (loc,x) -> (
+    | Get_bootstrap (loc,calltrace, x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
-      | Some x -> (LT.V_Ct (C_address x), ctxt)
+      | Some x ->
+         let (sk, pk) = Tezos_state.get_account ~raise ~loc ~calltrace x in
+         let record = LC.v_triple LT.(V_Ct (C_address x), V_Ct (C_key pk), V_Ct (C_string sk)) in
+         (record, ctxt)
       | None -> raise.raise (Errors.generic_error loc "This bootstrap account do not exist")
     )
     | Sign (loc, calltrace, sk, data) ->

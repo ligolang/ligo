@@ -469,7 +469,7 @@ module Constant_types = struct
                     of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
                     of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
-                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_address ());
+                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_triplet (t_address ()) (t_key ()) (t_string ()));
                     of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
                     of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
