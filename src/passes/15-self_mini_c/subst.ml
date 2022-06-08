@@ -107,6 +107,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_global_constant (hash, args) ->
     let args = List.map ~f:replace args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:replace args in
+    let x = replace_var x in
+    let code = replace code in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -254,6 +259,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_global_constant (hash, args) ->
     let args = List.map ~f:self args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:self args in
+    let (x, code) = self_binder1 ~body:(x, code) in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in

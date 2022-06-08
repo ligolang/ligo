@@ -20,9 +20,7 @@ let%expect_test _ =
       storage (pair (int %x) (int %y)) ;
       code { CDR ;
              PUSH int 3 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CAR ;
              ADD ;
              DROP ;

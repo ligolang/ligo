@@ -711,6 +711,22 @@ let%expect_test "spilling" =
   error (`Spilling_bad_decompile value) ;
   [%expect{| Cannot untranspile: None |}]
 
+let%expect_test "scoping" =
+  let open Mini_c in
+  let error e = human_readable_error (scoping_tracer e) in
+  error (`Scoping_corner_case ("foo", "bar")) ;
+  [%expect
+    {|
+      Scoping corner case at foo : bar.
+      Sorry, we don't have a proper error message for this error. Please report this use case so we can improve on this. |}] ;
+  error (`Scoping_contract_entrypoint "xxx") ;
+  [%expect {|contract entrypoint must be given as a literal string: xxx |}] ;
+  error (`Scoping_bad_iterator C_UNIT) ;
+  [%expect {|bad iterator: iter UNIT |}] ;
+  error `Scoping_not_comparable_pair_struct ;
+  [%expect
+    {|Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
+
 let%expect_test "stacking" =
   let open Mini_c in
   let error e = human_readable_error (stacking_tracer e) in
@@ -728,7 +744,7 @@ let%expect_test "stacking" =
     {|Invalid comparable value. When using a tuple with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
 
 
-let%expect_test "decompile_michelson" = () (* same as stacking *)
+let%expect_test "decompile_michelson" = () (* same as scoping *)
 
 let%expect_test "decompile_mini_c" = ()  (* same as spilling *)
 

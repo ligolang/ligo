@@ -169,6 +169,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_ppformat ~display_format f e
     | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Spilling_tracer e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Scoping_tracer e -> Scoping.Errors.error_ppformat ~display_format f e
     | `Stacking_tracer e -> Stacking.Errors.error_ppformat ~display_format f e
 
     | `Main_interpret_not_enough_initial_accounts (loc,max) ->
@@ -400,6 +401,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_jsonformat e
   | `Spilling_tracer e -> Spilling.Errors.error_jsonformat e
   | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_jsonformat e
+  | `Scoping_tracer e -> Scoping.Errors.error_jsonformat e
   | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
 
   | `Main_interpret_test_entry_not_found _
