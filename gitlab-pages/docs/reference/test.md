@@ -1066,3 +1066,19 @@ let restore_context: (u: unit) => unit
 Pops a testing framework context from the stack of contexts, and sets
 it up as the new current context. In case the stack was empty, the
 current context is kept.
+
+<SyntaxTitle syntax="pascaligo">
+val sign : string -> bytes -> signature
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sign : string -> bytes -> signature
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sign: (string, bytes) => signature
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let sign: (secret_key: string, data: bytes) => signature
+</SyntaxTitle>
+
+Creates a signature of `bytes` from a `string` representing a secret
+key, it can be checked with `Crypto.check`.
