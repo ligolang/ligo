@@ -206,10 +206,24 @@ module Typing = struct
         in
         (* Fetch all types declared in current module and its submodules *)
         let module_types = Types.get_module_types ctxt in
-        (*  Also add the shadowed t_sum types nested in the fetched types. *)
+        (*  Also add the shadowed t_sum types nested in the fetched types.
+            Since context is made of maps, all shadowed types are absent from the context.
+            However we still want the shadowed nested t_sum, see [add_shadowed_nested_t_sum] *)
         let module_types = List.fold (List.rev module_types) ~init:[] ~f:Ast_typed.Helpers.add_shadowed_nested_t_sum in
         (* For all types found, pick only the T_sum, and make 4-uple out of them  *)
         let matching_t_sum = List.filter_map ~f:filter_tsum @@ module_types in
+        (* Filter out duplicates (this prevents false warnings of "infered type is X but could also be X"
+           when a same type is present several times in the context) *)
+        let remove_doubles l : (type_variable * type_variable list * type_expression * type_expression) list =
+          let add_no_dup l elt : (type_variable * type_variable list * type_expression * type_expression) list =
+            let (_tv, _tvs, _te, te) : (type_variable * type_variable list * type_expression * type_expression) = elt in
+            match List.find l ~f:(fun (_tv, _tvs, _te, te') -> Hash.hash_type_expression te = Hash.hash_type_expression te') with
+            | Some _ -> l
+            | None -> elt :: l
+          in
+            List.rev @@ List.fold l ~f:add_no_dup ~init:[]
+        in
+        let matching_t_sum = remove_doubles matching_t_sum in
         let general_type_opt = List.find ~f:(fun (_, tvs, _, _) -> not @@ List.is_empty tvs) matching_t_sum in
         match general_type_opt with
           Some general_type -> [general_type]
