@@ -36,14 +36,14 @@ let%expect_test _ =
   [%expect{|
     Invalid command line argument.
     The provided storage does not have the correct type for the contract.
-    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of [
-    126 |     Buy_single (bs)      -> buy_single (bs, s)
-    127 |   | Sell_single (as)     -> sell_single (as, s)
-    128 |   | Transfer_single (at) -> transfer_single (at, s)
-    129 |   ]
+    File "../../test/contracts/coase.ligo", line 122, character 0 to line 127, character 3:
+    121 |
+    122 | function main (const action : parameter; const s : storage) : return is
+    123 |   case action of [
+    124 |     Buy_single (bs)      -> buy_single (bs, s)
+    125 |   | Sell_single (as)     -> sell_single (as, s)
+    126 |   | Transfer_single (at) -> transfer_single (at, s)
+    127 |   ]
 
     Invalid type(s).
     Expected: "storage", but got: "parameter". |}] ;
@@ -52,14 +52,14 @@ let%expect_test _ =
   [%expect{|
     Invalid command line argument.
     The provided parameter does not have the correct type for the given entrypoint.
-    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of [
-    126 |     Buy_single (bs)      -> buy_single (bs, s)
-    127 |   | Sell_single (as)     -> sell_single (as, s)
-    128 |   | Transfer_single (at) -> transfer_single (at, s)
-    129 |   ]
+    File "../../test/contracts/coase.ligo", line 122, character 0 to line 127, character 3:
+    121 |
+    122 | function main (const action : parameter; const s : storage) : return is
+    123 |   case action of [
+    124 |     Buy_single (bs)      -> buy_single (bs, s)
+    125 |   | Sell_single (as)     -> sell_single (as, s)
+    126 |   | Transfer_single (at) -> transfer_single (at, s)
+    127 |   ]
 
     Invalid type(s).
     Expected: "parameter", but got: "storage". |}] ;
@@ -1103,7 +1103,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
   [%expect {|
     File "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44:
-      6 |   block {
+      6 |   {
       7 |     var stamp : timestamp := ("badtimestamp" : timestamp)
       8 |   }
 
@@ -1485,7 +1485,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
-      7 |   block {
+      7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
     :
@@ -1495,13 +1495,13 @@ let%expect_test _ =
     File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
-      7 |   block {
+      7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
@@ -1591,7 +1591,7 @@ let%expect_test _ =
     File "../../test/contracts/self_with_entrypoint.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -1614,7 +1614,7 @@ let%expect_test _ =
     File "../../test/contracts/self_without_entrypoint.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -1637,13 +1637,13 @@ let%expect_test _ =
 File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, characters 21-22:
   5 |
   6 | function main (const p : parameter; const s : storage) : return is
-  7 |   block {
+  7 |   {
 :
 Warning: unused variable "p".
 Hint: replace it by "_p" to prevent this warning.
 
 File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
-  7 |   block {
+  7 |   {
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
 

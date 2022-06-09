@@ -4,7 +4,7 @@ type parameter is
 type storage is record [senders_whitelist : set (address)]
 
 function main (const p : parameter; const s : storage) is
-block {
+{
   const op
   = case p of [
       Call (op) ->
@@ -12,7 +12,7 @@ block {
         then op (Unit)
         else (failwith ("Sender is not whitelisted") : operation)
     | IsWhitelisted (addr_and_callback) ->
-        block {
+        {
           const addr = addr_and_callback.0;
           const callback_contract = addr_and_callback.1;
           const whitelisted = Set.mem (addr, s.senders_whitelist)

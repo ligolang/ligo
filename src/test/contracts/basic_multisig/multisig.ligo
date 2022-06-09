@@ -30,7 +30,7 @@ type return is list (operation) * storage
 
 
 function main (const p : parameter; var s : storage) : return is
-block {
+{
 
   var payload: payload := p.payload;
 
@@ -43,17 +43,16 @@ block {
     var valid : nat := 0n;
 
     var pkh_sigs : signatures := p.signatures;
-    for key in list s.auth block {
+    for key in list s.auth {
       case pkh_sigs of [
         nil -> skip
-      | pkh_sig # tl -> block {
-          if pkh_sig.0 = Crypto.hash_key (key) then block {
+      | pkh_sig # tl -> {
+          if pkh_sig.0 = Crypto.hash_key (key) then {
             pkh_sigs := tl;
             if Crypto.check (key, pkh_sig.1, packed_payload)
             then valid := valid + 1n
             else failwith ("Invalid signature")
           }
-          else skip
         }
       ]
     };

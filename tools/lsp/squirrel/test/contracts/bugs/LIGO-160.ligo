@@ -1,6 +1,6 @@
 type q is record a : int; b : int end
 type w is record c : int; d : q end
-const foo : q = block {
+const foo : q = {
   const x : q = record [ a = 1; b = 2 ] ;
   const y : w = record [ c = 5; d = x ] ;
 } with

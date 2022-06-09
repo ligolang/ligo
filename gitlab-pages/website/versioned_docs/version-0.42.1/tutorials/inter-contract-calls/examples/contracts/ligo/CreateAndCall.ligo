@@ -1,5 +1,5 @@
 function create_and_call (const st : list (address)) is
-block {
+{
   const create_contract_result = 
       Tezos.create_contract(
           (function (const p : int; const s : int) is
@@ -19,7 +19,7 @@ block {
 } with (list [create_op; call_op], (addr # st))
 
 function call_counter (const addr : address; const n : int) is
-block {
+{
   assert (Tezos.sender = Tezos.self_address);
   const callee_opt : option (contract (int)) = Tezos.get_contract_opt (addr);
   const callee =
