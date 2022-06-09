@@ -31,6 +31,7 @@ data ContractRunData =
   )
   => ContractRunData
   { crdProgram :: FilePath
+  , crdEntrypoint :: String
   , crdParam :: param
   , crdStorage :: st
   }
@@ -39,8 +40,8 @@ data ContractRunData =
 mkSnapshotsFor
   :: HasCallStack
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
-mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
-  ligoMapper <- compileLigoContractDebug file
+mkSnapshotsFor (ContractRunData file entrypoint (param :: param) (st :: st)) = do
+  ligoMapper <- compileLigoContractDebug entrypoint file
   (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
@@ -49,7 +50,7 @@ mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
     & maybe (assertFailure "Parameter type mismatch") pure
   Refl <- sing @st' `decideEquality` sing @(T.ToT st)
     & maybe (assertFailure "Storage type mismatch") pure
-  let his = collectInterpretSnapshots file contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
+  let his = collectInterpretSnapshots file (fromString entrypoint) contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
   return (allLocs, his)
 
 testWithSnapshots
@@ -99,6 +100,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
+            , crdEntrypoint = "main"
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -224,6 +226,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "match-on-some.mligo"
       let runData = ContractRunData
             { crdProgram = file
+            , crdEntrypoint = "main"
             , crdParam = ()
             , crdStorage = Just (5 :: Integer)
             }
