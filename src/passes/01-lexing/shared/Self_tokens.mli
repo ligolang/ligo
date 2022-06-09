@@ -13,6 +13,6 @@ module type S =
 
     type message = string Region.reg
 
-    val filter : 
+    val filter : add_warning:(Main_warnings.all -> unit) ->
       (lex_unit list, message) result -> (token list, message) result
   end

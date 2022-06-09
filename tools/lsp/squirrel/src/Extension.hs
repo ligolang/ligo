@@ -4,12 +4,14 @@ module Extension
   , UnsupportedExtension (..)
   , extGlobs
   , getExt
+  , isLigoFile
   , onExt
   , supportedExtensions
   ) where
 
 import Control.Exception (Exception)
 import Control.Monad.Except (MonadError (throwError))
+import Data.Either (isRight)
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -21,6 +23,7 @@ data ElimExt a = ElimExt
   { eePascal :: a
   , eeCaml   :: a
   , eeReason :: a
+  , eeJs     :: a
   }
 
 newtype UnsupportedExtension = UnsupportedExtension String
@@ -39,7 +42,11 @@ getExt path =
     ".religo" -> return Reason
     ".ligo"   -> return Pascal
     ".mligo"  -> return Caml
+    ".jsligo" -> return Js
     ext       -> throwError $ UnsupportedExtension ext
+
+isLigoFile :: FilePath -> Bool
+isLigoFile = isRight . getExt
 
 onExt :: MonadError UnsupportedExtension m => ElimExt a -> FilePath -> m a
 onExt ee path =
@@ -47,6 +54,7 @@ onExt ee path =
     Pascal -> eePascal ee
     Caml   -> eeCaml   ee
     Reason -> eeReason ee
+    Js     -> eeJs     ee
 
 supportedExtensions :: [FilePath]
-supportedExtensions = [".ligo", ".mligo", ".religo"]
+supportedExtensions = [".ligo", ".mligo", ".religo", ".jsligo"]

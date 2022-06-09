@@ -5,7 +5,7 @@ let test_lambda_call =
 
 let test_higher_order1 =
   let a = 2 in
-  let foo = fun (i : int) (j : int) (k : int) -> a + i + j + 0 in
+  let foo = fun (i : int) (j : int) (_k : int) -> a + i + j + 0 in
   let bar = (foo 1 2) in
   assert (bar 3 = 5)
 
@@ -68,8 +68,8 @@ let test_variant_match =
   let a = Bar 1 in
   assert (match a with
   | Foo   -> false
-  | Bar i -> true
-  | Baz s -> false)
+  | Bar _ -> true
+  | Baz _ -> false)
 
 let test_bool_match =
   let b = true in
@@ -80,7 +80,7 @@ let test_bool_match =
 let test_list_match =
   let a = [1; 2; 3; 4] in
   assert (match a with
-  | hd::tl -> true
+  | _::_ -> true
   | [] -> false)
 
 let test_tuple_proj =
@@ -96,25 +96,25 @@ type foobar = int option
 let test_options_match_some =
   let a = Some 0 in
   assert (match a with
-  | Some i -> true
+  | Some _ -> true
   | None -> false)
 
 let test_options_match_none =
   let a : foobar = None in
   assert (match a with
-  | Some i -> false
+  | Some _ -> false
   | None -> true)
 
 let test_is_nat_yes =
   let i : int = 1 in
   assert (match (is_nat i) with
-  | Some i -> true
+  | Some _ -> true
   | None -> false)
 
 let test_is_nat_no =
   let j : int = -1 in
   assert (match (is_nat j) with
-  | Some i -> false
+  | Some _ -> false
   | None -> true)
 
 let test_abs_int =
@@ -127,7 +127,7 @@ let test_map_list =
   let a = [1; 1; 1; 1] in
   let add_one : (int -> int) = fun (i : int) -> i + 1 in
   assert (match (List.map add_one a) with
-  | hd::tl -> (hd = 2)
+  | hd::_tl -> (hd = 2)
   | [] -> false)
 
 let test_fold_list =
@@ -173,14 +173,14 @@ let test_sizes =
 let test_modi = assert (3 mod 2 = 1n)
 
 let test_assertion_pass =
-  let unitt = assert (1=1) in
+  let () = assert (1=1) in
   assert true
 
 let test_map_finds =
   let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
   in
   assert (match (Map.find_opt "two" m) with
-  | Some v -> true
+  | Some _ -> true
   | None -> false)
 
 let m = Map.literal [("one", 1); ("two", 2); ("three", 3)]
@@ -317,7 +317,7 @@ let test_add_mutez =
 let test_sub_mutez =
   let m = 10tez in
   let n = 1tez in
-  assert (m - n = 9tez)
+  assert (m - n = Some 9tez)
 
 let test_div_mutez =
   let a = 1tez/2tez in
@@ -331,7 +331,7 @@ let test_list_fold_left_sum =
 let test_bytes_sub =
   let () = assert (Bytes.sub 0n 3n (Bytes.pack 5n) = (Bytes.pack 5)) in
   let () = assert (Bytes.sub 1n 2n (Bytes.pack 5n) = 0x0005) in
-  let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 3n 0n (Bytes.pack 5)) in
+  let () = assert (Bytes.sub 0n 0n (Bytes.pack 5n) = Bytes.sub 2n 0n (Bytes.pack 5)) in
   let () = assert (Bytes.sub 2n 1n (Bytes.pack 5n) = 0x05) in
   assert (Bytes.sub 0n 1n (Bytes.pack 5n) = 0x05)
 

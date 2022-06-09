@@ -17,39 +17,47 @@ type attributes = string list
 type known_attributes = {
   inline: bool ;
   no_mutation: bool;
+  (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
+     TODO: we should change the type of such constants to be `unit -> 'a` instead of just 'a
+  *)
+  thunk : bool;
   view : bool;
   public: bool;
-}
+  (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
+     set to true for standard libraries
+  *)
+  hidden: bool;
+} [@@deriving hash]
 
-type expression_variable = ValueVar.t
-type type_variable       = TypeVar.t
-type module_variable     = ModuleVar.t
+type expression_variable = ValueVar.t [@@deriving hash]
+type type_variable       = TypeVar.t [@@deriving hash]
+type module_variable     = ModuleVar.t [@@deriving hash]
 
 type kind = | Type
-            | Singleton [@@deriving yojson,equal,compare]
+            | Singleton [@@deriving yojson,equal,compare,hash]
 
-type label = Label of string
+type label = Label of string [@@deriving hash]
 let label_to_yojson (Label l) = `List [`String "Label"; `String l]
 let equal_label (Label a) (Label b) = String.equal a b
 let compare_label (Label a) (Label b) = String.compare a b
-
-module LMap = Simple_utils.Map.Make(struct type t = label let compare = compare_label end)
-type 'a label_map = 'a LMap.t
+module LMap = Simple_utils.Map.MakeHashable(struct type t = label [@@deriving hash]
+                                           let compare = compare_label
+                                            end)
+type 'a label_map = 'a LMap.t [@@deriving hash]
 
 let const_name = function
-  | Deprecated {const;_} -> const
   | Const      const     -> const
 
 type 'ty_expr row_element_mini_c = {
   associated_type      : 'ty_expr ;
-  michelson_annotation : string option ;
-  decl_pos : int ;
-  }
+  michelson_annotation : string option [@hash.ignore] ;
+  decl_pos : int [@hash.ignore] ;
+  } [@@deriving hash]
 
 type 'ty_exp type_app = {
   type_operator : type_variable ;
   arguments     : 'ty_exp list ;
-}
+} [@@deriving hash]
 
 type 'ty_expr row_element = {
   associated_type : 'ty_expr ;
@@ -60,14 +68,14 @@ type 'ty_expr row_element = {
 type 'a module_access = {
   module_path : module_variable list ;
   element     : 'a ;
-}
+} [@@deriving hash]
 
 (* Type level types *)
 type 'ty_exp abstraction = {
   ty_binder : type_variable;
   kind : kind ;
   type_ : 'ty_exp ;
-}
+} [@@deriving hash]
 
 type 'ty_exp rows = {
   fields     : 'ty_exp row_element label_map;
@@ -77,18 +85,18 @@ type 'ty_exp rows = {
 type 'ty_exp arrow = {
   type1: 'ty_exp ;
   type2: 'ty_exp ;
-  }
+  } [@@deriving hash]
 
 (* Expression level types *)
 type binder_attributes = {
     const_or_var : [`Const | `Var] option;
-  }
+  } [@@deriving hash]
 
 type 'ty_exp binder = {
   var  : expression_variable ;
   ascr : 'ty_exp option;
   attributes : binder_attributes ;
-  }
+  } [@@deriving hash]
 
 
 type 'exp application = {
@@ -159,8 +167,8 @@ and 'exp sequence = {
   expr2: 'exp ;
   }
 
-and 'exp assign = {
-  variable    : expression_variable ;
+and ('exp,'ty_exp) assign = {
+  binder      : 'ty_exp binder ;
   access_path : 'exp access list ;
   expression  : 'exp ;
   }

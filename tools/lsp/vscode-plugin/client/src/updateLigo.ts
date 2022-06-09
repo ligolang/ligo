@@ -5,6 +5,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import * as semver from 'semver'
 import * as vscode from 'vscode'
+import { getBinaryPath } from './commands/common'
 
 /* eslint-disable camelcase */
 /**
@@ -110,20 +111,6 @@ async function getLatestLigoRelease(): Promise<Release | undefined> {
   return releases[0]
 }
 
-function getLigoPath(config: vscode.WorkspaceConfiguration): string | undefined {
-  const ligoPath = config.get<string>('ligoLanguageServer.ligoBinaryPath')
-  if (ligoPath) {
-    return ligoPath
-  }
-
-  try {
-    vscode.window.showWarningMessage('LIGO binary not found through the configuration for the Visual Studio Code extension. Using PATH.')
-    return execFileSync('which', ['ligo']).toString().trim()
-  } catch {
-    return undefined
-  }
-}
-
 function openLigoReleases(): Thenable<boolean> {
   return vscode.env.openExternal(vscode.Uri.parse('https://gitlab.com/ligolang/ligo/-/releases'))
     .then((result) => {
@@ -189,7 +176,7 @@ export default async function updateLigo(): Promise<void> {
 }
 
 async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<void> {
-  const ligoPath = getLigoPath(config)
+  const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, config)
 
   let data: string
   try {

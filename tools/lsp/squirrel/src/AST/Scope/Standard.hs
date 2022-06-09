@@ -3,11 +3,12 @@ module AST.Scope.Standard
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as G
+import Data.Foldable (toList)
 import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope.Common
   ( pattern FindContract, FindFilepath (..), HasScopeForest (..), Includes (..)
-  , ParsedContract (..), MergeStrategy (..), addLigoErrToMsg, contractNotFoundException
+  , ParsedContract (..), MergeStrategy (..), addLigoErrsToMsg, contractNotFoundException
   , lookupContract, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
@@ -25,12 +26,13 @@ import Util.Graph (traverseAMConcurrently)
 data Standard
 
 instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
-  scopeForest reportProgress pc = do
-    fbForest <- scopeForest @Fallback reportProgress pc
+  scopeForest tempSettings reportProgress graph = do
+    fbForest <- scopeForest @Fallback tempSettings reportProgress graph
     tryMergeWithFromCompiler fbForest `catches`
-      [ Handler \(LigoDecodedExpectedClientFailureException err _) ->
+      [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) -> do
           -- catch only errors that we expect from ligo and try to use fallback parser
-          pure $ Includes $ G.gmap (addLigoErrToMsg (fromLigoErrorToMsg err)) $ getIncludes fbForest
+          let addErrs = addLigoErrsToMsg (fromLigoErrorToMsg <$> toList errs <> warns)
+          pure $ Includes $ G.gmap addErrs $ getIncludes fbForest
       , Handler \(_ :: SomeLigoException) ->
           pure fbForest
       , Handler \(e :: IOError) -> do
@@ -40,7 +42,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
       ]
     where
       tryMergeWithFromCompiler fbForest = do
-        lgForest <- scopeForest @FromCompiler reportProgress pc
+        lgForest <- scopeForest @FromCompiler tempSettings reportProgress graph
         merge lgForest fbForest
 
       merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do

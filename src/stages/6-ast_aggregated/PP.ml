@@ -89,11 +89,6 @@ let constraint_identifier_short ppf x =
   then Format.fprintf ppf "₀"
   else Format.fprintf ppf "%s" (constraint_identifier_unicode x)
 
-let list_sep_d_par f ppf lst =
-  match lst with
-  | [] -> ()
-  | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
-
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
@@ -150,20 +145,17 @@ and expression_content ppf (ec: expression_content) =
       fprintf ppf "%a.%a" expression ra.record label ra.path
   | E_record_update {record; path; update} ->
       fprintf ppf "{ %a with { %a = %a } }" expression record label path expression update
-  | E_lambda {binder; result} ->
-      fprintf ppf "lambda (%a) return %a" expression_variable binder
+  | E_lambda {binder=b; result} ->
+      fprintf ppf "lambda (%a) return %a" (binder type_expression) b
         expression result
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _} } ->
-      fprintf ppf "@[<h>let %a = %a%a%a in@.%a@]" expression_variable let_binder expression
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; thunk = _ ; hidden = false } } ->
+      fprintf ppf "@[<h>let %a = %a%a%a in@.%a@]" (binder type_expression) let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_type_in   {type_binder; rhs; let_result} ->
-      fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
-        type_variable type_binder
-        type_expression rhs
-        expression let_result
+  | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true} } ->
+      fprintf ppf "@[<h>%a@]" expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_type_inst {forall;type_} ->
@@ -173,6 +165,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
+  | E_assign a -> assign expression type_expression ppf a
 
 and option_inline ppf inline =
   if inline then
@@ -189,7 +182,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
-      let fields = LMap.map (fun (v,_) -> v) fields in
+      let fields = LMap.map (fun b -> b.var) fields in
       fprintf ppf "| @[%a@] ->@ @[%a@]"
         (tuple_or_record_sep_expr expression_variable) fields
         f body

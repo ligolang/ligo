@@ -37,7 +37,7 @@
 *)
 
 open Errors
-let fold_map_expression = Helpers.fold_map_expression
+let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed
@@ -51,7 +51,8 @@ type simpl_map = ((label * expression_variable) list) SimplMap.t
 let is_generated_partial_match : expression -> bool =
   fun exp ->
     match exp.expression_content with
-    | E_constant {cons_name=C_FAILWITH ; arguments=[e]} -> (
+    (* This is bad, we probably need some constant for "internally generated failwith" ? *)
+    | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" ValueVar.pp v)-> (
       match get_a_string e with
       | Some fw -> String.equal fw (Ligo_string.extract Stage_common.Backends.fw_partial_match)
       | None -> false
@@ -79,7 +80,7 @@ let substitute_var_in_body : expression_variable -> expression_variable -> expre
     let ((), res) = fold_map_expression aux () body in
     res
 
-let compress_matching ~raise : expression -> expression =
+let compress_matching : expression -> expression =
   fun exp ->
     let aux : (bool*simpl_map) -> expression -> bool * (bool*simpl_map) * expression =
       fun (has_been_simpl,smap) exp ->
@@ -100,8 +101,7 @@ let compress_matching ~raise : expression -> expression =
                   let (_,proj) = List.find_exn ~f:(fun (Label constructor',_) -> String.equal constructor' constructor) le in
                   let body' = substitute_var_in_body pattern proj body in
                   stop body'
-                | _ , [] -> continue smap
-                | _ , _ -> raise.raise (corner_case __LOC__)
+                | _ , _ -> continue smap
               )
               | None -> continue (SimplMap.add v (make_le cases) smap)
             )
@@ -135,6 +135,6 @@ let anomaly_check ~raise : expression -> unit =
     fold_expression aux () exp
 
 let peephole_expression ~raise exp =
-  let exp' = compress_matching ~raise exp in
+  let exp' = compress_matching exp in
   let () = anomaly_check ~raise exp' in
   exp'

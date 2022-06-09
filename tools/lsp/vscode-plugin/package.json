@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version":  "0.4.9",
+    "version": "0.4.11",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -19,7 +19,8 @@
     "activationEvents": [
         "onLanguage:ligo",
         "onLanguage:mligo",
-        "onLanguage:religo"
+        "onLanguage:religo",
+        "onLanguage:jsligo"
     ],
     "icon": "logo.png",
     "main": "./client/out/extension",
@@ -66,6 +67,20 @@
                     "dark": "logo.png"
                 },
                 "configuration": "./syntaxes/religo.configuration.json"
+            },
+            {
+                "id": "jsligo",
+                "aliases": [
+                    "JsLIGO"
+                ],
+                "extensions": [
+                    ".jsligo"
+                ],
+                "icon": {
+                    "light": "logo.png",
+                    "dark": "logo.png"
+                },
+                "configuration": "./syntaxes/jsligo.configuration.json"
             }
         ],
         "grammars": [
@@ -83,6 +98,11 @@
                 "language": "religo",
                 "scopeName": "source.religo",
                 "path": "./syntaxes/religo.tmLanguage.json"
+            },
+            {
+                "language": "jsligo",
+                "scopeName": "source.jsligo",
+                "path": "./syntaxes/jsligo.tmLanguage.json"
             }
         ],
         "configuration": {
@@ -106,6 +126,12 @@
                     "type": "array",
                     "default": [],
                     "description": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/tools/lsp/vscode-plugin/README.md)."
+                },
+                "ligoLanguageServer.tezos_source_account": {
+                    "scope": "resource",
+                    "type": "string",
+                    "default": "baker",
+                    "description": "Account for originating contracts from. It should contain enough money for origination"
                 }
             }
         },
@@ -124,6 +150,46 @@
                 "command": "ligo.restartServer",
                 "title": "LIGO: Restart LIGO LSP server",
                 "description": "Stops then starts the LIGO LSP server"
+            },
+            {
+                "command": "ligo.compileContract",
+                "title": "LIGO: Compile the current LIGO contract",
+                "description": "Compiles the current LIGO contract and prints the output to the console"
+            },
+            {
+                "command": "ligo.compileStorage",
+                "title": "LIGO: Compile the current LIGO contract's storage",
+                "description": "Compiles the current LIGO contract's storage and prints the output to the console"
+            },
+            {
+                "command": "ligo.compileExpression",
+                "title": "LIGO: Compile an entrypoint in the current LIGO contract",
+                "description": "Compiles an entrypoint in the current LIGO contract and prints the output to the console"
+            },
+            {
+                "command": "ligo.dryRun",
+                "title": "LIGO: Run the current LIGO contract",
+                "description": "Runs the current LIGO contract with the given parameter and storage"
+            },
+            {
+                "command": "ligo.evaluateFunction",
+                "title": "LIGO: Run a function in the current LIGO contract",
+                "description": "Runs a function in the current ligo contract on a given argument"
+            },
+            {
+                "command": "ligo.evaluateValue",
+                "title": "LIGO: Evaluate a LIGO definition",
+                "description": "Evaluates a LIGO definition"
+            },
+            {
+                "command": "ligo.deploy",
+                "title": "Tezos: Deploy the current contract",
+                "description": "Deploys the current contract on a given network"
+            },
+            {
+                "command": "ligo.generateDeployScript",
+                "title": "Tezos: Generate deploy script",
+                "description": "Generates deploy script for a given contract"
             }
         ]
     },
@@ -138,7 +204,11 @@
         "test": "npm run build-tests && node client/out/test/driver.js"
     },
     "dependencies": {
+        "@airgap/beacon-sdk": "^3.0.0",
+        "@taquito/signer": "^12.0.3",
+        "@taquito/taquito": "^12.0.3",
         "axios": "^0.21.1",
+        "node-fetch": "^3.2.3",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
@@ -157,6 +227,6 @@
         "mocha": "^9.1.3",
         "ts-command-line-args": "^2.1.0",
         "typescript": "^4.3.2",
-        "vsce": "^1.93.0"
+        "vsce": "^2.7.0"
     }
 }

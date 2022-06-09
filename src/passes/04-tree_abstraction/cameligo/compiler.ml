@@ -25,7 +25,7 @@ let pseq_to_list = function
 let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
   @ ["Michelson";"Loop";"Current"]
 
-open Predefined.Tree_abstraction.Cameligo
+open Predefined.Tree_abstraction
 
 let r_split = Location.r_split
 
@@ -316,7 +316,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
     )
   (*TODO: move to proper module*)
-  | ECall {value=(EModA {value={module_name;field;selector=_};region=_},args);region} when
+  | ECall ({value=(EModA {value={module_name;field;selector=_};region=_},args);region} as call) when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
     let loc = Location.lift region in
     let fun_name = match field with
@@ -332,7 +332,10 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let args = List.map ~f:self @@ nseq_to_list args in
       return @@ e_constant ~loc const args
     | None ->
-      raise.raise @@ unknown_constant var loc
+       let ((func, args), loc) = r_split call in
+       let func = self func in
+       let args = List.map ~f:self @@ nseq_to_list args in
+       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
       )
   | ECall call ->
     let ((func, args), loc) = r_split call in
@@ -362,6 +365,21 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   | EModA ma -> (
     let (ma, loc) = r_split ma in
     let (module_name, _) = r_split ma.module_name in
+    let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
+      match exp with
+      | EVar v ->
+         let accessed_el = compile_variable v in
+         return @@ e_module_accessor ~loc acc accessed_el
+      | EProj proj ->
+         let (proj, _) = r_split proj in
+         let (var, _) = r_split proj.struct_name in
+         let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
+         let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
+         return @@ e_accessor ~loc moda sels
+      | EModA ma ->
+         aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
+      | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+    in
     (*TODO: move to proper module*)
     if List.mem ~equal:Caml.(=) build_ins module_name then
       let fun_name = match ma.field with
@@ -374,23 +392,8 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let var = module_name ^ "." ^ fun_name in
       match constants var with
         Some const -> return @@ e_constant ~loc const []
-      | None -> return @@ e_variable_ez ~loc var
+      | None -> aux [compile_mod_var ma.module_name] ma.field
     else
-      let rec aux : module_variable list -> CST.expr -> AST.expression = fun acc exp ->
-        match exp with
-        | EVar v ->
-          let accessed_el = compile_variable v in
-          return @@ e_module_accessor ~loc acc accessed_el
-        | EProj proj ->
-          let (proj, _) = r_split proj in
-          let (var, _) = r_split proj.struct_name in
-          let moda  = e_module_accessor ~loc acc (ValueVar.of_input_var var) in
-          let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ npseq_to_list proj.field_path in
-          return @@ e_accessor ~loc moda sels
-        | EModA ma ->
-          aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
-        | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
-      in
       aux [compile_mod_var ma.module_name] ma.field
   )
   | EUpdate update ->
@@ -475,7 +478,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       let lst = List.map ~f:self lst in
       return @@ e_list ~loc lst
   )
-  | ELetIn li ->
+  | ELetIn li -> (
     let (li, loc) = r_split li in
     let ({kwd_let=_;kwd_rec;binding;kwd_in=_;body;attributes;} : CST.let_in) = li in
     let let_attr = compile_attributes attributes in
@@ -483,40 +486,44 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     let {type_params; binders; rhs_type; eq=_; let_rhs} : CST.let_binding = binding in
     let let_rhs = compile_expression ~raise let_rhs in
     let rhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) rhs_type in
-    (match binders with
-      pattern, [] when pattern_is_matching pattern -> (* matchin *)
-        let matchee = match rhs_type with
-          | Some t -> (e_annotation let_rhs t)
-          | None -> let_rhs
-        in
-        let pattern = conv ~raise pattern in
-        let match_case = { pattern ; body } in
-        e_matching ~loc matchee [match_case]
-    | pattern, args -> (* functoin *)
-    let let_binder, fun_ = compile_parameter ~raise pattern in
-    let binders = List.map ~f:(compile_parameter ~raise) args in
-    (* collect type annotation for let function declaration *)
-    let let_rhs, rhs_type = List.fold_right ~init:(let_rhs, rhs_type) ~f:(fun (b,fun_) (e,a) ->
-      e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
-    let let_binder   = {let_binder with ascr = rhs_type} in
-    (* This handle the recursion *)
-    let let_rhs = match kwd_rec with
-      Some reg ->
-        let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
-        let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
-        let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
-        e_recursive ~loc:(Location.lift reg#region) let_binder.var fun_type lambda
-    | None   -> let_rhs
-    in
-    (* This handle polymorphic annotation *)
-    let let_rhs = Option.value_map ~default:let_rhs ~f:(fun tp ->
-      let (tp,loc) = r_split tp in
-      let tp : CST.type_params = tp.inside in
-      let type_vars = List.Ne.map compile_type_var tp.type_vars in
-      List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
-    ) type_params in
-    return @@ e_let_in ~loc let_binder let_attr let_rhs @@ fun_ body
-    )
+    match binders with
+    | pattern, [] when pattern_is_matching pattern -> (* matchin *)
+      let matchee = match rhs_type with
+        | Some t -> (e_annotation let_rhs t)
+        | None -> (
+          match unepar pattern with
+          | CST.PUnit _ -> (e_annotation let_rhs (AST.t_unit ()))
+          | _ -> let_rhs
+        )
+      in
+      let pattern = conv ~raise pattern in
+      let match_case = { pattern ; body } in
+      e_matching ~loc matchee [match_case]
+    | pattern, args -> (* function *)
+      let let_binder, fun_ = compile_parameter ~raise pattern in
+      let binders = List.map ~f:(compile_parameter ~raise) args in
+      (* collect type annotation for let function declaration *)
+      let let_rhs, rhs_type = List.fold_right ~init:(let_rhs, rhs_type) ~f:(fun (b,fun_) (e,a) ->
+        e_lambda ~loc:(ValueVar.get_location b.var) b a @@ fun_ e, Option.map2 ~f:t_arrow b.ascr a) binders in
+      let let_binder   = {let_binder with ascr = rhs_type} in
+      (* This handle the recursion *)
+      let let_rhs = match kwd_rec with
+        Some reg ->
+          let fun_type = trace_option ~raise (untyped_recursive_fun reg#region) @@ rhs_type in
+          let rec get_first_non_annotation e = Option.value_map ~default:e ~f:(fun e -> get_first_non_annotation e.anno_expr) @@ get_e_annotation e  in
+          let lambda = trace_option ~raise (recursion_on_non_function loc) @@ get_e_lambda @@ (get_first_non_annotation let_rhs).expression_content in
+          e_recursive ~loc:(Location.lift reg#region) let_binder.var fun_type lambda
+      | None   -> let_rhs
+      in
+      (* This handle polymorphic annotation *)
+      let let_rhs = Option.value_map ~default:let_rhs ~f:(fun tp ->
+        let (tp,loc) = r_split tp in
+        let tp : CST.type_params = tp.inside in
+        let type_vars = List.Ne.map compile_type_var tp.type_vars in
+        List.Ne.fold_right ~f:(fun t e -> e_type_abs ~loc t e) ~init:let_rhs type_vars
+      ) type_params in
+      return @@ e_let_in ~loc let_binder let_attr let_rhs @@ fun_ body
+  )
   | ETypeIn ti ->
     let (ti, loc) = r_split ti in
     let ({type_decl={name;type_expr;_};kwd_in=_;body} : CST.type_in) = ti in

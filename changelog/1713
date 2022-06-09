@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1713'
+title: 'Fix: REPL support for stdlib'
+type: fixed

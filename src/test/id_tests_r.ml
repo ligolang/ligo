@@ -48,7 +48,7 @@ let buy_id ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "buy"
+  let () = expect_eq ~raise ~add_warning ~options program "buy"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -86,7 +86,7 @@ let buy_id_sender_addr ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "buy"
+  let () = expect_eq ~raise ~add_warning ~options program "buy"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -113,7 +113,7 @@ let buy_id_wrong_amount ~raise ~add_warning () =
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_some (e_address new_addr)))] in
-  let () = expect_string_failwith ~raise ~options program "buy"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "buy"
       (e_pair param storage)
       "Incorrect amount paid."
   in ()
@@ -159,7 +159,7 @@ let update_details_owner ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                        ("new_profile", e_some details) ;
                        ("new_controller", e_some (e_address new_addr))] in
-  let () = expect_eq ~raise ~options program "update_details"
+  let () = expect_eq ~raise ~add_warning ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -205,7 +205,7 @@ let update_details_controller ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_eq ~raise ~options program "update_details"
+  let () = expect_eq ~raise ~add_warning ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -242,7 +242,7 @@ let update_details_nonexistent ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 2) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_string_failwith ~raise ~options program "update_details"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "update_details"
       (e_pair param storage)
       "This ID does not exist."
   in ()
@@ -278,7 +278,7 @@ let update_details_wrong_addr ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 0) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_string_failwith ~raise ~options program "update_details"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "update_details"
       (e_pair param storage)
       "You are not the owner or controller of this ID."
   in ()
@@ -314,7 +314,7 @@ let update_details_unchanged ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_typed_none (t_bytes ())) ;
                            ("new_controller", e_typed_none (t_address ()))] in
-  let () = expect_eq ~raise ~options program "update_details"
+  let () = expect_eq ~raise ~add_warning ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)
   in ()
@@ -358,7 +358,7 @@ let update_owner ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_owner", e_address owner_addr)] in
-  let () = expect_eq ~raise ~options program "update_owner"
+  let () = expect_eq ~raise ~add_warning ~options program "update_owner"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -393,7 +393,7 @@ let update_owner_nonexistent ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 2);
                            ("new_owner", e_address new_addr)] in
-  let () = expect_string_failwith ~raise ~options program "update_owner"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "update_owner"
       (e_pair param storage)
       "This ID does not exist."
   in ()
@@ -428,7 +428,7 @@ let update_owner_wrong_addr ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 0);
                            ("new_owner", e_address new_addr)] in
-  let () = expect_string_failwith ~raise ~options program "update_owner"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "update_owner"
       (e_pair param storage)
       "You are not the owner of this ID."
   in ()
@@ -466,7 +466,7 @@ let skip ~raise ~add_warning () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~options program "skip"
+  let () = expect_eq ~raise ~add_warning ~options program "skip"
       (e_pair (e_unit ()) storage)
       (e_pair (e_list []) new_storage)
   in ()
@@ -498,7 +498,7 @@ let skip_wrong_amount ~raise ~add_warning () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_string_failwith ~raise ~options program "skip"
+  let () = expect_string_failwith ~raise ~add_warning ~options program "skip"
       (e_pair (e_unit ()) storage)
       "Incorrect amount paid."
   in ()

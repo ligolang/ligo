@@ -16,9 +16,9 @@ type return (* TODO *)
 
 let commit (p, s : bytes * storage) : return =
   let commit : commit =
-    { date = Tezos.now + 86400; salted_hash = p } in
+    { date = Tezos.get_now () + 86400; salted_hash = p } in
   let updated_map : commit_set =
-    Big_map.update Tezos.sender (Some commit) s.commits in
+    Big_map.update Tezos.get_sender () (Some commit) s.commits in
   let s = {s with commits = updated_map} in
   ([] : operation list), s
 
@@ -34,7 +34,7 @@ let reveal (p, s : reveal * storage) : return =
           (failwith
              "You have not made a commitment to hash against yet."
            : commit) in
-    if Tezos.now < commit.date then
+    if Tezos.get_now () < commit.date then
       (failwith
          "It has not been 24 hours since your commit yet."
        : return)

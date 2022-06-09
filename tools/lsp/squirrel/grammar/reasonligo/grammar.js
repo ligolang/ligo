@@ -141,6 +141,7 @@ module.exports = grammar({
       prec(10, // see 'accessor_chain' for explanation of precedence
         common.withAttrs($, seq(
           field("field_name", $.FieldName),
+          // FIXME: Type annotation is optional.
           ':',
           field("field_type", $._type_expr),
         ))),
@@ -622,7 +623,7 @@ module.exports = grammar({
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
-    String: $ => /\"(\\.|[^"])*\"/,
+    String: $ => /\"(\\.|[^"\n])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,
     Nat: $ => /([1-9][0-9_]*|0)n/,
     Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,

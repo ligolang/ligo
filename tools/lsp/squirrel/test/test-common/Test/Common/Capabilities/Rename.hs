@@ -12,7 +12,6 @@ import Data.HashMap.Strict qualified as HM
 import Data.List (sort)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Word (Word32)
 import Language.LSP.Types qualified as J
 import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
@@ -65,7 +64,7 @@ testRenameOk pos name (Range (declLine, declCol, _) _ declFile) newName expected
 testRenameFail
   :: forall impl. ScopeTester impl
   => FilePath  -- ^ Contract path
-  -> (Word32, Word32)  -- ^ Rename location
+  -> (J.UInt, J.UInt)  -- ^ Rename location
   -> Assertion
 testRenameFail fp pos = do
     tree <- readContractWithScopes @impl fp
@@ -79,8 +78,9 @@ testRenameFail fp pos = do
       Ok _ -> expectationFailure "Should not return edits"
 
 renameFail :: forall impl. ScopeTester impl => Assertion
-renameFail =
-  testRenameFail @impl (contractsDir </> "id.ligo") (1, 16)
+renameFail = do
+  fp <- makeAbsolute (contractsDir </> "id.ligo")
+  testRenameFail @impl fp (1, 16)
 
 renameId :: forall impl. ScopeTester impl => Assertion
 renameId = do

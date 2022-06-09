@@ -8,8 +8,7 @@
   zarith
   hex
   tezos-utils
-  tezos-hacl-glue-unix
-  bls12-381-unix)
+  tezos-hacl)
  (inline_tests)
  (preprocess
   (pps
@@ -17,7 +16,9 @@
    ppx_deriving.eq
    ppx_deriving.enum
    ppx_deriving.ord
+   ppx_hash
    ppx_print_constant
+   ppx_read_constant
    ppx_compare
    ppx_deriving_yojson
    ppx_only_interpreter_tags)))

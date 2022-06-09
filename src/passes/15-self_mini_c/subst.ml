@@ -83,11 +83,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in (e1, inline, ((v, tv), e2)) ->
+  | E_let_in (e1, inline, thunk, ((v, tv), e2)) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in (e1, inline, ((v, tv), e2))
+    return @@ E_let_in (e1, inline, thunk, ((v, tv), e2))
   | E_tuple exprs ->
     let exprs = List.map ~f:replace exprs in
     return @@ E_tuple exprs
@@ -107,6 +107,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_global_constant (hash, args) ->
     let args = List.map ~f:replace args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:replace args in
+    let x = replace_var x in
+    let code = replace code in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -180,10 +185,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (binder, body) = self_binder1 ~body:(binder, body) in
     return @@ E_closure { binder ; body }
   )
-  | E_let_in (expr, inline, ((v , tv), body)) -> (
+  | E_let_in (expr, inline, thunk, ((v , tv), body)) -> (
     let expr = self expr in
     let (v, body) = self_binder1 ~body:(v, body) in
-    return @@ E_let_in (expr, inline, ((v , tv) , body))
+    return @@ E_let_in (expr, inline, thunk, ((v , tv) , body))
   )
   | E_tuple exprs ->
     let exprs = List.map ~f:self exprs in
@@ -254,6 +259,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_global_constant (hash, args) ->
     let args = List.map ~f:self args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:self args in
+    let (x, code) = self_binder1 ~body:(x, code) in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
@@ -332,7 +341,7 @@ let%expect_test _ =
   (* let-in shadowed (not in rhs) *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false,((x, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, false, ((x, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -343,7 +352,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -354,7 +363,7 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type),
+    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type),
                            app (var x) (var y)))))
     ~x:x
     ~expr:(var y) ;

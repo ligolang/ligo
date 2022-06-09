@@ -57,7 +57,7 @@ and matching_content_variant = {
   }
 
 and matching_content_record = {
-  fields : (expression_variable * type_expression) label_map;
+  fields : type_expression binder label_map;
   body : expression;
   tv : type_expression;
 }
@@ -78,11 +78,6 @@ and expression = {
 
 and expr = expression
 
-and map_kv = {
-    key : expression ;
-    value : expression ;
-  }
-
 and expression_label_map = expression label_map
 and expression_list = expression list
 
@@ -96,7 +91,6 @@ and expression_content =
   | E_type_abstraction of expr type_abs
   | E_recursive of recursive
   | E_let_in of let_in
-  | E_type_in of (expr, ty_expr) type_in
   | E_raw_code of raw_code
   | E_type_inst of type_inst
   (* Variant *)
@@ -106,6 +100,8 @@ and expression_content =
   | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
+  (* assignation *)
+  | E_assign of (expression,type_expression) assign
 
 and type_inst = {
     forall: expression ;
@@ -123,12 +119,12 @@ and application = {
   }
 
 and lambda =  {
-    binder: expression_variable ;
+    binder: type_expression binder ;
     result: expression ;
   }
 
 and let_in = {
-    let_binder: expression_variable ;
+    let_binder: type_expression binder ;
     rhs: expression ;
     let_result: expression ;
     attr: known_attributes ;

@@ -1,10 +1,11 @@
-module Stacking = struct
+module Michelson = struct
 
   open Tezos_utils.Michelson
 
   type predicate =
     | Simple of unit michelson
     | Special of ((string -> unit michelson) -> unit michelson)
+    (* | Special of (Mini_c.expression list -> Mini_c.type_expression -> (unit michelson * Mini_c.expression list) option *)
 
   (* TODO why did these exist? *)
   let simple_constant c = Simple c

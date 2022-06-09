@@ -1,0 +1,131 @@
+{
+    "name": "ligo-debugger-vscode",
+    "description": "VSCode debugger extension for LIGO.",
+    "author": "Serokell",
+    "license": "MIT",
+    "version": "0.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/ligolang/ligo"
+    },
+    "publisher": "ligolang-publish",
+    "categories": [
+        "Programming Languages",
+        "Debuggers"
+    ],
+    "keywords": [],
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "activationEvents": [
+        "onDebugResolve:ligo",
+        "onDebugResolve:mligo",
+        "onDebugResolve:religo"
+    ],
+    "icon": "logo.png",
+    "main": "./out/extension",
+    "contributes": {
+        "breakpoints": [
+            {
+                "language": "ligo"
+            },
+            {
+                "language": "mligo"
+            },
+            {
+                "language": "religo"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "ligo",
+                "label": "LIGO Debugger",
+                "languages": [
+                    "ligo",
+                    "mligo",
+                    "religo"
+                ],
+                "configurationAttributes": {
+                    "launch": {
+                        "required": [
+                            "program",
+                            "entrypoint",
+                            "parameter",
+                            "storage"
+                        ],
+                        "properties": {
+                            "program": {
+                                "type": "string",
+                                "description": "Absolute path to contract code",
+                                "default": "${file}"
+                            },
+                            "stopOnEntry": {
+                                "type": "boolean",
+                                "description": "Whether to automatically stop after launch",
+                                "default": true
+                            },
+                            "entrypoint": {
+                                "type": "string",
+                                "description": "Name of the entrypoint to run",
+                                "default": "main"
+                            },
+                            "parameter": {
+                                "type": "string",
+                                "description": "Parameter value in Michelson/Morley syntax",
+                                "default": ""
+                            },
+                            "storage": {
+                                "type": "string",
+                                "description": "Storage value in Michelson/Morley syntax",
+                                "default": ""
+                            },
+                            "logDir": {
+                                "type": "string",
+                                "description": "Path to a directory where the debug adapter will create a logging file",
+                                "default": ""
+                            }
+                        }
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                        "type": "ligo",
+                        "request": "launch",
+                        "name": "Launch LIGO",
+                        "logDir": "",
+                        "program": "${file}",
+                        "stopOnEntry": true,
+                        "entrypoint": "${entrypoint}",
+                        "parameter": "${parameter}",
+                        "storage": "${storage}"
+                    }
+                ]
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "compile": "npm run esbuild-base -- --sourcemap",
+        "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=./out/extension.js --external:vscode --format=cjs --platform=node",
+        "watch": "tsc -b -w",
+        "package": "vsce package",
+        "lint": "eslint src/*.ts"
+    },
+    "dependencies": {
+        "@vscode/debugadapter-testsupport": "1.55.1",
+        "@vscode/debugprotocol": "1.55.1"
+    },
+    "devDependencies": {
+        "@types/node": "^15.14.9",
+        "@types/vscode": "^1.67.0",
+        "@typescript-eslint/eslint-plugin": "^4.33.0",
+        "@typescript-eslint/parser": "^4.27.0",
+        "esbuild": "^0.13.4",
+        "eslint": "^7.32.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-plugin-import": "^2.26.0",
+        "typescript": "^4.7.2",
+        "vsce": "^2.8.0",
+        "@vscode/debugadapter": "1.55.1"
+    }
+}

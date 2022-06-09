@@ -47,6 +47,7 @@ and type_base =
   | TB_never
   | TB_chest
   | TB_chest_key
+  | TB_tx_rollup_l2_address
 
 and environment_element = expression_variable * type_expression
 
@@ -56,6 +57,7 @@ and var_name = expression_variable
 and fun_name = expression_variable
 
 type inline = bool
+type thunk = bool
 
 type value =
   | D_unit
@@ -94,7 +96,7 @@ and expression_content =
   | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
-  | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
+  | E_let_in   of expression * inline * thunk * ((var_name * type_expression) * expression)
   | E_tuple of expression list
   | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
   (* E_proj (record, index, field_count): we use the field_count to
@@ -109,6 +111,7 @@ and expression_content =
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list
+  | E_create_contract of type_expression * type_expression * ((var_name * type_expression) * expression) * expression list
 
 and expression = {
   content : expression_content ;

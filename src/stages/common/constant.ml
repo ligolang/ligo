@@ -22,7 +22,6 @@ type t =
   | Contract
   | Michelson_or
   | Michelson_pair
-  | Map_or_big_map
   | Baker_hash
   | Pvss_key
   | Sapling_transaction
@@ -34,14 +33,15 @@ type t =
   | Never
   | Ticket
   | Michelson_program
-  | Test_exec_error
-  | Test_exec_result
+  | Michelson_contract
   | Typed_address
   | Mutation
   | Chest
   | Chest_key
   | Chest_opening_result
-  [@@deriving ord, eq]
+  | Tx_rollup_l2_address 
+  | External of string
+  [@@deriving ord, eq, hash]
 
 let to_string = function
   | Bool                 -> "bool"
@@ -65,7 +65,6 @@ let to_string = function
   | Contract             -> "contract"
   | Michelson_or         -> "michelson_or"
   | Michelson_pair       -> "michelson_pair"
-  | Map_or_big_map       -> "map_or_big_map"
   | Baker_hash           -> "baker_hash"
   | Pvss_key             -> "pvss_key"
   | Sapling_transaction  -> "sapling_transaction"
@@ -77,13 +76,14 @@ let to_string = function
   | Never                -> "never"
   | Ticket               -> "ticket"
   | Michelson_program    -> "michelson_program"
-  | Test_exec_error      -> "test_exec_error"
-  | Test_exec_result     -> "test_exec_result"
+  | Michelson_contract   -> "michelson_contract"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
   | Chest                -> "chest"
   | Chest_key            -> "chest_key"
   | Chest_opening_result -> "chest_opening_result"
+  | Tx_rollup_l2_address -> "tx_rollup_l2_address"
+  | External s           -> "external_" ^ s
 
   let of_string = function
   | "bool"                 -> Bool
@@ -107,7 +107,6 @@ let to_string = function
   | "contract"             -> Contract
   | "michelson_or"         -> Michelson_or
   | "michelson_pair"       -> Michelson_pair
-  | "map_or_big_map"       -> Map_or_big_map
   | "baker_hash"           -> Baker_hash
   | "pvss_key"             -> Pvss_key
   | "sapling_transaction"  -> Sapling_transaction
@@ -119,13 +118,16 @@ let to_string = function
   | "never"                -> Never
   | "ticket"               -> Ticket
   | "michelson_program"    -> Michelson_program
-  | "test_exec_error"      -> Test_exec_error
-  | "test_exec_result"     -> Test_exec_result
+  | "michelson_contract"   -> Michelson_contract
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
+  | "tx_rollup_l2_address" -> Tx_rollup_l2_address
+  | "external_int"         -> External "int"
+  | "external_ediv"        -> External "ediv"
+  | "external_u_ediv"      -> External "u_ediv"
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let bool                 = Bool
@@ -149,7 +151,6 @@ let set                  = Set
 let contract             = Contract
 let michelson_or         = Michelson_or
 let michelson_pair       = Michelson_pair
-let map_or_big_map       = Map_or_big_map
 let baker_hash           = Baker_hash
 let pvss_key             = Pvss_key
 let sapling_transaction  = Sapling_transaction
@@ -161,13 +162,17 @@ let bls12_381_fr         = Bls12_381_fr
 let never                = Never
 let ticket               = Ticket
 let michelson_program    = Michelson_program
-let test_exec_error      = Test_exec_error
-let test_exec_result     = Test_exec_result
+let michelson_contract   = Michelson_contract
 let typed_address        = Typed_address
 let mutation             = Mutation
 let chest                = Chest
 let chest_key            = Chest_key
 let chest_opening_result = Chest_opening_result
+let tx_rollup_l2_address = Tx_rollup_l2_address
+let external_failwith    = External "failwith"
+let external_int         = External "int"
+let external_ediv        = External "ediv"
+let external_u_ediv      = External "u_ediv"
 
 let v_bool                 : type_variable = TypeVar.of_input_var (to_string Bool)
 let v_string               : type_variable = TypeVar.of_input_var (to_string String)
@@ -191,7 +196,6 @@ let v_set                  : type_variable = TypeVar.of_input_var (to_string Set
 let v_contract             : type_variable = TypeVar.of_input_var (to_string Contract)
 let v_michelson_or         : type_variable = TypeVar.of_input_var (to_string Michelson_or)
 let v_michelson_pair       : type_variable = TypeVar.of_input_var (to_string Michelson_pair)
-let v_map_or_big_map       : type_variable = TypeVar.of_input_var (to_string Map_or_big_map)
 let v_baker_hash           : type_variable = TypeVar.of_input_var (to_string Baker_hash)
 let v_pvss_key             : type_variable = TypeVar.of_input_var (to_string Pvss_key)
 let v_sapling_trasaction   : type_variable = TypeVar.of_input_var (to_string Sapling_transaction)
@@ -203,10 +207,13 @@ let v_bls12_381_fr         : type_variable = TypeVar.of_input_var (to_string Bls
 let v_never                : type_variable = TypeVar.of_input_var (to_string Never)
 let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
-let v_test_exec_error      : type_variable = TypeVar.of_input_var (to_string Test_exec_error)
-let v_test_exec_result     : type_variable = TypeVar.of_input_var (to_string Test_exec_result)
+let v_michelson_contract   : type_variable = TypeVar.of_input_var (to_string Michelson_contract)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
+let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
+let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
+let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
+let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")

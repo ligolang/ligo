@@ -17,6 +17,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let lamb = decompile ~raise lamb in
        return (O.E_application { lamb ; args })
     | E_lambda { binder ; result } ->
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        let result = decompile ~raise result in
        return (O.E_lambda { binder ; result })
     | E_type_abstraction { type_binder ; result } ->
@@ -25,15 +26,13 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
     | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
        let fun_type = decompile_type ~raise fun_type in
        let result = decompile ~raise result in
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        return (O.E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = decompile ~raise rhs in
        let let_result = decompile ~raise let_result in
+       let let_binder = Stage_common.Maps.binder (decompile_type ~raise) let_binder in
        return (O.E_let_in { let_binder ; rhs ; let_result ; attr })
-    | E_type_in { type_binder ; rhs ; let_result } ->
-       let rhs = decompile_type ~raise rhs in
-       let let_result = decompile ~raise let_result in
-       return (O.E_type_in { type_binder ; rhs ; let_result })
     | E_raw_code { language ; code } ->
        let code = decompile ~raise code in
        return (O.E_raw_code { language ; code })
@@ -57,9 +56,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let matchee = decompile ~raise matchee in
        let tv = decompile_type ~raise tv in
        let body = decompile ~raise body in
-       let f (v, t) =
-         let t = decompile_type ~raise t in
-         (v, t) in
+       let f (b: _ I.binder) = {b with ascr = Option.map ~f:(decompile_type ~raise) (b.ascr) } in
        let fields = I.LMap.map f fields in
        return (O.E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
     (* Record *)
@@ -73,6 +70,16 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let record = decompile ~raise record in
        let update = decompile ~raise update in
        return (O.E_record_update { record ; path ; update })
+   | I.E_assign {binder;access_path;expression} ->
+      let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
+      let aux_ap : _ I.access -> _ O.access = function
+         Access_record s -> Access_record s
+      |  Access_tuple  i -> Access_tuple  i
+      |  Access_map    e -> Access_map (decompile ~raise e)
+      in
+      let access_path = List.map ~f:aux_ap access_path in
+      let expression = decompile ~raise expression in
+      return @@ O.E_assign {binder;access_path;expression}
 
 and decompile_type ~raise : Ast_aggregated.type_expression -> Ast_typed.type_expression =
   fun ty ->

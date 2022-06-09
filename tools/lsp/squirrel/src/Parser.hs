@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Parser
-  ( Msg
+  ( Severity (..)
+  , Message (..)
   , ParserM
   , LineMarkerType (..)
   , LineMarker (..)
@@ -35,7 +36,7 @@ import Data.Maybe (fromJust, isJust, mapMaybe)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import Data.Text qualified as Text
-import Data.Word (Word32)
+import Language.LSP.Types qualified as J
 import Text.Read (readMaybe)
 
 import Duplo.Pretty
@@ -65,7 +66,7 @@ data ParserEnv = ParserEnv
   -- ^ Type of the node being parsed. Stored for better error messages.
   }
 
-runParserM :: MonadIO m => ParserM a -> m (a, [Msg])
+runParserM :: MonadIO m => ParserM a -> m (a, [Message])
 runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], [])
   where
     initEnv = ParserEnv
@@ -74,11 +75,27 @@ runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], 
       , peNodeRange = point 0 0
       }
 
-type Msg = (Range, Error ())
-type ParserM = RWST ParserEnv [Msg] ([Text], [Text]) IO
+data Severity
+  = SeverityError
+  | SeverityWarning
+  deriving stock (Eq, Ord, Show)
 
-collectTreeErrors :: Contains Range info => SomeLIGO info -> [Msg]
-collectTreeErrors = map (getElem *** void) . collect . getLIGO
+-- | Represents some diagnostic (error, warning, etc) that may be contained
+-- together with some node.
+--
+-- Note that this is different from @Error@, which is a node by itself, and not
+-- something extra that is associated with some node.
+data Message = Message
+  { mMessage :: Text
+  , mSeverity :: Severity
+  , mRange :: Range
+  } deriving stock (Eq, Ord, Show)
+
+type ParserM = RWST ParserEnv [Message] ([Text], [Text]) IO
+
+collectTreeErrors :: Contains Range info => SomeLIGO info -> [Message]
+collectTreeErrors =
+  map (\(info, Error msg _) -> Message msg SeverityError (getRange info)) . collect . getLIGO
 
 -- | The flag of some line marker.
 --
@@ -99,11 +116,11 @@ data LineMarkerType
 data LineMarker = LineMarker
   { lmFile :: FilePath  -- ^ The file that was included.
   , lmFlag :: LineMarkerType  -- ^ The "parsed" flag of the line marker.
-  , lmLine :: Word32  -- ^ The line number that should be used after the inclusion.
+  , lmLine :: J.UInt  -- ^ The line number that should be used after the inclusion.
   , lmLoc  :: Range  -- ^ The location in the preprocessed file where the line marker was added.
   } deriving stock (Eq, Show)
 
-parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, Word32)
+parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, J.UInt)
 parseLineMarkerText marker = do
   "#" : lineStr : fileText : flags <- Just $ Text.words marker
   line <- readMaybe $ Text.unpack lineStr
@@ -161,13 +178,13 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isComment :: RawTree -> Bool
     isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
 
-allErrors :: [RawTree] -> [Msg]
+allErrors :: [RawTree] -> [Message]
 allErrors = mapMaybe extractUnnamedError
   where
-    extractUnnamedError :: RawTree -> Maybe Msg
+    extractUnnamedError :: RawTree -> Maybe Message
     extractUnnamedError tree = case only tree of
-      ((r, ""), ParseTree "ERROR" children _)
-        -> Just (r, void (Error ("Unexpected: " <> getBody tree) children))
+      ((r, ""), ParseTree "ERROR" _ _)
+        -> Just (Message ("Unexpected: " <> getBody tree) SeverityError r)
       _ -> Nothing
 
 getBody :: RawTree -> Text

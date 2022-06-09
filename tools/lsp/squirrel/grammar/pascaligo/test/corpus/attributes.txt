@@ -114,7 +114,7 @@ function
     (NameDecl)
     (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
-    (let_expr
+    (block_with
       (block
         (const_decl (var_pattern (NameDecl)) (TypeName) (Int))
       )
@@ -176,7 +176,7 @@ function foo (const a : int) : int is
     (NameDecl)
     (param_decl (var_pattern (NameDecl)) (TypeName))
     (TypeName)
-    (let_expr
+    (block_with
       (block
         (const_decl (attr) (var_pattern (NameDecl)) (TypeName) (Int))
       )

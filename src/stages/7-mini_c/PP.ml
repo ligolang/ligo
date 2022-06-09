@@ -56,6 +56,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_never -> "never"
     | TB_chest -> "chest"
     | TB_chest_key -> "chest_key"
+    | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
     in
   fprintf ppf "%s" s
 
@@ -131,7 +132,7 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf
         "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
         expression c ValueVar.pp name_l expression l ValueVar.pp name_r expression r
-  | E_let_in (expr, inline , ((name , _) , body)) ->
+  | E_let_in (expr, inline , _, ((name , _) , body)) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" ValueVar.pp name expression expr option_inline inline expression body
   | E_tuple exprs ->
     fprintf ppf "@[(%a)@]"
@@ -163,6 +164,14 @@ and expression_content ppf (e:expression_content) = match e with
   | E_global_constant (hash, args) ->
     fprintf ppf "@[constant(%s)( %a )@]"
       hash
+      Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
+  | E_create_contract (p, s, ((x, a), code), args) ->
+    fprintf ppf "@[create_contract(%a,@ %a,@ fun (%a : %a) -> %a,@ %a)@]"
+      type_expression p
+      type_expression s
+      ValueVar.pp x
+      type_expression a
+      expression code
       Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->

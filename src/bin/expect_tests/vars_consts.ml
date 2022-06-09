@@ -10,12 +10,12 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts/negative/vars_consts/match.ligo", line 8, characters 12-13:
       7 |       None -> skip
-      8 |     | Some (s) -> block {
+      8 |     | Some (s) -> {
       9 |         s := 3;
 
     Invalid assignment to constant variable "s", declared at
     File "../../test/contracts/negative/vars_consts/match.ligo", line 9, characters 8-9:
-      8 |     | Some (s) -> block {
+      8 |     | Some (s) -> {
       9 |         s := 3;
      10 |         result := s; } |}]
 
@@ -38,11 +38,11 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts/negative/vars_consts/assign_const_param.ligo", line 1, characters 19-20:
       1 | function foo(const x : int) : int is
-      2 |   block {
+      2 |   {
 
     Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_param.ligo", line 3, characters 4-5:
-      2 |   block {
+      2 |   {
       3 |     x := 4;
       4 |   } with x |}]
 
@@ -50,7 +50,7 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "assign_consts.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/vars_consts/assign_consts.ligo", line 3, characters 11-12:
-      2 |   block {
+      2 |   {
       3 |     const (x, y) = (4, 5);
       4 |     x := 1;
 
@@ -79,11 +79,11 @@ let%expect_test _ =
   [%expect{|
     File "../../test/contracts/negative/vars_consts/assign_const_params.ligo", line 1, characters 19-20:
       1 | function foo(const x : int; var y : int) : int is
-      2 |   block {
+      2 |   {
 
     Invalid assignment to constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/assign_const_params.ligo", line 3, characters 4-5:
-      2 |   block {
+      2 |   {
       3 |     x := 4;
       4 |     y := 3; |}]
 
@@ -91,27 +91,27 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "capture_var_param.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/vars_consts/capture_var_param.ligo", line 3, characters 42-43:
-      2 |   block {
+      2 |   {
       3 |     function bar(const _ : unit) : int is x;
       4 |   } with bar
 
     Invalid capture of non-constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/capture_var_param.ligo", line 1, characters 17-18:
       1 | function foo(var x : int) : int is
-      2 |   block { |}]
+      2 |   { |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "capture_var_params.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/vars_consts/capture_var_params.ligo", line 3, characters 42-43:
-      2 |   block {
+      2 |   {
       3 |     function bar(const _ : unit) : int is x + y;
       4 |   } with bar
 
     Invalid capture of non-constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/capture_var_params.ligo", line 1, characters 17-18:
       1 | function foo(var x : int; const y : int) : int -> int is
-      2 |   block { |}]
+      2 |   { |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "capture_var_params.mligo") ] ;
@@ -194,7 +194,7 @@ let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-core" ; (bad_test "multiple_vars_1.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/vars_consts/multiple_vars_1.ligo", line 3, characters 11-12:
-      2 |   block {
+      2 |   {
       3 |     const (x, y) = (4, 5);
       4 |     x := 2;
 
@@ -214,7 +214,7 @@ let%expect_test _ =
 
     Invalid capture of non-constant variable "y", declared at
     File "../../test/contracts/negative/vars_consts/multiple_vars_2.ligo", line 3, characters 12-13:
-      2 |   block {
+      2 |   {
       3 |     var (x, y) := (4, 5);
       4 |     function add(const _u : unit) is (x + y);
 
@@ -225,7 +225,7 @@ let%expect_test _ =
 
     Invalid capture of non-constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/multiple_vars_2.ligo", line 3, characters 9-10:
-      2 |   block {
+      2 |   {
       3 |     var (x, y) := (4, 5);
       4 |     function add(const _u : unit) is (x + y); |}]
 
@@ -239,9 +239,9 @@ let%expect_test _ =
 
     Invalid capture of non-constant variable "x", declared at
     File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 2, characters 6-7:
-      1 | function foo(const _ : unit) is block {
+      1 | function foo(const _ : unit) is {
       2 |   var x := 42;
-      3 |   function bar(const _ : unit) is block { |}]
+      3 |   function bar(const _ : unit) is { |}]
 
 (* Positives *)
 
@@ -249,10 +249,12 @@ let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "shadowing.ligo") ] ;
   [%expect{|
     const foo =
-      lambda (toto : int) return let toto[@var] = 2 in let toto = 3 in toto
+      lambda (toto : int) return let toto[@var] = 2 in
+                                 let ()#2 : unit = toto[@var] := 3 in toto
     const bar =
       lambda (_u[@var] : unit) return let toto = 1 in
-                                      let toto[@var] = 2 in let toto = 3 in toto |}]
+                                      let toto[@var] = 2 in
+                                      let ()#3 : unit = toto[@var] := 3 in toto |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "func_const_var.ligo") ] ;
@@ -269,7 +271,8 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let bar : int -> int =
                                       lambda (x[@var] : int) : int return
-                                      let x = ADD(x , 1) in x in
+                                      let ()#2 : unit = x[@var] := ADD(x , 1) in
+                                      x in
                                     (bar)@(42) |}]
 
 let%expect_test _ =
@@ -286,29 +289,16 @@ let%expect_test _ =
     const foo : int -> int =
       lambda (x : int) : int return let i[@var] = 0 in
                                     let b[@var] = 5 in
-                                    let env_rec#2 = ( ( i ) ) in
-                                    let env_rec#2 =
-                                      LOOP_LEFT(lambda (binder#3) return
-                                                let i = binder#3.0.0 in
-                                                 match AND(LT(i , x) , GT(b , 0)) with
-                                                  | True () -> LOOP_CONTINUE
-                                                               (let i =
-                                                                  ADD(i , 1) in
-                                                                let binder#3 =
-                                                                  { binder#3 with
-                                                                    { 0 =
-                                                                  { binder#3.0
-                                                                    with
-                                                                    { 0 =
-                                                                  i } } } } in
-                                                                let ()#4 : unit =
-                                                                  unit in
-                                                                binder#3)
-                                                  | False () -> LOOP_STOP
-                                                                (binder#3) ,
-                                                env_rec#2) in
-                                    let env_rec#2 = env_rec#2.0 in
-                                    let i = env_rec#2.0 in i |}]
+                                    let ()#5 : unit =
+                                      let fun_while_loop#2 =
+                                        rec (fun_while_loop#2:unit -> unit => lambda (()#3 : unit) return
+                                         match AND(LT(i , x) , GT(b , 0)) with
+                                          | True () -> let ()#4 : unit =
+                                                         i[@var] := ADD(i , 1) in
+                                                       (fun_while_loop#2)@(unit)
+                                          | False () -> unit ) in
+                                      (fun_while_loop#2)@(unit) in
+                                    i |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.ligo") ] ;
@@ -316,16 +306,16 @@ let%expect_test _ =
     const foo =
       lambda (_u : unit) return  match (4 , 5) with
                                   | (x[@var],y[@var]) -> {
-                                                            x := 2;
+                                                            x[@var] := 2;
                                                             {
-                                                               y := 3;
+                                                               y[@var] := 3;
                                                                ADD(x ,y)
                                                             }
                                   }
     const bar =
       lambda (_u : unit) return  match (4 , 5) with
                                   | (x,y) -> let add = lambda (_u : unit) return ADD(x ,y) in
-                                             (add)@(UNIT()) |}]
+                                             (add)@(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-imperative" ; (good_test "multiple_vars.jsligo") ] ;
@@ -334,9 +324,9 @@ let%expect_test _ =
       rec (foo:unit -> int => lambda (_#2 : unit) : int return  match (4 , 5) with
                                                                  | (x[@var],y[@var]) -> {
 
-                                                                   x := 2;
+                                                                   x[@var] := 2;
                                                                    {
-                                                                      y := 3;
+                                                                      y[@var] := 3;
                                                                       C_POLYMORPHIC_ADD(x ,y)
                                                                    }
                                                                  } )[@@private]

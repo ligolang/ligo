@@ -216,6 +216,165 @@ taking an argument of type `unit`, so, for example, `Guest ()` is the
 same value as `Guest (unit)`.
 </Syntax>
 
+There are cases where several sum types match a given constructor.
+
+In the example below, types `t1` to `t6` are all possible types for `x`.
+
+In this case, the compiler will choose one of these types as the type of the expression,
+and throw a warning stating that other types are possible.
+
+You can add a type annotation to remove this ambiguity.
+
+**NOTE** : The compiler will choose in priority the latest matching sum type in the current scope,
+if no type is defined in this scope, it will look in the latest module, if not in the second latest etc.
+Below, it will choose `t1`, and if `t1` didn't match it would have chosen `t2`, otherwise `t3`, etc.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=multi_sum
+type t2 is A of int | B of int
+
+module MyModule is {
+  type t5 is A of int | C of bool
+  type t4 is A of int | D of int
+
+  module MySubModule is {
+    type t6 is A of int | E of tez
+  }
+}
+
+module MySecondModule is {
+  type t3 is A of int | F of int
+}
+
+type t1 is A of int | G of tez
+
+// The compiler will search above for sum types with an 'A' constructor
+const x = A(42)
+```
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=multi_sum
+type t2 = A of int | B of int
+
+module MyModule = struct
+  type t5 = A of int | C of bool
+  type t4 = A of int | D of int
+
+  module MySubModule = struct
+    type t6 = A of int | E of tez
+  end
+end
+
+module MySecondModule = struct
+  type t3 = A of int | F of int
+end
+
+type t1 = A of int | G of tez
+
+// The compiler will search above for sum types with an 'A' constructor
+let x = A 42
+```
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=multi_sum
+module MyModule = {
+  type t5 = A (int) | C (bool)
+  type t4 = A (int) | D (int)
+
+  module MySubModule = {
+    type t6 = A (int) | E (tez)
+  }
+}
+
+module MySecondModule = {
+  type t3 = A (int) | F (int)
+}
+
+type t1 = A (int) | G (tez)
+
+// The compiler will search above for sum types with an 'A' constructor
+let x = A(42)
+```
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=multi_sum
+type t2 = ["A", int] | ["B", int];
+
+namespace MyModule {
+  type t5 = ["A", int] | ["C", bool];
+  type t4 = ["A", int] | ["D", int];
+
+  namespace MySubModule {
+    type t6 = ["A", int] | ["E", tez];
+  }
+}
+
+namespace MySecondModule {
+  type t3 = ["A", int] | ["F", int];
+}
+
+type t1 = ["A", int] | ["G", tez];
+
+// The compiler will search above for sum types with an 'A' constructor
+const x = A(42);
+```
+</Syntax>
+
+<Syntax syntax="pascaligo">
+
+In PascaLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
+The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
+
+```pascaligo group=sum_shadow
+module M is {
+  type t1 is A of int | B of int
+}
+module M is {
+  const y = 10
+}
+
+// This will fail because A will not be found
+// const x = A (42)
+```
+</Syntax>
+<Syntax syntax="cameligo">
+
+In CameLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
+The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
+
+```cameligo group=sum_shadow
+module M = struct
+  type t1 = A of int | B of int
+end
+module M = struct
+  let y = 10
+end
+
+// This will fail because A will not be found
+// let x = A 42
+```
+</Syntax>
+<Syntax syntax="reasonligo">
+
+In ReasonLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
+The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
+
+```reasonligo group=sum_shadow
+module M = {
+  type t1 = A (int) | B (int)
+}
+module M = {
+  let y = 10
+}
+
+// This will fail because A will not be found
+// let x = A 42
+```
+</Syntax>
 
 ## Optional values
 

@@ -1,0 +1,10 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0001-Use-win32-substitutes-for-pread-and-pwrite.patch' : 'true' }"
+    ],
+    "dune build -p index -j 4"
+  ]
+}

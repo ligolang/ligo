@@ -15,19 +15,19 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (body
-        (if_statement
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (block_statement
+        (if_else_statement
           (True_kwd)
-          (block_statement
-            (comment)
-            (return_statement
-              (False_kwd))))
-        (ocaml_comment)
-        (return_statement
-          (True_kwd))))))
+            (block_statement
+              (comment)
+              (return_statement
+                  (False_kwd))))
+          (ocaml_comment)
+          (return_statement
+              (True_kwd))))))
 
 =========
 conditional: if else
@@ -44,10 +44,10 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (body
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (block_statement
         (if_else_statement
           (True_kwd)
           (block_statement
@@ -72,16 +72,16 @@ let x = () => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (body
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (block_statement
         (if_else_statement
-          (binary_operator (Int) (Int))
+          (binary_call (Int) (Int))
           (block_statement
             (return_statement (False_kwd)))
           (if_else_statement
-            (binary_operator (Int) (Int))
+            (binary_call (Int) (Int))
             (block_statement
               (return_statement (False_kwd)))
             (block_statement
@@ -105,20 +105,20 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
-        (Name)
-        (type_annotation (TypeName)))
-      (body
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (TypeName))
+      (block_statement
         (switch_statement
           (Name)
-          (case
+          (case_statement
             (String)
             (block_statement
               (break_statement)))
-          (default_case
+          (default_statement
             (block_statement
               (return_statement
                 (False_kwd)))))))))
@@ -138,16 +138,16 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
-        (Name)
-        (type_annotation (TypeName)))
-      (body
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (TypeName))
+      (block_statement
         (switch_statement
           (Name)
-          (case
+          (case_statement
             (String)
             (block_statement
               (return_statement
@@ -168,16 +168,16 @@ let x = (x : string) => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
-        (Name)
-        (type_annotation (TypeName)))
-      (body
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (TypeName))
+      (block_statement
         (switch_statement
           (Name)
-          (default_case
+          (default_statement
             (block_statement
               (return_statement
                 (False_kwd)))))))))

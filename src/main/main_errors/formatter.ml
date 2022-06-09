@@ -6,6 +6,11 @@ module PP_helpers = Simple_utils.PP_helpers
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
   fun ~display_format f a ->
+  let is_dummy_location loc =
+    Location.is_dummy_or_generated loc ||
+      match Location.get_file loc with
+      | Some r -> String.equal r#file ""
+      | None -> true in
   match display_format with
   | Human_readable | Dev -> (
     match a with
@@ -63,7 +68,7 @@ let rec error_ppformat : display_format:string display_format ->
           generator
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf f
-        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', or 'reasonligo'. @]"
+        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', 'reasonligo', or 'jsligo'. @]"
           syntax
     | `Main_invalid_dialect_name syntax ->
       Format.fprintf f
@@ -80,23 +85,23 @@ let rec error_ppformat : display_format:string display_format ->
         actual
     | `Main_invalid_extension extension ->
       Format.fprintf f
-        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.@]"
+        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.@]"
         extension
 
     | `Main_unparse_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_typecheck_contract_tracer (_c,err_l) ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_could_not_serialize errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Check_typed_arguments_tracer (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"
@@ -106,20 +111,13 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided storage does not have the correct type for the contract.@ %a@]"
         (error_ppformat ~display_format) err
 
-    | `Main_unknown_failwith_type ->
-      Format.fprintf f "@[<v>The contract failed to dry run, and returned an unsupported failwith type. Only int, string, and bytes are supported as failwith types for dry-run.@]"
-
     | `Main_unknown ->
       Format.fprintf f "@[<v>An unknown error occurred.@]"
 
-    | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
-      let value = match fw with
-        | Failwith_int i -> string_of_int i
-        | Failwith_string s -> s
-        | Failwith_bytes b -> Bytes.to_string b in
+    | `Main_execution_failed v ->
       Format.fprintf f
-        "@[<hv>An error occurred while evaluating an expression: %s@]"
-        value
+        "@[<hv>An error occurred while evaluating an expression: %a@]"
+        Tezos_utils.Michelson.pp v
     | `Main_entrypoint_not_a_function -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not a function.@]"
     | `Main_view_not_a_function var -> Format.fprintf f "@[<hv>Invalid command line argument. @.View \"%a\" is not a function.@]" Ast_typed.PP.expression_variable var
     | `Main_entrypoint_not_found -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not found in the contract.@]"
@@ -134,24 +132,24 @@ let rec error_ppformat : display_format:string display_format ->
     | `Unparsing_michelson_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Parsing_payload_tracer _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
     | `Packing_payload_tracer _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
     | `Parsing_input_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Parsing_code_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
-        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Error_of_execution_tracer errs ->
       let errs = List.map ~f:( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
-      (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Preproc_tracer e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format f e
@@ -171,6 +169,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_ppformat ~display_format f e
     | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Spilling_tracer e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Scoping_tracer e -> Scoping.Errors.error_ppformat ~display_format f e
     | `Stacking_tracer e -> Stacking.Errors.error_ppformat ~display_format f e
 
     | `Main_interpret_not_enough_initial_accounts (loc,max) ->
@@ -182,45 +181,58 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_target_lang_error (loc, [], errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
     | `Main_interpret_target_lang_error (loc, calltrace, errs) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@]"
+           Snippet.pp loc
+           (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+           (PP_helpers.list_sep_d Location.pp) calltrace
+       else
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.%a@.Trace:@.%a@.%a@]"
+           Snippet.pp loc
+           (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+           Snippet.pp (List.hd_exn calltrace)
+           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
+    | `Main_interpret_target_lang_failwith (loc, v) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith: %a@]"
         Snippet.pp loc
-        (Tezos_client_012_Psithaca.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
-        (PP_helpers.list_sep_d Location.pp) calltrace
-    | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
-        Snippet.pp loc
-        n
-    | `Main_interpret_target_lang_failwith (loc, Failwith_bytes b) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (bytes): %s@]"
-        Snippet.pp loc
-        (Bytes.to_string b)
-    | `Main_interpret_target_lang_failwith (loc, Failwith_string s) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (string): %s@]"
-        Snippet.pp loc
-        s
+        Tezos_utils.Michelson.pp v
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc
     | `Main_interpret_meta_lang_eval (loc,[],reason) ->
-      Format.fprintf f "@[<hv>%a@.%s@]"
+      Format.fprintf f "@[<hv>%a@.%a@]"
         Snippet.pp loc
-        reason
+        Ligo_interpreter.PP.pp_value reason
     | `Main_interpret_meta_lang_eval (loc,calltrace,reason) ->
-      Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@]"
-        Snippet.pp loc
-        reason
-        (PP_helpers.list_sep_d Location.pp) calltrace
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+        Format.fprintf f "@[<hv>%a@.%a@.Trace:@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value reason
+          (PP_helpers.list_sep_d Location.pp) calltrace
+      else
+        Format.fprintf f "@[<hv>%a@.%a@.Trace:@.%a@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value reason
+          Snippet.pp (List.hd_exn calltrace)
+          (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_meta_lang_failwith (loc,[],value) ->
       Format.fprintf f "@[<hv>%a@.Test failed with %a@]"
         Snippet.pp loc
         Ligo_interpreter.PP.pp_value value
     | `Main_interpret_meta_lang_failwith (loc,calltrace,value) ->
-      Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@]"
-        Snippet.pp loc
-        Ligo_interpreter.PP.pp_value value
-        (PP_helpers.list_sep_d Location.pp) calltrace
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+        Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value value
+          (PP_helpers.list_sep_d Location.pp) calltrace
+      else
+        Format.fprintf f "@[<hv>%a@.Test failed with %a@.Trace:@.%a@.%a@]"
+          Snippet.pp loc
+          Ligo_interpreter.PP.pp_value value
+           Snippet.pp (List.hd_exn calltrace)
+           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_generic (loc,desc) ->
       Format.fprintf f "@[<hv>%a@.%s@]"
         Snippet.pp loc
@@ -237,11 +249,15 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_mini_c e -> Spilling.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
-
+    | `Main_view_rule_violated loc ->
+      Format.fprintf f "@[<hv>%a@.View rule violated: 
+      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas) 
+      - Tezos.self can't be used because the entry-point does not make sense in a view@.@]"
+      Snippet.pp loc
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
   )
 
-let json_error ~stage ?message ?child ?(extra_content=[]) () =
+let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
   let append_opt ~f xs opt = Option.fold opt ~init:xs ~f:(fun xs x -> f x :: xs) in
   let content = extra_content in
   let content = append_opt content message  ~f:(fun msg -> ("message", `String msg)) in
@@ -250,7 +266,8 @@ let json_error ~stage ?message ?child ?(extra_content=[]) () =
   `Assoc [
     ("status",  `String "error") ;
     ("stage",   `String stage)   ;
-    ("content", `Assoc content)  ]
+    ("content", `Assoc content) ;
+    ("location", Location.to_yojson loc)]
 
 
 let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
@@ -307,18 +324,15 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
         ~message:"Passed storage does not match the contract type"
         ~child:(error_jsonformat err) ()
 
-  | `Main_unknown_failwith_type ->
-    json_error ~stage:"michelson execution" ~message:"unknown failwith type" ()
   | `Main_unknown ->
     json_error ~stage:"michelson execution" ~message:"unknown error" ()
 
-  | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
-    let value = match fw with
-      | Failwith_int i -> `Assoc [("value", `Int i) ; ("type", `String "int")]
-      | Failwith_string s -> `Assoc [("value", `String s) ; ("type", `String "int")]
-      | Failwith_bytes b -> `Assoc [("value", `String (Bytes.to_string b)) ; ("type", `String "bytes")]
+  | `Main_execution_failed v ->
+    let value =
+      Format.asprintf "%a"
+      Tezos_utils.Michelson.pp v
     in
-    let extra_content = [("failwith", value)] in
+    let extra_content = [("failwith", `String value)] in
     json_error ~stage:"michelson execution" ~extra_content ()
 
   | `Main_invalid_amount a ->
@@ -366,6 +380,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
 
   | `Main_entrypoint_not_a_function -> json_error ~stage:"top-level glue" ~message:"given entrypoint is not a function" ()
   | `Main_view_not_a_function _str -> json_error ~stage:"top-level glue" ~message:"given view is not a function" ()
+  | `Main_view_rule_violated loc -> json_error ~loc ~stage:"top-level glue" ~message:"view rule violated" ()
   | `Main_entrypoint_not_found -> json_error ~stage:"top-level glue" ~message:"Missing entrypoint" ()
 
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
@@ -386,6 +401,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_jsonformat e
   | `Spilling_tracer e -> Spilling.Errors.error_jsonformat e
   | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_jsonformat e
+  | `Scoping_tracer e -> Scoping.Errors.error_jsonformat e
   | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
 
   | `Main_interpret_test_entry_not_found _

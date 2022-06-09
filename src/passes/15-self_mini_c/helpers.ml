@@ -51,9 +51,9 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
       let (c',l',r') = Triple.map ~f:self (c,l,r) in
       return @@ E_if_left (c', ((name_l, tvl) , l'), ((name_r, tvr) , r'))
   )
-  | E_let_in (expr , inline , ((v , tv) , body)) -> (
+  | E_let_in (expr , inline , thunk, ((v , tv) , body)) -> (
       let (expr',body') = Pair.map ~f:self (expr,body) in
-      return @@ E_let_in (expr', inline, ((v , tv) , body'))
+      return @@ E_let_in (expr', inline, thunk, ((v , tv) , body'))
   )
   | E_tuple exprs ->
       let exprs = List.map ~f:self exprs in
@@ -72,6 +72,10 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
   | E_global_constant (hash, args) ->
       let args = List.map ~f:self args in
       return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+      let args = List.map ~f:self args in
+      let code = self code in
+      return @@ E_create_contract (p, s, ((x, t), code), args)
 
 let map_sub_level_expression : mapper -> anon_function -> anon_function = fun f e ->
   let {binder ; body} : anon_function = e in

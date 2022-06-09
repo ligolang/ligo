@@ -51,7 +51,7 @@ module Free_variables = struct
                expression (union (singleton l) b) bl ;
                expression (union (singleton r) b) br ;
              ]
-    | E_let_in (expr, _ , ((v , _) , body) )->
+    | E_let_in (expr, _ , _, ((v , _) , body) )->
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
@@ -68,6 +68,11 @@ module Free_variables = struct
     | E_raw_michelson _ -> empty
     | E_global_constant (_hash, args) ->
       unions (List.map ~f:self args)
+    (* the code is not allowed to have any free variables ... but
+       maybe it still could if they are going to be inlined? *)
+    | E_create_contract (_p, _s, ((x, _), code), args) ->
+      let b = union (singleton x) b in
+      union (expression b code) (unions (List.map ~f:self args))
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
     if mem b n

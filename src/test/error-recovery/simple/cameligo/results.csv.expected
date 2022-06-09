@@ -32,7 +32,7 @@ PASS,missing_with_kw_in_match_expr.mligo,0,0,0,0,0
 PASS,typo_in_fun_kw.mligo,2,24,12,3,0
 PASS,typo_in_match_kw.mligo,5,44,26,6,3
 PASS,typo_in_with_kw_in_record_update.mligo,2,25,15,3,0
-PASS,unfinished_code00.mligo,1,355,7,5,0
+PASS,unfinished_code00.mligo,1,363,7,5,0
 PASS,unfinished_code01.mligo,2,2,2,2,0
 PASS,unfinished_code02.mligo,2,9,7,5,0
 PASS,unfinished_code03.mligo,2,7,5,4,0

@@ -41,7 +41,7 @@ let transfer ~raise ~add_warning f s () =
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) new_storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "transfer" input expected
+  expect_eq ~raise ~add_warning program ~options "transfer" input expected
 
 let transfer_not_e_allowance ~raise ~add_warning f s () =
   let program = get_program ~raise ~add_warning f ~st:s () in
@@ -53,7 +53,7 @@ let transfer_not_e_allowance ~raise ~add_warning f s () =
   let parameter = e_record_ez [("address_from", from_);("address_to",to_); ("value",e_nat 10)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_string_failwith ~raise ~options program "transfer" input
+  expect_string_failwith ~raise ~add_warning ~options program "transfer" input
   "NotEnoughAllowance"
 
 let transfer_not_e_balance ~raise ~add_warning f s () =
@@ -66,7 +66,7 @@ let transfer_not_e_balance ~raise ~add_warning f s () =
   let parameter = e_record_ez [("address_from", from_);("address_to",to_); ("value",e_nat 10)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_string_failwith ~raise ~options program "transfer" input
+  expect_string_failwith ~raise ~add_warning ~options program "transfer" input
   "NotEnoughBalance"
 
 let approve ~raise ~add_warning f s () =
@@ -85,7 +85,7 @@ let approve ~raise ~add_warning f s () =
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) new_storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "approve" input expected
+  expect_eq ~raise ~add_warning program ~options "approve" input expected
 
 let approve_unsafe ~raise ~add_warning f s () =
   let program = get_program ~raise ~add_warning f ~st:s () in
@@ -97,7 +97,7 @@ let approve_unsafe ~raise ~add_warning f s () =
   let parameter = e_record_ez [("spender", from_);("value",e_nat 100)] in
   let input = e_pair parameter storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_string_failwith ~raise ~options program "approve" input
+  expect_string_failwith ~raise ~add_warning ~options program "approve" input
   "UnsafeAllowanceChange"
 
 let get_allowance ~raise ~add_warning f s () =
@@ -111,7 +111,7 @@ let get_allowance ~raise ~add_warning f s () =
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "getAllowance" input expected
+  expect_eq ~raise ~add_warning program ~options "getAllowance" input expected
 
 let get_balance ~raise ~add_warning f s () =
   let program = get_program ~raise ~add_warning f ~st:s () in
@@ -124,7 +124,7 @@ let get_balance ~raise ~add_warning f s () =
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "getBalance" input expected
+  expect_eq ~raise ~add_warning program ~options "getBalance" input expected
 
 let get_total_supply ~raise ~add_warning f s () =
   let program = get_program ~raise ~add_warning f ~st:s () in
@@ -137,7 +137,7 @@ let get_total_supply ~raise ~add_warning f s () =
   let input = e_pair parameter storage in
   let expected = e_pair (e_typed_list [] (t_operation ())) storage in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
-  expect_eq ~raise program ~options "getTotalSupply" input expected
+  expect_eq ~raise ~add_warning program ~options "getTotalSupply" input expected
 
 let main = test_suite "tzip-7" [
   test_w "transfer"                          (transfer                 mfile_FA12 "cameligo");

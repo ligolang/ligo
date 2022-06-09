@@ -236,10 +236,6 @@ module Mutator = struct
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
         return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
     )
-    | E_type_in {type_binder; rhs; let_result} -> (
-      let+ let_result, mutation = self let_result in
-      return @@ E_type_in {type_binder;rhs;let_result}, mutation
-    )
     | E_lambda { binder ; result } -> (
       let+ result, mutation = self result in
       return @@ E_lambda { binder ; result }, mutation
@@ -266,6 +262,9 @@ module Mutator = struct
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
     | E_type_inst _ as e' -> [ (return e'), None ]
+    | E_assign {binder;access_path;expression} ->
+        let+ expression, mutation = self expression in
+        return @@ E_assign {binder;access_path;expression}, mutation
 
   and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
     match m with

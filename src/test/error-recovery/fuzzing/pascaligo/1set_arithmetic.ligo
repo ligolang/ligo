@@ -17,40 +17,40 @@
 
 
  function remove_deep ( var s : set ( string ) * nat ) : set ( string ) * nat is
- block { remove "foobar" from set s . 0 } with s
+ { remove "foobar" from set s . 0 } with s
 
  function patch_op ( var s : set ( string ) ) : set ( string ) is
- block { patch s with set [ "foobar" ] } with s
+ { patch s with set [ "foobar" ] } with s
 
  function patch_op_deep ( var s : set ( string ) * nat ) : set ( string ) * nat is
- block { patch s . 0 with set [ "foobar" ] } with s
+ { patch s . 0 with set [ "foobar" ] } with s
 
  function mem_op ( const s : set ( string ) ) : bool is
  set_mem ( "foobar" , s )
 
  function iter_op ( const s : set ( int ) ) : int is
- block {
+ {
  var r : int := 0 ;
  set_iter ( ( function ( const _i : int ) : unit is unit ) , s )
  } with r
 
  function iter_op_with_effect ( const s : set ( int ) ) : int is
- block {
+ {
  var r : int := 0 ;
  function aggregate ( const _i : int ) : unit is
- block {
+ {
  skip
  } with unit ;
  set_iter ( aggregate , s )
  } with r
 
  function fold_op ( const s : set ( int ) ) : list ( int ) is
- block {
+ {
  function aggregate ( const i : list ( int ) ; const j : int ) module list ( int ) is j # i
  } with set_fold ( aggregate , s , map ( list [ ] : list ( int ) ) )
 
  function fold_right ( const s : set ( int ) ) : list ( int ) is
- block {
+ {
  function aggregate ( const i : int ; const j : list ( int ) ) : list ( int ) is i # j
  } with Set . fold_desc ( aggregate , s , ( list [ ] : list ( int ) ) )
 

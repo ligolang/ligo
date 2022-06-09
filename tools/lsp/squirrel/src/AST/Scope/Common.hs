@@ -27,7 +27,7 @@ module AST.Scope.Common
   , contractTree
   , contractMsgs
 
-  , addLigoErrToMsg
+  , addLigoErrsToMsg
 
   , cFile
   , cTree
@@ -45,7 +45,7 @@ module AST.Scope.Common
   ) where
 
 import Algebra.Graph.AdjacencyMap (AdjacencyMap)
-import Algebra.Graph.AdjacencyMap qualified as G (gmap)
+import Algebra.Graph.AdjacencyMap qualified as G (edges, gmap, overlay, vertices)
 import Algebra.Graph.Class (Graph)
 import Algebra.Graph.Export qualified as G (export, literal, render)
 import Algebra.Graph.ToGraph (ToGraph)
@@ -54,7 +54,7 @@ import Control.Arrow ((&&&))
 import Control.Lens (makeLenses)
 import Control.Lens.Operators ((&), (%~))
 import Control.Monad.Reader
-import Data.Aeson (ToJSON (..), object, (.=))
+import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:), (.=))
 import Data.DList (DList, snoc)
 import Data.Foldable (toList)
 import Data.Function (on)
@@ -77,7 +77,7 @@ import Duplo.Tree hiding (loop)
 import AST.Pretty
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), Scope, ScopedDecl (..))
 import AST.Skeleton
-  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, Tree', TypeName (..)
+  ( Ctor (..), Name (..), NameDecl (..), RawLigoList, SomeLIGO, TypeName (..)
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
@@ -100,7 +100,7 @@ data MarkerInfo = MarkerInfo
 data ParsedContract info = ParsedContract
   { _cFile :: Source -- ^ The path to the contract.
   , _cTree :: info -- ^ The payload of the contract.
-  , _cMsgs :: [Msg] -- ^ Messages produced by this contract.
+  , _cMsgs :: [Message] -- ^ Messages produced by this contract.
   } deriving stock (Show)
     deriving Pretty via ShowPP (ParsedContract info)
 
@@ -123,19 +123,23 @@ contractFile (FindFilepath pc) = srcPath $ _cFile pc
 contractTree :: FindFilepath info -> info
 contractTree (FindFilepath pc) = _cTree pc
 
-contractMsgs :: FindFilepath info -> [Msg]
+contractMsgs :: FindFilepath info -> [Message]
 contractMsgs (FindFilepath pc) = _cMsgs pc
 
 makeLenses ''ParsedContract
 makeLenses ''FindFilepath
 
-addLigoErrToMsg :: Msg -> FindFilepath info -> FindFilepath info
-addLigoErrToMsg err = getContract . cMsgs %~ (err :)
+addLigoErrsToMsg :: [Message] -> FindFilepath info -> FindFilepath info
+addLigoErrsToMsg errs = getContract . cMsgs %~ (errs <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
-    :: ProgressCallback m
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ProgressCallback m
+    -- ^ A callback allowing reporting of the progress to the user.
     -> Includes ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
     -> m (Includes (FindFilepath ScopeForest))
 
 data Level = TermLevel | TypeLevel
@@ -160,8 +164,8 @@ data ScopeForest = ScopeForest
 emptyScopeForest :: ScopeForest
 emptyScopeForest = ScopeForest [] Map.empty
 
-type ScopeInfo = [Set DeclRef, Range]
-type ScopeTree = Tree' '[[]] ScopeInfo
+type ScopeInfo = (Set DeclRef, Range)
+type ScopeTree = Cofree [] ScopeInfo
 
 data DeclRef = DeclRef
   { drName  :: Text
@@ -189,18 +193,18 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
 
     go :: ScopeTree -> ScopeTree -> [ScopeTree]
     go
-      l@(only -> (ldecls :> lr :> Nil, ldeepen))
-      r@(only -> (rdecls :> rr :> Nil, rdeepen))
+      l@((ldecls, lr) :< ldeepen)
+      r@((rdecls, rr) :< rdeepen)
       -- These two are likely different things, so we shouldn't merge them.
       | not (lr `intersects` rr) = [l, r]
       -- Merge the scopes if they have different decls within the same range.
-      | lr == rr  = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend ldeepen rdeepen)]
+      | lr == rr  = [(mergeDecls ldecls rdecls, rr) :< descend ldeepen rdeepen]
       -- The left scope is more local than the right hence try to find where the
       -- right subscope is more local or equal to the left one.
-      | leq lr rr = [fastMake (mergeDecls ldecls rdecls :> rr :> Nil) (descend [l] rdeepen)]
+      | leq lr rr = [(mergeDecls ldecls rdecls, rr) :< descend [l] rdeepen]
       -- The right scope is more local than the left hence try to find where the
       -- left subscope is more local or equal to the right one.
-      | otherwise = [fastMake (mergeDecls ldecls rdecls :> lr :> Nil) (descend ldeepen [r])]
+      | otherwise = [(mergeDecls ldecls rdecls, lr) :< descend ldeepen [r]]
 
     zipWithMissing, zipWithMatched, zipWithStrategy :: Ord c => (a -> c) -> (a -> a -> b) -> (a -> b) -> [a] -> [a] -> [b]
     zipWithMissing _ _ g [] ys = g <$> ys
@@ -222,7 +226,7 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       OnIntersection -> zipWithMatched
 
     scopeRange :: ScopeTree -> Range
-    scopeRange (only -> (_ :> r :> Nil, _)) = r
+    scopeRange ((_, r) :< _) = r
 
     descend :: [ScopeTree] -> [ScopeTree] -> [ScopeTree]
     descend xs ys = concat $ zipWithStrategy fst (go `on` snd) (pure . snd) (sortMap xs) (sortMap ys)
@@ -264,7 +268,7 @@ instance Pretty ScopeForest where
     where
       go = sexpr "list" . map go'
       go' :: ScopeTree -> Doc
-      go' (only -> (decls :> r :> Nil, list')) =
+      go' ((decls, r) :< list') =
         sexpr "scope" (pp r : map pp (Set.toList decls) ++ [go list' | not $ null list'])
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
@@ -281,8 +285,8 @@ envAtPoint r (ScopeForest sf ds) = do
   map (ds Map.!) sp
 
 spine :: Range -> ScopeTree -> DList (Set DeclRef)
-spine r (only -> (i, trees))
-  | leq r (getRange i) = foldMap (spine r) trees `snoc` getElem @(Set DeclRef) i
+spine r ((decls, r') :< trees)
+  | leq r r' = foldMap (spine r) trees `snoc` decls
   | otherwise = mempty
 
 addLocalScopes
@@ -323,12 +327,13 @@ addLocalScopes tree forest =
 addScopes
   :: forall impl m
    . HasScopeForest impl m
-  => ProgressCallback m
+  => TempSettings
+  -> ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
-addScopes reportProgress graph = do
+addScopes tempSettings reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl reportProgress graph
+  forestGraph <- scopeForest @impl tempSettings reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially
@@ -355,7 +360,7 @@ addScopes reportProgress graph = do
 lookupContract :: FilePath -> Includes (FindFilepath a) -> Maybe (FindFilepath a)
 lookupContract fp g = fst <$> findKey contractFile fp (G.adjacencyMap g)
 
-pattern FindContract :: Source -> info -> [Msg] -> FindFilepath info
+pattern FindContract :: Source -> info -> [Message] -> FindFilepath info
 pattern FindContract f t m = FindFilepath (ParsedContract f t m)
 {-# COMPLETE FindContract #-}
 
@@ -385,8 +390,14 @@ instance Exception ContractNotFoundException where
 -- cyclic imports.
 newtype Includes info = Includes
   { getIncludes :: AdjacencyMap info
-  } deriving stock (Show)
+  } deriving stock (Eq, Show)
     deriving newtype (Graph, ToGraph)
+
+instance (Ord info, FromJSON info) => FromJSON (Includes info) where
+  parseJSON = withObject "Includes" \v -> Includes <$> do
+    G.overlay
+      <$> (G.vertices <$> v .: "vertices")
+      <*> (G.edges    <$> v .: "edges")
 
 instance (Ord info, ToJSON info) => ToJSON (Includes info) where
   toJSON includes = object

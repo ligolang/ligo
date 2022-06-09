@@ -21,6 +21,7 @@ then
 else
     apt-get update -qq
     apt-get -y -qq install \
+        jsonschema \
         libev-dev \
         perl \
         pkg-config \

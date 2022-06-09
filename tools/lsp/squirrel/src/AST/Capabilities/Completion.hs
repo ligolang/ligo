@@ -46,7 +46,7 @@ newtype TypeCompletion = TypeCompletion { getTypeCompletion :: Text } deriving n
 newtype DocCompletion  = DocCompletion  { getDocCompletion  :: Text } deriving newtype (Eq, Show)
 
 data Completion
-  = Completion (Maybe CompletionItemKind) NameCompletion TypeCompletion DocCompletion
+  = Completion (Maybe CompletionItemKind) NameCompletion (Maybe TypeCompletion) DocCompletion
   | CompletionKeyword NameCompletion
   deriving stock (Eq, Show)
 
@@ -102,6 +102,7 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
       Caml   -> cameLIGOKeywords
       Pascal -> pascaLIGOKeywords
       Reason -> reasonLIGOKeywords
+      Js     -> jsLIGOKeywords
 
 completeField
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
@@ -133,7 +134,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     mkCompletion field = Completion
       (Just CiField)
       (NameCompletion $ _tfName field)
-      (TypeCompletion $ docToText (lppLigoLike dialect (_tfTspec field)))
+      (TypeCompletion . docToText . lppLigoLike dialect <$> _tfTspec field)
       (DocCompletion "")
 
 completeFromScope :: Scope -> Maybe Level -> Maybe [Completion]
@@ -165,6 +166,7 @@ completeFromTSpec TypeDeclSpecifics {_tdsInit} = case _tdsInit of
   AliasType _ -> CiVariable
   ArrowType _ _ -> CiFunction
   VariableType _ -> CiTypeParameter
+  ParenType t -> completeFromTSpec t
 
 defCompletionItem :: Text -> CompletionItem
 defCompletionItem label = CompletionItem
@@ -188,10 +190,10 @@ defCompletionItem label = CompletionItem
   }
 
 toCompletionItem :: Completion -> CompletionItem
-toCompletionItem c@(Completion cKind (NameCompletion cName) (TypeCompletion cType) _) =
+toCompletionItem c@(Completion cKind (NameCompletion cName) cType _) =
   (defCompletionItem cName)
     { _kind = cKind
-    , _detail = Just $ ": " <> cType
+    , _detail = (\(TypeCompletion cType') -> ": " <> cType') <$> cType
     , _documentation = mkDoc c
     }
 toCompletionItem (CompletionKeyword (NameCompletion cName)) =
@@ -201,15 +203,17 @@ toCompletionItem (CompletionKeyword (NameCompletion cName)) =
 
 mkDoc :: Completion -> Maybe CompletionDoc
 mkDoc (CompletionKeyword (NameCompletion _cName)) = Nothing
-mkDoc (Completion _cKind (NameCompletion cName) (TypeCompletion cType) (DocCompletion cDoc)) =
+mkDoc (Completion _cKind (NameCompletion cName) cType (DocCompletion cDoc)) =
   Just . CompletionDocString $
-    cName <> " is of type " <> cType <> ". " <> cDoc
+    cName
+    <> maybe "" (\(TypeCompletion cType') -> " is of type " <> cType') cType <> ". "
+    <> cDoc
 
 asCompletion :: ScopedDecl -> Completion
 asCompletion sd = Completion
   (completionKind sd)
   (NameCompletion $ ppToText (_sdName sd))
-  (TypeCompletion $ docToText (lppDeclCategory sd))
+  (Just $ TypeCompletion $ docToText (lppDeclCategory sd))
   (DocCompletion  $ ppToText (fsep $ map pp $ _sdDoc sd))
 
 isSubseqOf :: Text -> Text -> Bool

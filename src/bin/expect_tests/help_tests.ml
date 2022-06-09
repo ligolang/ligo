@@ -50,6 +50,8 @@ let%expect_test _ =
                                                please contact us and use another
                                                format in the meanwhile.
                                                (alias: --format)
+      [--enable-michelson-typed-opt]           Enable Michelson optimizations that
+                                               work using typecking.
       [--file-constants FILE_CONSTANTS]        A file with a JSON list of strings
                                                with Michelson code. Those Michelson
                                                values will be registered as global
@@ -83,15 +85,17 @@ let%expect_test _ =
                                                be compiled as on-chain views,
                                                separated by ','
                                                (alias: -v)
+      [--warn-unused-rec]                      warn about unused recursion in a
+                                               recursive function
       [--werror]                               treat warnings as errors
       [-e ENTRY-POINT]                         the entry-point that will be
                                                compiled.
                                                (alias: --entry-point)
       [-p PROTOCOL]                            choose protocol's types/values
                                                pre-loaded into the LIGO environment
-                                               (hangzhou ,
+                                               (jakarta ,
                                                ithaca). By default, the current
-                                               protocol (hangzhou) will be used
+                                               protocol (ithaca) will be used
                                                (alias: --protocol)
       [-help]                                  print this help text and exit
                                                (alias: -?)
@@ -149,13 +153,15 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                warn about unused recursion in a recursive
+                                         function
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)
@@ -213,13 +219,15 @@ let%expect_test _ =
                                          extension (.ligo, .mligo, .religo, and
                                          .jsligo respectively).
                                          (alias: -s)
+      [--warn-unused-rec]                warn about unused recursion in a recursive
+                                         function
       [--werror]                         treat warnings as errors
       [-e ENTRY-POINT]                   the entry-point that will be compiled.
                                          (alias: --entry-point)
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)
@@ -247,12 +255,13 @@ let%expect_test _ =
                                  context initialization.
       [--no-warn]                disable warning messages
       [--project-root PATH]      The path to root of the project.
+      [--warn-unused-rec]        warn about unused recursion in a recursive function
       [--werror]                 treat warnings as errors
       [--without-run]            disable running of compiled expression.
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 LIGO environment (jakarta ,
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -294,13 +303,14 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        warn about unused recursion in a recursive function
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 LIGO environment (jakarta ,
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -342,13 +352,14 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        warn about unused recursion in a recursive function
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 LIGO environment (jakarta ,
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -391,13 +402,14 @@ let%expect_test _ =
                                  from the extension (.ligo, .mligo, .religo, and
                                  .jsligo respectively).
                                  (alias: -s)
+      [--warn-unused-rec]        warn about unused recursion in a recursive function
       [--werror]                 treat warnings as errors
       [-e ENTRY-POINT]           the entry-point that will be compiled.
                                  (alias: --entry-point)
       [-p PROTOCOL]              choose protocol's types/values pre-loaded into the
-                                 LIGO environment (hangzhou ,
-                                 ithaca). By default, the current protocol
-                                 (hangzhou) will be used
+                                 LIGO environment (jakarta ,
+                                 ithaca). By default, the current protocol (ithaca)
+                                 will be used
                                  (alias: --protocol)
       [-help]                    print this help text and exit
                                  (alias: -?)
@@ -437,12 +449,14 @@ let%expect_test _ =
                                          (default), 'json' and 'hex'.
       [--no-warn]                        disable warning messages
       [--project-root PATH]              The path to root of the project.
+      [--warn-unused-rec]                warn about unused recursion in a recursive
+                                         function
       [--werror]                         treat warnings as errors
       [--without-run]                    disable running of compiled expression.
       [-p PROTOCOL]                      choose protocol's types/values pre-loaded
-                                         into the LIGO environment (hangzhou ,
+                                         into the LIGO environment (jakarta ,
                                          ithaca). By default, the current protocol
-                                         (hangzhou) will be used
+                                         (ithaca) will be used
                                          (alias: --protocol)
       [-help]                            print this help text and exit
                                          (alias: -?)

@@ -27,8 +27,6 @@ type kwd_else      = lexeme wrap
 type kwd_if        = lexeme wrap
 type kwd_let       = lexeme wrap
 type kwd_const     = lexeme wrap
-type kwd_or        = lexeme wrap
-type kwd_then      = lexeme wrap
 type kwd_type      = lexeme wrap
 type kwd_return    = lexeme wrap
 type kwd_switch    = lexeme wrap
@@ -159,10 +157,13 @@ and attributes = attribute list
 
 and val_binding = {
   binders    : pattern;
+  type_params : type_generics option;
   lhs_type   : (colon * type_expr) option;
   eq         : equal;
   expr       : expr
 }
+
+and type_generics = (variable, comma) nsepseq chevrons reg
 
 (* Type declarations *)
 

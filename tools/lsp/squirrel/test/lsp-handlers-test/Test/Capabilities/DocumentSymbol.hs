@@ -3,15 +3,15 @@ module Test.Capabilities.DocumentSymbol
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
   , unit_document_symbols_example_let_religo
+  , unit_document_symbols_example_let_jsligo
   ) where
 
 import Control.Lens ((^.))
 import Data.Text (Text)
-import Data.Word (Word32)
 import Language.LSP.Test
 import Language.LSP.Types
   (Location (Location, _range), SymbolInformation (SymbolInformation, _kind, _location, _name),
-  SymbolKind (..))
+  SymbolKind (..), UInt)
 import Language.LSP.Types.Lens (character, end, line, start)
 import System.FilePath ((</>))
 
@@ -24,7 +24,7 @@ import Test.Common.LSP (openLigoDoc, runHandlersTest)
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "document-symbol"
 
-type SimpleSymInfo = (Text, SymbolKind, (Word32, Word32), (Word32, Word32))
+type SimpleSymInfo = (Text, SymbolKind, (UInt, UInt), (UInt, UInt))
 
 simplify :: SymbolInformation -> SimpleSymInfo
 simplify SymbolInformation{_name, _kind, _location = Location{_range}} =
@@ -92,4 +92,15 @@ unit_document_symbols_example_let_religo = mkUnitTest "let.religo"
 
     , ("const f", SkConstant, (3, 6), (3, 7))
     , ("const h", SkConstant, (3, 14), (3, 15))
+    ]
+
+unit_document_symbols_example_let_jsligo :: Assertion
+unit_document_symbols_example_let_jsligo = mkUnitTest "let.jsligo"
+    [ ("const a", SkConstant, (0, 4), (0, 5))
+
+    , ("const b", SkConstant, (1, 5), (1, 6))
+    , ("const c", SkConstant, (1, 13), (1, 14))
+
+    , ("const d", SkConstant, (2, 5), (2, 6))
+    , ("const e", SkConstant, (2, 8), (2, 9))
     ]

@@ -35,29 +35,28 @@ import Data.ByteString qualified as BS
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Encoding
-import Data.Word (Word32)
 
 import Duplo.Lattice
 import Duplo.Pretty
 
-point :: Word32 -> Word32 -> Range
+point :: LSP.UInt -> LSP.UInt -> Range
 point l c = Range (l, c, 0) (l, c, 0) ""
 
 -- | Construct a range spanning a single line `line` from a column
 -- `colSt` (inclusively) to `colFin` (exclusively).
-interval :: Word32 -> Word32 -> Word32 -> Range
+interval :: LSP.UInt -> LSP.UInt -> LSP.UInt -> Range
 interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).
 data Range = Range
-  { _rStart  :: (Word32, Word32, Word32)  -- ^ [Start: line, col, byte-offset...
-  , _rFinish :: (Word32, Word32, Word32)  -- ^ ... End: line, col, byte-offset).
+  { _rStart  :: (LSP.UInt, LSP.UInt, LSP.UInt)  -- ^ [Start: line, col, byte-offset...
+  , _rFinish :: (LSP.UInt, LSP.UInt, LSP.UInt)  -- ^ ... End: line, col, byte-offset).
   , _rFile   :: FilePath
   }
   deriving (Show) via PP Range
 
-rangeLines :: Traversal' Range Word32
+rangeLines :: Traversal' Range LSP.UInt
 rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
   Range
     <$> ((,,) <$> f sl <*> pure sc <*> pure so)
@@ -163,10 +162,10 @@ instance Ord Range where
 
 makeLenses ''Range
 
-startLine :: Lens' Range Word32
+startLine :: Lens' Range LSP.UInt
 startLine = rStart . _1
 {-# INLINE startLine #-}
 
-finishLine :: Lens' Range Word32
+finishLine :: Lens' Range LSP.UInt
 finishLine = rFinish . _1
 {-# INLINE finishLine #-}
