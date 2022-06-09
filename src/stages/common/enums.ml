@@ -208,6 +208,7 @@ type constant' =
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
+  | C_TEST_DROP_CONTEXT [@only_interpreter]
   | C_TEST_FAILWITH [@only_interpreter]
   | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_SIGN [@only_interpreter]

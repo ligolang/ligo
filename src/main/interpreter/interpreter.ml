@@ -844,6 +844,10 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> () = Pop_context () in
       return @@ V_Ct C_unit
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_DROP_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Drop_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_DROP_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
       let>> contract = Read_contract_from_file (loc, calltrace, fn) in
       return @@ contract
