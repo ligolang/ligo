@@ -598,6 +598,12 @@ let%expect_test _ =
     - test_cli_arg exited with value [1 ; 2 ; 3]. |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "reset_time.mligo" ] ;
+  [%expect {|
+  Everything at the top-level was executed.
+  - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_get_account.mligo" ] ;
   [%expect {|
     (tz1MBWU1WkszFfkEER2pgn4ATKXE9ng7x1sR , edpkusHqa6fxkGPPL9YpgbcakvSTvcTBcwnLAmCdcevmws4Mh2MdHB , "edsk41aRaPPBpidY7w5xu54edk76uJJtJ6myTwYDEWhAwNHce9gKNo")

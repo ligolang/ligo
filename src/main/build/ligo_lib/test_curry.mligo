@@ -22,7 +22,8 @@ module Test = struct
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
   let log (type a) (v : a) : unit = [%external "TEST_LOG"] v
-  let reset_state (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] n l
+  let reset_state (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] (None : timestamp option) n l
+  let reset_state_at (t:timestamp) (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] (Some t) n l
   let get_voting_power (kh : key_hash) : nat = [%external "TEST_GET_VOTING_POWER"] kh
   [@thunk]
     let get_total_voting_power : nat = [%external "TEST_GET_TOTAL_VOTING_POWER"]
