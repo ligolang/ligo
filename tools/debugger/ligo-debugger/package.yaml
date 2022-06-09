@@ -73,6 +73,7 @@ library:
     - filepath
     - fmt
     - lens
+    - lens-aeson
     - morley
     - morley-debugger
     - morley-prelude

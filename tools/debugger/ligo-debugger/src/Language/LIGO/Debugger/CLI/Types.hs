@@ -3,13 +3,14 @@ module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
 
-import Control.Lens (AsEmpty (..), prism)
-import Data.Aeson (FromJSON (..), withObject, (.:!), (.:), withArray)
+import Control.Lens (AsEmpty (..), forOf, prism)
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:))
 import Data.Aeson qualified as Aeson
+import Data.Aeson.Lens qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
 import Data.Scientific qualified as Sci
 import Data.Vector qualified as V
-import Fmt (Buildable (..), blockListF, nameF, tupleF, mapF)
+import Fmt (Buildable (..), blockListF, mapF, nameF, tupleF)
 import Morley.Micheline.Expression qualified as Micheline
 import Text.Interpolation.Nyan
 
@@ -345,8 +346,7 @@ instance {-# OVERLAPPING #-} Buildable [LigoIndexedInfo] where
 
 -- | The debug output produced by LIGO.
 data LigoMapper = LigoMapper
-  { lmTypes :: V.Vector LigoType
-  , lmLocations :: V.Vector LigoIndexedInfo
+  { lmLocations :: V.Vector LigoIndexedInfo
   , lmMichelsonCode :: Micheline.Expression
   }
 
@@ -354,6 +354,14 @@ instance FromJSON LigoMapper where
   parseJSON = withObject "ligo output" \o -> do
     mich <- o .: "michelson"
     lmMichelsonCode <- mich .: "expression"
-    lmLocations <- mich .: "locations"
-    let lmTypes = mempty
+
+    -- Here we are inlining types in @source_type@ fields.
+    Array types <- o .: "types"
+    locations <- mich .: "locations"
+    locationsInlined <-
+      forOf (Aeson.values . Aeson.key "environment" . Aeson.values . Aeson.key "source_type") (Array locations) \old -> do
+        TextualNumber index <- parseJSON old
+        maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
+
+    lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
