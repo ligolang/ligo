@@ -872,8 +872,9 @@ let%expect_test _ =
                                 { DROP ; PUSH int 1 ; LEFT bool ; RIGHT (or int nat) ; LEFT string }
                                 { DROP ; PUSH string "lol" ; RIGHT (or (or int nat) (or int bool)) } }
                             { IF_LEFT
-                                { DROP ; PUSH int 1 ; LEFT nat ; LEFT (or int bool) ; LEFT string }
-                                { DROP ; PUSH bool True ; RIGHT int ; RIGHT (or int nat) ; LEFT string } } }
+                                { DROP ; PUSH int 1 ; LEFT nat ; LEFT (or int bool) }
+                                { DROP ; PUSH bool True ; RIGHT int ; RIGHT (or int nat) } ;
+                              LEFT string } }
                         { DROP ; PUSH nat 2 ; RIGHT int ; LEFT (or int bool) ; LEFT string } ;
                       NIL operation ;
                       PAIR } } |}]

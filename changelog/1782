@@ -1,0 +1,8 @@
+author: er433
+description: '### New `Test` function: `get_bootstrap_account`\n\nThe new function
+  `val get_bootstrap_account : nat -> address * key * string` in `Test` retrieves the nth bootstrap account. Differently
+  to `nth_bootstrap_account`, it also recovers the `key` and the secret key (represented
+  as a `string`, similar to `Test.new_account`).'
+merge_request: '1782'
+title: 'Testing framework: support getting secret key from bootstrap accounts'
+type: added

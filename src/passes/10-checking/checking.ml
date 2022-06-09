@@ -573,7 +573,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let rhs = evaluate_type ~raise context rhs in
     let e' = Typing_context.add_type context type_binder rhs in
     let let_result = type_expression' ~raise ~add_warning ~options (app_context, e') let_result in
-    return (E_type_in {type_binder; rhs; let_result}) let_result.type_expression
+    return let_result.expression_content let_result.type_expression
   | E_mod_in {module_binder; rhs; let_result} ->
     let rhs_ctxt,rhs = type_module_expr ~raise ~add_warning ~options ~init_context:context rhs in
     let e' = Typing_context.add_module context module_binder rhs_ctxt in
@@ -678,12 +678,15 @@ and type_pattern ~raise (pattern : I.type_expression I.pattern) (expected_typ : 
     then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
     else
     let label_patterns = List.zip_exn labels patterns in (* TODO: dont use _exn*)
-    let context,patterns = List.fold_right label_patterns ~init:(context,[]) ~f:(fun (label,pattern') (context,patterns) ->
-      let c = O.LMap.find_opt label label_map in
-      let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
-      let field_typ = c.associated_type in
-      let context,pattern = type_pattern ~raise pattern' field_typ context in 
-      context, pattern::patterns) in
+    let label_patterns = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) label_patterns in
+    let context,labels,patterns = List.fold_right label_patterns ~init:(context,[],[]) 
+      ~f:(
+        fun (label,pattern') (context,labels,patterns) ->
+          let c = O.LMap.find_opt label label_map in
+          let c = trace_option ~raise (pattern_do_not_conform_type pattern expected_typ) c in
+          let field_typ = c.associated_type in
+          let context,pattern = type_pattern ~raise pattern' field_typ context in 
+          context, label::labels, pattern::patterns) in
     context, (Location.wrap ~loc:pattern.location (O.P_record (labels,patterns)))
   | _ -> raise.raise @@ pattern_do_not_conform_type pattern expected_typ
 

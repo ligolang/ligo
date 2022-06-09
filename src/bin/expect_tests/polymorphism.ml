@@ -108,7 +108,7 @@ let%expect_test _ =
   [%expect{|
     { parameter unit ;
       storage int ;
-      code { PUSH int 1 ; PUSH int 1 ; ADD ; SWAP ; DROP ; NIL operation ; PAIR } } |}]
+      code { DROP ; PUSH int 1 ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip((zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))))(list([\"a\",\"b\",\"c\"]))" ; "--init-file" ; (test "comb.jsligo") ] ;

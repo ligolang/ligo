@@ -1,5 +1,3 @@
-open Stage_common.Types
-
 open Tezos_micheline.Micheline
 module Location = Simple_utils.Location
 
@@ -10,131 +8,80 @@ type compiled_expression = {
   expr : (meta, string) node ;
 }
 
-include Ligo_coq_ocaml.Compiler
-open Ligo_coq_ocaml.Ligo
+let null = Mini_c.dummy_meta
 
-let wipe_locations l e =
-  inject_locations (fun _ -> l) (strip_locations e)
+let rec repeat x n =
+  if n <= 0
+  then []
+  else x :: repeat x (n - 1)
 
-let generated : meta =
-  { location = Location.generated;
-    env = [];
-    binder = None }
+type base_type = (meta, string) Tezos_micheline.Micheline.node
+type oty = (meta, base_type) Ligo_coq_ocaml.Compiler.ty
 
-let literal_type_prim (l : literal) : string =
-  match l with
-  | Literal_unit -> "unit"
-  | Literal_int _ -> "int"
-  | Literal_nat _ -> "nat"
-  | Literal_timestamp _ -> "timestamp"
-  | Literal_mutez _ -> "mutez"
-  | Literal_string _ -> "string"
-  | Literal_bytes _ -> "bytes"
-  | Literal_address _ -> "address"
-  | Literal_signature _ -> "signature"
-  | Literal_key _ -> "key"
-  | Literal_key_hash _ -> "key_hash"
-  | Literal_chain_id _ -> "chain_id"
-  | Literal_operation _ -> "operation"
-  | Literal_bls12_381_g1 _ -> "bls12_381_g1"
-  | Literal_bls12_381_g2 _ -> "bls12_381_g2"
-  | Literal_bls12_381_fr _ -> "bls12_381_fr"
-  | Literal_chest _ -> "chest"
-  | Literal_chest_key _ -> "chest_key"
+let get_ty_meta : oty -> meta = fun x ->
+  match x with
+  | T_base (meta, _) -> meta
+  | T_unit meta -> meta
+  | T_pair (meta, _, _, _, _) -> meta
+  | T_or (meta, _, _, _, _) -> meta
+  | T_func (meta, _, _) -> meta
+  | T_lambda (meta, _, _) -> meta
+  | T_option (meta, _) -> meta
+  | T_list (meta, _) -> meta
+  | T_set (meta, _) -> meta
+  | T_map (meta, _, _) -> meta
+  | T_big_map (meta, _, _) -> meta
+  | T_ticket (meta, _) -> meta
+  | T_contract (meta, _) -> meta
+  | T_bool meta -> meta
+  | T_int meta -> meta
+  | T_nat meta -> meta
+  | T_mutez meta -> meta
+  | T_string meta -> meta
+  | T_bytes meta -> meta
+  | T_address meta -> meta
+  | T_key_hash meta -> meta
+  | T_operation meta -> meta
 
-let literal_type (l : literal) : (meta, string) node =
-  Prim (generated, literal_type_prim l, [], [])
+let with_var_names (env : oty list) (m : meta) : meta =
+  { m with env = List.map ~f:(fun ty -> (get_ty_meta ty).binder) env }
 
-let literal_value (l : literal) : (meta, string) node =
-  match l with
-  | Literal_unit -> Prim (generated, "Unit", [], [])
-  | Literal_int x -> Int (generated, x)
-  | Literal_nat x -> Int (generated, x)
-  | Literal_timestamp x -> Int (generated, x)
-  | Literal_mutez x -> Int (generated, x)
-  | Literal_string x -> String (generated, Simple_utils.Ligo_string.extract x)
-  | Literal_bytes x -> Bytes (generated, x)
-  | Literal_address x -> String (generated, x)
-  | Literal_signature x -> String (generated, x)
-  | Literal_key x -> String (generated, x)
-  | Literal_key_hash x -> String (generated, x)
-  | Literal_chain_id x -> String (generated, x)
-  | Literal_operation x -> Bytes (generated, x)
-  | Literal_bls12_381_g1 x -> Bytes (generated, x)
-  | Literal_bls12_381_g2 x -> Bytes (generated, x)
-  | Literal_bls12_381_fr x -> Bytes (generated, x)
-  | Literal_chest x -> Bytes (generated,x)
-  | Literal_chest_key x -> Bytes (generated,x)
+let compile_binds env expr =
+  Ligo_coq_ocaml.Compiler.compile_binds
+    null
+    with_var_names
+    To_micheline.literal_code
+    To_micheline.global_constant
+    (repeat true (List.length env))
+    env
+    expr
 
-let compile_binds' = compile_binds
-let compile_expr' = compile_expr
+let compile_expr env expr =
+  Ligo_coq_ocaml.Compiler.compile_expr
+    null
+    with_var_names
+    To_micheline.literal_code
+    To_micheline.global_constant
+    (repeat true (List.length env))
+    env
+    expr
 
-open Ligo_coq_ocaml.Micheline_wrapper
+let compile_expr env e =
+  let p = compile_expr env e in
+  let (rs, p) = To_micheline.strengthen_prog p [true] in
+  (* TODO *)
+  let () = if List.length (List.filter ~f:ident rs) > 0 then failwith "TODO expr used something" else () in
+  (* hmm, why did this end up here *)
+  let drops = Ligo_coq_ocaml.Compiler.compile_ope null rs in
+  let drops = To_micheline.translate_prog drops in
+  let p = To_micheline.translate_prog p in
+  Seq (null, drops @ p)
 
-let with_var_names (env : (meta, string) node list) (m : meta) : meta =
-  { m with env = List.map ~f:(fun ty -> (location ty).binder) env }
-
-let rec compile_binds ~raise protocol_version env outer proj binds =
-  List.map ~f:forward
-    (compile_binds'
-       generated
-       (fun env meta -> with_var_names (List.map ~f:forward env) meta)
-       (fun x y z ->
-          List.map ~f:backward
-            (compile_operator ~raise protocol_version x y z))
-       (fun x -> backward (literal_type x))
-       (fun x -> backward (literal_value x))
-       env outer proj binds)
-
-and compile_expr ~raise protocol_version env outer expr =
-  List.map ~f:forward
-    (compile_expr'
-       generated
-       (fun env meta -> with_var_names (List.map ~f:forward env) meta)
-       (fun x y z ->
-          List.map ~f:backward
-            (compile_operator ~raise protocol_version x y z))
-       (fun x -> backward (literal_type x))
-       (fun x -> backward (literal_value x))
-       (List.map ~f:backward env)
-       outer
-       expr)
-
-and apply_static_args ~raise : Environment.Protocols.t -> string -> (_, constant', literal) static_args -> _ node =
-  fun protocol_version prim args ->
-  match args with
-  | Type_args (annot, types) ->
-    Prim (generated, prim, List.map ~f:forward types, Option.to_list annot)
-  | Instr_arg (code) ->
-    let code = compile_binds ~raise protocol_version [] [] [] code in
-    Prim (generated, prim, code, [])
-  | Script_arg (Script (p, s, e)) ->
-    (* prim will always be CREATE_CONTRACT, recursively compile the
-       contract here *)
-    let e = compile_binds ~raise protocol_version [] [] [] e in
-    let parameter = Prim (generated, "parameter", [forward p], []) in
-    let storage = Prim (generated, "storage", [forward s], []) in
-    let code = Prim (generated, "code", [Seq (generated, e)], []) in
-    Prim (generated, prim, [Seq (generated, [parameter; storage; code])], [])
-
-and compile_operator ~raise :
-  Environment.Protocols.t -> meta -> constant' ->
-  (_, constant', literal) static_args -> (meta, string) node list =
-  fun protocol_version loc c args ->
-  match Predefined.Stacking.get_operators protocol_version c with
-  | Some x -> [(* Handle predefined (and possibly special)
-                  operators, applying any type/annot/script args
-                  using apply_static_args. *)
-               (Predefined.Stacking.unpredicate
-                  loc
-                  (fun prim -> wipe_locations () (apply_static_args ~raise protocol_version prim args))
-                  x)]
-  | None ->
-    let open Simple_utils.Trace in
-    (raise.raise) (Errors.unsupported_primitive c protocol_version)
-
-let compile_expr ~raise protocol_version env outer e =
-  Seq (generated, compile_expr ~raise protocol_version env outer e)
-
-let compile_function_body ~raise protocol_version e =
-  Seq (generated, compile_binds ~raise protocol_version [] [] [] e)
+let compile_function_body e =
+  let p = compile_binds [] e in
+  let (rs, p) = To_micheline.strengthen_prog p [true] in
+  let p = To_micheline.translate_prog p in
+  (* hmm, why did this end up here *)
+  if Option.value ~default:false (List.hd rs)
+  then Seq (null, p)
+  else Seq (null, Prim (null, "DROP", [], []) :: p)

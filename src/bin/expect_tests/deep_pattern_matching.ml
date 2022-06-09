@@ -373,6 +373,16 @@ let%expect_test _ =
     4 |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "nested_record_pm { a = 1 ; b = E }" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
+  [%expect{|
+    5 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; (good_test "nested_record_sum.mligo") ] ;
+  [%expect{|
+    142 bytes |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
@@ -397,7 +407,9 @@ let%expect_test _ =
              UNPAIR ;
              CAR ;
              SWAP ;
-             IF_NONE { NIL operation ; PAIR } { SWAP ; DROP ; NIL operation ; PAIR } } } |}]
+             IF_NONE {} { SWAP ; DROP } ;
+             NIL operation ;
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.mligo") ] ;

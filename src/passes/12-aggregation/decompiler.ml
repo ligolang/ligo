@@ -33,10 +33,6 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let let_result = decompile ~raise let_result in
        let let_binder = Stage_common.Maps.binder (decompile_type ~raise) let_binder in
        return (O.E_let_in { let_binder ; rhs ; let_result ; attr })
-    | E_type_in { type_binder ; rhs ; let_result } ->
-       let rhs = decompile_type ~raise rhs in
-       let let_result = decompile ~raise let_result in
-       return (O.E_type_in { type_binder ; rhs ; let_result })
     | E_raw_code { language ; code } ->
        let code = decompile ~raise code in
        return (O.E_raw_code { language ; code })

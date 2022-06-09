@@ -145,6 +145,8 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_PUSH_CONTEXT
   | C_TEST_POP_CONTEXT
   | C_TEST_FAILWITH
+  | C_TEST_READ_CONTRACT_FROM_FILE
+  | C_TEST_SIGN
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
@@ -178,6 +180,9 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_global_constant (_hash, _args) ->
     (* hashed code can be impure :( *)
+    false
+  | E_create_contract _ ->
+    (* very not pure *)
     false
 
   (* I'm not sure about these. Maybe can be tested better? *)
@@ -397,15 +402,10 @@ let rec all_expression ~raise : expression -> expression =
 let create_contract ~raise expr =
   let _ = map_expression (fun expr ->
                   match expr.content with
-                  | E_constant { cons_name = C_CREATE_CONTRACT ;
-                                 arguments = { content = E_closure _ ; _ } as lambda :: _ } -> (
-                    let fvs = Free_variables.expression [] lambda in
+                  | E_create_contract (_, _, ((x, _), lambda), _) -> (
+                    let fvs = Free_variables.expression [x] lambda in
                     if Int.equal (List.length fvs) 0 then expr
                     else raise.raise @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
-                  )
-                  | E_constant { cons_name = C_CREATE_CONTRACT ;
-                                 arguments =  _ } -> (
-                    raise.raise @@ create_contract_lambda C_CREATE_CONTRACT expr
                   )
                   | _ -> expr) expr in
   expr

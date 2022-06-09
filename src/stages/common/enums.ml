@@ -209,6 +209,8 @@ type constant' =
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
   | C_TEST_FAILWITH [@only_interpreter]
+  | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
+  | C_TEST_SIGN [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE

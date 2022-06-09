@@ -50,6 +50,7 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_contract_from_file : string * string * string list -> LT.value t
+    | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
@@ -61,12 +62,13 @@ module Command = struct
     | Set_baker : Location.t * LT.calltrace * LT.value -> unit t
     | Get_voting_power : Location.t * Ligo_interpreter.Types.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
-    | Get_bootstrap : Location.t * LT.value -> LT.value t
+    | Get_bootstrap : Location.t * LT.calltrace * LT.value -> LT.value t
+    | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
-    | Implicit_account : Location.t * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
-    | Add_account : Location.t * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
+    | Add_account : Location.t * LT.calltrace * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
     | Baker_account : LT.value * LT.value -> unit t
     | Register_delegate : Location.t * Ligo_interpreter.Types.calltrace *  Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -247,6 +249,17 @@ module Command = struct
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
       let contract = LT.V_Michelson_contract contract_code in
       (contract, ctxt)
+    | Read_contract_from_file (loc, calltrace, source_file) ->
+      (try
+        let s = In_channel.(with_file source_file ~f:input_all) in
+        let t, _ =  Tezos_micheline.Micheline_parser.tokenize s in
+        let m, _ = Tezos_micheline.Micheline_parser.parse_expression t in
+        let contract_code = Tezos_micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) m in
+        let contract = LT.V_Michelson_contract contract_code in
+        (contract, ctxt)
+       with
+        | Sys_error _ ->
+          raise.raise @@ generic_error ~calltrace loc @@ "Could not open " ^ source_file ^ " for reading.")
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env f.orig_lambda in
@@ -330,12 +343,18 @@ module Command = struct
     | Get_total_voting_power (loc, calltrace) ->
       let tvp = Tezos_state.get_total_voting_power ~raise ~loc ~calltrace ctxt in
       ((LT.V_Ct (LT.C_nat (Z.of_int64 tvp))), ctxt)
-    | Get_bootstrap (loc,x) -> (
+    | Get_bootstrap (loc,calltrace, x) -> (
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
-      | Some x -> (LT.V_Ct (C_address x), ctxt)
+      | Some x ->
+         let (sk, pk) = Tezos_state.get_account ~raise ~loc ~calltrace x in
+         let record = LC.v_triple LT.(V_Ct (C_address x), V_Ct (C_key pk), V_Ct (C_string sk)) in
+         (record, ctxt)
       | None -> raise.raise (Errors.generic_error loc "This bootstrap account do not exist")
     )
+    | Sign (loc, calltrace, sk, data) ->
+      let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
+      (LT.V_Ct (LT.C_signature signature), ctxt)
     | Michelson_equal (loc,a,b) ->
       let { code ; _ } : LT.typed_michelson_code = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr a in
@@ -350,9 +369,9 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
-    | Implicit_account (loc, kh) -> (
+    | Implicit_account (loc, calltrace, kh) -> (
       let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
-      let address = Tezos_state.implicit_account ~raise ~loc address in
+      let address = Tezos_state.implicit_account ~raise ~loc ~calltrace address in
       let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
       (v, ctxt)
     )
@@ -360,9 +379,9 @@ module Command = struct
       let check = Bls12_381.Pairing.pairing_check l in
       (LC.v_bool check, ctxt)
     )
-    | Add_account (loc, sk, pk) -> (
+    | Add_account (loc, calltrace, sk, pk) -> (
       let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
-      Tezos_state.add_account ~raise ~loc sk pk pkh;
+      Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;
       ((), ctxt)
     )
     | New_account () -> (

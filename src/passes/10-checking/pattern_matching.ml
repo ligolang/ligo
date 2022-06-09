@@ -136,7 +136,7 @@ let rec substitute_var_in_body ~raise : O.expression_variable -> O.expression_va
           ret false { exp with expression_content = O.E_matching {matchee ; cases}}
         )
         | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
-           E_type_abstraction _|E_recursive _|E_let_in _|E_type_in _ | E_mod_in _ |
+           E_type_abstraction _|E_recursive _|E_let_in _| E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_record_accessor _ |
            E_record_update _ | E_type_inst _ | E_module_accessor _ | E_assign _) -> ret true exp
     in

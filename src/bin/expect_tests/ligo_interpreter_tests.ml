@@ -518,7 +518,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "recursion_uncurry.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value 116. |}]
+    - test exited with value 112. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_timestamp.mligo" ] ;
@@ -555,15 +555,13 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1AE9iae7b3xDWrzghqkPNmtVNNDvyncz8K , { parameter unit ;
+    - test_x exited with value (KT1M5ZGuADUwMysHzcbWsoryWD6KyBaW61pR , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address chest)) ;
       code { CDR ;
              PUSH bool True ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
@@ -574,9 +572,7 @@ let%expect_test _ =
                     IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
              DROP ;
              PUSH bool True ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
@@ -586,7 +582,14 @@ let%expect_test _ =
                     IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
              DROP ;
              NIL operation ;
-             PAIR } } , 230). |}]
+             PAIR } } , 222). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
+  [%expect {|
+    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV
+    Everything at the top-level was executed.
+    - test_foo exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "cli_arg.mligo" ; "--arg" ; "[ 1 ; 2 ; 3]" ] ;
@@ -599,6 +602,20 @@ let%expect_test _ =
   [%expect {|
   Everything at the top-level was executed.
   - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_get_account.mligo" ] ;
+  [%expect {|
+    (tz1MBWU1WkszFfkEER2pgn4ATKXE9ng7x1sR , edpkusHqa6fxkGPPL9YpgbcakvSTvcTBcwnLAmCdcevmws4Mh2MdHB , "edsk41aRaPPBpidY7w5xu54edk76uJJtJ6myTwYDEWhAwNHce9gKNo")
+    3800000000000mutez
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_sign.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd
@@ -841,6 +858,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test exited with value KT1BxaPaFE2YDn8Toh2u2SJ18P6zf24oqbzZ(None). |}]
+    - test exited with value KT1Riu7zn7S1PCTu197y2i29TGheSLzfeaZ6(None). |}]
 
 let () = Sys.chdir pwd

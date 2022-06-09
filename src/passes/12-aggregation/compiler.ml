@@ -195,11 +195,6 @@ and compile_expression ~raise : Data.scope -> Data.path -> I.expression -> O.exp
       let let_binder = Stage_common.Maps.binder (compile_type ~raise) let_binder in
       return @@ O.E_let_in { let_binder ; rhs ; let_result; attr }
     )
-    | I.E_type_in {type_binder; rhs; let_result} -> (
-      let let_result = self let_result in
-      let rhs = compile_type ~raise rhs in
-      return @@ O.E_type_in {type_binder; rhs; let_result}
-    )
     | I.E_lambda { binder ; result } -> (
       let data = Data.rm_exp scope binder.var in
       let binder = Stage_common.Maps.binder (compile_type ~raise) binder in

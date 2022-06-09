@@ -50,6 +50,8 @@ let%expect_test _ =
                                                please contact us and use another
                                                format in the meanwhile.
                                                (alias: --format)
+      [--enable-michelson-typed-opt]           Enable Michelson optimizations that
+                                               work using typecking.
       [--file-constants FILE_CONSTANTS]        A file with a JSON list of strings
                                                with Michelson code. Those Michelson
                                                values will be registered as global

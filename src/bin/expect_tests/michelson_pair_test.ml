@@ -150,7 +150,7 @@ let%expect_test _ =
     Hint: replace it by "_store" to prevent this warning.
 
     { parameter unit ;
-      storage (pair (string %three) (pair (int %one) (nat %two))) ;
+      storage (pair (string %three) (int %one) (nat %two)) ;
       code { DROP ;
              PUSH nat 2 ;
              PUSH int 1 ;

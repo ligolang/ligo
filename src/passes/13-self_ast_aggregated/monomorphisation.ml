@@ -123,7 +123,7 @@ let apply_table_expr table (e : AST.expression) =
                      let ascr = Option.map ~f:apply_table_type ascr in
                      return @@ E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression }
                   | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
-                  | E_let_in _ | E_type_in _ | E_raw_code _ | E_constructor _ | E_record _
+                  | E_let_in _ | E_raw_code _ | E_constructor _ | E_record _
                   | E_record_accessor _ | E_record_update _ -> return e.expression_content) () e in
   e
 
@@ -175,7 +175,7 @@ let subst_external_term et t (e : AST.expression) =
                      let ascr = Option.map ~f:(subst_external_type et t) ascr in
                      return @@ E_assign { binder = { var ; ascr ; attributes } ; access_path ; expression }
                   | E_literal _ | E_constant _ | E_variable _ | E_application _ | E_type_abstraction _
-                  | E_let_in _ | E_type_in _ | E_raw_code _ | E_constructor _ | E_record _
+                  | E_let_in _ | E_raw_code _ | E_constructor _ | E_record _
                   | E_record_accessor _ | E_record_update _ -> return e.expression_content) () e in
   e
 
@@ -251,9 +251,6 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
        let data, rhs = self data rhs in
        data, return (E_let_in { let_binder ; rhs ; let_result ; attr })
   )
-  | E_type_in { type_binder ; rhs ; let_result } ->
-     let data, let_result = self data let_result in
-     data, return (E_type_in { type_binder ; rhs ; let_result })
   | E_constructor { constructor ; element } ->
      let data, element  = self data element in
      data, return (E_constructor { constructor ; element })

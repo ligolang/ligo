@@ -46,6 +46,7 @@ type all =
  | `Self_ast_aggregated_tracer of Self_ast_aggregated.Errors.self_ast_aggregated_error
  | `Aggregation_tracer of Aggregation.Errors.aggregation_error
  | `Self_mini_c_tracer of Self_mini_c.Errors.self_mini_c_error
+ | `Scoping_tracer of Scoping.Errors.scoping_error
  | `Stacking_tracer of Stacking.Errors.stacking_error
 
  (* | `Main_interpreter of Interpreter.interpreter_error *)
