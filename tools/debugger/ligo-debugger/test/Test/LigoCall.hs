@@ -21,10 +21,10 @@ test_Call = testGroup "Getting debug info"
           , LigoEmptyLocationInfo
           ]
 
-        , [ LigoMereEnvInfo [LigoStackEntryNoVar (LigoTypeRef 0)] ]
+        , [ LigoMereEnvInfo [LigoStackEntryNoVar intType] ]
         , replicate 3 LigoEmptyLocationInfo
         , [ LigoMereLocInfo ((2, 11) <-> (2, 17)) ]
-        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" (LigoTypeRef 0)] ]
+        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" intType] ]
 
         ]
 

@@ -15,9 +15,12 @@ module Test.Util
   , HUnit.testCaseSteps
   , HUnit.assertFailure
   , HUnit.assertBool
+    -- * Common snippets
+  , intType
   ) where
 
 import Fmt (Buildable (..), blockListF', pretty)
+import Language.LIGO.Debugger.CLI.Types (LigoType (..), LigoTypeConstant (..))
 import System.FilePath (takeExtension, (</>))
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
@@ -72,3 +75,10 @@ assertLeft
 assertLeft = \case
   Left e -> liftIO $ HUnit.assertFailure (pretty $ TB e)
   Right _ -> pass
+
+intType :: LigoType
+intType = LTConstant $
+  LigoTypeConstant
+    { ltcParameters = []
+    , ltcInjection = "int"
+    }
