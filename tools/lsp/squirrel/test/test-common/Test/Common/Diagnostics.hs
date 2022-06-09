@@ -28,6 +28,7 @@ data DiagnosticSource impl where
 
 data DiagnosticTest = DiagnosticTest
   { dtFile :: FilePath
+  , dtParserMsgs :: [Message]
   , dtCompilerMsgs :: [Message]
   , dtFallbackMsgs :: [Message]
   }
@@ -37,17 +38,18 @@ simpleTest = do
   dtFile <- makeAbsolute $ inputDir </> "a.mligo"
   pure DiagnosticTest
     { dtFile
+    , dtParserMsgs =
+      [ Message "Unexpected: :: int"   SeverityError (mkRange (3, 17) (3, 23) dtFile)
+      , Message "Unrecognized: :: int" SeverityError (mkRange (3, 17) (3, 23) dtFile)
+      , Message "Unrecognized: int"    SeverityError (mkRange (3, 20) (3, 23) dtFile)
+      ]
     , dtCompilerMsgs =
       [ Message
         "Ill-formed function parameters.\nAt this point, one of the following is expected:\n  * another parameter as an irrefutable pattern, e.g a variable;\n  * a type annotation starting with a colon ':' for the body;\n  * the assignment symbol '=' followed by an expression.\n"
         SeverityError
         (mkRange (3, 17) (3, 19) dtFile)
       ]
-    , dtFallbackMsgs =
-      [ Message "Unexpected: :: int"   SeverityError (mkRange (3, 17) (3, 23) dtFile)
-      , Message "Unrecognized: :: int" SeverityError (mkRange (3, 17) (3, 23) dtFile)
-      , Message "Unrecognized: int"    SeverityError (mkRange (3, 20) (3, 23) dtFile)
-      ]
+    , dtFallbackMsgs = []
     }
 
 -- LIGO-474 regression test
@@ -56,13 +58,15 @@ treeDoesNotContainNameTest = do
   dtFile <- makeAbsolute $ inputDir </> "LIGO-474.religo"
   pure DiagnosticTest
     { dtFile
+    , dtParserMsgs =
+      [ Message "Unexpected: r" SeverityError (mkRange (1, 17) (1, 18) dtFile)
+      ]
     , dtCompilerMsgs =
       [ Message "Syntax error #200." SeverityError (mkRange (1, 14) (1, 16) dtFile)
       , Message "Syntax error #233." SeverityError (mkRange (1, 17) (1, 18) dtFile)
       ]
     , dtFallbackMsgs =
-      [ Message "Unexpected: r"                         SeverityError (mkRange (1, 17) (1, 18) dtFile)
-      , Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
+      [ Message "Expected to find a name, but got `42`" SeverityError (mkRange (1, 14) (1, 16) dtFile)
       ]
     }
 
@@ -79,10 +83,10 @@ parseDiagnosticsDriver
   => DiagnosticSource impl
   -> DiagnosticTest
   -> Assertion
-parseDiagnosticsDriver source (DiagnosticTest file fromCompiler fallback) = do
+parseDiagnosticsDriver source (DiagnosticTest file parser fromCompiler fallback) = do
   contract <- parseWithScopes @impl file
   let
-    expectedMsgs = case source of
+    expectedMsgs = parser <> case source of
       CompilerSource -> fromCompiler
       FallbackSource -> fallback
       StandardSource -> fallback <> fromCompiler
