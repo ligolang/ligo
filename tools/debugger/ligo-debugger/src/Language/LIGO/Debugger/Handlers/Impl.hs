@@ -7,7 +7,7 @@ import Debug qualified
 import Unsafe qualified
 
 import Control.Concurrent.STM (writeTChan)
-import Control.Lens (zoom, (.=), ix, (^?!))
+import Control.Lens (ix, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither)
 import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
@@ -22,7 +22,8 @@ import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.TypeCheck (typeVerifyParameter, typeVerifyStorage)
-import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..), SomeConstrainedValue (SomeValue))
+import Morley.Michelson.Typed
+  (Contract, Contract' (..), SomeConstrainedValue (SomeValue), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
@@ -37,7 +38,7 @@ import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
 import Language.LIGO.DAP.Variables
-import Morley.Debugger.Protocol.DAP (ScopesRequestArguments(frameIdScopesRequestArguments))
+import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 
 data LIGO
 
@@ -113,8 +114,11 @@ instance HasSpecificMessages LIGO where
 
     let builder =
           case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) ->
-              createVariables stackItems >>= \idx -> buildVariable value "$it" >>= insertToIndex idx . (:[])
+            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) -> do
+              idx <- createVariables stackItems
+              -- TODO: get the type of "$it" value
+              itVar <- buildVariable LTUnresolved value "$it"
+              insertToIndex idx [itVar]
             _ -> createVariables stackItems
 
     let (varReference, variables) = runBuilder builder
