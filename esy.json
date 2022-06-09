@@ -277,6 +277,7 @@
       "@opam/ocamlfind": "opam:1.9.1",
       "@opam/ocamlbuild": "opam:0.14.0",
       "@opam/conf-gmp": "opam:3",
+      "@opam/easy-format": "opam:1.3.3",
       "@opam/ocamlformat": {
         "source": "no-source:",
         "override": {

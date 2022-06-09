@@ -1,5 +1,5 @@
 {
-  "checksum": "d86f5a517ed92193cefa1dec477219e8",
+  "checksum": "a2f8c086ca4ad74f59f1df93a6b20fae",
   "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
@@ -3699,7 +3699,7 @@
         "ocaml@4.12.0@d41d8cd9", "@opam/ppxlib@opam:0.25.0@8553d2e8",
         "@opam/ppx_here@opam:v0.14.0@c05577d4",
         "@opam/dune@opam:2.9.2@f5a20a5e",
-        "@opam/bin_prot@opam:v0.14.0@2d7601e9",
+        "@opam/bin_prot@opam:v0.14.1@daad30cc",
         "@opam/base@opam:v0.14.3@b3ddb868",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
@@ -3707,7 +3707,7 @@
         "ocaml@4.12.0@d41d8cd9", "@opam/ppxlib@opam:0.25.0@8553d2e8",
         "@opam/ppx_here@opam:v0.14.0@c05577d4",
         "@opam/dune@opam:2.9.2@f5a20a5e",
-        "@opam/bin_prot@opam:v0.14.0@2d7601e9",
+        "@opam/bin_prot@opam:v0.14.1@daad30cc",
         "@opam/base@opam:v0.14.3@b3ddb868"
       ]
     },
@@ -6211,7 +6211,7 @@
         "@opam/jane-street-headers@opam:v0.14.0@b38e12bf",
         "@opam/fieldslib@opam:v0.14.0@5bb0d853",
         "@opam/dune@opam:2.9.2@f5a20a5e",
-        "@opam/bin_prot@opam:v0.14.0@2d7601e9",
+        "@opam/bin_prot@opam:v0.14.1@daad30cc",
         "@opam/base_quickcheck@opam:v0.14.1@0933a13f",
         "@opam/base_bigstring@opam:v0.14.0@aa572736",
         "@opam/base@opam:v0.14.3@b3ddb868",
@@ -6236,7 +6236,7 @@
         "@opam/jane-street-headers@opam:v0.14.0@b38e12bf",
         "@opam/fieldslib@opam:v0.14.0@5bb0d853",
         "@opam/dune@opam:2.9.2@f5a20a5e",
-        "@opam/bin_prot@opam:v0.14.0@2d7601e9",
+        "@opam/bin_prot@opam:v0.14.1@daad30cc",
         "@opam/base_quickcheck@opam:v0.14.1@0933a13f",
         "@opam/base_bigstring@opam:v0.14.0@aa572736",
         "@opam/base@opam:v0.14.3@b3ddb868"
@@ -6886,20 +6886,20 @@
         "@opam/dune@opam:2.9.2@f5a20a5e"
       ]
     },
-    "@opam/bin_prot@opam:v0.14.0@2d7601e9": {
-      "id": "@opam/bin_prot@opam:v0.14.0@2d7601e9",
+    "@opam/bin_prot@opam:v0.14.1@daad30cc": {
+      "id": "@opam/bin_prot@opam:v0.14.1@daad30cc",
       "name": "@opam/bin_prot",
-      "version": "opam:v0.14.0",
+      "version": "opam:v0.14.1",
       "source": {
         "type": "install",
         "source": [
-          "archive:https://opam.ocaml.org/cache/md5/a4/a4fee6c7d57a05e2420a69e16c287faf#md5:a4fee6c7d57a05e2420a69e16c287faf",
-          "archive:https://ocaml.janestreet.com/ocaml-core/v0.14/files/bin_prot-v0.14.0.tar.gz#md5:a4fee6c7d57a05e2420a69e16c287faf"
+          "archive:https://opam.ocaml.org/cache/md5/ae/ae9395a6a8000bd121779347a4b608aa#md5:ae9395a6a8000bd121779347a4b608aa",
+          "archive:https://github.com/janestreet/bin_prot/archive/refs/tags/v0.14.1.tar.gz#md5:ae9395a6a8000bd121779347a4b608aa"
         ],
         "opam": {
           "name": "bin_prot",
-          "version": "v0.14.0",
-          "path": "esy.lock/opam/bin_prot.v0.14.0"
+          "version": "v0.14.1",
+          "path": "esy.lock/opam/bin_prot.v0.14.1"
         }
       },
       "overrides": [],
