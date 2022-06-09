@@ -39,7 +39,7 @@ function mem (const k: int; const m: foobar) : bool is Map.mem (k, m)
 function iter_op (const m : foobar) : unit is
   {
     function aggregate (const i : int; const j : int) : unit is block
-      { if i=j then skip else failwith ("fail") } with unit
+      { if i =/= j then failwith ("fail") } with unit
   } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is

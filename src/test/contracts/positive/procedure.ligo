@@ -1,5 +1,5 @@
 function my_assert (const p : bool) : unit is
-  { if p then skip else failwith("assert") }
+  { if not p then failwith("assert") }
   with unit
 
 function main (const p : bool; const _s : int) : list(operation) * int is

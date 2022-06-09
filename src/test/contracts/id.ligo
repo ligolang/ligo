@@ -59,9 +59,8 @@ be to deter people from doing it just to chew up address space.
 
 function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
   begin
-    if Tezos.get_amount() = storage.name_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if Tezos.get_amount() =/= storage.name_price
+    then failwith("Incorrect amount paid.");
     const profile : bytes = parameter.profile;
     const initial_controller : option(address) = parameter.initial_controller;
     var identities : big_map (id, id_details) := storage.identities;
@@ -90,8 +89,7 @@ function update_owner (const parameter : update_owner; const storage : storage) 
     then
       begin
         failwith("Updating owner doesn't cost anything.");
-      end
-    else skip;
+      end;
     const id : int = parameter.id;
     const new_owner : address = parameter.new_owner;
     var identities : big_map (id, id_details) := storage.identities;

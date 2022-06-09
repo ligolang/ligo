@@ -17,13 +17,12 @@ function change_address (const param : change_addr_pt;
                          const s : storage_t) : contract_return_t is
   {
     if Tezos.get_sender() =/= s then failwith ("Unauthorized sender")
-    else skip
   } with ((nil : list (operation)), param)
 
 function pass_message (const param: pass_message_pt;
                        const s : storage_t ) : contract_return_t is
   {
-    if Tezos.get_sender() =/= s then failwith("Unauthorized sender") else skip;
+    if Tezos.get_sender() =/= s then failwith("Unauthorized sender");
     var _message : pass_message_pt := param
   } with (param (unit), s)
 

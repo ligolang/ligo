@@ -54,8 +54,7 @@ function transfer_single (const action : action_transfer_single;
       | None -> (failwith ("transfer_single: No card.") : card)
       ];
     if card.card_owner =/= Tezos.get_sender() then
-      failwith ("This card doesn't belong to you")
-    else skip;
+      failwith ("This card doesn't belong to you");
     card.card_owner := action.destination;
     cards[action.card_to_transfer] := card;
     s.cards := cards
@@ -70,8 +69,7 @@ function sell_single (const action : action_sell_single;
       | None -> (failwith ("sell_single: No card.") : card)
       ];
     if card.card_owner =/= Tezos.get_sender()
-    then failwith ("This card doesn't belong to you")
-    else skip;
+    then failwith ("This card doesn't belong to you");
     var card_pattern : card_pattern :=
       case s.card_patterns[card.card_pattern] of [
         Some (pattern) -> pattern
@@ -105,7 +103,7 @@ function buy_single (const action : action_buy_single;
       ];
     const price : tez =
       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    if price > Tezos.get_amount() then failwith ("Not enough money") else skip;
+    if price > Tezos.get_amount() then failwith ("Not enough money");
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
     var card_patterns : card_patterns := s.card_patterns;

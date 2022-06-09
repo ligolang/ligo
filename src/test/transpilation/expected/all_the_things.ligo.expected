@@ -1659,7 +1659,7 @@ function iter_op (const m : foobar) : unit is
   function aggregate (const i : int; const j : int)
     : unit is
   {
-    if i = j then skip else failwith ("fail")
+    if i =/= j then failwith ("fail")
   } with unit
 } with Map.iter (aggregate, m)
 
@@ -1839,25 +1839,22 @@ function send (const param : send_pt; var s : storage)
   if not Set.mem
        (Tezos.get_sender (),
         s.authorized_addresses)
-  then failwith ("Unauthorized address")
-  else skip;
+  then failwith ("Unauthorized address");
 
   var message : message := param;
 
   const packed_msg : bytes = Bytes.pack (message);
 
   if Bytes.length (packed_msg) > s.max_message_size
-  then failwith ("Message size exceed maximum limit")
-  else skip;
+  then failwith ("Message size exceed maximum limit");
 
   var new_store : addr_set := set [];
 
   case map_get (packed_msg, s.message_store) of [
     Some (voters) ->
       {
-        if Set.mem (Tezos.get_sender (), voters)
-        then skip
-        else
+        if not Set.mem (Tezos.get_sender (), voters)
+        then
           s.proposal_counters [Tezos.get_sender ()]  :=
             get_force
               (Tezos.get_sender (),
@@ -1882,8 +1879,7 @@ function send (const param : send_pt; var s : storage)
   := get_force (Tezos.get_sender (), s.proposal_counters);
 
   if sender_proposal_counter > s.max_proposal
-  then failwith ("Maximum number of proposal reached")
-  else skip;
+  then failwith ("Maximum number of proposal reached");
 
   var ret_ops : list (operation) := nil;
 
@@ -1901,7 +1897,6 @@ function send (const param : send_pt; var s : storage)
     {
       if Set.mem (addr, new_store)
       then s.proposal_counters [addr]  := abs (ctr - 1n)
-      else skip
     }
   }
   else s.message_store [packed_msg]  := new_store
@@ -1928,8 +1923,7 @@ function withdraw
               (get_force
                  (Tezos.get_sender (),
                   s.proposal_counters)
-               - 1n)
-        else skip;
+               - 1n);
 
         if Set.cardinal (new_set) = 0n
         then remove packed_msg from map s.message_store
@@ -2357,8 +2351,7 @@ function call (const p : call_pt; const s : storage_t)
   : contract_return_t is
 {
   if s >= now
-  then failwith ("Contract is still time locked")
-  else skip;
+  then failwith ("Contract is still time locked");
 
   const message : message_t = p;
 

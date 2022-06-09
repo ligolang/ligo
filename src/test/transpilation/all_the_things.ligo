@@ -1250,7 +1250,7 @@ function mem (const k: int; const m: foobar) : bool is Map.mem (k, m)
 function iter_op (const m : foobar) : unit is
   {
     function aggregate (const i : int; const j : int) : unit is block
-      { if i=j then skip else failwith ("fail") } with unit
+      { if i=/=j then failwith ("fail") } with unit
   } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
@@ -1397,16 +1397,14 @@ function send (const param : send_pt; var s : storage) : return is
     // check sender against the authorized addresses
 
     if not Set.mem (Tezos.get_sender(), s.authorized_addresses)
-    then failwith("Unauthorized address")
-    else skip;
+    then failwith("Unauthorized address");
 
     // check message size against the stored limit
 
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
     if Bytes.length (packed_msg) > s.max_message_size
-    then failwith ("Message size exceed maximum limit")
-    else skip;
+    then failwith ("Message size exceed maximum limit");
 
     (* compute the new set of addresses associated with the message and
        update counters *)
@@ -1419,9 +1417,8 @@ function send (const param : send_pt; var s : storage) : return is
           (* The message is already stored.
              Increment the counter only if the sender is not already
              associated with the message. *)
-          if Set.mem (Tezos.get_sender(), voters)
-          then skip
-          else s.proposal_counters[Tezos.get_sender()] :=
+          if not Set.mem (Tezos.get_sender(), voters)
+          then s.proposal_counters[Tezos.get_sender()] :=
                  get_force (Tezos.get_sender(), s.proposal_counters) + 1n;
                  new_store := Set.add (Tezos.get_sender(),voters)
         }
@@ -1440,8 +1437,7 @@ function send (const param : send_pt; var s : storage) : return is
       get_force (Tezos.get_sender(), s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
-    then failwith ("Maximum number of proposal reached")
-    else skip;
+    then failwith ("Maximum number of proposal reached");
 
     // check the threshold
 
@@ -1456,7 +1452,6 @@ function send (const param : send_pt; var s : storage) : return is
       for addr -> ctr in map s.proposal_counters {
         if Set.mem (addr, new_store) then
           s.proposal_counters[addr] := abs (ctr - 1n)
-        else skip
       }
     } else s.message_store[packed_msg] := new_store
   } with (ret_ops, s)
@@ -1477,8 +1472,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
 
           if Set.cardinal (voters) =/= Set.cardinal (new_set)
           then s.proposal_counters[Tezos.get_sender()] :=
-                 abs (get_force (Tezos.get_sender(), s.proposal_counters) - 1n)
-          else skip;
+                 abs (get_force (Tezos.get_sender(), s.proposal_counters) - 1n);
 
           (* If the message is left without any associated addresses,
              remove the corresponding message_store field *)
@@ -1838,7 +1832,7 @@ type entry_point_t is
 
 function call (const p : call_pt; const s : storage_t) : contract_return_t is
   {
-    if s >= now then failwith ("Contract is still time locked") else skip;
+    if s >= now then failwith ("Contract is still time locked");
     const message : message_t = p;
     const ret_ops : list (operation) = message (unit)
   } with (ret_ops, s)

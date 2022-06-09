@@ -51,7 +51,6 @@ function check_message (const param : check_message_pt;
             if Crypto.check (key, pkh_sig.1, packed_payload)
             then valid := valid + 1n
             else failwith ("Invalid signature")
-          else skip
         }
       ]
     };

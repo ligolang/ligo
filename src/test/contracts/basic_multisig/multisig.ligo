@@ -53,7 +53,6 @@ function main (const p : parameter; var s : storage) : return is
             then valid := valid + 1n
             else failwith ("Invalid signature")
           }
-          else skip
         }
       ]
     };

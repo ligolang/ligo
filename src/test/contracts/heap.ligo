@@ -41,7 +41,6 @@ function pop_ (const h : heap) : nat is
     else
       if right <= s and heap_elt_lt (tmp, get_force (right,h))
       then largest := right
-      else skip
   } with largest
 
 function insert (const h : heap ; const e : heap_elt) : heap is
@@ -59,8 +58,8 @@ function insert (const h : heap ; const e : heap_elt) : heap is
           const tmp : heap_elt = get_force (i,h);
           h[i] := get_force(parent, h);
           h[parent] := tmp
-        } else skip
-      } else skip
+        }
+      }
     }
   } with h
 
@@ -88,7 +87,7 @@ function pop (const h : heap) : heap * heap_elt * nat is
           const tmp : heap_elt = get_force(i,h);
           h[i] := get_force (left, h);
           h[left] := tmp
-        } else skip
+        }
       }
       else
         if right <= s then {
@@ -97,7 +96,7 @@ function pop (const h : heap) : heap * heap_elt * nat is
             const tmp : heap_elt = get_force (i,h);
             h[i] := get_force (right, h);
             h[left] := tmp
-          } else skip
-        } else skip
+          }
+        }
     }
    } with (h, result, c)

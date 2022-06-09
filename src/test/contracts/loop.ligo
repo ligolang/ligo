@@ -182,7 +182,7 @@ function inner_capture_in_conditional_block (var _ : unit) : bool * int is
     var mylist : list (int) := list [1; 2; 3];
     for _it1 in list mylist {
       for it2 in list mylist {
-        if count = it2 then ret := not (ret) else skip
+        if count = it2 then ret := not (ret)
       };
       count := count + 1
     }
