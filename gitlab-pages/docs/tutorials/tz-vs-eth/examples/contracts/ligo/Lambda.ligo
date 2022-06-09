@@ -2,8 +2,7 @@ type parameter is Compute of int -> int | Set of int
 
 type storage is int
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [

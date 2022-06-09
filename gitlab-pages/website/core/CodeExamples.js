@@ -29,23 +29,21 @@ function sub (const store : storage; const delta : int) : storage is
 
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
-  end)
+  ])
 
 (* Tests for main access point *)
 
-const test_initial_storage =
-  block {
+const test_initial_storage = {
     const initial_storage = 42;
     const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
     const storage = Test.get_storage(taddr);
   } with (storage = initial_storage);
 
-const test_increment =
-  block {
+const test_increment = {
     const initial_storage = 42;
     const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
     const contr = Test.to_contract(taddr);

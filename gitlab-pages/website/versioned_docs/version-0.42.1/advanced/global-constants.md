@@ -502,7 +502,7 @@ const ct : string = Test.register_constant(Test.eval(f));
 function main(const p : parameter; const s : storage) is
   ((nil : list(operation)), (((Tezos.constant(ct) : int -> int))(s)));
 
-const test = block {
+const test = {
   const (taddr, _, _) = Test.originate(main, 1, 0tez);
   const ctr = Test.to_contract(taddr);
   const _ = Test.transfer_to_contract_exn(ctr, Unit, 0tez);

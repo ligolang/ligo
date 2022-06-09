@@ -277,8 +277,7 @@ type parameter is LargeEntrypoint of int | ...
 type storage is
   record [large_entrypoint : big_map (bool, int -> int); result : int]
 
-function load_large_ep (const storage : storage) is
-block {
+function load_large_ep (const storage : storage) is {
   const maybe_large_entrypoint : option (int -> int)
   = Map.find_opt (True, storage.large_entrypoint)
 } with
@@ -287,8 +286,7 @@ block {
     | None -> (failwith ("Internal error") : int -> int)
     ]
 
-function main (const parameter : parameter; const storage : storage) is
-block {
+function main (const parameter : parameter; const storage : storage) is {
   const nop = (list [] : list (operation))
 } with
     case parameter of [

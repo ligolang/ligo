@@ -13,13 +13,11 @@ function transfer
   (const src : address;
    const dst : address;
    const amount_ : nat;
-   const storage : storage) is
-block {
+   const storage : storage) is {
   const src_balance_opt = is_nat (lookup (src, storage.ledger) - amount_)
 } with
     case src_balance_opt of [
-      Some (src_balance) ->
-        block {
+      Some (src_balance) -> {
           const dst_balance = lookup (dst, storage.ledger) + amount_;
           const ledger1 = Map.update (dst, Some (dst_balance), storage.ledger);
           const new_ledger = Map.update (src, Some (src_balance), ledger1)
@@ -27,8 +25,7 @@ block {
     | None -> (failwith ("Insufficient funds") : storage)
     ]
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [
@@ -36,8 +33,7 @@ block {
         if s.paused
         then
           (failwith ("The contract is paused") : (list (operation) * storage))
-        else
-          block {
+        else {
             const src = arg.0;
             const dst = arg.1;
             const amount_ = arg.2

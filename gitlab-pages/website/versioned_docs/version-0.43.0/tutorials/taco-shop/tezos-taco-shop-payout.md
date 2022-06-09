@@ -235,7 +235,7 @@ const donationReceiver : contract (unit) =
 
 const donationAmount : tez = Tezos.amount / 10n;
 
-const operations : list (operation) = block {
+const operations : list (operation) = {
     // Pedro will get 90% of the amount
     const op = case (Tezos.amount - donationAmount) of [
       | Some (x) -> Tezos.transaction (unit, x, receiver)

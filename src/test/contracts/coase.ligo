@@ -46,7 +46,7 @@ type parameter is
 
 function transfer_single (const action : action_transfer_single;
                           var s : storage) : return is
-  block {
+  {
     var cards : cards := s.cards;
     var card : card :=
       case cards[action.card_to_transfer] of [
@@ -63,7 +63,7 @@ function transfer_single (const action : action_transfer_single;
 
 function sell_single (const action : action_sell_single;
                       var s : storage) : return is
-  block {
+  {
     const card : card =
       case s.cards[action.card_to_sell] of [
         Some (card) -> card
@@ -96,7 +96,7 @@ function sell_single (const action : action_sell_single;
 
 function buy_single (const action : action_buy_single;
                      var s : storage) : return is
-  block {
+  {
     // Check funds
     var card_pattern : card_pattern :=
       case s.card_patterns[action.card_to_buy] of [

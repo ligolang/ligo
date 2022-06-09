@@ -8,8 +8,7 @@ function call (const fn : option (int -> int); const value : int) is
   | None -> (failwith ("Lambda is not set") : int)
   ]
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const newStorage
   = case p of [
       SetFunction (fn) -> s with record [fn = Some (fn)]

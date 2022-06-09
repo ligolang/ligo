@@ -1,5 +1,4 @@
-function main (const parameter : bytes; const storage : int) is
-block {
+function main (const parameter : bytes; const storage : int) is {
   const nop : list (operation) = list []
 } with
     if (parameter = 0xbc1ecb8e)
