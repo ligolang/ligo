@@ -844,6 +844,10 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> () = Pop_context () in
       return @@ V_Ct C_unit
     | ( C_TEST_POP_CONTEXT , _ ) -> fail @@ error_type
+    | ( C_TEST_DROP_CONTEXT , [ V_Ct C_unit ] ) ->
+      let>> () = Drop_context () in
+      return @@ V_Ct C_unit
+    | ( C_TEST_DROP_CONTEXT , _ ) -> fail @@ error_type
     | ( C_TEST_READ_CONTRACT_FROM_FILE , [ V_Ct (C_string fn) ] ) ->
       let>> contract = Read_contract_from_file (loc, calltrace, fn) in
       return @@ contract
@@ -865,7 +869,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE | C_TEST_DROP_CONTEXT |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
