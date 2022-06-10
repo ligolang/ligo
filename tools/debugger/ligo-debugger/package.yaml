@@ -68,8 +68,8 @@ library:
     - bytestring
     - conduit
     - containers
-    - directory
     - data-default
+    - directory
     - filepath
     - fmt
     - lens
@@ -122,6 +122,7 @@ tests:
     dependencies:
       - containers
       - data-default
+      - dir-traverse
       - filepath
       - fmt
       - lens
