@@ -250,7 +250,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "simple-ops.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = "main"
+              , crdEntrypoint = Nothing
               , crdParam = ()
               , crdStorage = 42 :: Integer
               }

@@ -230,6 +230,7 @@ test-suite ligo-debugger-test
     , morley
     , morley-debugger
     , nyan-interpolation
+    , nyan-interpolation-core
     , singletons
     , tasty
     , tasty-hunit-compat

@@ -130,6 +130,7 @@ tests:
       - lens
       - ligo-debugger
       - nyan-interpolation
+      - nyan-interpolation-core
       - morley
       - morley-debugger
       - singletons
