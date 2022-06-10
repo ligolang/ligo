@@ -18,7 +18,7 @@
       &>.nav-item {
         flex: 0 1 auto;
         overflow: hidden;
-        background: var(--color-bg2);
+        background: var(--color-primary);
         border-right: 1px solid var(--color-border);
         border-bottom: 1px solid var(--color-border);
         color: var(--color-text-muted);
@@ -29,10 +29,10 @@
         height: 30px;
 
         &:hover {
-          background: var(--color-hover);
+          background: rgba(var(--color-secondary), 0.6);
         }
         &.active {
-          background: var(--color-bg);
+          background: var(--color-secondary);
           border-bottom: 1px solid var(--color-bg);
           color: var(--color-text);
         }
@@ -165,15 +165,15 @@
 
       &.nav-tabs-dark-active {
         & .nav-item {
-          background: var(--color-bg);
+          background: var(--color-primary);
           &:hover {
-            background: var(--color-hover);
+            background: rgba(var(--color-secondary), 0.6);
           }
           &:not(.dragging):hover {
 
           }
           &.active {
-            background: var(--color-bg2);
+            background: var(--color-secondary);
             border-bottom: 1px solid var(--color-bg2);
           }
           &.nav-item-add {

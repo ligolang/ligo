@@ -93,8 +93,8 @@ export default class Terminal extends PureComponent {
 
     el.onmouseup = this.onMouseUpTerm
 
-    const color = getColor('--color-text')
-    const bgColor = getColor('--color-bg2')
+    const color = '#000'
+    const bgColor = '#fff'
 
     const term = new XTerm({
       fontSize: 12,
@@ -102,7 +102,8 @@ export default class Terminal extends PureComponent {
       theme: {
         foreground: color,
         background: bgColor,
-        cursor: this.props.interactive ? getColor('--color-text-muted') : bgColor
+        cursor: this.props.interactive ? getColor('--color-text-muted') : bgColor,
+        selection: '#d0e3ff'
       }
     })
 

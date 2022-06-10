@@ -11,7 +11,7 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
-  Badge,
+  Badge
 } from 'reactstrap'
 
 export default class DropdownInput extends PureComponent {
@@ -20,7 +20,7 @@ export default class DropdownInput extends PureComponent {
     this.state = {
       dropdownOpen: false,
       paddingRight: 0,
-      filterMode: false,
+      filterMode: false
     }
 
     this.dropdownOptions = null
@@ -124,7 +124,7 @@ export default class DropdownInput extends PureComponent {
             group: item.group,
             display: subitem.display,
             disabled: subitem.disabled,
-            onClick: subitem.onClick,
+            onClick: subitem.onClick
           })
         })
         if (groupOptions.length) {
@@ -143,7 +143,7 @@ export default class DropdownInput extends PureComponent {
           id: item.id,
           display: item.display,
           disabled: item.disabled,
-          onClick: item.onClick,
+          onClick: item.onClick
         })
       }
     })
@@ -212,7 +212,7 @@ export default class DropdownInput extends PureComponent {
       invalid,
       onClick,
       value,
-      readOnly,
+      readOnly
     } = this.props
     const selectedOption = this.findSelectedOption(options, value)
     const dropdownOptions = this.renderOptions()
@@ -229,7 +229,7 @@ export default class DropdownInput extends PureComponent {
         {
           addon &&
             <InputGroupAddon addonType='prepend'>
-              <Button color='secondary' tabIndex={-1} className={[classnames(size === 'sm' ? 'px-0' : 'px-1','cursor-default')]}>
+              <Button color='secondary' tabIndex={-1} className={[classnames(size === 'sm' ? 'px-0' : 'px-1', 'cursor-default')]}>
                 <div className='w-5'>{addon}</div>
               </Button>
             </InputGroupAddon>
@@ -266,7 +266,7 @@ export default class DropdownInput extends PureComponent {
             caret={!noCaret}
             className={classnames(
               'd-flex align-items-center h-100 form-control',
-              bg || (editable ? 'bg-transparent' : 'bg2'),
+              bg || (editable ? 'bg-transparent' : ''),
               size === 'sm' && 'btn-sm',
               editable ? 'w-auto p-absolute' : 'w-0 flex-grow-1',
             )}

@@ -3,7 +3,33 @@ button, .btn, .nav-link {
 }
 
 .btn-default {
-  @include button-variant($gray-800, transparent, $secondary, transparent, $dark, transparent);
+  @include button-variant($black, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
+}
+
+.btn-default:hover {
+  @include button-variant($black, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
+}
+
+.Pane .btn-default {
+  @include button-variant($primary, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
+}
+
+.Pane .btn-default:hover {
+  @include button-variant($primary, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
+}
+
+.btn-primary {
+  @include button-variant($primary, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
+}
+
+.btn-primary:hover {
+  @include button-variant($primary, transparent, rgba($secondary, 0.6), transparent, $secondary, transparent);
+  color: $white !important;
 }
 
 .btn-transparent {

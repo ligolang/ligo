@@ -46,8 +46,9 @@ $jumbotron-padding: 1.5rem;
 $modal-md: 720px;
 $modal-content-bg: $background;
 $modal-header-border-color: $black;
-$modal-backdrop-opacity: .7;
-$btn-disabled-opacity: .3;
+$modal-backdrop-opacity: .6;
+$modal-backdrop-bg: $secondary;
+$btn-disabled-opacity: .6;
 
 $btn-focus-box-shadow: none !important;
 $btn-active-box-shadow: none;
@@ -98,8 +99,8 @@ $close-color: $light;
 $close-text-shadow: 0 1px 0 $dark;
 
 $navbar-dark-color: $light;
-$navbar-dark-active-color: color-yiq($primary);
-$navbar-dark-hover-color: color-yiq($primary);
+$navbar-dark-active-color: $white;
+$navbar-dark-hover-color: $white;
 
 $dropdown-min-width: 9.5rem;
 $dropdown-padding-y: .3rem;
@@ -112,8 +113,8 @@ $dropdown-border-color: $black;
 $dropdown-divider-bg: $black;
 $dropdown-link-hover-color: rgba($white, .9);
 $dropdown-link-hover-bg: $secondary;
-$dropdown-link-active-color: color-yiq($primary);
-$dropdown-link-active-bg: $primary;
+$dropdown-link-active-color: $white;
+$dropdown-link-active-bg: rgba($secondary, 0.6);
 $dropdown-header-color: $text-muted;
 
 $btn-line-height-xs: $input-btn-line-height-xs;
@@ -124,7 +125,7 @@ $btn-border-radius-xs: $border-radius-xs;
 
 $table-border-color: $border;
 $table-border-width: $border-width;
-$table-hover-bg: rgba($secondary, 0.5);
+$table-hover-bg: rgba($secondary, 0.6);
 $table-accent-bg: $background2;
 $progress-bg: $dark2;
 

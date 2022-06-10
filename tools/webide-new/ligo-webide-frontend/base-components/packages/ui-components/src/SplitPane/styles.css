@@ -1,5 +1,6 @@
 .Pane {
   overflow: hidden;
+  background-color: #eff5ff;
 }
 
 .Resizer {

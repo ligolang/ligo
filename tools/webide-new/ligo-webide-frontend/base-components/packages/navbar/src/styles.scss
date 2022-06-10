@@ -10,7 +10,7 @@
   align-items: stretch;
 }
 .navbar.navbar-dark {
-  background: var(--color-bg);
+  background: var(--color-primary);
 }
 
 .navbar-left>.nav-link {
@@ -24,7 +24,7 @@
   background-color: var(--color-secondary);
 }
 .nav-link.active {
-  background: var(--color-primary);
+  background: var(--color-secondary);
 }
 
 .nav-dropdown-toggle {
@@ -69,6 +69,7 @@
   width: 32px;
   height: 32px;
   border-radius: 16px;
+  background-color: white !important;
 }
 .token-icon-lg {
   width: 32px;
