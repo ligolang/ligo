@@ -78,6 +78,7 @@ module Command = struct
     | Register_file_constants : Location.t * Ligo_interpreter.Types.calltrace * string -> LT.value t
     | Push_context : unit -> unit t
     | Pop_context : unit -> unit t
+    | Drop_context : unit -> unit t
 
   let eval
     : type a.
@@ -430,6 +431,13 @@ module Command = struct
       match ! Tezos_state.contexts with
       | [] -> ((), ctxt)
       | ctxt :: ctxts ->
+         Tezos_state.contexts := ctxts ;
+         ((), ctxt)
+    )
+    | Drop_context () -> (
+      match ! Tezos_state.contexts with
+      | [] -> ((), ctxt)
+      | _ :: ctxts ->
          Tezos_state.contexts := ctxts ;
          ((), ctxt)
     )
