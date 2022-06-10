@@ -221,6 +221,28 @@ test_Snapshots = testGroup "Snapshots collection"
             )
 
           ]
+  , testCaseSteps "Check specific entrypoint" \_step -> do
+      let file = contractsDir </> "not-main-entry-point.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = "not_main"
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      testWithSnapshots runData do
+        -- Skip starting snapshot
+        _ <- move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventExpressionPreview
+            , isStackFrames = StackFrame
+                { sfName = "not_main"
+                , sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                } :| []
+            } -> pass
+          sp -> unexpectedSnapshot sp
 
   , testCaseSteps "pattern-match on option" \_step -> do
       let file = contractsDir </> "match-on-some.mligo"
