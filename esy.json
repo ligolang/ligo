@@ -2,7 +2,7 @@
   "name": "ligo",
   "version": "0.43.0-dev",
   "esy": {
-    "opamOverrideRemote": "https://github.com/DiningPhilosophersCo/esy-opam-override",
+    "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "release": {
       "bin": ["ligo"],
       "includePackages": [
