@@ -144,6 +144,12 @@ let without_run =
   let doc  = "disable running of compiled expression." in
   flag ~doc name no_arg
 
+let no_stdlib =
+  let open Command.Param in
+  let name = "--no-stdlib" in
+  let doc  = "disable stdlib inclusion." in
+  flag ~doc name no_arg
+
 let with_types =
   let open Command.Param in
   let name = "--with-types" in
@@ -300,8 +306,8 @@ let compile_parameter =
   (f <$> source_file <*> entry_point <*> expression "parameter" <*> syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> michelson_code_format <*> output_file <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_expression =
-  let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+  let f syntax expression protocol_version init_file display_format without_run no_stdlib michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
+    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~no_stdlib ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format
     in
@@ -311,7 +317,7 @@ let compile_expression =
                    expression to a Michelson expression and then \
                    interpreting it using Michelson's interpreter." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> req_syntax <*> expression "" <*> protocol_version <*> init_file <*> display_format  <*> without_run <*> no_stdlib <*> michelson_code_format <*> warn <*> werror <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
