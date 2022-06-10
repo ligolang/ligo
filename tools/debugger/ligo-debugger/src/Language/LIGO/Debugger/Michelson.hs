@@ -157,6 +157,8 @@ michelsonInstrInnerBranches = \case
   DIP{} -> 1
   DIPN{} -> 1
 
+  LAMBDA{} -> 1
+
   _ -> 0
 
 -- | Read LIGO's debug output and produce
