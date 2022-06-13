@@ -96,6 +96,7 @@ compileLigoContractDebug entrypoint file =
   runAndReadOutput Aeson.eitherDecode
     "ligo"
     [ "compile", "contract"
+    , "--no-warn"
     , "--michelson-format", "json"
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
@@ -116,6 +117,7 @@ compileLigoExpression valueOrigin ctxFile expr =
     (MP.parseExpandValue valueOrigin . decodeUtf8)
     "ligo"
     [ "compile", "expression"
+    , "--no-warn"
     , "--init-file", ctxFile
     , "auto"  -- `syntax` argument, we can leave `auto` since context file is specified
     , toString expr
