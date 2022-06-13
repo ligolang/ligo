@@ -34,20 +34,18 @@ type parameter is
 | Default  of default_pt
 
 function send (const param : send_pt; var s : storage) : return is
-  block {
+  {
     // check sender against the authorized addresses
 
     if not Set.mem (Tezos.get_sender(), s.authorized_addresses)
-    then failwith("Unauthorized address")
-    else skip;
+    then failwith("Unauthorized address");
 
     // check message size against the stored limit
 
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
     if Bytes.length (packed_msg) > s.max_message_size
-    then failwith ("Message size exceed maximum limit")
-    else skip;
+    then failwith ("Message size exceed maximum limit");
 
     (* compute the new set of addresses associated with the message and
        update counters *)
@@ -56,7 +54,7 @@ function send (const param : send_pt; var s : storage) : return is
 
     case Map.find_opt (packed_msg, s.message_store) of [
       Some (voters) ->
-        block {
+        {
           (* The message is already stored.
              Increment the counter only if the sender is not already
              associated with the message. *)
@@ -67,7 +65,7 @@ function send (const param : send_pt; var s : storage) : return is
                  new_store := Set.add (Tezos.get_sender(),voters)
         }
     | None ->
-        block {
+        {
           // the message has never been received before
           s.proposal_counters[Tezos.get_sender()] :=
              Map.find (Tezos.get_sender(), s.proposal_counters) + 1n;
@@ -81,8 +79,7 @@ function send (const param : send_pt; var s : storage) : return is
       Map.find (Tezos.get_sender(), s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
-    then failwith ("Maximum number of proposal reached")
-    else skip;
+    then failwith ("Maximum number of proposal reached");
 
     // check the threshold
 
@@ -94,22 +91,21 @@ function send (const param : send_pt; var s : storage) : return is
       // update the state hash
       s.state_hash := Crypto.sha256 (Bytes.concat (s.state_hash, packed_msg));
       // decrement the counters
-      for addr -> ctr in map s.proposal_counters block {
+      for addr -> ctr in map s.proposal_counters {
         if Set.mem (addr, new_store) then
           s.proposal_counters[addr] := abs (ctr - 1n)
-        else skip
       }
     } else s.message_store[packed_msg] := new_store
   } with (ret_ops, s)
 
 function withdraw (const param : withdraw_pt; var s : storage) : return is
-  block {
+  {
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
 
     case s.message_store[packed_msg] of [
       Some (voters) ->
-        block {
+        {
           // The message is stored
           const new_set : addr_set = Set.remove (Tezos.get_sender(), voters);
 
@@ -118,8 +114,7 @@ function withdraw (const param : withdraw_pt; var s : storage) : return is
 
           if Set.cardinal (voters) =/= Set.cardinal (new_set)
           then s.proposal_counters[Tezos.get_sender()] :=
-                 abs (Map.find (Tezos.get_sender(), s.proposal_counters) - 1n)
-          else skip;
+                 abs (Map.find (Tezos.get_sender(), s.proposal_counters) - 1n);
 
           (* If the message is left without any associated addresses,
              remove the corresponding message_store field *)

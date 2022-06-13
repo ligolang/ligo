@@ -8,7 +8,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_pair_tree.ligo", line 6, characters 21-27:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = ("foo",(1,2n)) ;
     :
     Warning: unused variable "action".
@@ -16,7 +16,7 @@ let%expect_test _ =
 
     File "../../test/contracts/michelson_pair_tree.ligo", line 6, characters 42-47:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = ("foo",(1,2n)) ;
     :
     Warning: unused variable "store".
@@ -135,7 +135,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_pair_tree_intermediary.ligo", line 6, characters 21-27:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = ("foo",(1,2n)) ;
     :
     Warning: unused variable "action".
@@ -143,7 +143,7 @@ let%expect_test _ =
 
     File "../../test/contracts/michelson_pair_tree_intermediary.ligo", line 6, characters 42-47:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = ("foo",(1,2n)) ;
     :
     Warning: unused variable "store".

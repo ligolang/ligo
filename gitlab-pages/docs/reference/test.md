@@ -1097,6 +1097,22 @@ it up as the new current context. In case the stack was empty, the
 current context is kept.
 
 <SyntaxTitle syntax="pascaligo">
+val drop_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val drop_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let drop_context: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let drop_context: (u: unit) => unit
+</SyntaxTitle>
+
+Drops a testing framework context from the stack of contexts. In case
+the stack was empty, nothing is done.
+
+<SyntaxTitle syntax="pascaligo">
 val sign : string -> bytes -> signature
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

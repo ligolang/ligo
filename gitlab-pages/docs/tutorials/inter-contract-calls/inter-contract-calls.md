@@ -38,8 +38,7 @@ type parameter is address
 
 type storage is unit
 
-function main (const destination_addr : parameter; const s : storage) is
-block {
+function main (const destination_addr : parameter; const s : storage) is {
   const maybe_contract : option (contract (unit))
   = Tezos.get_contract_opt (destination_addr);
   const destination_contract
@@ -106,8 +105,7 @@ type parameter is int
 
 type storage is address
 
-function get_add_entrypoint (const addr : address) is
-block {
+function get_add_entrypoint (const addr : address) is {
   const maybe_contract : option (contract (int)) = Tezos.get_contract_opt (addr)
 } with
     case maybe_contract of [
@@ -115,8 +113,7 @@ block {
     | None -> (failwith ("Callee does not exist") : contract (int))
     ]
 
-function main (const param : parameter; const callee_addr : storage) is
-block {
+function main (const param : parameter; const callee_addr : storage) is {
   const callee : contract (int) = Tezos.get_contract (callee_addr);
   const op = Tezos.transaction (param, 0mutez, callee)
 } with (list [op], callee_addr)
@@ -210,8 +207,7 @@ But what if we want to make a transaction to a contract but do not know the full
 type parameter is
     Set of int | Add of int | Subtract of int | Multiply of int | Reset
 
-function main (const param : parameter; const storage : int) is
-block {
+function main (const param : parameter; const storage : int) is {
   const nop : list (operation) = list []
 } with
     case param of [
@@ -289,8 +285,7 @@ type parameter is int
 
 type storage is address
 
-function get_add_entrypoint (const addr : address) is
-block {
+function get_add_entrypoint (const addr : address) is {
   const entrypoint : option (contract (int))
   = Tezos.get_entrypoint_opt ("%add", addr)
 } with
@@ -299,8 +294,7 @@ block {
     | None -> (failwith ("The entrypoint does not exist") : contract (int))
     ]
 
-function main (const param : parameter; const callee_addr : storage) is
-block {
+function main (const param : parameter; const callee_addr : storage) is {
   const add : contract (int) = get_add_entrypoint (callee_addr);
   const op = Tezos.transaction (param, 0mutez, add)
 } with (list [op], callee_addr)
@@ -473,16 +467,14 @@ type parameter is
 
 type storage is record [senders_whitelist : set (address)]
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const op
   = case p of [
       Call (op) ->
         if Set.mem (Tezos.sender, s.senders_whitelist)
         then op (Unit)
         else (failwith ("Sender is not whitelisted") : operation)
-    | IsWhitelisted (addr_and_callback) ->
-        block {
+    | IsWhitelisted (addr_and_callback) -> {
           const addr = addr_and_callback.0;
           const callback_contract = addr_and_callback.1;
           const whitelisted = Set.mem (addr, s.senders_whitelist)
@@ -571,8 +563,7 @@ function transfer
    const amount_ : nat;
    const storage : storage) is (* ... *)
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [
@@ -580,8 +571,7 @@ block {
         if s.paused
         then
           (failwith ("The contract is paused") : (list (operation) * storage))
-        else
-          block {
+        else {
             const src = arg.0;
             const dst = arg.1;
             const amount_ = arg.2
@@ -717,8 +707,7 @@ Tezos.create_contract(
 // the contract, and an operation to self, that will continue
 // the execution after the contract is originated.
 
-function create_and_call (const st : list (address)) is
-block {
+function create_and_call (const st : list (address)) is {
   const create_contract_result =
       Tezos.create_contract(
           (function (const p : int; const s : int) is

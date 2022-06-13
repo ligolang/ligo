@@ -63,6 +63,7 @@ module Test = struct
   let constant_to_michelson_program (_s : string) : michelson_program = failwith "TEST MODE"
   let restore_context (_u : unit) : unit = failwith "TEST_POP_CONTEXT"
   let save_context (_u : unit) : unit = failwith "TEST_PUSH_CONTEXT"
+  let drop_context (_u : unit) : unit = failwith "TEST_DROP_CONTEXT"
   let read_contract_from_file (_fn : string) : michelson_contract = failwith "TEST_READ_CONTRACT_FROM_FILE"
   let compile_contract_from_file  (_fn : string) (_e : string) (_v : string list) : michelson_contract = failwith "TEST_COMPILE_CONTRACT_FROM_FILE"
   let compile_contract (type p s) (_f : p * s -> operation list * s) : michelson_contract = failwith "TEST_COMPILE_CONTRACT"

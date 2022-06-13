@@ -11,6 +11,6 @@ function f (const a : r) : int is
   ]
 
 function main (const _ : unit*int):(list(operation) * int) is
-  block {
+  {
     const x = f (record [ a = 1 ; b = A ]);
   } with (nil, x)

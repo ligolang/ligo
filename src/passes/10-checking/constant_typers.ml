@@ -503,6 +503,7 @@ module Constant_types = struct
                     of_type C_TEST_FAILWITH (for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b));
                     of_type C_TEST_PUSH_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_POP_CONTEXT O.(t_unit () ^-> t_unit ());
+                    of_type C_TEST_DROP_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_READ_CONTRACT_FROM_FILE O.(t_string () ^-> t_michelson_contract ());
                     of_type C_TEST_SIGN O.(t_string () ^-> t_bytes () ^-> t_signature ());
                     (* SAPLING *)

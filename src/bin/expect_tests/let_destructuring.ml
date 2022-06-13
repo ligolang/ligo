@@ -60,7 +60,7 @@ let%expect_test _ =
   run_ligo_bad ["run"; "interpret" ; "t1" ; "--init-file";(bad_test "let_destructuring.ligo") ] ;
   [%expect{|
     File "../../test/contracts/negative/let_destructuring.ligo", line 4, characters 6-30:
-      3 | const t1 = block {
+      3 | const t1 = {
       4 |   var record [ a = a ; f = b ] := record [ a = 1 ; b = 1n ] ;
       5 | } with (a,b)
 
