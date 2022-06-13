@@ -562,6 +562,21 @@ and thus `Test.get_balance` can show a different amount to the one
 being set with `Test.reset_state`.
 
 <SyntaxTitle syntax="pascaligo">
+val reset_state_at : timestamp -> nat -> list (tez) -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val reset_state_at : timestamp -> nat -> tez list -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let reset_state_at: (timestamp, nat, list(tez)) => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount: list&lt;tez&gt;) => unit
+</SyntaxTitle>
+
+Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
+
+<SyntaxTitle syntax="pascaligo">
 val baker_account : (string * key) -> tez option -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -1080,6 +1095,22 @@ let restore_context: (u: unit) => unit
 Pops a testing framework context from the stack of contexts, and sets
 it up as the new current context. In case the stack was empty, the
 current context is kept.
+
+<SyntaxTitle syntax="pascaligo">
+val drop_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val drop_context : unit -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let drop_context: unit => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let drop_context: (u: unit) => unit
+</SyntaxTitle>
+
+Drops a testing framework context from the stack of contexts. In case
+the stack was empty, nothing is done.
 
 <SyntaxTitle syntax="pascaligo">
 val sign : string -> bytes -> signature

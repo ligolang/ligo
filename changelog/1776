@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: '\ntesting framework: new function `Test.reset_at` (similar to `Test.reset`)
+  which takes a timestamp and initialize the genesis block with a given timestamp'
+merge_request: '1776'
+title: 'Testing framework: Better control of time'
+type: added

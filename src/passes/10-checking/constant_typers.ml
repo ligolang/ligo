@@ -471,7 +471,7 @@ module Constant_types = struct
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
                     of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_triplet (t_address ()) (t_key ()) (t_string ()));
                     of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
-                    of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
+                    of_type C_TEST_STATE_RESET O.(t_option (t_timestamp ()) ^-> t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
@@ -503,6 +503,7 @@ module Constant_types = struct
                     of_type C_TEST_FAILWITH (for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b));
                     of_type C_TEST_PUSH_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_POP_CONTEXT O.(t_unit () ^-> t_unit ());
+                    of_type C_TEST_DROP_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_READ_CONTRACT_FROM_FILE O.(t_string () ^-> t_michelson_contract ());
                     of_type C_TEST_SIGN O.(t_string () ^-> t_bytes () ^-> t_signature ());
                     (* SAPLING *)

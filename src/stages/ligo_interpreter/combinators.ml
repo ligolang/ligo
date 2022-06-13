@@ -109,6 +109,11 @@ let get_key : value -> _ option =
   | V_Ct (C_key x) -> Some x
   | _ -> None
 
+let get_timestamp : value -> Z.t option =
+  function
+  | V_Ct (C_timestamp z) -> Some z
+  | _ -> None
+
 let get_string_option : value -> string option option =
   function
   | V_Construct ("Some", V_Ct (C_string x)) -> Some (Some x)
