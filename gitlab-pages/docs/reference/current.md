@@ -778,16 +778,16 @@ When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
 <SyntaxTitle syntax="pascaligo">
-val level : nat
+val get_level : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val level : nat
+val get_level : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let level : nat
+let get_level : unit => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let level : nat
+let get_level : (_u : unit) => nat
 </SyntaxTitle>
 
 Get the current block level.
@@ -826,16 +826,16 @@ Eliminate a value of the type `never` using the instruction `NEVER`
 from Michelson.
 
 <SyntaxTitle syntax="pascaligo">
-function total_voting_power : nat
+function get_total_voting_power : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val total_voting_power : nat
+val get_total_voting_power : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let total_voting_power: nat
+let get_total_voting_power: unit => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let total_voting_power: nat
+let get_total_voting_power: (_u : unit) => nat
 </SyntaxTitle>
 
 Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
