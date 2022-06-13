@@ -68,6 +68,7 @@ let%expect_test _ =
                                                compile-contract for the resulting
                                                Michelson. Available formats are
                                                'text' (default), 'json' and 'hex'.
+      [--no-stdlib]                            disable stdlib inclusion.
       [--no-warn]                              disable warning messages
       [--output-file FILENAME]                 if used, prints the output into the
                                                specified file instead of stdout
@@ -447,6 +448,7 @@ let%expect_test _ =
                                          compile-contract for the resulting
                                          Michelson. Available formats are 'text'
                                          (default), 'json' and 'hex'.
+      [--no-stdlib]                      disable stdlib inclusion.
       [--no-warn]                        disable warning messages
       [--project-root PATH]              The path to root of the project.
       [--warn-unused-rec]                warn about unused recursion in a recursive
