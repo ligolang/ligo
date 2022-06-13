@@ -37,7 +37,7 @@ module Command = struct
     | Bootstrap_contract : int * LT.value * LT.value * Ast_aggregated.type_expression  -> unit t
     | Nth_bootstrap_contract : int -> Tezos_protocol.Protocol.Alpha_context.Contract.t t
     | Nth_bootstrap_typed_address : Location.t * int -> (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression * Ast_aggregated.type_expression) t
-    | Reset_state : Location.t * LT.calltrace * LT.value * LT.value -> unit t
+    | Reset_state : Location.t * Z.t option * LT.calltrace * LT.value * LT.value -> unit t
     | Get_state : unit -> Tezos_state.context t
     | Get_mod_res : unit -> ModRes.t option t
     | External_call : Location.t * Ligo_interpreter.Types.calltrace * LT.contract * (execution_trace, string) Tezos_micheline.Micheline.node * Z.t
@@ -128,7 +128,8 @@ module Command = struct
       let next_bootstrapped_contracts = (mutez, contract, storage, parameter_ty, storage_ty) :: ctxt.internals.next_bootstrapped_contracts in
       let ctxt = { ctxt with internals = { ctxt.internals with next_bootstrapped_contracts } } in
       ((),ctxt)
-    | Reset_state (loc,calltrace,n,amts) ->
+    | Reset_state (loc,initial_timestamp,calltrace,n,amts) ->
+      let initial_timestamp = Option.map initial_timestamp ~f:(fun x -> Proto_alpha_utils.Time.Protocol.of_seconds (Z.to_int64 x)) in
       let amts = trace_option ~raise (corner_case ()) @@ LC.get_list amts in
       let amts = List.map ~f:
         (fun x ->
@@ -140,7 +141,7 @@ module Command = struct
       let bootstrap_contracts = List.rev ctxt.internals.next_bootstrapped_contracts in
       let baker_accounts = List.rev ctxt.internals.next_baker_accounts in
       let ctxt = Tezos_state.init_ctxt
-        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n)
+        ~raise ~loc ~calltrace ~initial_balances:amts ~n:(Z.to_int n) ?initial_timestamp
         ctxt.internals.protocol_version bootstrap_contracts ~baker_accounts
       in
       ((),ctxt)
