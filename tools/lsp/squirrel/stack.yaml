@@ -3,7 +3,7 @@
 # Some commonly used options have been documented as comments in this file.
 # For advanced use and comprehensive documentation of the format, please see:
 # https://docs.haskellstack.org/en/stable/yaml_configuration/
-resolver: lts-18.10
+resolver: lts-19.16
 
 packages:
 - .
@@ -15,24 +15,26 @@ extra-deps:
     - lsp-types
     - lsp
     - lsp-test
-
 - git: https://github.com/serokell/tree-sitter.git
-  commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
-  # nix-sha256: 02ahzy1y38pa4mdm2cfwp8b4alsh29xdil3zd8km6w3lfmywqyw2
+  commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
 - git: https://github.com/co-log/co-log-core.git
   commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
   # nix-sha256: 04hr72vrcyz02gxqlrbizbscjz0ykqgxk42kl4ccvzj864han6b3
 - git: https://github.com/Bodigrim/text-rope
   commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
   # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l
-- fastsum-0.1.1.1
+- fastsum-0.2.0.0
 - stm-containers-1.2
-- stm-hamt-1.2.0.6
-- primitive-extras-0.10.1
-- primitive-unlifted-0.1.3.0
+- stm-hamt-1.2.0.7
+- primitive-extras-0.10.1.4
+- primitive-unlifted-0.1.3.1
 
 - git: https://github.com/serokell/duplo.git
   commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 
 nix:
   packages: [zlib]
+
+flags:
+  aeson:
+    ordered-keymap: false

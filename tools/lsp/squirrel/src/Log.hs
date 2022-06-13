@@ -93,7 +93,7 @@ flagBasedEnv = liftSplice do
   let flagName = "LIGO_ENV"
   liftIO (lookupEnv flagName) >>= maybe
     (examineSplice [|| "production" ||])
-    (\flag -> [|| Environment (pack flag) ||])
+    (\flag -> examineSplice [|| Environment (pack flag) ||])
 
 flagBasedSeverity :: SpliceQ Severity
 flagBasedSeverity = liftSplice do

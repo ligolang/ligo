@@ -2,8 +2,6 @@ name: ligo-squirrel
 
 dependencies:
   - base
-  - duplo
-  - ghc-prim
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -89,15 +87,16 @@ library:
     - containers
     - data-default
     - dlist
+    - duplo
     - fastsum
     - filepath
     - free
+    - ghc-prim
     - interpolate
     - katip
     - lens
     - lsp-types
     - mtl
-    - pretty
     - process
     - regex-tdfa
     - template-haskell
@@ -122,10 +121,10 @@ executables:
       - co-log-core
       - containers
       - data-default
+      - duplo
       - filepath
       - focus
       - hashable
-      - interpolate
       - katip
       - lens
       - ligo-squirrel
@@ -135,7 +134,6 @@ executables:
       - stm
       - stm-containers
       - text
-      - transformers
       - unliftio
       - unliftio-core
       - unordered-containers
@@ -162,6 +160,7 @@ executables:
       - app/ligo-vet
 
     dependencies:
+      - duplo
       - ligo-squirrel
       - mtl
       - optparse-applicative

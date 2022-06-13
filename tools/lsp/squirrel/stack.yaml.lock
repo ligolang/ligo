@@ -48,12 +48,12 @@ packages:
     version: 0.9.0.2
     git: https://github.com/serokell/tree-sitter.git
     pantry-tree:
-      size: 34276
-      sha256: 0d689d5664fc5e21422183dfd9c76d1aeb2ecb63dfb4fc0036bed6f332ad6a41
-    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+      size: 34417
+      sha256: e8d89e2f5ef5ead6eb0164ac986fba4ec19ea7f0af805cb39dffc2b8e5283cd4
+    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
   original:
     git: https://github.com/serokell/tree-sitter.git
-    commit: ded7f484cf75a7cf59b992d6bbb61d02029a5e06
+    commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
 - completed:
     name: co-log-core
     version: 0.3.1.0
@@ -77,12 +77,12 @@ packages:
     git: https://github.com/Bodigrim/text-rope
     commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
 - completed:
-    hackage: fastsum-0.1.1.1@sha256:ddb41e30396cc091845596130fb441150118086c6f227c0bd5ce30dadf9dad56,2398
+    hackage: fastsum-0.2.0.0@sha256:7abc9ceddc3dfb67420c927c0e69d9248c9e8d5877f53cd8fb76a63e72ce7ddb,2394
     pantry-tree:
       size: 431
-      sha256: 45e007bf4395315bf2cdb5b17f1e956739d836a53fa9dd022ea3d0b123ded8f5
+      sha256: 294ee5f98315161f27487e56425b8f1d3e59914607d1f467a9844b2befaa576d
   original:
-    hackage: fastsum-0.1.1.1
+    hackage: fastsum-0.2.0.0
 - completed:
     hackage: stm-containers-1.2@sha256:a887f2e7692b7cf20e0b081e2d66e21076e2bd4b57016ec59c484edfa2d29397,3244
     pantry-tree:
@@ -91,26 +91,26 @@ packages:
   original:
     hackage: stm-containers-1.2
 - completed:
-    hackage: stm-hamt-1.2.0.6@sha256:fba86ccb4b45c5706c19b0e1315ba63dcac3b5d71de945ec001ba921fae80061,3972
+    hackage: stm-hamt-1.2.0.7@sha256:e8ecba11580ae2ea839cc3b7a25adcce40810aa472b544728790d28804c912ee,3972
     pantry-tree:
       size: 1009
-      sha256: 1920790535af832b76e7583c33ecf51f8b0b0c3615ef1db1c8ed9be19622c1db
+      sha256: 2de07a746d44aebcff4b7b644373ae4aa5a505457b684ca02ae5a74605991d6b
   original:
-    hackage: stm-hamt-1.2.0.6
+    hackage: stm-hamt-1.2.0.7
 - completed:
-    hackage: primitive-extras-0.10.1@sha256:be21c87b5ffce1cd6e3cc179ee8667fcc9323e323f21c78c99686773ededbf2f,2957
+    hackage: primitive-extras-0.10.1.4@sha256:780726757a8ca5bad6d82e77180fb1ec5a1ba73073b7bd8ccf24cb60e11ab4fe,2959
     pantry-tree:
       size: 1096
-      sha256: bff74e4dff12a92fdca90e5909d4d000051bc13753104ea11b0ab63805309fab
+      sha256: c3b43cb57ca32200e0199c6b4a3cd23ca04415257c1266d08707f53ac4d89ec5
   original:
-    hackage: primitive-extras-0.10.1
+    hackage: primitive-extras-0.10.1.4
 - completed:
-    hackage: primitive-unlifted-0.1.3.0@sha256:a98f827740f5dcf097d885b3a47c32f4462204449620abc9d51b8c4f8619f9e6,1427
+    hackage: primitive-unlifted-0.1.3.1@sha256:3b00ca2c605168dee97d92490a018891e10f73b81ff5e2eeae48ece309d20485,1427
     pantry-tree:
       size: 420
-      sha256: c882dca2a96b98d02b0d21875b651edb11ac67d90e736c0de7a92c410a19eb7f
+      sha256: c492e3caeebf476ac0ee1daaedbc2464ef5a530a0b0152a353d64b410c3c1ff3
   original:
-    hackage: primitive-unlifted-0.1.3.0
+    hackage: primitive-unlifted-0.1.3.1
 - completed:
     name: duplo
     version: 0.0.0
@@ -124,7 +124,7 @@ packages:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 snapshots:
 - completed:
-    size: 587546
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/10.yaml
-    sha256: 88b4f81e162ba3adc230a9fcccc4d19ac116377656bab56c7382ca88598b257a
-  original: lts-18.10
+    size: 619163
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/16.yaml
+    sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0
+  original: lts-19.16

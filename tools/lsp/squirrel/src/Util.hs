@@ -14,10 +14,11 @@ module Util
   ) where
 
 import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as KM
+import Data.Aeson.Key qualified as Key
 import Data.Bitraversable (bitraverse)
 import Data.Foldable (foldlM)
 import Data.Functor.Identity (Identity (..))
-import Data.HashMap.Strict qualified as HashMap
 import Data.Map.Internal qualified as MI
 import Data.Text (Text)
 import Language.LSP.Types qualified as J
@@ -77,7 +78,8 @@ mapJsonText f = runIdentity . traverseJsonText (Identity . f)
 traverseJsonText :: Applicative f => (Text -> f Text) -> Aeson.Value -> f Aeson.Value
 traverseJsonText f = \case
   Aeson.Object obj ->
-    Aeson.Object . HashMap.fromList <$> traverse (bitraverse f (traverseJsonText f)) (HashMap.toList obj)
+    let toKeyFunction g x = Key.fromText <$> g (Key.toText x) in
+    Aeson.Object . KM.fromList <$> traverse (bitraverse (toKeyFunction f) (traverseJsonText f)) (KM.toList obj)
   Aeson.Array arr -> Aeson.Array <$> traverse (traverseJsonText f) arr
   Aeson.String str -> Aeson.String <$> f str
   n@(Aeson.Number _) -> pure n
