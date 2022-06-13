@@ -25,22 +25,28 @@ let testlib ~options syntax =
 
 let typed ~options syntax =
   let open Helpers in
-  let k = build_key ~options syntax in
-  internalize_typed @@
-    match LanguageMap.find_opt k @@ ! test_lib_cache with
-    | None ->
-       let typed, core = testlib ~options syntax in
-       test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
-       typed
-    | Some (typed, _) -> typed
+  if options.Compiler_options.middle_end.no_stdlib then
+    []
+  else
+    let k = build_key ~options syntax in
+    internalize_typed @@
+      match LanguageMap.find_opt k @@ ! test_lib_cache with
+      | None ->
+         let typed, core = testlib ~options syntax in
+         test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
+         typed
+      | Some (typed, _) -> typed
 
 let core ~options syntax =
   let open Helpers in
-  let k = build_key ~options syntax in
-  internalize_core @@
-    match LanguageMap.find_opt k @@ ! test_lib_cache with
-    | None ->
-       let typed, core = testlib ~options syntax in
-       test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
-       core
-    | Some (_, core) -> core
+  if options.Compiler_options.middle_end.no_stdlib then
+    []
+  else
+    let k = build_key ~options syntax in
+    internalize_core @@
+      match LanguageMap.find_opt k @@ ! test_lib_cache with
+      | None ->
+         let typed, core = testlib ~options syntax in
+         test_lib_cache := LanguageMap.add k (typed, core) @@ ! test_lib_cache;
+         core
+      | Some (_, core) -> core
