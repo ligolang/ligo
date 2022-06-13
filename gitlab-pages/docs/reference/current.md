@@ -519,7 +519,7 @@ let get_source: (_u : unit) => address
 
 Get the _originator_ (address) of the current transaction. That is, if
 a chain of transactions led to the current execution get the address
-that began the chain. Not to be confused with `Tezos.sender`, which
+that began the chain. Not to be confused with `Tezos.get_sender`, which
 gives the address of the contract or user which directly caused the
 current transaction.
 
