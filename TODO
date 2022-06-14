@@ -1,0 +1,52 @@
+Random notes & TODOs about pattern matching anomalies detection
+Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
+1. Unit pattern matching
+ (match action with
+  | () -> 1)
+
+2. How to treat unit patterns?
+   a. Variant with one constructor (#UNIT)
+   b. Wildcard
+   I think Variant with one constructor seems okay
+
+3. Convert LIGO pattern language to a simple pattern language with only
+   a. wildcards
+   b. constructors
+   c. tuples
+   ---
+   | P_unit    -> constructor #UNIT
+   | P_var     -> wildcard
+   | P_list    -> constructors #CONS & #NIL
+   | P_variant -> constructor ...
+   | P_tuple   -> tuple
+   | P_record  -> tiple
+
+4. Implement functions for specialization of matrix & default matrix
+
+5. Implement Algorithm I for missing cases (exhaustiveness check)
+
+6. Implement Algorithm Urec for useless cases (redundant pattern check)
+
+7. Once missing pattern is detected, give understandable error messages
+   a. add more contructors which are missing
+   b. convert tuple to original record/tuple (Convert to original pattern lang)
+
+8. Write a lot of test cases
+   Missing case:
+   a. constructors
+   b. constructors (constructors)
+   c. tuple (constructors)
+   d. record (constructors)
+   e. constructors (tuple (constructors))
+   f. constructors (record (constructors))
+   Redundant case:
+   a. c1, c1, c2, c3
+   b. c1, c2, c1, c3
+   c. c1, c2, c3, c1
+   d. c1, c2, c3, _
+   e. c1, _, c2, c3
+   f. tuple_x, tuple_x, tuple_y
+   g. tuple_x, _, tuple_y
+   h. record_x, record_x, record_y
+   i. record_x, _, record_y
+   ... Ask for more test cases if something missed ...
