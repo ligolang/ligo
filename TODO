@@ -50,3 +50,10 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    h. record_x, record_x, record_y
    i. record_x, _, record_y
    ... Ask for more test cases if something missed ...
+
+9. Warning : this pattern-matching is not exhaustive.
+   Here is an example of a case that is not matched: []
+    let rec last xs = 
+    match xs with
+        x::[] -> x
+    | _::xs -> last xs
