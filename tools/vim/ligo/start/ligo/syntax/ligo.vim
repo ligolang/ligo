@@ -16,7 +16,7 @@ syntax match constorvar "\<\(const\|var\)\>"
 highlight link constorvar Keyword 
 
 " identifierconstructor
-syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\s\+" 
+syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\>" 
 highlight link identifierconstructor Label 
 
 " module
@@ -26,7 +26,7 @@ syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_
 highlight link module Structure 
 
 " typedefinition
-syntax match typedefinition "\(type\)\>" 
+syntax match typedefinition "\<\(type\)\>" 
 highlight link typedefinition Type 
 
 " operators
@@ -38,7 +38,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " function
-syntax match function_ "[a-zA-Z$_][a-zA-Z0-9$_]*" contained 
+syntax match function_ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
 highlight link function_ Statement 
 syntax match function "\(function\)\W" nextgroup=function_ 
 highlight link function Keyword 

@@ -15,7 +15,7 @@ let let_binding_match2: Core.regexp = {
 let let_binding_match3: Core.regexp = {
   emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)"; 
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
-  vim      = "[a-zA-Z$_][a-zA-Z0-9$_]*";
+  vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
 }
 let let_binding_match1_ligo: Core.regexp = {
   emacs    = "\\\\b\\\\(function\\\\)\\\\b[ ]*"; 
@@ -26,7 +26,7 @@ let let_binding_match1_ligo: Core.regexp = {
 let let_binding_match2_ligo: Core.regexp = {
   emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)"; 
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
-  vim      = "[a-zA-Z$_][a-zA-Z0-9$_]*";
+  vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
 }
 
 let lambda_begin: Core.regexp = {
@@ -39,6 +39,12 @@ let lambda_end: Core.regexp = {
   emacs    = "(->)";
   textmate = "(->)";
   vim      = "\\(->\\)"
+}
+
+let of_keyword_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(of)\\\\b";
+  textmate = "\\b(of)\\b";
+  vim      = "\\<\\(of\\)\\>";
 }
 
 let control_keywords_match: Core.regexp = {
@@ -93,14 +99,38 @@ let module_match2: Core.regexp = {
 
 let identifier_constructor_match: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
-  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\s+";
-  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\s\\+"
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
+  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\>";
 }
 
-let type_definition_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(type\\\\)\\\\b";
-  textmate = "\\b(type)\\b";
-  vim      = "\\(type\\)\\>"
+let parentheses_begin: Core.regexp = {
+  emacs    = "\\\\(";
+  textmate = "(\\()";
+  vim      = "(";
+}
+
+let parentheses_end: Core.regexp = {
+  emacs    = "\\\\)";
+  textmate = "(\\))";
+  vim      = ")";
+}
+
+let brackets_begin: Core.regexp = {
+  emacs    = "{";
+  textmate = "({)";
+  vim      = "{";
+}
+
+let brackets_end: Core.regexp = {
+  emacs    = "}";
+  textmate = "(})";
+  vim      = "}";
+}
+
+let semicolon_match: Core.regexp = {
+  emacs    = ";";
+  textmate = "(;)";
+  vim      = ";";
 }
 
 let type_annotation_match: Core.regexp = {
@@ -193,4 +223,94 @@ let module_match2_jsligo: Core.regexp = {
   emacs    = "";
   textmate = "([a-zA-Z0-9_$]*)";
   vim      = ""
+}
+
+let int_literal_match: Core.regexp = {
+  emacs    = "\\\\b\\\\([0-9]+\\\\)\\\\b";
+  textmate = "\\b([0-9]+)\\b";
+  vim      = "\\<[0-9]+\\>";
+}
+
+(* CameLIGO Types *)
+let type_definition_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(type\\\\)\\\\b";
+  textmate = "\\b(type)\\b";
+  vim      = "\\<\\(type\\)\\>"
+}
+
+(*
+  A type declaration may appear in the following places:
+  * At top-level or in a module, immediately before a "let", "#" (directive),
+    "module", "type", "end", "[%" (attribute) or EOF.
+  * Locally inside a "let", immediately before an "in".
+
+  follow(type_decl) = Type Module Let In End EOF Directive Attr
+*)
+let type_definition_begin: Core.regexp = type_definition_match
+
+let type_definition_end: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead... too bad! *)
+  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\b";
+  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)";
+  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\)\\@!"
+}
+
+let type_name_match: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b([a-z_][a-zA-Z0-9_]*)\\b";
+  vim      = "\\<\\([a-z_][a-zA-Z0-9_]*\\)\\>";
+}
+
+let type_var_match: Core.regexp = {
+  emacs    = "'" ^ type_name_match.emacs;
+  textmate = "'" ^ type_name_match.textmate;
+  vim      = "'" ^ type_name_match.vim;
+}
+
+let type_operator_match: Core.regexp = {
+  emacs    = "\\\\(->\\\\|\\\\.\\\\|\\\\*\\\\||\\\\)";
+  textmate = "(->|\\.|\\*|\\|)";
+  vim      = "\\(->\\|\\.\\|\\*\\||\\)";
+}
+
+(*
+  A type annotation may appear in the following places:
+  * In the return type of a declaration, immediately before a =.
+  * In a function parameter, immediately before a ).
+  * In a field of a record, immediately before a ; or a }.
+  * In an arbitrary pattern, immediately before a ).
+
+  follow(field_decl) = SEMI RBRACE
+  follow(type_annotation(type_expr)) = RPAR EQ
+  follow(type_annotation(lambda_app_type)) = ARROW
+*)
+let type_annotation_begin: Core.regexp = {
+  emacs    = "\\\\(:\\\\)";
+  textmate = "(:)";
+  vim      = "\\(:\\)";
+}
+
+let type_annotation_end: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ")\\\\|=\\\\|;\\\\|}";
+  textmate = "(?=\\)|=|;|})";
+  vim      = "\\()\\|=\\|;\\|}\\)\\@!";
+}
+
+let type_annotation_begin_lambda: Core.regexp = type_annotation_begin
+
+let type_annotation_end_lambda: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ")\\\\|=\\\\|;\\\\|}\\\\|->";
+  textmate = "(?=\\)|=|;|}|->)";
+  vim      = "\\()\\|=\\|;\\|}\\|->\\)\\@!";
+}
+
+let type_field_annotation_begin: Core.regexp = type_annotation_begin
+
+let type_field_annotation_end: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = "\\\\(}\\\\|;\\\\)";
+  textmate = "(?=}|;)";
+  vim      = "\\(}\\|;\\)\\@!";
 }

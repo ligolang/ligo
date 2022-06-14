@@ -24,6 +24,7 @@ module JSON = struct
   | Exception         -> "keyword.control." ^ syntax
   | PreProc           -> "meta.preprocessor." ^ syntax
   | Type              -> "entity.name.type." ^ syntax
+  | Type_var          -> "variable.other.type." ^ syntax
   | StorageClass      -> "storage.modifier." ^ syntax
   | Structure         -> "storage.class." ^ syntax
   | Typedef           -> "storage.type." ^ syntax
@@ -38,7 +39,7 @@ module JSON = struct
   | Builtin_function  -> "support.function." ^ syntax 
   | FunctionName      -> "entity.name.function." ^ syntax
 
-
+  let make_reference r = if r = "$self" then r else "#" ^ r
   
   let rec capture syntax (i: int * Core.highlight_name) = 
     (string_of_int (fst i), `Assoc [("name", `String (highlight_to_textmate syntax (snd i)))])
@@ -86,7 +87,7 @@ module JSON = struct
         ("end", `String end_);
         ("beginCaptures", captures syntax begin_captures);
         ("endCaptures", captures syntax end_captures);
-        ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String ("#" ^ reference))]) patterns))
+        ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) patterns))
       ]
   | Match {match_; match_name} -> 
     let match_, regexps  = List.split match_ in
@@ -144,7 +145,7 @@ module JSON = struct
       ("name", `String s.syntax_name);
       ("scopeName", `String s.scope_name);
       ("fileTypes", `List (List.map (fun s -> `String s) s.file_types));
-      ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String ("#" ^ reference))]) s.syntax_patterns));
+      ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) s.syntax_patterns));
       ("repository", repository syntax s.repository)
     ]),
     language_features s.language_features)
@@ -152,13 +153,23 @@ module JSON = struct
 end
 
 module Validate = struct
+  let builtin_repo = [
+    "macro";
+    "string";
+    "string_specialchar";
+    "line_comment";
+    "block_comment";
+    "numeric_literals";
+    "attribute";
+  ]
 
   let rec check_reference repository r =
     if r = "$self" then 
       ok true
     else 
-      let exists = List.exists (fun (i: Core.pattern) -> i.name = r) repository in 
-      if exists then 
+      let exists_repo = List.exists (fun (i: Core.pattern) -> i.name = r) repository in
+      let exists_builtin = List.exists (fun (i: string) -> i = r) builtin_repo in
+      if exists_repo || exists_builtin then
         ok true
       else 
         error (Core.Referenced_rule_does_not_exist r)

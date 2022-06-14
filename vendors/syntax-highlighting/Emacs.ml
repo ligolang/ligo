@@ -196,6 +196,7 @@ let highlight_to_opt = function
   | PreProc          -> Some "font-lock-preprocessor-face"
   | Builtin_type     -> Some LigoFontLock.builtin_type.name
   | Type             -> Some "font-lock-type-face"
+  | Type_var         -> Some "font-lock-type-face"
   | StorageClass     -> Some LigoFontLock.storage_class.name
   | Builtin_module   -> Some LigoFontLock.builtin_module.name
   | Structure        -> Some LigoFontLock.structure.name

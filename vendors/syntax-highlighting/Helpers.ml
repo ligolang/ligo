@@ -1,4 +1,4 @@
-
+(* Note: When adding new patterns here, remember to also update Textmate.Validate.builtin_repo. *)
 let macro: Core.pattern = {
   name = "macro";
   kind = Match {

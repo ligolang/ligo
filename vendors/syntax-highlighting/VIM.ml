@@ -114,6 +114,7 @@ module Print = struct
     | PreProc          -> "PreProc"
     | Builtin_type
     | Type             -> "Type"
+    | Type_var         -> "Type"
     | StorageClass     -> "StorageClass"
     | Builtin_module
     | Structure        -> "Structure"

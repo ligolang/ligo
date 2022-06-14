@@ -15,7 +15,8 @@
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#module" }
+    { "include": "#module" },
+    { "include": "#typeannotation" }
   ],
   "repository": {
     "string": {
@@ -73,17 +74,17 @@
         "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+",
       "captures": {}
     },
+    "semicolon": { "match": "(;)", "captures": {} },
+    "ofkeyword": {
+      "match": "\\b(of)\\b",
+      "captures": { "1": { "name": "keyword.other.mligo" } }
+    },
     "lambda": {
       "begin": "\\b(fun)\\b",
       "end": "(->)",
       "beginCaptures": { "1": { "name": "keyword.other.mligo" } },
       "endCaptures": { "1": { "name": "keyword.operator.mligo" } },
-      "patterns": []
-    },
-    "typedefinition": {
-      "name": "entity.name.type.mligo",
-      "match": "\\b(type)\\b",
-      "captures": {}
+      "patterns": [ { "include": "#typeannotationlambda" } ]
     },
     "module": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
@@ -92,9 +93,121 @@
         "1": { "name": "storage.class.mligo" }
       }
     },
+    "identifier": {
+      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "captures": {}
+    },
     "identifierconstructor": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\s+",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": { "1": { "name": "variable.other.enummember.mligo" } }
+    },
+    "typedefinition": {
+      "begin": "\\b(type)\\b",
+      "end": "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)",
+      "beginCaptures": { "1": { "name": "keyword.other.mligo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#ofkeyword" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typemodule" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeannotation": {
+      "begin": "(:)",
+      "end": "(?=\\)|=|;|})",
+      "beginCaptures": { "1": { "name": "keyword.operator.mligo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#ofkeyword" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typemodule" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeannotationlambda": {
+      "begin": "(:)",
+      "end": "(?=\\)|=|;|}|->)",
+      "beginCaptures": { "1": { "name": "keyword.operator.mligo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#ofkeyword" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typemodule" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeoperator": {
+      "name": "keyword.operator.mligo",
+      "match": "(->|\\.|\\*|\\|)",
+      "captures": {}
+    },
+    "typename": {
+      "name": "entity.name.type.mligo",
+      "match": "\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typevar": {
+      "name": "variable.other.type.mligo",
+      "match": "'\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typeparentheses": {
+      "begin": "(\\()",
+      "end": "(\\))",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#ofkeyword" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typemodule" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typemodule": {
+      "name": "storage.var.mligo",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
+      "captures": {}
+    },
+    "typeint": {
+      "name": "constant.numeric.mligo",
+      "match": "\\b([0-9]+)\\b",
+      "captures": {}
+    },
+    "typeproduct": {
+      "begin": "({)",
+      "end": "(})",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#identifier" },
+        { "include": "#typeannotation" },
+        { "include": "#semicolon" }
+      ]
     }
   }
 }

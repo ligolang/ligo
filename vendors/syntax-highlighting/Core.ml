@@ -57,6 +57,7 @@ and highlight_name =
 | Exception
 | PreProc
 | Type
+| Type_var
 | StorageClass
 | Structure
 | Typedef

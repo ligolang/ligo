@@ -365,17 +365,41 @@
 		(,"[ ]*\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)[ ]*"
 			. ligo-font-lock-operator-face
 		)
-		(,"\\b\\(fun\\)\\b" ( 1 ligo-font-lock-statement-face))
-		(,"\\b\\(type\\)\\b"
-			. font-lock-type-face
+		(,";"
 		)
+		(,"\\b\\(of)\\b"
+			(1 font-lock-keyword-face)
+		)
+		(,"\\b\\(fun\\)\\b" ( 1 ligo-font-lock-statement-face))
 		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-structure-face)
 			(2 font-lock-variable-name-face)
 		)
+		(,"\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)"
+		)
 		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-label-face)
 		)
+		(,"\\b\\(type\\)\\b" ( 1 font-lock-keyword-face))
+		(,"\\(:\\)" ( 1 ligo-font-lock-operator-face))
+		(,"\\(:\\)" ( 1 ligo-font-lock-operator-face))
+		(,"\\(->\\|\\.\\|\\*\\||\\)"
+			. ligo-font-lock-operator-face
+		)
+		(,""
+			. font-lock-type-face
+		)
+		(,"'"
+			. font-lock-type-face
+		)
+		(,"\\(" ())
+		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\."
+			. font-lock-variable-name-face
+		)
+		(,"\\b\\([0-9]+\\)\\b"
+			. ligo-font-lock-number-face
+		)
+		(,"{" ())
 	)
 	"Syntax highlighting rules for mligo")
 (defun mligo-reload ()

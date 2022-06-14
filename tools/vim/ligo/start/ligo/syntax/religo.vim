@@ -12,7 +12,7 @@ syntax region comment start="/\*" end="\*/"
 highlight link comment Comment 
 
 " identifierconstructor
-syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\s\+" 
+syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\>" 
 highlight link identifierconstructor Label 
 
 " module
@@ -22,7 +22,7 @@ syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_
 highlight link module Structure 
 
 " typedefinition
-syntax match typedefinition "\(type\)\>" 
+syntax match typedefinition "\<\(type\)\>" 
 highlight link typedefinition Type 
 
 " operators
@@ -34,7 +34,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " letbinding
-syntax match letbinding__ "[a-zA-Z$_][a-zA-Z0-9$_]*" contained 
+syntax match letbinding__ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
 highlight link letbinding__ Statement 
 syntax match letbinding_ "rec\W\|" contained nextgroup=letbinding__ 
 highlight link letbinding_ StorageClass 
