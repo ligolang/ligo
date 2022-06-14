@@ -46,7 +46,7 @@ function main (const destination_addr : parameter; const s : storage) is {
       Some (contract) -> contract
     | None -> (failwith ("Contract does not exist") : contract (unit))
     ];
-  const op = Tezos.transaction (Unit, Tezos.amount, destination_contract)
+  const op = Tezos.transaction (Unit, (Tezos.get_amount ()), destination_contract)
 } with (op, Unit)
 ```
 
@@ -65,7 +65,7 @@ let main (destination_addr, _ : parameter * storage) =
     match maybe_contract with
       Some contract -> contract
     | None -> (failwith "Contract does not exist" : unit contract) in
-  let op = Tezos.transaction () Tezos.amount destination_contract in
+  let op = Tezos.transaction () (Tezos.get_amount ()) destination_contract in
   op, ()
 ```
 
@@ -85,7 +85,7 @@ let main = ((destination_addr, _): (parameter, storage)) => {
     | Some (contract) => contract
     | None => (failwith("Contract does not exist") : contract(unit))
     };
-  let op = Tezos.transaction((), Tezos.amount, destination_contract);
+  let op = Tezos.transaction((), (Tezos.get_amount ()), destination_contract);
   (op, ())
 };
 ```
@@ -454,7 +454,7 @@ When trying to port an existing distributed application to Tezos, you may want t
 
 In theory, one can use a callback – the callee could emit an operation back to the caller with the computed value. However, this pattern is often insecure:
 * You should somehow make sure that the response matches the request. Due to the breadth-first order of execution, you cannot assume that there have been no other requests in between.
-* Some contracts use `Tezos.sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
+* Some contracts use `Tezos.get_sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
 
 Let us look at a simple access control contract with a "view" entrypoint:
 <Syntax syntax="pascaligo">
@@ -471,7 +471,7 @@ function main (const p : parameter; const s : storage) is {
   const op
   = case p of [
       Call (op) ->
-        if Set.mem (Tezos.sender, s.senders_whitelist)
+        if Set.mem ((Tezos.get_sender ()), s.senders_whitelist)
         then op (Unit)
         else (failwith ("Sender is not whitelisted") : operation)
     | IsWhitelisted (addr_and_callback) -> {
@@ -498,7 +498,7 @@ let main (p, s : parameter * storage) =
   let op =
     match p with
       Call op ->
-        if Set.mem Tezos.sender s.senders_whitelist
+        if Set.mem (Tezos.get_sender ()) s.senders_whitelist
         then op ()
         else (failwith "Sender is not whitelisted" : operation)
     | IsWhitelisted arg ->
@@ -525,7 +525,7 @@ let main = ((p, s): (parameter, storage)) => {
     switch(p){
     | Call op =>
         {
-          if (Set.mem(Tezos.sender, s.senders_whitelist)) {
+          if (Set.mem((Tezos.get_sender ()), s.senders_whitelist)) {
             op()
           } else {
             (failwith("Sender is not whitelisted") : operation)
@@ -577,7 +577,7 @@ function main (const p : parameter; const s : storage) is {
             const amount_ = arg.2
           } with (nop, transfer (src, dst, amount_, s))
     | SetPaused (paused) ->
-        if (Tezos.sender =/= s.owner)
+        if ((Tezos.get_sender ()) =/= s.owner)
         then (failwith ("Access denied") : (list (operation) * storage))
         else (nop, s with record [paused = paused])
 ```
@@ -605,7 +605,7 @@ let main (p, s : parameter * storage) =
          let src, dst, amount_ = arg in
          transfer (src, dst, amount_, s)
    | SetPaused paused ->
-       if Tezos.sender <> s.owner
+       if (Tezos.get_sender ()) <> s.owner
        then (failwith "Access denied" : storage)
        else {s with paused = paused})
 ```
@@ -633,7 +633,7 @@ let main = ((p, s): (parameter, storage)) => {
         (nop, transfer(src, dst, amount_, s))
       }
   | SetPaused paused =>
-      if (Tezos.sender != s.owner) {
+      if ((Tezos.get_sender()) != s.owner) {
         (failwith("Access denied") : (list(operation), storage))
       } else {
         (nop, {...s, paused: paused})
