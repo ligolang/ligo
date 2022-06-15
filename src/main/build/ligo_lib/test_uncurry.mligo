@@ -13,6 +13,9 @@ type test_baker_policy =
   | By_account of address
   | Excluding of address list
 
+type 'a gen = unit -> 'a
+type 'a test = ('a gen) * ('a -> bool)
+
 module Test = struct
   let failwith (type a b) (v : a) : b = [%external "TEST_FAILWITH"] v
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
@@ -42,7 +45,9 @@ module Test = struct
   let mutation_test_all (type a b) ((v, f) : a * (a -> b)) : (b * mutation) list = [%external "TEST_MUTATION_TEST_ALL"] v f
   let run (type a b) ((f, v) : (a -> b) * a) : michelson_program = [%external "TEST_RUN"] f v
   let decompile (type a) (m : michelson_program) : a = [%external "TEST_DECOMPILE"] m
-  let random (type a) (u : unit) : a = [%external "TEST_RANDOM"] u
+  let random (type a) (_u : unit) : a =
+    let g : a gen = [%external "TEST_RANDOM"] false in
+    g ()
   let add_account ((s, k) : string * key) : unit = [%external "TEST_ADD_ACCOUNT"] s k
   let new_account (u : unit) : string * key = [%external "TEST_NEW_ACCOUNT"] u
   let baker_account ((p, o) : (string * key) * tez option) : unit = [%external "TEST_BAKER_ACCOUNT"] p o
@@ -103,4 +108,21 @@ module Test = struct
     (a, f, c)
   let read_contract_from_file (fn : string) : michelson_contract = [%external "TEST_READ_CONTRACT_FROM_FILE"] fn
   let sign ((sk, d) : string * bytes) : signature = [%external "TEST_SIGN"] sk d
+  module PBT = struct
+    let gen (type a) : a gen = [%external "TEST_RANDOM"] false
+    let gen_small (type a) : a gen = [%external "TEST_RANDOM"] true
+    let make_test (type a) (g : a gen) (p : a -> bool) : a test = (g, p)
+    let run (type a) ((g, p) : a test) (n : nat) : unit =
+      let rec loop (n : nat) : unit =
+        if (n = 0n) then
+	  ()
+	else
+	  let v = g () in
+	  if p v then
+	    loop (abs (n - 1))
+	  else
+	    let () = log v in
+	    failwith "TEST FAILED" in
+      loop n
+  end
 end

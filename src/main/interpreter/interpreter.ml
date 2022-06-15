@@ -779,8 +779,9 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
                    AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_RANDOM , [ V_Ct (C_unit) ] ) ->
-      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise expr_ty)  in
+    | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
+      let { type2 = expr_ty ; _ } = AST.get_t_arrow_exn expr_ty in
+      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise ~small expr_ty)  in
       let* value = eval_ligo expr_gen calltrace env in
       return value
     | ( C_TEST_RANDOM , _  ) -> fail @@ error_type
