@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1796'
+title: Replace `operations` for `operation` in error message
+type: fixed
