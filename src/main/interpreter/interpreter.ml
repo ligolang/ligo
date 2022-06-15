@@ -589,14 +589,16 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> code = Compile_contract_from_file (source_file,entryp,views) in
       return @@ code
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
-      let contract = { address; entrypoint = None } in
+    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
+      let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+      let contract = { address; entrypoint } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
       return_contract_exec_exn res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
-      let contract = { address; entrypoint = None } in
+    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
+      let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+      let contract = { address; entrypoint } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
       return_contract_exec res
     )

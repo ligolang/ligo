@@ -17,8 +17,8 @@ module Test = struct
   let failwith (type a b) (v : a) : b = [%external "TEST_FAILWITH"] v
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external "TEST_TO_CONTRACT"] t
   let set_source (a : address) : unit = [%external "TEST_SET_SOURCE"] a
-  let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a s t
-  let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a s t
+  let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a (None : string option) s t
+  let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a (None : string option) s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
   let log (type a) (v : a) : unit = [%external "TEST_LOG"] v
@@ -69,11 +69,11 @@ module Test = struct
   let transfer_to_contract (type p) ((c, s, t) : p contract * p * tez) : test_exec_result =
       let a : address = [%external "ADDRESS"] c in
       let s : michelson_program = eval s in
-      transfer (a, s, t)
+      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a (None : string option) s t
   let transfer_to_contract_exn (type p) ((c, s, t) : p contract * p * tez) : nat =
       let a : address = [%external "ADDRESS"] c in
       let s : michelson_program = eval s in
-      transfer_exn (a, s, t)
+      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a (None : string option) s t
   let michelson_equal ((m1, m2) : michelson_program * michelson_program) : bool = m1 = m2
   let to_entrypoint (type a b c) ((s, t) : string * (a, b) typed_address) : c contract =
     let s = if String.length s > 0n then
