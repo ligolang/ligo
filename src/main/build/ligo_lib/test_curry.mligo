@@ -68,12 +68,14 @@ module Test = struct
       s
   let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
       let a : address = [%external "ADDRESS"] c in
+      let e : string option = [%external "TEST_GET_ENTRYPOINT"] c in
       let s : michelson_program = eval s in
-      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a (None : string option) s t
+      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS"] a e s t
   let transfer_to_contract_exn (type p) (c : p contract) (s : p) (t : tez) : nat =
       let a : address = [%external "ADDRESS"] c in
+      let e : string option = [%external "TEST_GET_ENTRYPOINT"] c in
       let s : michelson_program = eval s in
-      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a (None : string option) s t
+      [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a e s t
   let michelson_equal (m1 : michelson_program) (m2 : michelson_program) : bool = m1 = m2
   let to_entrypoint (type a b c) (s : string) (t : (a, b) typed_address) : c contract =
     let s = if String.length s > 0n then
