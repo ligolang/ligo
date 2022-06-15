@@ -3,6 +3,7 @@ module T = Stage_common.Types
 module C = AST.Combinators
 
 module LMap = AST.LMap
+module XList = Simple_utils.List
 
 let unit_label = T.Label "#UNIT"
 let cons_label = T.Label "#CONS"
@@ -65,6 +66,38 @@ let find_anomaly eqs =
 
 type matrix = simple_pattern list list
 
-(* specialize matrix *)
+(* specialize *)
+let specialize_matrix c a matrix = 
+  let specialize row specialized = 
+    match row with
+      SP_Constructor (cp, r1_a, _) :: p2_n when T.equal_label c cp ->
+        let row = r1_a @ p2_n in
+        row :: specialized
+    | SP_Constructor _  :: _ -> specialized
+    | SP_wildcard :: p2_n ->
+      let wildcards = XList.repeat a SP_wildcard in
+      let row = wildcards @ p2_n in
+      row :: specialized
+    | [] -> [] (* TODO: check is this okay? *)
+  in
+  (* Here order does not matter; change this to fold_left later *)
+  List.fold_right matrix ~init:[] ~f:specialize
 
-(* default matrix *)
+let specialize_vector c a q1_n =
+  match q1_n with
+    SP_Constructor (cp, r1_a, _) :: q2_n when T.equal_label c cp ->
+      r1_a @ q2_n
+  | SP_wildcard :: q2_n ->
+    let wildcards = XList.repeat a SP_wildcard in
+    wildcards @ q2_n
+  | _ -> failwith "edge case: specialize_vector wrong constructor"
+
+(* default *)
+let default_matrix matrix = 
+  let default row dp =
+    match row with
+      SP_Constructor _ :: _ -> dp
+    | SP_wildcard   :: p2_n -> p2_n
+    | [] -> [] (* TODO: check is this okay? *)
+  in
+  List.fold_right matrix ~init:[] ~f:default
