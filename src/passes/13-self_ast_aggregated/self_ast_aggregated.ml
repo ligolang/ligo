@@ -1,6 +1,7 @@
 module Errors = Errors
 module Helpers = Helpers
 
+let reset_counter () = Monomorphisation.poly_counter_reset ()
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 
 let all_expression ~raise ~add_warning ~(options : Compiler_options.middle_end) e =

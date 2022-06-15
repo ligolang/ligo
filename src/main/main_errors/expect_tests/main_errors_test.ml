@@ -624,7 +624,7 @@ let%expect_test "self_ast_typed" =
     File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+    An entrypoint must of type "parameter * storage -> operation list * storage". |}] ;
   error
     (`Self_ast_typed_expected_list_operation (ValueVar.of_input_var "foo", type_expression, expression)) ;
   [%expect
@@ -632,7 +632,7 @@ let%expect_test "self_ast_typed" =
     File "a dummy file name", line 20, character 5:
 
     Invalid type for entrypoint "foo".
-    An entrypoint must of type "parameter * storage -> operations list * storage".
+    An entrypoint must of type "parameter * storage -> operation list * storage".
     We expected a list of operations but we got foo |}] ;
   error
     (`Self_ast_typed_expected_same_entry
@@ -665,11 +665,11 @@ let%expect_test "self_mini_c" =
   error `Self_mini_c_not_a_function ;
   [%expect {|
     Invalid type for entrypoint.
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+    An entrypoint must of type "parameter * storage -> operation list * storage". |}] ;
   error `Self_mini_c_could_not_aggregate_entry ;
   [%expect {|
     Invalid type for entrypoint.
-    An entrypoint must of type "parameter * storage -> operations list * storage". |}]
+    An entrypoint must of type "parameter * storage -> operation list * storage". |}]
 
 let%expect_test "spilling" =
   let error (e:Spilling.Errors.spilling_error) = human_readable_error (spilling_tracer e) in
