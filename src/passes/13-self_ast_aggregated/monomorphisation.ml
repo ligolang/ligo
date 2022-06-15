@@ -6,6 +6,7 @@ let fold_map_expression = Helpers.fold_map_expression
 let to_name_safe v =
   fst (AST.ValueVar.internal_get_name_and_counter v)
 let poly_counter = ref 0
+let poly_counter_reset () = poly_counter := 0
 let poly_name v = poly_counter := ! poly_counter + 1 ;
                   AST.ValueVar.of_input_var ("poly_" ^ (to_name_safe v) ^ "_" ^ string_of_int (! poly_counter))
 

@@ -130,8 +130,6 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         | None ->
           let expr = Compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end (Ast_typed.e_a_unit ()) aggregated in
           let mini_c = Compile.Of_aggregated.compile_expression ~raise expr in
-          let open Main_errors in
-          let mini_c = Trace.trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression mini_c in
           Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
           let expr = Compile.Of_typed.apply_to_entrypoint ~raise ~add_warning ~options:options.middle_end typed entry_point in
