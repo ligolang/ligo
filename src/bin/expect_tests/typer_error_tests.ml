@@ -85,7 +85,7 @@ let%expect_test _ =
       4 |
 
     Invalid type(s).
-    Expected: "list (string)", but got: "option (int)". |} ] ;
+    Expected: "list (string)", but got: "toto". |} ] ;
 
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/error_typer_3.mligo" ] ;
   [%expect {|
@@ -165,25 +165,6 @@ let%expect_test _ =
   [%expect {|
     SET_ADD(( 2 , ( 3 , 4 ) ) , SET_ADD(( 1 , ( 2 , 3 ) ) , SET_EMPTY())) |}]
 
-  (* 
-  run_ligo_bad [ "interpret" ; "Set.literal [ (1,2,3) ; (2,3,4) ]" ; "--syntax=cameligo" ] ;
-  [%expect {|
-    Error(s) occurred while parsing the Michelson input:
-    At (unshown) location 1, comparable type expected.Type
-                                                        pair (pair int int) int
-                                                      is not comparable. |}]
-  *)
-
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/failwith_wrong_type.ligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative/failwith_wrong_type.ligo", line 2, characters 19-27:
-      1 |
-      2 | const bad : unit = failwith((nil : list(int)))
-
-    Invalid arguments.
-    Expected an argument of type (string) or (nat) or (int), but got an argument of type list (int). |}]
-
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/invalid_field_record_update.mligo" ] ;
   [%expect {|
@@ -200,8 +181,7 @@ let%expect_test _ =
       2 |
       3 | let main (x,y:bool * bool) = ([] : operation list), (None : option)
 
-    Invalid type(s).
-    Expected: "option", but got: "option ('a)". |} ]
+    Constructor "None" not found. |} ]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; "../../test/contracts/negative/will_be_ignored.mligo" ] ;

@@ -51,9 +51,7 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f i
       let res = self res let_result in
       res
     )
-  | E_type_in { type_binder=_; rhs = _ ; let_result} ->
-    let res = self init let_result in
-    res
+  | E_assign a -> Folds.assign self (fun a _ -> a) init a
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> 'a = fun f init m ->
   match m with
@@ -105,10 +103,6 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
   )
-  | E_type_in {type_binder; rhs; let_result} -> (
-    let let_result = self let_result in
-    return @@ E_type_in {type_binder; rhs; let_result}
-  )
   | E_lambda { binder ; result } -> (
     let result = self result in
     return @@ E_lambda { binder ; result }
@@ -129,6 +123,9 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let args = List.map ~f:self c.arguments in
     return @@ E_constant {c with arguments=args}
   )
+  | E_assign a ->
+    let a = Maps.assign self (fun a -> a) a in
+    return @@ E_assign a
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
@@ -186,10 +183,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
-  | E_type_in { type_binder ; rhs ; let_result} -> (
-      let (res,let_result) = self init let_result in
-      (res, return @@ E_type_in { type_binder ; rhs ; let_result })
-    )
   | E_type_inst { forall ; type_ } -> (
     let (res, forall) = self init forall in
     ( res, return @@ E_type_inst { forall ; type_ })
@@ -213,6 +206,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
   | E_raw_code {language;code} -> (
     let (res,code) = self init code in
     (res, return @@ E_raw_code { language ; code }))
+  | E_assign a ->
+    let (res,a) = Fold_maps.assign self (fun a b -> a,b) init a in
+    (res, return @@ E_assign a)
   | E_literal _ | E_variable _ as e' -> (init, return e')
 
 and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr = fun f init m ->
@@ -254,12 +250,12 @@ module Free_variables :
       self forall
     | E_lambda {binder ; result} ->
       let fv = self result in
-      VarSet.remove binder @@ fv
+      VarSet.remove binder.var @@ fv
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
     | E_recursive {fun_name; lambda = {binder; result}} ->
       let fv = self result in
-      VarSet.remove fun_name @@ VarSet.remove binder @@ fv
+      VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv
     | E_constructor {element} ->
       self element
     | E_matching {matchee; cases} ->
@@ -274,10 +270,10 @@ module Free_variables :
       self record
     | E_let_in { let_binder ; rhs ; let_result } ->
       let fv2 = (self let_result) in
-      let fv2 = VarSet.remove let_binder fv2 in
+      let fv2 = VarSet.remove let_binder.var fv2 in
       VarSet.union (self rhs) fv2
-    | E_type_in {let_result} ->
-      self let_result
+    | E_assign { binder=_; access_path=_; expression } ->
+      self expression
 
   and get_fv_cases : matching_expr -> VarSet.t = fun m ->
     match m with
@@ -287,7 +283,7 @@ module Free_variables :
         VarSet.remove pattern @@ varSet in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = LMap.values fields |> List.map ~f:fst in
+      let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
       let varSet = get_fv_expr body in
       List.fold_right pattern ~f:VarSet.remove ~init:varSet
 

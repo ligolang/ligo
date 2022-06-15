@@ -28,7 +28,6 @@
   ;; LIGO
   lexing_shared
   menhir_pascaligo_tokens
-  main_warnings
   ;; Third party
   str
   hex))

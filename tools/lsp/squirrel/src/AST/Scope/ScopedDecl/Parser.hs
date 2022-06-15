@@ -42,7 +42,14 @@ parseType node =
       , parseApplyType
       , parseArrowType
       , parseVariableType
+      , parseParenType
       ]
+
+parseParenType :: PPableLIGO info => LIGO info -> Maybe Type
+parseParenType node = do
+  LIGO.TParen typ <- layer node
+  let typ' = parseTypeDeclSpecifics typ
+  pure $ ParenType typ'
 
 parseArrowType :: PPableLIGO info => LIGO info -> Maybe Type
 parseArrowType node = do
@@ -68,7 +75,7 @@ parseTypeField :: PPableLIGO info => LIGO info -> Maybe TypeField
 parseTypeField node = do
   LIGO.TField nameNode typNode <- layer node
   LIGO.FieldName _tfName <- layer nameNode
-  let _tfTspec = parseTypeDeclSpecifics typNode
+  let _tfTspec = parseTypeDeclSpecifics <$> typNode
   pure TypeField{ .. }
 
 parseVariantType :: LIGO info -> Maybe Type

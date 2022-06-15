@@ -54,7 +54,7 @@ be to deter people from doing it just to chew up address space.
 
 let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) => {
   let _ : unit =
-    if (Tezos.amount == storage.name_price) { (); }
+    if (Tezos.get_amount () == storage.name_price) { (); }
     else { failwith("Incorrect amount paid."); };
   let profile = parameter.profile;
   let initial_controller = parameter.initial_controller;
@@ -63,10 +63,10 @@ let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) =>
   let controller: address =
     switch (initial_controller) {
       | Some(addr) => addr
-      | None => Tezos.sender
+      | None => Tezos.get_sender ()
     };
   let new_id_details: id_details = {
-    owner : Tezos.sender,
+    owner : Tezos.get_sender (),
     controller : controller,
     profile : profile,
   };
@@ -80,7 +80,7 @@ let buy = ((parameter, storage): (buy, storage)) : (list(operation), storage) =>
 
 let update_owner = ((parameter, storage): (update_owner, storage)) : (list(operation), storage) => {
   let _ : unit =
-    if (Tezos.amount != 0mutez) {
+    if (Tezos.get_amount () != 0mutez) {
       failwith("Updating owner doesn't cost anything.");
     }
     else { (); };
@@ -93,7 +93,7 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
       | None => (failwith("This ID does not exist."): id_details)
     };
   let _ : unit =
-    if (Tezos.sender == current_id_details.owner) { (); }
+    if (Tezos.get_sender () == current_id_details.owner) { (); }
     else { failwith("You are not the owner of this ID."); };
   let updated_id_details: id_details = {
     owner : new_owner,
@@ -107,7 +107,7 @@ let update_owner = ((parameter, storage): (update_owner, storage)) : (list(opera
 let update_details = ((parameter, storage): (update_details, storage)) :
                    (list(operation), storage) => {
   let _ : unit =
-    if (Tezos.amount != 0mutez) {
+    if (Tezos.get_amount () != 0mutez) {
       failwith("Updating details doesn't cost anything.");
     }
     else { (); };
@@ -121,8 +121,8 @@ let update_details = ((parameter, storage): (update_details, storage)) :
       | None => (failwith("This ID does not exist."): id_details)
     };
   let _ : unit =
-    if ((Tezos.sender != current_id_details.controller) &&
-        (Tezos.sender != current_id_details.owner)) {
+    if ((Tezos.get_sender () != current_id_details.controller) &&
+        (Tezos.get_sender () != current_id_details.owner)) {
       failwith ("You are not the owner or controller of this ID.")
     }
     else { (); };
@@ -150,7 +150,7 @@ let update_details = ((parameter, storage): (update_details, storage)) :
 /* Let someone skip the next identity so nobody has to take one that's undesirable */
 let skip = ((_,storage): (unit, storage)) => {
   let _ : unit =
-    if (Tezos.amount != storage.skip_price) {
+    if (Tezos.get_amount () != storage.skip_price) {
       failwith("Incorrect amount paid.");
     }
     else { (); };

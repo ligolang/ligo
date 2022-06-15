@@ -7,8 +7,8 @@ let all_expression_mapper ~raise ~add_warning ~js_style_no_shadowing = [
   Literals.peephole_expression ~raise ;
   Expression_soundness.linearity ~raise ;
   Expression_soundness.reserved_names_exp ~raise ;
-  Deprecated_constants.warn ~add_warning ;
   External.replace ;
+  Deprecated_constants.warn ~add_warning ;
 ] @
   (if js_style_no_shadowing
   then [ No_shadowing.peephole_expression ~raise ]
@@ -46,9 +46,9 @@ let all_module ~raise ~add_warning ~js_style_no_shadowing init =
   let all_p3 = List.map ~f:Helpers.map_module @@ all_module ~raise ~js_style_no_shadowing in
   List.fold ~f:(|>) (all_p @ all_p2 @ all_p3) ~init
 
-let all_expression ~raise ~js_style_no_shadowing init =
+let all_expression ~raise ~add_warning ~js_style_no_shadowing init =
   let all_p = List.map ~f:Helpers.map_expression @@
-    (all_expression_mapper ~raise ~add_warning:(fun _ -> ()) ~js_style_no_shadowing) in
+    (all_expression_mapper ~raise ~add_warning ~js_style_no_shadowing) in
   List.fold ~f:(|>) all_p ~init
 
 let decompile_imperative init =

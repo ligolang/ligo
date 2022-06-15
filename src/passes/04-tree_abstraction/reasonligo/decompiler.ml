@@ -1,6 +1,6 @@
 module AST = Ast_imperative
 module CST = Cst.Reasonligo
-module Predefined = Predefined.Tree_abstraction.Reasonligo
+module Predefined = Predefined.Tree_abstraction
 module Token    = Lexing_reasonligo.Token
 module Region   = Simple_utils.Region
 module Location = Simple_utils.Location
@@ -171,6 +171,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_literal _
   | E_constant _
   | E_module_accessor _
+  | E_application _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -582,11 +583,24 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap @@ (var,args))
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
-  | E_assign _
+  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+    let var_attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
+    let binders =
+      CST.PVar (wrap @@ CST.{
+                    variable = decompile_variable var;
+                    attributes = var_attributes }) in
+    let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
+    let let_rhs = decompile_expression @@ match access_path with
+        [] -> expression
+      | _  -> AST.e_update (AST.e_variable var) access_path expression in
+    let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+    let body = decompile_expression (AST.e_unit ()) in
+    let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;semi=ghost;body;attributes=[]} in
+    return_expr @@ CST.ELetIn (wrap lin)
   | E_for _
   | E_for_each _
   | E_while _ ->
-    failwith @@ Format.asprintf "Decompiling a imperative construct to CameLIGO %a"
+    failwith @@ Format.asprintf "Decompiling a imperative construct to ReasonLIGO %a"
     AST.PP.expression expr
 
 and decompile_to_path : AST.expression_variable -> _ AST.access list -> CST.path = fun var access ->

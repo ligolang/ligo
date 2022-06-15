@@ -1,0 +1,9 @@
+--- ./lock_file_blocking/src/dune
++++ ./lock_file_blocking/src/dune
+@@ -3,4 +3,4 @@
+  (preprocess (pps ppx_jane -allow-unannotated-ignores)))
+ 
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:core:config.h} %{targets}")))
++ (action (bash "cp '%{lib:core:config.h}' %{targets}")))
+

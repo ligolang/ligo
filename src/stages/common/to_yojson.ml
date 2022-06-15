@@ -196,9 +196,9 @@ let sequence expression {expr1;expr2} =
     ("expr2", expression expr2);
   ]
 
-let assign expression {variable; access_path; expression=e} =
+let assign expression type_expression {binder=b; access_path; expression=e} =
   `Assoc [
-    ("variable", ValueVar.to_yojson variable);
+    ("variable", binder type_expression b);
     ("access_path", list (access expression) access_path);
     ("expression", expression e);
   ]
@@ -264,7 +264,6 @@ let deprecated {name;const} =
   ]
 
 let rich_constant = function
-  | Deprecated d -> `List [`String "Deprecatd"; deprecated d ]
   | Const      c -> `List [`String "Const"; constant' c ]
 
 let declaration_type type_expression a_t {type_binder; type_expr; type_attr} =

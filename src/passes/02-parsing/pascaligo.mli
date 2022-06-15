@@ -8,7 +8,6 @@ module Trace = Simple_utils.Trace
 
 module CST    = Cst_pascaligo.CST
 module Errors = Parsing_shared.Errors
-module Self_tokens = Lexing_pascaligo.Self_tokens
 
 (* Parsing *)
 
@@ -22,15 +21,15 @@ type file_path = string
 
 type 'a parser = raise:Errors.t Trace.raise -> Buffer.t -> 'a
 
-val from_file   : (file_path -> CST.t) parser
-val from_string : CST.t parser
-val expression  : CST.expr parser
+val from_file   : add_warning:(Main_warnings.all -> unit) -> (file_path -> CST.t) parser
+val from_string : add_warning:(Main_warnings.all -> unit) -> CST.t parser
+val expression  : add_warning:(Main_warnings.all -> unit) -> CST.expr parser
 
 (* Aliases *)
 
-val parse_file       : (file_path -> CST.t) parser
-val parse_string     : CST.t parser
-val parse_expression : CST.expr parser
+val parse_file       : add_warning:(Main_warnings.all -> unit) -> (file_path -> CST.t) parser
+val parse_string     : add_warning:(Main_warnings.all -> unit) -> CST.t parser
+val parse_expression : add_warning:(Main_warnings.all -> unit) -> CST.expr parser
 
 (* Pretty-printing *)
 
@@ -43,7 +42,7 @@ val pretty_print_pattern    : CST.pattern -> Buffer.t
 val pretty_print_type_expr  : CST.type_expr -> Buffer.t
 
 val pretty_print_file :
-  raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
+  add_warning:(Main_warnings.all -> unit) -> raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
 
 val pretty_print_cst :
-  raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
+  add_warning:(Main_warnings.all -> unit) -> raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t

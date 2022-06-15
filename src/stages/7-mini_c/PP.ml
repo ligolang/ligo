@@ -56,6 +56,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_never -> "never"
     | TB_chest -> "chest"
     | TB_chest_key -> "chest_key"
+    | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
     in
   fprintf ppf "%s" s
 
@@ -163,6 +164,14 @@ and expression_content ppf (e:expression_content) = match e with
   | E_global_constant (hash, args) ->
     fprintf ppf "@[constant(%s)( %a )@]"
       hash
+      Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
+  | E_create_contract (p, s, ((x, a), code), args) ->
+    fprintf ppf "@[create_contract(%a,@ %a,@ fun (%a : %a) -> %a,@ %a)@]"
+      type_expression p
+      type_expression s
+      ValueVar.pp x
+      type_expression a
+      expression code
       Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->

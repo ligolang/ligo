@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 {- | The input tree from TreeSitter. Doesn't have any pointers to any data
      from actual tree the TS produced and therefore has no usage limitations.
 
@@ -18,14 +16,12 @@ module ParseTree
   , toParseTree
 
     -- * Read file contents from its source
-  , srcToBytestring
-  , srcToText
+  , pathToSrc
   )
   where
 
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
-import Data.ByteString qualified as BS
 import Data.Functor.Classes (Show1 (..))
 import Data.String (IsString (..))
 import Data.Text (Text)
@@ -56,12 +52,15 @@ import Range
 foreign import ccall unsafe tree_sitter_PascaLigo  :: Ptr Language
 foreign import ccall unsafe tree_sitter_ReasonLigo :: Ptr Language
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
+foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
-data Source
-  = Path       { srcPath :: FilePath }
-  | Text       { srcPath :: FilePath, srcText :: Text }
-  | ByteString { srcPath :: FilePath, srcBS   :: ByteString }
-  deriving stock (Eq, Ord)
+data Source = Source
+  { srcPath :: FilePath
+  , srcText :: Text
+  } deriving stock (Eq, Ord)
+
+instance MonadIO m => IsString (m Source) where
+  fromString = pathToSrc
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
@@ -71,23 +70,11 @@ deriving anyclass instance ToObject Source
 instance LogItem Source where
   payloadKeys = const $ const AllKeys
 
-instance IsString Source where
-  fromString = Path
-
 instance Show Source where
   show = show . srcPath
 
-srcToBytestring :: Source -> IO ByteString
-srcToBytestring = \case
-  Path       p   -> BS.readFile p
-  Text       _ t -> return $ Text.encodeUtf8 t
-  ByteString _ s -> return s
-
-srcToText :: Source -> IO Text
-srcToText = \case
-  Path       p   -> Text.readFile p
-  Text       _ t -> return t
-  ByteString _ s -> return $ Text.decodeUtf8 s
+pathToSrc :: MonadIO m => FilePath -> m Source
+pathToSrc p = Source p <$> liftIO (Text.readFile p)
 
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = (Range, Text)
@@ -113,19 +100,20 @@ data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect input = Log.addNamespace "toParseTree" do
-  $(Log.debug) [Log.i|Reading #{input}|]
+toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
+  $(Log.debug) [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
         Caml   -> tree_sitter_CameLigo
         Reason -> tree_sitter_ReasonLigo
+        Js     -> tree_sitter_JsLigo
 
   res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
-    src <- srcToBytestring input
+    let src = Text.encodeUtf8 input
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
 
-  $(Log.debug) [Log.i|Done reading #{input}|]
+  $(Log.debug) [Log.i|Done reading #{fp}|]
   pure res
   where
     go :: ByteString -> Node -> IO RawTree
@@ -159,16 +147,16 @@ toParseTree dialect input = Log.addNamespace "toParseTree" do
             name     = if start2D == finish2D then "ERROR" else Text.pack ty
             range = Range
               { _rStart  =
-                  ( pointRow    start2D + 1
-                  , pointColumn start2D + 1
-                  , nodeStartByte node
+                  ( fromIntegral $ pointRow    start2D + 1
+                  , fromIntegral $ pointColumn start2D + 1
+                  , fromIntegral $ nodeStartByte node
                   )
               , _rFinish =
-                  ( pointRow    finish2D + 1
-                  , pointColumn finish2D + 1
-                  , nodeEndByte node
+                  ( fromIntegral $ pointRow    finish2D + 1
+                  , fromIntegral $ pointColumn finish2D + 1
+                  , fromIntegral $ nodeEndByte node
                   )
-              , _rFile = srcPath input
+              , _rFile = fp
               }
 
           pure $ fastMake

@@ -84,7 +84,6 @@ and expression_content = function
   | E_type_abstraction e -> `List [ `String "E_type_abstraction"; type_abs expression e ]
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
-  | E_type_in     e -> `List [ `String "E_type_in"; type_in e ]
   | E_raw_code    e -> `List [ `String "E_raw_code"; raw_code e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor e ]
@@ -94,6 +93,7 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_type_inst       e -> `List [ `String "E_type_inst"; type_inst e ]
+  | E_assign          e -> `List [ `String "E_assign";   assign expression type_expression e ]
 
 and constant {cons_name;arguments} =
   `Assoc [
@@ -113,9 +113,9 @@ and application {lamb;args} =
     ("args", expression args);
   ]
 
-and lambda {binder;result} =
+and lambda {binder=b;result} =
   `Assoc [
-    ("binder", ValueVar.to_yojson binder);
+    ("binder", binder type_expression b);
     ("result", expression result);
   ]
 
@@ -149,7 +149,7 @@ and module_attribute ({public}: module_attribute) =
 
 and let_in {let_binder;rhs;let_result;attr} =
   `Assoc [
-    ("let_binder", ValueVar.to_yojson let_binder);
+    ("let_binder", binder type_expression let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
     ("attr", attribute attr);
@@ -214,7 +214,7 @@ and matching_content_case {constructor; pattern; body} =
 
 and matching_content_record {fields; body; tv} =
   `Assoc [
-    ("fields", label_map (pair ValueVar.to_yojson type_expression) fields);
+    ("fields", label_map (binder type_expression) fields);
     ("body", expression body);
     ("record_type", type_expression tv);
   ]

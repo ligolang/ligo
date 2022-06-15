@@ -67,6 +67,7 @@ and expression_content = function
   | E_big_map     e -> `List [ `String "E_big_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_list        e -> `List [ `String "E_list"; list expression e]
   | E_set         e -> `List [ `String "E_set"; list expression e]
+  | E_assign      e -> `List [ `String "E_assign";   assign expression type_expression e ]
 
 and let_in {let_binder;rhs;let_result;attributes=attr;mut} =
   `Assoc [

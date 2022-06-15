@@ -10,6 +10,7 @@ interface CompileBody {
   entrypoint: string;
   storage: string;
   format?: string;
+  protocol: string;
 }
 
 const validateRequest = (body: any): { value: CompileBody; error?: any } => {
@@ -19,6 +20,7 @@ const validateRequest = (body: any): { value: CompileBody; error?: any } => {
       code: joi.string().required(),
       entrypoint: joi.string().required(),
       storage: joi.string().required(),
+      protocol: joi.string().required(),
       format: joi.string().optional()
     })
     .validate(body);
@@ -36,7 +38,8 @@ export async function compileStorageHandler(req: Request, res: Response) {
         body.code,
         body.entrypoint,
         body.format || 'text',
-        body.storage
+        body.storage,
+        body.protocol
       );
 
       res.send({ result: michelsonStorage });

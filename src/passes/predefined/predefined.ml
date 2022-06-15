@@ -7,17 +7,13 @@
   a new constructor at all those places.
 *)
 
+module Ligo_string = Simple_utils.Ligo_string
+
 module Tree_abstraction = struct
 
   open Ast_imperative
 
-  module type Constant = sig
-    val constants      : string -> rich_constant option
-    val constant_to_string      : rich_constant -> string
-  end
-
   let some_const c = Some (Const c)
-  let some_deprecated name const = Some (Deprecated {name;const})
 
   (*
     Each front-end has its owns constants.
@@ -44,7 +40,9 @@ module Tree_abstraction = struct
     | "Tezos.self"               -> some_const C_SELF
     | "Tezos.create_contract"    -> some_const C_CREATE_CONTRACT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
+    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -66,11 +64,7 @@ module Tree_abstraction = struct
     | "Bitwise.or"          -> some_const C_OR
     | "Bitwise.and"         -> some_const C_AND
 
-    (* String module *)
-    | "String.size"     -> some_deprecated x C_SIZE  (* Deprecated *)
-    | "String.slice"    -> some_deprecated x C_SLICE (* Deprecated *)
     (* Operator module *)
-
     | "Operator.neg"   -> some_const C_NEG
     | "Operator.add"   -> some_const C_ADD
     | "Operator.sub"   -> some_const C_POLYMORPHIC_SUB
@@ -93,17 +87,10 @@ module Tree_abstraction = struct
 
 
   let pseudo_module_to_string = function
-    | C_CHAIN_ID                -> "Tezos.chain_id"
-    | C_BALANCE                 -> "Tezos.balance"
-    | C_NOW                     -> "Tezos.now"
-    | C_AMOUNT                  -> "Tezos.amount"
-    | C_SENDER                  -> "Tezos.sender"
     | C_ADDRESS                 -> "Tezos.address"
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
     | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
-    | C_SOURCE                  -> "Tezos.source"
-    | C_FAILWITH                -> "Tezos.failwith"
     | C_CREATE_CONTRACT         -> "Tezos.create_contract"
     | C_CALL                    -> "Tezos.transaction"
     | C_SET_DELEGATE            -> "Tezos.set_delegate"
@@ -112,13 +99,11 @@ module Tree_abstraction = struct
     | C_CONTRACT_ENTRYPOINT_OPT -> "Tezos.get_entrypoint_opt"
     | C_CONTRACT                -> "Tezos.get_contract"
     | C_CONTRACT_ENTRYPOINT     -> "Tezos.get_entrypoint"
-    | C_NEVER                   -> "Tezos.never"
     | C_OPEN_CHEST              -> "Tezos.open_chest"
     | C_VIEW                    -> "Tezos.call_view"
     | C_GLOBAL_CONSTANT         -> "Tezos.constant"
 
     (* Operator module *)
-
     | C_NEG  -> "Operator.neg"
     | C_ADD  -> "Operator.add"
     | C_SUB  -> "Operator.sub"
@@ -139,316 +124,36 @@ module Tree_abstraction = struct
     | C_NEQ  -> "Operator.neq"
 
     (* Set module *)
-
     | C_SET_LITERAL    -> "Set.literal"
 
     (* Map module *)
-
     | C_MAP_LITERAL  -> "Map.literal"
     | C_MAP_ADD      -> "Map.add"
     | C_MAP_REMOVE   -> "Map.remove"
 
     (* Big_map module *)
-
     | C_BIG_MAP_LITERAL -> "Big_map.literal"
 
     (* Bitwise module *)
-
     | C_XOR -> "Bitwise.xor"
     | C_LSL -> "Bitwise.shift_left"
     | C_LSR -> "Bitwise.shift_right"
 
-    (* Not parsed *)
-    (* | C_SOME -> "Some" *)
-    (* | C_NONE -> "None" *)
-
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
 
-  module Pascaligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos module (ex-Michelson) *)
-      | "chain_id"               -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "get_chain_id"           -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "balance"                -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "now"                    -> some_deprecated C_NOW                 (* Deprecated *)
-      | "amount"                 -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "sender"                 -> some_deprecated C_SENDER              (* Deprecated *)
-      | "address"                -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "self_address"           -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "implicit_account"       -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "source"                 -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "transaction"            -> some_deprecated C_CALL                    (* Deprecated *)
-      | "set_delegate"           -> some_deprecated C_SET_DELEGATE            (* Deprecated *)
-      | "get_contract"           -> some_deprecated C_CONTRACT                (* Deprecated *)
-      | "get_contract_opt"       -> some_deprecated C_CONTRACT_OPT            (* Deprecated *)
-      | "get_entrypoint"         -> some_deprecated C_CONTRACT_ENTRYPOINT     (* Deprecated *)
-      | "get_entrypoint_opt"     -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      | "cons"             -> some_deprecated C_CONS (* Deprecated *)
-
-      (* Crypto module *)
-
-      | "crypto_check"    -> some_deprecated C_CHECK_SIGNATURE       (* Deprecated *)
-      | "crypto_hash_key" -> some_deprecated C_HASH_KEY              (* Deprecated *)
-      | "blake2b"         -> some_deprecated C_BLAKE2b               (* Deprecated *)
-      | "sha_256"         -> some_deprecated C_SHA256                (* Deprecated *)
-      | "sha_512"         -> some_deprecated C_SHA512                (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "bytes_pack"   -> some_deprecated C_BYTES_PACK    (* Deprecated *)
-      | "bytes_unpack" -> some_deprecated C_BYTES_UNPACK  (* Deprecated *)
-      | "Bytes.size"   -> some_deprecated C_SIZE          (* Deprecated *)
-      | "bytes_concat" -> some_deprecated C_CONCAT        (* Deprecated *)
-      | "bytes_slice"  -> some_deprecated C_SLICE         (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE         (* Deprecated *)
-
-      (* List module *)
-
-      | "list_size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "list_iter"   -> some_deprecated C_LIST_ITER  (* Deprecated *)
-      | "list_map"    -> some_deprecated C_LIST_MAP   (* Deprecated *)
-      | "list_fold"   -> some_deprecated C_LIST_FOLD  (* Deprecated *)
-
-      (* Set module *)
-
-
-      | "Set.size"    -> some_deprecated C_SIZE        (* Deprecated *)
-      | "set_size"    -> some_deprecated C_SIZE        (* Deprecated *)
-      | "set_empty"   -> some_deprecated C_SET_EMPTY   (* Deprecated *)
-      | "set_mem"     -> some_deprecated C_SET_MEM     (* Deprecated *)
-      | "set_add"     -> some_deprecated C_SET_ADD     (* Deprecated *)
-      | "set_remove"  -> some_deprecated C_SET_REMOVE  (* Deprecated *)
-      | "set_iter"    -> some_deprecated C_SET_ITER    (* Deprecated *)
-      | "set_fold"    -> some_deprecated C_SET_FOLD    (* Deprecated *)
-
-      (* Map module *)
-
-      | "get_force"    -> some_deprecated C_MAP_FIND      (* Deprecated *)
-      | "map_get"      -> some_deprecated C_MAP_FIND_OPT  (* Deprecated *)
-      | "map_update"   -> some_deprecated C_MAP_UPDATE    (* Deprecated *)
-      | "map_remove"   -> some_deprecated C_MAP_REMOVE    (* Deprecated *)
-      | "map_iter"     -> some_deprecated C_MAP_ITER      (* Deprecated *)
-      | "map_map"      -> some_deprecated C_MAP_MAP       (* Deprecated *)
-      | "map_fold"     -> some_deprecated C_MAP_FOLD      (* Deprecated *)
-      | "map_mem"      -> some_deprecated C_MAP_MEM       (* Deprecated *)
-      | "map_size"     -> some_deprecated C_SIZE          (* Deprecated *)
-
-
-      (* Bitwise module *)
-
-      | "bitwise_or"          -> some_deprecated C_OR      (* Deprecated *)
-      | "bitwise_and"         -> some_deprecated C_AND     (* Deprecated *)
-      | "bitwise_xor"         -> some_deprecated C_XOR     (* Deprecated *)
-      | "bitwise_lsl"         -> some_deprecated C_LSL     (* Deprecated *)
-      | "bitwise_lsr"         -> some_deprecated C_LSR     (* Deprecated *)
-
-      (* String module *)
-
-      | "string_slice"    -> some_deprecated C_SLICE    (* Deprecated *)
-      | "string_concat"   -> some_deprecated C_CONCAT   (* Deprecated *)
-
-      (* Others *)
-
-      | "size"                   -> some_deprecated C_SIZE (* Deprecated *)
-
-      | _ as c                   -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos module (ex-Michelson) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "nil"
-
-      (*->  Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-
-      | _ as c            -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Cameligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-
-      | "chain_id"                   -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "Current.balance"            -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "balance"                    -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "Current.time"               -> some_deprecated C_NOW                 (* Deprecated *)
-      | "time"                       -> some_deprecated C_NOW                 (* Deprecated *)
-      | "Current.amount"             -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "amount"                     -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "Current.sender"             -> some_deprecated C_SENDER              (* Deprecated *)
-      | "sender"                     -> some_deprecated C_SENDER              (* Deprecated *)
-      | "Current.address"            -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "Current.self_address"       -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "Current.implicit_account"   -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-
-      | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
-      | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
-      | "Operation.get_contract"       -> some_deprecated C_CONTRACT          (* Deprecated *)
-      | "Operation.get_contract_opt"   -> some_deprecated C_CONTRACT_OPT      (* Deprecated *)
-      | "Operation.get_entrypoint"     -> some_deprecated C_CONTRACT_ENTRYPOINT (* Deprecated *)
-      | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "Bytes.size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE      (* Deprecated *)
-
-      (* Set module *)
-      | "Set.size"     -> some_deprecated C_SIZE (* Deprecated *)
-
-      (* Map module *)
-      | "Map.find"     -> some_deprecated C_MAP_FIND     (* Deprecated *)
-
-      (* Bitwise module *)
-
-      | "Bitwise.lor"         -> some_deprecated C_OR  (* Deprecated *)
-      | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
-      | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
-
-      (* Others *)
-
-      | _ as c -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "[]"
-
-      (* Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-      | C_TRUE -> "true"
-      | C_FALSE -> "false"
-
-      | _ as c -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Reasonligo = struct
-    let constants x =
-      let some_deprecated = some_deprecated x in
-      match x with
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-
-      | "chain_id"                   -> some_deprecated C_CHAIN_ID            (* Deprecated *)
-      | "Current.balance"            -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "balance"                    -> some_deprecated C_BALANCE             (* Deprecated *)
-      | "Current.time"               -> some_deprecated C_NOW                 (* Deprecated *)
-      | "time"                       -> some_deprecated C_NOW                 (* Deprecated *)
-      | "Current.amount"             -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "amount"                     -> some_deprecated C_AMOUNT              (* Deprecated *)
-      | "Current.sender"             -> some_deprecated C_SENDER              (* Deprecated *)
-      | "sender"                     -> some_deprecated C_SENDER              (* Deprecated *)
-      | "Current.address"            -> some_deprecated C_ADDRESS             (* Deprecated *)
-      | "Current.self_address"       -> some_deprecated C_SELF_ADDRESS        (* Deprecated *)
-      | "Current.implicit_account"   -> some_deprecated C_IMPLICIT_ACCOUNT    (* Deprecated *)
-      | "Current.source"             -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "source"                     -> some_deprecated C_SOURCE              (* Deprecated *)
-      | "Current.failwith"           -> some_deprecated C_FAILWITH            (* Deprecated *)
-
-      | "Operation.transaction"        -> some_deprecated C_CALL              (* Deprecated *)
-      | "Operation.set_delegate"       -> some_deprecated C_SET_DELEGATE      (* Deprecated *)
-      | "Operation.get_contract"       -> some_deprecated C_CONTRACT          (* Deprecated *)
-      | "Operation.get_contract_opt"   -> some_deprecated C_CONTRACT_OPT      (* Deprecated *)
-      | "Operation.get_entrypoint"     -> some_deprecated C_CONTRACT_ENTRYPOINT (* Deprecated *)
-      | "Operation.get_entrypoint_opt" -> some_deprecated C_CONTRACT_ENTRYPOINT_OPT (* Deprecated *)
-
-      | "Michelson.is_nat" -> some_deprecated C_IS_NAT  (* Deprecated *)
-
-      (* Bytes module *)
-
-      | "Bytes.size"   -> some_deprecated C_SIZE       (* Deprecated *)
-      | "Bytes.slice"  -> some_deprecated C_SLICE      (* Deprecated *)
-
-      (* Set module *)
-      | "Set.size"     -> some_deprecated C_SIZE (* Deprecated *)
-
-      (* Map module *)
-      | "Map.find"     -> some_deprecated C_MAP_FIND     (* Deprecated *)
-
-      (* Bitwise module *)
-
-      | "Bitwise.lor"         -> some_deprecated C_OR  (* Deprecated *)
-      | "Bitwise.land"        -> some_deprecated C_AND (* Deprecated *)
-      | "Bitwise.lxor"        -> some_deprecated C_XOR (* Deprecated *)
-
-      (* Others *)
-
-      | _ as c -> pseudo_modules c
-
-    let constant'_to_string = function
-      (* Tezos (ex-Michelson, ex-Current, ex-Operation) *)
-      | C_FAILWITH -> "failwith"
-
-      | C_IS_NAT     -> "is_nat"
-      | C_INT        -> "int"
-      | C_ABS        -> "abs"
-      | C_EDIV       -> "ediv"
-      | C_UNIT       -> "unit"
-      | C_LIST_EMPTY -> "[]"
-
-      (* Others *)
-
-      | C_ASSERTION   -> "assert"
-      | C_ASSERT_SOME -> "assert_some"
-      | C_TRUE -> "true"
-      | C_FALSE -> "false"
-
-      | _ as c -> pseudo_module_to_string c
-
-    let constant_to_string = function
-      | Deprecated {name;_} -> name
-      | Const x -> constant'_to_string x
-
-  end
-
-  module Jsligo = Reasonligo
+  let constants x = pseudo_modules x
+  let constant_to_string = function
+      | Const x -> pseudo_module_to_string x
 end
 
-module Stacking = struct
+module Michelson = struct
   (*
     Most constants pass through the Spilling unchanged. So they need to be
     compiled down to Michelson. This is the last step.
 
     When compiling the constant, we need to provide its arity (through the type
-    predicate, defined in `Helpers.Stacking`, and its michelson code.
+    predicate, defined in `Helpers.Michelson`, and its michelson code.
     In the case of an n-ary constant, we assume that the stack has the form:
     `x1 :: x2 :: x3 ... :: xn :: _`.
 
@@ -457,7 +162,7 @@ module Stacking = struct
     be written by hand.
    *)
   type protocol_type = Environment.Protocols.t
-  include Helpers.Stacking
+  include Helpers.Michelson
   open Tezos_utils.Michelson
   open Stage_common.Types
 
@@ -465,9 +170,8 @@ module Stacking = struct
     match c , protocol_version with
     | C_ADD                , _   -> Some ( simple_binary @@ prim "ADD")
     | C_SUB                , _   -> Some ( simple_binary @@ prim "SUB")
-    | C_SUB_MUTEZ          , Ithaca -> Some ( simple_binary @@ prim "SUB_MUTEZ")
+    | C_SUB_MUTEZ          , _   -> Some ( simple_binary @@ prim "SUB_MUTEZ")
     | C_MUL                , _   -> Some ( simple_binary @@ prim "MUL")
-    | C_EDIV               , _   -> Some ( simple_binary @@ prim "EDIV")
     | C_DIV                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car])
     | C_MOD                , _   -> Some ( simple_binary @@ seq [prim "EDIV" ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr])
     | C_NEG                , _   -> Some ( simple_unary @@ prim "NEG")
@@ -491,66 +195,32 @@ module Stacking = struct
     | C_UPDATE             , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | C_SOME               , _   -> Some ( simple_unary  @@ prim "SOME")
     | C_MAP_FIND           , _   -> Some ( simple_binary @@ seq [prim "GET" ; i_assert_some_msg (i_push_string "MAP FIND")])
-    | C_MAP_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_MAP_FIND_OPT       , _   -> Some ( simple_binary @@ prim "GET")
     | C_MAP_ADD            , _   -> Some ( simple_ternary @@ seq [dip (i_some) ; prim "UPDATE"])
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_SIZE                  , _   -> Some ( simple_unary @@ prim "SIZE")
-    | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
-    | C_NEVER                 , _   -> Some ( simple_unary @@ prim "NEVER")
     | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
-    | C_ASSERT_SOME           , _   -> Some ( simple_unary @@ i_if_none (seq [i_push_string "failed assert some" ; i_failwith]) (seq [i_drop; i_push_unit]))
-    | C_ASSERT_SOME_WITH_ERROR, _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [i_dropn 2; i_push_unit]))
-    | C_ASSERT_NONE           , _   -> Some ( simple_unary @@ i_if_none (seq [i_push_unit]) (seq [i_push_string "failed assert none" ; i_failwith]))
-    | C_ASSERT_NONE_WITH_ERROR, _   -> Some ( simple_binary @@ i_if_none (seq [i_drop; i_push_unit]) (seq[i_drop;i_failwith]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
-    | C_ASSERTION          , _   -> Some ( simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_string "failed assertion" ; i_failwith]))
-    | C_ASSERTION_WITH_ERROR, _  -> Some ( simple_binary @@ i_if (seq [i_drop; i_push_unit]) (i_failwith))
-    | C_INT                , _   -> Some ( simple_unary @@ prim "INT")
-    | C_ABS                , _   -> Some ( simple_unary @@ prim "ABS")
-    | C_IS_NAT             , _   -> Some ( simple_unary @@ prim "ISNAT")
     | C_CONS               , _   -> Some ( simple_binary @@ prim "CONS")
     | C_UNIT               , _   -> Some ( simple_constant @@ prim "UNIT")
-    | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")
-    | C_AMOUNT             , _   -> Some ( simple_constant @@ prim "AMOUNT")
     | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
     | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
     | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
     | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
-    | C_NOW                , _   -> Some ( simple_constant @@ prim "NOW")
     | C_CALL               , _   -> Some ( simple_ternary @@ prim "TRANSFER_TOKENS")
-    | C_SOURCE             , _   -> Some ( simple_constant @@ prim "SOURCE")
-    | C_SENDER             , _   -> Some ( simple_constant @@ prim "SENDER")
     | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
     | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
-    | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
-    | C_SHA256             , _   -> Some ( simple_unary @@ prim "SHA256")
-    | C_SHA512             , _   -> Some ( simple_unary @@ prim "SHA512")
-    | C_BLAKE2b            , _   -> Some ( simple_unary @@ prim "BLAKE2B")
-    | C_CHECK_SIGNATURE    , _   -> Some ( simple_ternary @@ prim "CHECK_SIGNATURE")
-    | C_HASH_KEY           , _   -> Some ( simple_unary @@ prim "HASH_KEY")
-    | C_BYTES_PACK         , _   -> Some ( simple_unary @@ prim "PACK")
     | C_CONCAT             , _   -> Some ( simple_binary @@ prim "CONCAT")
-    | C_CHAIN_ID           , _   -> Some ( simple_constant @@ prim "CHAIN_ID")
-    | C_SHA3               , _   -> Some ( simple_unary @@ prim "SHA3")
-    | C_KECCAK             , _   -> Some ( simple_unary @@ prim "KECCAK")
-    | C_LEVEL              , _   -> Some ( simple_constant @@ prim "LEVEL")
-    | C_VOTING_POWER       , _   -> Some ( simple_unary @@ prim "VOTING_POWER")
-    | C_TOTAL_VOTING_POWER , _   -> Some ( simple_unary @@ prim "TOTAL_VOTING_POWER")
-
     | C_SELF               , _   -> Some (trivial_special "SELF")
     | C_NONE               , _   -> Some (trivial_special "NONE")
     | C_NIL                , _   -> Some (trivial_special "NIL")
     | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
     | C_LOOP_STOP          , _   -> Some (trivial_special "RIGHT")
     | C_LIST_EMPTY         , _   -> Some (trivial_special "NIL")
-    | C_LIST_HEAD_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
-    | C_LIST_TAIL_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
     | C_SET_EMPTY          , _   -> Some (trivial_special "EMPTY_SET")
     | C_MAP_EMPTY          , _   -> Some (trivial_special "EMPTY_MAP")
     | C_BIG_MAP_EMPTY      , _   -> Some (trivial_special "EMPTY_BIG_MAP")
@@ -558,13 +228,8 @@ module Stacking = struct
     | C_MAP_REMOVE         , _   -> Some (special (fun with_args -> seq [dip (with_args "NONE"); prim "UPDATE"]))
     | C_LEFT               , _   -> Some (trivial_special "LEFT")
     | C_RIGHT              , _   -> Some (trivial_special "RIGHT")
-    | C_TICKET             , _ -> Some ( simple_binary @@ prim "TICKET" )
-    | C_READ_TICKET        , _ -> Some ( simple_unary @@ seq [ prim "READ_TICKET" ; prim "PAIR" ] )
-    | C_SPLIT_TICKET       , _ -> Some ( simple_binary @@ prim "SPLIT_TICKET" )
-    | C_JOIN_TICKET        , _ -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
     | C_SAPLING_EMPTY_STATE, _ -> Some (trivial_special "SAPLING_EMPTY_STATE")
     | C_SAPLING_VERIFY_UPDATE , _ -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
-    | C_PAIRING_CHECK , _ -> Some (simple_binary @@ prim "PAIRING_CHECK")
     | C_CONTRACT           , _   ->
       Some (special
               (fun with_args ->

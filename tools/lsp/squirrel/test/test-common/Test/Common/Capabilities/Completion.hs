@@ -4,28 +4,25 @@ module Test.Common.Capabilities.Completion
   ) where
 
 import Data.Maybe (fromJust)
-import Data.Word (Word32)
-import Language.LSP.Types (CompletionItemKind (..))
+import Language.LSP.Types (CompletionItemKind (..), UInt)
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.Completion
-import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Scope (contractTree, lookupContract)
-import Progress (noProgress)
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldMatchList)
-import Test.Common.Util (ScopeTester, withoutLogger)
+import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
-  , tiPosition :: (Word32, Word32)
+  , tiPosition :: (UInt, UInt)
   , tiExpected :: [Completion]
   }
 
@@ -45,7 +42,7 @@ caseInfos =
     { tiContract = "yes-prefix.ligo"
     , tiPosition = (1, 48)
     , tiExpected =
-      [ Completion (Just CiVariable) (NameCompletion "parameter") (TypeCompletion "int") (DocCompletion "")
+      [ Completion (Just CiVariable) (NameCompletion "parameter") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "patch")
       ]
     }
@@ -54,8 +51,8 @@ caseInfos =
     { tiContract = "type-attribute.ligo"
     , tiPosition = (15, 35)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "id") (TypeCompletion "nat") (DocCompletion "")
-      , Completion (Just CiField) (NameCompletion "is_admin") (TypeCompletion "bool") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
       , CompletionKeyword (NameCompletion "big_map")
       , CompletionKeyword (NameCompletion "if")
       , CompletionKeyword (NameCompletion "begin")
@@ -74,8 +71,8 @@ caseInfos =
     { tiContract = "type-attribute.mligo"
     , tiPosition = (13, 33)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "id") (TypeCompletion "nat") (DocCompletion "")
-      , Completion (Just CiField) (NameCompletion "is_admin") (TypeCompletion "bool") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
       , CompletionKeyword (NameCompletion "if")
       , CompletionKeyword (NameCompletion "begin")
       , CompletionKeyword (NameCompletion "with")
@@ -86,10 +83,22 @@ caseInfos =
     { tiContract = "type-attribute.religo"
     , tiPosition = (13, 33)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "id") (TypeCompletion "nat") (DocCompletion "")
-      , Completion (Just CiField) (NameCompletion "is_admin") (TypeCompletion "bool") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
       , CompletionKeyword (NameCompletion "if")
       , CompletionKeyword (NameCompletion "switch")
+      ]
+    }
+  , TestInfo
+    { tiContract = "type-attribute.jsligo"
+    , tiPosition = (13, 33)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "if")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "while")
+      , CompletionKeyword (NameCompletion "import")
       ]
     }
 
@@ -97,21 +106,28 @@ caseInfos =
     { tiContract = "type-constructor.ligo"
     , tiPosition = (5, 21)
     , tiExpected =
-      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
     }
   , TestInfo
     { tiContract = "type-constructor.mligo"
     , tiPosition = (5, 19)
     , tiExpected =
-      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
     }
   , TestInfo
     { tiContract = "type-constructor.religo"
     , tiPosition = (5, 19)
     , tiExpected =
-      [ Completion (Just CiConstructor) (NameCompletion "Increment") (TypeCompletion "action") (DocCompletion "")
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
+      ]
+    }
+  , TestInfo
+    { tiContract = "type-constructor.jsligo"
+    , tiPosition = (5, 19)
+    , tiExpected =
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
       ]
     }
 
@@ -119,7 +135,7 @@ caseInfos =
     { tiContract = "unfinished-field-name.mligo"
     , tiPosition = (8, 27)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "sum") (TypeCompletion "int") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "sum") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "struct")
       ]
     }
@@ -128,7 +144,7 @@ caseInfos =
     { tiContract = "nested-fields.ligo"
     , tiPosition = (21, 37)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "series") (TypeCompletion "int") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "set")
       , CompletionKeyword (NameCompletion "list")
       , CompletionKeyword (NameCompletion "skip")
@@ -145,7 +161,7 @@ caseInfos =
     { tiContract = "nested-fields.mligo"
     , tiPosition = (18, 36)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "series") (TypeCompletion "int") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "struct")
       , CompletionKeyword (NameCompletion "lsl")
       , CompletionKeyword (NameCompletion "else")
@@ -156,7 +172,7 @@ caseInfos =
     { tiContract = "nested-fields.religo"
     , tiPosition = (18, 36)
     , tiExpected =
-      [ Completion (Just CiField) (NameCompletion "series") (TypeCompletion "int") (DocCompletion "")
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
       , CompletionKeyword (NameCompletion "switch")
       , CompletionKeyword (NameCompletion "lsl")
       , CompletionKeyword (NameCompletion "else")
@@ -164,10 +180,24 @@ caseInfos =
       ]
     }
   , TestInfo
+    { tiContract = "nested-fields.jsligo"
+    , tiPosition = (18, 35)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "as")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "namespace")
+      , CompletionKeyword (NameCompletion "case")
+      , CompletionKeyword (NameCompletion "else")
+      , CompletionKeyword (NameCompletion "const")
+      ]
+    }
+
+  , TestInfo
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)
     , tiExpected =
-      [ Completion (Just CiFunction) (NameCompletion "incr_my_stuff") (TypeCompletion "nat") (DocCompletion "")
+      [ Completion (Just CiFunction) (NameCompletion "incr_my_stuff") (Just $ TypeCompletion "nat") (DocCompletion "")
       , CompletionKeyword (NameCompletion "begin")
       , CompletionKeyword (NameCompletion "in")
       ]
@@ -175,8 +205,8 @@ caseInfos =
   ]
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
-completionDriver testInfos = withoutLogger \runLogger -> do
-  graph <- runLogger $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress contractsDir
+completionDriver testInfos = do
+  graph <- parseDirectoryWithScopes @parser contractsDir
   pure $ testGroup "Completion" $ map (makeTestCase graph) testInfos
   where
     makeTestCase graph info =

@@ -21,3 +21,7 @@ version.ml
 /*.mligo
 /*.religo
 /*.jsligo
+
+_esy
+node_modules
+/src/main/build/ligo_lib/loaded.ml

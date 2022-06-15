@@ -39,18 +39,21 @@ let t_constant ?loc ?core injection parameters : type_expression =
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
-[@@map (_type_, ("signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez", "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash", "chest_key", "chest"))]
+[@@map (_type_, (
+    "signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez",
+    "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash",
+    "chest_key", "chest" , "tx_rollup_l2_address", "michelson_contract"
+  ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
 [@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
 
-let t_ext_failwith ?loc ?core t : type_expression = t_constant ?loc ?core (External "failwith") [t]
 let t_ext_int ?loc ?core t : type_expression = t_constant ?loc ?core (External "int") [t]
 let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "ediv") [t; t']
 let t_ext_u_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "u_ediv") [t; t']
 
 let t__type_ ?loc ?core t t' : type_expression = t_constant ?loc ?core _type_ [t; t']
-[@@map (_type_, ("map", "big_map", "map_or_big_map", "typed_address"))]
+[@@map (_type_, ("map", "big_map", "typed_address"))]
 
 let t_mutez = t_tez
 
@@ -133,6 +136,8 @@ let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core [
   ]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Success" ,t_nat ()); ("Fail", t_test_exec_error ())]
+let t_test_baker_policy ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("By_round" ,t_int ()); ("By_account", t_address ()); ("Excluding", t_list (t_address ()))]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -229,7 +234,6 @@ let get_t_or (t:type_expression) : (type_expression * type_expression) option = 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
@@ -240,7 +244,6 @@ let get_t_typed_address (t:type_expression) : (type_expression * type_expression
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Big_map -> Some (k,v)
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Constant.equal injection Stage_common.Constant.Map_or_big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with
@@ -277,13 +280,12 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract", "failwith"))]
+[@@map (_ct_, ("some", "contract_opt", "contract"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
 [@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]
 
 let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
-let e_pack e : expression_content = E_constant {cons_name=C_BYTES_PACK; arguments=[e]}
 let e_unpack e : expression_content = E_constant {cons_name=C_BYTES_UNPACK; arguments=[e]}
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
@@ -336,7 +338,6 @@ let e_a_contract_opt a t = make_e (e_contract_opt a) (t_option (t_contract t))
 let e_a_contract a t = make_e (e_contract a) (t_contract t)
 let e_a_contract_entrypoint e a t = make_e (e_contract_entrypoint e a) (t_contract t)
 let e_a_contract_entrypoint_opt e a t = make_e (e_contract_entrypoint_opt e a) (t_option (t_contract t))
-let e_a_pack e = make_e (e_pack e) (t_bytes ())
 let e_a_unpack e t = make_e (e_unpack e) (t_option t)
 
 let get_a_int (t:expression) =

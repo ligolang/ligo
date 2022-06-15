@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: \n### upgrade to jakarta:\n- jakarta changes are available (please use
+  option `--protocol jakarta`)
+merge_request: '1709'
+title: Moving to jarkarta
+type: added

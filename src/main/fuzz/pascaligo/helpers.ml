@@ -160,11 +160,11 @@ module Fold_helpers(M : Monad) = struct
        let* arg = self value.arg in
        let value = {value with arg} in
        return @@E_Neg   {value;region}
-    | E_Int _ | E_Nat _ | E_Mutez _ as e -> return @@ e
+    | E_Int _ | E_Nat _ | E_Mutez _ as e -> return e
     | E_Cat {value;region} ->
        let* value = bin_op value in
        return @@ E_Cat {value;region}
-    | E_String _ | E_Verbatim _ as e -> return @@ e
+    | E_String _ | E_Verbatim _ as e -> return e
     | E_Cons {value;region} ->
        let* value = bin_op value in
        return @@ E_Cons {value;region}
@@ -175,16 +175,16 @@ module Fold_helpers(M : Monad) = struct
     | E_Nil _ as e -> return e
     | E_Ctor _ as e -> return e
     | E_App {value;region} ->
-      let const, expr = value in
+      let lambda, expr = value in
       let* expr = bind_map_option
-        (fun (e : arguments) ->
+        (fun (e : expr tuple) ->
           let* inside = bind_map_npseq self e.value.inside in
           ok {e with value = {e.value with inside}}
         )
         expr
       in
-      let value = const,expr in
-      return @@ E_App {value;region}
+      let value = lambda, expr in
+      return @@ E_App {value; region}
     | E_Record  {value;region} ->
        let aux (e : (expr,expr) field reg) =
         match e.value with
@@ -213,7 +213,7 @@ module Fold_helpers(M : Monad) = struct
     | E_Call {value;region} ->
        let (lam, args) = value in
        let* lam = self lam in
-       let* inside = bind_map_npseq self args.value.inside in
+       let* inside = bind_map_pseq self args.value.inside in
        let args = {args with value = {args.value with inside}} in
        let value = (lam,args) in
        return @@ E_Call {value;region}
@@ -392,7 +392,7 @@ module Fold_helpers(M : Monad) = struct
     | I_Call {value;region} ->
       let (expr, arguments) = value in
       let* expr = self_expr expr in
-      let* inside = bind_map_npseq self_expr arguments.value.inside in
+      let* inside = bind_map_pseq self_expr arguments.value.inside in
       let arguments = {arguments with value = {arguments.value with inside}} in
       let value = (expr,arguments) in
       ok @@ I_Call {value;region}
@@ -466,10 +466,10 @@ module Fold_helpers(M : Monad) = struct
         let* declarations = map_declarations f @@ declarations in
         ok (M_Body { region ; value = { enclosing ; declarations }})
       | M_Var _ | M_Path _  -> ok me
-  
+
   and map_declarations : mapper -> declarations -> declarations monad =
     fun f decl ->
     let self = map_declaration f in
     bind_map_ne_list self @@ decl
-  
+
 end

@@ -130,7 +130,8 @@ vscode-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix -p "$MICROSOFT_MARKETPLACE_TOKEN"
+    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix
+    - nix run -f nix/vsce.nix -c ovsx publish *.vsix
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:

@@ -32,11 +32,10 @@ module Free_variables = struct
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
-      let b' = union (singleton let_binder) b in
+      let b' = union (singleton let_binder.var) b in
       union
         (expression b' let_result)
         (self rhs)
-    | E_type_in { type_binder=_; rhs=_; let_result; _} -> self let_result
     | E_type_abstraction { type_binder=_; result} -> self result
     | E_mod_in { module_binder=_; rhs=_; let_result} -> self let_result
     | E_raw_code _ -> empty
@@ -45,9 +44,12 @@ module Free_variables = struct
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
     | E_module_accessor _ -> empty
+    | E_assign {binder;access_path=_;expression=e} ->
+      let b' = union (singleton binder.var) b in
+      expression b' e
 
   and lambda : bindings -> lambda -> bindings = fun b l ->
-    let b' = union (singleton l.binder) b in
+    let b' = union (singleton l.binder.var) b in
     expression b' l.result
 
   and expression : bindings -> expression -> bindings = fun b e ->
@@ -60,7 +62,7 @@ module Free_variables = struct
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
       | Match_record {fields; body; tv = _} ->
-        f (union (List.map ~f:fst (LMap.to_list fields)) b) body
+        f (union (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) b) body
 
     and matching_expression = fun x -> matching expression x
 
@@ -84,11 +86,7 @@ let layout_eq a b = match (a,b) with
   | _ -> false
 
 let constant_compare ia ib =
-  let open Stage_common.Constant in
-  match ia,ib with
-  | (Map     | Map_or_big_map), (Map     | Map_or_big_map) -> 0
-  | (Big_map | Map_or_big_map), (Big_map | Map_or_big_map) -> 0
-  | _ -> Stage_common.Constant.compare ia ib
+  Stage_common.Constant.compare ia ib
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in

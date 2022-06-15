@@ -4,9 +4,9 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-012-Psithaca
-    tezos-protocol-012-Psithaca-parameters
-    tezos-client-012-Psithaca
+    tezos-protocol-013-PtJakart
+    PtJakart-parameters
+    tezos-client-013-PtJakart
     tezos-memory-proto-alpha
     data-encoding
     simple-utils

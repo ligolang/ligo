@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1715'
+title: Remove operations that can be replaced in stdlib
+type: internal

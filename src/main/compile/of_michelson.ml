@@ -3,6 +3,31 @@ open Tezos_utils
 open Proto_alpha_utils
 open Trace
 
+let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
+  (* From Tezos changelog on views: 
+    CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS cannot be used at the top-level of a
+    view because they are stateful, and SELF because the entry-point does not make sense in a view.
+    However, CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS remain available in lambdas defined inside a view. (MR !3737)
+  *)
+  let open Tezos_micheline.Micheline in
+  let rec iter_prim_mich : inside_lambda:bool -> (inside_lambda:bool -> 'loc * 'p -> unit) -> ('loc,'p) node -> unit = fun ~inside_lambda f m ->
+    match m with
+    | Int _ | String _ | Bytes _ -> ()
+    | Seq (_,x) -> List.iter ~f:(iter_prim_mich ~inside_lambda f) x
+    | Prim (loc,p,lst,_) ->
+      f ~inside_lambda (loc,p) ;
+      let inside_lambda = if String.equal p "LAMBDA" then true else false in
+      List.iter ~f:(iter_prim_mich ~inside_lambda f) lst
+  in
+  let iter_prim_mich = iter_prim_mich ~inside_lambda:false in
+  let f ~inside_lambda : Mini_c.meta * string -> unit = fun ( {location;_} , prim_str ) ->
+    match prim_str, inside_lambda with
+    | "SELF" , (true | false) -> raise.raise (`Main_view_rule_violated location)
+    | ("CREATE_CONTRACT" | "SET_DELEGATE" | "TRANSFER_TOKENS") , false -> raise.raise (`Main_view_rule_violated location)
+    | _ -> ()
+  in
+  List.iter ~f:(fun m -> iter_prim_mich f m.expr) views_mich
+
 let parse_constant ~raise code =
   let open Tezos_micheline in
   let open Tezos_micheline.Micheline in
@@ -26,11 +51,13 @@ let dummy : Stacking.meta =
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise ~add_warning :
   protocol_version:Environment.Protocols.t ->
+  ?enable_typed_opt:bool ->
+  ?has_env_comments:bool ->
   ?disable_typecheck:bool ->
   ?constants:string list ->
   Stacking.compiled_expression ->
   (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
-    fun ~protocol_version ?(disable_typecheck= false) ?(constants = []) compiled views ->
+    fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
       let views =
         List.map
           ~f:(fun (name, view) ->
@@ -79,7 +106,17 @@ let build_contract ~raise ~add_warning :
             in
             ()
         in
-        contract
+        if enable_typed_opt then
+          let typer_oracle : type a . (a, _) Micheline.Micheline.node -> _ = fun c ->
+            let map, _ = Trace.trace_tzresult_lwt ~raise (typecheck_contract_tracer contract) @@
+                           Proto_alpha_utils.Memory_proto_alpha.typecheck_map_contract ~environment c in
+            map in
+          let has_comment : Mini_c.meta -> bool =
+            fun { env; location = _; binder = _ } ->
+            has_env_comments && not (List.is_empty env) in
+          Self_michelson.optimize_with_types ~raise ~typer_oracle protocol_version ~has_comment contract
+        else
+          contract
 
 let measure ~raise = fun m ->
   Trace.trace_tzresult_lwt ~raise (main_could_not_serialize) @@

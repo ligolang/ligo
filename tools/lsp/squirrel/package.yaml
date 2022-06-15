@@ -88,10 +88,10 @@ library:
     - bytestring
     - containers
     - data-default
-    - directory
     - dlist
     - fastsum
     - filepath
+    - free
     - interpolate
     - katip
     - lens
@@ -119,17 +119,19 @@ executables:
       - aeson
       - algebraic-graphs
       - clock
+      - co-log-core
       - containers
       - data-default
+      - filepath
       - focus
       - hashable
-      - hslogger
       - interpolate
       - katip
       - lens
       - ligo-squirrel
       - lsp
       - mtl
+      - prettyprinter
       - stm
       - stm-containers
       - text
@@ -180,19 +182,20 @@ tests:
 
     dependencies:
       - aeson
+      - algebraic-graphs
       - data-default
+      - directory
+      - filepath
+      - hspec-expectations
+      - HUnit
+      - lens
       - ligo-squirrel
       - lsp-test
-      - tasty
-      - HUnit
-      - hspec-expectations
-      - tasty-hunit
-      - filepath
-      - directory
       - lsp-types
-      - text
-      - lens
+      - tasty
+      - tasty-hunit
       - template-haskell
+      - text
       - unliftio
       - unordered-containers
 

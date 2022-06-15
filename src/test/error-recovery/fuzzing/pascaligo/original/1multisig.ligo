@@ -31,21 +31,21 @@ type return is list (operation) * storage
 type parameter is CheckMessage of check_message_pt
 
 function check_message (const param : check_message_pt;
-                        var s : storage) : return is block {
+                        var s : storage) : return is {
   var message : message := param.message;
 
   if param.counter =/= s.counter then
     failwith ("Counters does not match")
   else {
     const packed_payload : bytes =
-      Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
+      Bytes.pack ((message, param.counter, s.id, Tezos.get_chain_id()));
     var valid : nat := 0n;
 
     var keys : authorized_keys := s.auth;
-    for pkh_sig in list param.signatures block {
+    for pkh_sig in list param.signatures {
       case keys of [
         nil -> skip
-      | key # tl -> block {
+      | key # tl -> {
           keys := tl;
           if pkh_sig.0 = Crypto.hash_key (key) then
             if Crypto.check (key, pkh_sig.1, packed_payload)

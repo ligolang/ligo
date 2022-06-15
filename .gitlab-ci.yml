@@ -1,10 +1,10 @@
 variables:
-  GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
+  - esy
   - pretooling                      # changelog
   - docker-build                    # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
@@ -22,10 +22,37 @@ include:
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
 
+.submodule-clone:
+  before_script:
+    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
+    - git submodule sync --recursive
+    - git submodule update --init --recursive --remote
 .nix:
+  extends: .submodule-clone
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
+esy:
+  tags:
+    - windows
+  stage: esy
+  only:
+  - merge_requests
+  - dev
+  - /^.*-run-dev$/
+  - /^release/.*$/
+  - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - $env:GIT_CURL_VERBOSE = 1
+    - $env:GIT_TRACE = 1
+    - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g esy@beta --force
+    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - esy -vvv
+    - rm -Recurse -Force _esy
 
 changelog:
   stage: pretooling
@@ -60,6 +87,7 @@ to_dos:
 
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
+  extends: .submodule-clone
   stage: docker-build
   dependencies:
     - changelog
@@ -209,6 +237,7 @@ webide-backend-build-and-push-backend:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
@@ -219,32 +248,6 @@ webide-backend-build-and-push-backend:
     - docker push "${WEBIDE_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
-
-release:
-  stage: push
-  image: registry.gitlab.com/gitlab-org/release-cli
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
-  dependencies:
-    - docker_extract
-    - changelog
-    - initialize-git
-  ## FIXME find a better solution to upload the binary
-  artifacts:
-    expire_in: 1000 yrs
-    paths:
-      - ligo
-      - ligo.deb
-  script:
-    - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
-      # git cli initialized in .ci/gitlab-ci.yml. Update release branch metadata
-    - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
-    - git fetch
-    - git checkout release/$CI_COMMIT_TAG  
-    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $CI_JOB_ID 
-    - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
-    - git push -o ci.variable="TRIGGER_DOC_UPDATE='true'" origin HEAD:release/$CI_COMMIT_TAG
 
 .website:
   stage: push
@@ -312,6 +315,7 @@ deploy-handoff-feature:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 deploy-handoff:
@@ -356,6 +360,7 @@ build-preview-ligo-webide-front-end:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
@@ -377,4 +382,5 @@ build-ligo-webide-front-end:
     - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide/**/*
+        - src/test/examples/**/*
       when: always

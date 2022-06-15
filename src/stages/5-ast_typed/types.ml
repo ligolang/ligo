@@ -38,9 +38,9 @@ and row_element = type_expression row_element_mini_c
 
 and type_expression = {
     type_content: type_content;
-    type_meta: type_meta;
-    orig_var: type_variable option ;
-    location: location;
+    type_meta: type_meta [@hash.ignore] ;
+    orig_var: type_variable option [@hash.ignore] ;
+    location: location [@hash.ignore] ;
   }
 and ty_expr = type_expression
 
@@ -61,7 +61,7 @@ and matching_content_variant = {
   }
 
 and matching_content_record = {
-  fields : (expression_variable * type_expression) label_map;
+  fields : (type_expression binder) label_map;
   body : expression;
   tv : type_expression;
 }
@@ -107,7 +107,6 @@ and expression_content =
   | E_lambda of lambda
   | E_recursive of recursive
   | E_let_in of let_in
-  | E_type_in of (expr, ty_expr) type_in
   | E_mod_in of mod_in
   | E_raw_code of raw_code
   | E_type_inst of type_inst
@@ -120,6 +119,7 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   | E_module_accessor of expression_variable module_access
+  | E_assign   of (expr,ty_expr) assign
 
 and type_inst = {
     forall: expression ;
@@ -137,12 +137,12 @@ and application = {
   }
 
 and lambda =  {
-    binder: expression_variable ;
+    binder: ty_expr binder ;
     result: expression ;
   }
 
 and let_in = {
-    let_binder: expression_variable ;
+    let_binder: ty_expr binder ;
     rhs: expression ;
     let_result: expression ;
     attr: known_attributes ;
@@ -158,7 +158,7 @@ and raw_code = {
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
-  lambda : lambda;
+  lambda   : lambda;
   }
 
 and constructor = {

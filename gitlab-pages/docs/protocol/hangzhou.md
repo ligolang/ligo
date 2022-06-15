@@ -171,7 +171,7 @@ Here is an example of a contract trying to open a chest and the corresponding te
 
 <Syntax test-ligo syntax="cameligo">
 
-```cameligo test-ligo group=timelock protocol=hangzhou
+```cameligo test-ligo group=timelock
 type storage = bytes
 type parameter = chest_key * chest
 
@@ -219,7 +219,7 @@ let test =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=timelock protocol=hangzhou
+```jsligo group=timelock
 let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
   return (match ( Tezos.open_chest(ck,c,@time), {
     Ok_opening: (b:bytes) => b,
@@ -232,7 +232,7 @@ let open_or_fail = ([ck, c, @time] : [chest_key, chest, nat]) : bytes => {
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=timelock protocol=hangzhou
+```reasonligo group=timelock
 let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
   switch (Tezos.open_chest(ck,c,@time)) {
     | Ok_opening b => b
@@ -245,7 +245,7 @@ let open_or_fail = ((ck , c , @time) : (chest_key, chest, nat)) : bytes => {
 </Syntax>
 <Syntax syntax="pascaligo">
 
-```pascaligo group=timelock protocol=hangzhou
+```pascaligo group=timelock
 function open_or_fail (const ck : chest_key; const c : chest; const @time : nat) : bytes is
   case Tezos.open_chest (ck, c, @time) of [
     Ok_opening (b) -> b
@@ -284,7 +284,7 @@ are a few legit views:
 
 <Syntax syntax="cameligo">
 
-```cameligo group=views protocol=hangzhou
+```cameligo group=views
 type storage = string
 let main (((),s): unit * storage) : operation list * storage = ([]:operation list) , s
 
@@ -301,7 +301,7 @@ let main (((),s): unit * storage) : operation list * storage = ([]:operation lis
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=views protocol=hangzhou
+```jsligo group=views
 type storage = string
 let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [list([]) as list<operation> , s];
 
@@ -321,7 +321,7 @@ let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=views protocol=hangzhou
+```reasonligo group=views
 type storage = string
 let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => (([] : list(operation)) , s);
 
@@ -338,7 +338,7 @@ let main = ((_ , s): (unit , storage)) : (list(operation) , storage) => (([] : l
 </Syntax>
 <Syntax syntax="pascaligo">
 
-```pascaligo group=views protocol=hangzhou
+```pascaligo group=views
 type storage is string
 function main (const _ : unit ; const s : storage) : list (operation) * storage is ((nil : list (operation)), s)
 
@@ -360,38 +360,38 @@ function main (const _ : unit ; const s : storage) : list (operation) * storage 
 
 A few primitives have a slightly different meaning when executed as part of a view:
 
-- `Tezos.balance` represents the current amount of mutez held by the contract attached to the view
-- `Tezos.sender` represents the caller of the view
-- `Tezos.amount` is always 0 mutez
-- `Tezos.self_address` represents the contract attached to the view
+- `Tezos.get_balance` represents the current amount of mutez held by the contract attached to the view
+- `Tezos.get_sender` represents the caller of the view
+- `Tezos.get_amount` is always 0 mutez
+- `Tezos.get_self_address` represents the contract attached to the view
 
 On the caller side, the primitive `Tezos.call_view` will allow you to call another contract view and get its result by providing the view name; the contract address and the parameter of the view. If the address is nonexistent; the name does not match of of the contract
 view or the parameter type do not match, `Tezos.call_view` will return `None`.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=views protocol=hangzhou
+```cameligo group=views
 let view_call ((name,parameter,addr): string * int * address) : int option = Tezos.call_view "sto_plus_n" 1 addr
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=views protocol=hangzhou
+```jsligo group=views
 let view_call = ([name,parameter,addr]: [string , int , address]) : option<int> => (Tezos.call_view ("sto_plus_n", 1, addr) as option<int>)
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=views protocol=hangzhou
+```reasonligo group=views
 let view_call = ((name,parameter,addr): (string , int , address)) : option(int) => Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 
 </Syntax>
 <Syntax syntax="pascaligo">
 
-```pascaligo group=views protocol=hangzhou
+```pascaligo group=views
 function view_call (const name : string; const parameter : int; const addr: address) : option (int) is Tezos.call_view ("sto_plus_n", 1, addr)
 ```
 

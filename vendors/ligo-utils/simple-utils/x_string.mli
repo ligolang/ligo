@@ -5,7 +5,7 @@ delimited either with double quotes (standard) or with `{|...|}` (Varbatim)
 
 type t =
   Standard of string
-| Verbatim of string
+| Verbatim of string [@@deriving hash]
 
 val standard : string -> t
 val verbatim : string -> t

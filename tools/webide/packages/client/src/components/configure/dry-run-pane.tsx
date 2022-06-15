@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
-import { ChangeEntrypointAction, ChangeParametersAction, ChangeStorageAction, DryRunState } from '../../redux/dry-run';
+import { protocolType } from '../../redux/compile';
+import { ChangeEntrypointAction, ChangeParametersAction, ChangeProtocolAction, ChangeStorageAction, DryRunState } from '../../redux/dry-run';
 import { AccessFunctionLabel, Group, Input, Label, Textarea } from '../form/inputs';
+import { Option, SelectCommand } from '../form/select';
 
 const Container = styled.div``;
 
@@ -23,6 +25,15 @@ export const DryRunPaneComponent = () => {
   return (
     <Container>
       <Group>
+        <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
+        <SelectCommand
+          id="protocol-select"
+          value={protocolType.Ithaca}
+          onChange={ev =>
+            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          }>
+          <Option value={protocolType.Ithaca}>Ithaca</Option>
+        </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input
           id="entrypoint"
