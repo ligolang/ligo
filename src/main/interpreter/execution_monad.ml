@@ -64,7 +64,7 @@ module Command = struct
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.calltrace * LT.value -> LT.value t
     | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
-    | Add_cast : LT.mcontract * Ast_aggregated.type_expression -> unit t
+    | Add_cast : Location.t * LT.mcontract * Ast_aggregated.type_expression -> unit t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -357,17 +357,15 @@ module Command = struct
     | Sign (loc, calltrace, sk, data) ->
       let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
       (LT.V_Ct (LT.C_signature signature), ctxt)
-    | Add_cast (addr, ty) ->
-      let ctxt = match List.Assoc.find ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr with
-        | None ->
-           let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
-           let internals = { ctxt.internals with storage_tys } in
-           { ctxt with internals }
+    | Add_cast (loc, addr, ty) ->
+      let () = match List.Assoc.find ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr with
+        | None -> ()
         | Some ty' ->
-           let () = trace_option ~raise (Errors.generic_error ty.location "Storage type does not match expected type") @@
-                      (Ast_aggregated.Helpers.assert_type_expression_eq (ty, ty')) in
-           ctxt in
-      ((), ctxt)
+           if (Ast_aggregated.Helpers.type_expression_eq (ty, ty')) then ()
+           else Format.eprintf "@[<hv>%a:@.Run-time warning: cast changing the type of an address.\n@]" Simple_utils.Snippet.pp loc in
+      let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
+      let internals = { ctxt.internals with storage_tys } in
+      ((), { ctxt with internals })
     | Michelson_equal (loc,a,b) ->
       let { code ; _ } : LT.typed_michelson_code = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr a in
