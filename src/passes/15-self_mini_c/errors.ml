@@ -22,8 +22,8 @@ let error_ppformat : display_format:string display_format ->
     | `Self_mini_c_bad_self_address _cst ->
       let s = Format.asprintf "\"Tezos.self\" must be used directly and cannot be used via another function." in
       Format.pp_print_string f s ;
-    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
-    | `Self_mini_c_could_not_aggregate_entry -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
+    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operation list * storage\"."
+    | `Self_mini_c_could_not_aggregate_entry -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operation list * storage\"."
     | `Self_mini_c_fvs_in_create_contract_lambda (e,v) ->
       Format.fprintf f
         "@[<hv>%a@.Not all free variables could be inlined in Tezos.create_contract usage: %a.@]"

@@ -1538,7 +1538,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-2
   5 |   store + 1
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+An entrypoint must of type "parameter * storage -> operation list * storage". |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract2.mligo" ] ;
   [%expect {|
@@ -1556,7 +1556,7 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-
   6 |   ("bad",store + 1)
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage".
+An entrypoint must of type "parameter * storage -> operation list * storage".
 We expected a list of operations but we got string |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract3.mligo" ] ;
