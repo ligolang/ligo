@@ -52,7 +52,7 @@ test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      ligoMapper <- compileLigoContractDebug file
+      ligoMapper <- compileLigoContractDebug "main" file
       (allLocs, T.SomeContract contract) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v

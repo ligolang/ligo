@@ -190,13 +190,14 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
   program <- checkArgument "program" programLigoLaunchRequestArguments
   storageT <- checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- checkArgument "parameter" parameterLigoLaunchRequestArguments
+  let entrypoint = fromMaybe "main" entrypointLigoLaunchRequestArguments
 
   unlessM (doesFileExist program) $
     throwError $ DAP.mkErrorMessage "Contract file not found" $ toText program
 
   let src = P.MSFile program
 
-  ligoDebugInfo <- compileLigoContractDebug program
+  ligoDebugInfo <- compileLigoContractDebug entrypoint program
   lift . logger $ "Successfully read the LIGO debug output for " <> pretty program
 
   -- TODO [LIGO-554]: use LIGO for parsing it
@@ -206,10 +207,6 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
   -- TODO [LIGO-554]: use LIGO for parsing it
   uStorage <- P.parseExpandValue src (toText storageT) &
     either (throwError . DAP.mkErrorMessage "Could not parse storage" . pretty) pure
-
-  entrypoint <-
-    maybe (Right U.DefEpName) U.buildEpName (fromString <$> entrypointLigoLaunchRequestArguments)
-    & either (throwError . DAP.mkErrorMessage "Could not parse entrypoint" . toText) pure
 
   -- This do is purely for scoping, otherwise GHC trips up:
   --     • Couldn't match type ‘a0’ with ‘()’
@@ -222,7 +219,8 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
 
     lift $ logger $ pretty (cCode contract)
 
-    epcRes <- T.mkEntrypointCall entrypoint (cParamNotes contract) &
+    -- Entrypoint is default because in @ParamNotes@ we don't have @EpName@ at all.
+    epcRes <- T.mkEntrypointCall U.DefEpName (cParamNotes contract) &
       maybe (throwError $ DAP.mkErrorMessage "Entrypoint not found" $ pretty entrypoint) pure
 
     case epcRes of
@@ -234,7 +232,7 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
           & typeCheckingForDebugger
           & either (throwError . DAP.mkErrorMessage "Storage does not typecheck") pure
 
-        let his = collectInterpretSnapshots program contract epc arg storage dummyContractEnv
+        let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv
             ds = DebuggerState
               { _dsSourceOrigin = SourcePath program
               , _dsSnapshots = playInterpretHistory his
