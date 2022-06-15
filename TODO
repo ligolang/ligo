@@ -12,14 +12,14 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
 3. Convert LIGO pattern language to a simple pattern language with only
    a. wildcards
    b. constructors
-   c. tuples
+   c. tuples (* no need of tuples, now I think *)
    ---
    | P_unit    -> constructor #UNIT
    | P_var     -> wildcard
    | P_list    -> constructors #CONS & #NIL
    | P_variant -> constructor ...
-   | P_tuple   -> tuple
-   | P_record  -> tiple
+   | P_tuple   -> simple_pattern list
+   | P_record  -> simple_pattern list
 
 4. Implement functions for specialization of matrix & default matrix
 
