@@ -126,6 +126,8 @@ class FileManager {
           })
         }
       }
+    } else {
+      throw new Error(`No such directory <b>${path}</b>.`)
     }
   }
 

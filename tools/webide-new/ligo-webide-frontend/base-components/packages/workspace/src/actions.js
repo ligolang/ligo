@@ -1,5 +1,6 @@
 import redux from '@obsidians/redux'
 import notification from '@obsidians/notification'
+import fileOps from '@obsidians/file-ops'
 
 import BaseProjectManager from './ProjectManager/BaseProjectManager'
 
@@ -65,6 +66,8 @@ export class ProjectActions {
       this.history.replace(`/${author}`)
     }
     redux.dispatch('REMOVE_PROJECT', { id })
+    await fileOps.deleteDirectory('.workspaces/' + id)
+
     let notificationTitle = 'Remove Project Successful'
     let notificationDescription = `Project <b>${name}</b> is removed`
     if (type == 'delete') {
