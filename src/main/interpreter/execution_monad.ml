@@ -358,9 +358,15 @@ module Command = struct
       let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
       (LT.V_Ct (LT.C_signature signature), ctxt)
     | Add_cast (addr, ty) ->
-      let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
-      let internals = { ctxt.internals with storage_tys } in
-      let ctxt = { ctxt with internals } in
+      let ctxt = match List.Assoc.find ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr with
+        | None ->
+           let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
+           let internals = { ctxt.internals with storage_tys } in
+           { ctxt with internals }
+        | Some ty' ->
+           let () = trace_option ~raise (Errors.generic_error ty.location "Storage type does not match expected type") @@
+                      (Ast_aggregated.Helpers.assert_type_expression_eq (ty, ty')) in
+           ctxt in
       ((), ctxt)
     | Michelson_equal (loc,a,b) ->
       let { code ; _ } : LT.typed_michelson_code = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
