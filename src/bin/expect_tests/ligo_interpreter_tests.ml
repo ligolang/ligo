@@ -626,7 +626,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_transfer_entrypoint.ligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_entrypoint exited with value "Passed". |}]
+    - test exited with value (). |}]
 
 (* do not remove that :) *)
 let () = Sys.chdir pwd

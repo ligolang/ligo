@@ -1,15 +1,17 @@
 type parameter is
     | Default of unit
-    | OtherMethod of int
+    | Other of int
 
 function main (const p : parameter; const s: unit) : list (operation) * unit is
     case p of [
         | Default(_) -> (nil, s)
-        | OtherMethod(_) -> (nil, s)
+        | Other(_) -> (nil, s)
     ];
 
-const test_entrypoint = {
+const test = {
     const origination = Test.originate(main, Unit, 1tez);
-    const contract : contract(int) = Test.to_entrypoint("otherMethod", origination.0);
-    const _ = Test.transfer_to_contract_exn(contract, 42, 1tez);
-} with ("Passed")
+    const i_contract : contract(int) = Test.to_entrypoint("other", origination.0);
+    const _ = Test.transfer_to_contract_exn(i_contract, 42, 1tez);
+    const u_contract : contract(unit) = Test.to_entrypoint("default", origination.0);
+    const _ = Test.transfer_to_contract_exn(u_contract, Unit, 1tez);
+} with (Unit)
