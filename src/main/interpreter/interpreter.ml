@@ -790,6 +790,9 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return_ct (C_unit)
     | ( C_TEST_SET_BIG_MAP , _  ) -> fail @@ error_type
     | ( C_TEST_CAST_ADDRESS , [ V_Ct (C_address x) ] ) ->
+      let (_, ty) = trace_option ~raise (Errors.generic_error expr_ty.location "Expected typed_address type") @@
+                           Ast_aggregated.get_t_typed_address expr_ty in
+      let>> () = Add_cast (x, ty) in
       return_ct (C_address x)
     | ( C_TEST_CAST_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_ADD_ACCOUNT , [ V_Ct (C_string sk) ; V_Ct (C_key pk) ] ) ->

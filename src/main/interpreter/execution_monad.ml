@@ -64,6 +64,7 @@ module Command = struct
     | Get_total_voting_power : Location.t * Ligo_interpreter.Types.calltrace -> LT.value t
     | Get_bootstrap : Location.t * LT.calltrace * LT.value -> LT.value t
     | Sign : Location.t * LT.calltrace * string * bytes -> LT.value t
+    | Add_cast : LT.mcontract * Ast_aggregated.type_expression -> unit t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
     | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
@@ -356,6 +357,11 @@ module Command = struct
     | Sign (loc, calltrace, sk, data) ->
       let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
       (LT.V_Ct (LT.C_signature signature), ctxt)
+    | Add_cast (addr, ty) ->
+      let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
+      let internals = { ctxt.internals with storage_tys } in
+      let ctxt = { ctxt with internals } in
+      ((), ctxt)
     | Michelson_equal (loc,a,b) ->
       let { code ; _ } : LT.typed_michelson_code = trace_option ~raise (Errors.generic_error loc "Can't compare contracts") @@
         LC.get_michelson_expr a in
