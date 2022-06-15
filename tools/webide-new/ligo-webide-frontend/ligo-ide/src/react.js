@@ -7,9 +7,8 @@ import * as serviceWorker from './serviceWorker'
 import App from './App'
 
 if (!process.env.CDN) {
-  import('./scss/fonts/open_sans/open_sans.css')
+  import('./scss/fonts/montserrat/montserrat.css')
   import('./scss/fonts/hack/hack.css')
-  import('./scss/fonts/fira/fira_code.css')
   import('@fortawesome/fontawesome-free/js/all')
 }
 
