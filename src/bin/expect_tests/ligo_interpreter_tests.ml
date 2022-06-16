@@ -152,21 +152,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "catch_balance_too_low.mligo" ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 154, characters 2-68
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  (Invalid_argument "length mismatch in zip_exn: 3 <> 0"). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good ["run";"test" ; test "test_subst_with_storage.mligo" ] ;
@@ -283,7 +271,7 @@ let%expect_test _ =
 
   (Cli_expect_tests.Cli_expect.Should_exit_good)
   Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 277, characters 2-66
+  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 265, characters 2-66
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -883,20 +871,8 @@ let () = Sys.chdir "../../test/projects/"
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
-  [%expect.unreachable]
-[@@expect.uncaught_exn {|
-  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
-     This is strongly discouraged as backtraces are fragile.
-     Please change this test to not include a backtrace. *)
-
-  (Cli_expect_tests.Cli_expect.Should_exit_good)
-  Raised at Cli_expect_tests__Cli_expect.run_ligo_good in file "src/bin/expect_tests/cli_expect.ml", line 29, characters 7-29
-  Called from Cli_expect_tests__Ligo_interpreter_tests.(fun) in file "src/bin/expect_tests/ligo_interpreter_tests.ml", line 885, characters 2-123
-  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
-
-  Trailing output
-  ---------------
-  An internal error ocurred. Please, contact the developers.
-  (Invalid_argument "length mismatch in zip_exn: 2 <> 0"). |}]
+  [%expect{|
+    Everything at the top-level was executed.
+    - test exited with value KT1Riu7zn7S1PCTu197y2i29TGheSLzfeaZ6(None). |}]
 
 let () = Sys.chdir pwd

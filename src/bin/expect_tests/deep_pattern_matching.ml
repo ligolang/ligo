@@ -163,7 +163,8 @@ let%expect_test _ =
       5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
       6 |   | { a = Some (hd::tl) ; b = [] } -> hd
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
@@ -184,7 +185,8 @@ let%expect_test _ =
       5 |   | Nil , ys  -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 (* Positives *)
 

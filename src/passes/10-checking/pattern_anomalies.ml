@@ -61,7 +61,9 @@ let rec to_simple_pattern ty_pattern =
     [SP_Constructor (c, to_simple_pattern (p, p_ty), ty)]
   | P_tuple ps
   | P_record (_, ps) ->
-    let ps_tys = Option.value_exn (C.get_t_tuple ty) in (* BAD *)
+    (* let () = Format.printf "type 3 : %a \n" AST.PP.type_expression ty in *)
+    let ps_tys = Option.value_exn (C.get_record_fields ty) in (* BAD *)
+    let ps_tys = List.map ~f:snd ps_tys in
     let ps = List.zip_exn ps ps_tys in
     let ps = List.map ps ~f:to_simple_pattern in
     List.concat ps

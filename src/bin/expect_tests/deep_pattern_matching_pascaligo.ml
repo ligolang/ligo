@@ -122,7 +122,8 @@ let%expect_test _ =
       6 |   | record [ a = Some ((hd#tl)) ; b = nil ] -> hd
       7 |   ]
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.ligo") ] ;
@@ -134,7 +135,8 @@ let%expect_test _ =
       6 |   | (xs  , Nil) -> 2
       7 |   ]
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.ligo") ] ;
