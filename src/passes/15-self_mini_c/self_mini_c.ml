@@ -12,7 +12,7 @@ let eta_expand : expression -> type_expression -> type_expression -> anon_functi
 let get_t_function ~raise e =
   trace_option ~raise not_a_function @@ Mini_c.get_t_function e
 let get_t_pair ~raise e =
-  trace_option ~raise not_a_function @@ Mini_c.get_t_pair e
+  trace_option ~raise not_a_pair @@ Mini_c.get_t_pair e
 
 let get_function_or_eta_expand ~raise e =
   let in_ty, out_ty = match e.type_expression.type_content with
