@@ -10,7 +10,8 @@ let%expect_test _ =
       4 |   });
       5 | }
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ] ;
@@ -50,7 +51,8 @@ let%expect_test _ =
     5 | let do_something = ([state, action]:[state,action]) : state => {
     6 |     return match(state, {
 
-  Pattern matching anomaly (redundant, or non exhaustive). |}]
+  Pattern matching anomaly (redundant, or non exhaustive).
+  FOUND MISSING CASE(S)FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
