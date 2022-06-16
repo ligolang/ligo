@@ -82,6 +82,15 @@ let rec to_simple_pattern ty_pattern =
 
 type matrix = simple_pattern list list
 
+let print_matrix matrix = 
+  let () = Format.printf "matrix: \n" in
+  let () = List.iter matrix ~f:(fun row -> 
+    Format.printf "%a\n" pp_simple_pattern_list row) in
+  Format.printf "\n"
+
+let print_vector vector =
+  Format.printf "vector: \n%a\n" pp_simple_pattern_list vector
+
 (* specialize *)
 let specialize_matrix c a matrix =
   let specialize row specialized =
@@ -120,7 +129,10 @@ let default_matrix matrix =
 
 let find_constuctor_arity c (t : AST.type_expression) =
   match c with
-  T.Label "#CONS" -> 2
+  T.Label "#CONS" ->
+    (* TODO: fix this... very hacky now *)
+    let t  = C.get_t_list_exn t in
+    1 + count_type_parts t
   | Label "#NIL"  -> 1
   | _       ->
   let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
@@ -148,6 +160,8 @@ let get_constructos_from_1st_col matrix =
       | [] -> s)
 
 let rec algorithm_Urec matrix vector =
+  (* let () = print_matrix matrix in
+  let () = print_vector vector in *)
   match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
       (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
@@ -191,6 +205,8 @@ let find_anomaly eqs =
     ~f:(fun (p, t, _) ->
       let sps = to_simple_pattern (p, t) in
       Format.printf "%a\n" pp_simple_pattern_list sps) in *)
+      
+  (* TODO: vector should be based on type *)
   let vector = List.map (List.hd_exn matrix)
     ~f:(fun sp -> 
       match sp with
