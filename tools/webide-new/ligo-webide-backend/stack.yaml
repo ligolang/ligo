@@ -1,3 +1,6 @@
-resolver: lts-19.1
+resolver: lts-19.10
 packages:
 - .
+extra-deps:
+- hspec-wai-0.11.0@sha256:79f8aab21161cd551e0bb740f5416fb622fe94f710bedc97dabd39fe901b5291,2314
+- hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629

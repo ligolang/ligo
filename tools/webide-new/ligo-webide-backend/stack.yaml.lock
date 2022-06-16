@@ -3,10 +3,24 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: hspec-wai-0.11.0@sha256:79f8aab21161cd551e0bb740f5416fb622fe94f710bedc97dabd39fe901b5291,2314
+    pantry-tree:
+      size: 809
+      sha256: 7a3bceb28c15079f039a3d5c0b639f887ae881c27359b43f46145db3845c4795
+  original:
+    hackage: hspec-wai-0.11.0@sha256:79f8aab21161cd551e0bb740f5416fb622fe94f710bedc97dabd39fe901b5291,2314
+- completed:
+    hackage: hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629
+    pantry-tree:
+      size: 349
+      sha256: c25b93d8e0140a9ea24605199de5065967cd5fceeacac2b7f7d0747ab2142778
+  original:
+    hackage: hspec-wai-json-0.11.0@sha256:1fdd66a61c84a9ba6f2e1673ed49b2da1f57f025cd3fb9a46d62620ff9259d63,1629
 snapshots:
 - completed:
-    size: 617355
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/1.yaml
-    sha256: cbd5e8593869445794924668479b5bd9f1738d075898623dceacc13b2576b6e3
-  original: lts-19.1
+    size: 618509
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/10.yaml
+    sha256: 005f204647467d65c4ab549a5ca35d54b3d90a84a99a4ffc5d421a4018854fe2
+  original: lts-19.10

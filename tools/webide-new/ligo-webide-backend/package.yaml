@@ -1,14 +1,80 @@
-name:                ligo-webide
-version:             0.1.0.0
-github:              "serokell/ligo-webide"
-license:             BSD3
-copyright:           "2022 Serokell"
+name:                ligo-webide-backend
 
 dependencies:
 - base >= 4.7 && < 5
 
+default-extensions:
+  - AllowAmbiguousTypes
+  - ApplicativeDo
+  - BangPatterns
+  - BlockArguments
+  - ConstraintKinds
+  - DataKinds
+  - DeriveAnyClass
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveTraversable
+  - DerivingStrategies
+  - DerivingVia
+  - DuplicateRecordFields
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralisedNewtypeDeriving
+  - ImportQualifiedPost
+  - LambdaCase
+  - MagicHash
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - OverloadedStrings
+  - QuantifiedConstraints
+  - QuasiQuotes
+  - PatternSynonyms
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - StrictData
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+  - UndecidableInstances
+  - ViewPatterns
+
+ghc-options:
+  - -Weverything
+  - -Wno-missing-exported-signatures
+  - -Wno-missing-import-lists
+  - -Wno-missed-specialisations
+  - -Wno-all-missed-specialisations
+  - -Wno-unsafe
+  - -Wno-safe
+  - -Wno-missing-local-signatures
+  - -Wno-monomorphism-restriction
+  - -Wno-implicit-prelude
+  - -Wno-partial-fields
+  - -Wno-missing-safe-haskell-mode
+  - -Wno-prepositive-qualified-module
+
 library:
   source-dirs: src
+  dependencies:
+  - aeson
+  - bytestring
+  - katip
+  - mtl
+  - process
+  - servant-server
+  - temporary
+  - text
+  - wai
+  - wai-cors
+  - wai-extra
+  - warp
 
 executables:
   ligo-webide-backend:
@@ -19,5 +85,23 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - ligo-webide
-    - servant
+    - ligo-webide-backend
+    - optparse-applicative
+
+tests:
+  ligo-webide-backend-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - aeson
+    - bytestring
+    - http-types
+    - hspec
+    - hspec-wai
+    - ligo-webide-backend
+    - text
+    - wai-extra
