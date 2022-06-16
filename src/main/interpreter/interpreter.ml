@@ -589,14 +589,16 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> code = Compile_contract_from_file (source_file,entryp,views) in
       return @@ code
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
-      let contract = { address; entrypoint = None } in
+    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
+      let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+      let contract = { address; entrypoint } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
       return_contract_exec_exn res
     )
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , _  ) -> fail @@ error_type
-    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
-      let contract = { address; entrypoint = None } in
+    | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
+      let entrypoint = Option.join @@ LC.get_string_option entrypoint in
+      let contract = { address; entrypoint } in
       let>> res = External_call (loc,calltrace,contract,param,amt) in
       return_contract_exec res
     )
@@ -861,6 +863,12 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> signature = Sign (loc, calltrace, sk, d) in
       return @@ signature
     | ( C_TEST_SIGN , _ ) -> fail @@ error_type
+    | ( C_TEST_GET_ENTRYPOINT , [ V_Ct (C_contract { address = _ ; entrypoint }) ] ) ->
+       let v = match entrypoint with
+         | None -> v_none ()
+         | Some s -> v_some (v_string s) in
+      return @@ v
+    | ( C_TEST_GET_ENTRYPOINT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
     | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
