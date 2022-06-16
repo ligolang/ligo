@@ -23,7 +23,7 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    | P_record  -> simple_pattern list
 
 4. Implement functions for specialization of matrix & default matrix
-   Done - need to test 
+   (* Done - need to test  *)
 5. Implement Algorithm I for missing cases (exhaustiveness check)
 
 6. Implement Algorithm Urec for useless cases (redundant pattern check)
@@ -40,6 +40,10 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    d. record (constructors)
    e. constructors (tuple (constructors))
    f. constructors (record (constructors))
+   g. tuple (tuple (constructor))
+   h. tuple (record (constructor))
+   i. record (tuple (constructor))
+   j. record (record (constructor))
    Redundant case:
    a. c1, c1, c2, c3
    b. c1, c2, c1, c3

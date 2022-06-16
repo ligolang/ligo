@@ -38,11 +38,23 @@ let get_variant_nested_type label (tsum : AST.t_sum) =
   let c = Option.value_exn c in (* BAD *)
   c.associated_type
 
+let count_type_parts (t : AST.type_expression) =
+  match t.type_content with
+    AST.T_record { content ; _ } -> LMap.cardinal content
+  | _ -> 1
+
 let rec to_simple_pattern ty_pattern =
-  let pattern, ty = ty_pattern in
-  let pattern = T.Location.unwrap pattern in
+  let pattern', ty = ty_pattern in
+  let pattern = T.Location.unwrap pattern' in
   match pattern with
     AST.P_unit -> [SP_wildcard ty]
+  | P_var _ when C.is_t_record ty ->
+    let fields = Option.value_exn (C.get_record_fields ty) in
+    let fields = List.map ~f:snd fields in
+    let ps     = XList.repeat pattern' (List.length fields) in
+    let ps     = List.zip_exn ps fields in
+    let ps     = List.map ps ~f:to_simple_pattern in
+    List.concat ps
   | P_var _    -> [SP_wildcard ty]
   | P_list (Cons (hd, tl)) ->
     let hd_ty = Option.value_exn (C.get_t_list ty) in (* BAD *)

@@ -430,7 +430,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_FA12.mligo" ] ;
   [%expect {|
-    FOUND MISSING CASE(S)Everything at the top-level was executed.
+    Everything at the top-level was executed.
     - test_transfer exited with value ().
     - test_transfer_not_e_allowance exited with value ().
     - test_transfer_not_e_balance exited with value ().
@@ -464,7 +464,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "gas_consum.mligo" ] ;
   [%expect {|
-    FOUND MISSING CASE(S)Everything at the top-level was executed.
+    Everything at the top-level was executed.
     - test exited with value (1802n , 1985n , 1985n). |}]
 
 let%expect_test _ =
