@@ -9,7 +9,6 @@ module LSet = Caml.Set.Make (struct
   let compare = T.compare_label
 end)
 
-let unit_label = T.Label "#UNIT"
 let cons_label = T.Label "#CONS"
 let nil_label  = T.Label "#NIL"
 
@@ -30,7 +29,7 @@ let rec pp_simple_pattern ppf sp =
       (String.concat ~sep:", "
         (List.map ps ~f:(fun p -> Format.asprintf "%a" pp_simple_pattern p)))
 
-let rec pp_simple_pattern_list ppf sps =
+let pp_simple_pattern_list ppf sps =
   List.iter sps ~f:(fun sp -> Format.fprintf ppf "%a, " pp_simple_pattern sp)
 
 let get_variant_nested_type label (tsum : AST.t_sum) =
@@ -43,7 +42,7 @@ let rec to_simple_pattern ty_pattern =
   let pattern, ty = ty_pattern in
   let pattern = T.Location.unwrap pattern in
   match pattern with
-    AST.P_unit -> [SP_Constructor (unit_label, [SP_wildcard ty], t_unit)]
+    AST.P_unit -> [SP_wildcard ty]
   | P_var _    -> [SP_wildcard ty]
   | P_list (Cons (hd, tl)) ->
     let hd_ty = Option.value_exn (C.get_t_list ty) in (* BAD *)
@@ -107,8 +106,7 @@ let default_matrix matrix =
 
 let find_constuctor_arity c (t : AST.type_expression) =
   match c with
-  T.Label "#UNIT" -> 1
-  | Label "#CONS" -> 2
+  T.Label "#CONS" -> 2
   | Label "#NIL"  -> 1
   | _       ->
   let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
@@ -137,7 +135,7 @@ let get_constructos_from_1st_col matrix =
 
 let rec algorithm_Urec matrix vector =
   match vector with
-    SP_Constructor (c, r1_n, t) :: q2_n ->
+    SP_Constructor (c, _r1_n, t) :: _q2_n ->
       (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
       let a  = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
@@ -147,6 +145,7 @@ let rec algorithm_Urec matrix vector =
     (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
     let constructors = get_constructos_from_1st_col matrix in
+    (*  *)
     (* let () = Format.printf "----\ncomplete signature:\n" in
     let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l) 
       complete_signature in
@@ -154,6 +153,7 @@ let rec algorithm_Urec matrix vector =
     let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l) 
       constructors in
     let () = Format.printf "\n----\n" in *)
+    (*  *)
     if not (LSet.is_empty complete_signature)
       && LSet.equal complete_signature constructors then
       LSet.fold 
@@ -173,14 +173,15 @@ let rec algorithm_Urec matrix vector =
 let find_anomaly eqs =
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
-  let () = List.iter eqs
+  (* let () = List.iter eqs
     ~f:(fun (p, t, _) ->
       let sps = to_simple_pattern (p, t) in
-      Format.printf "%a\n" pp_simple_pattern_list sps) in
+      Format.printf "%a\n" pp_simple_pattern_list sps) in *)
   let vector = List.map (List.hd_exn matrix)
     ~f:(fun sp -> 
       match sp with
         SP_wildcard t -> SP_wildcard t
       | SP_Constructor (_, _, t) -> SP_wildcard t) in
-  let _ = algorithm_Urec matrix vector in
+  let missing_case = algorithm_Urec matrix vector in
+  if missing_case then Format.printf "FOUND MISSING CASE(S)";
   ()

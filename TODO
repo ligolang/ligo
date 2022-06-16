@@ -7,7 +7,8 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
 2. How to treat unit patterns?
    a. Variant with one constructor (#UNIT)
    b. Wildcard
-   I think Variant with one constructor seems okay
+   ~I think Variant with one constructor seems okay~
+   Now thinking wildcards is better
 
 3. Convert LIGO pattern language to a simple pattern language with only
    a. wildcards
@@ -22,7 +23,7 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    | P_record  -> simple_pattern list
 
 4. Implement functions for specialization of matrix & default matrix
-
+   Done - need to test 
 5. Implement Algorithm I for missing cases (exhaustiveness check)
 
 6. Implement Algorithm Urec for useless cases (redundant pattern check)
