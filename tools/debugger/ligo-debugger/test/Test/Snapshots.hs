@@ -12,17 +12,24 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation,
-  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs, Frozen)
+  (DebugSource (..), DebuggerState (..), Direction (..), Frozen, SourceLocation (SourceLocation),
+  SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
+  tsAfterInstrs)
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
+import Control.Lens (ix, makeLensesWith, (?~))
+import Data.Default (Default (def))
+import Data.Map qualified as M
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
+import Morley.Util.Lens (postfixLFields)
+import System.Directory (listDirectory)
+import System.FilePath (dropExtension)
 import Test.Util
-import Control.Lens (ix)
+import Text.Interpolation.Nyan
 
 data ContractRunData =
   forall param st.
@@ -374,3 +381,56 @@ test_Snapshots = testGroup "Snapshots collection"
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
   ]
+
+-- | Special options for checking contract.
+data CheckingOptions = CheckingOptions
+  { coEntrypoint :: Maybe String
+  , coCheckSourceLocations :: Bool
+  } deriving stock (Show)
+makeLensesWith postfixLFields ''CheckingOptions
+
+instance Default CheckingOptions where
+  def =
+    CheckingOptions
+      { coEntrypoint = Nothing
+      , coCheckSourceLocations = True
+      }
+
+-- | This test is checking that @readLigoMapper@ produces ok result for all contracts from @contractsDir@.
+-- Also this test can check contracts with special options
+-- (for e.g. with special entrypoint or should it check source locations for sensibility)
+unit_Contracts_locations_are_sensible :: Assertion
+unit_Contracts_locations_are_sensible = do
+  contracts <- listDirectory contractsDir
+
+  let ligoContracts = filter hasLigoExtension contracts
+  forM_ ligoContracts testContract
+  where
+    testContract :: FilePath -> Assertion
+    testContract contractName = do
+      let CheckingOptions{..} = fromMaybe def (specialContracts M.!? dropExtension contractName)
+
+      ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
+
+      (locations, _) <-
+        case readLigoMapper ligoMapper of
+          Right v -> pure v
+          Left err -> assertFailure $ pretty err
+
+      when coCheckSourceLocations do
+        forM_ locations \srcLoc@(SourceLocation loc _) -> do
+          case loc of
+            SourcePath path ->
+              -- Some paths can be empty in @SourceLocation@ because of some ligo issues.
+              -- So, we want to check them for sensibility.
+              when (path == "") do
+                assertFailure [int||Expected non-empty file name in loc #{srcLoc} in contract #{contractName}|]
+            LorentzContract ->
+              assertFailure [int||Unexpected "Lorentz contract" in loc #{srcLoc} in contract #{contractName}|]
+
+    -- Contracts with special checking options
+    specialContracts :: Map FilePath CheckingOptions
+    specialContracts = M.fromList
+      [ ("if-no-else", def & coCheckSourceLocationsL .~ False)
+      , ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
+      ]

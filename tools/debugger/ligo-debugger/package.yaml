@@ -126,6 +126,7 @@ tests:
       - containers
       - data-default
       - dir-traverse
+      - directory
       - filepath
       - fmt
       - lens
@@ -136,6 +137,7 @@ tests:
       - morley-debugger
       - singletons
       - tasty
+      - text
       - HUnit
       - tasty-hunit-compat
 
