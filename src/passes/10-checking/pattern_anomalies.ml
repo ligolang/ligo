@@ -203,6 +203,16 @@ let rec algorithm_Urec matrix vector =
     else if List.for_all matrix ~f:(List.is_empty) then false
     else failwith "edge case: Urec"
 
+let redundant_case_analysis matrix =
+  fst @@ List.fold_left matrix ~init:(false, [])
+    ~f:(fun (redundant_case_found, matrix) vector ->
+      if redundant_case_found then (true, [])
+      else if List.is_empty matrix then (false, [vector])
+      else
+        let redundant_case_found = not @@ algorithm_Urec matrix vector in
+        (redundant_case_found, matrix @ [vector]))
+
+
 let find_anomaly eqs =
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
@@ -219,4 +229,6 @@ let find_anomaly eqs =
       | SP_Constructor (_, _, t) -> SP_wildcard t) in
   let missing_case = algorithm_Urec matrix vector in
   if missing_case then Format.printf "FOUND MISSING CASE(S)";
+  let redundant_case = redundant_case_analysis matrix in
+  if redundant_case then Format.printf "FOUND REDUNDANT CASE(S)";
   ()

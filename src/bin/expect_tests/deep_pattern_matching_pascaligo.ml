@@ -96,7 +96,8 @@ let%expect_test _ =
       6 |   | (xs , (c,b,a)) -> 2
       7 |   ]
 
-    Redundant pattern matching |}]
+    Redundant pattern matching
+    FOUND REDUNDANT CASE(S) |}]
 
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
