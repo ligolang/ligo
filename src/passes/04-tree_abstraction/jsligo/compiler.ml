@@ -9,8 +9,6 @@ module Token = Lexing_jsligo.Token
 
 open AST
 
-let add_warning: (Main_warnings.all -> unit) option ref  = ref None
-
 let nseq_to_list (hd, tl) = hd :: tl
 
 let npseq_to_list (hd, tl) = hd :: (List.map ~f:snd tl)
@@ -1287,7 +1285,7 @@ and compile_statements_to_expression ~add_warning ~raise : CST.statements -> AST
   let statement_result = compile_statements ~add_warning ~raise statements in
   statement_result_to_expression statement_result
 
-and compile_statement_to_declaration ~add_warning ~raise ?(top_level=false) ~export : CST.statement -> AST.declaration list = fun statement ->
+and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement -> AST.declaration list = fun statement ->
   match statement with
   | SType {value; region} ->
     let name = value.name in
@@ -1313,20 +1311,19 @@ and compile_statement_to_declaration ~add_warning ~raise ?(top_level=false) ~exp
     in
     let d = AST.Declaration_type {type_binder = compile_type_var name; type_expr; type_attr=attributes} in
     [ Location.wrap ~loc:(Location.lift region) d ]
-  | SLet {value = {bindings; attributes; _ }; region} -> (
+  | SLet {value = {bindings; attributes; _ }; region = _} -> (
     let attributes =
       if export then
         filter_private attributes
       else
         attributes
     in
-    if top_level then add_warning (`Jsligo_deprecated_toplevel_let (Location.lift region)) else ();
     let fst_binding = fst bindings in
-    let fst_binding = compile_let_to_declaration ~add_warning ~raise ~const:top_level attributes fst_binding in
+    let fst_binding = compile_let_to_declaration ~add_warning ~raise ~const:false attributes fst_binding in
     let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
     let rec aux result = function
       binding :: remaining ->
-        let d = compile_let_to_declaration ~add_warning ~raise ~const:top_level attributes binding in
+        let d = compile_let_to_declaration ~add_warning ~raise ~const:false attributes binding in
         aux (d @ result) remaining
     | [] -> List.rev result
     in
@@ -1381,7 +1378,7 @@ and compile_statement_to_declaration ~add_warning ~raise ?(top_level=false) ~exp
 and compile_statements_to_program ~add_warning ~raise : CST.ast -> AST.module_ = fun ast ->
   let aux : CST.toplevel_statement -> declaration list = fun statement ->
     match statement with
-      TopLevel (statement, _) -> compile_statement_to_declaration ~top_level:true ~add_warning ~raise ~export:false statement
+      TopLevel (statement, _) -> compile_statement_to_declaration ~add_warning ~raise ~export:false statement
     | Directive _ -> []
   in
   let statements = nseq_to_list ast.statements in

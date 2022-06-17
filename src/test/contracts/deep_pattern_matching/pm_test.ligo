@@ -2,7 +2,7 @@ type myt is Nil | Cons of (int * int)
 type myr is record [ a : int ; b : nat ; c : string ]
 type myd is One of myt | Two of myr
 
-function t1 (const x: myt * myt) is block {
+function t1 (const x: myt * myt) is {
   const fr = function (const x: myt) is 1 ;
   const fl = function (const x: myt) is 2 ;
   const ret =
@@ -20,18 +20,18 @@ function t2 (const x: myt ; const y: myt) is
     case y of [
     | Nil -> 1
     | Cons (a,b) ->
-      block {
+      {
         const a = "a" ;
       } with (int (String.length(a))) + b
     ]
   )
   | Cons (a,b) ->
-    block {
+    {
       const old_b = b ;
       const b =
         case y of [
         | Nil ->
-          block {
+          {
             const f = function (const b:int) is (b + a) ;
           } with f (b+1)
         | _ -> a + b
@@ -52,25 +52,25 @@ function t3 (const x : myd) is
   ]
 
 (* A possible bug in the self pass (?) *)
-function t2_3 (const x: myt ; const y: myt ; const x2: myd) is block {
+function t2_3 (const x: myt ; const y: myt ; const x2: myd) is {
   const t2 =
     case x of [
     | Nil -> (
       case y of [
       | Nil -> 1
       | Cons (a,b) ->
-        block {
+        {
           const a = "a" ;
         } with (int (String.length(a))) + b
       ]
     )
     | Cons (a,b) ->
-      block {
+      {
         const old_b = b ;
         const b =
           case y of [
           | Nil ->
-            block {
+            {
               const f = function (const b:int) is (b + a) ;
             } with f (b+1)
           | _ -> a + b
@@ -142,7 +142,7 @@ function t10 (const x: myti ; const y: myti) is
   | (Nili , ys)  -> fl (ys)
   | (xs  , Nili) -> fl (xs)
   | (Consi (None) , Consi (Some (b))) ->
-    block {
+    {
       const b = 1;
     } with b
   | (Consi (a) , Consi (b)) -> fo (a) + fo (b)
@@ -153,7 +153,7 @@ function t11 (const x: myti ; const y: myti) is
   | (Nili , ys)  -> fl (ys)
   | (xs  , Nili) -> fl (xs)
   | (Consi (Some (a)) , Consi (Some (b))) ->
-    block {
+    {
       const a = 1 ;
     } with a + b
   | (Consi (a) , Consi (b)) -> (
@@ -186,4 +186,16 @@ function t13 (const x:recordi ; const y:recordi) is
   | (record [ a=_;b=_]    , record [ a = Some (nil) ; b = (hd#tl) ]) -> hd
   | (record [ a=_;b=_]    , record [ a = Some ((hd#tl)) ; b = nil ]) -> hd
   | (record [ a=Some (a);b=_] , _) -> int ( List.length(a) )
+  ]
+
+type a is A | B of int | C of int * int * int | D | E ;
+type r is record [ a : int; b : a ] ;
+
+function nested_record_pm (const a : r) : int is
+  case a of [
+  | record [ a = _    ; b = A        ] -> 1
+  | record [ b = B(_) ; a = _        ] -> 2
+  | record [ a = _    ; b = C(_,_,_) ] -> 3
+  | record [ b = D    ; a = _        ] -> 4
+  | record [ a = _    ; b = E        ] -> 5
   ]

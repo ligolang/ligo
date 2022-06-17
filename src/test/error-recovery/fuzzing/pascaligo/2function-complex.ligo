@@ -1,7 +1,7 @@
 
 
  function main ( i : int ) : int is
- block { from
+ { from
  _j : int := 0 ;
  var k : int := 1 ;
  _j := k + i ;

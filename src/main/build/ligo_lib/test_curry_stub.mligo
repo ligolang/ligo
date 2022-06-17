@@ -1,20 +1,26 @@
 type michelson_program = unit
+type michelson_contract = unit
 type test_exec_error_balance_too_low = { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
 type test_exec_error = Rejected of michelson_program * address
                      | Balance_too_low of test_exec_error_balance_too_low
                      | Other of string
 type test_exec_result = Success of nat | Fail of test_exec_error
+type test_baker_policy =
+  | By_round of int
+  | By_account of address
+  | Excluding of address list
 module Test = struct
-  [@private] let failwith (type a) (v : a) : a external_failwith = [%external "FAILWITH"] v
+  [@private] let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
   type ('a, 'b) typed_address = unit
   type michelson_program = unit
   type test_exec_result = unit
   type mutation = unit
   let to_contract (type p s) (_t : (p, s) typed_address) : p contract = failwith "TEST MODE"
-  let originate_from_file (_fn : string) (_e : string) (_v : string list) (_s : michelson_program)  (_t : tez) : address * michelson_program * int = failwith "TEST MODE"
-  let originate (type p s) (_f : p * s -> operation list * s) (_s : s) (_t : tez) : ((p, s) typed_address * michelson_program * int) = failwith "TEST MODE"
+  let originate_from_file (_fn : string) (_e : string) (_v : string list) (_s : michelson_program)  (_t : tez) : address * michelson_contract * int = failwith "TEST MODE"
+  let originate (type p s) (_f : p * s -> operation list * s) (_s : s) (_t : tez) : ((p, s) typed_address * michelson_contract * int) = failwith "TEST MODE"
   let set_source (_a : address) : unit = failwith "TEST MODE"
   let set_baker (_a : address) : unit = failwith "TEST MODE"
+  let set_baker_policy (_bp : test_baker_policy) : unit = failwith "TEST MODE"
   let transfer (_a : address) (_s : michelson_program) (_t : tez) : test_exec_result = failwith "TEST MODE"
   let transfer_exn (_a : address) (_s : michelson_program) (_t : tez) : nat = failwith "TEST MODE"
   let transfer_to_contract (type p) (_a : p contract) (_s : p) (_t : tez) : test_exec_result = failwith "TEST MODE"
@@ -25,6 +31,7 @@ module Test = struct
   let michelson_equal (_m1 : michelson_program) (_m2 : michelson_program) : bool = failwith "TEST MODE"
   let log (type a) (_v : a) : unit = failwith "TEST MODE"
   let reset_state (_n : nat) (_l : tez list) : unit = failwith "TEST MODE"
+  let reset_state_at (_t:timestamp) (_n : nat) (_l : tez list) : unit = failwith "TEST MODE"
   let get_voting_power (_kh : key_hash) : nat = failwith "TEST MODE"
   [@thunk] let get_total_voting_power : nat = failwith "TEST MODE"
   let bootstrap_contract (type p s) (_f : p * s -> operation list * s) (_s : s) (_t : tez) : unit = failwith "TEST MODE"
@@ -56,4 +63,12 @@ module Test = struct
   let constant_to_michelson_program (_s : string) : michelson_program = failwith "TEST MODE"
   let restore_context (_u : unit) : unit = failwith "TEST_POP_CONTEXT"
   let save_context (_u : unit) : unit = failwith "TEST_PUSH_CONTEXT"
+  let drop_context (_u : unit) : unit = failwith "TEST_DROP_CONTEXT"
+  let read_contract_from_file (_fn : string) : michelson_contract = failwith "TEST_READ_CONTRACT_FROM_FILE"
+  let compile_contract_from_file  (_fn : string) (_e : string) (_v : string list) : michelson_contract = failwith "TEST_COMPILE_CONTRACT_FROM_FILE"
+  let compile_contract (type p s) (_f : p * s -> operation list * s) : michelson_contract = failwith "TEST_COMPILE_CONTRACT"
+  let originate_contract (_c : michelson_contract) (_s : michelson_program) (_t : tez) : address = failwith "TEST_ORIGINATE"
+  let size (_c : michelson_contract) : int = failwith "TEST_SIZE"
+  let get_bootstrap_account (_n : nat) : address * key * string = failwith "TEST_GET_BOOTSTRAP_ACCOUNT"
+  let sign (_sk : string) (_d : bytes) : signature = failwith "TEST_SIGN"
 end

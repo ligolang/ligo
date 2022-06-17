@@ -199,11 +199,6 @@ and expression_content ppf (ec: expression_content) =
         rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true } } ->
       fprintf ppf "%a" expression let_result
-  | E_type_in   {type_binder; rhs; let_result} ->
-      fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
-        type_variable type_binder
-        type_expression rhs
-        expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder
         (module_expr expression type_expression e_attributes type_and_module_attr type_and_module_attr) rhs

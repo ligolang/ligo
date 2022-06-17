@@ -1,7 +1,10 @@
 open Types
 
 let v_pair : value * value -> value =
-  fun (a,b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1",b)])
+  fun (a, b) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b)])
+
+let v_triple : value * value * value -> value =
+  fun (a, b, c) -> V_Record (LMap.of_list [(Label "0", a) ; (Label "1", b) ; (Label "2", c)])
 
 let v_record : (string * value) list -> value =
   fun lst ->
@@ -67,7 +70,7 @@ let get_address : value -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Co
   | _ -> None
 
 let get_michelson_contract : value -> unit Tezos_utils.Michelson.michelson option = function
-  | V_Michelson ( Contract x ) -> Some x
+  | V_Michelson_contract x -> Some x
   | _ -> None
 
 let get_michelson_expr : value -> typed_michelson_code option =
@@ -104,6 +107,11 @@ let get_string : value -> string option =
 let get_key : value -> _ option =
   function
   | V_Ct (C_key x) -> Some x
+  | _ -> None
+
+let get_timestamp : value -> Z.t option =
+  function
+  | V_Ct (C_timestamp z) -> Some z
   | _ -> None
 
 let get_string_option : value -> string option option =
@@ -172,6 +180,14 @@ let get_bls12_381_fr : value -> Bls12_381.Fr.t option =
     | V_Ct (C_bls12_381_fr v) -> Some v
     | _ -> None
 
+let get_baker_policy : value -> _ option =
+  fun value ->
+    match value with
+    | V_Construct ("By_round", V_Ct (C_int round)) -> Some (`By_round (Z.to_int round))
+    | V_Construct ("By_account", V_Ct (C_address pkh)) -> Some (`By_account pkh)
+    | V_Construct ("Excluding", V_List l) -> Some (`Excluding (List.filter_map ~f:(function | V_Ct (C_address pkh) -> Some pkh | _ -> None) l))
+    | _ -> None
+
 let tag_constant_val : constant_val -> int = function
   | C_unit -> 0
   | C_bool _ -> 1
@@ -231,6 +247,7 @@ let tag_value : value -> int = function
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
   | V_Thunk _ -> 9
+  | V_Michelson_contract _ -> 10
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -259,22 +276,20 @@ let rec compare_value (v : value) (v' : value) : int =
   )
   | V_Michelson m, V_Michelson m' -> (
     match m, m' with
-      Contract _, Ty_code _ -> -1
-    | Contract c, Contract c' -> Caml.compare c c'
-    | Ty_code _, Contract _ -> 1
     | Ty_code t, Ty_code t' -> Caml.compare t t'
-    | Untyped_code _, (Ty_code _ | Contract _) -> -1
+    | Untyped_code _, Ty_code _ -> -1
     | Untyped_code c, Untyped_code c' -> Caml.compare c c'
-    | (Ty_code _ | Contract _), Untyped_code _ -> 1
+    | Ty_code _, Untyped_code _ -> 1
   )
   | V_Mutation (l, e), V_Mutation (l', e') -> (
     match Location.compare l l' with
       0 -> Caml.compare e e'
     | c -> c
   )
+  | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
   | V_Thunk v, V_Thunk v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _) -> Int.compare (tag_value v) (tag_value v')
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

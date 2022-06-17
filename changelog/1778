@@ -1,0 +1,6 @@
+author: melwyn95
+description: '### Fix record pattern matching when fields are not in the same order
+  in all patterns'
+merge_request: '1778'
+title: Fix record pattern matching when fields are not in the same order in all patterns
+type: fixed

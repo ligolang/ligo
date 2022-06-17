@@ -63,6 +63,86 @@ create-tag:
       when: always
 
 #######################################################################
+# Following script is executed when pipeline execute the release tag process
+# Related to release generation
+# Related to stable version
+# Related to metadata update
+#######################################################################
+determine_new_stable_version:
+  stage: pretooling
+  image: node:12.20.0-buster
+  tags:
+    - docker
+  before_script:
+    # Have to be done here because we are using an image for this job.
+    - apt-get update
+    - apt-get install -y --no-install-recommends jq
+  artifacts:
+    reports:
+      dotenv: stableversion.env
+  script:
+  # Determine new stable version from website docs.
+  # If we stop to use docusaurus we have to determine this value by another way
+    - STABLE_VERSION=`jq '.[1]' gitlab-pages/website/versions.json`
+    - echo "STABLE_VERSION=${STABLE_VERSION}" >> stableversion.env
+
+release:
+  stage: push
+  image: registry.gitlab.com/gitlab-org/release-cli
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+      when: always
+  dependencies:
+    - docker_extract
+    - changelog
+    - initialize-git
+  ## FIXME find a better solution to upload the binary
+  artifacts:
+    expire_in: 1000 yrs
+    paths:
+      - ligo
+      - ligo.deb
+    reports:
+      dotenv: releaseCiJobId.env
+  script:
+    - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
+    - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
+
+create_docker_stable_version:
+  stage: push
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+      when: always
+  variables:
+    STABLE_VERSION: "${STABLE_VERSION}"
+  needs:
+    - job: determine_new_stable_version
+      artifacts: true
+  script:
+    - docker pull ligolang/ligo:$STABLE_VERSION
+    - docker tag ligolang/ligo:$STABLE_VERSION ligolang/ligo:stable
+    - docker push ligolang/ligo:stable
+
+update_release_metadata:
+  stage: push
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+      when: always
+  needs:
+    - job: release
+    - job: determine_new_stable_version
+      artifacts: true
+  script:
+      # git cli initialized in .ci/gitlab-ci.yml. Update release branch metadata
+    - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
+    - git fetch
+    - git checkout release/$CI_COMMIT_TAG  
+    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $RELEASE_CI_JOB_ID 
+    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_STABLE_VERSION $STABLE_VERSION 
+    - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
+    - git push -o ci.variable="TRIGGER_DOC_UPDATE='true'" origin HEAD:release/$CI_COMMIT_TAG
+
+#######################################################################
 # Following script is executed when pipeline has executed Tag process
 # Related to documentation and web-ide
 #######################################################################

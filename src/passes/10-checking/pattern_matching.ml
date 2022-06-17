@@ -136,7 +136,7 @@ let rec substitute_var_in_body ~raise : O.expression_variable -> O.expression_va
           ret false { exp with expression_content = O.E_matching {matchee ; cases}}
         )
         | (E_literal _ | E_constant _ | E_variable _ | E_application _ | E_lambda _ |
-           E_type_abstraction _|E_recursive _|E_let_in _|E_type_in _ | E_mod_in _ |
+           E_type_abstraction _|E_recursive _|E_let_in _| E_mod_in _ |
            E_raw_code _ | E_constructor _ | E_record _ | E_record_accessor _ |
            E_record_update _ | E_type_inst _ | E_module_accessor _ | E_assign _) -> ret true exp
     in
@@ -400,6 +400,13 @@ let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression O.pattern 
   let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
     let fs = O.make_e (O.E_literal (O.Literal_string Stage_common.Backends.fw_partial_match)) (O.t_string ()) in
-    O.e_failwith fs
+    let t_fail =
+      let a = O.TypeVar.of_input_var "a" in
+      let b = O.TypeVar.of_input_var "b" in
+      O.t_for_all a O.Type (O.t_for_all b O.Type (O.t_arrow (O.t_variable a ()) (O.t_variable b ()) ()))
+    in
+    let lamb = (O.e_variable (O.ValueVar.of_input_var "failwith") t_fail) in
+    let args = fs in
+    O.E_application {lamb ; args }
   in
   match_ ~raise ~err_loc [matchee] eqs missing_case_default

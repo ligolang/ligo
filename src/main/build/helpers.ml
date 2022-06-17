@@ -40,6 +40,19 @@ let rec internalize_core (ds : Ast_core.module_) =
   let f (d : _ Ast_core.location_wrap) = Simple_utils.Location.map f d in
   List.map ~f ds
 
+(* [inject_declaration] [syntax] [module_] fetch expression argument passed through CLI options and inject a declaration `let cli_arg = [options.cli_expr_inj]`
+         on top of an existing core program
+*)
+let inject_declaration ~options ~raise ~add_warning : Syntax_types.t -> Ast_core.module_ -> Ast_core.module_ = fun syntax prg ->
+  let inject_arg_declaration arg =
+    let open Ast_core in
+    let expr = Ligo_compile.Utils.core_expression_string ~raise ~add_warning syntax arg in
+    let attr = { inline = false ; no_mutation = true ; thunk = false ; view = false ; public = false ; hidden = false } in
+    let d = Location.wrap @@ Declaration_constant { binder = make_binder (ValueVar.of_input_var "cli_arg") ; expr ; attr } in
+    d::prg
+  in
+  (Option.value_map Compiler_options.(options.test_framework.cli_expr_inj) ~default:prg ~f:inject_arg_declaration)
+
 
 (* LanguageMap are used to cache compilation of standard libs across :
    - multiple imports (#imports)

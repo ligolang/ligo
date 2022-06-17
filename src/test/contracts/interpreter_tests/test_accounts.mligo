@@ -1,5 +1,5 @@
 let test_new =
-  let (sk, pk) = Test.new_account () in
+  let (_sk, pk) = Test.new_account () in
   let pkh = Crypto.hash_key pk in
   let c = Tezos.implicit_account pkh in
   let a = Tezos.address c in

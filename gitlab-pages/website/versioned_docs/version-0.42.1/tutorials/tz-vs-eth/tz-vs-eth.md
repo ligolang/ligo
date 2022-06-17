@@ -264,8 +264,7 @@ For example, we can simulate Ethereum dispatching behaviour:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const parameter : bytes; const storage : int) is
-block {
+function main (const parameter : bytes; const storage : int) is {
   const nop : list (operation) = list []
 } with
     if (parameter = 0xbc1ecb8e)
@@ -283,8 +282,7 @@ type parameter is Increment | Decrement
 
 type storage is int
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [
@@ -363,8 +361,7 @@ type parameter is Add of int | Subtract of int
 
 type storage is int
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [
@@ -437,8 +434,7 @@ function multiplyBy4 (const storage : int) is
 
 type parameter is MultiplyBy4 | MultiplyBy16
 
-function main (const param : parameter; const storage : storage) is
-block {
+function main (const param : parameter; const storage : storage) is {
   const nop : list (operation) = list []
 } with
     case param of [
@@ -568,8 +564,7 @@ function call (const fn : option (int -> int); const value : int) is
   | None -> (failwith ("Lambda is not set") : int)
   ]
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const newStorage
   = case p of [
       SetFunction (fn) -> s with record [fn = Some (fn)]
@@ -670,8 +665,7 @@ In Tezos, the execution model is quite different. Contracts communicate via mess
 ```pascaligo
 type storage is record [rewardsLeft : tez; beneficiaryAddress : address]
 
-function treasury (const p : unit; const s : storage) is
-block {
+function treasury (const p : unit; const s : storage) is {
   // We do our computations first
   const newStorage = s with record [rewardsLeft = 0mutez];
 
@@ -754,8 +748,7 @@ It is a common idiom in Ethereum to make read-only calls to other contracts. Tez
 ```pascaligo skip
 type parameter is DoSomething | DoSomethingCont of int
 
-function doSomething (const p : unit; const s : int) is
-block {
+function doSomething (const p : unit; const s : int) is {
   (* The callee should call `%doSomethingCont` with the value we want *)
   const op = Tezos.transaction ...
 } with (ops, s)

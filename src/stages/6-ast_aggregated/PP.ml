@@ -156,11 +156,6 @@ and expression_content ppf (ec: expression_content) =
         rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true} } ->
       fprintf ppf "@[<h>%a@]" expression let_result
-  | E_type_in   {type_binder; rhs; let_result} ->
-      fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
-        type_variable type_binder
-        type_expression rhs
-        expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_type_inst {forall;type_} ->

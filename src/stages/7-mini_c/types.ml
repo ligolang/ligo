@@ -111,6 +111,7 @@ and expression_content =
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list
+  | E_create_contract of type_expression * type_expression * ((var_name * type_expression) * expression) * expression list
 
 and expression = {
   content : expression_content ;

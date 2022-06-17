@@ -7,6 +7,8 @@
   a new constructor at all those places.
 *)
 
+module Ligo_string = Simple_utils.Ligo_string
+
 module Tree_abstraction = struct
 
   open Ast_imperative
@@ -40,6 +42,7 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
     | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
+    | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -88,7 +91,6 @@ module Tree_abstraction = struct
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
     | C_IMPLICIT_ACCOUNT        -> "Tezos.implicit_account"
-    | C_FAILWITH                -> "Tezos.failwith"
     | C_CREATE_CONTRACT         -> "Tezos.create_contract"
     | C_CALL                    -> "Tezos.transaction"
     | C_SET_DELEGATE            -> "Tezos.set_delegate"
@@ -145,13 +147,13 @@ module Tree_abstraction = struct
       | Const x -> pseudo_module_to_string x
 end
 
-module Stacking = struct
+module Michelson = struct
   (*
     Most constants pass through the Spilling unchanged. So they need to be
     compiled down to Michelson. This is the last step.
 
     When compiling the constant, we need to provide its arity (through the type
-    predicate, defined in `Helpers.Stacking`, and its michelson code.
+    predicate, defined in `Helpers.Michelson`, and its michelson code.
     In the case of an n-ary constant, we assume that the stack has the form:
     `x1 :: x2 :: x3 ... :: xn :: _`.
 
@@ -160,7 +162,7 @@ module Stacking = struct
     be written by hand.
    *)
   type protocol_type = Environment.Protocols.t
-  include Helpers.Stacking
+  include Helpers.Michelson
   open Tezos_utils.Michelson
   open Stage_common.Types
 
@@ -198,7 +200,6 @@ module Stacking = struct
     | C_MAP_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE")
     | (C_MAP_GET_AND_UPDATE|C_BIG_MAP_GET_AND_UPDATE) , _ ->
       Some (simple_ternary @@ seq [prim "GET_AND_UPDATE"; prim "PAIR"])
-    | C_FAILWITH              , _   -> Some ( simple_unary @@ prim "FAILWITH")
     | C_UNOPT                 , _   -> Some ( simple_binary @@ i_if_none (seq [i_push_string "option is None"; i_failwith]) (seq []))
     | C_UNOPT_WITH_ERROR      , _   -> Some ( simple_binary @@ i_if_none (i_failwith) (seq [ i_swap; i_drop]))
     | C_ASSERT_INFERRED    , _   -> Some ( simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit]))
@@ -220,8 +221,6 @@ module Stacking = struct
     | C_LOOP_CONTINUE      , _   -> Some (trivial_special "LEFT")
     | C_LOOP_STOP          , _   -> Some (trivial_special "RIGHT")
     | C_LIST_EMPTY         , _   -> Some (trivial_special "NIL")
-    | C_LIST_HEAD_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_swap; i_drop; i_some]) (with_args "NONE") )
-    | C_LIST_TAIL_OPT      , _   -> Some ( special @@ fun with_args -> i_if_cons (seq [i_drop; i_some])       (with_args "NONE") )
     | C_SET_EMPTY          , _   -> Some (trivial_special "EMPTY_SET")
     | C_MAP_EMPTY          , _   -> Some (trivial_special "EMPTY_MAP")
     | C_BIG_MAP_EMPTY      , _   -> Some (trivial_special "EMPTY_BIG_MAP")

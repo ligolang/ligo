@@ -38,8 +38,7 @@ type parameter is address
 
 type storage is unit
 
-function main (const destination_addr : parameter; const s : storage) is
-block {
+function main (const destination_addr : parameter; const s : storage) is {
   const maybe_contract : option (contract (unit))
   = Tezos.get_contract_opt (destination_addr);
   const destination_contract
@@ -47,7 +46,7 @@ block {
       Some (contract) -> contract
     | None -> (failwith ("Contract does not exist") : contract (unit))
     ];
-  const op = Tezos.transaction (Unit, Tezos.amount, destination_contract)
+  const op = Tezos.transaction (Unit, (Tezos.get_amount ()), destination_contract)
 } with (op, Unit)
 ```
 
@@ -66,7 +65,7 @@ let main (destination_addr, _ : parameter * storage) =
     match maybe_contract with
       Some contract -> contract
     | None -> (failwith "Contract does not exist" : unit contract) in
-  let op = Tezos.transaction () Tezos.amount destination_contract in
+  let op = Tezos.transaction () (Tezos.get_amount ()) destination_contract in
   op, ()
 ```
 
@@ -86,7 +85,7 @@ let main = ((destination_addr, _): (parameter, storage)) => {
     | Some (contract) => contract
     | None => (failwith("Contract does not exist") : contract(unit))
     };
-  let op = Tezos.transaction((), Tezos.amount, destination_contract);
+  let op = Tezos.transaction((), (Tezos.get_amount ()), destination_contract);
   (op, ())
 };
 ```
@@ -106,8 +105,7 @@ type parameter is int
 
 type storage is address
 
-function get_add_entrypoint (const addr : address) is
-block {
+function get_add_entrypoint (const addr : address) is {
   const maybe_contract : option (contract (int)) = Tezos.get_contract_opt (addr)
 } with
     case maybe_contract of [
@@ -115,8 +113,7 @@ block {
     | None -> (failwith ("Callee does not exist") : contract (int))
     ]
 
-function main (const param : parameter; const callee_addr : storage) is
-block {
+function main (const param : parameter; const callee_addr : storage) is {
   const callee : contract (int) = Tezos.get_contract (callee_addr);
   const op = Tezos.transaction (param, 0mutez, callee)
 } with (list [op], callee_addr)
@@ -210,8 +207,7 @@ But what if we want to make a transaction to a contract but do not know the full
 type parameter is
     Set of int | Add of int | Subtract of int | Multiply of int | Reset
 
-function main (const param : parameter; const storage : int) is
-block {
+function main (const param : parameter; const storage : int) is {
   const nop : list (operation) = list []
 } with
     case param of [
@@ -289,8 +285,7 @@ type parameter is int
 
 type storage is address
 
-function get_add_entrypoint (const addr : address) is
-block {
+function get_add_entrypoint (const addr : address) is {
   const entrypoint : option (contract (int))
   = Tezos.get_entrypoint_opt ("%add", addr)
 } with
@@ -299,8 +294,7 @@ block {
     | None -> (failwith ("The entrypoint does not exist") : contract (int))
     ]
 
-function main (const param : parameter; const callee_addr : storage) is
-block {
+function main (const param : parameter; const callee_addr : storage) is {
   const add : contract (int) = get_add_entrypoint (callee_addr);
   const op = Tezos.transaction (param, 0mutez, add)
 } with (list [op], callee_addr)
@@ -460,7 +454,7 @@ When trying to port an existing distributed application to Tezos, you may want t
 
 In theory, one can use a callback – the callee could emit an operation back to the caller with the computed value. However, this pattern is often insecure:
 * You should somehow make sure that the response matches the request. Due to the breadth-first order of execution, you cannot assume that there have been no other requests in between.
-* Some contracts use `Tezos.sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
+* Some contracts use `Tezos.get_sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
 
 Let us look at a simple access control contract with a "view" entrypoint:
 <Syntax syntax="pascaligo">
@@ -473,16 +467,14 @@ type parameter is
 
 type storage is record [senders_whitelist : set (address)]
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const op
   = case p of [
       Call (op) ->
-        if Set.mem (Tezos.sender, s.senders_whitelist)
+        if Set.mem ((Tezos.get_sender ()), s.senders_whitelist)
         then op (Unit)
         else (failwith ("Sender is not whitelisted") : operation)
-    | IsWhitelisted (addr_and_callback) ->
-        block {
+    | IsWhitelisted (addr_and_callback) -> {
           const addr = addr_and_callback.0;
           const callback_contract = addr_and_callback.1;
           const whitelisted = Set.mem (addr, s.senders_whitelist)
@@ -506,7 +498,7 @@ let main (p, s : parameter * storage) =
   let op =
     match p with
       Call op ->
-        if Set.mem Tezos.sender s.senders_whitelist
+        if Set.mem (Tezos.get_sender ()) s.senders_whitelist
         then op ()
         else (failwith "Sender is not whitelisted" : operation)
     | IsWhitelisted arg ->
@@ -533,7 +525,7 @@ let main = ((p, s): (parameter, storage)) => {
     switch(p){
     | Call op =>
         {
-          if (Set.mem(Tezos.sender, s.senders_whitelist)) {
+          if (Set.mem((Tezos.get_sender ()), s.senders_whitelist)) {
             op()
           } else {
             (failwith("Sender is not whitelisted") : operation)
@@ -571,8 +563,7 @@ function transfer
    const amount_ : nat;
    const storage : storage) is (* ... *)
 
-function main (const p : parameter; const s : storage) is
-block {
+function main (const p : parameter; const s : storage) is {
   const nop : list (operation) = list []
 } with
     case p of [
@@ -580,14 +571,13 @@ block {
         if s.paused
         then
           (failwith ("The contract is paused") : (list (operation) * storage))
-        else
-          block {
+        else {
             const src = arg.0;
             const dst = arg.1;
             const amount_ = arg.2
           } with (nop, transfer (src, dst, amount_, s))
     | SetPaused (paused) ->
-        if (Tezos.sender =/= s.owner)
+        if ((Tezos.get_sender ()) =/= s.owner)
         then (failwith ("Access denied") : (list (operation) * storage))
         else (nop, s with record [paused = paused])
 ```
@@ -615,7 +605,7 @@ let main (p, s : parameter * storage) =
          let src, dst, amount_ = arg in
          transfer (src, dst, amount_, s)
    | SetPaused paused ->
-       if Tezos.sender <> s.owner
+       if (Tezos.get_sender ()) <> s.owner
        then (failwith "Access denied" : storage)
        else {s with paused = paused})
 ```
@@ -643,7 +633,7 @@ let main = ((p, s): (parameter, storage)) => {
         (nop, transfer(src, dst, amount_, s))
       }
   | SetPaused paused =>
-      if (Tezos.sender != s.owner) {
+      if ((Tezos.get_sender()) != s.owner) {
         (failwith("Access denied") : (list(operation), storage))
       } else {
         (nop, {...s, paused: paused})
@@ -717,8 +707,7 @@ Tezos.create_contract(
 // the contract, and an operation to self, that will continue
 // the execution after the contract is originated.
 
-function create_and_call (const st : list (address)) is
-block {
+function create_and_call (const st : list (address)) is {
   const create_contract_result =
       Tezos.create_contract(
           (function (const p : int; const s : int) is

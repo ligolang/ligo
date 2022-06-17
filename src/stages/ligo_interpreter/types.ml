@@ -12,7 +12,7 @@ type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 type mutation = Location.t * Ast_aggregated.expression
 
 type env_item =
-  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool }
+  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool ; inline : bool }
 
 and env = env_item list
 
@@ -32,7 +32,6 @@ and thunk_val = {
 and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggregated.type_expression }
 
 and michelson_code =
-  | Contract of mcode
   | Ty_code of typed_michelson_code
   | Untyped_code of mcode
 
@@ -71,6 +70,7 @@ and value =
   | V_Set of value list
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
+  | V_Michelson_contract of mcode
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Thunk of thunk_val

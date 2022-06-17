@@ -1,0 +1,1205 @@
+From 76566e146d809550652d426ef77be9df4cbf0f4b Mon Sep 17 00:00:00 2001
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Date: Sat, 8 Jan 2022 18:30:42 +0530
+Subject: [PATCH 1/2] Disable Unix APIs on Windows
+
+---
+ bigstring_unix/src/bigstring_unix.ml          |   2 +
+ bigstring_unix/src/bigstring_unix_stubs.c     |  12 +
+ bigstring_unix/src/dune                       |   4 +-
+ bigstring_unix/src/recvmmsg.c                 |  10 +
+ .../src/error_checking_mutex_stubs.c          |  23 +-
+ iobuf_unix/src/dune                           |   2 +-
+ iobuf_unix/src/iobuf_stubs.c                  |  42 +-
+ linux_ext/src/dune                            |   2 +-
+ src/core_unix.ml                              |   8 +-
+ src/core_unix.mli                             |  49 --
+ src/dune                                      |   2 +-
+ src/nss_stubs.c                               |  57 +-
+ src/unix_stubs.c                              | 518 +++++++++++++++++-
+ src/unix_time_stubs.c                         |  46 ++
+ syslog/src/dune                               |   2 +-
+ syslog/src/syslog_stubs.c                     |  55 +-
+ time_stamp_counter/src/dune                   |   2 +-
+ 17 files changed, 745 insertions(+), 91 deletions(-)
+
+diff --git a/bigstring_unix/src/bigstring_unix.ml b/bigstring_unix/src/bigstring_unix.ml
+index c9b4f80..888a159 100644
+--- a/bigstring_unix/src/bigstring_unix.ml
++++ b/bigstring_unix/src/bigstring_unix.ml
+@@ -121,6 +121,8 @@ let pwrite_assume_fd_is_nonblocking fd ~offset ?(pos = 0) ?len bstr =
+ 
+ [%%ifdef JSC_MSG_NOSIGNAL]
+ [%%define JSC_NOSIGPIPE]
++[%%else]
++[%%undef JSC_NOSIGPIPE]
+ [%%endif]
+ 
+ [%%ifdef JSC_SO_NOSIGPIPE]
+diff --git a/bigstring_unix/src/bigstring_unix_stubs.c b/bigstring_unix/src/bigstring_unix_stubs.c
+index a674098..6878c29 100644
+--- a/bigstring_unix/src/bigstring_unix_stubs.c
++++ b/bigstring_unix/src/bigstring_unix_stubs.c
+@@ -1,3 +1,13 @@
++#if (defined(WIN32) || defined(_WIN32))
++#include <caml/mlvalues.h>
++#include "caml/fail.h"
++CAMLprim value bigstring_init_stub(void* v_unit) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#undef JSC_NOSIGPIPE
++#else
++
+ #include "config.h"
+ 
+ #define _FILE_OFFSET_BITS 64
+@@ -735,3 +745,5 @@ CAMLprim value bigstring_sendmsg_nonblocking_no_sigpipe_stub(
+ #warning "Neither MSG_NOSIGNAL nor SO_NOSIGPIPE defined; bigstring_send{,msg}_noblocking_no_sigpipe not implemented"
+ #warning "Platform not supported. Please report this."
+ #endif /* JSC_MSG_NOSIGNAL || JSC_SO_NOSIGPIPE */
++
++#endif
+\ No newline at end of file
+diff --git a/bigstring_unix/src/dune b/bigstring_unix/src/dune
+index 4fce1a2..0d388b8 100644
+--- a/bigstring_unix/src/dune
++++ b/bigstring_unix/src/dune
+@@ -3,7 +3,7 @@
+  (preprocessor_deps config.h) (preprocess (pps ppx_jane)))
+ 
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:jst-config:config.h} .")))
++ (action (bash "cp '%{lib:jst-config:config.h}' .")))
+ 
+ (rule (targets socketaddr.h) (deps)
+- (action (bash "cp %{lib:core:socketaddr.h} .")))
+\ No newline at end of file
++ (action (bash "cp '%{lib:core:socketaddr.h}' .")))
+\ No newline at end of file
+diff --git a/bigstring_unix/src/recvmmsg.c b/bigstring_unix/src/recvmmsg.c
+index 664b6c1..7434c93 100644
+--- a/bigstring_unix/src/recvmmsg.c
++++ b/bigstring_unix/src/recvmmsg.c
+@@ -1,3 +1,12 @@
++#if (defined(WIN32) || defined(_WIN32))
++int recvmmsg_assume_fd_is_nonblocking(
++  int v_fd, void *iovecs, unsigned count, int v_srcs, void *hdrs)
++{
++  return 0;
++}
++#undef JSC_NOSIGPIPE
++#else
++
+ #define _GNU_SOURCE             /* recvmmsg */
+ 
+ #include <stdio.h>
+@@ -102,3 +111,4 @@ int recvmmsg_assume_fd_is_nonblocking(
+ }
+ 
+ #endif  /* JSC_RECVMMSG */
++#endif
+\ No newline at end of file
+diff --git a/error_checking_mutex/src/error_checking_mutex_stubs.c b/error_checking_mutex/src/error_checking_mutex_stubs.c
+index ad4d8bb..96f7994 100644
+--- a/error_checking_mutex/src/error_checking_mutex_stubs.c
++++ b/error_checking_mutex/src/error_checking_mutex_stubs.c
+@@ -4,6 +4,7 @@
+ #include <pthread.h>
+ 
+ #include "ocaml_utils.h"
++#include "caml/fail.h"
+ 
+ #define Mutex_val(v) (* ((pthread_mutex_t **) Data_custom_val(v)))
+ 
+@@ -16,13 +17,14 @@ static void caml_pthread_check(int retcode, char *msg)
+   value str;
+ 
+   if (retcode == 0) return;
+-
++#if !(defined(WIN32) || defined(_WIN32))
+ #ifdef __GLIBC__
+   err = strerror_r(retcode, err_buf, err_buf_len);
+ #else
+   if (strerror_r(retcode, err_buf, err_buf_len) == -1)
+     uerror("strerror_r", Nothing);
+   err = err_buf;
++#endif
+ #endif
+ 
+   msglen = strlen(msg);
+@@ -35,6 +37,16 @@ static void caml_pthread_check(int retcode, char *msg)
+ #undef err_buf_len
+ }
+ 
++#if (defined(WIN32) || defined(_WIN32))
++static void caml_mutex_finalize(value v_mtx) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++static int caml_mutex_condition_compare(value v_mtx1, value v_mtx2) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ static void caml_mutex_finalize(value v_mtx)
+ {
+   pthread_mutex_t *mtx = Mutex_val(v_mtx);
+@@ -48,6 +60,7 @@ static int caml_mutex_condition_compare(value v_mtx1, value v_mtx2)
+   pthread_mutex_t *mtx2 = Mutex_val(v_mtx2);
+   return mtx1 == mtx2 ? 0 : mtx1 < mtx2 ? -1 : 1;
+ }
++#endif
+ 
+ static struct custom_operations caml_mutex_ops = {
+   "_mutex",
+@@ -64,6 +77,13 @@ static struct custom_operations caml_mutex_ops = {
+ #endif
+ };
+ 
++#if (defined(WIN32) || defined(_WIN32))
++CAMLprim value unix_create_error_checking_mutex(value __unused v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ #if defined(_POSIX_THREADS) && _POSIX_THREADS >= 200112L
+ CAMLprim value unix_create_error_checking_mutex(value __unused v_unit)
+ {
+@@ -84,3 +104,4 @@ CAMLprim value unix_create_error_checking_mutex(value __unused v_unit)
+ #else
+ #warning "_POSIX_THREADS not defined or < 200112; unix_create_error_checking_mutex not available"
+ #endif
++#endif
+\ No newline at end of file
+diff --git a/iobuf_unix/src/dune b/iobuf_unix/src/dune
+index 40a7ae7..7510814 100644
+--- a/iobuf_unix/src/dune
++++ b/iobuf_unix/src/dune
+@@ -4,4 +4,4 @@
+  (preprocess (pps ppx_jane)))
+ 
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:jst-config:config.h} .")))
+\ No newline at end of file
++ (action (bash "cp '%{lib:jst-config:config.h}' .")))
+\ No newline at end of file
+diff --git a/iobuf_unix/src/iobuf_stubs.c b/iobuf_unix/src/iobuf_stubs.c
+index 1f588bd..ce0676c 100644
+--- a/iobuf_unix/src/iobuf_stubs.c
++++ b/iobuf_unix/src/iobuf_stubs.c
+@@ -1,9 +1,3 @@
+-#include "config.h"
+-#include "iobuf.h"
+-#include "unix_utils.h"
+-
+-#include <arpa/inet.h>
+-
+ #include <caml/mlvalues.h>
+ #include <caml/memory.h>
+ #include <caml/alloc.h>
+@@ -12,6 +6,41 @@
+ #include <caml/fail.h>
+ #include <caml/bigarray.h>
+ 
++#if (defined(WIN32) || defined(_WIN32))
++CAMLprim value iobuf_recvmmsg_ctx(value v_iobufs)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value
++iobuf_recvmmsg_assume_fd_is_nonblocking_stub
++(value v_fd, value v_iobufs, value v_recvmmsg_ctx)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value
++iobuf_unsafe_pokef_double
++(value v_iobuf, value v_fmt, value v_limit, double d_val)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value iobuf_unsafe_pokef_double_bytecode(value* vals, value nvals) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
++#include "config.h"
++#include "iobuf.h"
++#include "unix_utils.h"
++
++#include <arpa/inet.h>
++
+ 
+ #include <errno.h>
+ #include <assert.h>
+@@ -167,3 +196,4 @@ CAMLprim value iobuf_unsafe_pokef_double_bytecode(value* vals, value nvals) {
+   assert(nvals = 4);
+   return iobuf_unsafe_pokef_double(vals[0], vals[1], vals[2], Double_val(vals[3]));
+ }
++#endif
+\ No newline at end of file
+diff --git a/linux_ext/src/dune b/linux_ext/src/dune
+index 2075f16..2ed8caf 100644
+--- a/linux_ext/src/dune
++++ b/linux_ext/src/dune
+@@ -3,4 +3,4 @@
+  (preprocessor_deps config.h) (preprocess (pps ppx_jane)))
+ 
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:jst-config:config.h} .")))
+\ No newline at end of file
++ (action (bash "cp '%{lib:jst-config:config.h}' .")))
+\ No newline at end of file
+diff --git a/src/core_unix.ml b/src/core_unix.ml
+index c74e6b9..88f3c81 100644
+--- a/src/core_unix.ml
++++ b/src/core_unix.ml
+@@ -1347,7 +1347,7 @@ let clear_nonblock = unary_fd Unix.clear_nonblock
+ let set_close_on_exec = unary_fd Unix.set_close_on_exec
+ let clear_close_on_exec = unary_fd Unix.clear_close_on_exec
+ 
+-module Open_flags = struct
++(* module Open_flags = struct
+   external append    : unit -> Int63.t = "unix_O_APPEND"
+   external async     : unit -> Int63.t = "unix_O_ASYNC"
+   external cloexec   : unit -> Int63.t = "unix_O_CLOEXEC"
+@@ -1450,9 +1450,9 @@ module Open_flags = struct
+     in
+     Sexp.List (prefix @ rest)
+   ;;
+-end
++end *)
+ 
+-let fcntl_getfl, fcntl_setfl =
++(* let fcntl_getfl, fcntl_setfl =
+   let module M = struct
+     external unix_fcntl : Unix.file_descr -> Int63.t -> Int63.t -> Int63.t = "core_unix_fcntl"
+     external getfl : unit -> Int63.t = "unix_F_GETFL"
+@@ -1469,7 +1469,7 @@ let fcntl_getfl, fcntl_setfl =
+     assert (result = Int63.zero);
+   in
+   fcntl_getfl, fcntl_setfl
+-;;
++;; *)
+ 
+ let mkdir ?(perm=0o777) dirname =
+   improve (fun () -> Unix.mkdir dirname ~perm)
+diff --git a/src/core_unix.mli b/src/core_unix.mli
+index 6019c1d..1be1178 100644
+--- a/src/core_unix.mli
++++ b/src/core_unix.mli
+@@ -453,55 +453,6 @@ type file_perm = int [@@deriving sexp]
+     permissions 0o644. *)
+ val openfile : ?perm:file_perm -> mode:open_flag list -> string -> File_descr.t
+ 
+-module Open_flags : sig
+-  (** [Open_flags.t] represents the flags associated with a file descriptor in the
+-      open-file-descriptor table.  It deals with the same thing as OCaml's [open_flag]
+-      type; however, it uses Core's [Flags] approach and the underlying integer bitmask
+-      representation, and so interoperates more smoothly with C. *)
+-  type t [@@deriving sexp_of]
+-
+-  include Flags.S with type t := t
+-
+-  (** access mode.
+-
+-      These three flags are not individual bits like flags usually are.  The access mode
+-      is represented by the lower two bits of the [Open_flags.t].  A particular
+-      [Open_flags.t] should include exactly one access mode.  Combining different
+-      [Open_flags.t]'s using flags operations (e.g [+]) is only sensible if they have the
+-      same access mode. *)
+-  val rdonly   : t
+-  val wronly   : t
+-  val rdwr     : t
+-
+-  (** creation *)
+-  val creat    : t
+-  val excl     : t
+-  val noctty   : t
+-  val trunc    : t
+-
+-  val append   : t
+-  val nonblock : t
+-
+-  val dsync    : t
+-  val sync     : t
+-  val rsync    : t
+-
+-  (** [can_read t] iff [t] has [rdonly] or [rdwr] *)
+-  val can_read  : t -> bool
+-
+-  (** [can_read t] iff [t] has [wronly] or [rdwr] *)
+-  val can_write : t -> bool
+-end
+-
+-(** [fcntl_getfl fd] gets the current flags for [fd] from the open-file-descriptor table
+-    via the system call [fcntl(fd, F_GETFL)].  See "man fcntl". *)
+-val fcntl_getfl : File_descr.t -> Open_flags.t
+-
+-(** [fcntl_setfl fd flags] sets the flags for [fd] in the open-file-descriptor table via
+-    the system call [fcntl(fd, F_SETFL, flags)].  See "man fcntl".  As per the Linux man
+-    page, on Linux this only allows [append] and [nonblock] to be set. *)
+-val fcntl_setfl : File_descr.t -> Open_flags.t -> unit
+-
+ (** Close a file descriptor. *)
+ val close : ?restart:bool (** defaults to false *) -> File_descr.t -> unit
+ 
+diff --git a/src/dune b/src/dune
+index ed2e7f8..6169eb4 100644
+--- a/src/dune
++++ b/src/dune
+@@ -1,6 +1,6 @@
+ (rule (targets config.h thread_id.h) (deps)
+  (action
+-  (bash "cp %{lib:jst-config:config.h} %{lib:jst-config:thread_id.h} .")))
++  (bash "cp '%{lib:jst-config:config.h}' '%{lib:jst-config:thread_id.h}' .")))
+ 
+ (library (name core) (public_name core)
+  (libraries core_kernel.caml_unix core_kernel core_kernel.base_for_tests
+diff --git a/src/nss_stubs.c b/src/nss_stubs.c
+index 5a15196..3fea5f6 100644
+--- a/src/nss_stubs.c
++++ b/src/nss_stubs.c
+@@ -3,11 +3,14 @@
+ #define _GNU_SOURCE
+ 
+ #include <string.h>
++#if (defined(WIN32) || defined(_WIN32))
++#else
+ #include <sys/types.h>
+ #include <grp.h>
+ #include <pwd.h>
+ #include <assert.h>
+ #include <errno.h>
++#endif
+ 
+ #include <caml/mlvalues.h>
+ #include <caml/alloc.h>
+@@ -19,6 +22,55 @@
+ #include <caml/unixsupport.h>
+ 
+ 
++/*$ generate gr gid */
++
++#if (defined(WIN32) || defined(_WIN32))
++static value pw_entry_alloc(struct passwd *entry)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static value gr_entry_alloc (struct group *entry)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_getgrgid_r(value v_gid, value v_buf)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/*$ generate pw uid */
++
++CAMLprim value core_unix_getpwuid_r(value v_uid, value v_buf)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/*$ generate pw nam */
++
++CAMLprim value core_unix_getpwnam_r(value v_nam, value v_buf)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/*$ generate gr nam */
++
++CAMLprim value core_unix_getgrnam_r(value v_nam, value v_buf)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ static value pw_entry_alloc(struct passwd *entry)
+ {
+   CAMLparam0();
+@@ -54,8 +106,6 @@ static value gr_entry_alloc (struct group *entry)
+ }
+ 
+ 
+-/*$ generate gr gid */
+-
+ CAMLprim value core_unix_getgrgid_r(value v_gid, value v_buf)
+ {
+   CAMLparam2(v_gid, v_buf);
+@@ -176,5 +226,4 @@ CAMLprim value core_unix_getgrnam_r(value v_nam, value v_buf)
+     }
+   }
+ }
+-
+-
++#endif
+diff --git a/src/unix_stubs.c b/src/unix_stubs.c
+index d6e9cd2..a07303d 100644
+--- a/src/unix_stubs.c
++++ b/src/unix_stubs.c
+@@ -11,42 +11,46 @@
+ #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <sys/socket.h>
+ #endif
++#if (defined(WIN32) || defined(_WIN32))
++#else
+ #include <sys/uio.h>
+ #include <sys/utsname.h>
+ #include <sys/file.h>
+-#include <pwd.h>
+-#include <dirent.h>
+-#include <errno.h>
+-#include <limits.h>
+-#include <net/if.h>
+-#include <netinet/in.h>
+-#include <signal.h>
+-#include <stdlib.h>
+ #include <sys/ioctl.h>
+ #include <sys/resource.h>
+-#include <grp.h>
+ #include <sys/select.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+-#include <fnmatch.h>
+-#include <stdio.h>
+-#include <assert.h>
+-#include <time.h>
+-#include <unistd.h>
+-#include <sched.h>
+-#include <fcntl.h>
+ #include <sys/mman.h>
+-#include <math.h>
++#include <pwd.h>
++#include <net/if.h>
++#include <netinet/in.h>
++#include <grp.h>
++#include <fnmatch.h>
+ #include <arpa/inet.h>
+ #include <netdb.h>
+ #include <ifaddrs.h>
+-
+ /* makedev */
+ #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ /* The BSDs expose the definition for this macro via <sys/types.h>. */
+ #else
+ #include <sys/sysmacros.h>
++#include "unix_utils.h"
+ #endif
++#endif
++#include <dirent.h>
++#include <errno.h>
++#include <limits.h>
++#include <signal.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <assert.h>
++#include <time.h>
++#include <unistd.h>
++#include <sched.h>
++#include <fcntl.h>
++#include <math.h>
++
+ 
+ #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #define stat64 stat
+@@ -55,7 +59,6 @@
+ #endif
+ 
+ #include "ocaml_utils.h"
+-#include "unix_utils.h"
+ #include "config.h"
+ #include "timespec.h"
+ #include "thread_id.h"
+@@ -64,6 +67,482 @@
+ #include <wordexp.h>
+ #endif
+ 
++
++#if (defined(WIN32) || defined(_WIN32))
++CAMLprim value core_unix_error_of_code(value code)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_code_of_unix_error(value error)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_error_stub(value v_errcode, value v_cmdname, value cmd_arg)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_fcntl (value fd, value v_cmd, value v_arg) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++int core_unix_close_durably(int fd)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++void core_unix_close_on_exec(int fd)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++static inline char * core_copy_to_c_string(value v_str)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_setpwent(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_endpwent(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_getpwent(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_flock(value v_blocking, value v_fd, value v_lock_type)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_mknod_stub(
++  value v_pathname, value v_mode, value v_perm, value v_major, value v_minor)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_sync(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_fsync(value v_fd)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_fdatasync(value v_fd)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_dirfd(value v_dh)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_readdir_ino_stub(value v_dh)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_read_assume_fd_is_nonblocking_stub(
++  value v_fd, value v_buf, value v_pos, value v_len)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_write_assume_fd_is_nonblocking_stub(
++  value v_fd, value v_buf, value v_pos, value v_len)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_writev_assume_fd_is_nonblocking_stub(
++  value v_fd, value v_iovecs, value v_count)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_writev_stub(value v_fd, value v_iovecs, value v_count)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++
++static inline void fdlist_to_fdset(value fdlist, fd_set *fdset, int *maxfd)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static inline value fdset_to_fdlist(value fdlist, fd_set *fdset)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static inline void decode_sigset(value vset, value set)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_pselect_stub(
++  value v_rfds, value v_wfds, value v_efds, value v_timeout, value v_sigmask)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_clock_gettime(value v_cl)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_clock_settime(value v_cl, value v_t)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_clock_getres(value v_cl)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static inline pthread_t pthread_t_val(value __unused v_tid)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_clock_process_cputime_id_stub(value __unused v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_clock_thread_cputime_id_stub(value __unused v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* Resource limits */
++
++CAMLprim value core_unix_getrlimit(value v_resource)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_setrlimit(value v_resource, value v_limits)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* Resource usage */
++
++CAMLprim value core_unix_getrusage(value v_who)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++ }
++
++/* System configuration */
++
++CAMLprim value core_unix_sysconf(value v_name)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++/* Pathname resolution */
++
++/* Seems like a sane approach to getting a reasonable bound for the
++   maximum path length */
++CAMLprim value core_unix_realpath(value v_path)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++
++}
++
++
++/* Temporary file and directory creation */
++
++static inline void init_mktemp(char *loc, char *buf, value v_path)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mkstemp(value v_path)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mkdtemp(value v_path)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* Signal handling */
++
++CAMLprim value core_unix_abort(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* User id, group id management */
++
++CAMLprim value core_unix_initgroups(value v_user, value v_group)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_getgrouplist(value v_user, value v_group)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++/* Globbing and shell string expansion */
++
++CAMLprim value core_unix_fnmatch_make_flags(value v_flags)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_fnmatch(value v_flags, value v_glob, value v_str)
++{
++  caml_failwith("not implemented for win32"); return Val_unit;
++}
++
++/* System information */
++
++CAMLprim value core_unix_uname(value v_unit __unused)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* Additional IP functionality */
++
++CAMLprim value core_unix_if_indextoname(value v_index)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mcast_modify (value v_action,
++                                       value v_ifname_opt,
++                                       value v_source_opt,
++                                       value v_fd,
++                                       value v_sa)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++
++CAMLprim value core_unix_mcast_get_ttl(value v_socket)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mcast_set_ttl(value v_socket, value v_ttl)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mcast_set_ifname(value v_socket, value v_ifname)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mcast_get_loop(value v_socket)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_mcast_set_loop(value v_socket, value v_loop)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_nice(value v_inc)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_unsetenv(value var)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++static int mman_mcl_flags_table[] = {  };
++
++CAMLprim value core_unix_mlockall(value v_flags)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_munlockall()
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static value alloc_tm(struct tm *tm)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_strptime(value v_fmt, value v_s)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_remove(value v_path)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_gettid(value v_unit __unused)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++static value
++sockaddr_to_caml_string_of_octets(struct sockaddr* sa, int family)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static value
++alloc_ifaddrs(struct ifaddrs* ifap, value family_variant)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++/* THE ORDERING OF THESE CONSTANTS MUST MATCH core_unix.ml!!! */
++static uint32_t iff_table [] = {
++};
++
++CAMLprim value
++core_unix_iff_to_int(value v_iff)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value
++core_unix_getifaddrs(value v_unit)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++
++CAMLprim value core_unix_inet4_addr_of_int32(value v) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_inet4_addr_to_int32_exn(value v) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_inet4_addr_of_int63(value v) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_inet4_addr_to_int63_exn(value v) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_unix_sched_setscheduler(
++  value v_pid, value v_policy, value v_priority)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ CAMLprim value core_unix_error_of_code(value code)
+ {
+   return unix_error_of_code(Int_val(code));
+@@ -1636,3 +2115,4 @@ CAMLprim value core_unix_inet4_addr_to_int63_exn(value v) {
+   addr = GET_INET_ADDR(v);
+   CAMLreturn(caml_alloc_int63(htonl(addr.s_addr)));
+ }
++#endif
+\ No newline at end of file
+diff --git a/src/unix_time_stubs.c b/src/unix_time_stubs.c
+index 0aec6c6..5fe71c2 100644
+--- a/src/unix_time_stubs.c
++++ b/src/unix_time_stubs.c
+@@ -27,6 +27,22 @@
+ 
+ #ifdef JSC_POSIX_TIMERS
+ 
++#if (defined(WIN32) || defined(_WIN32))
++value caml_clock_getres (value clock_type) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++value caml_clock_gettime (value clock_type) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++clockid_t caml_clockid_t_of_caml (value clock_type) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ clockid_t caml_clockid_t_of_caml (value clock_type) {
+   switch (Int_val(clock_type)) {
+     case 0: return CLOCK_REALTIME;
+@@ -38,6 +54,7 @@ clockid_t caml_clockid_t_of_caml (value clock_type) {
+   caml_failwith ("invalid Clock.t");
+ }
+ 
++
+ value caml_clock_getres (value clock_type) {
+   struct timespec tp;
+   clock_getres (caml_clockid_t_of_caml (clock_type), &tp);
+@@ -49,9 +66,36 @@ value caml_clock_gettime (value clock_type) {
+   clock_gettime (caml_clockid_t_of_caml (clock_type), &tp);
+   return (caml_alloc_int63 (((int64_t)tp.tv_sec * 1000 * 1000 * 1000) + (int64_t)tp.tv_nsec));
+ }
++#endif
++
+ 
+ #endif /* JSC_POSIX_TIMERS */
+ 
++#if (defined(WIN32) || defined(_WIN32))
++CAMLprim value core_timegm (value tm_val) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++CAMLprim value core_time_ns_strftime(value v_tm, value v_fmt) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++CAMLprim value core_time_ns_nanosleep(value v_seconds)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++CAMLprim value core_gmtime(value t)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++CAMLprim value core_localtime(value t)
++{
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ static value alloc_tm(struct tm *tm)
+ {
+   value res;
+@@ -150,3 +194,5 @@ CAMLprim value core_time_ns_nanosleep(value v_seconds)
+ 
+ WRAP_TIME_FUN(localtime, "localtime")
+ WRAP_TIME_FUN(gmtime, "gmtime")
++
++#endif
+\ No newline at end of file
+diff --git a/syslog/src/dune b/syslog/src/dune
+index 31278ed..5445976 100644
+--- a/syslog/src/dune
++++ b/syslog/src/dune
+@@ -1,2 +1,2 @@
+ (library (name syslog) (public_name core.syslog) (libraries core)
+- (c_names syslog_stubs) (preprocess (pps ppx_jane)))
+\ No newline at end of file
++ (c_flags (:standard -I/usr/include)) (c_names syslog_stubs) (preprocess (pps ppx_jane)))
+\ No newline at end of file
+diff --git a/syslog/src/syslog_stubs.c b/syslog/src/syslog_stubs.c
+index c5a90be..7e60a13 100644
+--- a/syslog/src/syslog_stubs.c
++++ b/syslog/src/syslog_stubs.c
+@@ -1,6 +1,8 @@
+ #include <string.h>
++#if (defined(WIN32) || defined(_WIN32))
++# else
+ #include <syslog.h>
+-
++#endif
+ #include <caml/mlvalues.h>
+ #include <caml/memory.h>
+ #include <caml/signals.h>
+@@ -9,6 +11,56 @@
+ #define Val_none Val_int(0)
+ #define Some_val(v) Field(v, 0)
+ 
++
++#if (defined(WIN32) || defined(_WIN32))
++static int log_open_options[] = {
++};
++
++CAMLprim value core_syslog_open_option_to_int(value v_open_option) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static int log_facilities[] = {
++};
++
++CAMLprim value core_syslog_facility_to_int(value v_facility) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++static int log_levels[] = {
++};
++
++CAMLprim value core_syslog_level_to_int(value v_level) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++/* XXX: WARNING: this function leaks memory if v_ident is not None!
++   No way around that if syslog is called in a multi-threaded environment!
++   Therefore it shouldn't be called too often.  What for, anyway? */
++CAMLprim value core_syslog_openlog(value v_ident, value v_open_option, value v_facility) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++/* A priority is a level | facility.  See syslog(3). */
++CAMLprim value core_syslog_syslog(value v_priority, value v_message) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_syslog_closelog() {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++
++CAMLprim value core_syslog_setlogmask(value v_mask) {
++  caml_failwith("not implemented for win32");
++  return Val_unit;
++}
++#else
+ static int log_open_options[] = {
+   /* THESE MUST STAY IN THE SAME ORDER AS IN syslog.ml!!! */
+   LOG_PID, LOG_CONS, LOG_ODELAY, LOG_NDELAY, LOG_NOWAIT, LOG_PERROR
+@@ -84,3 +136,4 @@ CAMLprim value core_syslog_setlogmask(value v_mask) {
+   setlogmask(Int_val(v_mask));
+   return Val_unit;
+ }
++#endif
+\ No newline at end of file
+diff --git a/time_stamp_counter/src/dune b/time_stamp_counter/src/dune
+index 0813ff9..bbb11f9 100644
+--- a/time_stamp_counter/src/dune
++++ b/time_stamp_counter/src/dune
+@@ -4,4 +4,4 @@
+  (libraries core))
+ 
+ (rule (targets config.h) (deps)
+- (action (bash "cp %{lib:jst-config:config.h} %{targets}")))
+\ No newline at end of file
++ (action (bash "cp '%{lib:jst-config:config.h}' %{targets}")))
+\ No newline at end of file
+-- 
+2.34.1.windows.1
+

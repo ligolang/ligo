@@ -236,10 +236,6 @@ module Mutator = struct
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
         return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
     )
-    | E_type_in {type_binder; rhs; let_result} -> (
-      let+ let_result, mutation = self let_result in
-      return @@ E_type_in {type_binder;rhs;let_result}, mutation
-    )
     | E_lambda { binder ; result } -> (
       let+ result, mutation = self result in
       return @@ E_lambda { binder ; result }, mutation

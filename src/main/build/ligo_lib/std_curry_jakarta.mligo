@@ -21,7 +21,17 @@ module Tezos = struct
     let chain_id : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
   [@thunk]
     let total_voting_power : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
+  let get_balance (_u : unit) : tez = [%Michelson ({| { DROP ; BALANCE } |} : unit -> tez)] ()
+  let get_amount (_u : unit) : tez = [%Michelson ({| { DROP ; AMOUNT } |} : unit -> tez)] ()
+  let get_now (_u : unit) : timestamp = [%Michelson ({| { DROP ; NOW } |} : unit -> timestamp)] ()
+  let get_sender (_u : unit) : address = [%Michelson ({| { DROP ; SENDER } |} : unit -> address)] ()
+  let get_source (_u : unit) : address = [%Michelson ({| { DROP ; SOURCE } |} : unit -> address)] ()
+  let get_level (_u : unit) : nat = [%Michelson ({| { DROP ; LEVEL } |} : unit -> nat)] ()
+  let get_self_address (_u : unit) : address = [%external "SELF_ADDRESS"]
+  let get_chain_id (_u : unit) : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
+  let get_total_voting_power (_u : unit) : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
   let min_block_time : unit -> nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ]
+  let get_min_block_time : unit -> nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ]
   (* [@thunk] let self (type a) (s : string) : a contract = [%external "SELF"] s *)
   let voting_power (kh : key_hash) : nat = [%Michelson ({| { VOTING_POWER } |} : key_hash -> nat)] kh
   let address (type a) (c : a contract) : address = [%external "ADDRESS"] c
@@ -93,8 +103,8 @@ end
 module List = struct
   let length (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
   let size (type a) (xs : a list) : nat = [%Michelson ({| { SIZE } |} : a list -> nat)]  xs
-  let head_opt (type a) (xs : a list) : a option = [%external "LIST_HEAD_OPT"] xs
-  let tail_opt (type a) (xs : a list) : (a list) option = [%external "LIST_TAIL_OPT"] xs
+  let head_opt (type a) (xs : a list) : a option = match xs with | [] -> None | (x :: _) -> Some x
+  let tail_opt (type a) (xs : a list) : (a list) option = match xs with | [] -> None | (_ :: xs) -> Some xs
   let map (type a b) (f : a -> b) (xs : a list) : b list = [%external "LIST_MAP"] f xs
   let iter (type a) (f : a -> unit) (xs : a list): unit = [%external "LIST_ITER"] f xs
   let fold (type a b) (f : b * a -> b) (xs : a list) (i : b) : b = [%external "LIST_FOLD"] f xs i
@@ -163,7 +173,7 @@ end
 [@private]
   let unit : unit = [%external "UNIT"]
 [@private]
-  let failwith (type a) (v : a) : a external_failwith = [%external "FAILWITH"] v
+  let failwith (type a b) = [%Michelson ({|{ FAILWITH }|} : a -> b)]
 [@private]
   let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
 [@private]
