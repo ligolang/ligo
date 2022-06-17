@@ -80,7 +80,7 @@ type matrix = simple_pattern list list
 let print_matrix matrix = 
   let () = Format.printf "matrix: \n" in
   let () = List.iter matrix ~f:(fun row -> 
-    Format.printf "%a\n" pp_simple_pattern_list row) in
+    Format.printf "[%a]\n" pp_simple_pattern_list row) in
   Format.printf "\n"
 
 let print_vector vector =
@@ -94,8 +94,8 @@ let specialize_matrix c a matrix =
         let row = r1_a @ p2_n in
         row :: specialized
     | SP_Constructor _  :: _ -> specialized
-    | SP_wildcard t :: p2_n ->
-      let wildcards = XList.repeat (SP_wildcard t) a in
+    | SP_wildcard _ :: p2_n ->
+      let wildcards = List.map a ~f:(fun t -> SP_wildcard t) in
       let row = wildcards @ p2_n in
       row :: specialized
     | [] -> [] (* TODO: check is this okay? *)
@@ -107,8 +107,8 @@ let specialize_vector c a q1_n =
   match q1_n with
     SP_Constructor (cp, r1_a, _) :: q2_n when T.equal_label c cp ->
       r1_a @ q2_n
-  | SP_wildcard t :: q2_n ->
-    let wildcards = XList.repeat (SP_wildcard t) a in
+  | SP_wildcard _ :: q2_n ->
+    let wildcards = List.map a ~f:(fun t -> SP_wildcard t) in
     wildcards @ q2_n
   | _ -> failwith "edge case: specialize_vector wrong constructor"
 
@@ -125,19 +125,19 @@ let default_matrix matrix =
 let rec count_type_parts (t : AST.type_expression) =
   match t.type_content with
     AST.T_record { content ; _ } ->
-      LMap.fold (fun _ (row_elt : AST.row_element) count -> 
+      LMap.fold (fun _ (row_elt : AST.row_element) ts -> 
         let elt_typ = row_elt.associated_type in
-        count + count_type_parts elt_typ) 
-        content 0
-  | _ -> 1
+        ts @ count_type_parts elt_typ) 
+        content []
+  | _ -> [t]
 
 let find_constuctor_arity c (t : AST.type_expression) =
   match c with
   T.Label "#CONS" ->
     (* TODO: fix this... very hacky now *)
-    let t  = C.get_t_list_exn t in
-    1 + count_type_parts t
-  | Label "#NIL"  -> 1
+    let t'  = C.get_t_list_exn t in
+    count_type_parts t' @ [t]
+  | Label "#NIL"  -> [t]
   | _       ->
   let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
   count_type_parts te

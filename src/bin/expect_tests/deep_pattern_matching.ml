@@ -152,7 +152,8 @@ let%expect_test _ =
       3 |   | hd::(hd2::tl) -> hd + hd2
       4 |   | [] -> 0
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.mligo") ] ;

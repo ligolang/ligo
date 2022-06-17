@@ -110,7 +110,8 @@ let%expect_test _ =
       4 |   | nil -> 0
       5 |   ]
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.ligo") ] ;
