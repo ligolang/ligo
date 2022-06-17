@@ -93,8 +93,6 @@ let rec defuse_of_expr defuse expr : defuse =
      defuse_of_expr defuse record
   | E_record_update {record;update;_} ->
      defuse_union (defuse_of_expr defuse record) (defuse_of_expr defuse update)
-  | E_type_in {let_result;_} ->
-     defuse_of_expr defuse let_result
   | E_mod_in {let_result;_} ->
      defuse_of_expr defuse let_result
   | E_module_accessor _ ->

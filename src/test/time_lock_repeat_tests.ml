@@ -36,7 +36,7 @@ let early_call ~raise ~add_warning () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ()) in
   let exp_failwith = "You have to wait before you can execute this contract again." in
-  expect_string_failwith ~raise ~options program "main"
+  expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
 
 let fake_decompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
@@ -51,7 +51,7 @@ let interval_advance ~raise ~add_warning () =
   let init_storage = storage lock_time 86400 empty_message in
   let new_timestamp = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int 86_400) in
   let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
 
 let main = test_suite "Time Lock Repeating" [

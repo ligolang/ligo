@@ -6,7 +6,7 @@ let main ((k,v), s : (int * nat) * storage) : operation list * storage =
 
 let test =
   let init = Big_map.add 12 42n (Big_map.empty : storage) in
-  let (taddr, _, _) = Test.originate main init 0tez in
+  let (_taddr, _, _) = Test.originate main init 0tez in
   let init = Big_map.add 32 42n (Big_map.empty : storage) in
   let (taddr, _, _) = Test.originate main init 0tez in
   let ctr = Test.to_contract taddr in

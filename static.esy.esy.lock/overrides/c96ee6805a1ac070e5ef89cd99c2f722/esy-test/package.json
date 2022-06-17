@@ -1,0 +1,8 @@
+{
+  "esy": {
+    "build": "hidapi-test"
+  },
+  "dependencies": {
+    "esy-hidapi": "*"
+  }
+}

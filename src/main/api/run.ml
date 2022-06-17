@@ -13,7 +13,7 @@ let test (raw_options : Compiler_options.raw) source_file display_format () =
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps ; _ } = options.test_framework in
       let typed   = Build.merge_and_type_libraries ~raise ~add_warning ~options source_file in
-      Interpreter.eval_test ~raise ~steps ~options typed
+      Interpreter.eval_test ~raise ~add_warning ~steps ~options typed
 
 let dry_run (raw_options : Compiler_options.raw) source_file parameter storage amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
@@ -26,12 +26,12 @@ let dry_run (raw_options : Compiler_options.raw) source_file parameter storage a
       let Compiler_options.{ entry_point ; _ } = options.frontend in
       let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
       let typed_prg = Build.merge_and_type_libraries ~raise ~add_warning ~options source_file in
-      let aggregated_prg = Compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
+      let aggregated_prg = Compile.Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end typed_prg entry_point in
       let mini_c_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
       let compile_exp = Compile.Of_mini_c.compile_contract ~raise ~options mini_c_prg in
       let parameter_ty =
         (* fails if the given entry point is not a valid contract *)
-        let _contract : Mini_c.meta Tezos_utils.Michelson.michelson = Compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version compile_exp [] in
+        let _contract : Mini_c.meta Tezos_utils.Michelson.michelson = Compile.Of_michelson.build_contract ~raise ~add_warning ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version compile_exp [] in
         Option.map ~f:fst @@ Self_michelson.fetch_contract_ty_inputs compile_exp.expr_ty
       in
       let compiled_input    = Compile.Utils.compile_contract_input ~raise ~add_warning ~options parameter storage syntax typed_prg in
@@ -78,7 +78,7 @@ let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amo
       let core_param       = Compile.Of_sugar.compile_expression ~raise sugar_param in
       let app              = Compile.Of_core.apply entry_point core_param in
       let typed_app        = Compile.Of_core.compile_expression ~raise ~add_warning ~options ~init_prog app in
-      let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_app aggregated_prg in
+      let app_aggregated   = Compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_app aggregated_prg in
       let app_mini_c       = Compile.Of_aggregated.compile_expression ~raise app_aggregated in
       let michelson        = Compile.Of_mini_c.compile_expression ~raise ~options app_mini_c in
       let options          = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None} in

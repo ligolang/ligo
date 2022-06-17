@@ -43,7 +43,7 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       let views = Build.build_views ~raise ~add_warning ~options entry_point (views,env) source_file in
       let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
-      Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version:options.middle_end.protocol_version ~disable_typecheck ~constants code views
+      Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version:options.middle_end.protocol_version ~has_env_comments:options.backend.has_env_comments ~disable_typecheck ~constants code views
 
 let expression (raw_options : Compiler_options.raw) expression init_file display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
@@ -120,12 +120,12 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
-          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end app_typed_prg entry_point in
+          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end app_typed_prg entry_point in
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
         (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version ~constants michelson [] in
-        let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_param aggregated_prg in
+          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version ~constants michelson [] in
+        let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_parameter entry_point app_typed_prg typed_param in
@@ -156,12 +156,12 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
         let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
-          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end app_typed_prg entry_point in
+          let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end app_typed_prg entry_point in
           let mini_c              = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract in
           let michelson           = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
          (* fails if the given entry point is not a valid contract *)
-          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version ~constants michelson [] in
-        let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_param aggregated_prg in
+          Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version ~constants michelson [] in
+        let aggregated_param = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_param aggregated_prg in
         let mini_c_param     = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_param in
         let compiled_param   = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param in
         let ()               = Ligo_compile.Of_typed.assert_equal_contract_type ~raise Check_storage entry_point app_typed_prg typed_param in

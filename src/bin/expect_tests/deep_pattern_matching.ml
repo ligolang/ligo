@@ -25,7 +25,7 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern not of the expected type record[one -> int , two -> int] |}]
+    Pattern not of the expected type parameter |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -42,12 +42,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 6-8:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 11-14:
       1 | let main (_ : unit * unit) : operation list * unit =
       2 |   let () = 42n in
       3 |   (([] : operation list), ())
 
-    Variant pattern argument is expected of type nat but is of type unit. |}]
+    Invalid type(s).
+    Expected: "unit", but got: "nat". |}]
 
 
 (* Trying to match on values *)
@@ -82,7 +83,7 @@ let%expect_test _ =
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -92,7 +93,7 @@ let%expect_test _ =
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -372,6 +373,16 @@ let%expect_test _ =
     4 |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "nested_record_pm { a = 1 ; b = E }" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
+  [%expect{|
+    5 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; (good_test "nested_record_sum.mligo") ] ;
+  [%expect{|
+    142 bytes |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
@@ -396,7 +407,9 @@ let%expect_test _ =
              UNPAIR ;
              CAR ;
              SWAP ;
-             IF_NONE { NIL operation ; PAIR } { SWAP ; DROP ; NIL operation ; PAIR } } } |}]
+             IF_NONE {} { SWAP ; DROP } ;
+             NIL operation ;
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.mligo") ] ;

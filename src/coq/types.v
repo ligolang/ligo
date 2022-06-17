@@ -3,12 +3,18 @@ Set Implicit Arguments.
 From Coq Require Import String List.
 Import ListNotations.
 
-From ligo_coq Require Import micheline.
+(* Inductive D : Prop -> Prop := *)
+(* | DD : D (exists P, D P) *)
+(* . *)
+(* Error: Non strictly positive occurrence of "D" in "D (exists P : Prop, D P)". *)
+
+(* From ligo_coq Require Import micheline. *)
 
 Section types.
 
 Context {A : Set}.
 
+(*
 Local Open Scope string_scope.
 
 (* This typeclass-like prop accepts types which are suitable arguments for the "iter" Michelson instruction.
@@ -33,5 +39,6 @@ Inductive map_class : node A string -> node A string -> node A string -> node A 
 
 Hint Constructors iter_class.
 Hint Constructors map_class.
+*)
 
 End types.

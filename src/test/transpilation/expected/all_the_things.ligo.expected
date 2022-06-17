@@ -40,14 +40,15 @@ function transfer (const p : transfer; const s : storage)
 {
   var new_allowances : allowances := Big_map.empty;
 
-  if Tezos.sender = p.address_from
+  if Tezos.get_sender () = p.address_from
   then {
     new_allowances := s.allowances
   }
   else {
     var authorized_value : nat
     := case (Big_map.find_opt
-              ((Tezos.sender, p.address_from), s.allowances))
+              ((Tezos.get_sender (), p.address_from),
+               s.allowances))
       of [
         Some (value) -> value | None -> 0n
       ];
@@ -59,7 +60,7 @@ function transfer (const p : transfer; const s : storage)
     else {
       new_allowances :=
         Big_map.update
-          ((Tezos.sender, p.address_from),
+          ((Tezos.get_sender (), p.address_from),
            (Some (abs (authorized_value - p.value))),
            s.allowances)
     }
@@ -78,7 +79,8 @@ function transfer (const p : transfer; const s : storage)
     new_tokens :=
       Big_map.update
         (p.address_from,
-         (Some (abs (sender_balance - p.value))), s.tokens);
+         (Some (abs (sender_balance - p.value))),
+         s.tokens);
 
     var receiver_balance : nat
     := case (Big_map.find_opt (p.address_to, s.tokens)) of [
@@ -87,7 +89,8 @@ function transfer (const p : transfer; const s : storage)
 
     new_tokens :=
       Big_map.update
-        (p.address_to, (Some (receiver_balance + p.value)),
+        (p.address_to,
+         (Some (receiver_balance + p.value)),
          new_tokens)
   }
 } with
@@ -103,7 +106,8 @@ function approve (const p : approve; const s : storage)
 {
   var previous_value : nat
   := case Big_map.find_opt
-           ((p.spender, Tezos.sender), s.allowances)
+           ((p.spender, Tezos.get_sender ()),
+            s.allowances)
     of [
       Some (value) -> value | None -> 0n
     ];
@@ -115,7 +119,8 @@ function approve (const p : approve; const s : storage)
   else {
     new_allowances :=
       Big_map.update
-        ((p.spender, Tezos.sender), (Some (p.value)),
+        ((p.spender, Tezos.get_sender ()),
+         (Some (p.value)),
          s.allowances)
   }
 } with
@@ -128,7 +133,8 @@ function getAllowance
 {
   var value : nat
   := case Big_map.find_opt
-           ((p.owner, p.spender), s.allowances)
+           ((p.owner, p.spender),
+            s.allowances)
     of [
       Some (value) -> value | None -> 0n
     ];
@@ -268,7 +274,7 @@ type return is list (operation) * storage
 function main
   (const param : parameter;
    const store : storage) : return is
-  ((nil : list (operation)), Tezos.balance)
+  ((nil : list (operation)), Tezos.get_balance ())
 
 type parameter is unit
 
@@ -366,7 +372,7 @@ function id_address (const p : address)
 } with (Bytes.unpack (packed) : option (address))
 
 function chain_id (const tt : chain_id) : chain_id is
-  Tezos.chain_id
+  Tezos.get_chain_id ()
 
 function check_signature
   (const pk : key;
@@ -503,7 +509,7 @@ function sell_single
   = card_pattern.coefficient * card_pattern.quantity;
 
   const receiver : contract (unit)
-  = case (Tezos.get_contract_opt (Tezos.sender)
+  = case (Tezos.get_contract_opt (Tezos.get_sender ())
           : option (contract (unit)))
     of [
       Some (contract) -> contract
@@ -786,7 +792,7 @@ function main (const a : int) : int is
 } with i
 
 const x : int
-= (function  (const i : int) : int is i + 1) (41)
+= (function (const i : int) : int is i + 1) (41)
 
 function main (const i : int) : int is
 {
@@ -814,13 +820,14 @@ type return is list (operation) * storage
 
 function cb (const s : storage) : return is
 {
-  const c : contract (unit) = get_contract (Tezos.sender)
+  const c : contract (unit)
+  = get_contract (Tezos.get_sender ())
 } with (list [Tezos.transaction (unit, 0mutez, c)], s)
 
 function cbo (const s : unit) : return is
 {
   const c : contract (unit)
-  = case (Tezos.get_contract_opt (Tezos.sender)
+  = case (Tezos.get_contract_opt (Tezos.get_sender ())
           : option (contract (unit)))
     of [
       Some (contract) -> contract
@@ -912,7 +919,8 @@ function insert (var h : heap; const e : heap_elt) : heap is
     if parent >= 1n
     then {
       if heap_elt_lt
-           (get_force (parent, h), get_force (i, h))
+           (get_force (parent, h),
+            get_force (i, h))
       then {
         largest := parent;
 
@@ -977,7 +985,8 @@ function pop (var h : heap) : heap * heap_elt * nat is
       if right <= s
       then {
         if heap_elt_lt
-             (get_force (right, h), get_force (i, h))
+             (get_force (right, h),
+              get_force (i, h))
         then {
           largest := right;
 
@@ -1650,7 +1659,7 @@ function iter_op (const m : foobar) : unit is
   function aggregate (const i : int; const j : int)
     : unit is
   {
-    if i = j then skip else failwith ("fail")
+    if i =/= j then failwith ("fail")
   } with unit
 } with Map.iter (aggregate, m)
 
@@ -1827,47 +1836,50 @@ type parameter is
 function send (const param : send_pt; var s : storage)
   : return is
 {
-  if not Set.mem (Tezos.sender, s.authorized_addresses)
-  then failwith ("Unauthorized address")
-  else skip;
+  if not Set.mem
+       (Tezos.get_sender (),
+        s.authorized_addresses)
+  then failwith ("Unauthorized address");
 
   var message : message := param;
 
   const packed_msg : bytes = Bytes.pack (message);
 
   if Bytes.length (packed_msg) > s.max_message_size
-  then failwith ("Message size exceed maximum limit")
-  else skip;
+  then failwith ("Message size exceed maximum limit");
 
   var new_store : addr_set := set [];
 
   case map_get (packed_msg, s.message_store) of [
     Some (voters) ->
       {
-        if Set.mem (Tezos.sender, voters)
-        then skip
-        else
-          s.proposal_counters [Tezos.sender]  :=
-            get_force (Tezos.sender, s.proposal_counters)
+        if not Set.mem (Tezos.get_sender (), voters)
+        then
+          s.proposal_counters [Tezos.get_sender ()]  :=
+            get_force
+              (Tezos.get_sender (),
+               s.proposal_counters)
             + 1n;
 
-        new_store := Set.add (Tezos.sender, voters)
+        new_store := Set.add (Tezos.get_sender (), voters)
       }
   | None ->
       {
         s.proposal_counters [sender]  :=
-          get_force (Tezos.sender, s.proposal_counters) + 1n;
+          get_force
+            (Tezos.get_sender (),
+             s.proposal_counters)
+          + 1n;
 
-        new_store := set [Tezos.sender]
+        new_store := set [Tezos.get_sender ()]
       }
   ];
 
   var sender_proposal_counter : nat
-  := get_force (Tezos.sender, s.proposal_counters);
+  := get_force (Tezos.get_sender (), s.proposal_counters);
 
   if sender_proposal_counter > s.max_proposal
-  then failwith ("Maximum number of proposal reached")
-  else skip;
+  then failwith ("Maximum number of proposal reached");
 
   var ret_ops : list (operation) := nil;
 
@@ -1885,7 +1897,6 @@ function send (const param : send_pt; var s : storage)
     {
       if Set.mem (addr, new_store)
       then s.proposal_counters [addr]  := abs (ctr - 1n)
-      else skip
     }
   }
   else s.message_store [packed_msg]  := new_store
@@ -1903,15 +1914,16 @@ function withdraw
     Some (voters) ->
       {
         const new_set : addr_set
-        = Set.remove (Tezos.sender, voters);
+        = Set.remove (Tezos.get_sender (), voters);
 
         if Set.cardinal (voters) =/= Set.cardinal (new_set)
         then
-          s.proposal_counters [Tezos.sender]  :=
+          s.proposal_counters [Tezos.get_sender ()]  :=
             abs
-              (get_force (Tezos.sender, s.proposal_counters)
-               - 1n)
-        else skip;
+              (get_force
+                 (Tezos.get_sender (),
+                  s.proposal_counters)
+               - 1n);
 
         if Set.cardinal (new_set) = 0n
         then remove packed_msg from map s.message_store
@@ -1974,7 +1986,8 @@ function check_message
   else {
     const packed_payload : bytes
     = Bytes.pack
-        ((message, param.counter, s.id, Tezos.chain_id));
+        ((message, param.counter, s.id,
+          Tezos.get_chain_id ()));
 
     var valid : nat := 0n;
 
@@ -1991,7 +2004,9 @@ function check_message
             if pkh_sig.0 = Crypto.hash_key (key)
             then
               if Crypto.check
-                   (key, pkh_sig.1, packed_payload)
+                   (key,
+                    pkh_sig.1,
+                    packed_payload)
               then valid := valid + 1n
               else failwith ("Invalid signature")
           }
@@ -2134,7 +2149,7 @@ function main
   ]
 
 function main (const p : unit) : address is
-  Tezos.self_address
+  Tezos.get_self_address ()
 
 type parameter is nat
 
@@ -2336,8 +2351,7 @@ function call (const p : call_pt; const s : storage_t)
   : contract_return_t is
 {
   if s >= now
-  then failwith ("Contract is still time locked")
-  else skip;
+  then failwith ("Contract is still time locked");
 
   const message : message_t = p;
 

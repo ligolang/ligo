@@ -1,5 +1,11 @@
 module type OrderedType = Caml.Map.OrderedType
 
+module type OrderedHashableType = sig
+  include Caml.Map.OrderedType
+
+  val hash_fold_t : Hash.state -> t -> Hash.state
+end
+
 module type S = sig
   include Caml.Map.S
 
@@ -16,7 +22,7 @@ module type S = sig
   val fold_map : f:(key -> 'a -> 'b -> 'b * 'c) -> init:'b -> 'a t -> 'b * 'c t
 end
 
-module Make(Ord : Caml.Map.OrderedType) : S with type key = Ord.t = struct
+module Make(Ord : OrderedType) : S with type key = Ord.t = struct
   include Caml.Map.Make(Ord)
 
   let diff equal (a : 'a t) (b : 'a t) =
@@ -62,6 +68,19 @@ module Make(Ord : Caml.Map.OrderedType) : S with type key = Ord.t = struct
       acc, add k v map
     in
     fold aux map (init,empty)
+end
+
+module type SHashable = sig
+  include S
+
+  val hash_fold_t : (Hash.state -> 'a -> Hash.state) -> Hash.state -> 'a t -> Hash.state
+end
+
+module MakeHashable(Ord : OrderedHashableType) : SHashable with type key = Ord.t = struct
+  include Make(Ord)
+  let hash_fold_t hash_fold_a hsv arg =
+    let sort l = List.sort ~compare:(fun (k, _) (k',_) -> Ord.compare k k') l in
+    Hash.Builtin.hash_fold_list (fun st (k, v) -> Ord.hash_fold_t (hash_fold_a st v) k) hsv (sort (to_kv_list arg))
 end
 
 module String = Make(String)

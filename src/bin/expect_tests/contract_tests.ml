@@ -9,35 +9,41 @@ let () = Unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good [ "info" ; "measure-contract" ; contract "coase.ligo" ] ;
-  [%expect{| 1175 bytes |}] ;
+  [%expect{|
+    1107 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig.ligo" ] ;
-  [%expect{| 583 bytes |}] ;
+  [%expect{|
+    577 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "multisig-v2.ligo" ] ;
-  [%expect{| 1653 bytes |}] ;
+  [%expect{|
+    1589 bytes |}] ;
 
   run_ligo_good [ "info" ; "measure-contract" ; contract "vote.mligo" ] ;
-  [%expect{| 430 bytes |}] ;
+  [%expect{|
+    420 bytes |}] ;
 
   run_ligo_good [ "compile" ; "parameter" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
-  [%expect{| (Left (Left 1)) |}] ;
+  [%expect{|
+    (Left (Left 1)) |}] ;
 
   run_ligo_good [ "compile" ; "storage" ; contract "coase.ligo" ; "record [ cards = (map [] : cards) ; card_patterns = (map [] : card_patterns) ; next_id = 3n ]" ] ;
-  [%expect{| (Pair (Pair {} {}) 3) |}] ;
+  [%expect{|
+    (Pair (Pair {} {}) 3) |}] ;
 
   run_ligo_bad [ "compile" ; "storage" ; contract "coase.ligo" ; "Buy_single (record [ card_to_buy = 1n ])" ] ;
   [%expect{|
     Invalid command line argument.
     The provided storage does not have the correct type for the contract.
-    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of [
-    126 |     Buy_single (bs)      -> buy_single (bs, s)
-    127 |   | Sell_single (as)     -> sell_single (as, s)
-    128 |   | Transfer_single (at) -> transfer_single (at, s)
-    129 |   ]
+    File "../../test/contracts/coase.ligo", line 122, character 0 to line 127, character 3:
+    121 |
+    122 | function main (const action : parameter; const s : storage) : return is
+    123 |   case action of [
+    124 |     Buy_single (bs)      -> buy_single (bs, s)
+    125 |   | Sell_single (as)     -> sell_single (as, s)
+    126 |   | Transfer_single (at) -> transfer_single (at, s)
+    127 |   ]
 
     Invalid type(s).
     Expected: "storage", but got: "parameter". |}] ;
@@ -46,14 +52,14 @@ let%expect_test _ =
   [%expect{|
     Invalid command line argument.
     The provided parameter does not have the correct type for the given entrypoint.
-    File "../../test/contracts/coase.ligo", line 124, character 0 to line 129, character 3:
-    123 |
-    124 | function main (const action : parameter; const s : storage) : return is
-    125 |   case action of [
-    126 |     Buy_single (bs)      -> buy_single (bs, s)
-    127 |   | Sell_single (as)     -> sell_single (as, s)
-    128 |   | Transfer_single (at) -> transfer_single (at, s)
-    129 |   ]
+    File "../../test/contracts/coase.ligo", line 122, character 0 to line 127, character 3:
+    121 |
+    122 | function main (const action : parameter; const s : storage) : return is
+    123 |   case action of [
+    124 |     Buy_single (bs)      -> buy_single (bs, s)
+    125 |   | Sell_single (as)     -> sell_single (as, s)
+    126 |   | Transfer_single (at) -> transfer_single (at, s)
+    127 |   ]
 
     Invalid type(s).
     Expected: "parameter", but got: "storage". |}] ;
@@ -63,10 +69,11 @@ let%expect_test _ =
 let%expect_test _  =
   run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
+    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.get_now())
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -74,7 +81,7 @@ let%expect_test _  =
     File "../../test/contracts/timestamp.ligo", line 3, characters 37-38:
       2 |
       3 | function main (const p : unit; const s : storage_) :
-      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.now)
+      4 |   list (operation) * storage_ is ((nil: list (operation)), Tezos.get_now())
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
@@ -94,25 +101,17 @@ let%expect_test _ =
       code { UNPAIR ;
              IF_LEFT
                { IF_LEFT
-                   { SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                   { DUP 2 ;
                      CAR ;
                      CAR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      GET ;
                      IF_NONE { PUSH string "buy_single: No card pattern." ; FAILWITH } {} ;
                      PUSH nat 1 ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      ADD ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CAR ;
                      MUL ;
                      AMOUNT ;
@@ -121,9 +120,7 @@ let%expect_test _ =
                      GT ;
                      IF { PUSH string "Not enough money" ; FAILWITH } {} ;
                      PUSH nat 1 ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      ADD ;
                      SWAP ;
@@ -157,9 +154,7 @@ let%expect_test _ =
                      SOME ;
                      SWAP ;
                      UPDATE ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      SWAP ;
                      DIG 2 ;
@@ -168,30 +163,21 @@ let%expect_test _ =
                      PAIR ;
                      PAIR ;
                      PUSH nat 1 ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      ADD ;
                      SWAP ;
                      CAR ;
                      PAIR ;
-                     NIL operation ;
-                     PAIR }
-                   { SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     NIL operation }
+                   { DUP 2 ;
                      CAR ;
                      CDR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      GET ;
                      IF_NONE { PUSH string "sell_single: No card." ; FAILWITH } {} ;
                      SENDER ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CAR ;
                      COMPARE ;
                      NEQ ;
@@ -199,16 +185,12 @@ let%expect_test _ =
                      DUP 3 ;
                      CAR ;
                      CAR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      GET ;
                      IF_NONE { PUSH string "sell_single: No card pattern." ; FAILWITH } {} ;
                      PUSH nat 1 ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      SUB ;
                      ABS ;
@@ -232,9 +214,7 @@ let%expect_test _ =
                      UPDATE ;
                      PAIR ;
                      PAIR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      DIG 2 ;
                      CAR ;
@@ -245,9 +225,7 @@ let%expect_test _ =
                      SWAP ;
                      UNIT ;
                      TRANSFER_TOKENS ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      DUP 3 ;
                      CAR ;
@@ -263,11 +241,8 @@ let%expect_test _ =
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
-                     CONS ;
-                     PAIR } }
-               { SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                     CONS } }
+               { DUP 2 ;
                  CAR ;
                  CDR ;
                  DUP ;
@@ -276,9 +251,7 @@ let%expect_test _ =
                  GET ;
                  IF_NONE { PUSH string "transfer_single: No card." ; FAILWITH } {} ;
                  SENDER ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 2 ;
                  CAR ;
                  COMPARE ;
                  NEQ ;
@@ -301,8 +274,8 @@ let%expect_test _ =
                  CAR ;
                  PAIR ;
                  PAIR ;
-                 NIL operation ;
-                 PAIR } } } |} ]
+                 NIL operation } ;
+             PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "multisig.ligo" ] ;
@@ -310,8 +283,7 @@ let%expect_test _ =
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
               (list %signatures (pair key_hash signature))) ;
-      storage
-        (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
+      storage (pair (pair (list %auth key) (nat %counter)) (string %id) (nat %threshold)) ;
       code { UNPAIR ;
              DUP ;
              CAR ;
@@ -364,10 +336,13 @@ let%expect_test _ =
                                   CDR ;
                                   DIG 2 ;
                                   CHECK_SIGNATURE ;
-                                  IF { PUSH nat 1 ; DIG 2 ; ADD ; UNIT ; SWAP ; DIG 2 ; PAIR ; PAIR }
+                                  IF { PUSH nat 1 ; DIG 2 ; ADD ; UNIT ; SWAP }
                                      { PUSH string "Invalid signature" ; FAILWITH } }
-                                { DIG 3 ; DROP 2 ; UNIT ; DUG 2 ; PAIR ; PAIR } }
-                           { DIG 2 ; DROP ; UNIT ; DUG 2 ; PAIR ; PAIR } } ;
+                                { DIG 3 ; DROP 2 ; UNIT ; DIG 2 } }
+                           { DIG 2 ; DROP ; UNIT ; DIG 2 } ;
+                         DIG 2 ;
+                         PAIR ;
+                         PAIR } ;
                   SWAP ;
                   DROP ;
                   CAR ;
@@ -379,9 +354,7 @@ let%expect_test _ =
                   COMPARE ;
                   LT ;
                   IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
-                     { SWAP ;
-                       DUP ;
-                       DUG 2 ;
+                     { DUP 2 ;
                        CDR ;
                        PUSH nat 1 ;
                        DUP 4 ;
@@ -394,9 +367,9 @@ let%expect_test _ =
                        PAIR ;
                        PAIR ;
                        UNIT ;
-                       SWAP ;
-                       PAIR } } ;
-             CAR ;
+                       SWAP } } ;
+             SWAP ;
+             DROP ;
              UNIT ;
              DIG 2 ;
              SWAP ;
@@ -411,16 +384,15 @@ let%expect_test _ =
             (lambda %withdraw bytes (list operation))) ;
       storage
         (pair (pair (pair (set %authorized_addresses address) (nat %max_message_size))
-                    (pair (nat %max_proposal) (map %message_store bytes (set address))))
-              (pair (pair (map %proposal_counters address nat) (bytes %state_hash))
-                    (nat %threshold))) ;
+                    (nat %max_proposal)
+                    (map %message_store bytes (set address)))
+              (pair (map %proposal_counters address nat) (bytes %state_hash))
+              (nat %threshold)) ;
       code { UNPAIR ;
              IF_LEFT
                { IF_LEFT
-                   { DROP ; NIL operation ; PAIR }
-                   { SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                   { DROP ; NIL operation }
+                   { DUP 2 ;
                      CAR ;
                      CAR ;
                      CAR ;
@@ -434,9 +406,7 @@ let%expect_test _ =
                      CAR ;
                      CAR ;
                      CDR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      SIZE ;
                      COMPARE ;
                      GT ;
@@ -445,9 +415,7 @@ let%expect_test _ =
                      CAR ;
                      CDR ;
                      CDR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      GET ;
                      IF_NONE
                        { DUP 3 ;
@@ -486,13 +454,11 @@ let%expect_test _ =
                          SWAP ;
                          UPDATE ;
                          UNIT ;
-                         DUG 2 ;
-                         PAIR ;
-                         PAIR }
+                         DUG 2 }
                        { DUP ;
                          SENDER ;
                          MEM ;
-                         IF { UNIT ; DIG 4 ; PAIR }
+                         IF { UNIT ; DIG 4 }
                             { DUP 4 ;
                               CDR ;
                               CDR ;
@@ -524,9 +490,9 @@ let%expect_test _ =
                               CAR ;
                               PAIR ;
                               UNIT ;
-                              SWAP ;
-                              PAIR } ;
-                         CAR ;
+                              SWAP } ;
+                         SWAP ;
+                         DROP ;
                          SWAP ;
                          SENDER ;
                          PAIR ;
@@ -535,14 +501,12 @@ let%expect_test _ =
                          UNPAIR ;
                          PUSH bool True ;
                          SWAP ;
-                         UPDATE ;
-                         PAIR ;
-                         PAIR } ;
-                     CAR ;
-                     UNPAIR ;
+                         UPDATE } ;
+                     PAIR ;
                      SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DROP ;
+                     UNPAIR ;
+                     DUP 2 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -557,20 +521,14 @@ let%expect_test _ =
                      COMPARE ;
                      GT ;
                      IF { PUSH string "Maximum number of proposal reached" ; FAILWITH } {} ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      CDR ;
                      CDR ;
-                     SWAP ;
-                     DUP ;
-                     DUG 2 ;
+                     DUP 2 ;
                      SIZE ;
                      COMPARE ;
                      GE ;
-                     IF { SWAP ;
-                          DUP ;
-                          DUG 2 ;
+                     IF { DUP 2 ;
                           CDR ;
                           DUP 3 ;
                           CAR ;
@@ -597,9 +555,7 @@ let%expect_test _ =
                           DIG 4 ;
                           SWAP ;
                           EXEC ;
-                          SWAP ;
-                          DUP ;
-                          DUG 2 ;
+                          DUP 2 ;
                           CDR ;
                           CDR ;
                           DIG 4 ;
@@ -619,9 +575,7 @@ let%expect_test _ =
                           CAR ;
                           PAIR ;
                           UNIT ;
-                          SWAP ;
-                          DUP ;
-                          DUG 2 ;
+                          DUP 2 ;
                           DIG 3 ;
                           PAIR ;
                           PAIR ;
@@ -635,9 +589,7 @@ let%expect_test _ =
                                  DIG 2 ;
                                  UNPAIR ;
                                  DUP 5 ;
-                                 SWAP ;
-                                 DUP ;
-                                 DUG 2 ;
+                                 DUP 2 ;
                                  MEM ;
                                  IF { DUP 4 ;
                                       CDR ;
@@ -665,11 +617,11 @@ let%expect_test _ =
                                       CAR ;
                                       PAIR ;
                                       UNIT ;
-                                      SWAP ;
-                                      DIG 2 ;
-                                      PAIR ;
-                                      PAIR }
-                                    { DROP 2 ; UNIT ; DUG 2 ; PAIR ; PAIR } } ;
+                                      SWAP }
+                                    { DROP 2 ; UNIT ; DIG 2 } ;
+                                 DIG 2 ;
+                                 PAIR ;
+                                 PAIR } ;
                           SWAP ;
                           DROP }
                         { DIG 3 ;
@@ -700,20 +652,17 @@ let%expect_test _ =
                           NIL operation ;
                           PAIR ;
                           PAIR } ;
-                     CAR } }
+                     CAR ;
+                     UNPAIR } }
                { PACK ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 2 ;
                  CAR ;
                  CDR ;
                  CDR ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 2 ;
                  GET ;
                  IF_NONE
-                   { DROP ; UNIT ; SWAP ; PAIR }
+                   { DROP ; UNIT ; SWAP }
                    { DUP ;
                      SENDER ;
                      PUSH bool False ;
@@ -757,10 +706,10 @@ let%expect_test _ =
                           CAR ;
                           PAIR ;
                           UNIT ;
-                          SWAP ;
-                          PAIR }
-                        { UNIT ; DIG 3 ; PAIR } ;
-                     CAR ;
+                          SWAP }
+                        { UNIT ; DIG 3 } ;
+                     SWAP ;
+                     DROP ;
                      PUSH nat 0 ;
                      DUP 3 ;
                      SIZE ;
@@ -769,9 +718,7 @@ let%expect_test _ =
                      IF { SWAP ;
                           DROP ;
                           UNIT ;
-                          SWAP ;
-                          DUP ;
-                          DUG 2 ;
+                          DUP 2 ;
                           CDR ;
                           DUP 3 ;
                           CAR ;
@@ -788,14 +735,9 @@ let%expect_test _ =
                           PAIR ;
                           DIG 3 ;
                           CAR ;
-                          CAR ;
-                          PAIR ;
-                          PAIR ;
-                          PAIR }
+                          CAR }
                         { UNIT ;
-                          SWAP ;
-                          DUP ;
-                          DUG 2 ;
+                          DUP 2 ;
                           CDR ;
                           DUP 3 ;
                           CAR ;
@@ -814,13 +756,13 @@ let%expect_test _ =
                           PAIR ;
                           DIG 3 ;
                           CAR ;
-                          CAR ;
-                          PAIR ;
-                          PAIR ;
-                          PAIR } } ;
-                 CAR ;
-                 NIL operation ;
-                 PAIR } } } |} ]
+                          CAR } ;
+                     PAIR ;
+                     PAIR } ;
+                 SWAP ;
+                 DROP ;
+                 NIL operation } ;
+             PAIR } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "vote.mligo" ] ;
@@ -830,8 +772,10 @@ let%expect_test _ =
         (or %vote (unit %nay) (unit %yea))) ;
   storage
     (pair (pair (pair (timestamp %finish_time) (nat %nay))
-                (pair (timestamp %start_time) (string %title)))
-          (pair (set %voters address) (nat %yea))) ;
+                (timestamp %start_time)
+                (string %title))
+          (set %voters address)
+          (nat %yea)) ;
   code { UNPAIR ;
          IF_LEFT
            { SWAP ;
@@ -839,9 +783,7 @@ let%expect_test _ =
              PUSH nat 0 ;
              EMPTY_SET address ;
              PAIR ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CDR ;
              DUP 3 ;
              CAR ;
@@ -852,17 +794,12 @@ let%expect_test _ =
              CAR ;
              CAR ;
              PAIR ;
-             PAIR ;
-             PAIR ;
-             NIL operation ;
              PAIR }
            { SENDER ;
              SWAP ;
              IF_LEFT
                { DROP ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 2 ;
                  CDR ;
                  DUP 3 ;
                  CAR ;
@@ -878,7 +815,6 @@ let%expect_test _ =
                  CAR ;
                  CAR ;
                  PAIR ;
-                 PAIR ;
                  PAIR }
                { DROP ;
                  PUSH nat 1 ;
@@ -891,14 +827,12 @@ let%expect_test _ =
                  CAR ;
                  PAIR ;
                  DIG 2 ;
-                 CAR ;
-                 PAIR } ;
+                 CAR } ;
+             PAIR ;
              DUP ;
              CDR ;
              CDR ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              CDR ;
              CAR ;
              DIG 3 ;
@@ -907,10 +841,10 @@ let%expect_test _ =
              UPDATE ;
              PAIR ;
              SWAP ;
-             CAR ;
-             PAIR ;
-             NIL operation ;
-             PAIR } } } |}]
+             CAR } ;
+         PAIR ;
+         NIL operation ;
+         PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "ticket_wallet.mligo" ] ;
@@ -949,9 +883,7 @@ let%expect_test _ =
              PAIR ;
              NIL operation ;
              PAIR }
-           { SWAP ;
-             DUP ;
-             DUG 2 ;
+           { DUP 2 ;
              SENDER ;
              COMPARE ;
              EQ ;
@@ -1005,7 +937,7 @@ let%expect_test _ =
 File "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34:
  28 |       begin
  29 |         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
- 30 |         assert (ticketer = Tezos.self_address);
+ 30 |         assert (ticketer = Tezos.get_self_address ());
 :
 Warning: unused variable "ticket".
 Hint: replace it by "_ticket" to prevent this warning.
@@ -1030,11 +962,8 @@ Hint: replace it by "_ticket" to prevent this warning.
              COMPARE ;
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
-             NIL operation ;
-             PAIR }
-           { SWAP ;
-             DUP ;
-             DUG 2 ;
+             NIL operation }
+           { DUP 2 ;
              SENDER ;
              COMPARE ;
              EQ ;
@@ -1051,8 +980,8 @@ Hint: replace it by "_ticket" to prevent this warning.
              SWAP ;
              NIL operation ;
              DIG 2 ;
-             CONS ;
-             PAIR } } } |} ]
+             CONS } ;
+         PAIR } } |} ]
 
 let%expect_test _ =
     run_ligo_good [ "compile" ; "contract" ; contract "implicit.mligo" ] ;
@@ -1090,7 +1019,7 @@ let%expect_test _ =
 
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Tezos.amount
+      8 |   fun (x : unit) -> Tezos.get_amount ()
       9 |
     :
     Warning: unused variable "x".
@@ -1099,13 +1028,13 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
-      8 |   fun (x : unit) -> Tezos.amount
+      8 |   fun (x : unit) -> Tezos.get_amount ()
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
     File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
-      3 |   let amt : tez = Tezos.amount in
+      3 |   let amt : tez = Tezos.get_amount () in
       4 |   fun (x : unit) -> amt
       5 |
     :
@@ -1115,7 +1044,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Tezos.amount in
+      3 |   let amt : tez = Tezos.get_amount () in
     :
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
@@ -1123,7 +1052,12 @@ let%expect_test _ =
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
-             IF { AMOUNT ; LAMBDA (pair mutez unit) mutez { CAR } ; SWAP ; APPLY }
+             IF { AMOUNT ;
+                  LAMBDA (pair mutez unit) mutez { CAR } ;
+                  DUP 2 ;
+                  APPLY ;
+                  SWAP ;
+                  DROP }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
              PAIR } } |}]
@@ -1169,7 +1103,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
   [%expect {|
     File "../../test/contracts/bad_timestamp.ligo", line 7, characters 30-44:
-      6 |   block {
+      6 |   {
       7 |     var stamp : timestamp := ("badtimestamp" : timestamp)
       8 |   }
 
@@ -1252,7 +1186,7 @@ let%expect_test _ =
     Warning: unused variable "ps".
     Hint: replace it by "_ps" to prevent this warning.
 
-    failwith("This contract always fails") |}]
+    failed with: "This contract always fails" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_in_lambda.mligo" ] ;
@@ -1340,7 +1274,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#17. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#30. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1421,7 +1355,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#17. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#19. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#32. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -1535,7 +1469,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#17. 
     Hint: replace it by "_storage" to prevent this warning.
 
     { parameter int ;
-      storage (pair (pair int string) (pair nat bool)) ;
+      storage (pair (pair int string) nat bool) ;
       code { DROP ;
              PUSH bool False ;
              PUSH nat 2 ;
@@ -1551,7 +1485,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
   [%expect {|
     File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
-      7 |   block {
+      7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
     :
@@ -1561,13 +1495,13 @@ let%expect_test _ =
     File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
     File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
-      7 |   block {
+      7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
@@ -1604,7 +1538,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-2
   5 |   store + 1
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+An entrypoint must of type "parameter * storage -> operation list * storage". |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract2.mligo" ] ;
   [%expect {|
@@ -1622,7 +1556,7 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-
   6 |   ("bad",store + 1)
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage".
+An entrypoint must of type "parameter * storage -> operation list * storage".
 We expected a list of operations but we got string |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract3.mligo" ] ;
@@ -1657,7 +1591,7 @@ let%expect_test _ =
     File "../../test/contracts/self_with_entrypoint.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -1680,7 +1614,7 @@ let%expect_test _ =
     File "../../test/contracts/self_without_entrypoint.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
-      7 |   block {
+      7 |   {
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -1703,13 +1637,13 @@ let%expect_test _ =
 File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, characters 21-22:
   5 |
   6 | function main (const p : parameter; const s : storage) : return is
-  7 |   block {
+  7 |   {
 :
 Warning: unused variable "p".
 Hint: replace it by "_p" to prevent this warning.
 
 File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
-  7 |   block {
+  7 |   {
   8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
   9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
 
@@ -1880,7 +1814,7 @@ let%expect_test _ =
   [%expect {|
     { parameter unit ;
       storage unit ;
-      code { LAMBDA (pair unit unit unit unit) unit { UNPAIR 4 ; DROP 4 ; UNIT } ;
+      code { LAMBDA (pair unit unit unit unit) unit { DROP ; UNIT } ;
              LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ; |}]
 
 (* old uncurry bugs: *)
@@ -1924,69 +1858,6 @@ let%expect_test _ =
       storage int ;
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
-(* warning unused variables example *)
-let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_unused.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
-     10 |   let x = s.x + 3 in
-     11 |   let x = foo x in
-     12 |   let x = bar s.x in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    { parameter int ;
-      storage (pair (int %x) (int %y)) ;
-      code { CDR ;
-             PUSH int 3 ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
-             CAR ;
-             ADD ;
-             DROP ;
-             PUSH int 3 ;
-             PUSH int 9 ;
-             DUP 3 ;
-             CAR ;
-             MUL ;
-             ADD ;
-             SWAP ;
-             CDR ;
-             SWAP ;
-             PAIR ;
-             NIL operation ;
-             PAIR } } |}]
-
-(* warning non-duplicable variable used examples *)
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-50:
-      1 | module Foo = struct
-      2 |   let x : nat ticket = Tezos.create_ticket 42n 42n
-      3 | end
-    :
-    Warning: variable "Foo.x" cannot be used more than once.
-
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
-
-
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "warning_duplicate2.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
-      1 | let x = Tezos.create_ticket 42n 42n
-      2 | let x = (x, x)
-    :
-    Warning: variable "x" cannot be used more than once.
-
-    Error(s) occurred while checking the contract:
-    At (unshown) location 8, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-    At (unshown) location 8, Ticket in unauthorized position (type error). |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "warning_duplicate3.mligo" ] ;
@@ -2014,6 +1885,7 @@ let%expect_test _ =
 
     (Left 42)
   |}]
+
 
 (* never test for PascaLIGO *)
 let%expect_test _ =
@@ -2052,16 +1924,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "never.jsligo" ] ;
   [%expect {|
-    File "../../test/contracts/never.jsligo", line 8, character 0 to line 15, character 1:
+    File "../../test/contracts/never.jsligo", line 8, characters 4-8:
       7 |
       8 | let main = ([action, store] : [parameter, storage]) : [list<operation>, storage] => {
       9 |   return [
-     10 |    (list([]) as list <operation>),
-     11 |    (match (action, {
-     12 |     Increment: (n : int) => store + n,
-     13 |     Extend: (k : never) => (Tezos.never(k) as storage)}))
-     14 |   ]
-     15 | };
 
     Toplevel let declaration are silently change to const declaration.
 
@@ -2188,18 +2054,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 0-14:
-      1 | let dog = 1;
-      2 | let dog = true;
-
-    Toplevel let declaration are silently change to const declaration.
-
-    File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 1, characters 0-11:
-      1 | let dog = 1;
-      2 | let dog = true;
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 10-14:
       1 | let dog = 1;
       2 | let dog = true;
@@ -2209,15 +2063,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_block.jsligo" ] ;
   [%expect{|
-    File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 1, character 0 to line 5, character 1:
-      1 | let foo = (): int => {
-      2 |     let x = 2;
-      3 |     let x = 2;
-      4 |     return x;
-      5 | }
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 3, characters 8-13:
       2 |     let x = 2;
       3 |     let x = 2;
@@ -2227,15 +2072,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(false, ())"; "-e"; "with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(None: unit option)"; "-e"; "some_with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; contract "assert.mligo"; "(Some (): unit option)"; "-e"; "none_with_error"];
-  [%expect {| failwith("my custom error") |}]
+  [%expect {| failed with: "my custom error" |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
@@ -2269,12 +2114,6 @@ let%expect_test _ =
       Type "foo" not found. |}];
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "modules_export_const.jsligo" ] ;
     [%expect {|
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 0-15:
-        4 |
-        5 | let a = Bar.foo;
-
-      Toplevel let declaration are silently change to const declaration.
-
       File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 8-15:
         4 |
         5 | let a = Bar.foo;
@@ -2326,9 +2165,7 @@ let%expect_test _ =
                  PAIR ;
                  NIL operation ;
                  PAIR }
-               { SWAP ;
-                 DUP ;
-                 DUG 2 ;
+               { DUP 2 ;
                  SENDER ;
                  COMPARE ;
                  EQ ;
@@ -2388,16 +2225,18 @@ let%expect_test _ =
       code { { /* _ */ } ;
              CDR ;
              { /* _ */ } ;
-             LAMBDA unit unit { { /* x */ } } ;
+             LAMBDA
+               unit
+               unit
+               { { /* x */ } }
+             /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */ ;
              { /* f, _ */ } ;
-             DUP ;
-             DUG 2 ;
+             SWAP ;
+             DUP 2 ;
              SWAP ;
              EXEC ;
              { /* s2, f */ } ;
-             SWAP ;
-             DUP ;
-             DUG 2 ;
+             DUP 2 ;
              SWAP ;
              EXEC ;
              { /* s3, f */ } ;
@@ -2452,26 +2291,31 @@ let%expect_test _ =
                       { "prim": "LAMBDA",
                         "args":
                           [ { "prim": "unit" }, { "prim": "unit" }, [ [] ] ] },
-                      [], { "prim": "DUP" },
-                      { "prim": "DUG", "args": [ { "int": "2" } ] },
+                      [], { "prim": "SWAP" },
+                      { "prim": "DUP", "args": [ { "int": "2" } ] },
                       { "prim": "SWAP" }, { "prim": "EXEC" }, [],
-                      { "prim": "SWAP" }, { "prim": "DUP" },
-                      { "prim": "DUG", "args": [ { "int": "2" } ] },
+                      { "prim": "DUP", "args": [ { "int": "2" } ] },
                       { "prim": "SWAP" }, { "prim": "EXEC" }, [],
                       { "prim": "EXEC" }, [],
                       { "prim": "NIL", "args": [ { "prim": "operation" } ] },
                       { "prim": "PAIR" } ] ] } ],
           "locations":
             [ {}, {}, {}, {}, {}, {}, {}, { "environment": [ null ] }, {},
-              { "environment": [ { "source_type": "0" } ] }, {}, {}, {}, {},
+              { "environment": [ { "source_type": "0" } ] },
+              { "location":
+                  { "start":
+                      { "file": "../../test/contracts/noop.mligo", "line": "2",
+                        "col": "28" },
+                    "stop":
+                      { "file": "../../test/contracts/noop.mligo", "line": "2",
+                        "col": "29" } } }, {}, {}, {},
               { "environment": [ { "name": "x", "source_type": "0" } ] },
               { "environment":
                   [ { "name": "f", "source_type": "1" }, { "source_type": "0" } ] },
               {}, {}, {}, {}, {},
               { "environment":
                   [ { "name": "s2", "source_type": "0" },
-                    { "name": "f", "source_type": "1" } ] }, {}, {}, {}, {}, {},
-              {},
+                    { "name": "f", "source_type": "1" } ] }, {}, {}, {}, {},
               { "environment":
                   [ { "name": "s3", "source_type": "0" },
                     { "name": "f", "source_type": "1" } ] }, {},
@@ -2518,6 +2362,280 @@ const foo =
   let gen#10[@var] = (c)@(unit) in  match gen#10 with
                                      | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                      unit |} ]
+
+(* Module being defined does not type with its own type *)
+let%expect_test _ =
+  run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
+  [%expect {|
+    let #Tezos#balance#17 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
+    let #Tezos#amount#18 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
+    let #Tezos#now#19 = ({ DROP ; NOW })@(L(unit))[@inline] in
+    let #Tezos#sender#20 = ({ DROP ; SENDER })@(L(unit))[@inline] in
+    let #Tezos#source#21 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
+    let #Tezos#level#22 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
+    let #Tezos#self_address#23 = SELF_ADDRESS()[@inline] in
+    let #Tezos#chain_id#24 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
+    let #Tezos#total_voting_power#25 =
+      ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
+    let #Tezos#get_balance#26 =
+      fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let #Tezos#get_amount#27 =
+      fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let #Tezos#get_now#28 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let #Tezos#get_sender#29 =
+      fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let #Tezos#get_source#30 =
+      fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let #Tezos#get_level#31 =
+      fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let #Tezos#get_self_address#32 = fun _u -> (SELF_ADDRESS())[@inline] in
+    let #Tezos#get_chain_id#33 =
+      fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+    let #Tezos#get_total_voting_power#34 =
+      fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+    let #Tezos#min_block_time#35 = { DROP ; MIN_BLOCK_TIME }[@inline] in
+    let #Tezos#get_min_block_time#36 = { DROP ; MIN_BLOCK_TIME }[@inline] in
+    let #Tezos#voting_power#37 = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
+    let #Tezos#implicit_account#39 = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
+    let #Tezos#pairing_check#45 = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
+    let #Tezos#open_chest#46 =
+      fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
+    let #Tezos#set_delegate#50 = fun o -> (SET_DELEGATE(o))[@inline] in
+    let #Bitwise#xor#51 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
+    let #Bitwise#shift_left#52 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
+    let #Bitwise#shift_right#53 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+    let #String#concat#94 =
+      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
+    let #String#sub#95 =
+      fun s ->
+      (fun l ->
+       (fun b ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
+                                                                  b)))))[@inline] in
+    let #String#length#96 = fun b -> (({ SIZE })@(b))[@inline] in
+    let #Bytes#concat#99 =
+      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
+    let #Bytes#sub#100 =
+      fun s ->
+      (fun l ->
+       (fun b ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
+                                                                  b)))))[@inline] in
+    let #Bytes#length#103 = fun b -> (({ SIZE })@(b))[@inline] in
+    let #Crypto#blake2b#104 = fun b -> (({ BLAKE2B })@(b))[@inline] in
+    let #Crypto#sha256#105 = fun b -> (({ SHA256 })@(b))[@inline] in
+    let #Crypto#sha512#106 = fun b -> (({ SHA512 })@(b))[@inline] in
+    let #Crypto#sha3#107 = fun b -> (({ SHA3 })@(b))[@inline] in
+    let #Crypto#keccak#108 = fun b -> (({ KECCAK })@(b))[@inline] in
+    let #Crypto#hash_key#109 = fun k -> (({ HASH_KEY })@(k))[@inline] in
+    let #Crypto#check#110 =
+      fun k ->
+      (fun s ->
+       (fun b ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
+    let assert =
+      fun b ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
+    let assert_with_error =
+      fun b ->
+      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
+    let abs = fun i -> (({ ABS })@(i))[@inline] in
+    let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
+    let true = TRUE()[@inline] in
+    let false = FALSE()[@inline] in
+    let unit = UNIT()[@inline] in
+    let poly_#Test#failwith_15 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_14 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_13 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_12 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_11 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_10 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_9 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_8 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_7 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_6 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_5 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_4 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_3 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_2 = { FAILWITH }[@inline] in
+    let poly_#Test#failwith_1 = { FAILWITH }[@inline] in
+    let #Test#originate_from_file#113 =
+      fun _fn ->
+      (fun _e ->
+       (fun _v ->
+        (fun _s -> (fun _t -> ((poly_#Test#failwith_15)@(L("TEST MODE")))))))[@inline] in
+    let #Test#set_source#115 =
+      fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#set_baker#116 =
+      fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#set_baker_policy#117 =
+      fun _bp -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#transfer#118 =
+      fun _a ->
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_5)@(L("TEST MODE")))))[@inline] in
+    let #Test#transfer_exn#119 =
+      fun _a ->
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_12)@(L("TEST MODE")))))[@inline] in
+    let #Test#get_storage_of_address#123 =
+      fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#get_balance#124 =
+      fun _a -> ((poly_#Test#failwith_14)@(L("TEST MODE")))[@inline] in
+    let #Test#michelson_equal#125 =
+      fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_13)@(L("TEST MODE"))))[@inline] in
+    let #Test#reset_state#127 =
+      fun _n -> (fun _l -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
+    let #Test#reset_state_at#128 =
+      fun _t ->
+      (fun _n -> (fun _l -> ((poly_#Test#failwith_5)@(L("TEST MODE")))))[@inline] in
+    let #Test#get_voting_power#129 =
+      fun _kh -> ((poly_#Test#failwith_12)@(L("TEST MODE")))[@inline] in
+    let #Test#get_total_voting_power#130 =
+      (poly_#Test#failwith_12)@(L("TEST MODE"))[@inline] in
+    let #Test#nth_bootstrap_contract#132 =
+      fun _i -> ((poly_#Test#failwith_4)@(L("TEST MODE")))[@inline] in
+    let #Test#nth_bootstrap_account#133 =
+      fun _i -> ((poly_#Test#failwith_4)@(L("TEST MODE")))[@inline] in
+    let #Test#last_originations#135 =
+      fun _u -> ((poly_#Test#failwith_11)@(L("TEST MODE")))[@inline] in
+    let #Test#save_mutation#138 =
+      fun _s -> (fun _m -> ((poly_#Test#failwith_10)@(L("TEST MODE"))))[@inline] in
+    let #Test#add_account#145 =
+      fun _s -> (fun _k -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
+    let #Test#new_account#146 =
+      fun _u -> ((poly_#Test#failwith_9)@(L("TEST MODE")))[@inline] in
+    let #Test#baker_account#147 =
+      fun _p -> (fun _o -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
+    let #Test#bake_until_n_cycle_end#148 =
+      fun _n -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#register_delegate#149 =
+      fun _kh -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#register_constant#150 =
+      fun _m -> ((poly_#Test#failwith_8)@(L("TEST MODE")))[@inline] in
+    let #Test#create_chest#155 =
+      fun _b -> (fun _n -> ((poly_#Test#failwith_7)@(L("TEST MODE"))))[@inline] in
+    let #Test#create_chest_key#156 =
+      fun _c -> (fun _n -> ((poly_#Test#failwith_6)@(L("TEST MODE"))))[@inline] in
+    let #Test#constant_to_michelson_program#157 =
+      fun _s -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
+    let #Test#restore_context#158 =
+      fun _u -> ((poly_#Test#failwith_5)@(L("TEST_POP_CONTEXT")))[@inline] in
+    let #Test#save_context#159 =
+      fun _u -> ((poly_#Test#failwith_5)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+    let #Test#drop_context#160 =
+      fun _u -> ((poly_#Test#failwith_5)@(L("TEST_DROP_CONTEXT")))[@inline] in
+    let #Test#read_contract_from_file#161 =
+      fun _fn -> ((poly_#Test#failwith_5)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+    let #Test#compile_contract_from_file#162 =
+      fun _fn ->
+      (fun _e ->
+       (fun _v ->
+        ((poly_#Test#failwith_5)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+    let #Test#originate_contract#164 =
+      fun _c ->
+      (fun _s -> (fun _t -> ((poly_#Test#failwith_4)@(L("TEST_ORIGINATE")))))[@inline] in
+    let #Test#size#165 =
+      fun _c -> ((poly_#Test#failwith_3)@(L("TEST_SIZE")))[@inline] in
+    let #Test#get_bootstrap_account#166 =
+      fun _n -> ((poly_#Test#failwith_2)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+    let #Test#sign#167 =
+      fun _sk -> (fun _d -> ((poly_#Test#failwith_1)@(L("TEST_SIGN"))))[@inline] in
+    let #Tezos#balance#171 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
+    let #Tezos#amount#172 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
+    let #Tezos#now#173 = ({ DROP ; NOW })@(L(unit))[@inline] in
+    let #Tezos#sender#174 = ({ DROP ; SENDER })@(L(unit))[@inline] in
+    let #Tezos#source#175 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
+    let #Tezos#level#176 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
+    let #Tezos#self_address#177 = SELF_ADDRESS()[@inline] in
+    let #Tezos#chain_id#178 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
+    let #Tezos#total_voting_power#179 =
+      ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
+    let #Tezos#get_balance#180 =
+      fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let #Tezos#get_amount#181 =
+      fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let #Tezos#get_now#182 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let #Tezos#get_sender#183 =
+      fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let #Tezos#get_source#184 =
+      fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let #Tezos#get_level#185 =
+      fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let #Tezos#get_self_address#186 = fun _u -> (SELF_ADDRESS())[@inline] in
+    let #Tezos#get_chain_id#187 =
+      fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+    let #Tezos#get_total_voting_power#188 =
+      fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+    let #Tezos#voting_power#189 = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
+    let #Tezos#implicit_account#191 =
+      fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
+    let #Tezos#pairing_check#197 = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
+    let #Tezos#open_chest#198 =
+      fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
+    let #Tezos#set_delegate#202 = fun o -> (SET_DELEGATE(o))[@inline] in
+    let #Bitwise#xor#203 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
+    let #Bitwise#shift_left#204 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
+    let #Bitwise#shift_right#205 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+    let #String#concat#246 =
+      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
+    let #String#sub#247 =
+      fun s ->
+      (fun l ->
+       (fun b ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
+                                                                  b)))))[@inline] in
+    let #String#length#248 = fun b -> (({ SIZE })@(b))[@inline] in
+    let #Bytes#concat#251 =
+      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
+    let #Bytes#sub#252 =
+      fun s ->
+      (fun l ->
+       (fun b ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
+                                                                  b)))))[@inline] in
+    let #Bytes#length#255 = fun b -> (({ SIZE })@(b))[@inline] in
+    let #Crypto#blake2b#256 = fun b -> (({ BLAKE2B })@(b))[@inline] in
+    let #Crypto#sha256#257 = fun b -> (({ SHA256 })@(b))[@inline] in
+    let #Crypto#sha512#258 = fun b -> (({ SHA512 })@(b))[@inline] in
+    let #Crypto#sha3#259 = fun b -> (({ SHA3 })@(b))[@inline] in
+    let #Crypto#keccak#260 = fun b -> (({ KECCAK })@(b))[@inline] in
+    let #Crypto#hash_key#261 = fun k -> (({ HASH_KEY })@(k))[@inline] in
+    let #Crypto#check#262 =
+      fun k ->
+      (fun s ->
+       (fun b ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
+    let assert =
+      fun b ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
+    let assert_with_error =
+      fun b ->
+      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
+    let abs = fun i -> (({ ABS })@(i))[@inline] in
+    let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
+    let true = TRUE()[@inline] in
+    let false = FALSE()[@inline] in
+    let unit = UNIT()[@inline] in
+    let #Foo#x#263 = L(54) in let #Foo#y#264 = #Foo#x#263 in L(unit) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
+  [%expect{| 999 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_simple.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_complex.mligo" ; "{ number = 999 ; previous_action = Reset }" ] ;
@@ -2588,21 +2706,19 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "constant" ; "cameligo" ; "fun (x : int) -> if x > 3 then x * 2 else x * String.length \"fja\" + 1" ] ;
   [%expect{|
     Michelson constant as JSON string:
-    "{ PUSH int 3 ;\n  SWAP ;\n  DUP ;\n  DUG 2 ;\n  COMPARE ;\n  GT ;\n  IF { PUSH int 2 ; SWAP ; MUL }\n     { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }"
+    "{ PUSH int 3 ;\n  DUP 2 ;\n  COMPARE ;\n  GT ;\n  IF { PUSH int 2 ; SWAP ; MUL }\n     { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }"
     This string can be passed in `--constants` argument when compiling a contract.
 
     Remember to register it in the network, e.g.:
     > tezos-client register global constant "{ PUSH int 3 ;
-      SWAP ;
-      DUP ;
-      DUG 2 ;
+      DUP 2 ;
       COMPARE ;
       GT ;
       IF { PUSH int 2 ; SWAP ; MUL }
          { PUSH int 1 ; PUSH string \"fja\" ; SIZE ; DIG 2 ; MUL ; ADD } }" from bootstrap1
 
     Constant hash:
-    expruVivewmRtHKQn7h986tVPUzB65Z8w7QM1WP1X6DxcVWNs85USK |}]
+    exprtr7GE1A1cR39zNGRGF44aGfAX23tC7szWrnLzs9fkUhasLEcQT |}]
 
 (* Test pairing_check and bls12_381_g1/g2/fr literals *)
 let%expect_test _ =
@@ -2684,9 +2800,7 @@ let%expect_test _ =
              LOOP_LEFT
                { UNPAIR ;
                  PUSH int 0 ;
-                 SWAP ;
-                 DUP ;
-                 DUG 2 ;
+                 DUP 2 ;
                  COMPARE ;
                  EQ ;
                  IF { DROP ; RIGHT (pair int string) }
@@ -2716,6 +2830,53 @@ let%expect_test _ =
          NIL operation ;
          PAIR } } |}]
 
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main2" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main4" ; "--enable-michelson-typed-opt" ] ;
+  [%expect{|
+    { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main2" ] ;
+  [%expect{|
+    { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main3" ] ;
+  [%expect{|
+    { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "michelson_typed_opt.mligo" ; "-e" ; "main4" ] ;
+  [%expect{|
+    { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
+      storage nat ;
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
+           |}]
+
 (* check get contract with error typing *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "cbo" ; "--init-file" ; contract "get_contract_with_error.ligo" ] ;
@@ -2733,26 +2894,7 @@ let%expect_test _ =
   CONS ;
   PAIR } |}]
 
-(* some check about the warnings of the E_constructor cases *)
-let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "warning_ambiguous_ctor.mligo" ] ;
-  [%expect{|
-File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 61-64:
-  8 | (* here we expect a warning because both A constructor have the same parameter type *)
-  9 | let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1
 
-Warning: The type of this value is ambiguous: Inferred type is union_b but could be of type union_a.
-Hint: You might want to add a type annotation.
-
-{ parameter unit ;
-  storage (or (int %a) (nat %b)) ;
-  code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
-
-  run_ligo_good [ "compile" ; "contract" ; contract "not_ambiguous_ctor.mligo" ] ;
-  [%expect{|
-{ parameter unit ;
-  storage (or (nat %a) (nat %b)) ;
-  code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
 
 (* extend built-in modules *)
 let%expect_test _ =
@@ -2768,7 +2910,21 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "y" ; "--init-file" ; contract "extend_builtin.jsligo" ] ;
   [%expect{|
-File "../../test/contracts/extend_builtin.jsligo", line 6, characters 0-24:
+File "../../test/contracts/extend_builtin.jsligo", line 2, characters 13-14:
+  1 | namespace Tezos {
+  2 |   export let x = 42;
+  3 |   export let f = (x  : int) : int => x + 2;
+
+Toplevel let declaration are silently change to const declaration.
+
+File "../../test/contracts/extend_builtin.jsligo", line 3, characters 13-14:
+  2 |   export let x = 42;
+  3 |   export let f = (x  : int) : int => x + 2;
+  4 | }
+
+Toplevel let declaration are silently change to const declaration.
+
+File "../../test/contracts/extend_builtin.jsligo", line 6, characters 4-5:
   5 |
   6 | let y = Tezos.f(Tezos.x);
 
@@ -2812,3 +2968,14 @@ let%expect_test _ =
              IF_NONE { UNIT } {} ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "shadowed_sum_type.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/shadowed_sum_type.mligo", line 13, characters 8-12:
+     12 |
+     13 | let x = A 42
+     14 |
+
+    Constructor "A" not found.
+  |}]

@@ -136,13 +136,13 @@ let compile_groups ~raise filename grp_list =
         let testlib    = Build.Testlib.core ~options meta.syntax in
         let core = testlib @ stdlib @ core in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
-        let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
+        let _ = Interpreter.eval_test ~options ~raise ~add_warning ~steps:5000 typed in
         ()
       | Object ->
         let core = stdlib @ core in
         let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
-        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
+        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
         let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
         let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()

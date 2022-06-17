@@ -102,7 +102,7 @@ let compile_contract ~raise ~add_warning ~options source_file entry_point declar
   let open Ligo_compile in
   let michelson,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
   let views = Build.build_views ~raise ~add_warning ~options entry_point (declared_views,env) source_file in
-  Of_michelson.build_contract ~raise ~add_warning ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
+  Of_michelson.build_contract ~raise ~add_warning ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
@@ -113,9 +113,9 @@ let clean_locations e t =
 
 let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
-  let aux (let_binder , expr, no_mutation) (e : expression) =
+  let aux (let_binder , expr, no_mutation, inline) (e : expression) =
     if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
-      e_a_let_in {var=let_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} expr e { inline = false ; no_mutation ; view = false ; public = false ; thunk = false ; hidden = false }
+      e_a_let_in {var=let_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; thunk = false ; hidden = false }
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -185,6 +185,9 @@ let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} } in_ty out_ty
     | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}}} in
+  let (parameter, storage) = trace_option ~raise (Errors.generic_error Location.generated "Trying to compile a non-contract?") @@
+                               Ast_aggregated.get_t_pair in_ty in
+  let aggregated_exp = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp in
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 
@@ -321,7 +324,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      make_ast_map~raise ~loc key_ty value_ty kv
   | V_Map _ ->
      raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
-  | V_Michelson (Contract _) ->
+  | V_Michelson_contract _ ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
   | V_Michelson (Untyped_code _) ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
@@ -395,13 +398,13 @@ and make_subst_ast_env_exp ~raise env expr =
    Self_ast_aggregated.Helpers.Free_variables.expression expr in
   let rec aux (fv) acc = function
     | [] -> acc
-    | Expression { name; item ; no_mutation } :: tl ->
+    | Expression { name; item ; no_mutation ; inline } :: tl ->
        if List.mem fv name ~equal:ValueVar.equal then
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
          let fv = List.remove_element ~compare:ValueVar.compare name fv in
          let fv = List.dedup_and_sort ~compare:ValueVar.compare (fv @ expr_fv) in
-         aux fv ((name, expr, no_mutation) :: acc) tl
+         aux fv ((name, expr, no_mutation, inline) :: acc) tl
        else
          aux fv acc tl in
   aux (get_fv expr) [] env

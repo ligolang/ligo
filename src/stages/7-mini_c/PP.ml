@@ -165,6 +165,14 @@ and expression_content ppf (e:expression_content) = match e with
     fprintf ppf "@[constant(%s)( %a )@]"
       hash
       Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
+  | E_create_contract (p, s, ((x, a), code), args) ->
+    fprintf ppf "@[create_contract(%a,@ %a,@ fun (%a : %a) -> %a,@ %a)@]"
+      type_expression p
+      type_expression s
+      ValueVar.pp x
+      type_expression a
+      expression code
+      Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf ", ") expression) args
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
