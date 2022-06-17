@@ -38,11 +38,6 @@ let get_variant_nested_type label (tsum : AST.t_sum) =
   let c = Option.value_exn c in (* BAD *)
   c.associated_type
 
-let count_type_parts (t : AST.type_expression) =
-  match t.type_content with
-    AST.T_record { content ; _ } -> LMap.cardinal content
-  | _ -> 1
-
 let rec to_simple_pattern ty_pattern =
   let pattern', ty = ty_pattern in
   let pattern = T.Location.unwrap pattern' in
@@ -127,6 +122,15 @@ let default_matrix matrix =
   in
   List.fold_right matrix ~init:[] ~f:default
 
+let rec count_type_parts (t : AST.type_expression) =
+  match t.type_content with
+    AST.T_record { content ; _ } ->
+      LMap.fold (fun _ (row_elt : AST.row_element) count -> 
+        let elt_typ = row_elt.associated_type in
+        count + count_type_parts elt_typ) 
+        content 0
+  | _ -> 1
+
 let find_constuctor_arity c (t : AST.type_expression) =
   match c with
   T.Label "#CONS" ->
@@ -136,9 +140,7 @@ let find_constuctor_arity c (t : AST.type_expression) =
   | Label "#NIL"  -> 1
   | _       ->
   let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
-  match te.type_content with
-    AST.T_record { content ; _ } -> LMap.cardinal content
-  | _ -> 1
+  count_type_parts te
 
 let get_all_constructors (t : AST.type_expression) =
   if C.is_t_list t then list_constructors
@@ -161,7 +163,8 @@ let get_constructos_from_1st_col matrix =
 
 let rec algorithm_Urec matrix vector =
   (* let () = print_matrix matrix in
-  let () = print_vector vector in *)
+  let () = print_vector vector in
+  let () = Format.printf "---------------\n" in *)
   match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
       (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
@@ -187,10 +190,12 @@ let rec algorithm_Urec matrix vector =
       LSet.fold 
         (fun c b ->
           let a = find_constuctor_arity c t in
-          b && algorithm_Urec 
+          (* let Label l = c in *)
+          (* let () = Format.printf "-----\n%s arity: %d\n-----\n" l a in *)
+          b || algorithm_Urec 
                 (specialize_matrix c a matrix) 
                 (specialize_vector c a vector)) 
-        complete_signature true
+        complete_signature false
     else
       algorithm_Urec (default_matrix matrix) q2_n
   | [] -> 
