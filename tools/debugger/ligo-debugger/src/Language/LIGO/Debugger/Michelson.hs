@@ -27,7 +27,7 @@ import Morley.Michelson.Typed
 import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Types
+import Language.LIGO.Debugger.Common
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list

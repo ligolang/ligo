@@ -49,7 +49,7 @@ import Morley.Debugger.Core.Navigate
 import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
 
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Types
+import Language.LIGO.Debugger.Common
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 
 -- | Stack element, likely with an associated variable.
