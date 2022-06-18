@@ -164,6 +164,7 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.Breakpoints
       Test.DebugInfo
       Test.LigoCall
       Test.Snapshots

@@ -23,9 +23,18 @@ module Language.LIGO.Debugger.Snapshots
   , csInterpreterStateL
   , csStackFramesL
   , csActiveStackFrameL
+
+  , _InterpretStarted
+  , _InterpretRunning
+  , _InterpretTerminatedOk
+  , _InterpretFailed
+
+  , _EventFacedStatement
+  , _EventExpressionPreview
+  , _EventExpressionEvaluated
   ) where
 
-import Control.Lens (Zoom (zoom), makeLensesWith, (.=))
+import Control.Lens (Zoom (zoom), makeLensesWith, makePrisms, (.=))
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
@@ -337,3 +346,6 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
             }
           }
       }
+
+makePrisms ''InterpretStatus
+makePrisms ''InterpretEvent
