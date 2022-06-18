@@ -43,7 +43,6 @@ import Data.List.NonEmpty qualified as NE
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Fmt (Buildable (..), genericF)
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
@@ -162,12 +161,9 @@ instance Buildable InterpretSnapshot where
   build = genericF
 
 instance NavigableSnapshot InterpretSnapshot where
-  getExecutedPosition =
-    -- TODO: this conversion will be replaced after morley-debugger#44
-    let toSrcPos range =
-          let LigoPosition{..} = lrStart range
-          in SrcPos (Pos $ fromIntegral lpLine) (Pos $ fromIntegral lpCol - 1)
-    in Just . toSrcPos . sfLoc . head . isStackFrames <$> curSnapshot
+  getExecutedPosition = do
+    locRange <- sfLoc . head . isStackFrames <$> curSnapshot
+    return . Just $ ligoPositionToSrcPos (lrStart locRange)
   getLastExecutedPosition = unfreezeLocally do
     move Backward >>= \case
       ReachedBoundary -> return Nothing
