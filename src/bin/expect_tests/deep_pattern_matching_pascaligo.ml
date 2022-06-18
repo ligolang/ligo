@@ -112,20 +112,14 @@ let%expect_test _ =
       5 |   ]
 
     Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    FOUND MISSING CASE(S)
+    - #CONS (_ : int, #NIL (_ : list (int))), |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.ligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.ligo", line 4, character 2 to line 7, character 3:
-      3 | function t (const x:recordi) is
-      4 |   case x of [
-      5 |   | record [ a = Some (nil) ; b = (hd#tl) ] -> hd
-      6 |   | record [ a = Some ((hd#tl)) ; b = nil ] -> hd
-      7 |   ]
-
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    An internal error ocurred. Please, contact the developers.
+    "Option.value_exn None". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.ligo") ] ;
@@ -138,7 +132,8 @@ let%expect_test _ =
       7 |   ]
 
     Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    FOUND MISSING CASE(S)
+    - Cons (_ : int, _ : int), Cons (_ : int, _ : int), |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.ligo") ] ;

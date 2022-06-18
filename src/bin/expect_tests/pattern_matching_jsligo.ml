@@ -11,7 +11,8 @@ let%expect_test _ =
       5 | }
 
     Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    FOUND MISSING CASE(S)
+    - Success (_ : nat), |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ] ;
@@ -52,7 +53,10 @@ let%expect_test _ =
     6 |     return match(state, {
 
   Pattern matching anomaly (redundant, or non exhaustive).
-  FOUND MISSING CASE(S)FOUND MISSING CASE(S) |}]
+  FOUND MISSING CASE(S)
+  - C (_ : unit),
+  FOUND MISSING CASE(S)
+  - C (_ : unit), |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;

@@ -154,19 +154,14 @@ let%expect_test _ =
       4 |   | [] -> 0
 
     Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    FOUND MISSING CASE(S)
+    - #CONS (_ : int, #NIL (_ : list (int))), |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.mligo", line 4, character 2 to line 6, character 40:
-      3 | let t13 = fun (x:recordi) ->
-      4 |   match x with
-      5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
-      6 |   | { a = Some (hd::tl) ; b = [] } -> hd
-
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    An internal error ocurred. Please, contact the developers.
+    "Option.value_exn None". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
@@ -188,7 +183,8 @@ let%expect_test _ =
       6 |   | xs  , Nil -> 2
 
     Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S) |}]
+    FOUND MISSING CASE(S)
+    - Cons (_ : int, _ : int), Cons (_ : int, _ : int), |}]
 
 (* Positives *)
 

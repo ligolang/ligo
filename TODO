@@ -22,11 +22,11 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    | P_tuple   -> simple_pattern list
    | P_record  -> simple_pattern list
 
-4. Implement functions for specialization of matrix & default matrix
+4. [DONE] Implement functions for specialization of matrix & default matrix
    (* Done - need to test  *)
 5. Implement Algorithm I for missing cases (exhaustiveness check)
 
-6. Implement Algorithm Urec for useless cases (redundant pattern check)
+6. [DONE] Implement Algorithm Urec for useless cases (redundant pattern check)
 
 7. Once missing pattern is detected, give understandable error messages
    a. add more contructors which are missing

@@ -154,12 +154,12 @@ let get_all_constructors (t : AST.type_expression) =
       (* failwith "get_all_constructors: not a variant type" *)
     
 let get_constructos_from_1st_col matrix = 
-  List.fold_left matrix ~init:LSet.empty 
-    ~f:(fun s row ->
+  List.fold_left matrix ~init:(LSet.empty, None) 
+    ~f:(fun (s, t) row ->
       match row with
-        SP_Constructor (c, _, _) :: _ -> LSet.add c s
-      | SP_wildcard _ :: _ -> s
-      | [] -> s)
+        SP_Constructor (c, _, t) :: _ -> LSet.add c s, Some t
+      | SP_wildcard t :: _ -> s, Some t
+      | [] -> s, t)
 
 let rec algorithm_Urec matrix vector =
   (* let () = print_matrix matrix in
@@ -175,7 +175,7 @@ let rec algorithm_Urec matrix vector =
   | SP_wildcard t :: q2_n ->
     (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
-    let constructors = get_constructos_from_1st_col matrix in
+    let constructors, _ = get_constructos_from_1st_col matrix in
     (*  *)
     (* let () = Format.printf "----\ncomplete signature:\n" in
     let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l) 
@@ -201,7 +201,52 @@ let rec algorithm_Urec matrix vector =
   | [] -> 
     if List.is_empty matrix then true
     else if List.for_all matrix ~f:(List.is_empty) then false
-    else failwith "edge case: Urec"
+    else failwith "edge case: algorithm Urec"
+
+let rec algorithm_I matrix n =
+  if n  = 0 then
+    if List.is_empty matrix then Some [[]]
+    else if List.for_all matrix ~f:(List.is_empty) then None
+    else failwith "edge case: algorithm I"
+  else
+    let constructors, t = get_constructos_from_1st_col matrix in
+    let t = Option.value_exn t in
+    let complete_signature = get_all_constructors t in
+    if (not @@ LSet.is_empty constructors) && 
+      LSet.equal constructors complete_signature then
+        LSet.fold (fun ck p ->
+          if Option.is_some p then p
+          else
+            let a  = find_constuctor_arity ck t in
+            let ak = List.length a in
+            let matrix = specialize_matrix ck a matrix in
+            let ps = algorithm_I matrix (ak + n - 1) in
+            match ps with
+              Some ps -> Some 
+                (List.map ps ~f:(fun ps -> [SP_Constructor (ck, ps, t)]))
+            | None -> None
+          ) complete_signature None
+    else
+      let dp = default_matrix matrix in
+      let ps = algorithm_I dp (n - 1) in
+      match ps with
+        Some ps ->
+          if LSet.is_empty constructors then
+            Some (List.map ps ~f:(fun ps -> [SP_wildcard t] @ ps))
+          else
+            let missing_constructors 
+              = LSet.diff complete_signature constructors in
+            let cs = LSet.fold (fun c cs ->
+              let a  = find_constuctor_arity c t in
+              let a  = List.map a ~f:(fun t -> SP_wildcard t) in
+              let c  = SP_Constructor (c, a, t) in
+              c :: cs
+            ) missing_constructors [] in
+            Some (List.fold_left cs ~init:[] ~f:(fun new_ps c ->
+              let ps = List.map ps ~f:(fun p -> [c] @ p) in
+              ps @ new_ps
+            ))
+      | None -> None
 
 let redundant_case_analysis matrix =
   fst @@ List.fold_left matrix ~init:(false, [])
@@ -228,7 +273,12 @@ let find_anomaly eqs =
         SP_wildcard t -> SP_wildcard t
       | SP_Constructor (_, _, t) -> SP_wildcard t) in
   let missing_case = algorithm_Urec matrix vector in
-  if missing_case then Format.printf "FOUND MISSING CASE(S)";
+  let () = if missing_case then 
+    let i = algorithm_I matrix (List.length vector) in
+    let i = Option.value_exn i in
+    Format.printf "FOUND MISSING CASE(S) \n";
+    List.iter i ~f:(fun i -> Format.printf "- %a\n" pp_simple_pattern_list i);
+  else () in
   let redundant_case = redundant_case_analysis matrix in
   if redundant_case then Format.printf "FOUND REDUNDANT CASE(S)";
   ()
