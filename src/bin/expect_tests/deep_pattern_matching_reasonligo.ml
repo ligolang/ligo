@@ -123,8 +123,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.religo") ] ;
   [%expect{|
-    An internal error ocurred. Please, contact the developers.
-    "Option.value_exn None". |}]
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.religo", line 4, character 2 to line 7, character 3:
+      3 | let t13 = (x:recordi) =>
+      4 |   switch(x) {
+      5 |   | { a : Some ([])          , b : [hd, ...tl] } => hd
+      6 |   | { a : Some ([hd, ...tl]) , b : [] }          => hd
+      7 |   }
+
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S)
+    - None (_ : unit), _ : unit, |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;

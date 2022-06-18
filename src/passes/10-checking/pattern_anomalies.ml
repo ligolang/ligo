@@ -154,7 +154,7 @@ let get_all_constructors (t : AST.type_expression) =
       (* failwith "get_all_constructors: not a variant type" *)
     
 let get_constructos_from_1st_col matrix = 
-  List.fold_left matrix ~init:(LSet.empty, None) 
+  List.fold_left matrix ~init:(LSet.empty, Some t_unit) 
     ~f:(fun (s, t) row ->
       match row with
         SP_Constructor (c, _, t) :: _ -> LSet.add c s, Some t
@@ -204,6 +204,9 @@ let rec algorithm_Urec matrix vector =
     else failwith "edge case: algorithm Urec"
 
 let rec algorithm_I matrix n =
+  (* let () = Format.printf "n = %d\n" n in
+  let () = print_matrix matrix in
+  let () = Format.printf "---------------\n" in *)
   if n  = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
@@ -222,8 +225,12 @@ let rec algorithm_I matrix n =
             let matrix = specialize_matrix ck a matrix in
             let ps = algorithm_I matrix (ak + n - 1) in
             match ps with
-              Some ps -> Some 
-                (List.map ps ~f:(fun ps -> [SP_Constructor (ck, ps, t)]))
+              Some ps -> 
+                Some 
+                (List.map ps ~f:(fun ps -> 
+                  let xs = List.take ps ak in
+                  let ps = List.drop ps ak in
+                  [SP_Constructor (ck, xs, t)] @ ps))
             | None -> None
           ) complete_signature None
     else
@@ -232,7 +239,8 @@ let rec algorithm_I matrix n =
       match ps with
         Some ps ->
           if LSet.is_empty constructors then
-            Some (List.map ps ~f:(fun ps -> [SP_wildcard t] @ ps))
+            let ps = List.map ps ~f:(fun ps -> [SP_wildcard t] @ ps) in
+            Some ps
           else
             let missing_constructors 
               = LSet.diff complete_signature constructors in
