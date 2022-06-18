@@ -1,3 +1,4 @@
+import GistFs, { GistData } from './GistFs'
 import pathHelper from 'path-browserify'
 import IndexedLocalFs from './IndexedLocalFs'
 
@@ -26,11 +27,13 @@ export type FileInfo = {
 
 class FileManager {
   localFs: IndexedLocalFs
+  gistFs: GistFs
   workspace: string
   pathHelper: any
 
   constructor () {
     this.localFs = new IndexedLocalFs()
+    this.gistFs = new GistFs()
     this.workspace = ''  // TODO use ./workspaces as workspace root instead of full path
     this.pathHelper = pathHelper
   }
@@ -153,6 +156,71 @@ class FileManager {
     }
   }
 
+  async loadGistProject (gistId: string) {
+    const data = await this.gistFs.loadData(gistId).then((dt: GistData) => {
+      if (!dt.files) {
+        throw new Error(dt.message)
+      } else {
+        return dt.files
+      }
+    }).catch(e => {
+      throw new Error(`<b>${e.message}</b>`)
+    })
+
+    const obj: {[a: string]: string} = {}
+    Object.keys(data).forEach(element => {
+      const path = element.replace(/\.\.\./g, '/')
+      obj[path] = data[element]
+    })
+    return obj
+  }
+
+  async uploadGistProject(token: string, projectRoot: string): Promise<string> {
+    if (await this.isFile(projectRoot)) {
+      throw Error(`${projectRoot} is not a directory`)
+    }
+
+    const packaged = await this.copyFolderToJson(projectRoot)
+    const packagedObject: {[a: string]: {content: string}} = {}
+    packaged.forEach(({ path, content }) => {
+      packagedObject[path] = {content: content}
+    })
+    const description = 'Description'
+    return await this.gistFs.uploadData(packagedObject, description, token)
+  }
+
+  async copyFolderToJson (path: string): Promise<{path: string, content: string}[]> {
+    const files = await this.collectFiles(path)
+    const regex = new RegExp(path)
+    return files.map(({path: filePath, content}) => {
+      const gistFilePath = filePath.replace(regex, '').replace(/\//g, '...')
+      const gistFileContent = /^\s+$/.test(content) || !content.length ? '// this line is added to create a gist. Empty file is not allowed.' : content
+      return {path: gistFilePath, content: gistFileContent}
+    })
+  }
+
+  async collectFiles (path: string): Promise<{path: string, content: string}[]> {
+    const files: {path: string, content: string}[] = []
+
+    if (await this.exists(path)) {
+      const items = await this.readDirectory(path)
+      if (items.length !== 0) {
+        for (const item of items) {
+          const curPath = item.key
+          if (await this.isDirectory(curPath)) {
+            const folderContent = await this.collectFiles(curPath)
+            files.push(...folderContent)
+          } else {
+            const fileContent = await this.readFile(curPath)
+            files.push({path: curPath, content: fileContent})
+          }
+        }
+      }
+    }
+
+    return files
+  }
+
   showMessageBox ({ message }) {  // TODO add proper type or remove
     const result = window.confirm(message)
     return { response: result ? 0 : 1 }
@@ -164,38 +232,6 @@ class FileManager {
 
   openLink (href) {  // TODO add proper type or remove
     window.open(href, '_blank')
-  }
-
-  async copyFolderToJsonInternal (path: string, visitFile, visitFolder) {
-    try {
-      await this.folderToJson(path, visitFile, visitFolder)
-    } catch (e) {
-      throw new Error(`Fail to convert workspace to JSON: <b>${JSON.stringify(e)}</b>.`)
-    }
-  }
-
-  async folderToJson (path: string, visitFile, visitFolder) {
-    visitFile = visitFile || function () { }
-    visitFolder = visitFolder || function () { }
-
-    if (await this.exists(path)) {
-      try {
-        const items = await this.readDirectory(path)
-        visitFolder({ path })
-        if (items.length !== 0) {
-          for (const item of items) {
-            const curPath = item.key
-            if (await this.isDirectory(curPath)) {
-              await this.folderToJson(curPath, visitFile, visitFolder)
-            } else {
-              visitFile({ path: curPath, content: await this.readFile(curPath) })
-            }
-          }
-        }
-      } catch (e) {
-        throw new Error(`Fail to convert workspace to JSON: <b>${JSON.stringify(e)}</b>.`)
-      }
-    }
   }
 }
 

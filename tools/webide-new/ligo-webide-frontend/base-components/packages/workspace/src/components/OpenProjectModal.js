@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react'
+import fileOps from '@obsidians/file-ops'
 
 import {
   Modal,
@@ -45,25 +46,14 @@ export default class OpenProjectModal extends PureComponent {
 
     const gistId = this.getGistId(link)
 
-    let data
-    try {
-      data = await (await fetch(`https://api.github.com/gists/${gistId}`)).json()
-      if (!data.files) {
-        notification.error('Gist load error', data.message)
-        this.setState({ creating: false })
-        return
-      }
-    } catch (e) {
+    const obj = await fileOps.loadGistProject(gistId).catch(e => {
       notification.error('Gist load error', e.message)
+    })
+
+    if (!obj) {
       this.setState({ creating: false })
       return
     }
-
-    const obj = {}
-    Object.keys(data.files).forEach((element) => {
-      const path = element.replace(/\.\.\./g, '/')
-      obj[path] = data.files[element]
-    })
 
     const created = await this.openProject(obj, name)
 

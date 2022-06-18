@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react'
+import fileOps from '@obsidians/file-ops'
 
 import {
   Modal,
   DebouncedFormGroup
 } from '@obsidians/ui-components'
-
-import Gists from 'gists'
 
 import notification from '@obsidians/notification'
 
@@ -40,95 +39,16 @@ export default class GistUploadModals extends PureComponent {
 
     this.setState({ loading: true })
 
-    const folder = root
-    try {
-      const packaged = await this.packageGistFiles(folder)
-      const accessToken = token
-
-      if (!accessToken) {
-        notification.error('No access token', '')
-        this.setState({ loading: false })
-      } else {
-        const description = 'Description'
-        const gists = new Gists({ token: accessToken })
-
-        await gists.create({
-          description: description,
-          public: true,
-          files: packaged
-        })
-          .then(result => {
-            this.handleGistResponse(undefined, result.body)
-          })
-          .catch(error => {
-            this.handleGistResponse(error, undefined)
-          })
-      }
-    } catch (error) {
-      console.log(error)
-      notification.error('Publish to gist Failed', 'Failed to create gist: ' + error.message)
-      this.setState({ loading: false })
-    }
-  }
-
-  handleGistResponse = (error, data) => {
-    if (error) {
-      notification.error('Publish to gist Failed', 'Failed to create gist: ' + error)
-      this.setState({ loading: false })
-    } else {
-      if (data.html_url) {
-        this.setState({gistLink: data.html_url, loading: false})
-      } else {
-        const error = JSON.stringify(data.errors, null, '\t') || ''
-        const message = data.message === 'Not Found' ? data.message + '. Please make sure the API token has right to create a gist.' : data.message
-        notification.error('Publish to gist Failed', message + ' ' + data.documentation_url + ' ' + error)
-        this.setState({ loading: false })
-      }
-    }
-  }
-
-  packageGistFiles = async (directory) => {
-    const workspaceProvider = this.props.projectManager
-    const isFile = await workspaceProvider.isFile(directory)
-    return new Promise((resolve, reject) => {
-      const ret = {}
-
-      if (isFile) {
-        try {
-          workspaceProvider.readFile(directory, (error, content) => {
-            if (error) throw new Error('An error ocurred while getting file content. ' + directory)
-            if (/^\s+$/.test(content) || !content.length) {
-              content = '// this line is added to create a gist. Empty file is not allowed.'
-            }
-            directory = directory.replace(/\//g, '...')
-            ret[directory] = { content }
-            return resolve(ret)
-          })
-        } catch (e) {
-          return reject(e)
-        }
-      } else {
-        try {
-          (async () => {
-            await workspaceProvider.copyFolderToJson(directory, ({ path, content }) => {
-              if (/^\s+$/.test(content) || !content.length) {
-                content = '// this line is added to create a gist. Empty file is not allowed.'
-              }
-              if (path.indexOf('gist-') === 0) {
-                path = path.split('/')
-                path.shift()
-                path = path.join('/')
-              }
-              path = path.replace(/\//g, '...')
-              ret[path] = { content }
-            })
-            resolve(ret)
-          })()
-        } catch (e) {
-          return reject(e)
-        }
-      }
+    const link = await fileOps.uploadGistProject(token, root).catch(e => {
+      notification.error('Gist load error', e.message)
     })
+
+    if (!link) {
+      this.setState({ loading: false })
+      return
+    }
+
+    this.setState({gistLink: link, loading: false})
   }
 
   render () {
