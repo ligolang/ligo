@@ -25,7 +25,7 @@ let error_ppformat : display_format:string display_format ->
         Snippet.pp loc
     | `Self_ast_aggregated_polymorphism_unresolved loc ->
       Format.fprintf f
-        "@[<hv>%a@.Polymorphism not resolved before recursion.@]"
+        "@[<hv>%a@.Polymorphism not resolved TODO: meaningful error msg .@]"
         Snippet.pp loc
     | `Self_ast_aggregated_fvs_in_create_contract_lambda (e,v) ->
       Format.fprintf f
@@ -76,8 +76,8 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_aggregated_polymorphism_unresolved loc ->
-    let message = `String "unexpected polymorphism in recursion" in
-    let description = `String "polymorphism should be resolved before recursion" in
+    let message = `String "unexpected polymorphism" in
+    let description = `String "polymorphism should be resolved TODO: meaningful error msg" in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);
