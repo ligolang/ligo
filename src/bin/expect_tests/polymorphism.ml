@@ -343,7 +343,7 @@ let%expect_test _ =
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
 
-    Polymorphism not resolved TODO: meaningful error msg . |}]
+    Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
@@ -352,7 +352,7 @@ let%expect_test _ =
       1 | let s = List.length []
       2 |
 
-    Polymorphism not resolved TODO: meaningful error msg . |}]
+    Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
@@ -361,11 +361,11 @@ let%expect_test _ =
       1 | let p = []
       2 |
 
-    Polymorphism not resolved TODO: meaningful error msg . |}]
+    Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
   [%expect{|
-    Polymorphism not resolved TODO: meaningful error msg . |}]
+    Can't infer the type of this value, please add a type annotation. |}]
 
 let () = Sys.chdir pwd
