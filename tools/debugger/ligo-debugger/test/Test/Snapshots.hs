@@ -31,7 +31,7 @@ data ContractRunData =
   )
   => ContractRunData
   { crdProgram :: FilePath
-  , crdEntrypoint :: String
+  , crdEntrypoint :: Maybe String
   , crdParam :: param
   , crdStorage :: st
   }
@@ -40,7 +40,8 @@ data ContractRunData =
 mkSnapshotsFor
   :: HasCallStack
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
-mkSnapshotsFor (ContractRunData file entrypoint (param :: param) (st :: st)) = do
+mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
+  let entrypoint = mEntrypoint ?: "main"
   ligoMapper <- compileLigoContractDebug entrypoint file
   (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
     case readLigoMapper ligoMapper of
@@ -100,7 +101,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = "main"
+            , crdEntrypoint = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -225,7 +226,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "not-main-entry-point.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = "not_main"
+            , crdEntrypoint = Just "not_main"
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -278,7 +279,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "match-on-some.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = "main"
+            , crdEntrypoint = Nothing
             , crdParam = ()
             , crdStorage = Just (5 :: Integer)
             }

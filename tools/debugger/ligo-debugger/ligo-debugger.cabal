@@ -16,11 +16,11 @@ library
       Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
+      Language.LIGO.Debugger.Common
       Language.LIGO.Debugger.Handlers.Impl
       Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Snapshots
-      Language.LIGO.Debugger.Types
       Prelude
       Util
   other-modules:
@@ -164,6 +164,7 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.Breakpoints
       Test.DebugInfo
       Test.LigoCall
       Test.Snapshots

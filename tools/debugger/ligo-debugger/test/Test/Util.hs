@@ -10,6 +10,9 @@ module Test.Util
   , ShowThroughBuild (..)
   , TestBuildable (..)
   , (@?=)
+  , (@@?=)
+  , (@?)
+  , (@@?)
   , assertLeft
   , HUnit.testCase
   , HUnit.testCaseSteps
@@ -68,6 +71,30 @@ instance (Buildable (TestBuildable a), Buildable (TestBuildable b)) =>
   :: (Eq a, Buildable (TestBuildable a), MonadIO m, HasCallStack)
   => a -> a -> m ()
 (@?=) a b = liftIO $ STB a HUnit.@?= STB b
+infix 1 @?=
+
+-- | Similar to '@?=' but checks monadic value.
+(@@?=)
+  :: (Eq a, Buildable (TestBuildable a), MonadIO m, HasCallStack)
+  => m a -> a -> m ()
+(@@?=) am b = am >>= \a -> a @?= b
+infix 1 @@?=
+
+-- | Check that value matches certain predicate.
+(@?)
+  :: (Buildable (TestBuildable a), MonadIO m, HasCallStack)
+  => a -> (a -> Bool) -> m ()
+(@?) a p
+  | p a = pass
+  | otherwise = liftIO $ HUnit.assertFailure [int||Unexpected value: #{TB a}|]
+infix 1 @?
+
+-- | Similar to '@?' but checks monadic value.
+(@@?)
+  :: (Buildable (TestBuildable a), MonadIO m, HasCallStack)
+  => m a -> (a -> Bool) -> m ()
+(@@?) am p = am >>= \a -> a @? p
+infix 1 @@?
 
 assertLeft
   :: (Buildable (TestBuildable e), MonadIO m)
