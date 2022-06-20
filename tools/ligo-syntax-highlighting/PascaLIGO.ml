@@ -30,6 +30,7 @@ end
 let syntax_highlighting = 
   let open Core in
   let type_core_patterns = [
+    Name.type_module;
     (* Sum type *)
     Name.of_keyword;
     Name.identifier_constructor;
@@ -38,7 +39,6 @@ let syntax_highlighting =
     Name.type_operator;
     Name.type_name;
     Name.type_parentheses;
-    Name.type_module;
     Name.type_int;
     "string";
   ] in

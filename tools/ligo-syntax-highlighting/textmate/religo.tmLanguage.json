@@ -12,11 +12,13 @@
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#typedefinition" },
+    { "include": "#typeannotation" },
     { "include": "#controlkeywords" },
     { "include": "#numericliterals" },
     { "include": "#operators" },
     { "include": "#identifierconstructor" },
-    { "include": "#module" }
+    { "include": "#module" },
+    { "include": "#typedefinition" }
   ],
   "repository": {
     "string": {
@@ -74,11 +76,7 @@
         "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+",
       "captures": {}
     },
-    "typedefinition": {
-      "name": "entity.name.type.religo",
-      "match": "\\b(type)\\b",
-      "captures": {}
-    },
+    "comma": { "match": "(,)", "captures": {} },
     "module": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
       "captures": {
@@ -86,9 +84,100 @@
         "1": { "name": "storage.class.religo" }
       }
     },
+    "identifier": {
+      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "captures": {}
+    },
     "identifierconstructor": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": { "1": { "name": "variable.other.enummember.religo" } }
+    },
+    "typedefinition": {
+      "begin": "\\b(type)\\b",
+      "end": "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)",
+      "beginCaptures": { "1": { "name": "keyword.other.religo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeannotation": {
+      "begin": "(:)",
+      "end": "(?=\\)|}|=|,|=>)",
+      "beginCaptures": { "1": { "name": "keyword.operator.religo" } },
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typeoperator": {
+      "name": "keyword.operator.religo",
+      "match": "(=>|\\.|\\|)",
+      "captures": {}
+    },
+    "typename": {
+      "name": "entity.name.type.religo",
+      "match": "\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typevar": {
+      "name": "variable.other.type.religo",
+      "match": "'\\b([a-z_][a-zA-Z0-9_]*)\\b",
+      "captures": {}
+    },
+    "typeparentheses": {
+      "begin": "(\\()",
+      "end": "(\\))",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#typemodule" },
+        { "include": "#identifierconstructor" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typevar" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typeproduct" },
+        { "include": "#string" }
+      ]
+    },
+    "typemodule": {
+      "name": "storage.var.religo",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.",
+      "captures": {}
+    },
+    "typeint": {
+      "name": "constant.numeric.religo",
+      "match": "\\b([0-9]+)\\b",
+      "captures": {}
+    },
+    "typeproduct": {
+      "begin": "({)",
+      "end": "(})",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#identifier" },
+        { "include": "#typeannotation" },
+        { "include": "#comma" }
+      ]
     }
   }
 }

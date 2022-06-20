@@ -107,13 +107,13 @@
       "beginCaptures": { "1": { "name": "keyword.other.mligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
         { "include": "#typeparentheses" },
-        { "include": "#typemodule" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
         { "include": "#string" }
@@ -125,13 +125,13 @@
       "beginCaptures": { "1": { "name": "keyword.operator.mligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
         { "include": "#typeparentheses" },
-        { "include": "#typemodule" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
         { "include": "#string" }
@@ -143,13 +143,13 @@
       "beginCaptures": { "1": { "name": "keyword.operator.mligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
         { "include": "#typeparentheses" },
-        { "include": "#typemodule" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
         { "include": "#string" }
@@ -176,13 +176,13 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
         { "include": "#typevar" },
         { "include": "#typeparentheses" },
-        { "include": "#typemodule" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
         { "include": "#string" }

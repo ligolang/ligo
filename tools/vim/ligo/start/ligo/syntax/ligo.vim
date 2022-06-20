@@ -20,7 +20,7 @@ syntax match typemodule "\<\([A-Z][a-zA-Z0-9_$]*\)\." contained
 highlight link typemodule Identifier 
 
 " typeparentheses
-syntax region typeparentheses start="(" end=")" contained contains=ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typemodule,typeint,string 
+syntax region typeparentheses start="(" end=")" contained contains=typemodule,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
 
 " typename
 syntax match typename "\<\([a-z_][a-zA-Z0-9_]*\)\>" contained 
@@ -37,15 +37,15 @@ syntax match typeproduct___ "\s*" contained nextgroup=typeproduct______
 syntax region typeproduct______ start="\[" end="\]" contained contains=identifier,typeannotationfield,semicolon 
 
 " typeannotationfield
-syntax region typeannotationfield matchgroup=typeannotationfield_ start="\(:\)" end="\(;\|\]\)\@!" contained contains=ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typemodule,typeint,string 
+syntax region typeannotationfield matchgroup=typeannotationfield_ start="\(:\)" end="\(;\|\]\)\@!" contained contains=typemodule,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
 highlight link typeannotationfield_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\(;\|)\|}\|\<is\>\|=\|:=\)\@!" contains=ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typemodule,typeint,string 
+syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\(;\|)\|}\|\<is\>\|=\|:=\)\@!" contains=typemodule,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@!" contains=iskeyword,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typemodule,typeint,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@!" contains=iskeyword,typemodule,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
 highlight link typedefinition_ Keyword 
 
 " constorvar

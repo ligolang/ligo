@@ -470,3 +470,29 @@ let type_annotation_field_end_ligo: Core.regexp = {
   textmate = "(?=;|\\])";
   vim      = "\\(;\\|\\]\\)\\@!";
 }
+
+(* follow(type_annotation) = RPAR RBRACE EQ COMMA ARROW *)
+let type_annotation_begin_reasonligo: Core.regexp = type_annotation_begin
+
+let type_annotation_end_reasonligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ")\\\\|}\\\\|=\\\\|,\\\\|=>";
+  textmate = "(?=\\)|}|=|,|=>)";
+  vim      = "\\()\\|}\\|=\\|,\\|=>\\)\\@!";
+}
+
+(* follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr *)
+let type_definition_begin_reasonligo: Core.regexp = type_definition_begin
+
+let type_definition_end_reasonligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|{\\\\|^#\\\\|\\\\[@";
+  textmate = "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)";
+  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@!";
+}
+
+let type_operator_match_reasonligo: Core.regexp = {
+  emacs    = "\\\\(=>\\\\|\\\\.\\\\||\\\\)";
+  textmate = "(=>|\\.|\\|)";
+  vim      = "\\(=>\\|\\.\\||\\)";
+}

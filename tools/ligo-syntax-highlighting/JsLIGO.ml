@@ -34,10 +34,10 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
+    Name.type_module;
     Name.type_operator;
     Name.type_name;
     Name.type_parentheses;
-    Name.type_module;
     Name.type_int;
     Name.type_variant;
     Name.type_product;
