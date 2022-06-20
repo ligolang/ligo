@@ -835,13 +835,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 19-31:
-     16 |       | None -> ()
-     17 |       | Some _x -> assert false
-     18 | end
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 15, characters 14-41:
+     14 |   match PBT.run test 10000n with
+     15 |   | Some _ -> Test.failwith "TEST FAILED"
+     16 |   | None -> ()
 
-    An uncaught error occured:
-    Failwith: "failed assertion" |}]
+    Test failed with "TEST FAILED"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 15, characters 14-41 |}]
 
 
 let%expect_test _ =

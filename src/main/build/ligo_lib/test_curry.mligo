@@ -115,16 +115,15 @@ module PBT = struct
   let gen (type a) : a gen = [%external "TEST_RANDOM"] false
   let gen_small (type a) : a gen = [%external "TEST_RANDOM"] true
   let make_test (type a) (g : a gen) (p : a -> bool) : a test = (g, p)
-  let run (type a) ((g, p) : a test) (n : nat) : unit =
-    let _ = [%external "LOOP_LEFT"] (fun (n : nat) ->
+  let run (type a) ((g, p) : a test) (n : nat) : a option =
+    let (_, v) = [%external "LOOP_LEFT"] (fun ((n, _) : nat * a option) ->
                                        if n = 0n then
-                                         [%external "LOOP_STOP"] n
+                                         [%external "LOOP_STOP"] (0n, (None : a option))
                                        else
                                          let v = [%external "TEST_GENERATOR_EVAL"] g in
                                          if p v then
-                                           [%external "LOOP_CONTINUE"] n
+                                           [%external "LOOP_CONTINUE"] (abs (n - 1), (None : a option))
                                          else
-                                           let () = Test.log v in
-                                           Test.failwith "TEST FAILED") n in
-    ()
+                                           [%external "LOOP_STOP"] (n, Some v)) (n, (None : a option)) in
+    v
 end
