@@ -782,10 +782,9 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
-      let { type2 = expr_ty ; _ } = AST.get_t_arrow_exn expr_ty in
-      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise ~small expr_ty)  in
-      let* value = eval_ligo expr_gen calltrace env in
-      return value
+      let { type2 = gen_type ; _ } = AST.get_t_arrow_exn expr_ty in
+      let generator = (Mutation.value_gen ~raise ~small gen_type)  in
+      return (V_Gen { generator ; gen_type })
     | ( C_TEST_RANDOM , _  ) -> fail @@ error_type
     | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
       let bigmap_ty = List.nth_exn types 1 in
@@ -885,7 +884,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
+         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE | C_TEST_GENERATOR_EVAL |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
