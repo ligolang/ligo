@@ -1,6 +1,6 @@
 Random notes & TODOs about pattern matching anomalies detection
 Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
-1. Unit pattern matching
+1. [WORKS AS EXPRECTED] Unit pattern matching
  (match action with
   | () -> 1)
 
@@ -24,13 +24,13 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
 
 4. [DONE] Implement functions for specialization of matrix & default matrix
    (* Done - need to test  *)
-5. Implement Algorithm I for missing cases (exhaustiveness check)
+5. [DONE] Implement Algorithm I for missing cases (exhaustiveness check)
 
 6. [DONE] Implement Algorithm Urec for useless cases (redundant pattern check)
 
-7. Once missing pattern is detected, give understandable error messages
-   a. add more contructors which are missing
-   b. convert tuple to original record/tuple (Convert to original pattern lang)
+7. [DONE] Once missing pattern is detected, give understandable error messages
+   a. [DONE] add more contructors which are missing
+   b. [DONE] convert tuple to original record/tuple (Convert to original pattern lang)
 
 8. Write a lot of test cases
    Missing case:
@@ -40,6 +40,7 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    d. record (constructors)
    e. constructors (tuple (constructors))
    f. constructors (record (constructors))
+
    g. tuple (tuple (constructor))
    h. tuple (record (constructor))
    i. record (tuple (constructor))
