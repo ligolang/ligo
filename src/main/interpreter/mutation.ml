@@ -154,7 +154,6 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregat
 let value_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
   fun ~raise ?(small = true) type_expr ->
   let open QCheck.Gen in
-  let open Ast_aggregated in
   let generator = value_gen ~raise ~small type_expr in
   return @@ LT.V_Gen { gen_type = type_expr ;
                        generator }

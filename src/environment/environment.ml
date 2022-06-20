@@ -93,6 +93,7 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_typed_address      , t_abstraction2 Typed_address star star) ;
     (v_mutation           , t_constant Mutation                 []) ;
     (v_michelson_contract , t_constant Michelson_contract       []) ;
+    (v_gen                , t_abstraction1 Gen star               ) ;
   ]
 
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}})

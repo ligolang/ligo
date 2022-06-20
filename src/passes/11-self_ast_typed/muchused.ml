@@ -51,6 +51,7 @@ let rec is_dup (t : type_expression) =
     Tx_rollup_l2_address |
     Michelson_contract  |
     Michelson_program   |
+    Gen                 |
     (* Externals are dup *)
     External _
   ); _} ->
