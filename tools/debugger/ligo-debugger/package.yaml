@@ -73,6 +73,7 @@ library:
     - filepath
     - fmt
     - lens
+    - lens-aeson
     - morley
     - morley-debugger
     - morley-prelude
@@ -84,6 +85,7 @@ library:
     - stm
     - text
     - unliftio
+    - unordered-containers
     - vector
     - vinyl
     - with-utf8

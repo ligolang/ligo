@@ -244,6 +244,36 @@ test_Snapshots = testGroup "Snapshots collection"
             } -> pass
           sp -> unexpectedSnapshot sp
 
+
+  , testCaseSteps "check int type in simple-ops" \_step -> do
+        let file = contractsDir </> "simple-ops.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = "main"
+              , crdParam = ()
+              , crdStorage = 42 :: Integer
+              }
+
+        testWithSnapshots runData do
+          -- Skip starting snapshot
+          _ <- move Forward
+
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStatus = InterpretRunning EventExpressionPreview
+              , isStackFrames = StackFrame
+                  { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                  , sfStack =
+                    [ StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = LTConstant (LigoTypeConstant [] "int")
+                            }
+                        }
+                    ]
+                  } :| []
+              } -> pass
+            sp -> unexpectedSnapshot sp
+
   , testCaseSteps "pattern-match on option" \_step -> do
       let file = contractsDir </> "match-on-some.mligo"
       let runData = ContractRunData

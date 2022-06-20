@@ -3,13 +3,14 @@ module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
   ) where
 
-import Control.Lens (AsEmpty (..), prism)
-import Data.Aeson (FromJSON (..), withObject, (.:!), (.:))
+import Control.Lens (AsEmpty (..), forOf, prism)
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:))
 import Data.Aeson qualified as Aeson
+import Data.Aeson.Lens qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
 import Data.Scientific qualified as Sci
 import Data.Vector qualified as V
-import Fmt (Buildable (..), blockListF, nameF)
+import Fmt (Buildable (..), blockListF, mapF, nameF, tupleF)
 import Morley.Micheline.Expression qualified as Micheline
 import Text.Interpolation.Nyan
 
@@ -91,15 +92,130 @@ newtype LigoTypeRef = LigoTypeRef { unLigoTypeRef :: Word }
 instance Buildable LigoTypeRef where
   build (LigoTypeRef i) = [int||type##{i}|]
 
+-- TODO: in ligo lsp all these types declared as mixed sum and product type (which is obviously unsafe)
+-- We can delete these types when this issue is resolved in lsp.
+
 -- | Description of a type.
-data LigoType = LigoType
-  { -- TODO: pick from LSP
-  }
+data LigoType
+  = LTConstant LigoTypeConstant
+  | LTVariable LigoTypeVariable
+  -- | `"t_record"`
+  -- A map from field name to its type.
+  | LTRecord (HashMap Text LigoType)
+  | LTApp LigoTypeApp
+  | LTArrow LigoTypeArrow
+  | LTUnresolved
+    deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
+
+instance FromJSON LigoType where
+  parseJSON = withObject "type" \o -> do
+    value <- o .: "type_content"
+    flip (withArray "type_content") value \lst -> do
+      typ <- maybe (fail "Expected list with length 2") pure (lst V.!? 1)
+      asum
+        [ LTConstant <$> parseJSON typ
+        , LTVariable <$> parseJSON typ
+        , flip (withObject "t_record") typ \o' -> do -- "t_record"
+            parsed <- sequence $ parseJSON <$> o'
+            pure $ LTRecord parsed
+        , LTApp <$> parseJSON typ
+        , LTArrow <$> parseJSON typ
+        , pure LTUnresolved
+        ]
+
+instance Buildable LigoType where
+  build = \case
+    LTConstant constant -> build constant
+    LTVariable variable -> build variable
+    LTRecord record -> mapF record
+    LTApp app -> build app
+    LTArrow arrow -> build arrow
+    LTUnresolved -> ""
+
+-- | `"t_constant"`
+data LigoTypeConstant = LigoTypeConstant
+  { -- | Arguments to which the type is applied.
+    -- This list is not empty when we have complex constant values.
+    --
+    -- For example
+    -- @
+    -- let lst = [1;2;3] in
+    -- @
+    --
+    -- In that case @injection@ would be `"list"` and in "parameters" we will see
+    -- `"t_constant"` with `"int"`.
+    ltcParameters :: [LigoType]
+    -- | Type name.
+  , ltcInjection :: Text
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
+
+instance FromJSON LigoTypeConstant where
+  parseJSON = withObject "t_constant" \o -> do
+    ltcInjection <- o .: "injection"
+    ltcParameters <- o .: "parameters"
+    pure LigoTypeConstant{..}
+
+instance Buildable LigoTypeConstant where
+  build LigoTypeConstant{..} =
+    if null ltcParameters
+      then build ltcInjection
+      else tupleF ltcParameters <> build ltcInjection
+
+-- | `"t_variable"`
+newtype LigoTypeVariable = LigoTypeVariable
+  { -- | Type name.
+    ltvName :: Text
+  } deriving stock (Show, Eq, Generic)
+    deriving newtype (Buildable)
+    deriving anyclass (NFData)
+
+instance FromJSON LigoTypeVariable where
+  parseJSON = withObject "t_variable" \o -> do
+    ltvName <- o .: "name"
+    pure LigoTypeVariable{..}
+
+-- | `"t_app"`
+data LigoTypeApp = LigoTypeApp
+  { -- | Type operator name.
+    ltaTypeOperator :: Text
+    -- | Arguments to which the type is applied.
+  , ltaArguments :: [LigoType]
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
+
+instance FromJSON LigoTypeApp where
+  parseJSON = withObject "t_app" \o -> do
+    ltaTypeOperator <- o .: "type_operator" >>= \o' -> o' .: "name"
+    ltaArguments <- o .: "arguments"
+    pure LigoTypeApp{..}
+
+instance Buildable LigoTypeApp where
+  build LigoTypeApp{..} = tupleF ltaArguments <> build ltaTypeOperator
+
+-- | `"t_arrow"`, note that the order of its arguments is reversed.
+data LigoTypeArrow = LigoTypeArrow -- "type2" -> "type1"
+  { -- | Domain type.
+    ltaType2 :: LigoType
+    -- | Image type.
+  , ltaType1 :: LigoType
+  } deriving stock (Show, Eq, Generic)
+    deriving anyclass (NFData)
+
+instance FromJSON LigoTypeArrow where
+  parseJSON = withObject "t_arrow" \o -> do
+    ltaType1 <- o .: "type1"
+    ltaType2 <- o .: "type2"
+    pure LigoTypeArrow{..}
+
+instance Buildable LigoTypeArrow where
+  build LigoTypeArrow{..} = [int||#{ltaType2} -> #{ltaType1}|]
 
 -- | An element of the stack with some information interesting for us.
 data LigoExposedStackEntry = LigoExposedStackEntry
   { leseDeclaration :: Maybe LigoVariable
-  , leseType        :: LigoTypeRef
+  , leseType        :: LigoType
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
 
@@ -110,7 +226,7 @@ instance Buildable LigoExposedStackEntry where
 
 instance FromJSON LigoExposedStackEntry where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
-    TextualNumber leseType <- LigoTypeRef <<$>> o .: "source_type"
+    leseType <- o .: "source_type"
     leseDeclaration <- LigoVariable <<$>> o .:! "name"
     return LigoExposedStackEntry{..}
 
@@ -130,13 +246,13 @@ instance Buildable LigoStackEntry where
     LigoStackEntry ese   -> build ese
     LigoHiddenStackEntry -> "<hidden elem>"
 
-pattern LigoStackEntryNoVar :: LigoTypeRef -> LigoStackEntry
+pattern LigoStackEntryNoVar :: LigoType -> LigoStackEntry
 pattern LigoStackEntryNoVar ty = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Nothing
   , leseType = ty
   }
 
-pattern LigoStackEntryVar :: Text -> LigoTypeRef -> LigoStackEntry
+pattern LigoStackEntryVar :: Text -> LigoType -> LigoStackEntry
 pattern LigoStackEntryVar name ty = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Just LigoVariable{ lvName = name }
   , leseType = ty
@@ -230,8 +346,7 @@ instance {-# OVERLAPPING #-} Buildable [LigoIndexedInfo] where
 
 -- | The debug output produced by LIGO.
 data LigoMapper = LigoMapper
-  { lmTypes :: V.Vector LigoType
-  , lmLocations :: V.Vector LigoIndexedInfo
+  { lmLocations :: V.Vector LigoIndexedInfo
   , lmMichelsonCode :: Micheline.Expression
   }
 
@@ -239,6 +354,14 @@ instance FromJSON LigoMapper where
   parseJSON = withObject "ligo output" \o -> do
     mich <- o .: "michelson"
     lmMichelsonCode <- mich .: "expression"
-    lmLocations <- mich .: "locations"
-    let lmTypes = mempty
+
+    -- Here we are inlining types in @source_type@ fields.
+    Array types <- o .: "types"
+    locations <- mich .: "locations"
+    locationsInlined <-
+      forOf (Aeson.values . Aeson.key "environment" . Aeson.values . Aeson.key "source_type") (Array locations) \old -> do
+        TextualNumber index <- parseJSON old
+        maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
+
+    lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
