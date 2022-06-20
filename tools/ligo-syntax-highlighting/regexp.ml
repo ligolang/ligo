@@ -1,5 +1,11 @@
 module Core = SyntaxHighlighting.Core
 
+let whitespace_match: Core.regexp = {
+  emacs    = "[:space:]*";
+  textmate = "\\s*";
+  vim      = "\\s*";
+}
+
 let let_binding_match1: Core.regexp = {
   emacs    = "\\\\b\\\\(let\\\\)\\\\b[ ]*"; 
   textmate = "\\b(let)\\b\\s*";
@@ -45,6 +51,18 @@ let of_keyword_match: Core.regexp = {
   emacs    = "\\\\b\\\\(of)\\\\b";
   textmate = "\\b(of)\\b";
   vim      = "\\<\\(of\\)\\>";
+}
+
+let is_keyword_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(is)\\\\b";
+  textmate = "\\b(is)\\b";
+  vim      = "\\<\\(is\\)\\>";
+}
+
+let record_keyword_match: Core.regexp = {
+  emacs    = "\\\\brecord\\\\b";
+  textmate = "\\b(record)\\b";
+  vim      = "\\<record\\>";
 }
 
 let control_keywords_match: Core.regexp = {
@@ -411,4 +429,44 @@ let type_as_end_jsligo: Core.regexp = {
   emacs    = "";
   textmate = "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
   vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@!";
+}
+
+(*
+  follow(type_annotation) = SEMI RPAR RBRACKET Is EQ ASS
+  n.b.: Remove the `%inline` from `type_annotation` before running Menhir to see
+  its FOLLOW set.
+*)
+let type_annotation_begin_ligo: Core.regexp = type_annotation_begin
+
+let type_annotation_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ";\\\\|)\\\\|}\\\\|\\\\bis\\\\b\\\\|=\\\\|:=";
+  textmate = "(?=;|\\)|\\]|\\bis\\b|=|:=)";
+  vim      = "\\(;\\|)\\|}\\|\\<is\\>\\|=\\|:=\\)\\@!";
+}
+
+(* follow(type_decl) = Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr *)
+let type_definition_begin_ligo: Core.regexp = type_definition_begin
+
+let type_definition_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = "\\\\b\\\\(type\\\\|recursive\\\\|module\\\\|function\\\\|end\\\\|const\\\\)\\\\b\\\\|;\\\\|{\\\\|^#\\\\|\\\\[@";
+  textmate = "(?=\\b(type|recursive|module|function|end|const)\\b|;|{|^#|\\[@)";
+  vim      = "\\(\\<\\(type\\|recursive\\|module\\|function\\|end\\|const\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@!";
+}
+
+let type_operator_match_ligo: Core.regexp = {
+  emacs    = "\\\\(->\\\\|\\\\.\\\\||\\\\|\\\\*\\\\)";
+  textmate = "(->|\\.|\\||\\*)";
+  vim      = "\\(->\\|\\.\\||\\|\\*\\)";
+}
+
+(* follow(field_decl) = SEMI RBRACKET *)
+let type_annotation_field_begin_ligo: Core.regexp = type_annotation_begin
+
+let type_annotation_field_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ";\\\\|\\\\]";
+  textmate = "(?=;|\\])";
+  vim      = "\\(;\\|\\]\\)\\@!";
 }
