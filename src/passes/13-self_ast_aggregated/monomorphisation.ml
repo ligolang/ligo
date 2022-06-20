@@ -318,35 +318,28 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
 
 let check_if_polymorphism_present ~raise e =
    let show_error loc =
-      let region = Location.get_file loc in
-      Option.iter region 
-         ~f:(fun (r : Region.t) ->
-            let is_stdlib = String.equal r#file "" in 
-            if not is_stdlib
-            then raise.Trace.raise @@ Errors.polymorphism_unresolved loc)
+      raise.Trace.raise @@ Errors.polymorphism_unresolved loc
    in
    let rec check_type_expression ~loc (te : AST.type_expression) = 
       match te.type_content with
-        T_variable _ -> show_error loc; true
+        T_variable _ -> show_error loc;
       | T_constant { parameters ; _ } -> 
-         List.fold_left parameters ~init:false 
-            ~f:(fun b te -> check_type_expression ~loc te || b)
+         List.fold_left parameters ~init:() 
+            ~f:(fun () te -> ignore @@ check_type_expression ~loc te)
       | T_record { content ; _ }
       | T_sum { content ; _ } -> 
-         AST.LMap.fold (fun _ (re : AST.row_element) b -> 
-            check_type_expression ~loc re.associated_type || b) content false
-      | T_arrow { type1 ; type2 } ->
-         let b = check_type_expression ~loc type1 in
-         check_type_expression ~loc type2 || b
-      | T_singleton _ -> false
-      | T_for_all _ -> show_error loc; true
+         AST.LMap.fold (fun _ (re : AST.row_element) () -> 
+            check_type_expression ~loc re.associated_type) content ()
+      | T_arrow _ -> ()
+      | T_singleton _ -> ()
+      | T_for_all _ -> ()
    in
-   let b, e = fold_map_expression (fun b e ->
+   let (), e = fold_map_expression (fun _ e ->
       let te = e.type_expression in
       let loc = e.location in
-      let b = check_type_expression ~loc te || b in
-      (true, b, e)) false e in
-   if b then raise.Trace.raise @@ Errors.polymorphism_unresolved (Location.dummy);
+      let () = check_type_expression ~loc te in
+      (* Format.printf "%a %a\n" Location.pp loc AST.PP.type_expression te; *)
+      (true, (), e)) () e in
    e
 
 let mono_polymorphic_expr ~raise e =
