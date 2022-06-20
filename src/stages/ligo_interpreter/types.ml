@@ -62,6 +62,10 @@ and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
 
 and value_expr = { ast_type : Ast_aggregated.type_expression ;
                    eval_term : value }
+
+and gen = { generator : value QCheck.Gen.t ;
+            gen_type : Ast_aggregated.type_expression }
+  
 and value =
   | V_Ct of constant_val
   | V_List of value list
@@ -74,6 +78,7 @@ and value =
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Thunk of thunk_val
+  | V_Gen of gen
 
 and calltrace = Location.t list
 

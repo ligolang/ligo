@@ -332,6 +332,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Thunk { value ; _ } ->
      value
+  | V_Gen _ ->
+     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: generator"
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
