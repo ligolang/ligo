@@ -27,6 +27,9 @@ let v_some : value -> value =
 let v_nat : Z.t -> value =
   fun v -> V_Ct (C_nat v)
 
+let v_int : Z.t -> value =
+  fun v -> V_Ct (C_int v)
+
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
 
@@ -35,6 +38,15 @@ let v_ctor : string -> value -> value =
 
 let v_address : Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t -> value =
   fun a -> V_Ct (C_address a)
+
+let v_list : value list -> value =
+  fun xs -> V_List xs
+
+let v_set : value list -> value =
+  fun xs -> V_Set xs
+
+let v_map : (value * value) list -> value =
+  fun xs -> V_Map xs
 
 let extract_pair : value -> (value * value) option =
   fun p ->
