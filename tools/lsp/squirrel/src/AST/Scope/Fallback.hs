@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 module AST.Scope.Fallback
   ( Fallback
   , loop
@@ -7,13 +8,20 @@ module AST.Scope.Fallback
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
+import Control.Lens ((%~), (^.))
 import Control.Monad.State
 import Control.Monad.Trans.Reader
-import Control.Monad.Writer (Endo (..), Writer, WriterT, execWriter, runWriterT, tell)
+import Control.Monad.Writer (Endo (..), Writer, WriterT, execWriter, mapWriterT, runWriterT, tell)
 
+import Data.Bifunctor (first)
 import Data.Foldable (for_)
+import Data.Kind qualified (Type)
+import Data.HashMap.Lazy qualified as HashMap
+import Data.HashMap.Lazy (HashMap)
+import Data.List (foldl')
 import Data.Map qualified as Map
-import Data.Maybe (listToMaybe)
+import Data.Map (Map)
+import Data.Maybe (listToMaybe, maybeToList)
 import Data.Set qualified as Set
 import Data.Text (Text)
 import Duplo.Pretty (Doc, pp, ppToText)
@@ -24,10 +32,11 @@ import AST.Scope.Common
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), Scope, ScopedDecl (..), Type (VariableType)
   , TypeDeclSpecifics (..), TypeParams (..), TypeVariable (..), ValueDeclSpecifics (..)
-  , fillTypeIntoCon, fillTypeParams
+  , sdName, sdOrigin, sdRefs
   )
 import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics)
 import AST.Skeleton hiding (Type, TypeParams (..))
+import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
 import Cli.Types
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
@@ -51,14 +60,236 @@ toMsg (TreeDoesNotContainName tree range name) =
 
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeContract _ (FindContract src (SomeLIGO dialect ligo) msgs) = do
-    (sf, (`appEndo` []) -> errs) <- liftIO $ flip runReaderT dialect $ runWriterT $ getEnv ligo
+    (sf, (`appEndo` []) -> errs) <-
+        liftIO
+      $ flip runReaderT (HashMap.empty, dialect)
+      $ flip evalStateT Map.empty
+      $ runWriterT
+      $ getEnv ligo
     let msgs' = map toMsg errs
     pure $ FindContract src sf (msgs <> msgs')
 
-type ScopeM = ReaderT Lang IO
+type ScopeM =
+  StateT (Map DeclRef ScopedDecl)
+  (ReaderT (HashMap Text Range, Lang) IO)
 
-getEnv :: LIGO ParsedInfo -> WriterT (Endo [TreeDoesNotContainName]) ScopeM ScopeForest
-getEnv _ = pure (ScopeForest [] Map.empty)
+type ScopeM' a = WriterT (Endo [TreeDoesNotContainName]) ScopeM a
+
+askInScope :: ScopeM (HashMap Text Range)
+askInScope = fst <$> lift ask
+
+askDialect :: ScopeM Lang
+askDialect = snd <$> lift ask
+
+mapInScope :: (HashMap Text Range -> HashMap Text Range) -> ScopeM' a -> ScopeM' a
+mapInScope = mapWriterT . mapStateT . local . first
+
+insertScope :: ScopedDecl -> ScopeM' DeclRef
+insertScope scopedDecl = do
+  let declRef = DeclRef (scopedDecl ^. sdName) (scopedDecl ^. sdOrigin)
+  modify (Map.insert declRef scopedDecl)
+  pure declRef
+
+withScope :: DeclRef -> ScopeM' a -> ScopeM' a
+withScope declRef = mapInScope (HashMap.insert (drName declRef) (drRange declRef))
+
+withScopes :: [DeclRef] -> ScopeM' a -> ScopeM' a
+withScopes declRefs m = foldl' (flip withScope) m declRefs
+
+insertRef :: Text -> Range -> ScopeM' ()
+insertRef name refRange = do
+  inScope <- lift askInScope
+  case HashMap.lookup name inScope of
+    Nothing -> pure ()
+    Just declRange -> modify $
+      Map.adjust (sdRefs %~ (refRange:)) (DeclRef name declRange)
+
+getEnv :: LIGO ParsedInfo -> ScopeM' ScopeForest
+getEnv info = do
+  trees <- fmap fst <$> walk info
+  decls <- get
+  let sf = ScopeForest (maybeToList trees) decls
+  pure sf
+
+walk :: LIGO ParsedInfo -> ScopeM' (Maybe (ScopeTree, [DeclRef]))
+walk (r :< s) = walk' s r
+
+class HasGo (f :: Data.Kind.Type -> Data.Kind.Type) where
+  walk' :: f (LIGO ParsedInfo) -> Product ParsedInfo -> ScopeM' (Maybe (ScopeTree, [DeclRef]))
+
+instance HasGo Name where
+  walk' _ _ = pure Nothing
+
+instance HasGo QualifiedName where
+  walk' _ _ = pure Nothing
+
+instance HasGo Pattern where
+  walk' pattern' _ = case pattern' of
+    IsConstr   {} -> pure Nothing
+    IsConstant {} -> pure Nothing
+    IsVar      {} -> pure Nothing
+    IsCons     {} -> pure Nothing
+    IsAnnot    {} -> pure Nothing
+    IsWildcard {} -> pure Nothing
+    IsSpread   {} -> pure Nothing
+    IsList     {} -> pure Nothing
+    IsTuple    {} -> pure Nothing
+    IsRecord   {} -> pure Nothing
+    IsParen    {} -> pure Nothing
+
+instance HasGo RecordFieldPattern where
+  walk' rfp _ = case rfp of
+    IsRecordField   {} -> pure Nothing
+    IsRecordCapture {} -> pure Nothing
+
+instance HasGo Constant where
+  walk' constant _ = case constant of
+    CInt    {} -> pure Nothing
+    CNat    {} -> pure Nothing
+    CString {} -> pure Nothing
+    CFloat  {} -> pure Nothing
+    CBytes  {} -> pure Nothing
+    CTez    {} -> pure Nothing
+
+instance HasGo FieldAssignment where
+  walk' fieldAssignment _ = case fieldAssignment of
+    FieldAssignment {} -> pure Nothing
+    Spread          {} -> pure Nothing
+    Capture         {} -> pure Nothing
+
+instance HasGo MapBinding where
+  walk' _ _ = pure Nothing
+
+instance HasGo Alt where
+  walk' _ _ = pure Nothing
+
+instance HasGo Expr where
+  walk' expr _ = case expr of
+    Let        {} -> pure Nothing
+    Apply      {} -> pure Nothing
+    Constant   {} -> pure Nothing
+    Ident      {} -> pure Nothing
+    BinOp      {} -> pure Nothing
+    UnOp       {} -> pure Nothing
+    Op         {} -> pure Nothing
+    Record     {} -> pure Nothing
+    If         {} -> pure Nothing
+    Assign     {} -> pure Nothing
+    AssignOp   {} -> pure Nothing
+    List       {} -> pure Nothing
+    ListAccess {} -> pure Nothing
+    Set        {} -> pure Nothing
+    Tuple      {} -> pure Nothing
+    Annot      {} -> pure Nothing
+    Attrs      {} -> pure Nothing
+    BigMap     {} -> pure Nothing
+    Map        {} -> pure Nothing
+    Remove     {} -> pure Nothing
+    Case       {} -> pure Nothing
+    Skip       {} -> pure Nothing
+    Break      {} -> pure Nothing
+    Return     {} -> pure Nothing
+    SwitchStm  {} -> pure Nothing
+    ForLoop    {} -> pure Nothing
+    WhileLoop  {} -> pure Nothing
+    ForOfLoop  {} -> pure Nothing
+    Seq        {} -> pure Nothing
+    Block      {} -> pure Nothing
+    Lambda     {} -> pure Nothing
+    ForBox     {} -> pure Nothing
+    Patch      {} -> pure Nothing
+    RecordUpd  {} -> pure Nothing
+    Michelson  {} -> pure Nothing
+    Paren      {} -> pure Nothing
+
+instance HasGo Collection where
+  walk' collection _ = case collection of
+    CList -> pure Nothing
+    CMap  -> pure Nothing
+    CSet  -> pure Nothing
+
+instance HasGo TField where
+  walk' _ _ = pure Nothing
+
+instance HasGo Variant where
+  walk' _ _ = pure Nothing
+
+instance HasGo Skeleton.Type where
+  walk' type' _ = case type' of
+    TArrow    {} -> pure Nothing
+    TRecord   {} -> pure Nothing
+    TSum      {} -> pure Nothing
+    TProduct  {} -> pure Nothing
+    TApply    {} -> pure Nothing
+    TString   {} -> pure Nothing
+    TWildcard {} -> pure Nothing
+    TVariable {} -> pure Nothing
+    TParen    {} -> pure Nothing
+
+instance HasGo Binding where
+  walk' binding _ = case binding of
+    BFunction     {} -> pure Nothing
+    BParameter    {} -> pure Nothing
+    BVar          {} -> pure Nothing
+    BConst        {} -> pure Nothing
+    BTypeDecl     {} -> pure Nothing
+    BAttribute    {} -> pure Nothing
+    BInclude      {} -> pure Nothing
+    BImport       {} -> pure Nothing
+    BModuleDecl   {} -> pure Nothing
+    BModuleAlias  {} -> pure Nothing
+
+instance HasGo RawContract where
+  walk' _ _ = pure Nothing
+
+instance HasGo TypeName where
+  walk' _ _ = pure Nothing
+
+instance HasGo TypeVariableName where
+  walk' _ _ = pure Nothing
+
+instance HasGo FieldName where
+  walk' _ _ = pure Nothing
+
+instance HasGo Verbatim where
+  walk' _ _ = pure Nothing
+
+instance HasGo Error where
+  walk' _ _ = pure Nothing
+
+instance HasGo Ctor where
+  walk' _ _ = pure Nothing
+
+instance HasGo NameDecl where
+  walk' _ _ = pure Nothing
+
+instance HasGo Preprocessor where
+  walk' _ _ = pure Nothing
+
+instance HasGo PreprocessorCommand where
+  walk' _ _ = pure Nothing
+
+instance HasGo PatchableExpr where
+  walk' _ _ = pure Nothing
+
+instance HasGo ModuleName where
+  walk' _ _ = pure Nothing
+
+instance HasGo ModuleAccess where
+  walk' _ _ = pure Nothing
+
+instance HasGo Skeleton.TypeParams where
+  walk' typeParams _ = case typeParams of
+    Skeleton.TypeParam  {} -> pure Nothing
+    Skeleton.TypeParams {} -> pure Nothing
+
+instance HasGo CaseOrDefaultStm where
+  walk' cods _ = case cods of
+    CaseStm    {} -> pure Nothing
+    DefaultStm {} -> pure Nothing
+
+instance Apply HasGo RawLigoList => HasGo (Sum RawLigoList) where
+  walk' = apply @HasGo walk'
 
 loop :: Functor f => (Cofree f a -> Cofree f a) -> Cofree f a -> Cofree f a
 loop go = aux
@@ -94,7 +325,7 @@ functionScopedDecl
   -> Maybe (LIGO info) -- ^ function body node, optional for type constructors
   -> ScopeM (Either TreeDoesNotContainName ScopedDecl)
 functionScopedDecl docs nameNode paramNodes typ body = do
-  dialect <- ask
+  dialect <- askDialect
   getName nameNode <<&>> \(PreprocessedRange origin, name) ->
     let
       _vdsInitRange = getRange <$> body
@@ -120,7 +351,7 @@ valueScopedDecl
   -> Maybe (LIGO info) -- ^ initializer node
   -> ScopeM (Either TreeDoesNotContainName ScopedDecl)
 valueScopedDecl docs nameNode typ body = do
-  dialect <- ask
+  dialect <- askDialect
   getName nameNode <<&>> \(PreprocessedRange origin, name) ->
     ScopedDecl
       { _sdName = name
@@ -144,7 +375,7 @@ typeScopedDecl
   -> LIGO info  -- ^ type body node
   -> ScopeM (Either TreeDoesNotContainName ScopedDecl)
 typeScopedDecl docs nameNode body = do
-  dialect <- ask
+  dialect <- askDialect
   getTypeName nameNode <<&>> \(PreprocessedRange origin, name) ->
     ScopedDecl
       { _sdName = name
@@ -157,7 +388,7 @@ typeScopedDecl docs nameNode body = do
 
 typeVariableScopedDecl :: TypeParams -> ScopeM Scope
 typeVariableScopedDecl tyVars = do
-  dialect <- ask
+  dialect <- askDialect
   pure case tyVars of
     TypeParam var -> [mkTyVarScope dialect var]
     TypeParams vars -> map (mkTyVarScope dialect) vars
