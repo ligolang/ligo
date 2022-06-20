@@ -386,10 +386,10 @@
 		(,"\\(->\\|\\.\\|\\*\\||\\)"
 			. ligo-font-lock-operator-face
 		)
-		(,""
+		(,"\\b[a-z_][a-zA-Z0-9]\\*\\b"
 			. font-lock-type-face
 		)
-		(,"'"
+		(,"'\\b[a-z_][a-zA-Z0-9]\\*\\b"
 			. font-lock-type-face
 		)
 		(,"\\(" ())

@@ -24,7 +24,6 @@ module Name = struct
   let type_operator             = "typeoperator"
   let type_module               = "typemodule"
   let type_int                  = "typeint"
-  let type_string               = "typestring"
   let type_product              = "typeproduct"
 end
 
@@ -293,8 +292,8 @@ let syntax_highlighting =
         name = Name.type_product;
         kind = Begin_end {
           meta_name = None;
-          begin_ = [(Regexp.brackets_begin, None)];
-          end_ = [(Regexp.brackets_end, None)];
+          begin_ = [(Regexp.braces_begin, None)];
+          end_ = [(Regexp.braces_end, None)];
           patterns = [Name.identifier; Name.type_annotation; Name.semicolon];
         }
       };

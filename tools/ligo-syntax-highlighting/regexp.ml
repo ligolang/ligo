@@ -116,21 +116,51 @@ let parentheses_end: Core.regexp = {
 }
 
 let brackets_begin: Core.regexp = {
+  emacs    = "\\\\[";
+  textmate = "(\\[)";
+  vim      = "\\[";
+}
+
+let brackets_end: Core.regexp = {
+  emacs    = "\\\\]";
+  textmate = "(\\])";
+  vim      = "\\]";
+}
+
+let braces_begin: Core.regexp = {
   emacs    = "{";
   textmate = "({)";
   vim      = "{";
 }
 
-let brackets_end: Core.regexp = {
+let braces_end: Core.regexp = {
   emacs    = "}";
   textmate = "(})";
   vim      = "}";
+}
+
+let chevron_begin: Core.regexp = {
+  emacs    = "<";
+  textmate = "(<)";
+  vim      = "<";
+}
+
+let chevron_end: Core.regexp = {
+  emacs    = ">";
+  textmate = "(>)";
+  vim      = ">";
 }
 
 let semicolon_match: Core.regexp = {
   emacs    = ";";
   textmate = "(;)";
   vim      = ";";
+}
+
+let comma_match: Core.regexp = {
+  emacs    = ",";
+  textmate = "(,)";
+  vim      = ",";
 }
 
 let type_annotation_match: Core.regexp = {
@@ -166,15 +196,18 @@ let attributes_match_jsligo: Core.regexp = {
 }
 
 let let_binding_match1_jsligo: Core.regexp = {
-  emacs    = ""; 
+  emacs    = "\\\\b\\\\(let\\\\|const\\\\)\\\\b";
   textmate = "\\b(let|const)\\b\\s*";
-  vim      = "";
+  vim      = "\\<\\(let\\|const\\)\\>";
 }
 
-let let_binding_match2_jsligo: Core.regexp = {
-  emacs    = ""; 
-  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
-  vim      = "";
+let let_binding_match2_jsligo: Core.regexp = let_binding_match3
+
+let identifier_annotation_negative_lookahead: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)\\\\b[:space:]*:";
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(?=:)";
+  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>\\s*:\\@!";
 }
 
 let control_keywords_match_jsligo: Core.regexp = {
@@ -231,7 +264,7 @@ let int_literal_match: Core.regexp = {
   vim      = "\\<[0-9]+\\>";
 }
 
-(* CameLIGO Types *)
+(* Types *)
 let type_definition_match: Core.regexp = {
   emacs    = "\\\\b\\\\(type\\\\)\\\\b";
   textmate = "\\b(type)\\b";
@@ -256,7 +289,7 @@ let type_definition_end: Core.regexp = {
 }
 
 let type_name_match: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b[a-z_][a-zA-Z0-9]\\\\*\\\\b";
   textmate = "\\b([a-z_][a-zA-Z0-9_]*)\\b";
   vim      = "\\<\\([a-z_][a-zA-Z0-9_]*\\)\\>";
 }
@@ -313,4 +346,69 @@ let type_field_annotation_end: Core.regexp = {
   emacs    = "\\\\(}\\\\|;\\\\)";
   textmate = "(?=}|;)";
   vim      = "\\(}\\|;\\)\\@!";
+}
+
+(* follow(type_decl) = SEMI RBRACE Else EOF Default Case *)
+let type_definition_begin_jsligo: Core.regexp = type_definition_match
+
+let type_definition_end_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ";\\\\|}\\\\|\\\\b\\\\(else\\\\|default\\\\|case\\\\)\\\\b";
+  textmate = "(?=;|}|\\b(else|default|case)\\b)";
+  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\)\\>\\)\\@!"
+}
+
+let type_name_match_jsligo: Core.regexp = {
+  emacs    = "\\\\b[a-zA-Z_][a-zA-Z0-9]\\\\*\\\\b";
+  textmate = "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b";
+  vim      = "\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\>";
+}
+
+let type_operator_match_jsligo: Core.regexp = {
+  emacs    = "\\\\(=>\\\\|\\\\.\\\\||\\\\)";
+  textmate = "(=>|\\.|\\|)";
+  vim      = "\\(=>\\|\\.\\||\\)";
+}
+
+(*
+  follow(type_annotation) = RPAR RBRACE COMMA ARROW
+  follow(binding_type) = EQ
+*)
+let type_annotation_begin_jsligo: Core.regexp = type_annotation_begin
+
+let type_annotation_end_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ")\\\\|=>\\\\|,\\\\|}\\\\|=";
+  textmate = "(?=\\)|=>|,|}|=)";
+  vim      = "\\()\\|=>\\|,\\}\\|=\\)\\@!";
+}
+
+(* follow(field_decl) = RBRACE COMMA *)
+let type_annotation_field_begin_jsligo: Core.regexp = type_annotation_begin_jsligo
+
+let type_annotation_field_end_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ",\\\\|}";
+  textmate = "(?=,|})";
+  vim      = "\\(,\\})\\@!";
+}
+
+(*
+  follow(as_expr_level) = SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ    Else EQ EOF Default DIV_EQ Case COMMA COLON As
+  follow(type_expr)     = SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW
+  Since `as_expr_level` also includes `disj_expr_level` as an alternative, we
+  likely want the intersection of those two. Therefore:
+  follow(as_expr_level) ∩ follow(type_expr) = follow(as_expr_level)
+*)
+let type_as_begin_jsligo: Core.regexp = {
+  emacs    = "\\\\bas\\\\b";
+  textmate = "\\b(as)\\b";
+  vim      = "\\<as\\>";
+}
+
+let type_as_end_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = "";
+  textmate = "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
+  vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@!";
 }
