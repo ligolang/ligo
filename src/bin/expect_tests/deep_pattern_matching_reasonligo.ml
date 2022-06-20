@@ -118,7 +118,7 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive).
     FOUND MISSING CASE(S)
-    - #CONS (_ : int, #NIL (_ : list (int))), |}]
+    - _ :: [  ] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.religo") ] ;
@@ -132,7 +132,7 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive).
     FOUND MISSING CASE(S)
-    - None (_ : unit), _ : unit, |}]
+    - {a = None(_) ; b = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
@@ -146,7 +146,7 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive).
     FOUND MISSING CASE(S)
-    - Cons (_ : int, _ : int), Cons (_ : int, _ : int), |}]
+    - (Cons((_,_)),Cons((_,_))) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.religo") ] ;
