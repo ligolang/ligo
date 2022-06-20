@@ -150,10 +150,3 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregat
     | None -> raise.raise (Errors.generic_error type_expr.location "Expected map type")
   else
     raise.raise (Errors.generic_error type_expr.location @@ Format.asprintf "Test generator not implemented: %a" Ast_aggregated.PP.type_expression type_expr)
-
-let value_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
-  fun ~raise ?(small = true) type_expr ->
-  let open QCheck.Gen in
-  let generator = value_gen ~raise ~small type_expr in
-  return @@ LT.V_Gen { gen_type = type_expr ;
-                       generator }
