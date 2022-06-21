@@ -2,6 +2,7 @@ module AST = Ast_typed
 module T = Stage_common.Types
 module C = AST.Combinators
 module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 
 module LMap = AST.LMap
 module XList = Simple_utils.List
@@ -127,7 +128,7 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
       let labels, tys = List.unzip kvs in
       let tys = List.map tys ~f:(fun ty -> ty.associated_type) in
 
-      let _, ps = List.fold_left tys ~init:(simple_patterns, []) 
+      let _, ps = List.fold_left tys ~init:(simple_patterns, [])
         ~f:(fun (sps, ps) t ->
             let n = List.length @@ count_type_parts t in
             if n > 1 then
@@ -326,32 +327,7 @@ let redundant_case_analysis matrix =
   in
   (redundant, case)
 
-let rec pp_list_pattern (ppf : Format.formatter) = fun pl ->
-  let open Simple_utils.PP_helpers in
-  let open Format in
-  match pl with
-  | T.Cons (pl,pr) -> fprintf ppf "%a::%a" pp_pattern pl pp_pattern pr
-  | List pl -> fprintf ppf "[%a]" (list_sep pp_pattern (tag " ; ")) pl
-
-and pp_pattern ppf (p : _ T.pattern) =
-  let open Simple_utils.PP_helpers in
-  let open Format in
-  match p.wrap_content with
-  | P_unit -> fprintf ppf "()"
-  | P_var _ -> fprintf ppf "_"
-  | P_list l -> pp_list_pattern ppf l
-  | P_variant (l , p) -> fprintf ppf "%a(%a)" AST.PP.label l pp_pattern p
-  (* TODO: if Constructor has only unit value e.g. None(_) print it as None  *)
-  | P_tuple pl ->
-    fprintf ppf "(%a)" (list_sep pp_pattern (tag ",")) pl
-  | P_record (ll , pl) ->
-    let x = List.zip_exn ll pl in
-    let aux ppf (l,p) =
-      fprintf ppf "%a = %a" AST.PP.label l pp_pattern p
-    in
-    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
-
-let find_anomaly eqs t =
+let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
   (* let () = List.iter eqs
@@ -365,14 +341,19 @@ let find_anomaly eqs t =
       match sp with
         SP_Wildcard t -> SP_Wildcard t
       | SP_Constructor (_, _, t) -> SP_Wildcard t) in
+
   let missing_case = algorithm_Urec matrix vector in
   let () = if missing_case then
     let i = algorithm_I matrix (List.length vector) in
     let i = Option.value_exn i in
     let ps = List.map i ~f:(fun sp -> to_original_pattern sp t) in
-    Format.printf "FOUND MISSING CASE(S) \n";
-    List.iter ps ~f:(fun i -> Format.printf "- %a\n" pp_pattern i);
+    raise.raise @@ Errors.pattern_missing_cases loc ps
   else () in
+
   let redundant, case = redundant_case_analysis matrix in
-  if redundant then Format.printf "FOUND REDUNDANT CASE(S): %d" case;
-  ()
+  if redundant 
+  then 
+    let p, _, _ = List.nth_exn eqs (case - 1) in
+    let loc = Location.get_location p in
+    raise.raise @@ Errors.pattern_redundant_case loc
+  else()

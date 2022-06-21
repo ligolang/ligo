@@ -529,7 +529,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let _,infered_eqs = Helpers.first_success ~raise type_cases permutations in
       List.map ~f:(fun (p,p_ty,body,_) -> (p,p_ty,body)) @@ List.sort infered_eqs ~compare:(fun (_,_,_,a) (_,_,_,b) -> Int.compare a b)
     in
-    let () = Pattern_anomalies.find_anomaly eqs matchee'.type_expression in
+    let () = Pattern_anomalies.check_anomalies ~raise ~loc:e.location eqs matchee'.type_expression in
     match matchee.expression_content with
     | E_variable matcheevar ->
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in

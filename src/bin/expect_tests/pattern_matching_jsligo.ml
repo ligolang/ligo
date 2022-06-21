@@ -10,8 +10,8 @@ let%expect_test _ =
       4 |   });
       5 | }
 
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S)
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
     - Success(_) |}]
 
 let%expect_test _ =
@@ -47,15 +47,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match6.jsligo") ] ;
   [%expect{|
-  File "../../test/contracts/negative/pattern_match6.jsligo", line 5, characters 20-35:
-    4 |
-    5 | let do_something = ([state, action]:[state,action]) : state => {
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 7, character 33 to line 10, character 10:
     6 |     return match(state, {
+    7 |         S1: () => (match(action, {
+    8 |             A: () => S1(),
+    9 |             B: () => S2()
+   10 |         })),
+   11 |         S2: () => (match(action, {
 
-  Pattern matching anomaly (redundant, or non exhaustive).
-  FOUND MISSING CASE(S)
-  - C(_)
-  FOUND MISSING CASE(S)
+  Error : this pattern-matching is not exhaustive.
+  Here are examples of cases that are not matched:
   - C(_) |}]
 
 let%expect_test _ =

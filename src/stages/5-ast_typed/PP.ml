@@ -244,3 +244,31 @@ and module_ ppf (m : module_) =
   Stage_common.PP.(declarations ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
     ppf m
 let program ppf p = module_ ppf p
+
+let rec pp_list_pattern (ppf : Format.formatter) = fun pl ->
+  let open Simple_utils.PP_helpers in
+  let open Format in
+  match pl with
+  | Cons (pl,pr) -> fprintf ppf "%a::%a" pp_pattern pl pp_pattern pr
+  | List pl -> fprintf ppf "[%a]" (list_sep pp_pattern (tag " ; ")) pl
+
+and pp_pattern ppf (p : _ pattern) =
+  let open Simple_utils.PP_helpers in
+  let open Format in
+  match p.wrap_content with
+  | P_unit -> fprintf ppf "()"
+  | P_var _ -> fprintf ppf "_"
+  | P_list l -> pp_list_pattern ppf l
+  | P_variant (l , p) -> fprintf ppf "%a(%a)" label l pp_pattern p
+  (* TODO: if Constructor has only unit value e.g. None(_) print it as None  *)
+  | P_tuple pl ->
+    fprintf ppf "(%a)" (list_sep pp_pattern (tag ",")) pl
+  | P_record (ll , pl) ->
+    let x = List.zip_exn ll pl in
+    let aux ppf (l,p) =
+      fprintf ppf "%a = %a" label l pp_pattern p
+    in
+    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
+and pp_patterns ppf (ps : _ pattern list) =
+  let open Simple_utils.PP_helpers in
+  Format.fprintf ppf "- %a" (list_sep pp_pattern (tag "\n- ")) ps

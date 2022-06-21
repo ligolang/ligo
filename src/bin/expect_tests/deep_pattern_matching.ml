@@ -133,14 +133,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
-      3 | let t = fun (x: myt * ( int * int * int)) ->
-      4 |   match x with
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 6, characters 4-16:
       5 |   | xs , (a,b,c) -> 1
       6 |   | xs , (c,b,a) -> 2
 
-    Redundant pattern matching
-    FOUND REDUNDANT CASE(S): 2 |}]
+    Error : this match case is unused. |}]
 
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
@@ -153,8 +150,8 @@ let%expect_test _ =
       3 |   | hd::(hd2::tl) -> hd + hd2
       4 |   | [] -> 0
 
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S)
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
     - _::[] |}]
 
 let%expect_test _ =
@@ -166,8 +163,8 @@ let%expect_test _ =
       5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
       6 |   | { a = Some (hd::tl) ; b = [] } -> hd
 
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S)
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
     - { a = None(_) ; b = _ } |}]
 
 let%expect_test _ =
@@ -189,8 +186,8 @@ let%expect_test _ =
       5 |   | Nil , ys  -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern matching anomaly (redundant, or non exhaustive).
-    FOUND MISSING CASE(S)
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
     - (Cons((_,_)),Cons((_,_))) |}]
 
 (* Positives *)
