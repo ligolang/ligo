@@ -33,14 +33,13 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    b. [DONE] convert tuple to original record/tuple (Convert to original pattern lang)
 
 8. Write a lot of test cases
-   Missing case:
+   [DONE] Missing case:
    a. constructors
    b. constructors (constructors)
    c. tuple (constructors)
    d. record (constructors)
    e. constructors (tuple (constructors))
    f. constructors (record (constructors))
-
    g. tuple (tuple (constructor))
    h. tuple (record (constructor))
    i. record (tuple (constructor))

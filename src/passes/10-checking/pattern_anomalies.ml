@@ -126,8 +126,18 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
         ~compare:(fun (l1, _) (l2, _) -> T.compare_label l1 l2) in
       let labels, tys = List.unzip kvs in
       let tys = List.map tys ~f:(fun ty -> ty.associated_type) in
-      let ps = List.map2_exn simple_patterns tys
-          ~f:(fun sp t -> to_original_pattern [sp] t) in
+
+      let _, ps = List.fold_left tys ~init:(simple_patterns, []) 
+        ~f:(fun (sps, ps) t ->
+            let n = List.length @@ count_type_parts t in
+            if n > 1 then
+              let sps, rest = List.split_n sps n in
+              rest, ps @ [to_original_pattern sps t]
+            else
+              let sps, rest = List.split_n sps 1 in
+              rest, ps @ [to_original_pattern sps t]
+          )
+      in
       if are_keys_numeric labels then
         Location.wrap @@ T.P_tuple ps
       else
@@ -338,7 +348,7 @@ and pp_pattern ppf (p : _ T.pattern) =
     let aux ppf (l,p) =
       fprintf ppf "%a = %a" AST.PP.label l pp_pattern p
     in
-    fprintf ppf "{%a}" (list_sep aux (tag " ; ")) x
+    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
 
 let find_anomaly eqs t =
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
