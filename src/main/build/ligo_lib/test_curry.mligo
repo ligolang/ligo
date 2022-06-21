@@ -25,7 +25,8 @@ module Test = struct
   let eprint (v : string) : unit = [%external "TEST_PRINT"] 2 v
   let to_string (type a) (v : a) : string = [%external "TEST_TO_STRING"] v
   let log (type a) (v : a) : unit =
-    let s = to_string v in
+    let nl = [%external "TEST_UNESCAPE_STRING"] "\n" in
+    let s = to_string v ^ nl in
     print s
   let reset_state (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] (None : timestamp option) n l
   let reset_state_at (t:timestamp) (n : nat) (l : tez list) : unit = [%external "TEST_STATE_RESET"] (Some t) n l
