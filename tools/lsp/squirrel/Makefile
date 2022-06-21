@@ -2,6 +2,7 @@ PACKAGE := squirrel
 
 LIGO_SEVERITY = LIGO_SEVERITY="debug"
 LIGO_ENV = LIGO_ENV="development"
+VSCODE_BIN_PATH = ../vscode-plugin/bin
 BUILD_FLAGS = $(LIGO_SEVERITY) $(LIGO_ENV)
 GHC_OPTIONS_WITH_WERROR = --fast --test --no-run-tests --ghc-options '-Werror -freverse-errors'
 GHC_OPTIONS_WITHOUT_WERROR = --fast --test --no-run-tests --ghc-options '-freverse-errors'
@@ -32,5 +33,10 @@ werror-watch: grammar
 
 watch: grammar
 	$(STACK_DEV) $(GHC_OPTIONS_WITHOUT_WERROR) --file-watch
+
+installvsc: grammar
+	$(BUILD_FLAGS) stack install $(GHC_OPTIONS_WITHOUT_WERROR) --local-bin-path $(VSCODE_BIN_PATH)
+	cd ../vscode-plugin && yarn package && code --install-extension *.vsix
+
 
 .PHONY: all clean grammar build watch FORCE
