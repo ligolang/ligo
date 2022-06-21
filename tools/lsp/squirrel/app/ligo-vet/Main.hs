@@ -12,9 +12,10 @@ import Options.Applicative
 import System.Environment (setEnv)
 
 import AST
-  ( Fallback, FindFilepath, Message (..), ParsedContract (..), _getContract, parse
+  ( Fallback, FindFilepath, ParsedContract (..), _getContract, parse
   , parseWithScopes
   )
+import Diagnostic (Message (..))
 import Log (runNoLoggingT)
 import ParseTree (pathToSrc)
 

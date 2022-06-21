@@ -13,9 +13,11 @@ import Language.LSP.Diagnostics qualified as D
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 
-import AST (ContractInfo', Message (..), Severity (..))
+import AST (ContractInfo')
 import AST.Parser (collectAllErrors)
 import Config (Config (..))
+import Diagnostic (Message (..), Severity (..))
+import Duplo.Pretty (ppToText)
 import Log qualified
 import Range (Range (..), toLspRange)
 import RIO.Types (RIO)
@@ -56,7 +58,7 @@ errorToDiag (Message what severity r) =
     (Just dsSeverity)
     Nothing
     source
-    what
+    (ppToText what)
     (Just $ J.List [])
     Nothing
   )

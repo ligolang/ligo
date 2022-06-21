@@ -82,9 +82,10 @@ import AST.Skeleton
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
+import Diagnostic (Message)
 import Log qualified
 import ParseTree
-import Parser
+import Parser (Info, LineMarker, ParsedInfo)
 import Product
 import Progress (Progress (..), ProgressCallback, (%))
 import Range

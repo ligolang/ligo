@@ -8,4 +8,3 @@ import AST.Parser as M
 import AST.Pretty as M
 import AST.Scope as M
 import AST.Skeleton as M
-import Parser as M (Message (..), Severity (..))

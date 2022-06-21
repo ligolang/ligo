@@ -35,11 +35,12 @@ import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
   , SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
   )
+import Diagnostic (Message)
 import Extension
 import Log (Log, NoLoggingT (..), i)
 import Log qualified
 import ParseTree (Source (..), pathToSrc, toParseTree)
-import Parser
+import Parser (collectTreeErrors, parseLineMarkerText, runParserM)
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
 
