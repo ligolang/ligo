@@ -90,6 +90,6 @@ parseDiagnosticsDriver source (DiagnosticTest file parser fromCompiler fallback)
       CompilerSource -> fromCompiler
       FallbackSource -> fallback
       StandardSource -> fallback <> fromCompiler
-    -- FIXME (LIGO-507)
+    -- FIXME (LIGO-507): Remove duplicated diagnostics.
     msgs = nub $ collectAllErrors contract
   msgs `shouldMatchList` expectedMsgs
