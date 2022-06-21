@@ -20,7 +20,8 @@
     { "include": "#modulealias" },
     { "include": "#moduledeclaration" },
     { "include": "#typeannotation" },
-    { "include": "#typeas" }
+    { "include": "#typeas" },
+    { "include": "#objectorblock" }
   ],
   "repository": {
     "string": {
@@ -55,7 +56,7 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let|const)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "match": "\\b(let|const)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
         "2": { "name": "entity.name.function.jsligo" },
         "1": { "name": "keyword.other.jsligo" }
@@ -81,7 +82,7 @@
     "semicolon": { "match": "(;)", "captures": {} },
     "comma": { "match": "(,)", "captures": {} },
     "identifier": {
-      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)",
+      "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {}
     },
     "identifierconstructor": {
@@ -108,6 +109,57 @@
         "2": { "name": "storage.class.jsligo" },
         "1": { "name": "keyword.other.jsligo" }
       }
+    },
+    "objectorblock": {
+      "begin": "({)",
+      "end": "(})",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#objectpropertyctor" },
+        { "include": "#objectpropertyint" },
+        { "include": "#objectpropertystring" },
+        { "include": "#objectproperty" },
+        { "include": "#comma" },
+        { "include": "$self" }
+      ]
+    },
+    "objectpropertyctor": {
+      "begin": "\\b([A-Z][a-zA-Z0-9_$]*)\\b(\\s*)(:)",
+      "end": "(?=,|})",
+      "beginCaptures": {
+        "3": { "name": "keyword.operator.jsligo" },
+        "1": { "name": "variable.other.enummember.jsligo" }
+      },
+      "endCaptures": {},
+      "patterns": [ { "include": "$self" } ]
+    },
+    "objectpropertyint": {
+      "begin": "\\b([0-9]+)\\b(\\s*)(:)",
+      "end": "(?=,|})",
+      "beginCaptures": {
+        "3": { "name": "keyword.operator.jsligo" },
+        "1": { "name": "constant.numeric.jsligo" }
+      },
+      "endCaptures": {},
+      "patterns": [ { "include": "$self" } ]
+    },
+    "objectpropertystring": {
+      "begin": "(\\\".*\\\")(\\s*)(:)",
+      "end": "(?=,|})",
+      "beginCaptures": {
+        "3": { "name": "keyword.operator.jsligo" },
+        "1": { "name": "string.quoted.double.jsligo" }
+      },
+      "endCaptures": {},
+      "patterns": [ { "include": "$self" } ]
+    },
+    "objectproperty": {
+      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b(\\s*)(:)",
+      "end": "(?=,|})",
+      "beginCaptures": { "3": { "name": "keyword.operator.jsligo" } },
+      "endCaptures": {},
+      "patterns": [ { "include": "$self" } ]
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",

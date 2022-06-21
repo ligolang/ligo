@@ -1,9 +1,9 @@
 module Core = SyntaxHighlighting.Core
 
 let whitespace_match: Core.regexp = {
-  emacs    = "[:space:]*";
-  textmate = "\\s*";
-  vim      = "\\s*";
+  emacs    = "\\\\([:space:]*\\\\)";
+  textmate = "(\\s*)";
+  vim      = "\\(\\s*\\)";
 }
 
 let let_binding_match1: Core.regexp = {
@@ -19,10 +19,11 @@ let let_binding_match2: Core.regexp = {
 }
 
 let let_binding_match3: Core.regexp = {
-  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)"; 
-  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
-  vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)\\\\b"; 
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b";
+  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\>";
 }
+
 let let_binding_match1_ligo: Core.regexp = {
   emacs    = "\\\\b\\\\(function\\\\)\\\\b[ ]*"; 
   textmate = "\\b(function)\\b\\s*";
@@ -181,16 +182,10 @@ let comma_match: Core.regexp = {
   vim      = ",";
 }
 
-let type_annotation_match: Core.regexp = {
-  emacs    = "\\\\(:[ ]*[^]=;\\\\):]*\\\\)";
-  textmate = "(:[ ]*[^\\]=;\\):]*)";
-  vim      = "\\(:[^]=;\\):]*\\)"
-}
-
-let type_annotation_match_reasonligo: Core.regexp = {
-  emacs    = "\\\\(:[ ]*[^,=\n]*\\\\)";
-  textmate = "(:[ ]*[^\\]=;\\):]*)";
-  vim      = "\\(:[^]=;\\):]*\\)"
+let colon_match: Core.regexp = {
+  emacs    = "\\\\(:\\\\)";
+  textmate = "(:)";
+  vim      = "\\(:\\)";
 }
 
 let multiplication_match: Core.regexp = {
@@ -276,10 +271,36 @@ let module_match2_jsligo: Core.regexp = {
   vim      = ""
 }
 
+(* follow(property) = RBRACE COMMA *)
+let property_expr_begin_jsligo: Core.regexp = colon_match
+
+let property_expr_end_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ",\\\\|}";
+  textmate = "(?=,|})";
+  vim      = "\\(,\\|})\\@!";
+}
+
+(* follow(field_assignment) = RBRACE COMMA *)
+let field_expr_begin_reasonligo: Core.regexp = colon_match
+
+let field_expr_end_reasonligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support negative look-ahead *)
+  emacs    = ",\\\\|}";
+  textmate = "(?=,|})";
+  vim      = "\\(,\\|}\\)\\@!";
+}
+
 let int_literal_match: Core.regexp = {
   emacs    = "\\\\b\\\\([0-9]+\\\\)\\\\b";
   textmate = "\\b([0-9]+)\\b";
   vim      = "\\<[0-9]+\\>";
+}
+
+let string_literal_match: Core.regexp = {
+  emacs    = "\\\\\\\"\\\\.*\\\\\\\"";
+  textmate = "(\\\".*\\\")";
+  vim      = "\\\".*\\\"";
 }
 
 (* Types *)
@@ -335,11 +356,7 @@ let type_operator_match: Core.regexp = {
   follow(type_annotation(type_expr)) = RPAR EQ
   follow(type_annotation(lambda_app_type)) = ARROW
 *)
-let type_annotation_begin: Core.regexp = {
-  emacs    = "\\\\(:\\\\)";
-  textmate = "(:)";
-  vim      = "\\(:\\)";
-}
+let type_annotation_begin: Core.regexp = colon_match
 
 let type_annotation_end: Core.regexp = {
   (* FIXME: Emacs doesn't support negative look-ahead *)
@@ -401,15 +418,13 @@ let type_annotation_end_jsligo: Core.regexp = {
   vim      = "\\()\\|=>\\|,\\}\\|=\\)\\@!";
 }
 
-(* follow(field_decl) = RBRACE COMMA *)
-let type_annotation_field_begin_jsligo: Core.regexp = type_annotation_begin_jsligo
-
-let type_annotation_field_end_jsligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
-  emacs    = ",\\\\|}";
-  textmate = "(?=,|})";
-  vim      = "\\(,\\})\\@!";
-}
+(*
+  follow(field_decl) = RBRACE COMMA
+  n.b.: For JsLIGO, both the FIRST and FOLLOW for both the type_annotation in
+  a property and the "expression field assignment" are the same.
+*)
+let type_annotation_field_begin_jsligo: Core.regexp = property_expr_begin_jsligo
+let type_annotation_field_end_jsligo: Core.regexp = property_expr_end_jsligo
 
 (*
   follow(as_expr_level) = SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ    Else EQ EOF Default DIV_EQ Case COMMA COLON As

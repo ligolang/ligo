@@ -12,6 +12,8 @@ module Name = struct
   let identifier                = "identifier"
   let identifier_constructor    = "identifierconstructor"
   let module_                   = "module"
+  let record_or_block           = "recordorblock"
+  let record_field              = "recordfield"
   let attribute                 = "attribute"
   (* Types *)
   let type_definition           = "typedefinition"
@@ -138,7 +140,7 @@ let syntax_highlighting =
       Name.operators;
       Name.identifier_constructor;
       Name.module_;
-      Name.type_definition;
+      Name.record_or_block;
     ];
     repository = [
       Helpers.attribute;
@@ -150,6 +152,7 @@ let syntax_highlighting =
           match_ = [(Regexp.control_keywords_match_reasonligo, None)]
         }
       };
+      (* FIXME: breaks on patterns *)
       {
         name = Name.let_binding;
         kind = Match {
@@ -207,6 +210,28 @@ let syntax_highlighting =
         kind = Match {
           match_name = None;
           match_     = [(Regexp.identifier_constructor_match, Some Label)]
+        }
+      };
+      {
+        name = Name.record_or_block;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.braces_begin, None)];
+          end_ = [(Regexp.braces_end, None)];
+          patterns = [Name.record_field; Name.comma; "$self"];
+        }
+      };
+      {
+        name = Name.record_field;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.let_binding_match3, None);
+            (Regexp.whitespace_match, None);
+            (Regexp.field_expr_begin_reasonligo, Some Operator);
+          ];
+          end_ = [(Regexp.field_expr_end_reasonligo, None)];
+          patterns = ["$self"];
         }
       };
       (* Types *)

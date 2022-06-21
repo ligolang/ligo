@@ -156,7 +156,7 @@
       ]
     },
     "typeproduct": {
-      "begin": "\\b(record)\\b\\s*(\\[)",
+      "begin": "\\b(record)\\b(\\s*)(\\[)",
       "end": "(\\])",
       "beginCaptures": { "1": { "name": "keyword.other.ligo" } },
       "endCaptures": {},

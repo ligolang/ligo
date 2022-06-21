@@ -33,7 +33,7 @@ highlight link typeoperator Operator
 " typeproduct
 syntax match typeproduct "\<record\>" contained nextgroup=typeproduct___ 
 highlight link typeproduct Keyword 
-syntax match typeproduct___ "\s*" contained nextgroup=typeproduct______ 
+syntax match typeproduct___ "\(\s*\)" contained nextgroup=typeproduct______ 
 syntax region typeproduct______ start="\[" end="\]" contained contains=identifier,typeannotationfield,semicolon 
 
 " typeannotationfield

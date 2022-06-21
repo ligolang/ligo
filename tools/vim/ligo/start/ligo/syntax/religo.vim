@@ -45,12 +45,21 @@ highlight link typeannotation_ Operator
 syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(\<\(type\|module\|let\)\>\|;\|{\|^#\|\[@\)\@!" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
+" recordfield
+syntax match recordfield "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained nextgroup=recordfield___ 
+syntax match recordfield___ "\(\s*\)" contained nextgroup=recordfield______ 
+syntax region recordfield______ matchgroup=recordfield_______ start="\(:\)" end="\(,\|}\)\@!" contained contains=$self 
+highlight link recordfield_______ Operator 
+
+" recordorblock
+syntax region recordorblock start="{" end="}" contains=recordfield,comma,$self 
+
 " identifierconstructor
 syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\>" 
 highlight link identifierconstructor Label 
 
 " identifier
-syntax match identifier "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
+syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
 
 " module
 syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
@@ -70,7 +79,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " letbinding
-syntax match letbinding__ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
+syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
 highlight link letbinding__ Statement 
 syntax match letbinding_ "rec\W\|" contained nextgroup=letbinding__ 
 highlight link letbinding_ StorageClass 

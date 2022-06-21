@@ -54,7 +54,7 @@ syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\>"
 highlight link identifierconstructor Label 
 
 " identifier
-syntax match identifier "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
+syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
 
 " module
 syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
@@ -83,7 +83,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " letbinding
-syntax match letbinding__ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
+syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
 highlight link letbinding__ Statement 
 syntax match letbinding_ "rec\W\|" contained nextgroup=letbinding__ 
 highlight link letbinding_ StorageClass 

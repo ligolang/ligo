@@ -153,22 +153,13 @@ module JSON = struct
 end
 
 module Validate = struct
-  let builtin_repo = [
-    "macro";
-    "string";
-    "string_specialchar";
-    "line_comment";
-    "block_comment";
-    "numeric_literals";
-    "attribute";
-  ]
-
   let rec check_reference repository r =
     if r = "$self" then 
       ok true
     else 
+      let open Helpers in
       let exists_repo = List.exists (fun (i: Core.pattern) -> i.name = r) repository in
-      let exists_builtin = List.exists (fun (i: string) -> i = r) builtin_repo in
+      let exists_builtin = List.exists (fun (i: string) -> i = r) Helpers.builtin_repo in
       if exists_repo || exists_builtin then
         ok true
       else 

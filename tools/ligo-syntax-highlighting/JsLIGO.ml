@@ -14,6 +14,11 @@ module Name = struct
   let module_access             = "moduleaccess "
   let module_alias              = "modulealias"
   let module_declaration        = "moduledeclaration"
+  let object_or_block           = "objectorblock"
+  let object_property           = "objectproperty"
+  let object_property_ctor      = "objectpropertyctor"
+  let object_property_int       = "objectpropertyint"
+  let object_property_string    = "objectpropertystring"
   let attribute                 = "attribute"
   (* Types *)
   let type_definition           = "typedefinition"
@@ -143,6 +148,7 @@ let syntax_highlighting =
       Name.module_declaration;
       Name.type_annotation;
       Name.type_as;
+      Name.object_or_block;
     ];
     repository = [
       {
@@ -153,6 +159,7 @@ let syntax_highlighting =
         }
       };
       Helpers.macro;
+      (* FIXME: breaks on patterns *)
       {
         name = Name.let_binding;
         kind = Match {
@@ -234,6 +241,74 @@ let syntax_highlighting =
             (Regexp.module_declaration_match2_jsligo, Some Structure)
           ];
           match_name = None
+        }
+      };
+      {
+        name = Name.object_or_block;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.braces_begin, None)];
+          end_ = [(Regexp.braces_end, None)];
+          patterns = [
+            Name.object_property_ctor;
+            Name.object_property_int;
+            Name.object_property_string;
+            Name.object_property;
+            Name.comma;
+            "$self";
+          ];
+        }
+      };
+      {
+        name = Name.object_property_ctor;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.identifier_constructor_match, Some Label);
+            (Regexp.whitespace_match, None);
+            (Regexp.property_expr_begin_jsligo, Some Operator);
+          ];
+          end_ = [(Regexp.property_expr_end_jsligo, None)];
+          patterns = ["$self"];
+        }
+      };
+      {
+        name = Name.object_property_int;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.int_literal_match, Some Number);
+            (Regexp.whitespace_match, None);
+            (Regexp.property_expr_begin_jsligo, Some Operator);
+          ];
+          end_ = [(Regexp.property_expr_end_jsligo, None)];
+          patterns = ["$self"];
+        }
+      };
+      {
+        name = Name.object_property_string;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.string_literal_match, Some String);
+            (Regexp.whitespace_match, None);
+            (Regexp.property_expr_begin_jsligo, Some Operator);
+          ];
+          end_ = [(Regexp.property_expr_end_jsligo, None)];
+          patterns = ["$self"];
+        }
+      };
+      {
+        name = Name.object_property;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [
+            (Regexp.let_binding_match2_jsligo, None);
+            (Regexp.whitespace_match, None);
+            (Regexp.property_expr_begin_jsligo, Some Operator);
+          ];
+          end_ = [(Regexp.property_expr_end_jsligo, None)];
+          patterns = ["$self"];
         }
       };
       (* Types *)
