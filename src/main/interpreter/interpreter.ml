@@ -630,6 +630,9 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
       return_ct (C_string s)
     | ( C_TEST_TO_STRING , _  ) -> fail @@ error_type
+    | ( C_TEST_UNESCAPE_STRING , [ V_Ct (C_string s) ]) ->
+      return_ct (C_string (Scanf.unescaped s))
+    | ( C_TEST_UNESCAPE_STRING , _  ) -> fail @@ error_type
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
