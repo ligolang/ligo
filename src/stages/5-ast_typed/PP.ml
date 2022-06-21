@@ -255,12 +255,18 @@ let rec pp_list_pattern (ppf : Format.formatter) = fun pl ->
 and pp_pattern ppf (p : _ pattern) =
   let open Simple_utils.PP_helpers in
   let open Format in
+  let is_unit_pattern p =
+    let p = Location.unwrap p in
+    match p with
+      P_unit -> true
+    | _      -> false
+  in
   match p.wrap_content with
   | P_unit -> fprintf ppf "()"
   | P_var _ -> fprintf ppf "_"
   | P_list l -> pp_list_pattern ppf l
+  | P_variant (l , p) when is_unit_pattern p -> fprintf ppf "%a" label l
   | P_variant (l , p) -> fprintf ppf "%a(%a)" label l pp_pattern p
-  (* TODO: if Constructor has only unit value e.g. None(_) print it as None  *)
   | P_tuple pl ->
     fprintf ppf "(%a)" (list_sep pp_pattern (tag ",")) pl
   | P_record (ll , pl) ->

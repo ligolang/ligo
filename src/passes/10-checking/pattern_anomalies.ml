@@ -112,6 +112,7 @@ let rec to_list_pattern simple_pattern =
 and to_original_pattern simple_patterns (ty : AST.type_expression) =
   match simple_patterns with
     [] -> failwith "edge case: to_original_pattern empty patterns"
+  | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap @@ T.P_unit
   | SP_Wildcard _::[] -> Location.wrap @@ T.P_var wild_binder
   | (SP_Constructor (T.Label "#CONS", _, _) as simple_pattern)::[]
   | (SP_Constructor (T.Label "#NIL", _, _) as simple_pattern)::[] ->
@@ -213,7 +214,7 @@ let get_all_constructors (t : AST.type_expression) =
         LSet.of_list labels
     | None -> LSet.empty
 
-let get_constructos_from_1st_col matrix =
+let get_constructors_from_1st_col matrix =
   List.fold_left matrix ~init:(LSet.empty, Some t_unit)
     ~f:(fun (s, t) row ->
       match row with
@@ -235,7 +236,7 @@ let rec algorithm_Urec matrix vector =
   | SP_Wildcard t :: q2_n ->
     (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
-    let constructors, _ = get_constructos_from_1st_col matrix in
+    let constructors, _ = get_constructors_from_1st_col matrix in
     (*  *)
     (* let () = Format.printf "----\ncomplete signature:\n" in
     let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l)
@@ -263,7 +264,7 @@ let rec algorithm_Urec matrix vector =
     else if List.for_all matrix ~f:(List.is_empty) then false
     else failwith "edge case: algorithm Urec"
 
-let rec algorithm_I matrix n =
+let rec algorithm_I matrix n ts =
   (* let () = Format.printf "n = %d\n" n in
   let () = print_matrix matrix in
   let () = Format.printf "---------------\n" in *)
@@ -272,8 +273,9 @@ let rec algorithm_I matrix n =
     else if List.for_all matrix ~f:(List.is_empty) then None
     else failwith "edge case: algorithm I"
   else
-    let constructors, t = get_constructos_from_1st_col matrix in
-    let t = Option.value_exn t in
+    let constructors, _ = get_constructors_from_1st_col matrix in
+    let t, ts = List.split_n ts 1 in
+    let t = List.hd_exn t in
     let complete_signature = get_all_constructors t in
     if (not @@ LSet.is_empty constructors) &&
       LSet.equal constructors complete_signature then
@@ -283,7 +285,7 @@ let rec algorithm_I matrix n =
             let a  = find_constuctor_arity ck t in
             let ak = List.length a in
             let matrix = specialize_matrix ck a matrix in
-            let ps = algorithm_I matrix (ak + n - 1) in
+            let ps = algorithm_I matrix (ak + n - 1) (a @ ts) in
             match ps with
               Some ps ->
                 Some
@@ -295,7 +297,7 @@ let rec algorithm_I matrix n =
           ) complete_signature None
     else
       let dp = default_matrix matrix in
-      let ps = algorithm_I dp (n - 1) in
+      let ps = algorithm_I dp (n - 1) ts in
       match ps with
         Some ps ->
           if LSet.is_empty constructors then
@@ -344,15 +346,16 @@ let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
 
   let missing_case = algorithm_Urec matrix vector in
   let () = if missing_case then
-    let i = algorithm_I matrix (List.length vector) in
+    let ts = count_type_parts t in
+    let i = algorithm_I matrix (List.length vector) ts in
     let i = Option.value_exn i in
     let ps = List.map i ~f:(fun sp -> to_original_pattern sp t) in
     raise.raise @@ Errors.pattern_missing_cases loc ps
   else () in
 
   let redundant, case = redundant_case_analysis matrix in
-  if redundant 
-  then 
+  if redundant
+  then
     let p, _, _ = List.nth_exn eqs (case - 1) in
     let loc = Location.get_location p in
     raise.raise @@ Errors.pattern_redundant_case loc

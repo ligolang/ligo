@@ -57,7 +57,7 @@ let%expect_test _ =
 
   Error : this pattern-matching is not exhaustive.
   Here are examples of cases that are not matched:
-  - C(_) |}]
+  - C |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;

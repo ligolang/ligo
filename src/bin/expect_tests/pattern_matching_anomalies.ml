@@ -14,7 +14,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - Three(_)
+    - Three
     - Two(_) |}]
 
 let%expect_test _ =
@@ -29,8 +29,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - One(Four(_))
-    - One(Six(_)) |}]
+    - One(Four)
+    - One(Six) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_c.mligo") ] ;
@@ -44,8 +44,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_,One(_),Five(_))
-    - (_,One(_),Four(_)) |}]
+    - (_,One,Five)
+    - (_,One,Four) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_c.mligo") ] ;
@@ -59,8 +59,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - { a = _ ; b = One(_) ; c = Five(_) }
-    - { a = _ ; b = One(_) ; c = Four(_) } |}]
+    - { a = _ ; b = One ; c = Five }
+    - { a = _ ; b = One ; c = Four } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_t_c.mligo") ] ;
@@ -74,8 +74,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - One((_,Five(_)))
-    - One((_,Four(_))) |}]
+    - One((_,Five))
+    - One((_,Four)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_r_c.mligo") ] ;
@@ -89,8 +89,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - One({ a = _ ; b = Five(_) })
-    - One({ a = _ ; b = Four(_) }) |}]
+    - One({ a = _ ; b = Five })
+    - One({ a = _ ; b = Four }) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_t_c.mligo") ] ;
@@ -104,8 +104,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - ((_,_,_),(One(_),Five(_)))
-    - ((_,_,_),(One(_),Four(_))) |}]
+    - ((_,_,_),(One,Five))
+    - ((_,_,_),(One,Four)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_r_c.mligo") ] ;
@@ -118,8 +118,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_,({ a = _ ; b = Three(_) ; c = _ },_))
-    - (_,({ a = _ ; b = Two(_) ; c = _ },_)) |}]
+    - (_,({ a = _ ; b = Three ; c = _ },_))
+    - (_,({ a = _ ; b = Two ; c = _ },_)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_t_c.mligo") ] ;
@@ -132,8 +132,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - { a = _ ; b = ((_,_),(Four(_),_)) ; c = _ }
-    - { a = _ ; b = ((_,_),(Three(_),_)) ; c = _ } |}]
+    - { a = _ ; b = ((_,_),(Four,_)) ; c = _ }
+    - { a = _ ; b = ((_,_),(Three,_)) ; c = _ } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_r_c.mligo") ] ;
@@ -146,8 +146,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = Four(_) ; h = _ } } ; c = _ }
-    - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = One(_) ; h = _ } } ; c = _ } |}]
+    - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = Four ; h = _ } } ; c = _ }
+    - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = One ; h = _ } } ; c = _ } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "last.mligo") ] ;
