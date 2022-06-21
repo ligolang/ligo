@@ -192,7 +192,6 @@ let%expect_test _ =
     Redundant pattern matching
     FOUND REDUNDANT CASE(S): 3 |}]
 
-
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c3_c1.mligo") ] ;
   [%expect{|
@@ -217,7 +216,7 @@ let%expect_test _ =
 
   (Cli_expect_tests.Cli_expect.Should_exit_bad)
   Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
-  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 211, characters 2-82
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 210, characters 2-82
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -243,7 +242,7 @@ let%expect_test _ =
 
   (Cli_expect_tests.Cli_expect.Should_exit_bad)
   Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
-  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 237, characters 2-82
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 236, characters 2-82
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -269,7 +268,7 @@ let%expect_test _ =
 
   (Cli_expect_tests.Cli_expect.Should_exit_bad)
   Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
-  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 263, characters 2-82
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 262, characters 2-82
   Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
 
   Trailing output
@@ -277,3 +276,129 @@ let%expect_test _ =
   FOUND REDUNDANT CASE(S): 2type t = sum[One -> int , Three -> unit , Two -> nat]
   const s =
     lambda (x : sum[One -> int , Three -> unit , Two -> nat]) return unit |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "tx_tx_ty.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/tx_tx_ty.mligo", line 6, character 2 to line 9, character 18:
+      5 | let s (x : t) =
+      6 |   match x with
+      7 |     (n, One) -> ()
+      8 |   | (n, One) -> ()
+      9 |   | (n, Two) -> ()
+
+    Redundant pattern matching
+    FOUND REDUNDANT CASE(S): 2 |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "tx_w_ty.mligo") ] ;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_bad)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 294, characters 2-79
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  FOUND REDUNDANT CASE(S): 3type p = sum[One -> unit , Two -> unit]
+  type t = ( int * sum[One -> unit , Two -> unit] )
+  const s =
+    lambda (x : ( int * sum[One -> unit , Two -> unit] )) return  match
+                                                                   x with
+                                                                   | ( n , tuple_proj#3 ) ->
+                                                                    match
+                                                                     tuple_proj#3 with
+                                                                     | Two ctor_proj#11 ->
+                                                                      unit
+                                                                     | One unit_proj#10 ->
+                                                                      unit |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "w_tx_ty.mligo") ] ;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_bad)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 322, characters 2-79
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  FOUND REDUNDANT CASE(S): 2type p = sum[One -> unit , Two -> unit]
+  type t = ( int * sum[One -> unit , Two -> unit] )
+  const s =
+    lambda (x : ( int * sum[One -> unit , Two -> unit] )) return  match
+                                                                   x with
+                                                                   | ( n , tuple_proj#3 ) ->
+                                                                   unit |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "rx_rx_ry.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/rx_rx_ry.mligo", line 6, character 2 to line 9, character 25:
+      5 | let s (x : t) =
+      6 |   match x with
+      7 |     { a ; b = One } -> ()
+      8 |   | { a ; b = One } -> ()
+      9 |   | { a ; b = Two } -> ()
+
+    Redundant pattern matching
+    FOUND REDUNDANT CASE(S): 2 |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "rx_w_ry.mligo") ] ;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_bad)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 358, characters 2-79
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  FOUND REDUNDANT CASE(S): 3type p = sum[One -> unit , Two -> unit]
+  type t = record[a -> int , b -> sum[One -> unit , Two -> unit]]
+  const s =
+    lambda (x : record[a -> int , b -> sum[One -> unit , Two -> unit]]) return
+     match x with
+      | record[a -> a , b -> record_proj#3] ->
+       match record_proj#3 with
+        | Two ctor_proj#11 ->
+          unit | One unit_proj#10 ->
+                 unit |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "w_rx_ry.mligo") ] ;
+  [%expect.unreachable]
+[@@expect.uncaught_exn {|
+  (* CR expect_test_collector: This test expectation appears to contain a backtrace.
+     This is strongly discouraged as backtraces are fragile.
+     Please change this test to not include a backtrace. *)
+
+  (Cli_expect_tests.Cli_expect.Should_exit_bad)
+  Raised at Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 35, characters 7-28
+  Called from Cli_expect_tests__Pattern_matching_anomalies.(fun) in file "src/bin/expect_tests/pattern_matching_anomalies.ml", line 384, characters 2-79
+  Called from Expect_test_collector.Make.Instance.exec in file "collector/expect_test_collector.ml", line 244, characters 12-19
+
+  Trailing output
+  ---------------
+  FOUND REDUNDANT CASE(S): 2type p = sum[One -> unit , Two -> unit]
+  type t = record[a -> int , b -> sum[One -> unit , Two -> unit]]
+  const s =
+    lambda (x : record[a -> int , b -> sum[One -> unit , Two -> unit]]) return
+     match x with
+      | record[a -> a , b -> record_proj#3] ->
+      unit |}]

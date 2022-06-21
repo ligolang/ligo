@@ -28,7 +28,7 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    a. [DONE] add more contructors which are missing
    b. [DONE] convert tuple to original record/tuple (Convert to original pattern lang)
 
-8. Write a lot of test cases
+8. [DONE] Write a lot of test cases
    [DONE] Missing case:
    a. constructors
    b. constructors (constructors)
@@ -40,14 +40,13 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    h. tuple (record (constructor))
    i. record (tuple (constructor))
    j. record (record (constructor))
-   Redundant case:
+   [DONE] Redundant case:
    a. c1, c1, c2, c3
    b. c1, c2, c1, c3
    c. c1, c2, c3, c1
    d. c1, c2, c3, _
    e. c1, _, c2, c3
    f. _, c1, c2, c3
-
    g. tuple_x, tuple_x, tuple_y
    h. tuple_x, _, tuple_y
    i. _, tuple_x, tuple_y
