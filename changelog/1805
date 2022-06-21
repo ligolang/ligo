@@ -1,5 +1,5 @@
 author: er433
 description: ''
 merge_request: '1805'
-title: 'Draft: custom JSON output for types `bool` and `option`'
+title: 'Custom JSON output for types `bool` and `option`'
 type: fixed
