@@ -110,4 +110,26 @@ module Test = struct
     (a, f, c)
   let read_contract_from_file (fn : string) : michelson_contract = [%external "TEST_READ_CONTRACT_FROM_FILE"] fn
   let sign (sk : string) (d : bytes) : signature = [%external "TEST_SIGN"] sk d
+  module Console = struct
+    let nl = [%external "TEST_UNESCAPE_STRING"] "\n"
+    let reset = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[0m")
+    let black = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[30m")
+    let red = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[31m")
+    let green = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[32m")
+    let yellow = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[33m")
+    let blue = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[34m")
+    let purple = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[35m")
+    let cyan = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[36m")
+    let white = [%external "TEST_UNESCAPE_STRING"] ([%external "TEST_UNESCAPE_STRING"] "\\027[37m")
+    let color_reset () = print reset
+    let set_black () = print black
+    let set_red () = print red
+    let set_green () = print green
+    let set_yellow () = print yellow
+    let set_blue () = print blue
+    let set_purple () = print purple
+    let set_cyan () = print cyan
+    let set_white () = print white
+  end
+  let println (v : string) : unit = print (v ^ Console.nl)
 end
