@@ -21,7 +21,12 @@ module Test = struct
   let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external "TEST_EXTERNAL_CALL_TO_ADDRESS_EXN"] a (None : string option) s t
   let get_storage_of_address (a : address) : michelson_program = [%external "TEST_GET_STORAGE_OF_ADDRESS"] a
   let get_balance (a : address) : tez = [%external "TEST_GET_BALANCE"] a
-  let log (type a) (v : a) : unit = [%external "TEST_LOG"] v
+  let print (v : string) : unit = [%external "TEST_PRINT"] 1 v
+  let eprint (v : string) : unit = [%external "TEST_PRINT"] 2 v
+  let to_string (type a) (v : a) : string = [%external "TEST_TO_STRING"] v
+  let log (type a) (v : a) : unit =
+    let s = to_string v in
+    print v
   let reset_state ((n, l) : nat * tez list) : unit = [%external "TEST_STATE_RESET"] (None: timestamp option) n l
   let reset_state_at ((t, n, l) : timestamp * nat * tez list) : unit = [%external "TEST_STATE_RESET"] (Some t) n l
   let get_voting_power (kh : key_hash) : nat = [%external "TEST_GET_VOTING_POWER"] kh

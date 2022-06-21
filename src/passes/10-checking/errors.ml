@@ -504,8 +504,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_assert_equal (loc,expected,actual) ->
     let message = `String "bad types" in
-    let expected = Ast_typed.Yojson.type_expression expected in
-    let actual = Ast_typed.Yojson.type_expression actual in
+    let expected = Ast_typed.Yojson.type_expression (type_improve expected) in
+    let actual = Ast_typed.Yojson.type_expression (type_improve actual) in
     let content = `Assoc [
       ("location", Location.to_yojson loc);
       ("message" , message);
