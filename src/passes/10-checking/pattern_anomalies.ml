@@ -20,15 +20,15 @@ let wild_binder =
   AST.{ var ; ascr = None ; attributes }
 
 type simple_pattern =
-    SP_wildcard of AST.type_expression
+    SP_Wildcard of AST.type_expression
   | SP_Constructor of T.label * (simple_pattern list) * AST.type_expression
 
-let nil_constructor ty = SP_Constructor (nil_label, [SP_wildcard t_unit], ty)
+let nil_constructor ty = SP_Constructor (nil_label, [SP_Wildcard t_unit], ty)
 let list_constructors = LSet.of_list [cons_label ; nil_label]
 
 let rec pp_simple_pattern ppf sp =
   match sp with
-    SP_wildcard t -> Format.fprintf ppf "_ : %a" AST.PP.type_expression t
+    SP_Wildcard t -> Format.fprintf ppf "_ : %a" AST.PP.type_expression t
   | SP_Constructor (Label c, ps, _) ->
     Format.fprintf ppf "%s (%s)" c
       (String.concat ~sep:", "
@@ -56,7 +56,7 @@ let rec to_simple_pattern ty_pattern =
   let pattern', ty = ty_pattern in
   let pattern = Location.unwrap pattern' in
   match pattern with
-    AST.P_unit -> [SP_wildcard ty]
+    AST.P_unit -> [SP_Wildcard ty]
   | P_var _ when C.is_t_record ty ->
     let fields = Option.value_exn (C.get_record_fields ty) in
     let fields = List.map ~f:snd fields in
@@ -64,7 +64,7 @@ let rec to_simple_pattern ty_pattern =
     let ps     = List.zip_exn ps fields in
     let ps     = List.map ps ~f:to_simple_pattern in
     List.concat ps
-  | P_var _    -> [SP_wildcard ty]
+  | P_var _    -> [SP_Wildcard ty]
   | P_list (Cons (hd, tl)) ->
     let hd_ty = Option.value_exn (C.get_t_list ty) in (* BAD *)
     let hd_tl =
@@ -95,7 +95,7 @@ let are_keys_numeric keys =
 
 let rec to_list_pattern simple_pattern =
   match simple_pattern with
-    SP_wildcard _ -> Location.wrap @@ T.P_var wild_binder
+    SP_Wildcard _ -> Location.wrap @@ T.P_var wild_binder
   | SP_Constructor (T.Label "#NIL", _, _) ->
     Location.wrap @@ T.P_list (T.List [])
   | SP_Constructor (T.Label "#CONS", sps, t) ->
@@ -111,7 +111,7 @@ let rec to_list_pattern simple_pattern =
 and to_original_pattern simple_patterns (ty : AST.type_expression) =
   match simple_patterns with
     [] -> failwith "edge case: to_original_pattern empty patterns"
-  | SP_wildcard _::[] -> Location.wrap @@ T.P_var wild_binder
+  | SP_Wildcard _::[] -> Location.wrap @@ T.P_var wild_binder
   | (SP_Constructor (T.Label "#CONS", _, _) as simple_pattern)::[]
   | (SP_Constructor (T.Label "#NIL", _, _) as simple_pattern)::[] ->
     to_list_pattern simple_pattern
@@ -164,8 +164,8 @@ let specialize_matrix c a matrix =
         let row = r1_a @ p2_n in
         row :: specialized
     | SP_Constructor _  :: _ -> specialized
-    | SP_wildcard _ :: p2_n ->
-      let wildcards = List.map a ~f:(fun t -> SP_wildcard t) in
+    | SP_Wildcard _ :: p2_n ->
+      let wildcards = List.map a ~f:(fun t -> SP_Wildcard t) in
       let row = wildcards @ p2_n in
       row :: specialized
     | [] -> [] (* TODO: check is this okay? *)
@@ -176,8 +176,8 @@ let specialize_vector c a q1_n =
   match q1_n with
     SP_Constructor (cp, r1_a, _) :: q2_n when T.equal_label c cp ->
       r1_a @ q2_n
-  | SP_wildcard _ :: q2_n ->
-    let wildcards = List.map a ~f:(fun t -> SP_wildcard t) in
+  | SP_Wildcard _ :: q2_n ->
+    let wildcards = List.map a ~f:(fun t -> SP_Wildcard t) in
     wildcards @ q2_n
   | _ -> failwith "edge case: specialize_vector wrong constructor"
 
@@ -186,7 +186,7 @@ let default_matrix matrix =
   let default row dp =
     match row with
       SP_Constructor _ :: _ -> dp
-    | SP_wildcard _ :: p2_n -> p2_n :: dp
+    | SP_Wildcard _ :: p2_n -> p2_n :: dp
     | [] -> [] (* TODO: check is this okay? *)
   in
   List.fold_right matrix ~init:[] ~f:default
@@ -211,14 +211,13 @@ let get_all_constructors (t : AST.type_expression) =
         let labels = LMap.keys label_map in
         LSet.of_list labels
     | None -> LSet.empty
-      (* failwith "get_all_constructors: not a variant type" *)
 
 let get_constructos_from_1st_col matrix =
   List.fold_left matrix ~init:(LSet.empty, Some t_unit)
     ~f:(fun (s, t) row ->
       match row with
         SP_Constructor (c, _, t) :: _ -> LSet.add c s, Some t
-      | SP_wildcard t :: _ -> s, Some t
+      | SP_Wildcard t :: _ -> s, Some t
       | [] -> s, t)
 
 let rec algorithm_Urec matrix vector =
@@ -232,7 +231,7 @@ let rec algorithm_Urec matrix vector =
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
       algorithm_Urec matrix vector
-  | SP_wildcard t :: q2_n ->
+  | SP_Wildcard t :: q2_n ->
     (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
     let constructors, _ = get_constructos_from_1st_col matrix in
@@ -299,14 +298,14 @@ let rec algorithm_I matrix n =
       match ps with
         Some ps ->
           if LSet.is_empty constructors then
-            let ps = List.map ps ~f:(fun ps -> [SP_wildcard t] @ ps) in
+            let ps = List.map ps ~f:(fun ps -> [SP_Wildcard t] @ ps) in
             Some ps
           else
             let missing_constructors
               = LSet.diff complete_signature constructors in
             let cs = LSet.fold (fun c cs ->
               let a  = find_constuctor_arity c t in
-              let a  = List.map a ~f:(fun t -> SP_wildcard t) in
+              let a  = List.map a ~f:(fun t -> SP_Wildcard t) in
               let c  = SP_Constructor (c, a, t) in
               c :: cs
             ) missing_constructors [] in
@@ -317,13 +316,15 @@ let rec algorithm_I matrix n =
       | None -> None
 
 let redundant_case_analysis matrix =
-  fst @@ List.fold_left matrix ~init:(false, [])
-    ~f:(fun (redundant_case_found, matrix) vector ->
-      if redundant_case_found then (true, [])
-      else if List.is_empty matrix then (false, [vector])
+  let redundant, case, _ =  List.fold_left matrix ~init:(false, 0, [])
+    ~f:(fun (redundant_case_found, case, matrix) vector ->
+      if redundant_case_found then (true, case, [])
+      else if List.is_empty matrix then (false, case + 1, [vector])
       else
         let redundant_case_found = not @@ algorithm_Urec matrix vector in
-        (redundant_case_found, matrix @ [vector]))
+        (redundant_case_found, case + 1, matrix @ [vector]))
+  in
+  (redundant, case)
 
 let rec pp_list_pattern (ppf : Format.formatter) = fun pl ->
   let open Simple_utils.PP_helpers in
@@ -362,8 +363,8 @@ let find_anomaly eqs t =
   let vector = List.map (List.hd_exn matrix)
     ~f:(fun sp ->
       match sp with
-        SP_wildcard t -> SP_wildcard t
-      | SP_Constructor (_, _, t) -> SP_wildcard t) in
+        SP_Wildcard t -> SP_Wildcard t
+      | SP_Constructor (_, _, t) -> SP_Wildcard t) in
   let missing_case = algorithm_Urec matrix vector in
   let () = if missing_case then
     let i = algorithm_I matrix (List.length vector) in
@@ -372,6 +373,6 @@ let find_anomaly eqs t =
     Format.printf "FOUND MISSING CASE(S) \n";
     List.iter ps ~f:(fun i -> Format.printf "- %a\n" pp_pattern i);
   else () in
-  let redundant_case = redundant_case_analysis matrix in
-  if redundant_case then Format.printf "FOUND REDUNDANT CASE(S)";
+  let redundant, case = redundant_case_analysis matrix in
+  if redundant then Format.printf "FOUND REDUNDANT CASE(S): %d" case;
   ()

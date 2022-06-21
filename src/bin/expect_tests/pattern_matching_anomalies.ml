@@ -1,11 +1,12 @@
 open Cli_expect
 
-let bad_test s = (bad_test "")^"/pattern_matching_anomalies/missing_cases/"^s
+let bad_missing_test s = (bad_test "")^"/pattern_matching_anomalies/missing_cases/"^s
+let bad_redundant_test s = (bad_test "")^"/pattern_matching_anomalies/redundant_case/"^s
 
 (* Missing Cases *)
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.mligo", line 5, characters 4-15:
       4 |   match x with
@@ -17,7 +18,7 @@ let%expect_test _ =
     - Two(_) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "c_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_c.mligo", line 6, character 2 to line 9, character 18:
       5 | let s (x : t) =
@@ -32,7 +33,7 @@ let%expect_test _ =
     - One(Six(_)) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "t_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/t_c.mligo", line 7, character 2 to line 10, character 25:
       6 | let s (x : t) =
@@ -47,7 +48,7 @@ let%expect_test _ =
     - (_,One(_),Four(_)) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "r_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/r_c.mligo", line 7, character 2 to line 10, character 36:
       6 | let s (x : t) =
@@ -62,7 +63,7 @@ let%expect_test _ =
     - { a = _ ; b = One(_) ; c = Four(_) } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "c_t_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_t_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_t_c.mligo", line 5, character 2 to line 8, character 22:
       4 | let s (x : t) =
@@ -77,7 +78,7 @@ let%expect_test _ =
     - One((_,Four(_))) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "c_r_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_r_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_r_c.mligo", line 5, character 2 to line 8, character 29:
       4 | let s (x : t) =
@@ -92,7 +93,7 @@ let%expect_test _ =
     - One({ a = _ ; b = Four(_) }) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "t_t_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_t_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/t_t_c.mligo", line 7, character 2 to line 10, character 35:
       6 | let s (x : t) =
@@ -107,7 +108,7 @@ let%expect_test _ =
     - ((_,_,_),(One(_),Four(_))) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "t_r_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "t_r_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/t_r_c.mligo", line 7, character 2 to line 9, character 40:
       6 | let s (x : t) =
@@ -121,7 +122,7 @@ let%expect_test _ =
     - (_,({ a = _ ; b = Two(_) ; c = _ },_)) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "r_t_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_t_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/r_t_c.mligo", line 7, character 2 to line 9, character 44:
       6 | let s (x : t) =
@@ -135,7 +136,7 @@ let%expect_test _ =
     - { a = _ ; b = ((_,_),(Three(_),_)) ; c = _ } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "r_r_c.mligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_r_c.mligo") ] ;
   [%expect{|
     File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/r_r_c.mligo", line 7, character 2 to line 9, character 67:
       6 | let s (x : t) =
@@ -147,3 +148,32 @@ let%expect_test _ =
     FOUND MISSING CASE(S)
     - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = Four(_) ; h = _ } } ; c = _ }
     - { a = _ ; b = { d = { e = _ ; f = _ } ; i = { g = One(_) ; h = _ } } ; c = _ } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "last.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/last.mligo", line 2, character 2 to line 4, character 20:
+      1 | let rec last (xs : int list) : int =
+      2 |   match xs with
+      3 |     x::[] -> x
+      4 |   | _::xs -> last xs
+
+    Pattern matching anomaly (redundant, or non exhaustive).
+    FOUND MISSING CASE(S)
+    - [] |}]
+
+(* Redundant Case *)
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c1_c2_c3.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.mligo", line 4, character 2 to line 8, character 15:
+      3 | let s (x : t) =
+      4 |   match x with
+      5 |     One a -> ()
+      6 |   | One b -> ()
+      7 |   | Two c -> ()
+      8 |   | Three -> ()
+
+    Redundant pattern matching
+    FOUND REDUNDANT CASE(S): 2 |}]

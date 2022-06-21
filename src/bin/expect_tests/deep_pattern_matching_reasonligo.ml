@@ -63,7 +63,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    FOUND REDUNDANT CASE(S)const t = lambda (x : list (int)) return 0 |}]
+    FOUND REDUNDANT CASE(S): 2const t = lambda (x : list (int)) return 0 |}]
 
 (* wrong body type *)
 
@@ -102,7 +102,7 @@ let%expect_test _ =
       7 |   }
 
     Redundant pattern matching
-    FOUND REDUNDANT CASE(S) |}]
+    FOUND REDUNDANT CASE(S): 2 |}]
 
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
@@ -118,7 +118,7 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive).
     FOUND MISSING CASE(S)
-    - _ :: [  ] |}]
+    - _::[] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.religo") ] ;
@@ -132,7 +132,7 @@ let%expect_test _ =
 
     Pattern matching anomaly (redundant, or non exhaustive).
     FOUND MISSING CASE(S)
-    - {a = None(_) ; b = _} |}]
+    - { a = None(_) ; b = _ } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
