@@ -42,12 +42,12 @@ Ref: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf
    j. record (record (constructor))
    Redundant case:
    a. c1, c1, c2, c3
-
    b. c1, c2, c1, c3
    c. c1, c2, c3, c1
    d. c1, c2, c3, _
    e. c1, _, c2, c3
    f. _, c1, c2, c3
+
    g. tuple_x, tuple_x, tuple_y
    h. tuple_x, _, tuple_y
    i. _, tuple_x, tuple_y
