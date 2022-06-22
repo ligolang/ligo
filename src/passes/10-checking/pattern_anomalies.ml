@@ -182,7 +182,7 @@ let default_matrix matrix =
     match row with
       SP_Constructor _ :: _ -> dp
     | SP_Wildcard _ :: p2_n -> p2_n :: dp
-    | [] -> [] (* TODO: check is this okay? *)
+    | [] -> dp
   in
   List.fold_right matrix ~init:[] ~f:default
 
@@ -215,38 +215,22 @@ let get_constructors_from_1st_col matrix =
       | [] -> s)
 
 let rec algorithm_Urec matrix vector =
-  (* let () = print_matrix matrix in
-  let () = print_vector vector in
-  let () = Format.printf "---------------\n" in *)
   if List.is_empty matrix then true
   else if List.for_all matrix ~f:(List.is_empty) then false
   else match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
-      (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
       let a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
       algorithm_Urec matrix vector
   | SP_Wildcard t :: q2_n ->
-    (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
     let constructors = get_constructors_from_1st_col matrix in
-    (*  *)
-    (* let () = Format.printf "----\ncomplete signature:\n" in
-    let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l)
-      complete_signature in
-    let () = Format.printf "\nconstructors from 1st column:\n" in
-    let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l)
-      constructors in
-    let () = Format.printf "\n----\n" in *)
-    (*  *)
     if not (LSet.is_empty complete_signature)
       && LSet.equal complete_signature constructors then
       LSet.fold
         (fun c b ->
           let tys = find_constuctor_arity c t in
-          (* let Label l = c in *)
-          (* let () = Format.printf "-----\n%s arity: %d\n-----\n" l a in *)
           b || algorithm_Urec
                 (specialize_matrix c tys matrix)
                 (specialize_vector c tys vector))
@@ -256,9 +240,6 @@ let rec algorithm_Urec matrix vector =
   | [] -> failwith "edge case: algorithm Urec"
 
 let rec algorithm_I matrix n ts =
-  (* let () = Format.printf "n = %d\n" n in
-  let () = print_matrix matrix in
-  let () = Format.printf "---------------\n" in *)
   if n  = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
@@ -323,10 +304,6 @@ let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
   let ts = destructure_type t in
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
-  (* let () = List.iter eqs
-    ~f:(fun (p, t, _) ->
-      let sps = to_simple_pattern (p, t) in
-      Format.printf "%a\n" pp_simple_pattern_list sps) in *)
 
   let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
 
@@ -345,3 +322,34 @@ let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
     let loc = Location.get_location p in
     raise.raise @@ Errors.pattern_redundant_case loc
   else ()
+
+  (* 
+  
+  8. [DONE] Write a lot of test cases
+   [DONE] Missing case:
+   a. constructors
+   b. constructors (constructors)
+   c. tuple (constructors)
+   d. record (constructors)
+   e. constructors (tuple (constructors))
+   f. constructors (record (constructors))
+   g. tuple (tuple (constructor))
+   h. tuple (record (constructor))
+   i. record (tuple (constructor))
+   j. record (record (constructor))
+   [DONE] Redundant case:
+   a. c1, c1, c2, c3
+   b. c1, c2, c1, c3
+   c. c1, c2, c3, c1
+   d. c1, c2, c3, _
+   e. c1, _, c2, c3
+   f. _, c1, c2, c3
+   g. tuple_x, tuple_x, tuple_y
+   h. tuple_x, _, tuple_y
+   i. _, tuple_x, tuple_y
+   j. record_x, record_x, record_y
+   k. record_x, _, record_y
+   l. _, record_x, record_y
+   ... Ask for more test cases if something missed ...
+
+  *)
