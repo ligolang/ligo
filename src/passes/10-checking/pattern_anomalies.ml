@@ -277,7 +277,8 @@ let get_constructors_from_1st_col matrix =
         Urec (matrix, vector) = Urec (specialize_matrix, specialize_vector)
 
     Case 2: v1 is a wildcard pattern
-      Let Σ = { C1, C2, ... , Cz } (set of constructors of v1)
+      Let Σ = { C1, C2, ... , Cz } set of constructors that appear at
+      root of patterns in 1st column
 
       Now there are further 2 cases depending on whether Σ has all the
       constructors.
@@ -358,10 +359,10 @@ let rec algorithm_Urec matrix vector =
           we can improve by returning all the patterns that can be formed
           using the extra constructors. *)
 let rec algorithm_I matrix n ts =
-  if n  = 0 then
+  if n = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
-    else failwith "edge case: algorithm I"
+    else failwith "edge case: algorithm I" (* remove failwith's *)
   else
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
@@ -416,14 +417,12 @@ let rec algorithm_I matrix n ts =
 let missing_case_analysis matrix t =
   let ts = destructure_type t in
   let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
-  let missing_case = algorithm_Urec matrix vector in
 
-  if missing_case then
-    let sps_opt = algorithm_I matrix (List.length vector) ts in
-    let sps = Option.value_exn sps_opt in
-    let ps = List.map sps ~f:(fun sp -> to_original_pattern sp t) in
-    Some ps
-  else None
+  match algorithm_I matrix (List.length vector) ts with
+    Some sps ->
+      let ps = List.map sps ~f:(fun sp -> to_original_pattern sp t) in
+      Some ps
+  | None -> None
 
 (* Redundant case analysis uses [algorithm_Urec] to check if any row of the
    matrix is redundant.
