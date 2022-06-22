@@ -40,16 +40,15 @@ let pp_simple_pattern_list ppf sps =
 
 let get_variant_nested_type label (tsum : AST.t_sum) =
   let label_map = tsum.content in
-  let c = LMap.find_opt label label_map in
-  let c = Option.value_exn c in (* BAD *)
+  let c = LMap.find label label_map in
   c.associated_type
 
-let rec count_type_parts (t : AST.type_expression) =
+let rec destructure_type (t : AST.type_expression) =
   match t.type_content with
     AST.T_record { content ; _ } ->
       LMap.fold (fun _ (row_elt : AST.row_element) ts ->
         let elt_typ = row_elt.associated_type in
-        ts @ count_type_parts elt_typ)
+        ts @ destructure_type elt_typ)
         content []
   | _ -> [t]
 
@@ -83,7 +82,6 @@ let rec to_simple_pattern ty_pattern =
     [SP_Constructor (c, to_simple_pattern (p, p_ty), ty)]
   | P_tuple ps
   | P_record (_, ps) ->
-    (* let () = Format.printf "type 3 : %a \n" AST.PP.type_expression ty in *)
     let ps_tys = Option.value_exn (C.get_record_fields ty) in (* BAD *)
     let ps_tys = List.map ~f:snd ps_tys in
     let ps = List.zip_exn ps ps_tys in
@@ -131,7 +129,7 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
 
       let _, ps = List.fold_left tys ~init:(simple_patterns, [])
         ~f:(fun (sps, ps) t ->
-            let n = List.length @@ count_type_parts t in
+            let n = List.length @@ destructure_type t in
             let sps, rest = List.split_n sps n in
             rest, ps @ [to_original_pattern sps t]
           )
@@ -141,7 +139,6 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
       else
         Location.wrap @@ T.P_record (labels, ps)
     | _ -> failwith "edge case: not a record/tuple")
-
 
 type matrix = simple_pattern list list
 
@@ -155,7 +152,7 @@ let print_vector vector =
   Format.printf "vector: \n%a\n" pp_simple_pattern_list vector
 
 (* specialize *)
-let specialize_matrix c a matrix =
+let specialize_matrix c tys matrix =
   let specialize specialized row =
     match row with
       SP_Constructor (cp, r1_a, _) :: p2_n when T.equal_label c cp ->
@@ -163,19 +160,19 @@ let specialize_matrix c a matrix =
         row :: specialized
     | SP_Constructor _  :: _ -> specialized
     | SP_Wildcard _ :: p2_n ->
-      let wildcards = List.map a ~f:(fun t -> SP_Wildcard t) in
+      let wildcards = List.map tys ~f:(fun t -> SP_Wildcard t) in
       let row = wildcards @ p2_n in
       row :: specialized
-    | [] -> [] (* TODO: check is this okay? *)
+    | [] -> specialized
   in
   List.fold_left matrix ~init:[] ~f:specialize
 
-let specialize_vector c a q1_n =
+let specialize_vector c tys q1_n =
   match q1_n with
     SP_Constructor (cp, r1_a, _) :: q2_n when T.equal_label c cp ->
       r1_a @ q2_n
   | SP_Wildcard _ :: q2_n ->
-    let wildcards = List.map a ~f:(fun t -> SP_Wildcard t) in
+    let wildcards = List.map tys ~f:(fun t -> SP_Wildcard t) in
     wildcards @ q2_n
   | _ -> failwith "edge case: specialize_vector wrong constructor"
 
@@ -192,13 +189,12 @@ let default_matrix matrix =
 let find_constuctor_arity c (t : AST.type_expression) =
   match c with
   T.Label "#CONS" ->
-    (* TODO: fix this... very hacky now *)
-    let t'  = C.get_t_list_exn t in
-    count_type_parts t' @ [t]
+    let t' = C.get_t_list_exn t in
+    destructure_type t' @ [t]
   | Label "#NIL"  -> [t]
-  | _       ->
-  let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
-  count_type_parts te
+  | _             ->
+    let te = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
+    destructure_type te
 
 let get_all_constructors (t : AST.type_expression) =
   if C.is_t_list t then list_constructors
@@ -211,12 +207,12 @@ let get_all_constructors (t : AST.type_expression) =
     | None -> LSet.empty
 
 let get_constructors_from_1st_col matrix =
-  List.fold_left matrix ~init:(LSet.empty, Some t_unit)
-    ~f:(fun (s, t) row ->
+  List.fold_left matrix ~init:LSet.empty
+    ~f:(fun s row ->
       match row with
-        SP_Constructor (c, _, t) :: _ -> LSet.add c s, Some t
-      | SP_Wildcard t :: _ -> s, Some t
-      | [] -> s, t)
+        SP_Constructor (c, _, _) :: _ -> LSet.add c s
+      | SP_Wildcard _ :: _ -> s
+      | [] -> s)
 
 let rec algorithm_Urec matrix vector =
   (* let () = print_matrix matrix in
@@ -227,14 +223,14 @@ let rec algorithm_Urec matrix vector =
   else match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
       (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
-      let a  = find_constuctor_arity c t in
+      let a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
       algorithm_Urec matrix vector
   | SP_Wildcard t :: q2_n ->
     (* let () = Format.printf "type 2 : %a \n" AST.PP.type_expression t in *)
     let complete_signature = get_all_constructors t in
-    let constructors, _ = get_constructors_from_1st_col matrix in
+    let constructors = get_constructors_from_1st_col matrix in
     (*  *)
     (* let () = Format.printf "----\ncomplete signature:\n" in
     let () = LSet.iter (fun (Label l) -> Format.printf "%s, " l)
@@ -248,12 +244,12 @@ let rec algorithm_Urec matrix vector =
       && LSet.equal complete_signature constructors then
       LSet.fold
         (fun c b ->
-          let a = find_constuctor_arity c t in
+          let tys = find_constuctor_arity c t in
           (* let Label l = c in *)
           (* let () = Format.printf "-----\n%s arity: %d\n-----\n" l a in *)
           b || algorithm_Urec
-                (specialize_matrix c a matrix)
-                (specialize_vector c a vector))
+                (specialize_matrix c tys matrix)
+                (specialize_vector c tys vector))
         complete_signature false
     else
       algorithm_Urec (default_matrix matrix) q2_n
@@ -268,7 +264,7 @@ let rec algorithm_I matrix n ts =
     else if List.for_all matrix ~f:(List.is_empty) then None
     else failwith "edge case: algorithm I"
   else
-    let constructors, _ = get_constructors_from_1st_col matrix in
+    let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
     let t = List.hd_exn t in
     let complete_signature = get_all_constructors t in
@@ -277,10 +273,10 @@ let rec algorithm_I matrix n ts =
         LSet.fold (fun ck p ->
           if Option.is_some p then p
           else
-            let a  = find_constuctor_arity ck t in
-            let ak = List.length a in
-            let matrix = specialize_matrix ck a matrix in
-            let ps = algorithm_I matrix (ak + n - 1) (a @ ts) in
+            let tys = find_constuctor_arity ck t in
+            let ak  = List.length tys in
+            let matrix = specialize_matrix ck tys matrix in
+            let ps = algorithm_I matrix (ak + n - 1) (tys @ ts) in
             match ps with
               Some ps ->
                 Some
@@ -301,9 +297,9 @@ let rec algorithm_I matrix n ts =
             let missing_constructors
               = LSet.diff complete_signature constructors in
             let cs = LSet.fold (fun c cs ->
-              let a  = find_constuctor_arity c t in
-              let a  = List.map a ~f:(fun t -> SP_Wildcard t) in
-              let c  = SP_Constructor (c, a, t) in
+              let tys = find_constuctor_arity c t in
+              let ps = List.map tys ~f:(fun t -> SP_Wildcard t) in
+              let c = SP_Constructor (c, ps, t) in
               c :: cs
             ) missing_constructors [] in
             Some (List.fold_left cs ~init:[] ~f:(fun new_ps c ->
@@ -324,7 +320,7 @@ let redundant_case_analysis matrix =
   (redundant, case)
 
 let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
-  let ts = count_type_parts t in
+  let ts = destructure_type t in
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
   (* let () = List.iter eqs
@@ -348,4 +344,4 @@ let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
     let p, _, _ = List.nth_exn eqs (case - 1) in
     let loc = Location.get_location p in
     raise.raise @@ Errors.pattern_redundant_case loc
-  else()
+  else ()
