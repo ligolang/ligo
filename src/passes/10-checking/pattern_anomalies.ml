@@ -10,7 +10,7 @@ module LSet = Caml.Set.Make (struct
   type t = T.label
   let compare = T.compare_label
 end)
-
+(* TODO: write good comments *)
 let cons_label = T.Label "#CONS"
 let nil_label  = T.Label "#NIL"
 
@@ -132,12 +132,8 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
       let _, ps = List.fold_left tys ~init:(simple_patterns, [])
         ~f:(fun (sps, ps) t ->
             let n = List.length @@ count_type_parts t in
-            if n > 1 then
-              let sps, rest = List.split_n sps n in
-              rest, ps @ [to_original_pattern sps t]
-            else
-              let sps, rest = List.split_n sps 1 in
-              rest, ps @ [to_original_pattern sps t]
+            let sps, rest = List.split_n sps n in
+            rest, ps @ [to_original_pattern sps t]
           )
       in
       if are_keys_numeric labels then
@@ -290,8 +286,7 @@ let rec algorithm_I matrix n ts =
               Some ps ->
                 Some
                 (List.map ps ~f:(fun ps ->
-                  let xs = List.take ps ak in
-                  let ps = List.drop ps ak in
+                  let xs, ps = List.split_n ps ak in
                   [SP_Constructor (ck, xs, t)] @ ps))
             | None -> None
           ) complete_signature None
@@ -330,6 +325,7 @@ let redundant_case_analysis matrix =
   (redundant, case)
 
 let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
+  let ts = count_type_parts t in
   let matrix = List.map eqs ~f:(fun (p, t, _) ->
     to_simple_pattern (p, t)) in
   (* let () = List.iter eqs
@@ -337,16 +333,10 @@ let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
       let sps = to_simple_pattern (p, t) in
       Format.printf "%a\n" pp_simple_pattern_list sps) in *)
 
-  (* TODO: vector should be based on type *)
-  let vector = List.map (List.hd_exn matrix)
-    ~f:(fun sp ->
-      match sp with
-        SP_Wildcard t -> SP_Wildcard t
-      | SP_Constructor (_, _, t) -> SP_Wildcard t) in
+  let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
 
   let missing_case = algorithm_Urec matrix vector in
   let () = if missing_case then
-    let ts = count_type_parts t in
     let i = algorithm_I matrix (List.length vector) ts in
     let i = Option.value_exn i in
     let ps = List.map i ~f:(fun sp -> to_original_pattern sp t) in

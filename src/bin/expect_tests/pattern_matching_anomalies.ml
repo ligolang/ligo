@@ -162,6 +162,35 @@ let%expect_test _ =
     Here are examples of cases that are not matched:
     - [] |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.jsligo", line 4, character 11 to line 6, character 4:
+      3 | let s = (x : t) : unit =>
+      4 |   match(x, {
+      5 |     Two: (_ : nat) => unit,
+      6 |   })
+
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - One(_)
+    - Three |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "c_c.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_c.jsligo", line 9, character 30 to line 11, character 6:
+      8 |   Three: ()      => unit,
+      9 |   One: (c : p)   => (match(c, {
+     10 |       Four: () => unit
+     11 |     }))
+     12 |   })
+
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - Five
+    - Six |}]
+  
 (* Redundant Case *)
 
 let%expect_test _ =
