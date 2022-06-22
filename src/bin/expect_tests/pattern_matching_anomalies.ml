@@ -308,3 +308,43 @@ let%expect_test _ =
       9 |   | { a ; b = Two } -> ()
 
     Error : this match case is unused. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c_c.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c_c.mligo", line 11, characters 8-12:
+     10 |   | Three    -> ()
+     11 |   | One Four -> ()
+
+    Error : this match case is unused. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c1_c2_c3.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.jsligo", line 6, characters 12-13:
+      5 |     One:   (a : int) => unit,
+      6 |     One:   (b : int) => unit,
+      7 |     Two:   (c : nat) => unit,
+
+    Error : this match case is unused. |}]
+
+    
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c1_c3.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.jsligo", line 7, characters 12-13:
+      6 |     Two:   (c : nat) => unit,
+      7 |     One:   (b : int) => unit,
+      8 |     Three: () => unit
+
+    Error : this match case is unused. |}]
+  
+let%expect_test _ =
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_redundant_test "c1_c2_c3_c1.jsligo") ] ;
+  [%expect{|
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.jsligo", line 8, characters 12-13:
+      7 |     Three: ()        => unit,
+      8 |     One:   (b : int) => unit,
+      9 |   })
+
+    Error : this match case is unused. |}]

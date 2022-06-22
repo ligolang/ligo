@@ -222,7 +222,9 @@ let rec algorithm_Urec matrix vector =
   (* let () = print_matrix matrix in
   let () = print_vector vector in
   let () = Format.printf "---------------\n" in *)
-  match vector with
+  if List.is_empty matrix then true
+  else if List.for_all matrix ~f:(List.is_empty) then false
+  else match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
       (* let () = Format.printf "type 1 : %a \n" AST.PP.type_expression t in *)
       let a  = find_constuctor_arity c t in
@@ -255,10 +257,7 @@ let rec algorithm_Urec matrix vector =
         complete_signature false
     else
       algorithm_Urec (default_matrix matrix) q2_n
-  | [] ->
-    if List.is_empty matrix then true
-    else if List.for_all matrix ~f:(List.is_empty) then false
-    else failwith "edge case: algorithm Urec"
+  | [] -> failwith "edge case: algorithm Urec"
 
 let rec algorithm_I matrix n ts =
   (* let () = Format.printf "n = %d\n" n in

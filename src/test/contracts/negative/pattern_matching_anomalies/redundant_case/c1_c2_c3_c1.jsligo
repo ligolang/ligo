@@ -1,10 +1,9 @@
-TODO
+type t = ["One", int] | ["Two", nat] | ["Three"]
 
-type t = One of int | Two of nat | Three
-
-let s (x : t) = 
-  match x with
-    One a -> ()
-  | Two c -> ()
-  | Three -> ()
-  | One b -> ()
+let s = (x : t) : unit => 
+  match(x, {
+    One:   (a : int) => unit,
+    Two:   (c : nat) => unit,
+    Three: ()        => unit,
+    One:   (b : int) => unit,
+  })
