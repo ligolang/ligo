@@ -1,3 +1,6 @@
+(* This module implements pattern matching anomaly detection as described in
+   the paper "Warnings for pattern matching"
+   Link: http://moscova.inria.fr/~maranget/papers/warn/warn.pdf  *)
 module AST = Ast_typed
 module T = Stage_common.Types
 module C = AST.Combinators
@@ -10,7 +13,7 @@ module LSet = Caml.Set.Make (struct
   type t = T.label
   let compare = T.compare_label
 end)
-(* TODO: write good comments *)
+
 let cons_label = T.Label "#CONS"
 let nil_label  = T.Label "#NIL"
 
@@ -66,13 +69,13 @@ let rec to_simple_pattern ty_pattern =
     List.concat ps
   | P_var _    -> [SP_Wildcard ty]
   | P_list (Cons (hd, tl)) ->
-    let hd_ty = Option.value_exn (C.get_t_list ty) in (* BAD *)
+    let hd_ty = Option.value_exn (C.get_t_list ty) in
     let hd_tl =
       to_simple_pattern (hd, hd_ty) @
       to_simple_pattern (tl, ty) in
     [SP_Constructor (cons_label, hd_tl, ty)]
   | P_list (List ps) ->
-    let hd_ty = Option.value_exn (C.get_t_list ty) in (* BAD *)
+    let hd_ty = Option.value_exn (C.get_t_list ty) in
     List.fold_right ps ~init:([nil_constructor ty])
       ~f:(fun p acc ->
         let hd_tl = to_simple_pattern (p, hd_ty) @ acc in
@@ -82,7 +85,7 @@ let rec to_simple_pattern ty_pattern =
     [SP_Constructor (c, to_simple_pattern (p, p_ty), ty)]
   | P_tuple ps
   | P_record (_, ps) ->
-    let ps_tys = Option.value_exn (C.get_record_fields ty) in (* BAD *)
+    let ps_tys = Option.value_exn (C.get_record_fields ty) in
     let ps_tys = List.map ~f:snd ps_tys in
     let ps = List.zip_exn ps ps_tys in
     let ps = List.map ps ~f:to_simple_pattern in
@@ -140,8 +143,6 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
         Location.wrap @@ T.P_record (labels, ps)
     | _ -> failwith "edge case: not a record/tuple")
 
-type matrix = simple_pattern list list
-
 let print_matrix matrix =
   let () = Format.printf "matrix: \n" in
   let () = List.iter matrix ~f:(fun row ->
@@ -151,7 +152,20 @@ let print_matrix matrix =
 let print_vector vector =
   Format.printf "vector: \n%a\n" pp_simple_pattern_list vector
 
-(* specialize *)
+(* Specialize matrix [specialize_matrix c tys matrix]
+
+    +-----------------------------+------------------------------+
+    |               pi1           |      S (c, matrix)           |
+    +-----------------------------+----+---------+---------------+
+    | c (r1, ... , ra)            | r1, ... , ra, pi2, ... , pin |
+    | c'(r1, ... , ra) (c' != c)  | No Row                       |
+    | _                           | _, ... , _, pi2, ... , pin   |
+    +----------------------------------+---------+---------------+
+
+  In simple words look for constructor c in the 1st column of the matrix
+  and explore the inner patterns.
+  Ignore the constructors which are not c.
+  If wildcard then add filler wildcards *)
 let specialize_matrix c tys matrix =
   let specialize specialized row =
     match row with
@@ -167,6 +181,20 @@ let specialize_matrix c tys matrix =
   in
   List.fold_left matrix ~init:[] ~f:specialize
 
+(* Specialize vector [specialize_vector c tys q1_n]
+
+    Let
+      vector = [q1, ... , qn]
+      c : c(r1, ... , ra)
+
+    S(c, (c(r1, ... , ra), q2, ... , qn)) = r1, ... , ra, q2, ... , qn
+
+    S(c, (_, q1, ... , qn)) = _, .... , _, q2, ... , qn
+                              <-a times->
+
+    In simple words if the 1st element of [vector] is a constructor
+    explore the inner patterns.
+    If 1st element of [vector] is wildcard, add filler wildcards *)
 let specialize_vector c tys q1_n =
   match q1_n with
     SP_Constructor (cp, r1_a, _) :: q2_n when T.equal_label c cp ->
@@ -176,7 +204,18 @@ let specialize_vector c tys q1_n =
     wildcards @ q2_n
   | _ -> failwith "edge case: specialize_vector wrong constructor"
 
-(* default *)
+(* Default matrix [default_matrix matrix]
+
+    +-----------------------------+------------------------------+
+    |               pi1           |      D (matrix)              |
+    +-----------------------------+----+---------+---------------+
+    | c (r1, ... , ra)            | No Row                       |
+    | _                           | pi2, ... , pin               |
+    +----------------------------------+---------+---------------+
+
+  In simple words ignore the rows in [matrix] which has constructors
+  in the 1st column.
+  If 1st of a row starts with a wildcard, explore the other columns *)
 let default_matrix matrix =
   let default row dp =
     match row with
@@ -214,9 +253,51 @@ let get_constructors_from_1st_col matrix =
       | SP_Wildcard _ :: _ -> s
       | [] -> s)
 
+(* Algorithm Urec [algorithm_Urec matrix vector]
+
+   [vector] is (v1, v2, ... , vn)
+
+   Base case:
+    if there are no columns in [matrix] (we check if some rows are present)
+      if some rows are prent in [matrix]
+      then false (meaning [vectors] matches some row of [matrix])
+      else true ([matrix] is empty, [vector] is not matced by any row)
+
+   Induction:
+    if there are some columns present in the [matrix] there are 2 cases
+    we need to take care of
+
+    Case 1: v1 is a contructor pattern (C(r1, r2, ... , ra))
+      From [matrix] we extract a
+       specialized_matrix = [specialize_matrix C tys matrix]
+      and we also
+        specialize_vector = [specialize_vector C tys vector]
+
+      Finally,
+        Urec (matrix, vector) = Urec (specialize_matrix, specialize_vector)
+
+    Case 2: v1 is a wildcard pattern
+      Let Σ = { C1, C2, ... , Cz } (set of constructors of v1)
+
+      Now there are further 2 cases depending on whether Σ has all the
+      constructors.
+
+      (a.) If Σ has all the constructors
+        Urec (matrix, vector) =
+          for(k = 1 to z)
+            specialized_matrix = [specialize_matrix Ck tys matrix]
+            specialize_vector = [specialize_vector Ck tys vector]
+            Urec (specialized_matrix, specialize_vector)
+          (all the results are or-ed (||) )
+
+      (b.) If Σ dos not have all the constructors
+        default_matrix = [default_matrix matrix]
+
+        Urec (matrix, vector) = Urec (default_matrix, (v2, ... , vn)) *)
 let rec algorithm_Urec matrix vector =
   if List.is_empty matrix then true
-  else if List.for_all matrix ~f:(List.is_empty) then false
+  else if List.for_all matrix ~f:(List.is_empty) && List.is_empty vector
+  then false
   else match vector with
     SP_Constructor (c, _r1_n, t) :: _q2_n ->
       let a = find_constuctor_arity c t in
@@ -239,6 +320,43 @@ let rec algorithm_Urec matrix vector =
       algorithm_Urec (default_matrix matrix) q2_n
   | [] -> failwith "edge case: algorithm Urec"
 
+(* Algorithm I [algorithm_I matrix n ts]
+
+   Base case:
+    I (empty_matrix, 0) = Some []
+    I (matrix, 0) = None
+
+   Induction:
+    Let Σ be set of constructors what appear at root of patterns in 1st column
+
+    Case 1: If Σ has all the constructors
+      for all constructors ck
+        ak be the number of values ck holds
+        I ([specialize_matrix ck tys matrix], ak + n - 1)
+      If all the calls return None then
+        I (matrix, n) = None
+      else
+        if one of the calls returns a pattern,
+          I (S (ck, matrix), ak + n - 1) = (r1, ... , rak, p2, ... ,pn)
+        then
+          I (matrix, n) = Some (ck(r1, ... , rak), p2, ... , pn)
+
+    Case 2: If Σ dos not have all the constructors
+
+      calculate I ([default_matrix matrix], n - 1),
+      if it return None then I (matrix, n) = None
+      otherwise,
+        I (D(matrix), n - 1) = (p2, ... , pn)
+
+        if Σ is empty
+          I (matrix, n) = (_, p2, ... , pn)
+        else
+          I (matrix, n) = (C(_, ... ,_), p2, ... , pn)
+          Here C is a constructor that does not belong to Σ
+
+          If there more constructors that do not belong to Σ,
+          we can improve by returning all the patterns that can be formed
+          using the extra constructors. *)
 let rec algorithm_I matrix n ts =
   if n  = 0 then
     if List.is_empty matrix then Some [[]]
@@ -289,6 +407,31 @@ let rec algorithm_I matrix n ts =
             ))
       | None -> None
 
+(* Missing case analysis uses [algorithm_Urec] if missing cases are present
+   and it uses [algorithm_I] to find out the actuali missing pattern(s)
+    Urec([[p11, p12, ... , p1n]
+          [p21, p22, ... , p2n]
+          ...
+          [pm1, pm2, ... , pmn]], (_, _, ... ,_)) *)
+let missing_case_analysis matrix t =
+  let ts = destructure_type t in
+  let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
+  let missing_case = algorithm_Urec matrix vector in
+
+  if missing_case then
+    let sps_opt = algorithm_I matrix (List.length vector) ts in
+    let sps = Option.value_exn sps_opt in
+    let ps = List.map sps ~f:(fun sp -> to_original_pattern sp t) in
+    Some ps
+  else None
+
+(* Redundant case analysis uses [algorithm_Urec] to check if any row of the
+   matrix is redundant.
+   A row in matrix P (pi) is redundant if
+    Urec([[p1]
+          [p2]
+          ...
+          [p(i-1)], pi) is false *)
 let redundant_case_analysis matrix =
   let redundant, case, _ =  List.fold_left matrix ~init:(false, 0, [])
     ~f:(fun (redundant_case_found, case, matrix) vector ->
@@ -300,56 +443,39 @@ let redundant_case_analysis matrix =
   in
   (redundant, case)
 
+(* Pattern matching anomalies are of 2 kinds
+   1. Missing case(s)
+   2. Redundant case(s)
+   To detect these anomalies we use [algorithm_Urec] & to find the actual
+   missing pattern(s) we use [algorithm_I].
+
+   In simple words [algorithm_Urec matrix vector] tells us whether [vector]
+   is a useful pattern in the context of [matrix], if the result is true
+   that means [vector] is a useful pattern.
+
+   The flow goes as follows:
+   a. We start by converting [eqs] (type-checked ligo patterns) into
+   simple_pattern matrix.
+   b. Using the matchee type [t] we create a vector of wildcards.
+   c. Calculate [algorithm_Urec matrix vector] [Urec(P, (_,..,_))], if the
+   result is true that means there are missing cases in [eqs].
+   d. To find out the actual missing patterns we use [algorithm_I] which
+   give you the missing pattern (simple_pattern), we need to convert the
+   missing pattern to the original pattern representation
+   using [to_original_pattern].
+   e. If there are no missing cases we check for redundant cases. *)
 let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
-  let ts = destructure_type t in
-  let matrix = List.map eqs ~f:(fun (p, t, _) ->
-    to_simple_pattern (p, t)) in
 
-  let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
+  let matrix = List.map eqs ~f:(fun (p, t, _) -> to_simple_pattern (p, t)) in
 
-  let missing_case = algorithm_Urec matrix vector in
-  let () = if missing_case then
-    let i = algorithm_I matrix (List.length vector) ts in
-    let i = Option.value_exn i in
-    let ps = List.map i ~f:(fun sp -> to_original_pattern sp t) in
-    raise.raise @@ Errors.pattern_missing_cases loc ps
-  else () in
-
-  let redundant, case = redundant_case_analysis matrix in
-  if redundant
-  then
-    let p, _, _ = List.nth_exn eqs (case - 1) in
-    let loc = Location.get_location p in
-    raise.raise @@ Errors.pattern_redundant_case loc
-  else ()
-
-  (* 
-  
-  8. [DONE] Write a lot of test cases
-   [DONE] Missing case:
-   a. constructors
-   b. constructors (constructors)
-   c. tuple (constructors)
-   d. record (constructors)
-   e. constructors (tuple (constructors))
-   f. constructors (record (constructors))
-   g. tuple (tuple (constructor))
-   h. tuple (record (constructor))
-   i. record (tuple (constructor))
-   j. record (record (constructor))
-   [DONE] Redundant case:
-   a. c1, c1, c2, c3
-   b. c1, c2, c1, c3
-   c. c1, c2, c3, c1
-   d. c1, c2, c3, _
-   e. c1, _, c2, c3
-   f. _, c1, c2, c3
-   g. tuple_x, tuple_x, tuple_y
-   h. tuple_x, _, tuple_y
-   i. _, tuple_x, tuple_y
-   j. record_x, record_x, record_y
-   k. record_x, _, record_y
-   l. _, record_x, record_y
-   ... Ask for more test cases if something missed ...
-
-  *)
+  match missing_case_analysis matrix t with
+    Some missing_cases ->
+      raise.raise @@ Errors.pattern_missing_cases loc missing_cases
+  | None ->
+    let redundant, case = redundant_case_analysis matrix in
+    if redundant
+    then
+      let p, _, _ = List.nth_exn eqs (case - 1) in
+      let loc = Location.get_location p in
+      raise.raise @@ Errors.pattern_redundant_case loc
+    else ()
