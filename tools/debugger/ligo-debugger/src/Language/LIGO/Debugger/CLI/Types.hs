@@ -120,7 +120,8 @@ data LigoStackEntry
     -- ^ Stack entry with known details.
   | LigoHiddenStackEntry
     -- ^ Stack entry that is unknown.
-    -- This can denote some auxiliary entry added by LIGO, like reusable functions.
+    -- This can denote some auxiliary entry added by LIGO, like
+    -- reusable functions or part of sum type when unfolding via @IF_LEFT@s.
   deriving stock (Show, Eq, Generic)
   deriving anyclass (NFData)
 
@@ -144,7 +145,9 @@ pattern LigoStackEntryVar name ty = LigoStackEntry LigoExposedStackEntry
 instance FromJSON LigoStackEntry where
   parseJSON v = case v of
     Aeson.Null     -> pure LigoHiddenStackEntry
-    Aeson.Object{} -> LigoStackEntry <$> parseJSON v
+    Aeson.Object o
+      | null o    -> pure LigoHiddenStackEntry
+      | otherwise -> LigoStackEntry <$> parseJSON v
     other          -> Aeson.unexpected other
 
 type LigoStack = [LigoStackEntry]

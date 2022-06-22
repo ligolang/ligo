@@ -360,10 +360,10 @@ function main (const _ : unit ; const s : storage) : list (operation) * storage 
 
 A few primitives have a slightly different meaning when executed as part of a view:
 
-- `Tezos.balance` represents the current amount of mutez held by the contract attached to the view
-- `Tezos.sender` represents the caller of the view
-- `Tezos.amount` is always 0 mutez
-- `Tezos.self_address` represents the contract attached to the view
+- `Tezos.get_balance` represents the current amount of mutez held by the contract attached to the view
+- `Tezos.get_sender` represents the caller of the view
+- `Tezos.get_amount` is always 0 mutez
+- `Tezos.get_self_address` represents the contract attached to the view
 
 On the caller side, the primitive `Tezos.call_view` will allow you to call another contract view and get its result by providing the view name; the contract address and the parameter of the view. If the address is nonexistent; the name does not match of of the contract
 view or the parameter type do not match, `Tezos.call_view` will return `None`.

@@ -339,7 +339,7 @@ const destinationAddress : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
 const contract : contract (unit) =
-  case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+  case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
      Some (contract) -> contract
    | None -> (failwith ("No contract.") : contract (unit))
   ]
@@ -676,7 +676,7 @@ let destinationAddress : address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
 
 let contract : unit contract =
-  match (Tezos.get_contract_opt Tezos.sender : unit contract option) with
+  match (Tezos.get_contract_opt (Tezos.get_sender ()) : unit contract option) with
     Some contract -> contract
     | None -> (failwith "no contract" : unit contract)
 ```
@@ -1023,7 +1023,7 @@ let destinationAddress: address =
   ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
 let contract : contract(unit) =
-  switch (Tezos.get_contract_opt(Tezos.sender) : option(contract(unit))) {
+  switch (Tezos.get_contract_opt(Tezos.get_sender()) : option(contract(unit))) {
     | Some(contract) => contract
     | None => (failwith("no contract") : contract(unit))
   }
@@ -1373,7 +1373,7 @@ let destinationAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 let contract : contract<unit> =
-  match (Tezos.get_contract_opt(Tezos.sender) as option<contract<unit>>, {
+  match (Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>, {
     Some: (contract: contract<unit>) => contract,
     None: () => (failwith("no contract") as contract<unit>)
   })

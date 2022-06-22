@@ -554,7 +554,7 @@ let buy_taco2 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]
 In order to make Pedro's taco shop profitable, he needs to stop giving
 away tacos for free. When a contract is invoked via a transaction, an
 amount of tezzies to be sent can be specified as well. This amount is
-accessible within LIGO as `Tezos.amount`.
+accessible within LIGO as `Tezos.get_amount`.
 
 To make sure we get paid, we will:
 
@@ -579,7 +579,7 @@ function buy_taco (const taco_kind_index : nat ; var taco_shop_storage : taco_sh
   const current_purchase_price : tez =
     taco_kind.max_price / taco_kind.current_stock;
 
-  if Tezos.amount =/= current_purchase_price then
+  if (Tezos.get_amount ()) =/= current_purchase_price then
     // We won't sell tacos if the amount is not correct
     failwith ("Sorry, the taco you are trying to purchase has a different price");
 
@@ -604,7 +604,7 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
   in
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock in
   (* We won't sell tacos if the amount is not correct *)
-  let () = if Tezos.amount <> current_purchase_price then
+  let () = if (Tezos.get_amount ()) <> current_purchase_price then
     failwith "Sorry, the taco you are trying to purchase has a different price"
   in
   (* Update the storage decreasing the stock by 1n *)
@@ -628,7 +628,7 @@ let buy_taco = ((taco_kind_index, taco_shop_storage) : (nat, taco_shop_storage))
     | None => (failwith ("Unknown kind of taco"): taco_supply) } ;
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
-  let x : unit = if (Tezos.amount != current_purchase_price) {
+  let x : unit = if ((Tezos.get_amount ()) != current_purchase_price) {
     failwith ("Sorry, the taco you are trying to purchase has a different price")
   } ;
   /* Update the storage decreasing the stock by 1n */
@@ -653,7 +653,7 @@ let buy_taco3 = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]
     }) ;
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
-  if (Tezos.amount != current_purchase_price) {
+  if ((Tezos.get_amount ()) != current_purchase_price) {
     return failwith ("Sorry, the taco you are trying to purchase has a different price") as return_
   } else {
     /* Update the storage decreasing the stock by 1n */
@@ -984,28 +984,28 @@ following line, depending on your preference.
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-if Tezos.amount =/= current_purchase_price then
+if (Tezos.get_amount ()) =/= current_purchase_price then
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-if Tezos.amount <> current_purchase_price then
+if (Tezos.get_amount ()) <> current_purchase_price then
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-if (Tezos.amount != current_purchase_price)
+if ((Tezos.get_amount ()) != current_purchase_price)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-if (Tezos.amount != current_purchase_price)
+if ((Tezos.get_amount ()) != current_purchase_price)
 ```
 
 </Syntax>
@@ -1015,28 +1015,28 @@ if (Tezos.amount != current_purchase_price)
 <Syntax syntax="pascaligo">
 
 ```pascaligo skip
-if Tezos.amount < current_purchase_price then
+if (Tezos.get_amount ()) < current_purchase_price then
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-if Tezos.amount >= current_purchase_price then
+if (Tezos.get_amount ()) >= current_purchase_price then
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo skip
-if (Tezos.amount >= current_purchase_price)
+if ((Tezos.get_amount ()) >= current_purchase_price)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-if (Tezos.amount >= current_purchase_price)
+if ((Tezos.get_amount ()) >= current_purchase_price)
 ```
 
 </Syntax>

@@ -7,7 +7,7 @@ import Debug qualified
 import Unsafe qualified
 
 import Control.Concurrent.STM (writeTChan)
-import Control.Lens (zoom, (.=))
+import Control.Lens (zoom, (.=), ix, (^?!))
 import Control.Monad.Except (MonadError (..), liftEither)
 import Fmt (pretty)
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
@@ -22,7 +22,7 @@ import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.TypeCheck (typeVerifyParameter, typeVerifyStorage)
-import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..))
+import Morley.Michelson.Typed (Contract, Contract' (..), SomeContract (..), SomeConstrainedValue (SomeValue))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
@@ -35,6 +35,9 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
+
+import Language.LIGO.DAP.Variables
+import Morley.Debugger.Protocol.DAP (ScopesRequestArguments(frameIdScopesRequestArguments))
 
 data LIGO
 
@@ -102,16 +105,26 @@ instance HasSpecificMessages LIGO where
 
   handleScopesRequest DAP.ScopesRequest{..} = do
     -- We follow the implementation from morley-debugger
+    snap <- zoom dsDebuggerState $ frozen curSnapshot
+    let stackItems = snap
+          & isStackFrames
+          & flip (^?!) (ix (frameIdScopesRequestArguments argumentsScopesRequest - 1))
+          & sfStack
 
-    -- Lazily calculate tree of variables for the current scope and store it
-    -- for subsequent "variables" request.
-    -- TODO [LIGO-304]: fill with actual variables
-    dsVariables .= mempty
+    let builder =
+          case isStatus snap of
+            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value))) ->
+              createVariables stackItems >>= \idx -> buildVariable value "$it" >>= insertToIndex idx . (:[])
+            _ -> createVariables stackItems
+
+    let (varReference, variables) = runBuilder builder
+
+    dsVariables .= variables
 
     -- TODO [LIGO-304]: show detailed scopes
     let theScope = DAP.defaultScope
           { DAP.nameScope = "all variables"
-          , DAP.variablesReferenceScope = 1
+          , DAP.variablesReferenceScope = varReference
           }
     pushMessage $ DAPResponse $ ScopesResponse $ DAP.defaultScopesResponse
       { DAP.successScopesResponse = True
@@ -177,13 +190,14 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
   program <- checkArgument "program" programLigoLaunchRequestArguments
   storageT <- checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- checkArgument "parameter" parameterLigoLaunchRequestArguments
+  let entrypoint = fromMaybe "main" entrypointLigoLaunchRequestArguments
 
   unlessM (doesFileExist program) $
     throwError $ DAP.mkErrorMessage "Contract file not found" $ toText program
 
   let src = P.MSFile program
 
-  ligoDebugInfo <- compileLigoContractDebug program
+  ligoDebugInfo <- compileLigoContractDebug entrypoint program
   lift . logger $ "Successfully read the LIGO debug output for " <> pretty program
 
   -- TODO [LIGO-554]: use LIGO for parsing it
@@ -193,10 +207,6 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
   -- TODO [LIGO-554]: use LIGO for parsing it
   uStorage <- P.parseExpandValue src (toText storageT) &
     either (throwError . DAP.mkErrorMessage "Could not parse storage" . pretty) pure
-
-  entrypoint <-
-    maybe (Right U.DefEpName) U.buildEpName (fromString <$> entrypointLigoLaunchRequestArguments)
-    & either (throwError . DAP.mkErrorMessage "Could not parse entrypoint" . toText) pure
 
   -- This do is purely for scoping, otherwise GHC trips up:
   --     • Couldn't match type ‘a0’ with ‘()’
@@ -209,7 +219,8 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
 
     lift $ logger $ pretty (cCode contract)
 
-    epcRes <- T.mkEntrypointCall entrypoint (cParamNotes contract) &
+    -- Entrypoint is default because in @ParamNotes@ we don't have @EpName@ at all.
+    epcRes <- T.mkEntrypointCall U.DefEpName (cParamNotes contract) &
       maybe (throwError $ DAP.mkErrorMessage "Entrypoint not found" $ pretty entrypoint) pure
 
     case epcRes of
@@ -221,7 +232,7 @@ initDebuggerSession logger LigoLaunchRequestArguments {..} = do
           & typeCheckingForDebugger
           & either (throwError . DAP.mkErrorMessage "Storage does not typecheck") pure
 
-        let his = collectInterpretSnapshots program contract epc arg storage dummyContractEnv
+        let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv
             ds = DebuggerState
               { _dsSourceOrigin = SourcePath program
               , _dsSnapshots = playInterpretHistory his
