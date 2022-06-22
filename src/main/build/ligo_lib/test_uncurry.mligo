@@ -134,7 +134,7 @@ module Test = struct
     let background_cyan = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[46m")
     let background_white = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[47m")
 
-    let color_reset () = print reset
+    let colour_reset () = print reset
 
     let set_black () = print black
     let set_red () = print red
