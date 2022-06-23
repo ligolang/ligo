@@ -529,6 +529,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
       let _,infered_eqs = Helpers.first_success ~raise type_cases permutations in
       List.map ~f:(fun (p,p_ty,body,_) -> (p,p_ty,body)) @@ List.sort infered_eqs ~compare:(fun (_,_,_,a) (_,_,_,b) -> Int.compare a b)
     in
+    let () = Pattern_anomalies.check_anomalies ~raise ~loc:e.location eqs matchee'.type_expression in
     match matchee.expression_content with
     | E_variable matcheevar ->
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
@@ -678,7 +679,7 @@ and type_pattern ~raise (pattern : I.type_expression I.pattern) (expected_typ : 
     then raise.raise @@ pattern_do_not_conform_type pattern expected_typ 
     else
     let label_patterns = List.zip_exn labels patterns in (* TODO: dont use _exn*)
-    let label_patterns = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) label_patterns in
+    let label_patterns = List.sort ~compare:(fun (l1,_) (l2,_) -> O.compare_label l1 l2) label_patterns in
     let context,labels,patterns = List.fold_right label_patterns ~init:(context,[],[]) 
       ~f:(
         fun (label,pattern') (context,labels,patterns) ->
