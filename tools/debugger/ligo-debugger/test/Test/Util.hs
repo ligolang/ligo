@@ -1,10 +1,16 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Test.Util
-  ( ShowThroughBuild (..)
+  ( -- * Shared helpers
+    (</>)
+  , contractsDir
+  , hasLigoExtension
+
+    -- * Test utilities
+  , ShowThroughBuild (..)
   , TestBuildable (..)
   , (@?=)
-  , inContractsDir
+  , assertLeft
   , HUnit.testCase
   , HUnit.testCaseSteps
   , HUnit.assertFailure
@@ -12,13 +18,22 @@ module Test.Util
   ) where
 
 import Fmt (Buildable (..), blockListF', pretty)
-import System.FilePath ((</>))
+import System.FilePath (takeExtension, (</>))
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
 import Text.Show qualified
 
-inContractsDir :: FilePath -> FilePath
-inContractsDir path = "test" </> "contracts" </> path
+contractsDir :: FilePath
+contractsDir = "test" </> "contracts"
+
+hasLigoExtension :: FilePath -> Bool
+hasLigoExtension file =
+  takeExtension file `elem`
+    [ ".ligo"
+    , ".mligo"
+    , ".religo"
+    , ".jsligo"
+    ]
 
 newtype ShowThroughBuild a = STB
   { unSTB :: a
@@ -50,3 +65,10 @@ instance (Buildable (TestBuildable a), Buildable (TestBuildable b)) =>
   :: (Eq a, Buildable (TestBuildable a), MonadIO m, HasCallStack)
   => a -> a -> m ()
 (@?=) a b = liftIO $ STB a HUnit.@?= STB b
+
+assertLeft
+  :: (Buildable (TestBuildable e), MonadIO m)
+  => Either e a -> m ()
+assertLeft = \case
+  Left e -> liftIO $ HUnit.assertFailure (pretty $ TB e)
+  Right _ -> pass

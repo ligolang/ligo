@@ -20,7 +20,7 @@ unit_type_definition = do
 
   eitherDefs <- runHandlersTest contractsDir $ do
     doc <- openLigoDoc filename
-    getTypeDefinitions doc (Position 105 7)
+    getTypeDefinitions doc (Position 101 7)
 
   filepath <- makeAbsolute (contractsDir </> filename)
   let uri = filePathToUri filepath
