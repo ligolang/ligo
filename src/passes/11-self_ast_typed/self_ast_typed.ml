@@ -6,13 +6,13 @@ let all_module_passes ~add_warning ~raise ~warn_unused_rec = [
   Muchused.muchused_map_module ~add_warning;
   Helpers.map_module @@ Recursion.check_tail_expression ~raise ;
   Helpers.map_module @@ Recursion.remove_rec_expression ~add_warning ~warn_unused_rec ;
-  Helpers.map_module @@ Pattern_matching_simpl.peephole_expression ~raise ;
+  Helpers.map_module @@ Pattern_matching_simpl.peephole_expression ;
 ]
 
 let all_expression_passes ~add_warning ~raise ~warn_unused_rec = [
   Helpers.map_expression @@ Recursion.check_tail_expression ~raise ;
   Helpers.map_expression @@ Recursion.remove_rec_expression ~add_warning ~warn_unused_rec ;
-  Pattern_matching_simpl.peephole_expression ~raise ;
+  Pattern_matching_simpl.peephole_expression ;
 ]
 
 let contract_passes ~raise = [
