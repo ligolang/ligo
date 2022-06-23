@@ -636,6 +636,21 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_print.mligo" ] ;
+  [%expect {|
+    Hello world
+    @42
+    Everything at the top-level was executed.
+    - test exited with value "(true , 42n)". |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_eprint.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value ().
+    Ooops |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
