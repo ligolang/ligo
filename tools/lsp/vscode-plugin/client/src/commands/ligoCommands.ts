@@ -15,7 +15,31 @@ type CompileStorageResult = {
   result: string
 }
 
+export type SilentCompilationOptions = {
+  entrypoint: string,
+  onPath: Maybe<string>,
+  flags: string[]
+}
+
 const ligoBinaryInfo = { name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }
+
+export async function executeSilentCompileContract(
+  client: LanguageClient,
+  options: SilentCompilationOptions,
+) {
+  let args = ['compile', 'contract', '-e', options.entrypoint].concat(options.flags)
+  if (options.onPath) {
+    args = args.concat(['--output-file', options.onPath])
+  }
+
+  return executeCommand(
+    ligoBinaryInfo,
+    (path) => args.concat([path]),
+    client,
+    CommandRequiredArguments.Path,
+    options.onPath === undefined,
+  )
+}
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
