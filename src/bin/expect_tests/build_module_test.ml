@@ -244,18 +244,18 @@ let #../../test/contracts/build/A.mligo#Test#originate_from_file#204 =
        L("TEST MODE")))))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#set_source#206 =
   fun _a ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#set_baker#207 =
   fun _a ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#set_baker_policy#208 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#transfer#209 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))))[@inline] in
+    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#transfer_exn#210 =
   fun _a ->
   (fun _s ->
@@ -263,7 +263,7 @@ let #../../test/contracts/build/A.mligo#Test#transfer_exn#210 =
     ((poly_#../../test/contracts/build/A.mligo#Test#failwith_102)@(L("TEST MODE")))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#get_storage_of_address#214 =
   fun _a ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#get_balance#215 =
   fun _a ->
   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_104)@(L("TEST MODE")))[@inline] in
@@ -274,12 +274,12 @@ let #../../test/contracts/build/A.mligo#Test#michelson_equal#216 =
 let #../../test/contracts/build/A.mligo#Test#reset_state#218 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#reset_state_at#219 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))))[@inline] in
+    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#get_voting_power#220 =
   fun _kh ->
   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_102)@(L("TEST MODE")))[@inline] in
@@ -287,135 +287,149 @@ let #../../test/contracts/build/A.mligo#Test#get_total_voting_power#221 =
   (poly_#../../test/contracts/build/A.mligo#Test#failwith_102)@(L("TEST MODE"))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#nth_bootstrap_contract#223 =
   fun _i ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_94)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_96)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#nth_bootstrap_account#224 =
   fun _i ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_94)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_96)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#last_originations#226 =
   fun _u ->
   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_101)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#save_mutation#229 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_100)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_92)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#add_account#236 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#new_account#237 =
   fun _u ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_99)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_100)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#baker_account#238 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#bake_until_n_cycle_end#239 =
   fun _n ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#register_delegate#240 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#register_constant#241 =
   fun _m ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_98)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_99)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#create_chest#246 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_97)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_98)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#create_chest_key#247 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_96)@(L("TEST MODE"))))[@inline] in
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_97)@(L("TEST MODE"))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#constant_to_michelson_program#248 =
   fun _s ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST MODE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST MODE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#restore_context#249 =
   fun _u ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_POP_CONTEXT")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_POP_CONTEXT")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#save_context#250 =
   fun _u ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_PUSH_CONTEXT")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#drop_context#251 =
   fun _u ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_DROP_CONTEXT")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_DROP_CONTEXT")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#read_contract_from_file#252 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#compile_contract_from_file#253 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#originate_contract#255 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_94)@(L("TEST_ORIGINATE")))))[@inline] in
+    ((poly_#../../test/contracts/build/A.mligo#Test#failwith_96)@(L("TEST_ORIGINATE")))))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#size#256 =
   fun _c ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_93)@(L("TEST_SIZE")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_95)@(L("TEST_SIZE")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#get_bootstrap_account#257 =
   fun _n ->
-  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_92)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_94)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
 let #../../test/contracts/build/A.mligo#Test#sign#258 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#balance#262 =
+   ((poly_#../../test/contracts/build/A.mligo#Test#failwith_93)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/A.mligo#Test#chr#259 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_92)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/A.mligo#Test#nl#260 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/A.mligo#Test#println#261 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/A.mligo#Test#print#262 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/A.mligo#Test#eprint#263 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/A.mligo#Test#failwith_91)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/A.mligo#Tezos#balance#268 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#amount#263 =
+let #../../test/contracts/build/A.mligo#Tezos#amount#269 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#now#264 =
+let #../../test/contracts/build/A.mligo#Tezos#now#270 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#sender#265 =
+let #../../test/contracts/build/A.mligo#Tezos#sender#271 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#source#266 =
+let #../../test/contracts/build/A.mligo#Tezos#source#272 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#level#267 =
+let #../../test/contracts/build/A.mligo#Tezos#level#273 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#self_address#268 =
+let #../../test/contracts/build/A.mligo#Tezos#self_address#274 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#chain_id#269 =
+let #../../test/contracts/build/A.mligo#Tezos#chain_id#275 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#total_voting_power#270 =
+let #../../test/contracts/build/A.mligo#Tezos#total_voting_power#276 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_balance#271 =
+let #../../test/contracts/build/A.mligo#Tezos#get_balance#277 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_amount#272 =
+let #../../test/contracts/build/A.mligo#Tezos#get_amount#278 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_now#273 =
+let #../../test/contracts/build/A.mligo#Tezos#get_now#279 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_sender#274 =
+let #../../test/contracts/build/A.mligo#Tezos#get_sender#280 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_source#275 =
+let #../../test/contracts/build/A.mligo#Tezos#get_source#281 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_level#276 =
+let #../../test/contracts/build/A.mligo#Tezos#get_level#282 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_self_address#277 =
+let #../../test/contracts/build/A.mligo#Tezos#get_self_address#283 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_chain_id#278 =
+let #../../test/contracts/build/A.mligo#Tezos#get_chain_id#284 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#get_total_voting_power#279 =
+let #../../test/contracts/build/A.mligo#Tezos#get_total_voting_power#285 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#voting_power#280 =
+let #../../test/contracts/build/A.mligo#Tezos#voting_power#286 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#implicit_account#282 =
+let #../../test/contracts/build/A.mligo#Tezos#implicit_account#288 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#pairing_check#288 =
+let #../../test/contracts/build/A.mligo#Tezos#pairing_check#294 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#open_chest#289 =
+let #../../test/contracts/build/A.mligo#Tezos#open_chest#295 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/A.mligo#Tezos#set_delegate#293 =
+let #../../test/contracts/build/A.mligo#Tezos#set_delegate#299 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/A.mligo#Bitwise#xor#294 =
+let #../../test/contracts/build/A.mligo#Bitwise#xor#300 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/A.mligo#Bitwise#shift_left#295 =
+let #../../test/contracts/build/A.mligo#Bitwise#shift_left#301 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/A.mligo#Bitwise#shift_right#296 =
+let #../../test/contracts/build/A.mligo#Bitwise#shift_right#302 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/A.mligo#String#concat#337 =
+let #../../test/contracts/build/A.mligo#String#concat#343 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/A.mligo#String#sub#338 =
+let #../../test/contracts/build/A.mligo#String#sub#344 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -424,11 +438,11 @@ let #../../test/contracts/build/A.mligo#String#sub#338 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/A.mligo#String#length#339 =
+let #../../test/contracts/build/A.mligo#String#length#345 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Bytes#concat#342 =
+let #../../test/contracts/build/A.mligo#Bytes#concat#348 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/A.mligo#Bytes#sub#343 =
+let #../../test/contracts/build/A.mligo#Bytes#sub#349 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -437,98 +451,98 @@ let #../../test/contracts/build/A.mligo#Bytes#sub#343 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/A.mligo#Bytes#length#346 =
+let #../../test/contracts/build/A.mligo#Bytes#length#352 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#blake2b#347 =
+let #../../test/contracts/build/A.mligo#Crypto#blake2b#353 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#sha256#348 =
+let #../../test/contracts/build/A.mligo#Crypto#sha256#354 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#sha512#349 =
+let #../../test/contracts/build/A.mligo#Crypto#sha512#355 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#sha3#350 =
+let #../../test/contracts/build/A.mligo#Crypto#sha3#356 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#keccak#351 =
+let #../../test/contracts/build/A.mligo#Crypto#keccak#357 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#hash_key#352 =
+let #../../test/contracts/build/A.mligo#Crypto#hash_key#358 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/A.mligo#Crypto#check#353 =
+let #../../test/contracts/build/A.mligo#Crypto#check#359 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/A.mligo#assert#354 =
+let #../../test/contracts/build/A.mligo#assert#360 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/A.mligo#assert_with_error#355 =
+let #../../test/contracts/build/A.mligo#assert_with_error#361 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/A.mligo#abs#360 =
+let #../../test/contracts/build/A.mligo#abs#366 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/A.mligo#is_nat#361 =
+let #../../test/contracts/build/A.mligo#is_nat#367 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/A.mligo#true#362 = TRUE()[@inline] in
-let #../../test/contracts/build/A.mligo#false#363 = FALSE()[@inline] in
-let #../../test/contracts/build/A.mligo#unit#364 = UNIT()[@inline] in
-let #../../test/contracts/build/A.mligo#toto#368 = L(1) in
-let #../../test/contracts/build/B.mligo#Tezos#balance#372 =
+let #../../test/contracts/build/A.mligo#true#368 = TRUE()[@inline] in
+let #../../test/contracts/build/A.mligo#false#369 = FALSE()[@inline] in
+let #../../test/contracts/build/A.mligo#unit#370 = UNIT()[@inline] in
+let #../../test/contracts/build/A.mligo#toto#374 = L(1) in
+let #../../test/contracts/build/B.mligo#Tezos#balance#378 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#amount#373 =
+let #../../test/contracts/build/B.mligo#Tezos#amount#379 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#now#374 =
+let #../../test/contracts/build/B.mligo#Tezos#now#380 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#sender#375 =
+let #../../test/contracts/build/B.mligo#Tezos#sender#381 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#source#376 =
+let #../../test/contracts/build/B.mligo#Tezos#source#382 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#level#377 =
+let #../../test/contracts/build/B.mligo#Tezos#level#383 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#self_address#378 =
+let #../../test/contracts/build/B.mligo#Tezos#self_address#384 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#chain_id#379 =
+let #../../test/contracts/build/B.mligo#Tezos#chain_id#385 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#total_voting_power#380 =
+let #../../test/contracts/build/B.mligo#Tezos#total_voting_power#386 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_balance#381 =
+let #../../test/contracts/build/B.mligo#Tezos#get_balance#387 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_amount#382 =
+let #../../test/contracts/build/B.mligo#Tezos#get_amount#388 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_now#383 =
+let #../../test/contracts/build/B.mligo#Tezos#get_now#389 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_sender#384 =
+let #../../test/contracts/build/B.mligo#Tezos#get_sender#390 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_source#385 =
+let #../../test/contracts/build/B.mligo#Tezos#get_source#391 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_level#386 =
+let #../../test/contracts/build/B.mligo#Tezos#get_level#392 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_self_address#387 =
+let #../../test/contracts/build/B.mligo#Tezos#get_self_address#393 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_chain_id#388 =
+let #../../test/contracts/build/B.mligo#Tezos#get_chain_id#394 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_total_voting_power#389 =
+let #../../test/contracts/build/B.mligo#Tezos#get_total_voting_power#395 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#min_block_time#390 =
+let #../../test/contracts/build/B.mligo#Tezos#min_block_time#396 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_min_block_time#391 =
+let #../../test/contracts/build/B.mligo#Tezos#get_min_block_time#397 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#voting_power#392 =
+let #../../test/contracts/build/B.mligo#Tezos#voting_power#398 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#implicit_account#394 =
+let #../../test/contracts/build/B.mligo#Tezos#implicit_account#400 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#pairing_check#400 =
+let #../../test/contracts/build/B.mligo#Tezos#pairing_check#406 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#open_chest#401 =
+let #../../test/contracts/build/B.mligo#Tezos#open_chest#407 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#set_delegate#405 =
+let #../../test/contracts/build/B.mligo#Tezos#set_delegate#411 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#xor#406 =
+let #../../test/contracts/build/B.mligo#Bitwise#xor#412 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#shift_left#407 =
+let #../../test/contracts/build/B.mligo#Bitwise#shift_left#413 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#shift_right#408 =
+let #../../test/contracts/build/B.mligo#Bitwise#shift_right#414 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#String#concat#449 =
+let #../../test/contracts/build/B.mligo#String#concat#455 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/B.mligo#String#sub#450 =
+let #../../test/contracts/build/B.mligo#String#sub#456 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -537,11 +551,11 @@ let #../../test/contracts/build/B.mligo#String#sub#450 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#String#length#451 =
+let #../../test/contracts/build/B.mligo#String#length#457 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#concat#454 =
+let #../../test/contracts/build/B.mligo#Bytes#concat#460 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#sub#455 =
+let #../../test/contracts/build/B.mligo#Bytes#sub#461 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -550,38 +564,38 @@ let #../../test/contracts/build/B.mligo#Bytes#sub#455 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#length#458 =
+let #../../test/contracts/build/B.mligo#Bytes#length#464 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#blake2b#459 =
+let #../../test/contracts/build/B.mligo#Crypto#blake2b#465 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha256#460 =
+let #../../test/contracts/build/B.mligo#Crypto#sha256#466 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha512#461 =
+let #../../test/contracts/build/B.mligo#Crypto#sha512#467 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha3#462 =
+let #../../test/contracts/build/B.mligo#Crypto#sha3#468 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#keccak#463 =
+let #../../test/contracts/build/B.mligo#Crypto#keccak#469 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#hash_key#464 =
+let #../../test/contracts/build/B.mligo#Crypto#hash_key#470 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#check#465 =
+let #../../test/contracts/build/B.mligo#Crypto#check#471 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#assert#466 =
+let #../../test/contracts/build/B.mligo#assert#472 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#assert_with_error#467 =
+let #../../test/contracts/build/B.mligo#assert_with_error#473 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/B.mligo#abs#472 =
+let #../../test/contracts/build/B.mligo#abs#478 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/B.mligo#is_nat#473 =
+let #../../test/contracts/build/B.mligo#is_nat#479 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/B.mligo#true#474 = TRUE()[@inline] in
-let #../../test/contracts/build/B.mligo#false#475 = FALSE()[@inline] in
-let #../../test/contracts/build/B.mligo#unit#476 = UNIT()[@inline] in
+let #../../test/contracts/build/B.mligo#true#480 = TRUE()[@inline] in
+let #../../test/contracts/build/B.mligo#false#481 = FALSE()[@inline] in
+let #../../test/contracts/build/B.mligo#unit#482 = UNIT()[@inline] in
 let poly_#../../test/contracts/build/B.mligo#Test#failwith_90 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/B.mligo#Test#failwith_89 =
@@ -612,187 +626,201 @@ let poly_#../../test/contracts/build/B.mligo#Test#failwith_77 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/B.mligo#Test#failwith_76 =
   { FAILWITH }[@inline] in
-let #../../test/contracts/build/B.mligo#Test#originate_from_file#482 =
+let #../../test/contracts/build/B.mligo#Test#originate_from_file#488 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s ->
      (fun _t ->
       ((poly_#../../test/contracts/build/B.mligo#Test#failwith_90)@(L("TEST MODE")))))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#set_source#484 =
+let #../../test/contracts/build/B.mligo#Test#set_source#490 =
   fun _a ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#set_baker#485 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#set_baker#491 =
   fun _a ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#set_baker_policy#486 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#set_baker_policy#492 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#transfer#487 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#transfer#493 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#transfer_exn#488 =
+    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#transfer_exn#494 =
   fun _a ->
   (fun _s ->
    (fun _t ->
     ((poly_#../../test/contracts/build/B.mligo#Test#failwith_87)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#get_storage_of_address#492 =
+let #../../test/contracts/build/B.mligo#Test#get_storage_of_address#498 =
   fun _a ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#get_balance#493 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#get_balance#499 =
   fun _a ->
   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_89)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#michelson_equal#494 =
+let #../../test/contracts/build/B.mligo#Test#michelson_equal#500 =
   fun _m1 ->
   (fun _m2 ->
    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_88)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#reset_state#496 =
+let #../../test/contracts/build/B.mligo#Test#reset_state#502 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#reset_state_at#497 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#reset_state_at#503 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#get_voting_power#498 =
+    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#get_voting_power#504 =
   fun _kh ->
   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_87)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#get_total_voting_power#499 =
+let #../../test/contracts/build/B.mligo#Test#get_total_voting_power#505 =
   (poly_#../../test/contracts/build/B.mligo#Test#failwith_87)@(L("TEST MODE"))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#nth_bootstrap_contract#501 =
+let #../../test/contracts/build/B.mligo#Test#nth_bootstrap_contract#507 =
   fun _i ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_79)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#nth_bootstrap_account#502 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_81)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#nth_bootstrap_account#508 =
   fun _i ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_79)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#last_originations#504 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_81)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#last_originations#510 =
   fun _u ->
   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_86)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#save_mutation#507 =
+let #../../test/contracts/build/B.mligo#Test#save_mutation#513 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_85)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#add_account#514 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_77)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#add_account#520 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#new_account#515 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#new_account#521 =
   fun _u ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_84)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#baker_account#516 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_85)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#baker_account#522 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#bake_until_n_cycle_end#517 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#bake_until_n_cycle_end#523 =
   fun _n ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#register_delegate#518 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#register_delegate#524 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#register_constant#519 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#register_constant#525 =
   fun _m ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_83)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#create_chest#524 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_84)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#create_chest#530 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_82)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#create_chest_key#525 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_83)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#create_chest_key#531 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_81)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#constant_to_michelson_program#526 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_82)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#constant_to_michelson_program#532 =
   fun _s ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#restore_context#527 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#restore_context#533 =
   fun _u ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#save_context#528 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#save_context#534 =
   fun _u ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#drop_context#529 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#drop_context#535 =
   fun _u ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#read_contract_from_file#530 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#read_contract_from_file#536 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#compile_contract_from_file#531 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#compile_contract_from_file#537 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#originate_contract#533 =
+    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#originate_contract#539 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_79)@(L("TEST_ORIGINATE")))))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#size#534 =
+    ((poly_#../../test/contracts/build/B.mligo#Test#failwith_81)@(L("TEST_ORIGINATE")))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#size#540 =
   fun _c ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_78)@(L("TEST_SIZE")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#get_bootstrap_account#535 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_80)@(L("TEST_SIZE")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#get_bootstrap_account#541 =
   fun _n ->
-  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_77)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #../../test/contracts/build/B.mligo#Test#sign#536 =
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_79)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#sign#542 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#balance#540 =
+   ((poly_#../../test/contracts/build/B.mligo#Test#failwith_78)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#chr#543 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_77)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#nl#544 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/B.mligo#Test#println#545 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#print#546 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/B.mligo#Test#eprint#547 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/B.mligo#Test#failwith_76)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/B.mligo#Tezos#balance#552 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#amount#541 =
+let #../../test/contracts/build/B.mligo#Tezos#amount#553 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#now#542 =
+let #../../test/contracts/build/B.mligo#Tezos#now#554 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#sender#543 =
+let #../../test/contracts/build/B.mligo#Tezos#sender#555 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#source#544 =
+let #../../test/contracts/build/B.mligo#Tezos#source#556 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#level#545 =
+let #../../test/contracts/build/B.mligo#Tezos#level#557 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#self_address#546 =
+let #../../test/contracts/build/B.mligo#Tezos#self_address#558 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#chain_id#547 =
+let #../../test/contracts/build/B.mligo#Tezos#chain_id#559 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#total_voting_power#548 =
+let #../../test/contracts/build/B.mligo#Tezos#total_voting_power#560 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_balance#549 =
+let #../../test/contracts/build/B.mligo#Tezos#get_balance#561 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_amount#550 =
+let #../../test/contracts/build/B.mligo#Tezos#get_amount#562 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_now#551 =
+let #../../test/contracts/build/B.mligo#Tezos#get_now#563 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_sender#552 =
+let #../../test/contracts/build/B.mligo#Tezos#get_sender#564 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_source#553 =
+let #../../test/contracts/build/B.mligo#Tezos#get_source#565 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_level#554 =
+let #../../test/contracts/build/B.mligo#Tezos#get_level#566 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_self_address#555 =
+let #../../test/contracts/build/B.mligo#Tezos#get_self_address#567 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_chain_id#556 =
+let #../../test/contracts/build/B.mligo#Tezos#get_chain_id#568 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#get_total_voting_power#557 =
+let #../../test/contracts/build/B.mligo#Tezos#get_total_voting_power#569 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#voting_power#558 =
+let #../../test/contracts/build/B.mligo#Tezos#voting_power#570 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#implicit_account#560 =
+let #../../test/contracts/build/B.mligo#Tezos#implicit_account#572 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#pairing_check#566 =
+let #../../test/contracts/build/B.mligo#Tezos#pairing_check#578 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#open_chest#567 =
+let #../../test/contracts/build/B.mligo#Tezos#open_chest#579 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/B.mligo#Tezos#set_delegate#571 =
+let #../../test/contracts/build/B.mligo#Tezos#set_delegate#583 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#xor#572 =
+let #../../test/contracts/build/B.mligo#Bitwise#xor#584 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#shift_left#573 =
+let #../../test/contracts/build/B.mligo#Bitwise#shift_left#585 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#Bitwise#shift_right#574 =
+let #../../test/contracts/build/B.mligo#Bitwise#shift_right#586 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/B.mligo#String#concat#615 =
+let #../../test/contracts/build/B.mligo#String#concat#627 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/B.mligo#String#sub#616 =
+let #../../test/contracts/build/B.mligo#String#sub#628 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -801,11 +829,11 @@ let #../../test/contracts/build/B.mligo#String#sub#616 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#String#length#617 =
+let #../../test/contracts/build/B.mligo#String#length#629 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#concat#620 =
+let #../../test/contracts/build/B.mligo#Bytes#concat#632 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#sub#621 =
+let #../../test/contracts/build/B.mligo#Bytes#sub#633 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -814,109 +842,109 @@ let #../../test/contracts/build/B.mligo#Bytes#sub#621 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#Bytes#length#624 =
+let #../../test/contracts/build/B.mligo#Bytes#length#636 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#blake2b#625 =
+let #../../test/contracts/build/B.mligo#Crypto#blake2b#637 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha256#626 =
+let #../../test/contracts/build/B.mligo#Crypto#sha256#638 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha512#627 =
+let #../../test/contracts/build/B.mligo#Crypto#sha512#639 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#sha3#628 =
+let #../../test/contracts/build/B.mligo#Crypto#sha3#640 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#keccak#629 =
+let #../../test/contracts/build/B.mligo#Crypto#keccak#641 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#hash_key#630 =
+let #../../test/contracts/build/B.mligo#Crypto#hash_key#642 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/B.mligo#Crypto#check#631 =
+let #../../test/contracts/build/B.mligo#Crypto#check#643 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/B.mligo#assert#632 =
+let #../../test/contracts/build/B.mligo#assert#644 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/B.mligo#assert_with_error#633 =
+let #../../test/contracts/build/B.mligo#assert_with_error#645 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/B.mligo#abs#638 =
+let #../../test/contracts/build/B.mligo#abs#650 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/B.mligo#is_nat#639 =
+let #../../test/contracts/build/B.mligo#is_nat#651 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/B.mligo#true#640 = TRUE()[@inline] in
-let #../../test/contracts/build/B.mligo#false#641 = FALSE()[@inline] in
-let #../../test/contracts/build/B.mligo#unit#642 = UNIT()[@inline] in
-let #../../test/contracts/build/B.mligo#toto#646 = L(32) in
-let #../../test/contracts/build/B.mligo#titi#647 =
-  ADD(#../../test/contracts/build/A.mligo#toto#368 , L(42)) in
-let #../../test/contracts/build/B.mligo#f#648 =
-  fun gen#3428 ->
-  (let (gen#6975, gen#6976) = gen#3428 in
-   let gen#3429 = gen#6975 in
-   let x = gen#6976 in
+let #../../test/contracts/build/B.mligo#true#652 = TRUE()[@inline] in
+let #../../test/contracts/build/B.mligo#false#653 = FALSE()[@inline] in
+let #../../test/contracts/build/B.mligo#unit#654 = UNIT()[@inline] in
+let #../../test/contracts/build/B.mligo#toto#658 = L(32) in
+let #../../test/contracts/build/B.mligo#titi#659 =
+  ADD(#../../test/contracts/build/A.mligo#toto#374 , L(42)) in
+let #../../test/contracts/build/B.mligo#f#660 =
+  fun gen#3492 ->
+  (let (gen#7094, gen#7095) = gen#3492 in
+   let gen#3493 = gen#7094 in
+   let x = gen#7095 in
    let x =
-     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#368) ,
-         #../../test/contracts/build/B.mligo#titi#647) in
+     ADD(ADD(x , #../../test/contracts/build/A.mligo#toto#374) ,
+         #../../test/contracts/build/B.mligo#titi#659) in
    PAIR(LIST_EMPTY() , x)) in
-let #../../test/contracts/build/F.mligo#Tezos#balance#652 =
+let #../../test/contracts/build/F.mligo#Tezos#balance#664 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#amount#653 =
+let #../../test/contracts/build/F.mligo#Tezos#amount#665 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#now#654 =
+let #../../test/contracts/build/F.mligo#Tezos#now#666 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#sender#655 =
+let #../../test/contracts/build/F.mligo#Tezos#sender#667 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#source#656 =
+let #../../test/contracts/build/F.mligo#Tezos#source#668 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#level#657 =
+let #../../test/contracts/build/F.mligo#Tezos#level#669 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#self_address#658 =
+let #../../test/contracts/build/F.mligo#Tezos#self_address#670 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#chain_id#659 =
+let #../../test/contracts/build/F.mligo#Tezos#chain_id#671 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#total_voting_power#660 =
+let #../../test/contracts/build/F.mligo#Tezos#total_voting_power#672 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_balance#661 =
+let #../../test/contracts/build/F.mligo#Tezos#get_balance#673 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_amount#662 =
+let #../../test/contracts/build/F.mligo#Tezos#get_amount#674 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_now#663 =
+let #../../test/contracts/build/F.mligo#Tezos#get_now#675 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_sender#664 =
+let #../../test/contracts/build/F.mligo#Tezos#get_sender#676 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_source#665 =
+let #../../test/contracts/build/F.mligo#Tezos#get_source#677 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_level#666 =
+let #../../test/contracts/build/F.mligo#Tezos#get_level#678 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_self_address#667 =
+let #../../test/contracts/build/F.mligo#Tezos#get_self_address#679 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_chain_id#668 =
+let #../../test/contracts/build/F.mligo#Tezos#get_chain_id#680 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_total_voting_power#669 =
+let #../../test/contracts/build/F.mligo#Tezos#get_total_voting_power#681 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#min_block_time#670 =
+let #../../test/contracts/build/F.mligo#Tezos#min_block_time#682 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_min_block_time#671 =
+let #../../test/contracts/build/F.mligo#Tezos#get_min_block_time#683 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#voting_power#672 =
+let #../../test/contracts/build/F.mligo#Tezos#voting_power#684 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#implicit_account#674 =
+let #../../test/contracts/build/F.mligo#Tezos#implicit_account#686 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#pairing_check#680 =
+let #../../test/contracts/build/F.mligo#Tezos#pairing_check#692 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#open_chest#681 =
+let #../../test/contracts/build/F.mligo#Tezos#open_chest#693 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#set_delegate#685 =
+let #../../test/contracts/build/F.mligo#Tezos#set_delegate#697 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#xor#686 =
+let #../../test/contracts/build/F.mligo#Bitwise#xor#698 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#shift_left#687 =
+let #../../test/contracts/build/F.mligo#Bitwise#shift_left#699 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#shift_right#688 =
+let #../../test/contracts/build/F.mligo#Bitwise#shift_right#700 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#String#concat#729 =
+let #../../test/contracts/build/F.mligo#String#concat#741 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/F.mligo#String#sub#730 =
+let #../../test/contracts/build/F.mligo#String#sub#742 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -925,11 +953,11 @@ let #../../test/contracts/build/F.mligo#String#sub#730 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#String#length#731 =
+let #../../test/contracts/build/F.mligo#String#length#743 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#concat#734 =
+let #../../test/contracts/build/F.mligo#Bytes#concat#746 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#sub#735 =
+let #../../test/contracts/build/F.mligo#Bytes#sub#747 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -938,38 +966,38 @@ let #../../test/contracts/build/F.mligo#Bytes#sub#735 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#length#738 =
+let #../../test/contracts/build/F.mligo#Bytes#length#750 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#blake2b#739 =
+let #../../test/contracts/build/F.mligo#Crypto#blake2b#751 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha256#740 =
+let #../../test/contracts/build/F.mligo#Crypto#sha256#752 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha512#741 =
+let #../../test/contracts/build/F.mligo#Crypto#sha512#753 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha3#742 =
+let #../../test/contracts/build/F.mligo#Crypto#sha3#754 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#keccak#743 =
+let #../../test/contracts/build/F.mligo#Crypto#keccak#755 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#hash_key#744 =
+let #../../test/contracts/build/F.mligo#Crypto#hash_key#756 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#check#745 =
+let #../../test/contracts/build/F.mligo#Crypto#check#757 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#assert#746 =
+let #../../test/contracts/build/F.mligo#assert#758 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#assert_with_error#747 =
+let #../../test/contracts/build/F.mligo#assert_with_error#759 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/F.mligo#abs#752 =
+let #../../test/contracts/build/F.mligo#abs#764 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/F.mligo#is_nat#753 =
+let #../../test/contracts/build/F.mligo#is_nat#765 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/F.mligo#true#754 = TRUE()[@inline] in
-let #../../test/contracts/build/F.mligo#false#755 = FALSE()[@inline] in
-let #../../test/contracts/build/F.mligo#unit#756 = UNIT()[@inline] in
+let #../../test/contracts/build/F.mligo#true#766 = TRUE()[@inline] in
+let #../../test/contracts/build/F.mligo#false#767 = FALSE()[@inline] in
+let #../../test/contracts/build/F.mligo#unit#768 = UNIT()[@inline] in
 let poly_#../../test/contracts/build/F.mligo#Test#failwith_75 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/F.mligo#Test#failwith_74 =
@@ -1000,187 +1028,201 @@ let poly_#../../test/contracts/build/F.mligo#Test#failwith_62 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/F.mligo#Test#failwith_61 =
   { FAILWITH }[@inline] in
-let #../../test/contracts/build/F.mligo#Test#originate_from_file#762 =
+let #../../test/contracts/build/F.mligo#Test#originate_from_file#774 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s ->
      (fun _t ->
       ((poly_#../../test/contracts/build/F.mligo#Test#failwith_75)@(L("TEST MODE")))))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#set_source#764 =
+let #../../test/contracts/build/F.mligo#Test#set_source#776 =
   fun _a ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#set_baker#765 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#set_baker#777 =
   fun _a ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#set_baker_policy#766 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#set_baker_policy#778 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#transfer#767 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#transfer#779 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#transfer_exn#768 =
+    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#transfer_exn#780 =
   fun _a ->
   (fun _s ->
    (fun _t ->
     ((poly_#../../test/contracts/build/F.mligo#Test#failwith_72)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#get_storage_of_address#772 =
+let #../../test/contracts/build/F.mligo#Test#get_storage_of_address#784 =
   fun _a ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#get_balance#773 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#get_balance#785 =
   fun _a ->
   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_74)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#michelson_equal#774 =
+let #../../test/contracts/build/F.mligo#Test#michelson_equal#786 =
   fun _m1 ->
   (fun _m2 ->
    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_73)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#reset_state#776 =
+let #../../test/contracts/build/F.mligo#Test#reset_state#788 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#reset_state_at#777 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#reset_state_at#789 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#get_voting_power#778 =
+    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#get_voting_power#790 =
   fun _kh ->
   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_72)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#get_total_voting_power#779 =
+let #../../test/contracts/build/F.mligo#Test#get_total_voting_power#791 =
   (poly_#../../test/contracts/build/F.mligo#Test#failwith_72)@(L("TEST MODE"))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#nth_bootstrap_contract#781 =
+let #../../test/contracts/build/F.mligo#Test#nth_bootstrap_contract#793 =
   fun _i ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_64)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#nth_bootstrap_account#782 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_66)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#nth_bootstrap_account#794 =
   fun _i ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_64)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#last_originations#784 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_66)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#last_originations#796 =
   fun _u ->
   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_71)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#save_mutation#787 =
+let #../../test/contracts/build/F.mligo#Test#save_mutation#799 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_70)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#add_account#794 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_62)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#add_account#806 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#new_account#795 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#new_account#807 =
   fun _u ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_69)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#baker_account#796 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_70)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#baker_account#808 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#bake_until_n_cycle_end#797 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#bake_until_n_cycle_end#809 =
   fun _n ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#register_delegate#798 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#register_delegate#810 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#register_constant#799 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#register_constant#811 =
   fun _m ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_68)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#create_chest#804 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_69)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#create_chest#816 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_67)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#create_chest_key#805 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_68)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#create_chest_key#817 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_66)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#constant_to_michelson_program#806 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_67)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#constant_to_michelson_program#818 =
   fun _s ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#restore_context#807 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#restore_context#819 =
   fun _u ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#save_context#808 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#save_context#820 =
   fun _u ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#drop_context#809 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#drop_context#821 =
   fun _u ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#read_contract_from_file#810 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#read_contract_from_file#822 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#compile_contract_from_file#811 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#compile_contract_from_file#823 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#originate_contract#813 =
+    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#originate_contract#825 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_64)@(L("TEST_ORIGINATE")))))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#size#814 =
+    ((poly_#../../test/contracts/build/F.mligo#Test#failwith_66)@(L("TEST_ORIGINATE")))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#size#826 =
   fun _c ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_63)@(L("TEST_SIZE")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#get_bootstrap_account#815 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_65)@(L("TEST_SIZE")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#get_bootstrap_account#827 =
   fun _n ->
-  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_62)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #../../test/contracts/build/F.mligo#Test#sign#816 =
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_64)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#sign#828 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#balance#820 =
+   ((poly_#../../test/contracts/build/F.mligo#Test#failwith_63)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#chr#829 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_62)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#nl#830 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/F.mligo#Test#println#831 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#print#832 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/F.mligo#Test#eprint#833 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/F.mligo#Test#failwith_61)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/F.mligo#Tezos#balance#838 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#amount#821 =
+let #../../test/contracts/build/F.mligo#Tezos#amount#839 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#now#822 =
+let #../../test/contracts/build/F.mligo#Tezos#now#840 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#sender#823 =
+let #../../test/contracts/build/F.mligo#Tezos#sender#841 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#source#824 =
+let #../../test/contracts/build/F.mligo#Tezos#source#842 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#level#825 =
+let #../../test/contracts/build/F.mligo#Tezos#level#843 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#self_address#826 =
+let #../../test/contracts/build/F.mligo#Tezos#self_address#844 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#chain_id#827 =
+let #../../test/contracts/build/F.mligo#Tezos#chain_id#845 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#total_voting_power#828 =
+let #../../test/contracts/build/F.mligo#Tezos#total_voting_power#846 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_balance#829 =
+let #../../test/contracts/build/F.mligo#Tezos#get_balance#847 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_amount#830 =
+let #../../test/contracts/build/F.mligo#Tezos#get_amount#848 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_now#831 =
+let #../../test/contracts/build/F.mligo#Tezos#get_now#849 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_sender#832 =
+let #../../test/contracts/build/F.mligo#Tezos#get_sender#850 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_source#833 =
+let #../../test/contracts/build/F.mligo#Tezos#get_source#851 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_level#834 =
+let #../../test/contracts/build/F.mligo#Tezos#get_level#852 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_self_address#835 =
+let #../../test/contracts/build/F.mligo#Tezos#get_self_address#853 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_chain_id#836 =
+let #../../test/contracts/build/F.mligo#Tezos#get_chain_id#854 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#get_total_voting_power#837 =
+let #../../test/contracts/build/F.mligo#Tezos#get_total_voting_power#855 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#voting_power#838 =
+let #../../test/contracts/build/F.mligo#Tezos#voting_power#856 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#implicit_account#840 =
+let #../../test/contracts/build/F.mligo#Tezos#implicit_account#858 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#pairing_check#846 =
+let #../../test/contracts/build/F.mligo#Tezos#pairing_check#864 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#open_chest#847 =
+let #../../test/contracts/build/F.mligo#Tezos#open_chest#865 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/F.mligo#Tezos#set_delegate#851 =
+let #../../test/contracts/build/F.mligo#Tezos#set_delegate#869 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#xor#852 =
+let #../../test/contracts/build/F.mligo#Bitwise#xor#870 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#shift_left#853 =
+let #../../test/contracts/build/F.mligo#Bitwise#shift_left#871 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#Bitwise#shift_right#854 =
+let #../../test/contracts/build/F.mligo#Bitwise#shift_right#872 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/F.mligo#String#concat#895 =
+let #../../test/contracts/build/F.mligo#String#concat#913 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/F.mligo#String#sub#896 =
+let #../../test/contracts/build/F.mligo#String#sub#914 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1189,11 +1231,11 @@ let #../../test/contracts/build/F.mligo#String#sub#896 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#String#length#897 =
+let #../../test/contracts/build/F.mligo#String#length#915 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#concat#900 =
+let #../../test/contracts/build/F.mligo#Bytes#concat#918 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#sub#901 =
+let #../../test/contracts/build/F.mligo#Bytes#sub#919 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1202,98 +1244,98 @@ let #../../test/contracts/build/F.mligo#Bytes#sub#901 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#Bytes#length#904 =
+let #../../test/contracts/build/F.mligo#Bytes#length#922 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#blake2b#905 =
+let #../../test/contracts/build/F.mligo#Crypto#blake2b#923 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha256#906 =
+let #../../test/contracts/build/F.mligo#Crypto#sha256#924 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha512#907 =
+let #../../test/contracts/build/F.mligo#Crypto#sha512#925 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#sha3#908 =
+let #../../test/contracts/build/F.mligo#Crypto#sha3#926 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#keccak#909 =
+let #../../test/contracts/build/F.mligo#Crypto#keccak#927 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#hash_key#910 =
+let #../../test/contracts/build/F.mligo#Crypto#hash_key#928 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/F.mligo#Crypto#check#911 =
+let #../../test/contracts/build/F.mligo#Crypto#check#929 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/F.mligo#assert#912 =
+let #../../test/contracts/build/F.mligo#assert#930 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/F.mligo#assert_with_error#913 =
+let #../../test/contracts/build/F.mligo#assert_with_error#931 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/F.mligo#abs#918 =
+let #../../test/contracts/build/F.mligo#abs#936 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/F.mligo#is_nat#919 =
+let #../../test/contracts/build/F.mligo#is_nat#937 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/F.mligo#true#920 = TRUE()[@inline] in
-let #../../test/contracts/build/F.mligo#false#921 = FALSE()[@inline] in
-let #../../test/contracts/build/F.mligo#unit#922 = UNIT()[@inline] in
-let #../../test/contracts/build/F.mligo#toto#926 = L(44) in
-let #../../test/contracts/build/G.mligo#Tezos#balance#930 =
+let #../../test/contracts/build/F.mligo#true#938 = TRUE()[@inline] in
+let #../../test/contracts/build/F.mligo#false#939 = FALSE()[@inline] in
+let #../../test/contracts/build/F.mligo#unit#940 = UNIT()[@inline] in
+let #../../test/contracts/build/F.mligo#toto#944 = L(44) in
+let #../../test/contracts/build/G.mligo#Tezos#balance#948 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#amount#931 =
+let #../../test/contracts/build/G.mligo#Tezos#amount#949 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#now#932 =
+let #../../test/contracts/build/G.mligo#Tezos#now#950 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#sender#933 =
+let #../../test/contracts/build/G.mligo#Tezos#sender#951 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#source#934 =
+let #../../test/contracts/build/G.mligo#Tezos#source#952 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#level#935 =
+let #../../test/contracts/build/G.mligo#Tezos#level#953 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#self_address#936 =
+let #../../test/contracts/build/G.mligo#Tezos#self_address#954 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#chain_id#937 =
+let #../../test/contracts/build/G.mligo#Tezos#chain_id#955 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#total_voting_power#938 =
+let #../../test/contracts/build/G.mligo#Tezos#total_voting_power#956 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_balance#939 =
+let #../../test/contracts/build/G.mligo#Tezos#get_balance#957 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_amount#940 =
+let #../../test/contracts/build/G.mligo#Tezos#get_amount#958 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_now#941 =
+let #../../test/contracts/build/G.mligo#Tezos#get_now#959 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_sender#942 =
+let #../../test/contracts/build/G.mligo#Tezos#get_sender#960 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_source#943 =
+let #../../test/contracts/build/G.mligo#Tezos#get_source#961 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_level#944 =
+let #../../test/contracts/build/G.mligo#Tezos#get_level#962 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_self_address#945 =
+let #../../test/contracts/build/G.mligo#Tezos#get_self_address#963 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_chain_id#946 =
+let #../../test/contracts/build/G.mligo#Tezos#get_chain_id#964 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_total_voting_power#947 =
+let #../../test/contracts/build/G.mligo#Tezos#get_total_voting_power#965 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#min_block_time#948 =
+let #../../test/contracts/build/G.mligo#Tezos#min_block_time#966 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_min_block_time#949 =
+let #../../test/contracts/build/G.mligo#Tezos#get_min_block_time#967 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#voting_power#950 =
+let #../../test/contracts/build/G.mligo#Tezos#voting_power#968 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#implicit_account#952 =
+let #../../test/contracts/build/G.mligo#Tezos#implicit_account#970 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#pairing_check#958 =
+let #../../test/contracts/build/G.mligo#Tezos#pairing_check#976 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#open_chest#959 =
+let #../../test/contracts/build/G.mligo#Tezos#open_chest#977 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#set_delegate#963 =
+let #../../test/contracts/build/G.mligo#Tezos#set_delegate#981 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#xor#964 =
+let #../../test/contracts/build/G.mligo#Bitwise#xor#982 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#shift_left#965 =
+let #../../test/contracts/build/G.mligo#Bitwise#shift_left#983 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#shift_right#966 =
+let #../../test/contracts/build/G.mligo#Bitwise#shift_right#984 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#String#concat#1007 =
+let #../../test/contracts/build/G.mligo#String#concat#1025 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/G.mligo#String#sub#1008 =
+let #../../test/contracts/build/G.mligo#String#sub#1026 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1302,11 +1344,11 @@ let #../../test/contracts/build/G.mligo#String#sub#1008 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#String#length#1009 =
+let #../../test/contracts/build/G.mligo#String#length#1027 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#concat#1012 =
+let #../../test/contracts/build/G.mligo#Bytes#concat#1030 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#sub#1013 =
+let #../../test/contracts/build/G.mligo#Bytes#sub#1031 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1315,38 +1357,38 @@ let #../../test/contracts/build/G.mligo#Bytes#sub#1013 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#length#1016 =
+let #../../test/contracts/build/G.mligo#Bytes#length#1034 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#blake2b#1017 =
+let #../../test/contracts/build/G.mligo#Crypto#blake2b#1035 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha256#1018 =
+let #../../test/contracts/build/G.mligo#Crypto#sha256#1036 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha512#1019 =
+let #../../test/contracts/build/G.mligo#Crypto#sha512#1037 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha3#1020 =
+let #../../test/contracts/build/G.mligo#Crypto#sha3#1038 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#keccak#1021 =
+let #../../test/contracts/build/G.mligo#Crypto#keccak#1039 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#hash_key#1022 =
+let #../../test/contracts/build/G.mligo#Crypto#hash_key#1040 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#check#1023 =
+let #../../test/contracts/build/G.mligo#Crypto#check#1041 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#assert#1024 =
+let #../../test/contracts/build/G.mligo#assert#1042 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#assert_with_error#1025 =
+let #../../test/contracts/build/G.mligo#assert_with_error#1043 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/G.mligo#abs#1030 =
+let #../../test/contracts/build/G.mligo#abs#1048 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/G.mligo#is_nat#1031 =
+let #../../test/contracts/build/G.mligo#is_nat#1049 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/G.mligo#true#1032 = TRUE()[@inline] in
-let #../../test/contracts/build/G.mligo#false#1033 = FALSE()[@inline] in
-let #../../test/contracts/build/G.mligo#unit#1034 = UNIT()[@inline] in
+let #../../test/contracts/build/G.mligo#true#1050 = TRUE()[@inline] in
+let #../../test/contracts/build/G.mligo#false#1051 = FALSE()[@inline] in
+let #../../test/contracts/build/G.mligo#unit#1052 = UNIT()[@inline] in
 let poly_#../../test/contracts/build/G.mligo#Test#failwith_60 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/G.mligo#Test#failwith_59 =
@@ -1377,187 +1419,201 @@ let poly_#../../test/contracts/build/G.mligo#Test#failwith_47 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/G.mligo#Test#failwith_46 =
   { FAILWITH }[@inline] in
-let #../../test/contracts/build/G.mligo#Test#originate_from_file#1040 =
+let #../../test/contracts/build/G.mligo#Test#originate_from_file#1058 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s ->
      (fun _t ->
       ((poly_#../../test/contracts/build/G.mligo#Test#failwith_60)@(L("TEST MODE")))))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#set_source#1042 =
+let #../../test/contracts/build/G.mligo#Test#set_source#1060 =
   fun _a ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#set_baker#1043 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#set_baker#1061 =
   fun _a ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#set_baker_policy#1044 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#set_baker_policy#1062 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#transfer#1045 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#transfer#1063 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#transfer_exn#1046 =
+    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#transfer_exn#1064 =
   fun _a ->
   (fun _s ->
    (fun _t ->
     ((poly_#../../test/contracts/build/G.mligo#Test#failwith_57)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#get_storage_of_address#1050 =
+let #../../test/contracts/build/G.mligo#Test#get_storage_of_address#1068 =
   fun _a ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#get_balance#1051 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#get_balance#1069 =
   fun _a ->
   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_59)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#michelson_equal#1052 =
+let #../../test/contracts/build/G.mligo#Test#michelson_equal#1070 =
   fun _m1 ->
   (fun _m2 ->
    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_58)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#reset_state#1054 =
+let #../../test/contracts/build/G.mligo#Test#reset_state#1072 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#reset_state_at#1055 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#reset_state_at#1073 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#get_voting_power#1056 =
+    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#get_voting_power#1074 =
   fun _kh ->
   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_57)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#get_total_voting_power#1057 =
+let #../../test/contracts/build/G.mligo#Test#get_total_voting_power#1075 =
   (poly_#../../test/contracts/build/G.mligo#Test#failwith_57)@(L("TEST MODE"))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#nth_bootstrap_contract#1059 =
+let #../../test/contracts/build/G.mligo#Test#nth_bootstrap_contract#1077 =
   fun _i ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_49)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#nth_bootstrap_account#1060 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_51)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#nth_bootstrap_account#1078 =
   fun _i ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_49)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#last_originations#1062 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_51)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#last_originations#1080 =
   fun _u ->
   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_56)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#save_mutation#1065 =
+let #../../test/contracts/build/G.mligo#Test#save_mutation#1083 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_55)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#add_account#1072 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_47)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#add_account#1090 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#new_account#1073 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#new_account#1091 =
   fun _u ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_54)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#baker_account#1074 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_55)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#baker_account#1092 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#bake_until_n_cycle_end#1075 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#bake_until_n_cycle_end#1093 =
   fun _n ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#register_delegate#1076 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#register_delegate#1094 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#register_constant#1077 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#register_constant#1095 =
   fun _m ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_53)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#create_chest#1082 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_54)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#create_chest#1100 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_52)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#create_chest_key#1083 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_53)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#create_chest_key#1101 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_51)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#constant_to_michelson_program#1084 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_52)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#constant_to_michelson_program#1102 =
   fun _s ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#restore_context#1085 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#restore_context#1103 =
   fun _u ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#save_context#1086 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#save_context#1104 =
   fun _u ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#drop_context#1087 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#drop_context#1105 =
   fun _u ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#read_contract_from_file#1088 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#read_contract_from_file#1106 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#compile_contract_from_file#1089 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#compile_contract_from_file#1107 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#originate_contract#1091 =
+    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#originate_contract#1109 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_49)@(L("TEST_ORIGINATE")))))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#size#1092 =
+    ((poly_#../../test/contracts/build/G.mligo#Test#failwith_51)@(L("TEST_ORIGINATE")))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#size#1110 =
   fun _c ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_48)@(L("TEST_SIZE")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#get_bootstrap_account#1093 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_50)@(L("TEST_SIZE")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#get_bootstrap_account#1111 =
   fun _n ->
-  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_47)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #../../test/contracts/build/G.mligo#Test#sign#1094 =
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_49)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#sign#1112 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#balance#1098 =
+   ((poly_#../../test/contracts/build/G.mligo#Test#failwith_48)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#chr#1113 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_47)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#nl#1114 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/G.mligo#Test#println#1115 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#print#1116 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/G.mligo#Test#eprint#1117 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/G.mligo#Test#failwith_46)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/G.mligo#Tezos#balance#1122 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#amount#1099 =
+let #../../test/contracts/build/G.mligo#Tezos#amount#1123 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#now#1100 =
+let #../../test/contracts/build/G.mligo#Tezos#now#1124 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#sender#1101 =
+let #../../test/contracts/build/G.mligo#Tezos#sender#1125 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#source#1102 =
+let #../../test/contracts/build/G.mligo#Tezos#source#1126 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#level#1103 =
+let #../../test/contracts/build/G.mligo#Tezos#level#1127 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#self_address#1104 =
+let #../../test/contracts/build/G.mligo#Tezos#self_address#1128 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#chain_id#1105 =
+let #../../test/contracts/build/G.mligo#Tezos#chain_id#1129 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#total_voting_power#1106 =
+let #../../test/contracts/build/G.mligo#Tezos#total_voting_power#1130 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_balance#1107 =
+let #../../test/contracts/build/G.mligo#Tezos#get_balance#1131 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_amount#1108 =
+let #../../test/contracts/build/G.mligo#Tezos#get_amount#1132 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_now#1109 =
+let #../../test/contracts/build/G.mligo#Tezos#get_now#1133 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_sender#1110 =
+let #../../test/contracts/build/G.mligo#Tezos#get_sender#1134 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_source#1111 =
+let #../../test/contracts/build/G.mligo#Tezos#get_source#1135 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_level#1112 =
+let #../../test/contracts/build/G.mligo#Tezos#get_level#1136 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_self_address#1113 =
+let #../../test/contracts/build/G.mligo#Tezos#get_self_address#1137 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_chain_id#1114 =
+let #../../test/contracts/build/G.mligo#Tezos#get_chain_id#1138 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#get_total_voting_power#1115 =
+let #../../test/contracts/build/G.mligo#Tezos#get_total_voting_power#1139 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#voting_power#1116 =
+let #../../test/contracts/build/G.mligo#Tezos#voting_power#1140 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#implicit_account#1118 =
+let #../../test/contracts/build/G.mligo#Tezos#implicit_account#1142 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#pairing_check#1124 =
+let #../../test/contracts/build/G.mligo#Tezos#pairing_check#1148 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#open_chest#1125 =
+let #../../test/contracts/build/G.mligo#Tezos#open_chest#1149 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/G.mligo#Tezos#set_delegate#1129 =
+let #../../test/contracts/build/G.mligo#Tezos#set_delegate#1153 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#xor#1130 =
+let #../../test/contracts/build/G.mligo#Bitwise#xor#1154 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#shift_left#1131 =
+let #../../test/contracts/build/G.mligo#Bitwise#shift_left#1155 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#Bitwise#shift_right#1132 =
+let #../../test/contracts/build/G.mligo#Bitwise#shift_right#1156 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/G.mligo#String#concat#1173 =
+let #../../test/contracts/build/G.mligo#String#concat#1197 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/G.mligo#String#sub#1174 =
+let #../../test/contracts/build/G.mligo#String#sub#1198 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1566,11 +1622,11 @@ let #../../test/contracts/build/G.mligo#String#sub#1174 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#String#length#1175 =
+let #../../test/contracts/build/G.mligo#String#length#1199 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#concat#1178 =
+let #../../test/contracts/build/G.mligo#Bytes#concat#1202 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#sub#1179 =
+let #../../test/contracts/build/G.mligo#Bytes#sub#1203 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1579,98 +1635,98 @@ let #../../test/contracts/build/G.mligo#Bytes#sub#1179 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#Bytes#length#1182 =
+let #../../test/contracts/build/G.mligo#Bytes#length#1206 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#blake2b#1183 =
+let #../../test/contracts/build/G.mligo#Crypto#blake2b#1207 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha256#1184 =
+let #../../test/contracts/build/G.mligo#Crypto#sha256#1208 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha512#1185 =
+let #../../test/contracts/build/G.mligo#Crypto#sha512#1209 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#sha3#1186 =
+let #../../test/contracts/build/G.mligo#Crypto#sha3#1210 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#keccak#1187 =
+let #../../test/contracts/build/G.mligo#Crypto#keccak#1211 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#hash_key#1188 =
+let #../../test/contracts/build/G.mligo#Crypto#hash_key#1212 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/G.mligo#Crypto#check#1189 =
+let #../../test/contracts/build/G.mligo#Crypto#check#1213 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/G.mligo#assert#1190 =
+let #../../test/contracts/build/G.mligo#assert#1214 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/G.mligo#assert_with_error#1191 =
+let #../../test/contracts/build/G.mligo#assert_with_error#1215 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/G.mligo#abs#1196 =
+let #../../test/contracts/build/G.mligo#abs#1220 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/G.mligo#is_nat#1197 =
+let #../../test/contracts/build/G.mligo#is_nat#1221 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/G.mligo#true#1198 = TRUE()[@inline] in
-let #../../test/contracts/build/G.mligo#false#1199 = FALSE()[@inline] in
-let #../../test/contracts/build/G.mligo#unit#1200 = UNIT()[@inline] in
-let #../../test/contracts/build/G.mligo#toto#1204 = L(43) in
-let #../../test/contracts/build/C.mligo#Tezos#balance#1208 =
+let #../../test/contracts/build/G.mligo#true#1222 = TRUE()[@inline] in
+let #../../test/contracts/build/G.mligo#false#1223 = FALSE()[@inline] in
+let #../../test/contracts/build/G.mligo#unit#1224 = UNIT()[@inline] in
+let #../../test/contracts/build/G.mligo#toto#1228 = L(43) in
+let #../../test/contracts/build/C.mligo#Tezos#balance#1232 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#amount#1209 =
+let #../../test/contracts/build/C.mligo#Tezos#amount#1233 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#now#1210 =
+let #../../test/contracts/build/C.mligo#Tezos#now#1234 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#sender#1211 =
+let #../../test/contracts/build/C.mligo#Tezos#sender#1235 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#source#1212 =
+let #../../test/contracts/build/C.mligo#Tezos#source#1236 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#level#1213 =
+let #../../test/contracts/build/C.mligo#Tezos#level#1237 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#self_address#1214 =
+let #../../test/contracts/build/C.mligo#Tezos#self_address#1238 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#chain_id#1215 =
+let #../../test/contracts/build/C.mligo#Tezos#chain_id#1239 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#total_voting_power#1216 =
+let #../../test/contracts/build/C.mligo#Tezos#total_voting_power#1240 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_balance#1217 =
+let #../../test/contracts/build/C.mligo#Tezos#get_balance#1241 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_amount#1218 =
+let #../../test/contracts/build/C.mligo#Tezos#get_amount#1242 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_now#1219 =
+let #../../test/contracts/build/C.mligo#Tezos#get_now#1243 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_sender#1220 =
+let #../../test/contracts/build/C.mligo#Tezos#get_sender#1244 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_source#1221 =
+let #../../test/contracts/build/C.mligo#Tezos#get_source#1245 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_level#1222 =
+let #../../test/contracts/build/C.mligo#Tezos#get_level#1246 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_self_address#1223 =
+let #../../test/contracts/build/C.mligo#Tezos#get_self_address#1247 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_chain_id#1224 =
+let #../../test/contracts/build/C.mligo#Tezos#get_chain_id#1248 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_total_voting_power#1225 =
+let #../../test/contracts/build/C.mligo#Tezos#get_total_voting_power#1249 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#min_block_time#1226 =
+let #../../test/contracts/build/C.mligo#Tezos#min_block_time#1250 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_min_block_time#1227 =
+let #../../test/contracts/build/C.mligo#Tezos#get_min_block_time#1251 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#voting_power#1228 =
+let #../../test/contracts/build/C.mligo#Tezos#voting_power#1252 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#implicit_account#1230 =
+let #../../test/contracts/build/C.mligo#Tezos#implicit_account#1254 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#pairing_check#1236 =
+let #../../test/contracts/build/C.mligo#Tezos#pairing_check#1260 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#open_chest#1237 =
+let #../../test/contracts/build/C.mligo#Tezos#open_chest#1261 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#set_delegate#1241 =
+let #../../test/contracts/build/C.mligo#Tezos#set_delegate#1265 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#xor#1242 =
+let #../../test/contracts/build/C.mligo#Bitwise#xor#1266 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#shift_left#1243 =
+let #../../test/contracts/build/C.mligo#Bitwise#shift_left#1267 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#shift_right#1244 =
+let #../../test/contracts/build/C.mligo#Bitwise#shift_right#1268 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#String#concat#1285 =
+let #../../test/contracts/build/C.mligo#String#concat#1309 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/C.mligo#String#sub#1286 =
+let #../../test/contracts/build/C.mligo#String#sub#1310 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1679,11 +1735,11 @@ let #../../test/contracts/build/C.mligo#String#sub#1286 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#String#length#1287 =
+let #../../test/contracts/build/C.mligo#String#length#1311 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#concat#1290 =
+let #../../test/contracts/build/C.mligo#Bytes#concat#1314 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#sub#1291 =
+let #../../test/contracts/build/C.mligo#Bytes#sub#1315 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1692,38 +1748,38 @@ let #../../test/contracts/build/C.mligo#Bytes#sub#1291 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#length#1294 =
+let #../../test/contracts/build/C.mligo#Bytes#length#1318 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#blake2b#1295 =
+let #../../test/contracts/build/C.mligo#Crypto#blake2b#1319 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha256#1296 =
+let #../../test/contracts/build/C.mligo#Crypto#sha256#1320 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha512#1297 =
+let #../../test/contracts/build/C.mligo#Crypto#sha512#1321 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha3#1298 =
+let #../../test/contracts/build/C.mligo#Crypto#sha3#1322 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#keccak#1299 =
+let #../../test/contracts/build/C.mligo#Crypto#keccak#1323 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#hash_key#1300 =
+let #../../test/contracts/build/C.mligo#Crypto#hash_key#1324 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#check#1301 =
+let #../../test/contracts/build/C.mligo#Crypto#check#1325 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#assert#1302 =
+let #../../test/contracts/build/C.mligo#assert#1326 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#assert_with_error#1303 =
+let #../../test/contracts/build/C.mligo#assert_with_error#1327 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/C.mligo#abs#1308 =
+let #../../test/contracts/build/C.mligo#abs#1332 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/C.mligo#is_nat#1309 =
+let #../../test/contracts/build/C.mligo#is_nat#1333 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/C.mligo#true#1310 = TRUE()[@inline] in
-let #../../test/contracts/build/C.mligo#false#1311 = FALSE()[@inline] in
-let #../../test/contracts/build/C.mligo#unit#1312 = UNIT()[@inline] in
+let #../../test/contracts/build/C.mligo#true#1334 = TRUE()[@inline] in
+let #../../test/contracts/build/C.mligo#false#1335 = FALSE()[@inline] in
+let #../../test/contracts/build/C.mligo#unit#1336 = UNIT()[@inline] in
 let poly_#../../test/contracts/build/C.mligo#Test#failwith_45 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/C.mligo#Test#failwith_44 =
@@ -1754,187 +1810,201 @@ let poly_#../../test/contracts/build/C.mligo#Test#failwith_32 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/C.mligo#Test#failwith_31 =
   { FAILWITH }[@inline] in
-let #../../test/contracts/build/C.mligo#Test#originate_from_file#1318 =
+let #../../test/contracts/build/C.mligo#Test#originate_from_file#1342 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s ->
      (fun _t ->
       ((poly_#../../test/contracts/build/C.mligo#Test#failwith_45)@(L("TEST MODE")))))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#set_source#1320 =
+let #../../test/contracts/build/C.mligo#Test#set_source#1344 =
   fun _a ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#set_baker#1321 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#set_baker#1345 =
   fun _a ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#set_baker_policy#1322 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#set_baker_policy#1346 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#transfer#1323 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#transfer#1347 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#transfer_exn#1324 =
+    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#transfer_exn#1348 =
   fun _a ->
   (fun _s ->
    (fun _t ->
     ((poly_#../../test/contracts/build/C.mligo#Test#failwith_42)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#get_storage_of_address#1328 =
+let #../../test/contracts/build/C.mligo#Test#get_storage_of_address#1352 =
   fun _a ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#get_balance#1329 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#get_balance#1353 =
   fun _a ->
   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_44)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#michelson_equal#1330 =
+let #../../test/contracts/build/C.mligo#Test#michelson_equal#1354 =
   fun _m1 ->
   (fun _m2 ->
    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_43)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#reset_state#1332 =
+let #../../test/contracts/build/C.mligo#Test#reset_state#1356 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#reset_state_at#1333 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#reset_state_at#1357 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#get_voting_power#1334 =
+    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#get_voting_power#1358 =
   fun _kh ->
   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_42)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#get_total_voting_power#1335 =
+let #../../test/contracts/build/C.mligo#Test#get_total_voting_power#1359 =
   (poly_#../../test/contracts/build/C.mligo#Test#failwith_42)@(L("TEST MODE"))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#nth_bootstrap_contract#1337 =
+let #../../test/contracts/build/C.mligo#Test#nth_bootstrap_contract#1361 =
   fun _i ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_34)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#nth_bootstrap_account#1338 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_36)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#nth_bootstrap_account#1362 =
   fun _i ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_34)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#last_originations#1340 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_36)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#last_originations#1364 =
   fun _u ->
   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_41)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#save_mutation#1343 =
+let #../../test/contracts/build/C.mligo#Test#save_mutation#1367 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_40)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#add_account#1350 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_32)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#add_account#1374 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#new_account#1351 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#new_account#1375 =
   fun _u ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_39)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#baker_account#1352 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_40)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#baker_account#1376 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#bake_until_n_cycle_end#1353 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#bake_until_n_cycle_end#1377 =
   fun _n ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#register_delegate#1354 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#register_delegate#1378 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#register_constant#1355 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#register_constant#1379 =
   fun _m ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_38)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#create_chest#1360 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_39)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#create_chest#1384 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_37)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#create_chest_key#1361 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_38)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#create_chest_key#1385 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_36)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#constant_to_michelson_program#1362 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_37)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#constant_to_michelson_program#1386 =
   fun _s ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#restore_context#1363 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#restore_context#1387 =
   fun _u ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#save_context#1364 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#save_context#1388 =
   fun _u ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#drop_context#1365 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#drop_context#1389 =
   fun _u ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#read_contract_from_file#1366 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#read_contract_from_file#1390 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#compile_contract_from_file#1367 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#compile_contract_from_file#1391 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#originate_contract#1369 =
+    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#originate_contract#1393 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_34)@(L("TEST_ORIGINATE")))))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#size#1370 =
+    ((poly_#../../test/contracts/build/C.mligo#Test#failwith_36)@(L("TEST_ORIGINATE")))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#size#1394 =
   fun _c ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_33)@(L("TEST_SIZE")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#get_bootstrap_account#1371 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_35)@(L("TEST_SIZE")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#get_bootstrap_account#1395 =
   fun _n ->
-  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_32)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #../../test/contracts/build/C.mligo#Test#sign#1372 =
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_34)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#sign#1396 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#balance#1376 =
+   ((poly_#../../test/contracts/build/C.mligo#Test#failwith_33)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#chr#1397 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_32)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#nl#1398 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/C.mligo#Test#println#1399 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#print#1400 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/C.mligo#Test#eprint#1401 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/C.mligo#Test#failwith_31)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/C.mligo#Tezos#balance#1406 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#amount#1377 =
+let #../../test/contracts/build/C.mligo#Tezos#amount#1407 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#now#1378 =
+let #../../test/contracts/build/C.mligo#Tezos#now#1408 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#sender#1379 =
+let #../../test/contracts/build/C.mligo#Tezos#sender#1409 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#source#1380 =
+let #../../test/contracts/build/C.mligo#Tezos#source#1410 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#level#1381 =
+let #../../test/contracts/build/C.mligo#Tezos#level#1411 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#self_address#1382 =
+let #../../test/contracts/build/C.mligo#Tezos#self_address#1412 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#chain_id#1383 =
+let #../../test/contracts/build/C.mligo#Tezos#chain_id#1413 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#total_voting_power#1384 =
+let #../../test/contracts/build/C.mligo#Tezos#total_voting_power#1414 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_balance#1385 =
+let #../../test/contracts/build/C.mligo#Tezos#get_balance#1415 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_amount#1386 =
+let #../../test/contracts/build/C.mligo#Tezos#get_amount#1416 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_now#1387 =
+let #../../test/contracts/build/C.mligo#Tezos#get_now#1417 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_sender#1388 =
+let #../../test/contracts/build/C.mligo#Tezos#get_sender#1418 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_source#1389 =
+let #../../test/contracts/build/C.mligo#Tezos#get_source#1419 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_level#1390 =
+let #../../test/contracts/build/C.mligo#Tezos#get_level#1420 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_self_address#1391 =
+let #../../test/contracts/build/C.mligo#Tezos#get_self_address#1421 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_chain_id#1392 =
+let #../../test/contracts/build/C.mligo#Tezos#get_chain_id#1422 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#get_total_voting_power#1393 =
+let #../../test/contracts/build/C.mligo#Tezos#get_total_voting_power#1423 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#voting_power#1394 =
+let #../../test/contracts/build/C.mligo#Tezos#voting_power#1424 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#implicit_account#1396 =
+let #../../test/contracts/build/C.mligo#Tezos#implicit_account#1426 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#pairing_check#1402 =
+let #../../test/contracts/build/C.mligo#Tezos#pairing_check#1432 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#open_chest#1403 =
+let #../../test/contracts/build/C.mligo#Tezos#open_chest#1433 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/C.mligo#Tezos#set_delegate#1407 =
+let #../../test/contracts/build/C.mligo#Tezos#set_delegate#1437 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#xor#1408 =
+let #../../test/contracts/build/C.mligo#Bitwise#xor#1438 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#shift_left#1409 =
+let #../../test/contracts/build/C.mligo#Bitwise#shift_left#1439 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#Bitwise#shift_right#1410 =
+let #../../test/contracts/build/C.mligo#Bitwise#shift_right#1440 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/C.mligo#String#concat#1451 =
+let #../../test/contracts/build/C.mligo#String#concat#1481 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/C.mligo#String#sub#1452 =
+let #../../test/contracts/build/C.mligo#String#sub#1482 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1943,11 +2013,11 @@ let #../../test/contracts/build/C.mligo#String#sub#1452 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#String#length#1453 =
+let #../../test/contracts/build/C.mligo#String#length#1483 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#concat#1456 =
+let #../../test/contracts/build/C.mligo#Bytes#concat#1486 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#sub#1457 =
+let #../../test/contracts/build/C.mligo#Bytes#sub#1487 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -1956,102 +2026,102 @@ let #../../test/contracts/build/C.mligo#Bytes#sub#1457 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#Bytes#length#1460 =
+let #../../test/contracts/build/C.mligo#Bytes#length#1490 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#blake2b#1461 =
+let #../../test/contracts/build/C.mligo#Crypto#blake2b#1491 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha256#1462 =
+let #../../test/contracts/build/C.mligo#Crypto#sha256#1492 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha512#1463 =
+let #../../test/contracts/build/C.mligo#Crypto#sha512#1493 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#sha3#1464 =
+let #../../test/contracts/build/C.mligo#Crypto#sha3#1494 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#keccak#1465 =
+let #../../test/contracts/build/C.mligo#Crypto#keccak#1495 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#hash_key#1466 =
+let #../../test/contracts/build/C.mligo#Crypto#hash_key#1496 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/C.mligo#Crypto#check#1467 =
+let #../../test/contracts/build/C.mligo#Crypto#check#1497 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/C.mligo#assert#1468 =
+let #../../test/contracts/build/C.mligo#assert#1498 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/C.mligo#assert_with_error#1469 =
+let #../../test/contracts/build/C.mligo#assert_with_error#1499 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/C.mligo#abs#1474 =
+let #../../test/contracts/build/C.mligo#abs#1504 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/C.mligo#is_nat#1475 =
+let #../../test/contracts/build/C.mligo#is_nat#1505 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/C.mligo#true#1476 = TRUE()[@inline] in
-let #../../test/contracts/build/C.mligo#false#1477 = FALSE()[@inline] in
-let #../../test/contracts/build/C.mligo#unit#1478 = UNIT()[@inline] in
-let #../../test/contracts/build/C.mligo#tata#1482 =
-  ADD(#../../test/contracts/build/A.mligo#toto#368 ,
-      #../../test/contracts/build/B.mligo#titi#647) in
-let #../../test/contracts/build/C.mligo#foo#1483 =
-  (#../../test/contracts/build/B.mligo#f#648)@(PAIR(L(unit) , L(3))) in
-let #../../test/contracts/build/E.mligo#Tezos#balance#1487 =
+let #../../test/contracts/build/C.mligo#true#1506 = TRUE()[@inline] in
+let #../../test/contracts/build/C.mligo#false#1507 = FALSE()[@inline] in
+let #../../test/contracts/build/C.mligo#unit#1508 = UNIT()[@inline] in
+let #../../test/contracts/build/C.mligo#tata#1512 =
+  ADD(#../../test/contracts/build/A.mligo#toto#374 ,
+      #../../test/contracts/build/B.mligo#titi#659) in
+let #../../test/contracts/build/C.mligo#foo#1513 =
+  (#../../test/contracts/build/B.mligo#f#660)@(PAIR(L(unit) , L(3))) in
+let #../../test/contracts/build/E.mligo#Tezos#balance#1517 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#amount#1488 =
+let #../../test/contracts/build/E.mligo#Tezos#amount#1518 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#now#1489 =
+let #../../test/contracts/build/E.mligo#Tezos#now#1519 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#sender#1490 =
+let #../../test/contracts/build/E.mligo#Tezos#sender#1520 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#source#1491 =
+let #../../test/contracts/build/E.mligo#Tezos#source#1521 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#level#1492 =
+let #../../test/contracts/build/E.mligo#Tezos#level#1522 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#self_address#1493 =
+let #../../test/contracts/build/E.mligo#Tezos#self_address#1523 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#chain_id#1494 =
+let #../../test/contracts/build/E.mligo#Tezos#chain_id#1524 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#total_voting_power#1495 =
+let #../../test/contracts/build/E.mligo#Tezos#total_voting_power#1525 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_balance#1496 =
+let #../../test/contracts/build/E.mligo#Tezos#get_balance#1526 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_amount#1497 =
+let #../../test/contracts/build/E.mligo#Tezos#get_amount#1527 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_now#1498 =
+let #../../test/contracts/build/E.mligo#Tezos#get_now#1528 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_sender#1499 =
+let #../../test/contracts/build/E.mligo#Tezos#get_sender#1529 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_source#1500 =
+let #../../test/contracts/build/E.mligo#Tezos#get_source#1530 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_level#1501 =
+let #../../test/contracts/build/E.mligo#Tezos#get_level#1531 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_self_address#1502 =
+let #../../test/contracts/build/E.mligo#Tezos#get_self_address#1532 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_chain_id#1503 =
+let #../../test/contracts/build/E.mligo#Tezos#get_chain_id#1533 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_total_voting_power#1504 =
+let #../../test/contracts/build/E.mligo#Tezos#get_total_voting_power#1534 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#min_block_time#1505 =
+let #../../test/contracts/build/E.mligo#Tezos#min_block_time#1535 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_min_block_time#1506 =
+let #../../test/contracts/build/E.mligo#Tezos#get_min_block_time#1536 =
   { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#voting_power#1507 =
+let #../../test/contracts/build/E.mligo#Tezos#voting_power#1537 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#implicit_account#1509 =
+let #../../test/contracts/build/E.mligo#Tezos#implicit_account#1539 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#pairing_check#1515 =
+let #../../test/contracts/build/E.mligo#Tezos#pairing_check#1545 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#open_chest#1516 =
+let #../../test/contracts/build/E.mligo#Tezos#open_chest#1546 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#set_delegate#1520 =
+let #../../test/contracts/build/E.mligo#Tezos#set_delegate#1550 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#xor#1521 =
+let #../../test/contracts/build/E.mligo#Bitwise#xor#1551 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#shift_left#1522 =
+let #../../test/contracts/build/E.mligo#Bitwise#shift_left#1552 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#shift_right#1523 =
+let #../../test/contracts/build/E.mligo#Bitwise#shift_right#1553 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#String#concat#1564 =
+let #../../test/contracts/build/E.mligo#String#concat#1594 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/E.mligo#String#sub#1565 =
+let #../../test/contracts/build/E.mligo#String#sub#1595 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2060,11 +2130,11 @@ let #../../test/contracts/build/E.mligo#String#sub#1565 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#String#length#1566 =
+let #../../test/contracts/build/E.mligo#String#length#1596 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#concat#1569 =
+let #../../test/contracts/build/E.mligo#Bytes#concat#1599 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#sub#1570 =
+let #../../test/contracts/build/E.mligo#Bytes#sub#1600 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2073,38 +2143,38 @@ let #../../test/contracts/build/E.mligo#Bytes#sub#1570 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#length#1573 =
+let #../../test/contracts/build/E.mligo#Bytes#length#1603 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#blake2b#1574 =
+let #../../test/contracts/build/E.mligo#Crypto#blake2b#1604 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha256#1575 =
+let #../../test/contracts/build/E.mligo#Crypto#sha256#1605 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha512#1576 =
+let #../../test/contracts/build/E.mligo#Crypto#sha512#1606 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha3#1577 =
+let #../../test/contracts/build/E.mligo#Crypto#sha3#1607 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#keccak#1578 =
+let #../../test/contracts/build/E.mligo#Crypto#keccak#1608 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#hash_key#1579 =
+let #../../test/contracts/build/E.mligo#Crypto#hash_key#1609 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#check#1580 =
+let #../../test/contracts/build/E.mligo#Crypto#check#1610 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#assert#1581 =
+let #../../test/contracts/build/E.mligo#assert#1611 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#assert_with_error#1582 =
+let #../../test/contracts/build/E.mligo#assert_with_error#1612 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/E.mligo#abs#1587 =
+let #../../test/contracts/build/E.mligo#abs#1617 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/E.mligo#is_nat#1588 =
+let #../../test/contracts/build/E.mligo#is_nat#1618 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/E.mligo#true#1589 = TRUE()[@inline] in
-let #../../test/contracts/build/E.mligo#false#1590 = FALSE()[@inline] in
-let #../../test/contracts/build/E.mligo#unit#1591 = UNIT()[@inline] in
+let #../../test/contracts/build/E.mligo#true#1619 = TRUE()[@inline] in
+let #../../test/contracts/build/E.mligo#false#1620 = FALSE()[@inline] in
+let #../../test/contracts/build/E.mligo#unit#1621 = UNIT()[@inline] in
 let poly_#../../test/contracts/build/E.mligo#Test#failwith_30 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/E.mligo#Test#failwith_29 =
@@ -2135,187 +2205,201 @@ let poly_#../../test/contracts/build/E.mligo#Test#failwith_17 =
   { FAILWITH }[@inline] in
 let poly_#../../test/contracts/build/E.mligo#Test#failwith_16 =
   { FAILWITH }[@inline] in
-let #../../test/contracts/build/E.mligo#Test#originate_from_file#1597 =
+let #../../test/contracts/build/E.mligo#Test#originate_from_file#1627 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s ->
      (fun _t ->
       ((poly_#../../test/contracts/build/E.mligo#Test#failwith_30)@(L("TEST MODE")))))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#set_source#1599 =
+let #../../test/contracts/build/E.mligo#Test#set_source#1629 =
   fun _a ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#set_baker#1600 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#set_baker#1630 =
   fun _a ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#set_baker_policy#1601 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#set_baker_policy#1631 =
   fun _bp ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#transfer#1602 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#transfer#1632 =
   fun _a ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#transfer_exn#1603 =
+    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#transfer_exn#1633 =
   fun _a ->
   (fun _s ->
    (fun _t ->
     ((poly_#../../test/contracts/build/E.mligo#Test#failwith_27)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#get_storage_of_address#1607 =
+let #../../test/contracts/build/E.mligo#Test#get_storage_of_address#1637 =
   fun _a ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#get_balance#1608 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#get_balance#1638 =
   fun _a ->
   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_29)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#michelson_equal#1609 =
+let #../../test/contracts/build/E.mligo#Test#michelson_equal#1639 =
   fun _m1 ->
   (fun _m2 ->
    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_28)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#reset_state#1611 =
+let #../../test/contracts/build/E.mligo#Test#reset_state#1641 =
   fun _n ->
   (fun _l ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#reset_state_at#1612 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#reset_state_at#1642 =
   fun _t ->
   (fun _n ->
    (fun _l ->
-    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#get_voting_power#1613 =
+    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#get_voting_power#1643 =
   fun _kh ->
   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_27)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#get_total_voting_power#1614 =
+let #../../test/contracts/build/E.mligo#Test#get_total_voting_power#1644 =
   (poly_#../../test/contracts/build/E.mligo#Test#failwith_27)@(L("TEST MODE"))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#nth_bootstrap_contract#1616 =
+let #../../test/contracts/build/E.mligo#Test#nth_bootstrap_contract#1646 =
   fun _i ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_19)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#nth_bootstrap_account#1617 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_21)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#nth_bootstrap_account#1647 =
   fun _i ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_19)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#last_originations#1619 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_21)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#last_originations#1649 =
   fun _u ->
   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_26)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#save_mutation#1622 =
+let #../../test/contracts/build/E.mligo#Test#save_mutation#1652 =
   fun _s ->
   (fun _m ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_25)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#add_account#1629 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_17)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#add_account#1659 =
   fun _s ->
   (fun _k ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#new_account#1630 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#new_account#1660 =
   fun _u ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_24)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#baker_account#1631 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_25)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#baker_account#1661 =
   fun _p ->
   (fun _o ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#bake_until_n_cycle_end#1632 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#bake_until_n_cycle_end#1662 =
   fun _n ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#register_delegate#1633 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#register_delegate#1663 =
   fun _kh ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#register_constant#1634 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#register_constant#1664 =
   fun _m ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_23)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#create_chest#1639 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_24)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#create_chest#1669 =
   fun _b ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_22)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#create_chest_key#1640 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_23)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#create_chest_key#1670 =
   fun _c ->
   (fun _n ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_21)@(L("TEST MODE"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#constant_to_michelson_program#1641 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_22)@(L("TEST MODE"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#constant_to_michelson_program#1671 =
   fun _s ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST MODE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#restore_context#1642 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST MODE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#restore_context#1672 =
   fun _u ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#save_context#1643 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#save_context#1673 =
   fun _u ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#drop_context#1644 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#drop_context#1674 =
   fun _u ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#read_contract_from_file#1645 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#read_contract_from_file#1675 =
   fun _fn ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#compile_contract_from_file#1646 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#compile_contract_from_file#1676 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#originate_contract#1648 =
+    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#originate_contract#1678 =
   fun _c ->
   (fun _s ->
    (fun _t ->
-    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_19)@(L("TEST_ORIGINATE")))))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#size#1649 =
+    ((poly_#../../test/contracts/build/E.mligo#Test#failwith_21)@(L("TEST_ORIGINATE")))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#size#1679 =
   fun _c ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_18)@(L("TEST_SIZE")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#get_bootstrap_account#1650 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_20)@(L("TEST_SIZE")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#get_bootstrap_account#1680 =
   fun _n ->
-  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_17)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #../../test/contracts/build/E.mligo#Test#sign#1651 =
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_19)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#sign#1681 =
   fun _sk ->
   (fun _d ->
-   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_SIGN"))))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#balance#1655 =
+   ((poly_#../../test/contracts/build/E.mligo#Test#failwith_18)@(L("TEST_SIGN"))))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#chr#1682 =
+  fun _n ->
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_17)@(L("TEST_CHR")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#nl#1683 =
+  L("NEWLINE")[@inline] in
+let #../../test/contracts/build/E.mligo#Test#println#1684 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_PRINTLN")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#print#1685 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_PRINT")))[@inline] in
+let #../../test/contracts/build/E.mligo#Test#eprint#1686 =
+  fun _v ->
+  ((poly_#../../test/contracts/build/E.mligo#Test#failwith_16)@(L("TEST_EPRINTL")))[@inline] in
+let #../../test/contracts/build/E.mligo#Tezos#balance#1691 =
   ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#amount#1656 =
+let #../../test/contracts/build/E.mligo#Tezos#amount#1692 =
   ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#now#1657 =
+let #../../test/contracts/build/E.mligo#Tezos#now#1693 =
   ({ DROP ; NOW })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#sender#1658 =
+let #../../test/contracts/build/E.mligo#Tezos#sender#1694 =
   ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#source#1659 =
+let #../../test/contracts/build/E.mligo#Tezos#source#1695 =
   ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#level#1660 =
+let #../../test/contracts/build/E.mligo#Tezos#level#1696 =
   ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#self_address#1661 =
+let #../../test/contracts/build/E.mligo#Tezos#self_address#1697 =
   SELF_ADDRESS()[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#chain_id#1662 =
+let #../../test/contracts/build/E.mligo#Tezos#chain_id#1698 =
   ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#total_voting_power#1663 =
+let #../../test/contracts/build/E.mligo#Tezos#total_voting_power#1699 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_balance#1664 =
+let #../../test/contracts/build/E.mligo#Tezos#get_balance#1700 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_amount#1665 =
+let #../../test/contracts/build/E.mligo#Tezos#get_amount#1701 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_now#1666 =
+let #../../test/contracts/build/E.mligo#Tezos#get_now#1702 =
   fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_sender#1667 =
+let #../../test/contracts/build/E.mligo#Tezos#get_sender#1703 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_source#1668 =
+let #../../test/contracts/build/E.mligo#Tezos#get_source#1704 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_level#1669 =
+let #../../test/contracts/build/E.mligo#Tezos#get_level#1705 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_self_address#1670 =
+let #../../test/contracts/build/E.mligo#Tezos#get_self_address#1706 =
   fun _u -> (SELF_ADDRESS())[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_chain_id#1671 =
+let #../../test/contracts/build/E.mligo#Tezos#get_chain_id#1707 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#get_total_voting_power#1672 =
+let #../../test/contracts/build/E.mligo#Tezos#get_total_voting_power#1708 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#voting_power#1673 =
+let #../../test/contracts/build/E.mligo#Tezos#voting_power#1709 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#implicit_account#1675 =
+let #../../test/contracts/build/E.mligo#Tezos#implicit_account#1711 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#pairing_check#1681 =
+let #../../test/contracts/build/E.mligo#Tezos#pairing_check#1717 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#open_chest#1682 =
+let #../../test/contracts/build/E.mligo#Tezos#open_chest#1718 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #../../test/contracts/build/E.mligo#Tezos#set_delegate#1686 =
+let #../../test/contracts/build/E.mligo#Tezos#set_delegate#1722 =
   fun o -> (SET_DELEGATE(o))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#xor#1687 =
+let #../../test/contracts/build/E.mligo#Bitwise#xor#1723 =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#shift_left#1688 =
+let #../../test/contracts/build/E.mligo#Bitwise#shift_left#1724 =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#Bitwise#shift_right#1689 =
+let #../../test/contracts/build/E.mligo#Bitwise#shift_right#1725 =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #../../test/contracts/build/E.mligo#String#concat#1730 =
+let #../../test/contracts/build/E.mligo#String#concat#1766 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/E.mligo#String#sub#1731 =
+let #../../test/contracts/build/E.mligo#String#sub#1767 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2324,11 +2408,11 @@ let #../../test/contracts/build/E.mligo#String#sub#1731 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#String#length#1732 =
+let #../../test/contracts/build/E.mligo#String#length#1768 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#concat#1735 =
+let #../../test/contracts/build/E.mligo#Bytes#concat#1771 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#sub#1736 =
+let #../../test/contracts/build/E.mligo#Bytes#sub#1772 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2337,83 +2421,83 @@ let #../../test/contracts/build/E.mligo#Bytes#sub#1736 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#Bytes#length#1739 =
+let #../../test/contracts/build/E.mligo#Bytes#length#1775 =
   fun b -> (({ SIZE })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#blake2b#1740 =
+let #../../test/contracts/build/E.mligo#Crypto#blake2b#1776 =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha256#1741 =
+let #../../test/contracts/build/E.mligo#Crypto#sha256#1777 =
   fun b -> (({ SHA256 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha512#1742 =
+let #../../test/contracts/build/E.mligo#Crypto#sha512#1778 =
   fun b -> (({ SHA512 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#sha3#1743 =
+let #../../test/contracts/build/E.mligo#Crypto#sha3#1779 =
   fun b -> (({ SHA3 })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#keccak#1744 =
+let #../../test/contracts/build/E.mligo#Crypto#keccak#1780 =
   fun b -> (({ KECCAK })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#hash_key#1745 =
+let #../../test/contracts/build/E.mligo#Crypto#hash_key#1781 =
   fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #../../test/contracts/build/E.mligo#Crypto#check#1746 =
+let #../../test/contracts/build/E.mligo#Crypto#check#1782 =
   fun k ->
   (fun s ->
    (fun b ->
     (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-let #../../test/contracts/build/E.mligo#assert#1747 =
+let #../../test/contracts/build/E.mligo#assert#1783 =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let #../../test/contracts/build/E.mligo#assert_with_error#1748 =
+let #../../test/contracts/build/E.mligo#assert_with_error#1784 =
   fun b ->
   (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-let #../../test/contracts/build/E.mligo#abs#1753 =
+let #../../test/contracts/build/E.mligo#abs#1789 =
   fun i -> (({ ABS })@(i))[@inline] in
-let #../../test/contracts/build/E.mligo#is_nat#1754 =
+let #../../test/contracts/build/E.mligo#is_nat#1790 =
   fun i -> (({ ISNAT })@(i))[@inline] in
-let #../../test/contracts/build/E.mligo#true#1755 = TRUE()[@inline] in
-let #../../test/contracts/build/E.mligo#false#1756 = FALSE()[@inline] in
-let #../../test/contracts/build/E.mligo#unit#1757 = UNIT()[@inline] in
-let #../../test/contracts/build/E.mligo#toto#1761 = L(10) in
-let #../../test/contracts/build/E.mligo#foo#1762 = L("bar") in
-let #Tezos#balance#1766 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #Tezos#amount#1767 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #Tezos#now#1768 = ({ DROP ; NOW })@(L(unit))[@inline] in
-let #Tezos#sender#1769 = ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #Tezos#source#1770 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #Tezos#level#1771 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #Tezos#self_address#1772 = SELF_ADDRESS()[@inline] in
-let #Tezos#chain_id#1773 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #Tezos#total_voting_power#1774 =
+let #../../test/contracts/build/E.mligo#true#1791 = TRUE()[@inline] in
+let #../../test/contracts/build/E.mligo#false#1792 = FALSE()[@inline] in
+let #../../test/contracts/build/E.mligo#unit#1793 = UNIT()[@inline] in
+let #../../test/contracts/build/E.mligo#toto#1797 = L(10) in
+let #../../test/contracts/build/E.mligo#foo#1798 = L("bar") in
+let #Tezos#balance#1802 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
+let #Tezos#amount#1803 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
+let #Tezos#now#1804 = ({ DROP ; NOW })@(L(unit))[@inline] in
+let #Tezos#sender#1805 = ({ DROP ; SENDER })@(L(unit))[@inline] in
+let #Tezos#source#1806 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
+let #Tezos#level#1807 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
+let #Tezos#self_address#1808 = SELF_ADDRESS()[@inline] in
+let #Tezos#chain_id#1809 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
+let #Tezos#total_voting_power#1810 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #Tezos#get_balance#1775 =
+let #Tezos#get_balance#1811 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #Tezos#get_amount#1776 =
+let #Tezos#get_amount#1812 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #Tezos#get_now#1777 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #Tezos#get_sender#1778 =
+let #Tezos#get_now#1813 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+let #Tezos#get_sender#1814 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #Tezos#get_source#1779 =
+let #Tezos#get_source#1815 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #Tezos#get_level#1780 =
+let #Tezos#get_level#1816 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #Tezos#get_self_address#1781 = fun _u -> (SELF_ADDRESS())[@inline] in
-let #Tezos#get_chain_id#1782 =
+let #Tezos#get_self_address#1817 = fun _u -> (SELF_ADDRESS())[@inline] in
+let #Tezos#get_chain_id#1818 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #Tezos#get_total_voting_power#1783 =
+let #Tezos#get_total_voting_power#1819 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #Tezos#min_block_time#1784 = { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #Tezos#get_min_block_time#1785 = { DROP ; MIN_BLOCK_TIME }[@inline] in
-let #Tezos#voting_power#1786 =
+let #Tezos#min_block_time#1820 = { DROP ; MIN_BLOCK_TIME }[@inline] in
+let #Tezos#get_min_block_time#1821 = { DROP ; MIN_BLOCK_TIME }[@inline] in
+let #Tezos#voting_power#1822 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #Tezos#implicit_account#1788 =
+let #Tezos#implicit_account#1824 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #Tezos#pairing_check#1794 =
+let #Tezos#pairing_check#1830 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #Tezos#open_chest#1795 =
+let #Tezos#open_chest#1831 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #Tezos#set_delegate#1799 = fun o -> (SET_DELEGATE(o))[@inline] in
-let #Bitwise#xor#1800 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #Bitwise#shift_left#1801 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #Bitwise#shift_right#1802 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #String#concat#1843 =
+let #Tezos#set_delegate#1835 = fun o -> (SET_DELEGATE(o))[@inline] in
+let #Bitwise#xor#1836 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
+let #Bitwise#shift_left#1837 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
+let #Bitwise#shift_right#1838 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let #String#concat#1879 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #String#sub#1844 =
+let #String#sub#1880 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2422,10 +2506,10 @@ let #String#sub#1844 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #String#length#1845 = fun b -> (({ SIZE })@(b))[@inline] in
-let #Bytes#concat#1848 =
+let #String#length#1881 = fun b -> (({ SIZE })@(b))[@inline] in
+let #Bytes#concat#1884 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #Bytes#sub#1849 =
+let #Bytes#sub#1885 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2434,14 +2518,14 @@ let #Bytes#sub#1849 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #Bytes#length#1852 = fun b -> (({ SIZE })@(b))[@inline] in
-let #Crypto#blake2b#1853 = fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #Crypto#sha256#1854 = fun b -> (({ SHA256 })@(b))[@inline] in
-let #Crypto#sha512#1855 = fun b -> (({ SHA512 })@(b))[@inline] in
-let #Crypto#sha3#1856 = fun b -> (({ SHA3 })@(b))[@inline] in
-let #Crypto#keccak#1857 = fun b -> (({ KECCAK })@(b))[@inline] in
-let #Crypto#hash_key#1858 = fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #Crypto#check#1859 =
+let #Bytes#length#1888 = fun b -> (({ SIZE })@(b))[@inline] in
+let #Crypto#blake2b#1889 = fun b -> (({ BLAKE2B })@(b))[@inline] in
+let #Crypto#sha256#1890 = fun b -> (({ SHA256 })@(b))[@inline] in
+let #Crypto#sha512#1891 = fun b -> (({ SHA512 })@(b))[@inline] in
+let #Crypto#sha3#1892 = fun b -> (({ SHA3 })@(b))[@inline] in
+let #Crypto#keccak#1893 = fun b -> (({ KECCAK })@(b))[@inline] in
+let #Crypto#hash_key#1894 = fun k -> (({ HASH_KEY })@(k))[@inline] in
+let #Crypto#check#1895 =
   fun k ->
   (fun s ->
    (fun b ->
@@ -2472,127 +2556,136 @@ let poly_#Test#failwith_4 = { FAILWITH }[@inline] in
 let poly_#Test#failwith_3 = { FAILWITH }[@inline] in
 let poly_#Test#failwith_2 = { FAILWITH }[@inline] in
 let poly_#Test#failwith_1 = { FAILWITH }[@inline] in
-let #Test#originate_from_file#1862 =
+let #Test#originate_from_file#1898 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
     (fun _s -> (fun _t -> ((poly_#Test#failwith_15)@(L("TEST MODE")))))))[@inline] in
-let #Test#set_source#1864 =
-  fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#set_baker#1865 =
-  fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#set_baker_policy#1866 =
-  fun _bp -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#transfer#1867 =
+let #Test#set_source#1900 =
+  fun _a -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#set_baker#1901 =
+  fun _a -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#set_baker_policy#1902 =
+  fun _bp -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#transfer#1903 =
   fun _a ->
-  (fun _s -> (fun _t -> ((poly_#Test#failwith_5)@(L("TEST MODE")))))[@inline] in
-let #Test#transfer_exn#1868 =
+  (fun _s -> (fun _t -> ((poly_#Test#failwith_1)@(L("TEST MODE")))))[@inline] in
+let #Test#transfer_exn#1904 =
   fun _a ->
   (fun _s -> (fun _t -> ((poly_#Test#failwith_12)@(L("TEST MODE")))))[@inline] in
-let #Test#get_storage_of_address#1872 =
-  fun _a -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#get_balance#1873 =
+let #Test#get_storage_of_address#1908 =
+  fun _a -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#get_balance#1909 =
   fun _a -> ((poly_#Test#failwith_14)@(L("TEST MODE")))[@inline] in
-let #Test#michelson_equal#1874 =
+let #Test#michelson_equal#1910 =
   fun _m1 -> (fun _m2 -> ((poly_#Test#failwith_13)@(L("TEST MODE"))))[@inline] in
-let #Test#reset_state#1876 =
-  fun _n -> (fun _l -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
-let #Test#reset_state_at#1877 =
+let #Test#reset_state#1912 =
+  fun _n -> (fun _l -> ((poly_#Test#failwith_1)@(L("TEST MODE"))))[@inline] in
+let #Test#reset_state_at#1913 =
   fun _t ->
-  (fun _n -> (fun _l -> ((poly_#Test#failwith_5)@(L("TEST MODE")))))[@inline] in
-let #Test#get_voting_power#1878 =
+  (fun _n -> (fun _l -> ((poly_#Test#failwith_1)@(L("TEST MODE")))))[@inline] in
+let #Test#get_voting_power#1914 =
   fun _kh -> ((poly_#Test#failwith_12)@(L("TEST MODE")))[@inline] in
-let #Test#get_total_voting_power#1879 =
+let #Test#get_total_voting_power#1915 =
   (poly_#Test#failwith_12)@(L("TEST MODE"))[@inline] in
-let #Test#nth_bootstrap_contract#1881 =
-  fun _i -> ((poly_#Test#failwith_4)@(L("TEST MODE")))[@inline] in
-let #Test#nth_bootstrap_account#1882 =
-  fun _i -> ((poly_#Test#failwith_4)@(L("TEST MODE")))[@inline] in
-let #Test#last_originations#1884 =
+let #Test#nth_bootstrap_contract#1917 =
+  fun _i -> ((poly_#Test#failwith_6)@(L("TEST MODE")))[@inline] in
+let #Test#nth_bootstrap_account#1918 =
+  fun _i -> ((poly_#Test#failwith_6)@(L("TEST MODE")))[@inline] in
+let #Test#last_originations#1920 =
   fun _u -> ((poly_#Test#failwith_11)@(L("TEST MODE")))[@inline] in
-let #Test#save_mutation#1887 =
-  fun _s -> (fun _m -> ((poly_#Test#failwith_10)@(L("TEST MODE"))))[@inline] in
-let #Test#add_account#1894 =
-  fun _s -> (fun _k -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
-let #Test#new_account#1895 =
-  fun _u -> ((poly_#Test#failwith_9)@(L("TEST MODE")))[@inline] in
-let #Test#baker_account#1896 =
-  fun _p -> (fun _o -> ((poly_#Test#failwith_5)@(L("TEST MODE"))))[@inline] in
-let #Test#bake_until_n_cycle_end#1897 =
-  fun _n -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#register_delegate#1898 =
-  fun _kh -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#register_constant#1899 =
-  fun _m -> ((poly_#Test#failwith_8)@(L("TEST MODE")))[@inline] in
-let #Test#create_chest#1904 =
-  fun _b -> (fun _n -> ((poly_#Test#failwith_7)@(L("TEST MODE"))))[@inline] in
-let #Test#create_chest_key#1905 =
-  fun _c -> (fun _n -> ((poly_#Test#failwith_6)@(L("TEST MODE"))))[@inline] in
-let #Test#constant_to_michelson_program#1906 =
-  fun _s -> ((poly_#Test#failwith_5)@(L("TEST MODE")))[@inline] in
-let #Test#restore_context#1907 =
-  fun _u -> ((poly_#Test#failwith_5)@(L("TEST_POP_CONTEXT")))[@inline] in
-let #Test#save_context#1908 =
-  fun _u -> ((poly_#Test#failwith_5)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-let #Test#drop_context#1909 =
-  fun _u -> ((poly_#Test#failwith_5)@(L("TEST_DROP_CONTEXT")))[@inline] in
-let #Test#read_contract_from_file#1910 =
-  fun _fn -> ((poly_#Test#failwith_5)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-let #Test#compile_contract_from_file#1911 =
+let #Test#save_mutation#1923 =
+  fun _s -> (fun _m -> ((poly_#Test#failwith_2)@(L("TEST MODE"))))[@inline] in
+let #Test#add_account#1930 =
+  fun _s -> (fun _k -> ((poly_#Test#failwith_1)@(L("TEST MODE"))))[@inline] in
+let #Test#new_account#1931 =
+  fun _u -> ((poly_#Test#failwith_10)@(L("TEST MODE")))[@inline] in
+let #Test#baker_account#1932 =
+  fun _p -> (fun _o -> ((poly_#Test#failwith_1)@(L("TEST MODE"))))[@inline] in
+let #Test#bake_until_n_cycle_end#1933 =
+  fun _n -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#register_delegate#1934 =
+  fun _kh -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#register_constant#1935 =
+  fun _m -> ((poly_#Test#failwith_9)@(L("TEST MODE")))[@inline] in
+let #Test#create_chest#1940 =
+  fun _b -> (fun _n -> ((poly_#Test#failwith_8)@(L("TEST MODE"))))[@inline] in
+let #Test#create_chest_key#1941 =
+  fun _c -> (fun _n -> ((poly_#Test#failwith_7)@(L("TEST MODE"))))[@inline] in
+let #Test#constant_to_michelson_program#1942 =
+  fun _s -> ((poly_#Test#failwith_1)@(L("TEST MODE")))[@inline] in
+let #Test#restore_context#1943 =
+  fun _u -> ((poly_#Test#failwith_1)@(L("TEST_POP_CONTEXT")))[@inline] in
+let #Test#save_context#1944 =
+  fun _u -> ((poly_#Test#failwith_1)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+let #Test#drop_context#1945 =
+  fun _u -> ((poly_#Test#failwith_1)@(L("TEST_DROP_CONTEXT")))[@inline] in
+let #Test#read_contract_from_file#1946 =
+  fun _fn -> ((poly_#Test#failwith_1)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+let #Test#compile_contract_from_file#1947 =
   fun _fn ->
   (fun _e ->
    (fun _v ->
-    ((poly_#Test#failwith_5)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-let #Test#originate_contract#1913 =
+    ((poly_#Test#failwith_1)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+let #Test#originate_contract#1949 =
   fun _c ->
-  (fun _s -> (fun _t -> ((poly_#Test#failwith_4)@(L("TEST_ORIGINATE")))))[@inline] in
-let #Test#size#1914 =
-  fun _c -> ((poly_#Test#failwith_3)@(L("TEST_SIZE")))[@inline] in
-let #Test#get_bootstrap_account#1915 =
-  fun _n -> ((poly_#Test#failwith_2)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-let #Test#sign#1916 =
-  fun _sk -> (fun _d -> ((poly_#Test#failwith_1)@(L("TEST_SIGN"))))[@inline] in
-let #Tezos#balance#1920 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
-let #Tezos#amount#1921 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-let #Tezos#now#1922 = ({ DROP ; NOW })@(L(unit))[@inline] in
-let #Tezos#sender#1923 = ({ DROP ; SENDER })@(L(unit))[@inline] in
-let #Tezos#source#1924 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
-let #Tezos#level#1925 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
-let #Tezos#self_address#1926 = SELF_ADDRESS()[@inline] in
-let #Tezos#chain_id#1927 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-let #Tezos#total_voting_power#1928 =
+  (fun _s -> (fun _t -> ((poly_#Test#failwith_6)@(L("TEST_ORIGINATE")))))[@inline] in
+let #Test#size#1950 =
+  fun _c -> ((poly_#Test#failwith_5)@(L("TEST_SIZE")))[@inline] in
+let #Test#get_bootstrap_account#1951 =
+  fun _n -> ((poly_#Test#failwith_4)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+let #Test#sign#1952 =
+  fun _sk -> (fun _d -> ((poly_#Test#failwith_3)@(L("TEST_SIGN"))))[@inline] in
+let #Test#chr#1953 =
+  fun _n -> ((poly_#Test#failwith_2)@(L("TEST_CHR")))[@inline] in
+let #Test#nl#1954 = L("NEWLINE")[@inline] in
+let #Test#println#1955 =
+  fun _v -> ((poly_#Test#failwith_1)@(L("TEST_PRINTLN")))[@inline] in
+let #Test#print#1956 =
+  fun _v -> ((poly_#Test#failwith_1)@(L("TEST_PRINT")))[@inline] in
+let #Test#eprint#1957 =
+  fun _v -> ((poly_#Test#failwith_1)@(L("TEST_EPRINTL")))[@inline] in
+let #Tezos#balance#1962 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
+let #Tezos#amount#1963 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
+let #Tezos#now#1964 = ({ DROP ; NOW })@(L(unit))[@inline] in
+let #Tezos#sender#1965 = ({ DROP ; SENDER })@(L(unit))[@inline] in
+let #Tezos#source#1966 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
+let #Tezos#level#1967 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
+let #Tezos#self_address#1968 = SELF_ADDRESS()[@inline] in
+let #Tezos#chain_id#1969 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
+let #Tezos#total_voting_power#1970 =
   ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-let #Tezos#get_balance#1929 =
+let #Tezos#get_balance#1971 =
   fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-let #Tezos#get_amount#1930 =
+let #Tezos#get_amount#1972 =
   fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-let #Tezos#get_now#1931 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-let #Tezos#get_sender#1932 =
+let #Tezos#get_now#1973 = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+let #Tezos#get_sender#1974 =
   fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-let #Tezos#get_source#1933 =
+let #Tezos#get_source#1975 =
   fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-let #Tezos#get_level#1934 =
+let #Tezos#get_level#1976 =
   fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-let #Tezos#get_self_address#1935 = fun _u -> (SELF_ADDRESS())[@inline] in
-let #Tezos#get_chain_id#1936 =
+let #Tezos#get_self_address#1977 = fun _u -> (SELF_ADDRESS())[@inline] in
+let #Tezos#get_chain_id#1978 =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-let #Tezos#get_total_voting_power#1937 =
+let #Tezos#get_total_voting_power#1979 =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-let #Tezos#voting_power#1938 =
+let #Tezos#voting_power#1980 =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-let #Tezos#implicit_account#1940 =
+let #Tezos#implicit_account#1982 =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-let #Tezos#pairing_check#1946 =
+let #Tezos#pairing_check#1988 =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let #Tezos#open_chest#1947 =
+let #Tezos#open_chest#1989 =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let #Tezos#set_delegate#1951 = fun o -> (SET_DELEGATE(o))[@inline] in
-let #Bitwise#xor#1952 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
-let #Bitwise#shift_left#1953 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
-let #Bitwise#shift_right#1954 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
-let #String#concat#1995 =
+let #Tezos#set_delegate#1993 = fun o -> (SET_DELEGATE(o))[@inline] in
+let #Bitwise#xor#1994 = fun l -> (fun r -> (XOR(l , r)))[@inline] in
+let #Bitwise#shift_left#1995 = fun l -> (fun r -> (LSL(l , r)))[@inline] in
+let #Bitwise#shift_right#1996 = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let #String#concat#2037 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #String#sub#1996 =
+let #String#sub#2038 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2601,10 +2694,10 @@ let #String#sub#1996 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #String#length#1997 = fun b -> (({ SIZE })@(b))[@inline] in
-let #Bytes#concat#2000 =
+let #String#length#2039 = fun b -> (({ SIZE })@(b))[@inline] in
+let #Bytes#concat#2042 =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-let #Bytes#sub#2001 =
+let #Bytes#sub#2043 =
   fun s ->
   (fun l ->
    (fun b ->
@@ -2613,14 +2706,14 @@ let #Bytes#sub#2001 =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let #Bytes#length#2004 = fun b -> (({ SIZE })@(b))[@inline] in
-let #Crypto#blake2b#2005 = fun b -> (({ BLAKE2B })@(b))[@inline] in
-let #Crypto#sha256#2006 = fun b -> (({ SHA256 })@(b))[@inline] in
-let #Crypto#sha512#2007 = fun b -> (({ SHA512 })@(b))[@inline] in
-let #Crypto#sha3#2008 = fun b -> (({ SHA3 })@(b))[@inline] in
-let #Crypto#keccak#2009 = fun b -> (({ KECCAK })@(b))[@inline] in
-let #Crypto#hash_key#2010 = fun k -> (({ HASH_KEY })@(k))[@inline] in
-let #Crypto#check#2011 =
+let #Bytes#length#2046 = fun b -> (({ SIZE })@(b))[@inline] in
+let #Crypto#blake2b#2047 = fun b -> (({ BLAKE2B })@(b))[@inline] in
+let #Crypto#sha256#2048 = fun b -> (({ SHA256 })@(b))[@inline] in
+let #Crypto#sha512#2049 = fun b -> (({ SHA512 })@(b))[@inline] in
+let #Crypto#sha3#2050 = fun b -> (({ SHA3 })@(b))[@inline] in
+let #Crypto#keccak#2051 = fun b -> (({ KECCAK })@(b))[@inline] in
+let #Crypto#hash_key#2052 = fun k -> (({ HASH_KEY })@(k))[@inline] in
+let #Crypto#check#2053 =
   fun k ->
   (fun s ->
    (fun b ->
@@ -2637,14 +2730,14 @@ let true = TRUE()[@inline] in
 let false = FALSE()[@inline] in
 let unit = UNIT()[@inline] in
 let toto =
-  ADD(#../../test/contracts/build/E.mligo#toto#1761 ,
-      #../../test/contracts/build/A.mligo#toto#368) in
+  ADD(#../../test/contracts/build/E.mligo#toto#1797 ,
+      #../../test/contracts/build/A.mligo#toto#374) in
 let fb = (L(1), toto, L(2), L(3)) in
 let main =
-  fun gen#6971 ->
-  (let (gen#6977, gen#6978) = gen#6971 in
-   let p = gen#6977 in
-   let s = gen#6978 in
+  fun gen#7090 ->
+  (let (gen#7096, gen#7097) = gen#7090 in
+   let p = gen#7096 in
+   let s = gen#7097 in
    let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
 L(unit) |}]
 
