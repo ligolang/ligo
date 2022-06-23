@@ -14,6 +14,8 @@ module LSet = Caml.Set.Make (struct
   let compare = T.compare_label
 end)
 
+type raise = Errors.typer_error Trace.raise
+
 let cons_label = T.Label "#CONS"
 let nil_label  = T.Label "#NIL"
 
@@ -156,11 +158,11 @@ let print_vector vector =
 
     +-----------------------------+------------------------------+
     |               pi1           |      S (c, matrix)           |
-    +-----------------------------+----+---------+---------------+
+    +-----------------------------+------------------------------+
     | c (r1, ... , ra)            | r1, ... , ra, pi2, ... , pin |
     | c'(r1, ... , ra) (c' != c)  | No Row                       |
     | _                           | _, ... , _, pi2, ... , pin   |
-    +----------------------------------+---------+---------------+
+    +-----------------------------+------------------------------+
 
   In simple words look for constructor c in the 1st column of the matrix
   and explore the inner patterns.
@@ -208,10 +210,10 @@ let specialize_vector c tys q1_n =
 
     +-----------------------------+------------------------------+
     |               pi1           |      D (matrix)              |
-    +-----------------------------+----+---------+---------------+
+    +-----------------------------+------------------------------+
     | c (r1, ... , ra)            | No Row                       |
     | _                           | pi2, ... , pin               |
-    +----------------------------------+---------+---------------+
+    +-----------------------------+------------------------------+
 
   In simple words ignore the rows in [matrix] which has constructors
   in the 1st column.
@@ -295,7 +297,7 @@ let get_constructors_from_1st_col matrix =
         default_matrix = [default_matrix matrix]
 
         Urec (matrix, vector) = Urec (default_matrix, (v2, ... , vn)) *)
-let rec algorithm_Urec matrix vector =
+let rec algorithm_Urec ~(raise : raise) matrix vector =
   if List.is_empty matrix then true
   else if List.for_all matrix ~f:(List.is_empty) && List.is_empty vector
   then false
@@ -304,7 +306,7 @@ let rec algorithm_Urec matrix vector =
       let a = find_constuctor_arity c t in
       let matrix = specialize_matrix c a matrix in
       let vector = specialize_vector c a vector in
-      algorithm_Urec matrix vector
+      algorithm_Urec ~raise matrix vector
   | SP_Wildcard t :: q2_n ->
     let complete_signature = get_all_constructors t in
     let constructors = get_constructors_from_1st_col matrix in
@@ -313,13 +315,13 @@ let rec algorithm_Urec matrix vector =
       LSet.fold
         (fun c b ->
           let tys = find_constuctor_arity c t in
-          b || algorithm_Urec
+          b || algorithm_Urec ~raise
                 (specialize_matrix c tys matrix)
                 (specialize_vector c tys vector))
         complete_signature false
     else
-      algorithm_Urec (default_matrix matrix) q2_n
-  | [] -> failwith "edge case: algorithm Urec"
+      algorithm_Urec ~raise (default_matrix matrix) q2_n
+  | [] -> raise.raise @@ Errors.corner_case "edge case: algorithm Urec"
 
 (* Algorithm I [algorithm_I matrix n ts]
 
@@ -358,11 +360,11 @@ let rec algorithm_Urec matrix vector =
           If there more constructors that do not belong to Σ,
           we can improve by returning all the patterns that can be formed
           using the extra constructors. *)
-let rec algorithm_I matrix n ts =
+let rec algorithm_I ~(raise : raise) matrix n ts =
   if n = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
-    else failwith "edge case: algorithm I" (* remove failwith's *)
+    else raise.raise @@ Errors.corner_case "edge case: algorithm Urec"
   else
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
@@ -376,7 +378,7 @@ let rec algorithm_I matrix n ts =
             let tys = find_constuctor_arity ck t in
             let ak  = List.length tys in
             let matrix = specialize_matrix ck tys matrix in
-            let ps = algorithm_I matrix (ak + n - 1) (tys @ ts) in
+            let ps = algorithm_I ~raise matrix (ak + n - 1) (tys @ ts) in
             match ps with
               Some ps ->
                 Some
@@ -387,7 +389,7 @@ let rec algorithm_I matrix n ts =
           ) complete_signature None
     else
       let dp = default_matrix matrix in
-      let ps = algorithm_I dp (n - 1) ts in
+      let ps = algorithm_I ~raise dp (n - 1) ts in
       match ps with
         Some ps ->
           if LSet.is_empty constructors then
@@ -408,17 +410,19 @@ let rec algorithm_I matrix n ts =
             ))
       | None -> None
 
-(* Missing case analysis uses [algorithm_Urec] if missing cases are present
-   and it uses [algorithm_I] to find out the actuali missing pattern(s)
-    Urec([[p11, p12, ... , p1n]
-          [p21, p22, ... , p2n]
-          ...
-          [pm1, pm2, ... , pmn]], (_, _, ... ,_)) *)
-let missing_case_analysis matrix t =
-  let ts = destructure_type t in
-  let vector = List.map ts ~f:(fun t -> SP_Wildcard t) in
+(* Missing case analysis uses [algorithm_I matrix n] to find out the 
+   actual missing pattern(s)
 
-  match algorithm_I matrix (List.length vector) ts with
+   [n] is the number of parts a pattern has
+
+    I([[p11, p12, ... , p1n]
+       [p21, p22, ... , p2n]
+        ...
+       [pm1, pm2, ... , pmn]], n) *)
+let missing_case_analysis ~raise matrix t =
+  let ts = destructure_type t in
+
+  match algorithm_I ~raise matrix (List.length ts) ts with
     Some sps ->
       let ps = List.map sps ~f:(fun sp -> to_original_pattern sp t) in
       Some ps
@@ -431,13 +435,14 @@ let missing_case_analysis matrix t =
           [p2]
           ...
           [p(i-1)], pi) is false *)
-let redundant_case_analysis matrix =
+let redundant_case_analysis ~raise matrix =
   let redundant, case, _ =  List.fold_left matrix ~init:(false, 0, [])
     ~f:(fun (redundant_case_found, case, matrix) vector ->
       if redundant_case_found then (true, case, [])
       else if List.is_empty matrix then (false, case + 1, [vector])
       else
-        let redundant_case_found = not @@ algorithm_Urec matrix vector in
+        let redundant_case_found 
+          = not @@ algorithm_Urec matrix ~raise vector in
         (redundant_case_found, case + 1, matrix @ [vector]))
   in
   (redundant, case)
@@ -463,15 +468,15 @@ let redundant_case_analysis matrix =
    missing pattern to the original pattern representation
    using [to_original_pattern].
    e. If there are no missing cases we check for redundant cases. *)
-let check_anomalies ~(raise : Errors.typer_error Trace.raise) ~loc eqs t =
+let check_anomalies ~(raise : raise) ~loc eqs t =
 
   let matrix = List.map eqs ~f:(fun (p, t, _) -> to_simple_pattern (p, t)) in
 
-  match missing_case_analysis matrix t with
+  match missing_case_analysis ~raise matrix t with
     Some missing_cases ->
       raise.raise @@ Errors.pattern_missing_cases loc missing_cases
   | None ->
-    let redundant, case = redundant_case_analysis matrix in
+    let redundant, case = redundant_case_analysis ~raise matrix in
     if redundant
     then
       let p, _, _ = List.nth_exn eqs (case - 1) in
