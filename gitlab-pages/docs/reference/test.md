@@ -539,6 +539,90 @@ let log = (a: 'a) => unit
 Log a value.
 
 <SyntaxTitle syntax="pascaligo">
+val to_string&lt;a&gt; : a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val to_string : 'a -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let to_string: 'a => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let to_string = (a: 'a) => string
+</SyntaxTitle>
+Convert a value to a string (same conversion as used by `log`).
+
+<SyntaxTitle syntax="pascaligo">
+val print : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val print : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let print: string => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let print = (s: string) => unit
+</SyntaxTitle>
+Prints an string to stdout.
+
+<SyntaxTitle syntax="pascaligo">
+val println : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val println : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let println: string => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let println = (s: string) => unit
+</SyntaxTitle>
+Prints an string to stdout, ended with a newline.
+
+<SyntaxTitle syntax="pascaligo">
+val eprint : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val eprint : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let eprint: string => unit
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let eprint = (s: string) => unit
+</SyntaxTitle>
+Prints an string to stderr.
+
+<SyntaxTitle syntax="pascaligo">
+val nl : string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val nl : string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let nl: string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let nl : string
+</SyntaxTitle>
+String consisting of only a newline.
+
+<SyntaxTitle syntax="pascaligo">
+val chr : nat -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val chr : nat -> string
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let chr: nat => string
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let chr = (c: nat) => string
+</SyntaxTitle>
+String consisting of the character represented by a `nat` in the interval [0, 255].
+
+<SyntaxTitle syntax="pascaligo">
 val reset_state : nat -> list (tez) -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
