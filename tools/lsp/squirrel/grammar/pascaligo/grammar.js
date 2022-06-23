@@ -554,7 +554,6 @@ module.exports = grammar({
           field("type", $._type_expr),
         )
       ),
-      optional(common.par(common.sepBy(',', field("argument", $._expr)))),
       ']'
     ),
 

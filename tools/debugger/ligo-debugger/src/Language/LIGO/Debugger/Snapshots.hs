@@ -262,6 +262,7 @@ runInstrCollect = \case
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
+
       lift $ C.yield InterpretSnapshot
         { isStatus = InterpretRunning event
         , ..
@@ -309,13 +310,14 @@ runCollectInterpretSnapshots act env initSt =
 collectInterpretSnapshots
   :: forall cp st arg.
      FilePath
+  -> Text
   -> Contract cp st
   -> EntrypointCallT cp arg
   -> Value arg
   -> Value st
   -> ContractEnv
   -> InterpretHistory InterpretSnapshot
-collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
+collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env =
   runCollectInterpretSnapshots
     (runInstrCollect cCode initStack)
     env
@@ -326,7 +328,7 @@ collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
     collSt = CollectorState
       { csInterpreterState = initSt
       , csStackFrames = one StackFrame
-          { sfName = "main"
+          { sfName = entrypoint
           , sfStack = []
           , sfLoc = LigoRange
             { lrFile = mainFile

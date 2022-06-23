@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1795'
+title: 'Fix: `Test.transfer_to_contract` use entrypoint'
+type: fixed

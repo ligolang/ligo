@@ -91,7 +91,7 @@ let error_ppformat : display_format:string display_format ->
         desc
     | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\". @]"
         Snippet.pp e.location
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_bad_view_io (entrypoint, e) ->
@@ -101,7 +101,7 @@ let error_ppformat : display_format:string display_format ->
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\".@.\
         We expected a list of operations but we got %a@]"
         Snippet.pp e.location
         PP.expression_variable entrypoint

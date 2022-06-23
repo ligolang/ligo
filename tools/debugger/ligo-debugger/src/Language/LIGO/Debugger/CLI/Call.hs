@@ -84,14 +84,15 @@ instance Exception BadLigoOutput where
   displayException = pretty
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: (MonadIO m) => FilePath -> m LigoMapper
-compileLigoContractDebug file =
+compileLigoContractDebug :: (MonadIO m) => String -> FilePath -> m LigoMapper
+compileLigoContractDebug entrypoint file =
   runAndReadOutput Aeson.eitherDecode
     "ligo"
     [ "compile", "contract"
     , "--michelson-format", "json"
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
+    , "-e", entrypoint
     , file
     ]
     >>= either (throwIO . BadLigoOutput . toText) pure

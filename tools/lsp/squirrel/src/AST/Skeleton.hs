@@ -16,7 +16,7 @@ module AST.Skeleton
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
-  , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
   , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
@@ -68,7 +68,7 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
+  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
   , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
   ]
@@ -192,7 +192,7 @@ data Expr it
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
+  | Michelson it it -- (Verbatim) (Type)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
@@ -211,8 +211,8 @@ data Collection it
   | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
-newtype MichelsonCode it
-  = MichelsonCode Text
+newtype Verbatim it
+  = Verbatim Text
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 

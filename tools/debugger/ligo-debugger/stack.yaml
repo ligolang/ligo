@@ -9,6 +9,7 @@ packages:
 - .
 
 extra-deps:
+- dir-traverse-0.2.3.0
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
   commit: 0c04b73412f8f05be8e8069d6b6c8faeb3b4efc2  # master
