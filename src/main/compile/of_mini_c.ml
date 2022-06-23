@@ -26,7 +26,7 @@ let optimize_for_contract ~raise options e : type_expression * anon_function =
   let (input_ty , _) = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression in
   let contract : anon_function = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_function_or_eta_expand e in
   let contract = { contract with body = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body } in
-  let optimized = trace ~raise self_mini_c_tracer @@ Self_mini_c.contract_check contract in
+  let optimized = trace ~raise self_mini_c_tracer @@ Self_mini_c.contract_check ~options contract in
   input_ty, optimized
 
 let compile_type = fun e ->
