@@ -111,49 +111,6 @@ module Test = struct
     (a, f, c)
   let read_contract_from_file (fn : string) : michelson_contract = [%external "TEST_READ_CONTRACT_FROM_FILE"] fn
   let sign (sk : string) (d : bytes) : signature = [%external "TEST_SIGN"] sk d
-  module Console = struct
-    let nl = [%external "TEST_UNESCAPE_STRING"] "\n"
-    let backslash = [%external "TEST_UNESCAPE_STRING"] "\\"
-    let reset = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[0m")
-
-    let black = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[30m")
-    let red = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[31m")
-    let green = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[32m")
-    let yellow = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[33m")
-    let blue = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[34m")
-    let purple = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[35m")
-    let cyan = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[36m")
-    let white = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[37m")
-
-    let background_black = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[40m")
-    let background_red = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[41m")
-    let background_green = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[42m")
-    let background_yellow = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[43m")
-    let background_blue = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[44m")
-    let background_purple = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[45m")
-    let background_cyan = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[46m")
-    let background_white = [%external "TEST_UNESCAPE_STRING"] (backslash ^ "027[47m")
-
-    let colour_reset () = print reset
-
-    let set_black () = print black
-    let set_red () = print red
-    let set_green () = print green
-    let set_yellow () = print yellow
-    let set_blue () = print blue
-    let set_purple () = print purple
-    let set_cyan () = print cyan
-    let set_white () = print white
-
-    let set_background_black () = print background_black
-    let set_background_red () = print background_red
-    let set_background_green () = print background_green
-    let set_background_yellow () = print background_yellow
-    let set_background_blue () = print background_blue
-    let set_background_purple () = print background_purple
-    let set_background_cyan () = print background_cyan
-    let set_background_white () = print background_white
-  end
   let chr (n : nat) : string option =
     if n < 10n then
       Some ([%external "TEST_UNESCAPE_STRING"] (Console.backslash ^ "00" ^ to_string (int n)))
@@ -163,5 +120,7 @@ module Test = struct
       Some ([%external "TEST_UNESCAPE_STRING"] (Console.backslash ^ to_string (int n)))
     else
       None
-  let println (v : string) : unit = print (v ^ Console.nl)
+  let nl = [%external "TEST_UNESCAPE_STRING"] "\n"
+  let println (v : string) : unit =
+    print (v ^ nl)
 end
