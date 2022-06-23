@@ -245,36 +245,6 @@ and module_ ppf (m : module_) =
     ppf m
 let program ppf p = module_ ppf p
 
-let rec pp_list_pattern (ppf : Format.formatter) = fun pl ->
-  let open Simple_utils.PP_helpers in
-  let open Format in
-  match pl with
-  | Cons (pl,pr) -> fprintf ppf "%a::%a" pp_pattern pl pp_pattern pr
-  | List pl -> fprintf ppf "[%a]" (list_sep pp_pattern (tag " ; ")) pl
-
-and pp_pattern ppf (p : _ pattern) =
-  let open Simple_utils.PP_helpers in
-  let open Format in
-  let is_unit_pattern p =
-    let p = Location.unwrap p in
-    match p with
-      P_unit -> true
-    | _      -> false
-  in
-  match p.wrap_content with
-  | P_unit -> fprintf ppf "()"
-  | P_var _ -> fprintf ppf "_"
-  | P_list l -> pp_list_pattern ppf l
-  | P_variant (l , p) when is_unit_pattern p -> fprintf ppf "%a" label l
-  | P_variant (l , p) -> fprintf ppf "%a(%a)" label l pp_pattern p
-  | P_tuple pl ->
-    fprintf ppf "(%a)" (list_sep pp_pattern (tag ",")) pl
-  | P_record (ll , pl) ->
-    let x = List.zip_exn ll pl in
-    let aux ppf (l,p) =
-      fprintf ppf "%a = %a" label l pp_pattern p
-    in
-    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
 and pp_patterns ppf (ps : _ pattern list) =
   let open Simple_utils.PP_helpers in
-  Format.fprintf ppf "- %a" (list_sep pp_pattern (tag "\n- ")) ps
+  Format.fprintf ppf "- %a" (list_sep (match_pattern ~pm:true Ast_core.PP.type_expression) (tag "\n- ")) ps

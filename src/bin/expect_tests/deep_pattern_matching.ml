@@ -461,8 +461,8 @@ let%expect_test _ =
   [%expect{|
     const a =
        match CONS(1 , LIST_EMPTY()) with
-        | [  ] -> 1
-        | a :: b :: c :: [  ] -> 2
+        | [] -> 1
+        | a::b::c::[] -> 2
         | _#2 -> 3 |}]
 
 

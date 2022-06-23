@@ -97,7 +97,7 @@ let are_keys_numeric keys =
   List.for_all keys
     ~f:(fun (T.Label l) -> Option.is_some @@ int_of_string_opt l)
 
-let rec to_list_pattern simple_pattern =
+let rec to_list_pattern ~(raise : raise) simple_pattern =
   match simple_pattern with
     SP_Wildcard _ -> Location.wrap @@ T.P_var wild_binder
   | SP_Constructor (T.Label "#NIL", _, _) ->
@@ -106,23 +106,25 @@ let rec to_list_pattern simple_pattern =
     let rsps = List.rev sps in
     let tl = List.hd_exn rsps in
     let hd = List.rev (List.tl_exn rsps) in
-    let hd = to_original_pattern hd (C.get_t_list_exn t) in
-    let tl = to_list_pattern tl in
+    let hd = to_original_pattern ~raise hd (C.get_t_list_exn t) in
+    let tl = to_list_pattern ~raise tl in
     Location.wrap @@ T.P_list (T.Cons (hd, tl))
   | SP_Constructor (T.Label c, _, _) ->
-    failwith (Format.sprintf "edge case: %s in to_list_pattern" c)
+    raise.raise @@ 
+      Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c)
 
-and to_original_pattern simple_patterns (ty : AST.type_expression) =
+and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
   match simple_patterns with
-    [] -> failwith "edge case: to_original_pattern empty patterns"
+    [] -> raise.raise @@ 
+      Errors.corner_case "edge case: to_original_pattern empty patterns"
   | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap @@ T.P_unit
   | SP_Wildcard _::[] -> Location.wrap @@ T.P_var wild_binder
   | (SP_Constructor (T.Label "#CONS", _, _) as simple_pattern)::[]
   | (SP_Constructor (T.Label "#NIL", _, _) as simple_pattern)::[] ->
-    to_list_pattern simple_pattern
+    to_list_pattern ~raise simple_pattern
   | SP_Constructor (c, sps, t)::[] ->
     let t = get_variant_nested_type c (Option.value_exn (C.get_t_sum t)) in
-    let ps = to_original_pattern sps t in
+    let ps = to_original_pattern ~raise sps t in
     Location.wrap @@ T.P_variant (c, ps)
   | _ ->
     (match ty.type_content with
@@ -136,14 +138,14 @@ and to_original_pattern simple_patterns (ty : AST.type_expression) =
         ~f:(fun (sps, ps) t ->
             let n = List.length @@ destructure_type t in
             let sps, rest = List.split_n sps n in
-            rest, ps @ [to_original_pattern sps t]
+            rest, ps @ [to_original_pattern ~raise sps t]
           )
       in
       if are_keys_numeric labels then
         Location.wrap @@ T.P_tuple ps
       else
         Location.wrap @@ T.P_record (labels, ps)
-    | _ -> failwith "edge case: not a record/tuple")
+    | _ -> raise.raise @@ Errors.corner_case "edge case: not a record/tuple")
 
 let print_matrix matrix =
   let () = Format.printf "matrix: \n" in
@@ -424,7 +426,8 @@ let missing_case_analysis ~raise matrix t =
 
   match algorithm_I ~raise matrix (List.length ts) ts with
     Some sps ->
-      let ps = List.map sps ~f:(fun sp -> to_original_pattern sp t) in
+      let ps = List.map sps 
+        ~f:(fun sp -> to_original_pattern ~raise sp t) in
       Some ps
   | None -> None
 
