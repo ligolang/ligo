@@ -609,16 +609,16 @@ let nl : string
 String consisting of only a newline.
 
 <SyntaxTitle syntax="pascaligo">
-val chr : nat -> string
+val chr : nat -> option string
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val chr : nat -> string
+val chr : nat -> string option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let chr: nat => string
+let chr: nat => option (string)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let chr = (c: nat) => string
+let chr = (c: nat) => option&lt;string&gt;
 </SyntaxTitle>
 String consisting of the character represented by a `nat` in the interval [0, 255].
 
@@ -661,13 +661,13 @@ let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount
 Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
 
 <SyntaxTitle syntax="pascaligo">
-val baker_account : (string * key) -> tez option -> unit
+val baker_account : (string * key) -> option tez -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val baker_account : (string * key) -> tez option -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let baker_account: ((string, key), tez option) => unit
+let baker_account: ((string, key), option(tez)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 let baker_account = ([string, key], amount : option&lt;tez&gt;) => unit
