@@ -154,5 +154,14 @@ module Test = struct
     let set_background_cyan () = print background_cyan
     let set_background_white () = print background_white
   end
+  let chr (n : nat) : string option =
+    if n < 10n then
+      Some ([%external "TEST_UNESCAPE_STRING"] (Console.backslash ^ "00" ^ to_string (int n)))
+    else if n < 100n then
+      Some ([%external "TEST_UNESCAPE_STRING"] (Console.backslash ^ "0" ^ to_string (int n)))
+    else if n < 256n then
+      Some ([%external "TEST_UNESCAPE_STRING"] (Console.backslash ^ to_string (int n)))
+    else
+      None
   let println (v : string) : unit = print (v ^ Console.nl)
 end
