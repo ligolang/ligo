@@ -619,10 +619,20 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
       let>> balance = Get_balance (loc, calltrace, addr) in
       return balance
     | ( C_TEST_GET_BALANCE , _  ) -> fail @@ error_type
-    | ( C_TEST_LOG , [ v ]) ->
-      let () = Format.printf "%a\n" Ligo_interpreter.PP.pp_value v in
+    | ( C_TEST_PRINT , [ V_Ct (C_int i) ; V_Ct (C_string v) ]) ->
+      let () = match Z.to_int i with
+        | 2 -> Format.eprintf "%s" v
+        | 1 -> Format.printf "%s" v
+        | _ -> () in
       return_ct C_unit
-    | ( C_TEST_LOG , _  ) -> fail @@ error_type
+    | ( C_TEST_PRINT , _  ) -> fail @@ error_type
+    | ( C_TEST_TO_STRING , [ v ]) ->
+      let s = Format.asprintf "%a" Ligo_interpreter.PP.pp_value v in
+      return_ct (C_string s)
+    | ( C_TEST_TO_STRING , _  ) -> fail @@ error_type
+    | ( C_TEST_UNESCAPE_STRING , [ V_Ct (C_string s) ]) ->
+      return_ct (C_string (Scanf.unescaped s))
+    | ( C_TEST_UNESCAPE_STRING , _  ) -> fail @@ error_type
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
