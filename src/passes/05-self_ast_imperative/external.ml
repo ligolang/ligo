@@ -9,7 +9,7 @@ let destruct_args (m : expression list) : (string * expression list) option =
 let replace : expression -> expression = fun e ->
   match e.expression_content with
   | E_raw_code { language ; code = { expression_content = E_tuple m ; _ } }
-       when String.equal language "ext" -> (
+       when String.equal language "external" -> (
     match destruct_args m with
     | Some (code, arguments) -> (
        match read_constant' code with
@@ -22,7 +22,7 @@ let replace : expression -> expression = fun e ->
     | _ -> e
   )
   | E_raw_code { language ; code = { expression_content = E_literal (Literal_string code) ; _ } }
-       when String.equal language "ext" -> (
+       when String.equal language "external" -> (
     let code = (Simple_utils.Ligo_string.extract code) in
     match read_constant' code with
     | None -> failwith @@ "Constant cannot be externalized: " ^ code
