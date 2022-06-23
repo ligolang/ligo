@@ -318,27 +318,25 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
   (*TODO: move to proper module*)
   | ECall ({value=(EModA {value={module_name;field;selector=_};region=_},args);region} as call) when
     List.mem ~equal:Caml.(=) build_ins module_name.value ->
-     let loc = Location.lift region in
-     let r =
-       let open Option in
-       let* fun_name = match field with
-         | EVar v -> Some v.value
-         | EModA _ -> None
-         |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-          |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-          |EModAlias _|ETuple _| EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
-       in
-       let var = module_name.value ^ "." ^ fun_name in
-       constants var in
-     (match r with
-       Some const ->
-        let args = List.map ~f:self @@ nseq_to_list args in
-        return @@ e_constant ~loc const args
-     | None ->
-        let ((func, args), loc) = r_split call in
-        let func = self func in
-        let args = List.map ~f:self @@ nseq_to_list args in
-        return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args)
+    let loc = Location.lift region in
+    let fun_name = match field with
+      EVar v -> v.value
+      | EModA _ -> raise.raise @@ unknown_constant module_name.value loc
+      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
+      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+    in
+    let var = module_name.value ^ "." ^ fun_name in
+    (match constants var with
+      Some const ->
+      let args = List.map ~f:self @@ nseq_to_list args in
+      return @@ e_constant ~loc const args
+    | None ->
+       let ((func, args), loc) = r_split call in
+       let func = self func in
+       let args = List.map ~f:self @@ nseq_to_list args in
+       return @@ List.fold_left ~f:(e_application ~loc) ~init:func @@ args
+      )
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let func = self func in
@@ -384,18 +382,15 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
     in
     (*TODO: move to proper module*)
     if List.mem ~equal:Caml.(=) build_ins module_name then
-      let r =
-        let open Option in
-        let* fun_name = match ma.field with
-          | EVar v -> Some v.value
-          | EModA _ -> None
-          |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-           |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-           |EModAlias _|ETuple _| EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
-        in
-        let var = module_name ^ "." ^ fun_name in
-        constants var in
-      match r with
+      let fun_name = match ma.field with
+        | EVar v -> v.value
+        | EModA _ -> raise.raise @@ unknown_constant module_name loc
+        |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+        |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
+        |EModAlias _|ETuple _| EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+      in
+      let var = module_name ^ "." ^ fun_name in
+      match constants var with
         Some const -> return @@ e_constant ~loc const []
       | None -> aux [compile_mod_var ma.module_name] ma.field
     else
