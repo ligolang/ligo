@@ -332,14 +332,17 @@ let check_if_polymorphism_present ~raise e =
             check_type_expression ~loc re.associated_type) content ()
       | T_arrow _ -> ()
       | T_singleton _ -> ()
-      | T_for_all _ -> ()
+      | T_for_all _ -> show_error loc;
    in
    let (), e = fold_map_expression (fun _ e ->
-      let te = e.type_expression in
-      let loc = e.location in
-      let () = check_type_expression ~loc te in
-      (* Format.printf "%a %a\n" Location.pp loc AST.PP.type_expression te; *)
-      (true, (), e)) () e in
+      match e.expression_content with
+         AST.E_application { args ; lamb } when not (AST.is_e_raw_code lamb) ->
+            check_type_expression ~loc:args.location args.type_expression;
+            (true, (), e)
+      | AST.E_constant _ ->
+         check_type_expression ~loc:e.location e.type_expression;
+         (true, (), e)
+      | _ -> (true, (), e)) () e in
    e
 
 let mono_polymorphic_expr ~raise e =

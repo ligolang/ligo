@@ -339,6 +339,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
   [%expect{|
+    File "./unresolved/contract.mligo", line 6, characters 29-31:
+      5 |     let b                = List.length ys in
+      6 |     [], (a + b + List.length [])
+
     Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
@@ -353,11 +357,19 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
   [%expect{|
+    File "./unresolved/storage.mligo", line 1, characters 20-22:
+      1 | let s = List.length []
+      2 |
+
     Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
   [%expect{|
+    File "./unresolved/parameter.mligo", line 1, characters 8-10:
+      1 | let p = []
+      2 |
+
     Can't infer the type of this value, please add a type annotation. |}]
 
 let%expect_test _ =
