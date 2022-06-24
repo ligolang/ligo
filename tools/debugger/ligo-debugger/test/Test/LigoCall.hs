@@ -11,9 +11,9 @@ import Test.Util
 test_Call :: TestTree
 test_Call = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
-      let file = inContractsDir "simple-ops.mligo"
+      let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
-      res <- compileLigoContractDebug file
+      res <- compileLigoContractDebug "main" file
       take 15 (toList $ lmLocations res) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 

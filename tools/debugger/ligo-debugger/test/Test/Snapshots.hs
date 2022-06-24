@@ -31,6 +31,7 @@ data ContractRunData =
   )
   => ContractRunData
   { crdProgram :: FilePath
+  , crdEntrypoint :: String
   , crdParam :: param
   , crdStorage :: st
   }
@@ -39,8 +40,8 @@ data ContractRunData =
 mkSnapshotsFor
   :: HasCallStack
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
-mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
-  ligoMapper <- compileLigoContractDebug file
+mkSnapshotsFor (ContractRunData file entrypoint (param :: param) (st :: st)) = do
+  ligoMapper <- compileLigoContractDebug entrypoint file
   (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
@@ -49,7 +50,7 @@ mkSnapshotsFor (ContractRunData file (param :: param) (st :: st)) = do
     & maybe (assertFailure "Parameter type mismatch") pure
   Refl <- sing @st' `decideEquality` sing @(T.ToT st)
     & maybe (assertFailure "Storage type mismatch") pure
-  let his = collectInterpretSnapshots file contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
+  let his = collectInterpretSnapshots file (fromString entrypoint) contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
   return (allLocs, his)
 
 testWithSnapshots
@@ -96,9 +97,10 @@ pattern SomeLorentzValue v <- T.SomeValue (fromValCasting -> Just v)
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
   [ testCaseSteps "noop.mligo contract" \step -> do
-      let file = inContractsDir "noop.mligo"
+      let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
+            , crdEntrypoint = "main"
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -219,5 +221,49 @@ test_Snapshots = testGroup "Snapshots collection"
             )
 
           ]
+  , testCaseSteps "Check specific entrypoint" \_step -> do
+      let file = contractsDir </> "not-main-entry-point.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = "not_main"
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      testWithSnapshots runData do
+        -- Skip starting snapshot
+        _ <- move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventExpressionPreview
+            , isStackFrames = StackFrame
+                { sfName = "not_main"
+                , sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                } :| []
+            } -> pass
+          sp -> unexpectedSnapshot sp
+
+  , testCaseSteps "pattern-match on option" \_step -> do
+      let file = contractsDir </> "match-on-some.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = "main"
+            , crdParam = ()
+            , crdStorage = Just (5 :: Integer)
+            }
+
+      testWithSnapshots runData do
+        -- Skip starting snapshot
+        _ <- move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning EventExpressionPreview
+            , isStackFrames = StackFrame
+                { sfLoc = LigoRange _ (LigoPosition 3 16) (LigoPosition 3 21)
+                } :| []
+            } -> pass
+          sp -> unexpectedSnapshot sp
 
   ]

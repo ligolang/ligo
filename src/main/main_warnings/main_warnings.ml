@@ -153,7 +153,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       let message = `String "unused recursion in function" in
       let stage   = "self_ast_typed" in
       let description = `String s in
-      let loc = `String (Format.asprintf "%a" Location.pp loc) in
+      let loc = Location.to_yojson loc in
       let content = `Assoc [
                         ("message", message);
                         ("location", loc);
@@ -172,16 +172,16 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
     let message = `String (Format.asprintf "Deprecated polymorphic var %a" Stage_common.Types.TypeVar.pp name) in
     let stage   = "self_ast_imperative" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
     ] in
     json_warning ~stage ~content
-  | `Self_ast_imperative_warning_deprecated_constant (l, _, _, _) ->
+  | `Self_ast_imperative_warning_deprecated_constant (loc, _, _, _) ->
     let message = `String "Constant soon to be deprecated." in
     let stage   = "self_ast_imperative" in
-    let loc = `String (Format.asprintf "%a" Location.pp l) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
@@ -190,7 +190,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Jsligo_deprecated_failwith_no_return loc ->
     let message = `String "deprecated use of failwith without return" in
     let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
@@ -199,7 +199,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Jsligo_deprecated_toplevel_let loc ->
     let message = `String "Toplevel let declarations are silently convert to const declarations" in
     let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
