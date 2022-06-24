@@ -1,11 +1,11 @@
-let rec internalize_typed (ds : Ast_typed.program) =
+let rec internalize_typed ?(inner = false) (ds : Ast_typed.program) =
   let open Ast_typed in
   let f (d : _) = match d with
     | Declaration_module { module_binder ; module_ ; module_attr = _ } ->
-      let module_attr = { public = false ; hidden = true } in
+      let module_attr = { public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = M_struct (internalize_typed x)}
+          { module_ with wrap_content = M_struct (internalize_typed ~inner:true x)}
         | _ -> module_
       in
       Declaration_module { module_binder ; module_ ; module_attr }
@@ -19,14 +19,14 @@ let rec internalize_typed (ds : Ast_typed.program) =
   let f (d : _ Ast_typed.location_wrap) = Simple_utils.Location.map f d in
   List.map ~f ds
 
-let rec internalize_core (ds : Ast_core.module_) =
+let rec internalize_core ?(inner = false) (ds : Ast_core.module_) =
   let open Ast_core in
   let f (d : _) = match d with
     | Declaration_module { module_binder ; module_ ; module_attr = _ } ->
-      let module_attr = { public = false ; hidden = true } in
+      let module_attr = { public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = M_struct (internalize_core x)}
+          { module_ with wrap_content = M_struct (internalize_core ~inner:true x)}
         | _ -> module_
       in
       Declaration_module { module_binder ; module_ ; module_attr }
