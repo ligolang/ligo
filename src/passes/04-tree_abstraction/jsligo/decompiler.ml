@@ -846,3 +846,16 @@ let decompile_expression : AST.expression -> CST.expr list = fun expr ->
                     @.Expr : %a@ @,Loc : %a"
                    AST.PP.expression expr
                    Location.pp expr.location
+
+let rec decompile_pattern p =
+  match (Location.unwrap p) with
+  | AST.P_variant (constructor,_) -> ( (* TODO: implement rest decompile for rest of the patterns*)
+      match constructor with
+      | Label constructor -> (
+        (* let p = decompile_pattern p in *)
+        (* let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in *)
+        (* let p = Region.wrap_ghost (par p) in *)
+        CST.PConstr (Region.wrap_ghost constructor)
+      )
+    )
+  | _ -> failwith "not_implemented"

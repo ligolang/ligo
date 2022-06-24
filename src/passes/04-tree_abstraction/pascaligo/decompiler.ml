@@ -228,8 +228,8 @@ and decompile_statements : dialect -> AST.expression -> _ = fun dialect expr ->
         AST.PP.expression expr
         Location.pp expr.location
 
-and decompile_pattern : dialect -> AST.type_expression AST.pattern -> CST.pattern =
-  fun dialect pattern ->
+and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
+  fun pattern ->
     match pattern.wrap_content with
     | AST.P_unit ->
       CST.P_Ctor (Wrap.ghost "Unit")
@@ -239,20 +239,20 @@ and decompile_pattern : dialect -> AST.type_expression AST.pattern -> CST.patter
     | AST.P_list pl -> (
       match pl with
       | AST.Cons (pa,pb) ->
-        let pa = decompile_pattern dialect pa in
-        let pb = decompile_pattern dialect pb in
+        let pa = decompile_pattern pa in
+        let pb = decompile_pattern pb in
         let cons = Region.wrap_ghost (pa, Token.ghost_sharp, pb) in
         P_Cons cons
       | AST.List [] -> P_Nil Token.ghost_nil
       | AST.List plst ->
-        let plst = List.map ~f:(decompile_pattern dialect) plst in
+        let plst = List.map ~f:(decompile_pattern) plst in
         let elements = list_to_sepseq ~sep:Token.ghost_semi plst in
         P_List (Region.wrap_ghost (inject Token.ghost_list elements))
     )
     | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label constructor -> (
-        let p = decompile_pattern dialect p in
+        let p = decompile_pattern p in
         let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in
         let p = Region.wrap_ghost (par p) in
         let constr = CST.P_Ctor (Wrap.ghost constructor) in
@@ -260,13 +260,13 @@ and decompile_pattern : dialect -> AST.type_expression AST.pattern -> CST.patter
       )
     )
     | AST.P_tuple lst ->
-      let pl = List.map ~f:(decompile_pattern dialect) lst in
+      let pl = List.map ~f:(decompile_pattern) lst in
       let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
       CST.P_Tuple (Region.wrap_ghost (par pl))
     | AST.P_record (labels, patterns) ->
       let aux : AST.label * AST.type_expression AST.pattern -> CST.field_pattern CST.reg =
         fun (Label label, pattern) ->
-          let field_rhs = decompile_pattern dialect pattern in
+          let field_rhs = decompile_pattern pattern in
           let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_ass ; field_rhs ; attributes = [] } in
           Region.wrap_ghost full_field
       in
@@ -447,7 +447,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let lead_vbar = lead_vbar dialect in
     let aux decompile_f =
       fun ({ pattern ; body }:(AST.expression, AST.type_expression) AST.match_case) ->
-        let pattern = decompile_pattern dialect pattern in
+        let pattern = decompile_pattern pattern in
         let rhs = decompile_f body in
         let clause : (_ CST.case_clause)= { pattern ; arrow = Token.ghost_arrow ; rhs } in
         (Region.wrap_ghost clause)

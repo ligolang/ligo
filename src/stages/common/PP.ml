@@ -300,6 +300,7 @@ let while_ expression ppf = fun {cond; body} ->
 
 (* matches *)
 
+(* TODO: Print patterns using Decompilation flow, remove the paramerter ~pm *)
 let rec list_pattern ?pm type_expression ppf = fun pl ->
   let mpp = match_pattern ?pm type_expression in
   match pl with

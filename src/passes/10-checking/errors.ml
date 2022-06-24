@@ -72,7 +72,7 @@ type typer_error = [
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
-  | `Typer_pattern_missing_cases of Location.t * Ast_core.type_expression Ast_core.pattern list
+  | `Typer_pattern_missing_cases of Location.t * (Syntax_types.t option) * Ast_core.type_expression Ast_core.pattern list
   | `Typer_pattern_redundant_case of Location.t
   | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
@@ -291,11 +291,37 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Redundant pattern matching@]"
         Snippet.pp loc
-    | `Typer_pattern_missing_cases (loc, ps) ->
+    | `Typer_pattern_missing_cases (loc, syntax, ps) ->
+      let ps = List.fold ps ~init:"" ~f:(fun s p ->
+        let p = Desugaring.Decompiler.decompile_pattern p in
+        let p = Purification.Decompiler.decompile_pattern p in
+        (* let state = Cst.Tree.mk_state ~offsets:true `Point in *)
+        (* in Cst_jsligo.Print.to_buffer state cst *)
+        let s' = match syntax with
+          Some Syntax_types.JsLIGO -> 
+            let p = Tree_abstraction.Jsligo.decompile_pattern p in
+            let p = Parsing.Jsligo.pretty_print_pattern p in
+            Buffer.contents p
+        | Some CameLIGO -> 
+          let p = Tree_abstraction.Cameligo.decompile_pattern p in
+          let p = Parsing.Cameligo.pretty_print_pattern p in
+          Buffer.contents p
+        | Some ReasonLIGO -> 
+          let p = Tree_abstraction.Reasonligo.decompile_pattern p in
+          let p = Parsing.Reasonligo.pretty_print_pattern p in
+          Buffer.contents p
+        | Some PascaLIGO _ -> 
+          let p = Tree_abstraction.Pascaligo.decompile_pattern p in
+          let p = Parsing.Pascaligo.pretty_print_pattern p in
+          Buffer.contents p
+        | None -> 
+          let p = Tree_abstraction.Cameligo.decompile_pattern p in
+          let p = Parsing.Cameligo.pretty_print_pattern p in
+          Buffer.contents p in s ^ "\n- " ^ s') in
       Format.fprintf f
-        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%a@]"
+        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"
         Snippet.pp loc
-        Ast_typed.PP.pp_patterns ps
+        ps
     | `Typer_pattern_redundant_case loc ->
       Format.fprintf f
         "@[<hv>%a@.Error : this match case is unused.@]"
@@ -657,7 +683,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("location", Location.to_yojson p.location);
     ] in
     json_error ~stage ~content
-  | `Typer_pattern_missing_cases (loc,ps) ->
+  | `Typer_pattern_missing_cases (loc,_,ps) ->
+    (* TODO: decompile patterns *)
     let message = `String "pattern-matching is not exhaustive." in
     let pattern = List.map ps ~f:(Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) in
     let content = `Assoc [

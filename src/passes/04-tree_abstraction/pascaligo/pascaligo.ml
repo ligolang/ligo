@@ -10,3 +10,4 @@ let compile_expression = Compiler.compile_expression ~attr:[]
 
 let decompile_declarations = Decompiler.decompile_declarations
 let decompile_expression = Decompiler.decompile_expression
+let decompile_pattern = Decompiler.decompile_pattern

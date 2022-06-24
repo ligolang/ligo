@@ -367,9 +367,9 @@ module MakePretty (CST    : CST)
     (* Pretty-print a pattern from its CST *)
 
     let print_pattern pattern =
-      let width, buffer = set () in
+      let _width, buffer = set () in
       let doc = Pretty.print_pattern pattern in
-      let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
+      let () = PPrint.ToBuffer.pretty 1.0 120 buffer doc (* Don't hardcode 120*)
       in buffer
 
     let pretty_print_pattern = print_pattern
