@@ -133,7 +133,8 @@
   "faq": {
     "FAQ": [
       "faq/intro",
-      "faq/convert-address-to-contract"
+      "faq/convert-address-to-contract",
+      "faq/polymorphic-comparison"
     ]
   }
 }
