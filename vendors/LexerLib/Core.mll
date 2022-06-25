@@ -722,13 +722,9 @@ and scan_string delimiter thread state = parse
            scan_string delimiter (thread#push_char '"') state lexbuf
   }
 | '\''   {
-  if Char.(=) delimiter '\'' then
-    let {state; _} = state#sync lexbuf
-        in thread, state
-  else
     let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char '\'') state lexbuf
-
+    if Char.(=) delimiter '\'' then thread, state
+    else scan_string delimiter (thread#push_char '\'') state lexbuf
   }
 | esc    { let {lexeme; state; _} = state#sync lexbuf in
            let thread = thread#push_string lexeme
