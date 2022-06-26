@@ -735,9 +735,8 @@ and unescape delimiter thread state = parse
 | '\\' { let {state; lexeme; _} = state#sync lexbuf in
          let thread = thread#push_string lexeme (* Unescaped "\\" into '\\' *)
          in scan_string delimiter thread state lexbuf }
-| _    { rollback lexbuf; (* Not a valid escape sequence *)
-         let thread = thread#push_char '\\' (* verbatim *)
-         in scan_string delimiter thread state lexbuf }
+| _    { let {region; _} = state#sync lexbuf in
+         fail region Undefined_escape_sequence }
 
 (* Scanner called first *)
 
