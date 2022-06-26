@@ -159,10 +159,10 @@ module Esy = struct
       |> List.rev
       |> String.concat path_separator
 
-  (* [normalize_pkg_name pkg_name] transforms the path of package names, 
+  (* [normalize_name name] transforms names used in esy paths, 
      1. '-' in the project name are transformed to '_' 
      2. '_' in the project name are transformed to '__' *)
-  let normalize_name pkg_name = pkg_name
+  let normalize_name name = name
     |> String.split_on_char '_'
     |> String.concat "__"
     |> String.split_on_char '-' 
