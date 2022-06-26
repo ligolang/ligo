@@ -212,7 +212,38 @@ let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) (
       "Done.";
       "42";
       "24";
-      ]
+    ]
+    ()
+
+let test_use_scoped_package ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/using_scope_pkg_project" in
+  let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #use (equivalent of #include) *)
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#use \"@stevenj/generic-fa2/multi_asset.instance.mligo\"";
+      "Errors.undefined_token";
+    ]
+    [ 
+      "main , update_ops , balance_of , transfer , extension , parameter ,\n\
+      update_operators , unit_update , operator , balance_of , callback , request ,\n\
+      transfer , transfer_from , atomic_trans , storage , Storage , Ledger ,\n\
+      TokenMetadata , Operators ,\n\
+      Errors";
+      "\"FA2_TOKEN_UNDEFINED\"";  
+    ]
+    ()
+
+let test_import_scoped_packages ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/using_scope_pkg_project" in
+  let raw_options = { raw_options with project_root = project_root } in
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#import \"@stevenj/generic-fa2/multi_asset.instance.mligo\" \"MA\"";
+      "MA.Errors.undefined_token";
+    ]
+    [ 
+      "Done.";
+      "\"FA2_TOKEN_UNDEFINED\"";  
+    ]
     ()
 
 let () =
@@ -237,8 +268,10 @@ let () =
         test "long" (test_long_jsligo ~raw_options)
       ] ;
     test_suite "REPL + package-management" [
-      test "#use external packages" (test_use_external_packages ~raw_options);
-      test "#import external packages" (test_import_external_packages ~raw_options);
+      test "#use ext pkgs" (test_use_external_packages ~raw_options);
+      test "#import ext pkgs" (test_import_external_packages ~raw_options);
+      test "#use scoped ext pkg" (test_use_scoped_package ~raw_options);
+      test "#import scoped ext pkg" (test_import_scoped_packages ~raw_options);
     ] ;
   ] ;
   ()
