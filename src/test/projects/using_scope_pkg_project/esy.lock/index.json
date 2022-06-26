@@ -1,0 +1,33 @@
+{
+  "checksum": "63a8ece63fbb923b028adec3767b6db5",
+  "root": "using_scope_pkg_project@link-dev:./package.json",
+  "node": {
+    "using_scope_pkg_project@link-dev:./package.json": {
+      "id": "using_scope_pkg_project@link-dev:./package.json",
+      "name": "using_scope_pkg_project",
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [ "@stevenj/generic-fa2@1.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "@stevenj/generic-fa2@1.0.0@d41d8cd9": {
+      "id": "@stevenj/generic-fa2@1.0.0@d41d8cd9",
+      "name": "@stevenj/generic-fa2",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@stevenj/generic-fa2/-/generic-fa2-1.0.0.tgz#sha1:73a5bd39e91ae87232f24e57a8f9110feeb2c6eb"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}

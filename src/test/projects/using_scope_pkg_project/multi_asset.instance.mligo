@@ -1,0 +1,1 @@
+#include "@stevenj/generic-fa2/multi_asset.instance.mligo"
