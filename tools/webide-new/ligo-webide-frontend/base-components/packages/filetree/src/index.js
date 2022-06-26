@@ -236,9 +236,13 @@ const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, r
       treeRef.current && (treeRef.current.state.loadedKeys = [])
     }
 
+    const getRoot = (path) => {
+      return path.indexOf('/', 11) === -1 ? path : path.substring(0, path.indexOf('/', 11))
+    }
+
     const refreshDirectory = async (directory) => {
-      const { prefix, projectId, userId } = projectManager
-      if (directory.path === `${prefix}/${userId}/${projectId}`) {
+      const rootPath = getRoot(directory.path)
+      if (directory.path === rootPath) {
         await loadTree(projectManager)
       } else {
         const tempTree = cloneDeep(prevTreeData.current)
@@ -250,6 +254,17 @@ const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, r
         setLeaf(tempTree, tempTree[0].path)
         setTreeData(tempTree)
         setSelectNode(tempTree[0])
+
+        if (treeRef.current) {
+          treeRef.current.state.loadedKeys = treeRef.current.state.loadedKeys.filter(key => !key.includes(directory.path))
+  
+          const newExpandedKeys = treeRef.current.state.expandedKeys.filter(key => {
+            return key === directory.path || !key.includes(directory.path)
+          })
+  
+          setExpandKeys(newExpandedKeys)
+        }
+
       }
     }
 
