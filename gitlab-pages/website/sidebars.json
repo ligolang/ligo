@@ -134,7 +134,8 @@
     "FAQ": [
       "faq/intro",
       "faq/convert-address-to-contract",
-      "faq/polymorphic-comparison"
+      "faq/polymorphic-comparison",
+      "faq/catch-error-view"
     ]
   }
 }
