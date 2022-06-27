@@ -18,8 +18,11 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 
-let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
-  @ ["Michelson"]
+let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
+let rec compile_pseudomodule_access field = let open CST in match field with
+  | EVar v -> v.value
+  | EModA { value = { module_name ; field ; selector = _ } ; region = _ } -> module_name.value ^ "." ^ compile_pseudomodule_access field
+  | _ -> failwith "Corner case : This couldn't be produce by the parser"
 
 open Predefined.Tree_abstraction
 
@@ -312,21 +315,15 @@ let rec compile_expression ~(raise:Errors.abs_error Simple_utils.Trace.raise) ?f
       return @@ e_application ~loc func args
     )
   (*TODO: move to proper module*)
-  | ECall ({value=(EModA {value={module_name;field;selector=_};region=_},args);region} as call) when
-    List.mem ~equal:Caml.(=) build_ins module_name.value ->
+  | ECall ({value=(EModA {value={module_name;field=_;selector=_};region=_} as value,args);region} as call) when
+    List.mem ~equal:String.(=) built_ins module_name.value ->
     let args = match args with
       | Unit the_unit -> CST.EUnit the_unit,[]
       | Multiple xs ->
          let hd,tl = xs.value.inside in
          hd,List.map ~f:snd tl in
     let loc = Location.lift region in
-    let fun_name = match field with
-      EVar v -> v.value | EModA _ ->raise.raise @@ unknown_constant module_name.value loc
-      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
-    in
-    let var = module_name.value ^ "." ^ fun_name in
+    let var = compile_pseudomodule_access value in
     (match constants var with
       Some const ->
       let args = List.map ~f:self @@ nseq_to_list args in
@@ -376,15 +373,8 @@ let rec compile_expression ~(raise:Errors.abs_error Simple_utils.Trace.raise) ?f
     let (ma, loc) = r_split ma in
     (*TODO: move to proper module*)
     let (module_name', _) = r_split ma.module_name in
-    if List.mem ~equal:Caml.(=) build_ins module_name' then
-      let fun_name = match ma.field with
-        EVar v -> v.value
-      | EModA _ ->raise.raise @@ unknown_constant module_name' loc
-      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
-      in
-      let var = module_name' ^ "." ^ fun_name in
+    if List.mem ~equal:String.(=) built_ins module_name' then
+      let var = compile_pseudomodule_access e in
       (match constants var with
         Some const -> return @@ e_constant ~loc const []
        | None -> (
