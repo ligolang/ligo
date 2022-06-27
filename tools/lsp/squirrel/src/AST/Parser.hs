@@ -117,7 +117,7 @@ parseWithScopes fp = runNoLoggingT do
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
 parseContracts
-  :: MonadUnliftIO m
+  :: (Log m, MonadUnliftIO m)
   => ParserCallback m contract
   -> ProgressCallback m
   -> (FilePath -> Bool)
