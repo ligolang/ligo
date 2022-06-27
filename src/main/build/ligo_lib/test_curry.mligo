@@ -111,19 +111,20 @@ module Test = struct
   let sign (sk : string) (d : bytes) : signature = [%external "TEST_SIGN"] sk d
 end
 
+type 'a pbt_result = Success | Fail of 'a
 module PBT = struct
   let gen (type a) : a gen = [%external "TEST_RANDOM"] false
   let gen_small (type a) : a gen = [%external "TEST_RANDOM"] true
   let make_test (type a) (g : a gen) (p : a -> bool) : a test = (g, p)
-  let run (type a) ((g, p) : a test) (n : nat) : a option =
-    let (_, v) = [%external "LOOP_LEFT"] (fun ((n, _) : nat * a option) ->
-                                       if n = 0n then
-                                         [%external "LOOP_STOP"] (0n, (None : a option))
+  let run (type a) ((g, p) : a test) (k : nat) : a pbt_result =
+    let (_, v) = [%external "LOOP_LEFT"] (fun ((n, _) : nat * a pbt_result) ->
+                                       if n = k then
+                                         [%external "LOOP_STOP"] (0n, (Success : a pbt_result))
                                        else
                                          let v = [%external "TEST_GENERATOR_EVAL"] g in
                                          if p v then
-                                           [%external "LOOP_CONTINUE"] (abs (n - 1), (None : a option))
+                                           [%external "LOOP_CONTINUE"] ((n + 1n), (Success : a pbt_result))
                                          else
-                                           [%external "LOOP_STOP"] (n, Some v)) (n, (None : a option)) in
+                                           [%external "LOOP_STOP"] (n, Fail v)) (0n, (Success : a pbt_result)) in
     v
 end
