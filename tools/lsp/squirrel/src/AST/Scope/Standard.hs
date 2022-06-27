@@ -11,14 +11,12 @@ import AST.Scope.Common
   )
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
-
 import Cli.Impl
 import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
-
+import Diagnostic (Message)
 import Log (Log, i)
 import Log qualified
-import Parser (Message)
 
 data Standard
 

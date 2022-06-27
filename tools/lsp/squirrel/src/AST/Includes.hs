@@ -43,9 +43,9 @@ import AST.Scope.Common
   )
 import AST.Scope.Fallback (loopM, loopM_)
 import AST.Skeleton (Error (..), Lang (..), LIGO, SomeLIGO (..))
-
+import Diagnostic (Message (..), MessageDetail (MissingContract))
 import Parser
-  ( Info, LineMarker (..), LineMarkerType (..), Message (..), ParsedInfo, emptyParsedInfo
+  ( Info, LineMarker (..), LineMarkerType (..), ParsedInfo, emptyParsedInfo
   , parseLineMarkerText
   )
 import ParseTree (Source (..))
@@ -272,5 +272,5 @@ includesGraph contracts = do
     emptyContract name =
       FindContract
         (Source name "")
-        (SomeLIGO Caml (fastMake emptyParsedInfo (Error ("Missing contract: " <> Text.pack name) [])))
+        (SomeLIGO Caml (fastMake emptyParsedInfo (Error (MissingContract name) [])))
         []
