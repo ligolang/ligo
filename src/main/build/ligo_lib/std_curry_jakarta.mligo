@@ -50,6 +50,7 @@ module Tezos = struct
   let constant (type a) (s : string) : a = [%external ("GLOBAL_CONSTANT", s)]
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation = [%external ("CALL", a, mu, c)]
   let set_delegate (o : key_hash option) : operation = [%external ("SET_DELEGATE", o)]
+  
 end
 
 module Bitwise = struct
