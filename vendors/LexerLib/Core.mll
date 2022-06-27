@@ -716,12 +716,12 @@ and scan_string delimiter thread state = parse
            else
              let thread = thread#push_char '"' in
              scan_string delimiter thread state lexbuf }
-| '\\'   { let {state; _} = state#sync lexbuf
-           in unescape delimiter thread state lexbuf }
+| '\\'   { let {state; region; _} = state#sync lexbuf
+           in unescape region delimiter thread state lexbuf }
 | _ as c { let {state; _} = state#sync lexbuf in
            scan_string delimiter (thread#push_char c) state lexbuf }
 
-and unescape delimiter thread state = parse
+and unescape backslash delimiter thread state = parse
   '"'  { let {state; lexeme; _} = state#sync lexbuf in
          let interpretation =
            if Char.(=) delimiter '"' then
@@ -736,6 +736,7 @@ and unescape delimiter thread state = parse
          let thread = thread#push_string lexeme (* Unescaped "\\" into '\\' *)
          in scan_string delimiter thread state lexbuf }
 | _    { let {region; _} = state#sync lexbuf in
+         let region = Region.cover backslash region in
          fail region Undefined_escape_sequence }
 
 (* Scanner called first *)
