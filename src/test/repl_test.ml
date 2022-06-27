@@ -220,16 +220,14 @@ let test_use_scoped_package ~raise ~(raw_options : Compiler_options.raw) () =
   let raw_options = { raw_options with project_root = project_root } in
   (* Here we #use (equivalent of #include) *)
   test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
-      "#use \"@stevenj/generic-fa2/multi_asset.instance.mligo\"";
-      "Errors.undefined_token";
+      "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\"";
+      "reverse [3 ; 2 ; 1]";
     ]
     [ 
-      "main , update_ops , balance_of , transfer , extension , parameter ,\n\
-      update_operators , unit_update , operator , balance_of , callback , request ,\n\
-      transfer , transfer_from , atomic_trans , storage , Storage , Ledger ,\n\
-      TokenMetadata , Operators ,\n\
-      Errors";
-      "\"FA2_TOKEN_UNDEFINED\"";  
+      "remove , equal , rotate , split , slice , take , drop , insert , set , find ,\n\
+      concat , reverse , last , construct ,\n\
+      big_array";
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
     ]
     ()
 
@@ -237,12 +235,12 @@ let test_import_scoped_packages ~raise ~(raw_options : Compiler_options.raw) () 
   let project_root = Some "projects/using_scope_pkg_project" in
   let raw_options = { raw_options with project_root = project_root } in
   test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
-      "#import \"@stevenj/generic-fa2/multi_asset.instance.mligo\" \"MA\"";
-      "MA.Errors.undefined_token";
+      "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\"";
+      "BA.reverse [3 ; 2 ; 1]";
     ]
     [ 
       "Done.";
-      "\"FA2_TOKEN_UNDEFINED\"";  
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
     ]
     ()
 

@@ -1,5 +1,5 @@
 {
-  "checksum": "63a8ece63fbb923b028adec3767b6db5",
+  "checksum": "46e05c0246ddced7da901e0d9c2b6dc9",
   "root": "using_scope_pkg_project@link-dev:./package.json",
   "node": {
     "using_scope_pkg_project@link-dev:./package.json": {
@@ -12,17 +12,17 @@
         "manifest": "package.json"
       },
       "overrides": [],
-      "dependencies": [ "@stevenj/generic-fa2@1.0.0@d41d8cd9" ],
+      "dependencies": [ "@ligo/bigarray-cameligo@0.0.0@d41d8cd9" ],
       "devDependencies": []
     },
-    "@stevenj/generic-fa2@1.0.0@d41d8cd9": {
-      "id": "@stevenj/generic-fa2@1.0.0@d41d8cd9",
-      "name": "@stevenj/generic-fa2",
-      "version": "1.0.0",
+    "@ligo/bigarray-cameligo@0.0.0@d41d8cd9": {
+      "id": "@ligo/bigarray-cameligo@0.0.0@d41d8cd9",
+      "name": "@ligo/bigarray-cameligo",
+      "version": "0.0.0",
       "source": {
         "type": "install",
         "source": [
-          "archive:https://registry.npmjs.org/@stevenj/generic-fa2/-/generic-fa2-1.0.0.tgz#sha1:73a5bd39e91ae87232f24e57a8f9110feeb2c6eb"
+          "archive:https://registry.npmjs.org/@ligo/bigarray-cameligo/-/bigarray-cameligo-0.0.0.tgz#sha1:e3661a3eac49337aa35759da870fd0acb4ae2e39"
         ]
       },
       "overrides": [],
