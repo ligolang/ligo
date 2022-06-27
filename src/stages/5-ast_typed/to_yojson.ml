@@ -30,7 +30,31 @@ let layout = function
   | L_tree -> `List [ `String "L_tree"; `Null ]
 let type_and_module_attr ({ public ; hidden } : type_attribute) = `Assoc [ ("public", `Bool public) ; ("hidden", `Bool hidden) ]
 
-let rec type_expression {type_content=tc;type_meta;location;orig_var} =
+let rec bool () =
+  `List [ `String "t_constant";
+          `Assoc [
+              ("language", `String "Michelson");
+              ("injection", `String Stage_common.Constant.(to_string bool));
+              ("parameters", `List []);
+            ]
+    ]
+
+and opt te =
+  let parameters = match Combinators.get_t_option te  with
+    | Some parameter -> list type_expression [parameter]
+    | None -> `List [] in
+  `List [ `String "t_constant";
+          `Assoc [
+              ("language", `String "Michelson");
+              ("injection", `String "option");
+              ("parameters", parameters);
+            ]
+    ]
+
+and type_expression ({type_content=tc;type_meta;location;orig_var} as te) =
+  if Option.is_some (Combinators.get_t_bool te) then bool () else
+  if Option.is_some (Combinators.get_t_option te) then opt te
+  else
   `Assoc [
     ("type_content", type_content tc);
     ("type_meta", option Ast_core.Yojson.type_expression type_meta);

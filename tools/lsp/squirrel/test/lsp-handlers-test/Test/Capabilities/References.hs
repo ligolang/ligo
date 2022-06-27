@@ -34,9 +34,9 @@ unit_references = do
   let uri = filePathToUri filepath
   refs `shouldMatchList` fmap (Location uri)
     [ Range (Position 7 9) (Position 7 16)
-    , Range (Position 11 29) (Position 11 36)
-    , Range (Position 24 30) (Position 24 37)
-    , Range (Position 68 30) (Position 68 37)
+    , Range (Position 10 29) (Position 10 36)
+    , Range (Position 22 30) (Position 22 37)
+    , Range (Position 64 30) (Position 64 37)
     ]
 
 unit_close_open_docs :: Assertion

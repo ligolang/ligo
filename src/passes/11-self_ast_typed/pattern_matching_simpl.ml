@@ -36,12 +36,10 @@
   TODO: This approach is naive, with a more sophisticated approach it is possible to descriminate between non-exhaustive/redundant/unused patterns
 *)
 
-open Errors
 let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed
-open Simple_utils.Trace
 
 module SimplMap = Simple_utils.Map.Make(ValueVar)
 
@@ -117,24 +115,6 @@ let compress_matching : expression -> expression =
     in
     do_while simplify exp
 
-let anomaly_check ~raise : expression -> unit =
-  fun exp ->
-    let aux : unit -> expression -> unit =
-      fun () exp ->
-        match exp.expression_content with
-        | E_matching _ ->
-          let contains_partial_match : expression -> expression =
-            fun exp' ->
-              if is_generated_partial_match exp' then raise.raise (pattern_matching_anomaly exp.location)
-              else exp'
-          in
-          let _ = map_expression contains_partial_match exp in
-          ()
-        | _ -> ()
-    in
-    fold_expression aux () exp
-
-let peephole_expression ~raise exp =
+let peephole_expression exp =
   let exp' = compress_matching exp in
-  let () = anomaly_check ~raise exp' in
   exp'

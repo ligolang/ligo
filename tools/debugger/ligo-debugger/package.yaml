@@ -68,8 +68,8 @@ library:
     - bytestring
     - conduit
     - containers
-    - directory
     - data-default
+    - directory
     - filepath
     - fmt
     - lens
@@ -80,6 +80,7 @@ library:
     - nyan-interpolation
     - process
     - scientific
+    - singletons
     - stm
     - text
     - unliftio
@@ -121,6 +122,7 @@ tests:
     dependencies:
       - containers
       - data-default
+      - dir-traverse
       - filepath
       - fmt
       - lens
