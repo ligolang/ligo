@@ -112,7 +112,7 @@ module Test = struct
   let read_contract_from_file (fn : string) : michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
   let sign (sk : string) (d : bytes) : signature = [%external ("TEST_SIGN", sk, d)]
   let chr (n : nat) : string option =
-    let backslash = [%external ("TEST_UNESCAPE_STRING", "\\")] in
+    let backslash = "\\" in
     if n < 10n then
       Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
     else if n < 100n then
