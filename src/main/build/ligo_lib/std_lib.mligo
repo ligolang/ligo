@@ -867,16 +867,16 @@ module Test = struct
     (a, f, c)
   let read_contract_from_file (fn : string) : michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
   let sign (sk : string) (d : bytes) : signature = [%external ("TEST_SIGN", sk, d)]
-  // let chr (n : nat) : string option =
-  //   let backslash = [%external ("TEST_UNESCAPE_STRING", "\\")] in
-  //   if n < 10n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
-  //   else if n < 100n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "0" ^ to_string (int n)))])
-  //   else if n < 256n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ to_string (int n)))])
-  //   else
-  //     None
+  let chr (n : nat) : string option =
+    let backslash = "\\" in
+    if n < 10n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
+    else if n < 100n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "0" ^ to_string (int n)))])
+    else if n < 256n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ to_string (int n)))])
+    else
+      None
   let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
   let println (v : string) : unit =
     print (v ^ nl)
@@ -978,16 +978,16 @@ module Test = struct
     let a = originate_contract (f, s, t) in
     let c = size f in
     (a, f, c)
-  // let chr (n : nat) : string option =
-  //   let backslash = [%external ("TEST_UNESCAPE_STRING", "\\")] in
-  //   if n < 10n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
-  //   else if n < 100n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "0" ^ to_string (int n)))])
-  //   else if n < 256n then
-  //     Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ to_string (int n)))])
-  //   else
-  //     None
+  let chr (n : nat) : string option =
+    let backslash = "\\" in
+    if n < 10n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
+    else if n < 100n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "0" ^ to_string (int n)))])
+    else if n < 256n then
+      Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ to_string (int n)))])
+    else
+      None
   let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
   let println (v : string) : unit =
     print (v ^ nl)
