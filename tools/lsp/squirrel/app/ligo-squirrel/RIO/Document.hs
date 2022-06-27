@@ -169,6 +169,11 @@ preload normFp = Log.addNamespace "preload" do
 
   mvf <- S.getVirtualFile uri
   case mvf of
+    -- FIXME: Opening a file through `virtualFileText` rather than `pathToSrc`
+    -- will cause different behavior w.r.t. encodings. For instance, opening
+    -- a UTF-16-encoded file that was not yet indexed will not show errors,
+    -- while opening it after it was indexed will display various encoding
+    -- errors.
     Just vf -> pure $ Source fin' (V.virtualFileText vf)
     Nothing -> pathToSrc fin'
 
