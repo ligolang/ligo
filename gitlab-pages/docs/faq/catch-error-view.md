@@ -15,7 +15,7 @@ or define your own type result like in OCaml:
 
 In PascaLIGO :
 
-```pascaligo
+```pascaligo group=failwith_view
 type result (s,f) is Ok of s | Error of f
 ```
 
@@ -24,7 +24,7 @@ type result (s,f) is Ok of s | Error of f
 
 In CameLIGO :
 
-```cameligo
+```cameligo group=failwith_view
 type ('s,'f) result = Ok of 's | Error of 'f
 ```
 
@@ -33,7 +33,7 @@ type ('s,'f) result = Ok of 's | Error of 'f
 
 In ReasonLIGO :
 
-```reasonligo
+```reasonligo group=failwith_view
 type result ('s,'f) = Ok('s) | Error('f)
 ```
 
@@ -42,7 +42,7 @@ type result ('s,'f) = Ok('s) | Error('f)
 
 In JsLIGO :
 
-```jsligo
+```jsligo group=failwith_view
 type result<s,f> = ["Ok", s] | ["Error", f]
 ```
 

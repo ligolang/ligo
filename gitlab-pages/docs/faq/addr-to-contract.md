@@ -15,7 +15,7 @@ example:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo test-ligo
+```pascaligo test-ligo group=addr2contract
 const test = {
   const addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
   const taddr : typed_address(unit, unit) = Test.cast_address (addr);
@@ -26,7 +26,7 @@ const test = {
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo test-ligo
+```cameligo test-ligo group=addr2contract
 let test =
   let addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) in
   let taddr : (unit, unit) typed_address = Test.cast_address addr in
@@ -37,7 +37,7 @@ let test =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo test-ligo
+```reasonligo test-ligo group=addr2contract
 let test = {
   let addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
   let taddr : typed_address(unit,unit) = Test.cast_address(addr);
@@ -49,7 +49,7 @@ let test = {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo
+```jsligo test-ligo group=addr2contract
 const _test = () : contract<unit> => {
   const addr : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
   const taddr : typed_address<unit,unit> = Test.cast_address(addr);
