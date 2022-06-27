@@ -1,3 +1,5 @@
+module PBT = Test.PBT
+
 (* This function is almost like identity... *)
 let almost_id (xs : int list) =
   if (List.length xs = 5n) then
