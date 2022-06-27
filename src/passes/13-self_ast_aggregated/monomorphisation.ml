@@ -316,6 +316,36 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
                     Data.instances_add (Longident.of_variable binder) binder_instances data) in
      data, Match_record { tv ; body ; fields }
 
-let mono_polymorphic_expr e =
+let check_if_polymorphism_present ~raise e =
+   let show_error loc =
+      raise.Trace.raise @@ Errors.polymorphism_unresolved loc
+   in
+   let rec check_type_expression ~loc (te : AST.type_expression) = 
+      match te.type_content with
+        T_variable _ -> show_error loc;
+      | T_constant { parameters ; _ } -> 
+         List.fold_left parameters ~init:() 
+            ~f:(fun () te -> ignore @@ check_type_expression ~loc te)
+      | T_record { content ; _ }
+      | T_sum { content ; _ } -> 
+         AST.LMap.fold (fun _ (re : AST.row_element) () -> 
+            check_type_expression ~loc re.associated_type) content ()
+      | T_arrow _ -> ()
+      | T_singleton _ -> ()
+      | T_for_all _ -> show_error loc;
+   in
+   let (), e = fold_map_expression (fun _ e ->
+      match e.expression_content with
+         AST.E_application { args ; lamb } when not (AST.is_e_raw_code lamb) ->
+            check_type_expression ~loc:args.location args.type_expression;
+            (true, (), e)
+      | AST.E_constant _ ->
+         check_type_expression ~loc:e.location e.type_expression;
+         (true, (), e)
+      | _ -> (true, (), e)) () e in
+   e
+
+let mono_polymorphic_expr ~raise e =
   let _, m = mono_polymorphic_expression Data.empty e in
+  let m = check_if_polymorphism_present ~raise m in
   m
