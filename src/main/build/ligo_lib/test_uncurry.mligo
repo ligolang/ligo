@@ -110,7 +110,7 @@ module Test = struct
     let c = size f in
     (a, f, c)
   let chr (n : nat) : string option =
-    let backslash = [%external ("TEST_UNESCAPE_STRING", "\\")] in
+    let backslash = "\\" in
     if n < 10n then
       Some ([%external ("TEST_UNESCAPE_STRING", (backslash ^ "00" ^ to_string (int n)))])
     else if n < 100n then
