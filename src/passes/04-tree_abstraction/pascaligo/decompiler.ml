@@ -267,7 +267,7 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
       let aux : AST.label * AST.type_expression AST.pattern -> CST.field_pattern CST.reg =
         fun (Label label, pattern) ->
           let field_rhs = decompile_pattern pattern in
-          let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_ass ; field_rhs ; attributes = [] } in
+          let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_eq ; field_rhs ; attributes = [] } in
           Region.wrap_ghost full_field
       in
       let field_patterns = List.map ~f:aux (List.zip_exn labels patterns) in

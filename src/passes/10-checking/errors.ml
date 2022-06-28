@@ -300,23 +300,23 @@ let rec error_ppformat : display_format:string display_format ->
         let s' = match syntax with
           Some Syntax_types.JsLIGO -> 
             let p = Tree_abstraction.Jsligo.decompile_pattern p in
-            let p = Parsing.Jsligo.pretty_print_pattern p in
+            let p = Parsing.Jsligo.pretty_print_pattern ~cols:80 p in
             Buffer.contents p
         | Some CameLIGO -> 
           let p = Tree_abstraction.Cameligo.decompile_pattern p in
-          let p = Parsing.Cameligo.pretty_print_pattern p in
+          let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 p in
           Buffer.contents p
         | Some ReasonLIGO -> 
           let p = Tree_abstraction.Reasonligo.decompile_pattern p in
-          let p = Parsing.Reasonligo.pretty_print_pattern p in
+          let p = Parsing.Reasonligo.pretty_print_pattern ~cols:80 p in
           Buffer.contents p
         | Some PascaLIGO _ -> 
           let p = Tree_abstraction.Pascaligo.decompile_pattern p in
-          let p = Parsing.Pascaligo.pretty_print_pattern p in
+          let p = Parsing.Pascaligo.pretty_print_pattern ~cols:80 p in
           Buffer.contents p
         | None -> 
           let p = Tree_abstraction.Cameligo.decompile_pattern p in
-          let p = Parsing.Cameligo.pretty_print_pattern p in
+          let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 p in
           Buffer.contents p in s ^ "\n- " ^ s') in
       Format.fprintf f
         "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"

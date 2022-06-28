@@ -38,7 +38,7 @@ val parse_expression : add_warning:(Main_warnings.all -> unit) -> CST.expr parse
 
 val pretty_print            : CST.t -> Buffer.t
 val pretty_print_expression : CST.expr -> Buffer.t
-val pretty_print_pattern    : CST.pattern -> Buffer.t
+val pretty_print_pattern    : ?cols:int -> CST.pattern -> Buffer.t
 val pretty_print_type_expr  : CST.type_expr -> Buffer.t
 val pretty_print_file       : add_warning:(Main_warnings.all -> unit) -> raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
 val pretty_print_cst        : add_warning:(Main_warnings.all -> unit) -> raise:Errors.t Trace.raise -> Buffer.t -> file_path -> Buffer.t
