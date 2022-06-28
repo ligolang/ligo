@@ -793,7 +793,9 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
     | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
       let* gen_type = monad_option (Errors.generic_error loc "Expected typed address") @@ AST.get_t_gen expr_ty in
-      let generator = Mutation.value_gen ~raise ~small gen_type in
+      let>> ctxt : Tezos_state.context = Get_state () in
+      let addresses = ctxt.internals.bootstrapped @ List.concat (List.map ~f:snd ctxt.transduced.last_originations) in
+      let generator = Mutation.value_gen ~raise ~small ~addresses gen_type in
       return (V_Gen { generator ; gen_type })
     | ( C_TEST_RANDOM , _  ) -> fail @@ error_type
     | ( C_TEST_GENERATOR_EVAL , [ V_Gen { generator ; gen_type = _ } ] ) ->

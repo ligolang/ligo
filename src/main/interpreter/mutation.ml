@@ -91,16 +91,18 @@ let expr_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregated.ty
   let* result = expr_gen ~raise ~small type_expr in
   return @@ e_a_lambda { binder = { var = ValueVar.fresh () ; ascr = Some (t_unit ()) ; attributes = { const_or_var = None } } ; result } (t_unit ()) result.type_expression
 
-let rec value_gen : raise:interpreter_error raise -> ?small:bool -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
-  fun ~raise ?(small = true) type_expr ->
+let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?addresses:LT.mcontract list -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
+  fun ~raise ?(small = true) ?addresses type_expr ->
   let open Ast_aggregated in
   let open LC in
+  let addresses = [Michelson_to_value.contract_of_string ~raise "tz1fakefakefakefakefakefakefakcphLA5"] @ match addresses with
+    | None -> [] | Some xs -> xs in
   if is_t_unit type_expr then
     QCheck.Gen.(unit >>= fun _ -> return (v_unit ()))
   else if is_t_string type_expr then
     QCheck.Gen.(string >>= fun s -> return (v_string s))
-  (* else if is_t_address type_expr then
-   *   QCheck.Gen.(int >>= fun _i -> return (v_address _)) *)
+  else if is_t_address type_expr then
+    QCheck.Gen.(oneofl addresses >>= fun addr -> return (v_address addr))
   else if is_t_int type_expr then
     QCheck.Gen.((if small then small_int else int) >>= fun n ->
                 return (v_int (Z.of_int n)))
