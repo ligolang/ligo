@@ -54,13 +54,15 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
      Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_aggregated.PP.expression e
   | V_Thunk { context = _ ; value } ->
      Format.fprintf ppf "Thunk(%a)" Ast_aggregated.PP.expression value
+  | V_Gen _ ->
+     Format.fprintf ppf "Generator"
 
 let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
   Format.fprintf ppf "%a" pp_value v.eval_term
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> env_item -> unit = fun ppf ->
-    function | Expression {name;item;no_mutation=_;inline=_} ->
+  let aux : Format.formatter -> expression_variable * env_item -> unit = fun ppf ->
+    function (name, {item;no_mutation=_;inline=_}) ->
                 Format.fprintf ppf "%a -> %a" ValueVar.pp name pp_value_expr item in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
     (List.length env)

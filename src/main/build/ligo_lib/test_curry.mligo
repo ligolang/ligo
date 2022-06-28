@@ -13,6 +13,9 @@ type test_baker_policy =
   | By_account of address
   | Excluding of address list
 
+type 'a pbt_test = ('a gen) * ('a -> bool)
+type 'a pbt_result = Success | Fail of 'a
+
 module Test = struct
   let failwith (type a b) (v : a) : b = [%external ("TEST_FAILWITH", v)]
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external ("TEST_TO_CONTRACT", t)]
@@ -48,7 +51,9 @@ module Test = struct
   let mutation_test_all (type a b) (v : a) (f : a -> b) : (b * mutation) list = [%external ("TEST_MUTATION_TEST_ALL", v, f)]
   let run (type a b) (f : a -> b) (v : a) : michelson_program = [%external ("TEST_RUN", f, v)]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
-  let random (type a) (u : unit) : a = [%external ("TEST_RANDOM", u)]
+  let random (type a) (_u : unit) : a =
+    let g : a gen = [%external ("TEST_RANDOM", false)] in
+    [%external ("TEST_GENERATOR_EVAL", g)]
   let add_account (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
   let baker_account (p : string * key) (o : tez option) : unit = [%external ("TEST_BAKER_ACCOUNT", p, o)]
@@ -124,4 +129,21 @@ module Test = struct
   let nl = [%external ("TEST_UNESCAPE_STRING", "\n")]
   let println (v : string) : unit =
     print (v ^ nl)
+  module PBT = struct
+    let gen (type a) : a gen = [%external ("TEST_RANDOM", false)]
+    let gen_small (type a) : a gen = [%external ("TEST_RANDOM", true)]
+    let make_test (type a) (g : a gen) (p : a -> bool) : a pbt_test = (g, p)
+    let run (type a) ((g, p) : a pbt_test) (k : nat) : a pbt_result =
+      let iter = fun ((n, _) : nat * a pbt_result) ->
+                                       if n = k then
+                                         [%external ("LOOP_STOP", (0n, (Success : a pbt_result)))]
+                                       else
+                                         let v = [%external ("TEST_GENERATOR_EVAL", g)] in
+                                         if p v then
+                                           [%external ("LOOP_CONTINUE", ((n + 1n), (Success : a pbt_result)))]
+                                         else
+                                           [%external ("LOOP_STOP", (n, Fail v))] in
+      let (_, v) = [%external ("LOOP_LEFT", iter, (0n, (Success : a pbt_result)))] in
+      v
+  end
 end

@@ -651,6 +651,13 @@ let%expect_test _ =
     - test exited with value ().
     Ooops |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_random.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -845,19 +852,6 @@ let%expect_test _ =
     "STARTING BALANCE AND VOTING POWER"
     95000000000mutez
     100000000000n |}]
-
-
-let%expect_test _ =
-  run_ligo_bad [ "run"; "test" ; bad_test "test_random.mligo" ] ;
-  [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 17, characters 19-31:
-     16 |       | None -> ()
-     17 |       | Some _x -> assert false
-     18 | end
-
-    An uncaught error occured:
-    Failwith: "failed assertion" |}]
-
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test" ; bad_test "test_create.mligo" ] ;
