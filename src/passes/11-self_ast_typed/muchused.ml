@@ -80,8 +80,7 @@ let rec is_dup (t : type_expression) =
                      Set              |                        Michelson_or       |
     Michelson_pair | Pvss_key         | Baker_operation      |
     Ticket         |                    Chest_opening_result | Baker_hash);_ }  -> false
-  | T_singleton _
-  | T_module_accessor _ -> false
+  | T_singleton _ -> false
 
 let muchuse_union (x,a) (y,b) =
   M.union (fun _ x y -> Some (x + y)) x y, a@b

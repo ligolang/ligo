@@ -42,7 +42,6 @@ let type_expression_tag ty_cont =
   | T_sum             _ -> 3
   | T_record          _ -> 4
   | T_arrow           _ -> 5
-  | T_module_accessor _ -> 6
   | T_singleton       _ -> 7
   | T_abstraction     _ -> 8
   | T_for_all         _ -> 9
@@ -58,12 +57,11 @@ and type_content a b =
   | T_sum      a, T_sum      b -> rows a b
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | T_module_accessor a, T_module_accessor b -> module_access type_variable a b
   | T_singleton a , T_singleton b -> literal a b
   | T_abstraction a , T_abstraction b -> for_all a b
   | T_for_all a , T_for_all b -> for_all a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_singleton _ | T_abstraction _ | T_for_all _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =

@@ -53,7 +53,6 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     let arguments = List.map ~f:self parameters in
     let type_operator = I.TypeVar.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
-  | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
   | O.T_singleton l ->
     return @@ I.T_singleton l
   | O.T_abstraction x ->
