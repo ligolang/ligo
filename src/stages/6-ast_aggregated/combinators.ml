@@ -193,9 +193,17 @@ let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj 
   | _ -> None
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
-[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "bool", "unit", "address", "tez", "contract", "map", "big_map"))]
+[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "unit", "address", "tez", "contract", "map", "big_map"))]
 
 let is_t_mutez t = is_t_tez t
+
+let is_t_bool t =
+  match t.type_content with
+    T_sum { content ; _ } ->
+    (match LMap.keys content with
+      [Label "True" ; Label "False"] -> true
+    | _ -> false)
+  | _ -> false
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
@@ -203,7 +211,7 @@ let assert_t_list_operation (t : type_expression) : unit option =
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
-[@@map (_type_, ("int", "nat", "bool", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
+[@@map (_type_, ("int", "nat", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
 
 let assert_t__type_ : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t__type_ v
 [@@map (_type_, ("set", "list"))]
@@ -239,7 +247,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
@@ -259,6 +267,7 @@ let e_a_recursive l= e_recursive l l.fun_type
 let e_a_let_in let_binder rhs let_result attr = e_let_in { let_binder ; rhs ; let_result ; attr } (get_type let_result)
 let e_a_raw_code language code t = e_raw_code { language ; code } t
 let e_a_type_inst forall type_ u = e_type_inst { forall ; type_ } u
+let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)

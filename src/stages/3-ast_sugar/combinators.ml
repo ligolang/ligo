@@ -39,9 +39,9 @@ let t_variable ?loc variable : type_expression = make_t ?loc @@ T_variable varia
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
 let t__type_ ?loc () : type_expression = t_variable ?loc v__type_
-[@@map (_type_, ("bool", "string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp"))]
+[@@map (_type_, ("string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp"))]
 let t__type_ ?loc t : type_expression = t_app ?loc v__type_ [t]
-[@@map (_type_, ("option", "list", "set", "contract"))]
+[@@map (_type_, ("list", "set", "contract"))]
 let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
@@ -65,6 +65,12 @@ let t_sum_ez ?loc (lst:((string * ty_expr row_element) list)) : type_expression 
 let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_sum_ez ?loc lst
+
+let t_bool ?loc () : type_expression = 
+  let unit : ty_expr row_element = 
+    { associated_type = t_unit (); attributes = [] ; decl_pos = 0 } in
+  t_sum_ez ?loc
+  [("True", unit);("False", unit)]
 
 let t_arrow ?loc type1 type2  : type_expression = t_arrow ?loc {type1; type2} ()
 

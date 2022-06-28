@@ -256,7 +256,7 @@ let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj 
   | _ -> None
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
-[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "bool", "unit", "address", "tez", "contract", "map", "big_map"))]
+[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "unit", "address", "tez", "contract", "map", "big_map"))]
 
 let is_t_mutez t = is_t_tez t
 
@@ -266,7 +266,7 @@ let assert_t_list_operation (t : type_expression) : unit option =
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
-[@@map (_type_, ("int", "nat", "bool", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
+[@@map (_type_, ("int", "nat", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
 
 let assert_t__type_ : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t__type_ v
 [@@map (_type_, ("set", "list"))]
@@ -302,7 +302,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
