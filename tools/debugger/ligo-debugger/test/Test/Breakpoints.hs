@@ -14,6 +14,7 @@ import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Language.LIGO.Debugger.Snapshots
 import Test.Snapshots
 import Test.Util
+import Morley.Debugger.Core.Navigate (DebuggerState)
 
 test_test :: [TestTree]
 test_test =
@@ -57,4 +58,84 @@ test_test =
             @@? has (_InterpretRunning . _EventExpressionEvaluated)
           view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
 
+  , testCaseSteps "Pausing in different contracts" \step -> do
+      -- TODO; remove these functions when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58) is merged
+      let goToNextBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+          goToNextBreakpoint = do
+            oldPosMb <- N.frozen N.getExecutedPosition
+            N.continueUntilBreakpoint N.NextBreak
+            whenJust oldPosMb \oldPos -> do
+              newPosMb <- N.frozen N.getExecutedPosition
+              whenJust newPosMb \newPos -> do
+                unless (oldPos /= newPos) do
+                  goToNextBreakpoint
+
+      let goToPreviousBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
+          goToPreviousBreakpoint = do
+            oldPosMb <- N.frozen N.getExecutedPosition
+            N.reverseContinue N.NextBreak
+            whenJust oldPosMb \oldPos -> do
+              newPosMb <- N.frozen N.getExecutedPosition
+              whenJust newPosMb \newPos -> do
+                unless (oldPos /= newPos) do
+                  goToPreviousBreakpoint
+
+      let modulePath = contractsDir </> "module_contracts"
+      let file = modulePath </> "importer.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 5 :: Integer
+            }
+
+      let nestedFile = modulePath </> "imported.mligo"
+      let nestedFile2 = modulePath </> "imported2.ligo"
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 5) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 7) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 9) (Pos 0))
+
+        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 8) (Pos 0))
+        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 13) (Pos 0))
+        N.switchBreakpoint (N.SourcePath nestedFile) (SrcPos (Pos 18) (Pos 0))
+
+        N.switchBreakpoint (N.SourcePath nestedFile2) (SrcPos (Pos 0) (Pos 0))
+
+        lift $ step "Go to first breakpoint"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 5) (Pos 21)))
+
+        lift $ step "Go to next breakpoint (switch file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 14) (Pos 5)))
+
+        lift $ step "Go to next breakpoint (go to start file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 7) (Pos 23)))
+
+        lift $ step "Go to next breakpoint (switch file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 11) (Pos 18)))
+
+        lift $ step "Go to next breakpoint (more nested file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
+
+        lift $ step "Go to next breakpoint (go back)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 18) (Pos 45)))
+
+        lift $ step "Go to previous breakpoint"
+        goToPreviousBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
   ]

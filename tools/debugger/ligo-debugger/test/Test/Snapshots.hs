@@ -300,6 +300,8 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "multiple contracts" \step -> do
       let modulePath = contractsDir </> "module_contracts"
       let file = modulePath </> "importer.mligo"
+      let nestedFile = modulePath </> "imported.mligo"
+      let nestedFile2 = modulePath </> "imported2.ligo"
       let runData = ContractRunData
             { crdProgram = file
             , crdEntrypoint = Nothing
@@ -309,6 +311,8 @@ test_Snapshots = testGroup "Snapshots collection"
 
       testWithSnapshots runData do
         -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
+        -- TODO; wrap this predicate when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58)
+        -- is merged.
         let stopAtFile
               :: (MonadState (DebuggerState InterpretSnapshot) m)
               => FilePath
@@ -321,13 +325,13 @@ test_Snapshots = testGroup "Snapshots collection"
                 Nothing -> pure False
 
         lift $ step "Go to nested contract"
-        _ <- moveTill Forward $ stopAtFile (modulePath </> "imported.mligo")
+        _ <- moveTill Forward $ stopAtFile nestedFile
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange "test/contracts/module_contracts/imported.mligo" (LigoPosition 15 5) (LigoPosition 15 10)
+                { sfLoc = LigoRange file' (LigoPosition 15 5) (LigoPosition 15 10)
                 } :| []
-            } -> pass
+            } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
 
         lift $ step "Make sure that we went back"
@@ -335,29 +339,29 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange "test/contracts/module_contracts/importer.mligo" (LigoPosition 7 12) (LigoPosition 7 21)
+                { sfLoc = LigoRange file' (LigoPosition 7 12) (LigoPosition 7 21)
                 } :| []
-            } -> pass
+            } | file' == file -> pass
           sp -> unexpectedSnapshot sp
 
         lift $ step "Check that we can go to more nested contract (and in another dialect)"
-        _ <- moveTill Forward $ stopAtFile (modulePath </> "imported2.ligo")
+        _ <- moveTill Forward $ stopAtFile nestedFile2
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange "test/contracts/module_contracts/imported2.ligo" (LigoPosition 5 11) (LigoPosition 5 18)
+                { sfLoc = LigoRange file' (LigoPosition 5 11) (LigoPosition 5 18)
                 } :| []
-            } -> pass
+            } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
 
         lift $ step "Make sure that we went back to \"imported.mligo\""
-        _ <- moveTill Forward $ stopAtFile (modulePath </> "imported.mligo")
+        _ <- moveTill Forward $ stopAtFile nestedFile
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange "test/contracts/module_contracts/imported.mligo" (LigoPosition 19 57) (LigoPosition 19 64)
+                { sfLoc = LigoRange file' (LigoPosition 19 57) (LigoPosition 19 64)
                 } :| []
-            } -> pass
+            } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
 
         lift $ step "Make sure that we went back to \"importer.mligo\""
@@ -365,8 +369,8 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange "test/contracts/module_contracts/importer.mligo" (LigoPosition 10 26) (LigoPosition 10 39)
+                { sfLoc = LigoRange file' (LigoPosition 10 26) (LigoPosition 10 39)
                 } :| []
-            } -> pass
+            } | file' == file -> pass
           sp -> unexpectedSnapshot sp
   ]
