@@ -655,7 +655,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_random.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test exited with value "TEST FAILED". |}]
+    - test exited with value (). |}]
 
 
 (* do not remove that :) *)
