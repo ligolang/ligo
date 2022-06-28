@@ -12,7 +12,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation, SourceType (..),
+  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation,
   curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs, Frozen)
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
@@ -59,11 +59,10 @@ testWithSnapshots
   :: ContractRunData
   -> StateT (DebuggerState InterpretSnapshot) IO ()
   -> Assertion
-testWithSnapshots runData@ContractRunData{ crdProgram = file } action = do
+testWithSnapshots runData action = do
   (allLocs, his) <- mkSnapshotsFor runData
   let st = DebuggerState
-        { _dsSourceOrigin = SourcePath file
-        , _dsSnapshots = playInterpretHistory his
+        { _dsSnapshots = playInterpretHistory his
         , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
         }
   evalStateT action st
@@ -303,7 +302,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = modulePath </> "importer.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = "main"
+            , crdEntrypoint = Nothing
             , crdParam = ()
             , crdStorage = 10 :: Integer
             }

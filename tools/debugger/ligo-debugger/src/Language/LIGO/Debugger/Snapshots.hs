@@ -163,7 +163,7 @@ instance Buildable InterpretSnapshot where
 instance NavigableSnapshot InterpretSnapshot where
   getExecutedPosition = do
     locRange <- sfLoc . head . isStackFrames <$> curSnapshot
-    return . Just $ ligoPositionToSrcPos (lrStart locRange)
+    return . Just $ ligoRangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
     move Backward >>= \case
       ReachedBoundary -> return Nothing
