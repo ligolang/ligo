@@ -1,22 +1,5 @@
 open Types
-
-let range i j =
-  let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
-  aux i j []
-
-let label_range i j =
-  List.map ~f:(fun i -> Label (string_of_int i)) @@ range i j
-
-let is_tuple_lmap m =
-  List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
-
-let tuple_of_record (m: _ LMap.t) =
-  let aux i =
-    let label = Label (string_of_int i) in
-    let opt = LMap.find_opt (label) m in
-    Option.bind ~f: (fun opt -> Some ((label,opt),i+1)) opt
-  in
-  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
+include Stage_common.Helpers
 
 let kv_list_of_t_sum ?(layout = L_tree) (m: row_element LMap.t) =
   let lst = LMap.to_kv_list m in
@@ -84,29 +67,38 @@ let is_michelson_pair (t: row_element label_map) : (row_element * row_element) o
     )
   | _ -> None
 
-let rec subst_type v t (u : type_expression) =
-  let self = subst_type in
-  match u.type_content with
-  | T_variable v' when TypeVar.equal v v' -> t
+(* This function parse te and replace all occurence of binder by value *)
+let rec subst_type (binder : type_variable) (value : type_expression) (te : type_expression) =
+  let self = subst_type binder value in
+  let return type_content = {te with type_content} in
+  match te.type_content with
+    T_variable var when TypeVar.equal binder var -> value
+  | T_variable  _ -> te
+  | T_constant  {language;injection;parameters} ->
+      let parameters = List.map ~f:self parameters in
+      return @@ T_constant {language;injection;parameters}
+  | T_singleton _ -> te
   | T_arrow {type1;type2} ->
-     let type1 = self v t type1 in
-     let type2 = self v t type2 in
-     { u with type_content = T_arrow {type1;type2} }
-  | T_for_all {ty_binder;kind;type_} when not (TypeVar.equal ty_binder v) ->
-     let type_ = self v t type_ in
-     { u with type_content = T_for_all {ty_binder;kind;type_} }
-  | T_constant {language;injection;parameters} ->
-     let parameters = List.map ~f:(self v t) parameters in
-     { u with type_content = T_constant {language;injection;parameters} }
-  | T_sum {content; layout} ->
-     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
-                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
-     { u with type_content = T_sum {content; layout} }
-  | T_record {content; layout} ->
-     let content = LMap.map (fun {associated_type; michelson_annotation; decl_pos} : row_element ->
-                       {associated_type = self v t associated_type; michelson_annotation;decl_pos}) content in
-     { u with type_content = T_record {content; layout} }
-  | _ -> u
+      let type1 = self type1 in
+      let type2 = self type2 in
+      return @@ T_arrow {type1;type2}
+  | T_sum m -> (
+    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
+      let associated_type = self associated_type in
+      ({associated_type;michelson_annotation;decl_pos} : row_element)
+    in
+    return @@ T_sum { m with content = LMap.map aux m.content }
+  )
+  | T_record m -> (
+    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
+      let associated_type = self associated_type in
+      ({associated_type;michelson_annotation;decl_pos} : row_element)
+    in
+    return @@ T_record { m with content = LMap.map aux m.content }
+  )
+  | T_for_all {ty_binder;kind;type_} ->
+    let type_ = self type_ in
+    return @@ T_for_all {ty_binder;kind;type_}
 
 (* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
 let destruct_for_alls (t : type_expression) =

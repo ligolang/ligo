@@ -36,7 +36,7 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     in
     Format.fprintf ppf "[%a]" (list_sep aux (tag " ; ")) vmap
   | V_Record recmap  ->
-    if (Ast_aggregated.Helpers.is_tuple_lmap recmap) then
+    if (Stage_common.Helpers.is_tuple_lmap recmap) then
       let aux : Format.formatter -> value -> unit = fun ppf v ->
         Format.fprintf ppf "%a" pp_value v
       in

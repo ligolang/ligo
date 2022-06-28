@@ -28,7 +28,6 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
     let _ = check_no_nested_bigmap ~raise false type2 in
     ()
   | T_variable _ -> ()
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> check_no_nested_bigmap ~raise is_in_bigmap x.type_
   | T_for_all x -> check_no_nested_bigmap ~raise is_in_bigmap x.type_
