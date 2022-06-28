@@ -71,4 +71,10 @@ module Test = struct
   let size (_c : michelson_contract) : int = failwith "TEST_SIZE"
   let get_bootstrap_account (_n : nat) : address * key * string = failwith "TEST_GET_BOOTSTRAP_ACCOUNT"
   let sign ((_sk, _d) : string * bytes) : signature = failwith "TEST_SIGN"
+  let chr (_n : nat) : string option = failwith "TEST_CHR"
+  let nl : string = "NEWLINE"
+  let println (_v : string) : unit = failwith "TEST_PRINTLN"
+  let print (_v : string) : unit = failwith "TEST_PRINT"
+  let eprint (_v : string) : unit = failwith "TEST_EPRINTL"
+  let to_string (type a) (_v : a) : string = failwith "TEST_TO_STRING"
 end

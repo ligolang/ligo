@@ -1,0 +1,5 @@
+author: melwyn95
+description: '### Improve error message if polymorphism cannot be resolved'
+merge_request: '1804'
+title: 'Error if polymorphism is present after monomorphisation'
+type: fixed

@@ -76,6 +76,7 @@ FROM esydev/esy:nightly-alpine as esy
 FROM alpine:3.12
 COPY --from=esy . .
 WORKDIR /root/
+RUN chmod 755 /root # so non-root users inside container can see and execute /root/ligo
 COPY --from=0 /tmp/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc
 COPY --from=0 /ligo/coverage /root/coverage
