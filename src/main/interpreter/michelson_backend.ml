@@ -398,9 +398,9 @@ and make_subst_ast_env_exp ~raise env expr =
   let open Ligo_interpreter.Types in
   let get_fv expr =
    Self_ast_aggregated.Helpers.Free_variables.expression expr in
-  let rec aux (fv) acc = function
+  let rec aux fv acc = function
     | [] -> acc
-    | Expression { name; item ; no_mutation ; inline } :: tl ->
+    | (name, { item ; no_mutation ; inline }) :: tl ->
        if List.mem fv name ~equal:ValueVar.equal then
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
