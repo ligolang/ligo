@@ -26,25 +26,23 @@ module type VAR = sig
    val pp : Format.formatter -> t -> unit
 end
 
+module ModuleVar : sig
+   include VAR
+end
 module ValueVar : sig
    include VAR
    val is_mutable : t -> bool
    val is_name    : t -> string -> bool
+   val set_namespace : t -> ModuleVar.t list -> t
 
    (* Maybe bad *)
    val internal_get_name_and_counter : t -> (string * int)
-   val add_prefix : string -> t -> t
 end
 
 module TypeVar : sig
    include VAR
    val is_name          : t -> string -> bool
-   (* Will disapear when redesigning polymorphism *)
+   val set_namespace : t -> ModuleVar.t list -> t
+   (* Use for warning of deprecated polymorphic variable, should desapear *)
    val is_generalizable : t -> bool
-end
-
-module ModuleVar : sig
-   include VAR
-   (* Maybe bad *)
-   val add_prefix : string -> t -> t
 end

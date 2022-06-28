@@ -45,8 +45,6 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
     )
   | T_sum _, _ -> None
-  | T_record ra, T_record rb
-       when Bool.(<>) (Helpers.is_tuple_lmap ra.content) (Helpers.is_tuple_lmap rb.content) -> None
   | T_record ra, T_record rb -> (
       let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
       let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.content in
