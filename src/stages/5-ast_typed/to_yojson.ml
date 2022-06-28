@@ -34,7 +34,7 @@ let rec bool () =
   `List [ `String "t_constant";
           `Assoc [
               ("language", `String "Michelson");
-              ("injection", `String Stage_common.Constant.(to_string bool));
+              ("injection", `String "bool");
               ("parameters", `List []);
             ]
     ]
