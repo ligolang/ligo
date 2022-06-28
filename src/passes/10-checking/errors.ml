@@ -10,7 +10,7 @@ let type_improve t =
   let make_type (module_path, element) =
     match module_path with
       [] -> (t_variable element ())
-    | _ -> t_module_accessor { module_path ; element } () in
+    | _ -> failwith "toto" in
   match t.type_content with
   | T_constant { parameters ; _ } when List.length parameters = 0 -> t
   | _ ->
