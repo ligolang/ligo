@@ -1274,7 +1274,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#30. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#24. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1355,7 +1355,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#30. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#31. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#25. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -2392,8 +2392,6 @@ let%expect_test _ =
       fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
     let <Tezos#0>get_total_voting_power =
       fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-    let <Tezos#0>min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
-    let <Tezos#0>get_min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
     let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
     let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
     let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
@@ -2545,87 +2543,7 @@ let%expect_test _ =
       fun _v -> ((poly_failwith_1)@(L("TEST_PRINT")))[@inline] in
     let <Test#0>eprint =
       fun _v -> ((poly_failwith_1)@(L("TEST_EPRINTL")))[@inline] in
-    let <Tezos#2>balance = ({ DROP ; BALANCE })@(L(unit))[@inline] in
-    let <Tezos#2>amount = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-    let <Tezos#2>now = ({ DROP ; NOW })@(L(unit))[@inline] in
-    let <Tezos#2>sender = ({ DROP ; SENDER })@(L(unit))[@inline] in
-    let <Tezos#2>source = ({ DROP ; SOURCE })@(L(unit))[@inline] in
-    let <Tezos#2>level = ({ DROP ; LEVEL })@(L(unit))[@inline] in
-    let <Tezos#2>self_address = SELF_ADDRESS()[@inline] in
-    let <Tezos#2>chain_id = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-    let <Tezos#2>total_voting_power =
-      ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-    let <Tezos#2>get_balance =
-      fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-    let <Tezos#2>get_amount =
-      fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-    let <Tezos#2>get_now = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-    let <Tezos#2>get_sender =
-      fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-    let <Tezos#2>get_source =
-      fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-    let <Tezos#2>get_level = fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-    let <Tezos#2>get_self_address = fun _u -> (SELF_ADDRESS())[@inline] in
-    let <Tezos#2>get_chain_id =
-      fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-    let <Tezos#2>get_total_voting_power =
-      fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-    let <Tezos#2>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-    let <Tezos#2>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-    let <Tezos#2>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-    let <Tezos#2>open_chest =
-      fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-    let <Tezos#2>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
-    let <Bitwise#3>xor = fun l -> (fun r -> (XOR(l , r)))[@inline] in
-    let <Bitwise#3>shift_left = fun l -> (fun r -> (LSL(l , r)))[@inline] in
-    let <Bitwise#3>shift_right = fun l -> (fun r -> (LSR(l , r)))[@inline] in
-    let <String#8>concat =
-      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-    let <String#8>sub =
-      fun s ->
-      (fun l ->
-       (fun b ->
-        (({ UNPAIR ;
-           UNPAIR ;
-           SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
-                                                                  b)))))[@inline] in
-    let <String#8>length = fun b -> (({ SIZE })@(b))[@inline] in
-    let <Bytes#10>concat =
-      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-    let <Bytes#10>sub =
-      fun s ->
-      (fun l ->
-       (fun b ->
-        (({ UNPAIR ;
-           UNPAIR ;
-           SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
-                                                                  b)))))[@inline] in
-    let <Bytes#10>length = fun b -> (({ SIZE })@(b))[@inline] in
-    let <Crypto#11>blake2b = fun b -> (({ BLAKE2B })@(b))[@inline] in
-    let <Crypto#11>sha256 = fun b -> (({ SHA256 })@(b))[@inline] in
-    let <Crypto#11>sha512 = fun b -> (({ SHA512 })@(b))[@inline] in
-    let <Crypto#11>sha3 = fun b -> (({ SHA3 })@(b))[@inline] in
-    let <Crypto#11>keccak = fun b -> (({ KECCAK })@(b))[@inline] in
-    let <Crypto#11>hash_key = fun k -> (({ HASH_KEY })@(k))[@inline] in
-    let <Crypto#11>check =
-      fun k ->
-      (fun s ->
-       (fun b ->
-        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
-    let assert =
-      fun b ->
-      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-    let assert_with_error =
-      fun b ->
-      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-    let abs = fun i -> (({ ABS })@(i))[@inline] in
-    let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
-    let true = TRUE()[@inline] in
-    let false = FALSE()[@inline] in
-    let unit = UNIT()[@inline] in
-    let <Foo#0>x = L(54) in let <Foo#12>y = <Foo#0>x in L(unit) |}]
+    let <Foo#0>x = L(54) in let <Foo#2>y = <Foo#0>x in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;

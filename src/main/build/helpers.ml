@@ -64,7 +64,6 @@ module LanguageMap = Simple_utils.Map.Make(struct
 end)
 type cache = (Ast_typed.module_ * Ast_core.module_) LanguageMap.t
 let std_lib_cache = ref (LanguageMap.empty : cache)
-let test_lib_cache = ref (LanguageMap.empty : cache)
 let build_key ~options syntax = 
   let open Compiler_options in
   (syntax, options.middle_end.protocol_version, options.middle_end.test)
