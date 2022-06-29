@@ -1002,6 +1002,8 @@ module Test = struct
     let a = originate_contract (f, s, t) in
     let c = size f in
     (a, f, c)
+  let read_contract_from_file (fn : string) : michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
+  let sign ((sk, d) : string * bytes) : signature = [%external ("TEST_SIGN", sk, d)]
   let chr (n : nat) : string option =
     let backslash = "\\" in
     if n < 10n then
