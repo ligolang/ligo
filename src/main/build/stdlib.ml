@@ -1,12 +1,20 @@
-let get_lib : Environment.Protocols.t -> Syntax_types.t -> string = fun protocol stx ->
-  match (protocol , stx) with
-  | Environment.Protocols.Jakarta , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_jakarta
-  | Environment.Protocols.Ithaca , ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> Ligo_lib.Ligo_Stdlib.std_uncurry_ithaca
-  | Environment.Protocols.Jakarta , CameLIGO -> Ligo_lib.Ligo_Stdlib.std_curry_jakarta
-  | Environment.Protocols.Ithaca  , CameLIGO -> Ligo_lib.Ligo_Stdlib.std_curry_ithaca
+let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> string = fun protocol stx ~test_enabled ->
+  let def str = "#define " ^ str ^ "\n" in
+  let test_module = if test_enabled then def "TEST_LIB" else "" in
+  let func_type =
+    match stx with
+    | ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> def "UNCURRY"
+    | CameLIGO                             -> def "CURRY"
+  in
+  let std = match protocol with
+    | Environment.Protocols.Jakarta -> def "JAKARTA"
+    | Environment.Protocols.Ithaca  -> def "ITHACA"
+  in
+  let lib = Ligo_lib.get () in
+  test_module ^ func_type ^ std ^ lib
 
 let stdlib ~options syntax =
-  let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax in
+  let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax ~test_enabled:Compiler_options.(options.middle_end.test) in
   match Simple_utils.Trace.to_stdlib_result @@
           Ligo_compile.Utils.type_program_string ~add_warning:(fun _ -> ()) ~options CameLIGO lib with
   | Ok s -> s
