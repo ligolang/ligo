@@ -128,6 +128,10 @@ let <../../test/contracts/build/A.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/A.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/A.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/A.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Tezos#0>implicit_account =
@@ -337,6 +341,10 @@ let <../../test/contracts/build/B.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/B.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/B.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/B.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Tezos#0>implicit_account =
@@ -513,10 +521,10 @@ let <../../test/contracts/build/B.mligo#0>toto = L(32) in
 let <../../test/contracts/build/B.mligo#0>titi =
   ADD(<../../test/contracts/build/A.mligo#0>toto , L(42)) in
 let <../../test/contracts/build/B.mligo#0>f =
-  fun gen#927 ->
-  (let (gen#3129, gen#3130) = gen#927 in
-   let gen#928 = gen#3129 in
-   let x = gen#3130 in
+  fun gen#931 ->
+  (let (gen#3143, gen#3144) = gen#931 in
+   let gen#932 = gen#3143 in
+   let x = gen#3144 in
    let x =
      ADD(ADD(x , <../../test/contracts/build/A.mligo#0>toto) ,
          <../../test/contracts/build/B.mligo#0>titi) in
@@ -557,6 +565,10 @@ let <../../test/contracts/build/F.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/F.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/F.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/F.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Tezos#0>implicit_account =
@@ -766,6 +778,10 @@ let <../../test/contracts/build/G.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/G.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/G.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/G.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Tezos#0>implicit_account =
@@ -975,6 +991,10 @@ let <../../test/contracts/build/C.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/C.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/C.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/C.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Tezos#0>implicit_account =
@@ -1188,6 +1208,10 @@ let <../../test/contracts/build/E.mligo#0><Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <../../test/contracts/build/E.mligo#0><Tezos#0>min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <../../test/contracts/build/E.mligo#0><Tezos#0>get_min_block_time =
+  { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <../../test/contracts/build/E.mligo#0><Tezos#0>voting_power =
   fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Tezos#0>implicit_account =
@@ -1387,6 +1411,8 @@ let <Tezos#0>get_chain_id =
   fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
 let <Tezos#0>get_total_voting_power =
   fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+let <Tezos#0>min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
+let <Tezos#0>get_min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
@@ -1543,10 +1569,10 @@ let toto =
       <../../test/contracts/build/A.mligo#0>toto) in
 let fb = (L(1), toto, L(2), L(3)) in
 let main =
-  fun gen#3125 ->
-  (let (gen#3131, gen#3132) = gen#3125 in
-   let p = gen#3131 in
-   let s = gen#3132 in
+  fun gen#3139 ->
+  (let (gen#3145, gen#3146) = gen#3139 in
+   let p = gen#3145 in
+   let s = gen#3146 in
    let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
 L(unit) |}]
 

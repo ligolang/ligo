@@ -168,7 +168,7 @@ If the value is `None` the function is not executed/applied.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=option_map protocol=ithaca
+```pascaligo group=option_map
 
 const value: option (int) = Some (1);
 
@@ -182,7 +182,7 @@ const none : option (string) = Option.map (foo, (None : option (int))) (* None *
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=option_map protocol=ithaca
+```cameligo group=option_map
 
 let value : int option = Some 1
 
@@ -197,7 +197,7 @@ let none : string option = Option.map foo (None : int option) (* None *)
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=option_map protocol=ithaca
+```reasonligo group=option_map
 
 let value : option(int) = Some(1)
 
@@ -212,7 +212,7 @@ let none : option(string) = Option.map (foo, (None : option(int))) /* None */
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=option_map protocol=ithaca
+```jsligo group=option_map
 
 let value : option<int> = Some(1);
 

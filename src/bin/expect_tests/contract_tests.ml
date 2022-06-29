@@ -1071,7 +1071,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
-    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Error(s) occurred while type checking the contract:
     Ill typed contract:
       1: { parameter int ;
       2:   storage address ;
@@ -1081,23 +1081,7 @@ let%expect_test _ =
     { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol jakarta
-
-    Warning: Error(s) occurred while type checking the produced michelson contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
+      "data": { "input": "KT1badaddr" } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -2392,6 +2376,8 @@ let%expect_test _ =
       fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
     let <Tezos#0>get_total_voting_power =
       fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+    let <Tezos#0>min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
+    let <Tezos#0>get_min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
     let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
     let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
     let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in

@@ -19,7 +19,7 @@ Subtracting values of type `tez` yeilds on optional value. (This emmits the `SUB
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=b protocol=ithaca
+```pascaligo group=b
 
 const d : option (tez) = 5mutez - 1mutez (* Some (4mutez) *)
 
@@ -30,7 +30,7 @@ const e : option (tez) = 1mutez - 5mutez (* None *)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=b protocol=ithaca
+```cameligo group=b
 
 let d : tez option = 5mutez - 1mutez (* Some (4mutez) *)
 
@@ -41,7 +41,7 @@ let e : tez option = 1mutez - 5mutez (* None *)
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=b protocol=ithaca
+```reasonligo group=b
 
 let d : option(tez) = 5mutez - 1mutez /* Some (4mutez) */
 
@@ -52,7 +52,7 @@ let e : option(tez) = 1mutez - 5mutez /* None */
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=b protocol=ithaca
+```jsligo group=b
 
 let d : option<tez> = (5 as mutez) - (1 as mutez); /* Some (4mutez) */
 
