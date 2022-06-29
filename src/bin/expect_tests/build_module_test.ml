@@ -138,16 +138,18 @@ let <../../test/contracts/build/A.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/A.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/A.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/A.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/A.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/A.mligo#0><String#0>sub =
@@ -159,7 +161,7 @@ let <../../test/contracts/build/A.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/A.mligo#0><String#0>length =
+let <../../test/contracts/build/A.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -172,8 +174,6 @@ let <../../test/contracts/build/A.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/A.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/A.mligo#0><Crypto#0>sha256 =
@@ -194,9 +194,6 @@ let <../../test/contracts/build/A.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/A.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/A.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/A.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/A.mligo#0>is_nat =
@@ -204,6 +201,9 @@ let <../../test/contracts/build/A.mligo#0>is_nat =
 let <../../test/contracts/build/A.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/A.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/A.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/A.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_105 = { FAILWITH }[@inline] in
 let poly_failwith_104 = { FAILWITH }[@inline] in
 let poly_failwith_103 = { FAILWITH }[@inline] in
@@ -351,16 +351,18 @@ let <../../test/contracts/build/B.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/B.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/B.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/B.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/B.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/B.mligo#0><String#0>sub =
@@ -372,7 +374,7 @@ let <../../test/contracts/build/B.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/B.mligo#0><String#0>length =
+let <../../test/contracts/build/B.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -385,8 +387,6 @@ let <../../test/contracts/build/B.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/B.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/B.mligo#0><Crypto#0>sha256 =
@@ -407,9 +407,6 @@ let <../../test/contracts/build/B.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/B.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/B.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/B.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/B.mligo#0>is_nat =
@@ -417,6 +414,9 @@ let <../../test/contracts/build/B.mligo#0>is_nat =
 let <../../test/contracts/build/B.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/B.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/B.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/B.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_90 = { FAILWITH }[@inline] in
 let poly_failwith_89 = { FAILWITH }[@inline] in
 let poly_failwith_88 = { FAILWITH }[@inline] in
@@ -575,16 +575,18 @@ let <../../test/contracts/build/F.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/F.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/F.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/F.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/F.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/F.mligo#0><String#0>sub =
@@ -596,7 +598,7 @@ let <../../test/contracts/build/F.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/F.mligo#0><String#0>length =
+let <../../test/contracts/build/F.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -609,8 +611,6 @@ let <../../test/contracts/build/F.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/F.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/F.mligo#0><Crypto#0>sha256 =
@@ -631,9 +631,6 @@ let <../../test/contracts/build/F.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/F.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/F.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/F.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/F.mligo#0>is_nat =
@@ -641,6 +638,9 @@ let <../../test/contracts/build/F.mligo#0>is_nat =
 let <../../test/contracts/build/F.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/F.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/F.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/F.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_75 = { FAILWITH }[@inline] in
 let poly_failwith_74 = { FAILWITH }[@inline] in
 let poly_failwith_73 = { FAILWITH }[@inline] in
@@ -788,16 +788,18 @@ let <../../test/contracts/build/G.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/G.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/G.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/G.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/G.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/G.mligo#0><String#0>sub =
@@ -809,7 +811,7 @@ let <../../test/contracts/build/G.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/G.mligo#0><String#0>length =
+let <../../test/contracts/build/G.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -822,8 +824,6 @@ let <../../test/contracts/build/G.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/G.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/G.mligo#0><Crypto#0>sha256 =
@@ -844,9 +844,6 @@ let <../../test/contracts/build/G.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/G.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/G.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/G.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/G.mligo#0>is_nat =
@@ -854,6 +851,9 @@ let <../../test/contracts/build/G.mligo#0>is_nat =
 let <../../test/contracts/build/G.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/G.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/G.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/G.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_60 = { FAILWITH }[@inline] in
 let poly_failwith_59 = { FAILWITH }[@inline] in
 let poly_failwith_58 = { FAILWITH }[@inline] in
@@ -1001,16 +1001,18 @@ let <../../test/contracts/build/C.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/C.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/C.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/C.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/C.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/C.mligo#0><String#0>sub =
@@ -1022,7 +1024,7 @@ let <../../test/contracts/build/C.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/C.mligo#0><String#0>length =
+let <../../test/contracts/build/C.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -1035,8 +1037,6 @@ let <../../test/contracts/build/C.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/C.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/C.mligo#0><Crypto#0>sha256 =
@@ -1057,9 +1057,6 @@ let <../../test/contracts/build/C.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/C.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/C.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/C.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/C.mligo#0>is_nat =
@@ -1067,6 +1064,9 @@ let <../../test/contracts/build/C.mligo#0>is_nat =
 let <../../test/contracts/build/C.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/C.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/C.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/C.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_45 = { FAILWITH }[@inline] in
 let poly_failwith_44 = { FAILWITH }[@inline] in
 let poly_failwith_43 = { FAILWITH }[@inline] in
@@ -1218,16 +1218,18 @@ let <../../test/contracts/build/E.mligo#0><Tezos#0>implicit_account =
   fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Tezos#0>pairing_check =
   fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-let <../../test/contracts/build/E.mligo#0><Tezos#0>open_chest =
-  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Tezos#0>set_delegate =
   fun o -> (SET_DELEGATE(o))[@inline] in
+let <../../test/contracts/build/E.mligo#0><Tezos#0>open_chest =
+  fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Bitwise#0>xor =
   fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Bitwise#0>shift_left =
   fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Bitwise#0>shift_right =
   fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <../../test/contracts/build/E.mligo#0><String#0>length =
+  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/E.mligo#0><String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <../../test/contracts/build/E.mligo#0><String#0>sub =
@@ -1239,7 +1241,7 @@ let <../../test/contracts/build/E.mligo#0><String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/E.mligo#0><String#0>length =
+let <../../test/contracts/build/E.mligo#0><Bytes#0>length =
   fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
@@ -1252,8 +1254,6 @@ let <../../test/contracts/build/E.mligo#0><Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <../../test/contracts/build/E.mligo#0><Bytes#0>length =
-  fun b -> (({ SIZE })@(b))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Crypto#0>blake2b =
   fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <../../test/contracts/build/E.mligo#0><Crypto#0>sha256 =
@@ -1274,9 +1274,6 @@ let <../../test/contracts/build/E.mligo#0><Crypto#0>check =
 let <../../test/contracts/build/E.mligo#0>assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let <../../test/contracts/build/E.mligo#0>assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let <../../test/contracts/build/E.mligo#0>abs =
   fun i -> (({ ABS })@(i))[@inline] in
 let <../../test/contracts/build/E.mligo#0>is_nat =
@@ -1284,6 +1281,9 @@ let <../../test/contracts/build/E.mligo#0>is_nat =
 let <../../test/contracts/build/E.mligo#0>true = TRUE()[@inline] in
 let <../../test/contracts/build/E.mligo#0>false = FALSE()[@inline] in
 let <../../test/contracts/build/E.mligo#0>unit = UNIT()[@inline] in
+let <../../test/contracts/build/E.mligo#0>assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_30 = { FAILWITH }[@inline] in
 let poly_failwith_29 = { FAILWITH }[@inline] in
 let poly_failwith_28 = { FAILWITH }[@inline] in
@@ -1416,12 +1416,13 @@ let <Tezos#0>get_min_block_time = { DROP ; MIN_BLOCK_TIME }[@inline] in
 let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
 let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
 let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
+let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
 let <Tezos#0>open_chest =
   fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
 let <Bitwise#0>xor = fun l -> (fun r -> (XOR(l , r)))[@inline] in
 let <Bitwise#0>shift_left = fun l -> (fun r -> (LSL(l , r)))[@inline] in
 let <Bitwise#0>shift_right = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
 let <String#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <String#0>sub =
@@ -1433,7 +1434,7 @@ let <String#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
+let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
 let <Bytes#0>concat =
   fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
 let <Bytes#0>sub =
@@ -1445,7 +1446,6 @@ let <Bytes#0>sub =
        SLICE ;
        IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                               b)))))[@inline] in
-let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
 let <Crypto#0>blake2b = fun b -> (({ BLAKE2B })@(b))[@inline] in
 let <Crypto#0>sha256 = fun b -> (({ SHA256 })@(b))[@inline] in
 let <Crypto#0>sha512 = fun b -> (({ SHA512 })@(b))[@inline] in
@@ -1460,14 +1460,14 @@ let <Crypto#0>check =
 let assert =
   fun b ->
   (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-let assert_with_error =
-  fun b ->
-  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let abs = fun i -> (({ ABS })@(i))[@inline] in
 let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
 let true = TRUE()[@inline] in
 let false = FALSE()[@inline] in
 let unit = UNIT()[@inline] in
+let assert_with_error =
+  fun b ->
+  (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
 let poly_failwith_15 = { FAILWITH }[@inline] in
 let poly_failwith_14 = { FAILWITH }[@inline] in
 let poly_failwith_13 = { FAILWITH }[@inline] in

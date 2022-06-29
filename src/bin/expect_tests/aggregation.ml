@@ -228,13 +228,13 @@ let%expect_test _ =
     let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
     let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
     let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
+    let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
     let <Tezos#0>open_chest =
-      fun gen#141 ->
-      (let (gen#596, gen#597) = gen#141 in
+      fun gen#146 ->
+      (let (gen#596, gen#597) = gen#146 in
        let (gen#598, gen#599) = gen#596 in
        let ck = gen#598 in
        let c = gen#599 in let n = gen#597 in OPEN_CHEST(ck , c , n))[@inline] in
-    let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
     let <Bitwise#0>xor =
       fun gen#160 ->
       (let (gen#600, gen#601) = gen#160 in
@@ -247,14 +247,15 @@ let%expect_test _ =
       fun gen#168 ->
       (let (gen#604, gen#605) = gen#168 in
        let l = gen#604 in let r = gen#605 in LSR(l , r))[@inline] in
+    let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <String#0>concat =
-      fun gen#330 ->
-      (let (gen#606, gen#607) = gen#330 in
+      fun gen#332 ->
+      (let (gen#606, gen#607) = gen#332 in
        let b1 = gen#606 in
        let b2 = gen#607 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
     let <String#0>sub =
-      fun gen#334 ->
-      (let (gen#608, gen#609) = gen#334 in
+      fun gen#336 ->
+      (let (gen#608, gen#609) = gen#336 in
        let (gen#610, gen#611) = gen#608 in
        let s = gen#610 in
        let l = gen#611 in
@@ -263,15 +264,15 @@ let%expect_test _ =
          UNPAIR ;
          SLICE ;
          IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) , b)))[@inline] in
-    let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
+    let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <Bytes#0>concat =
-      fun gen#347 ->
-      (let (gen#612, gen#613) = gen#347 in
+      fun gen#353 ->
+      (let (gen#612, gen#613) = gen#353 in
        let b1 = gen#612 in
        let b2 = gen#613 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
     let <Bytes#0>sub =
-      fun gen#351 ->
-      (let (gen#614, gen#615) = gen#351 in
+      fun gen#357 ->
+      (let (gen#614, gen#615) = gen#357 in
        let (gen#616, gen#617) = gen#614 in
        let s = gen#616 in
        let l = gen#617 in
@@ -280,7 +281,6 @@ let%expect_test _ =
          UNPAIR ;
          SLICE ;
          IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) , b)))[@inline] in
-    let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <Crypto#0>blake2b = fun b -> (({ BLAKE2B })@(b))[@inline] in
     let <Crypto#0>sha256 = fun b -> (({ SHA256 })@(b))[@inline] in
     let <Crypto#0>sha512 = fun b -> (({ SHA512 })@(b))[@inline] in
@@ -298,17 +298,17 @@ let%expect_test _ =
     let assert =
       fun b ->
       (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-    let assert_with_error =
-      fun gen#381 ->
-      (let (gen#622, gen#623) = gen#381 in
-       let b = gen#622 in
-       let s = gen#623 in
-       ({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s)))[@inline] in
     let abs = fun i -> (({ ABS })@(i))[@inline] in
     let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
+    let assert_with_error =
+      fun gen#395 ->
+      (let (gen#622, gen#623) = gen#395 in
+       let b = gen#622 in
+       let s = gen#623 in
+       ({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s)))[@inline] in
     let poly_failwith_15 = { FAILWITH }[@inline] in
     let poly_failwith_14 = { FAILWITH }[@inline] in
     let poly_failwith_13 = { FAILWITH }[@inline] in

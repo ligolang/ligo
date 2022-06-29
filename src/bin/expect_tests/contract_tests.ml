@@ -2381,12 +2381,13 @@ let%expect_test _ =
     let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
     let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
     let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
+    let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
     let <Tezos#0>open_chest =
       fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-    let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
     let <Bitwise#0>xor = fun l -> (fun r -> (XOR(l , r)))[@inline] in
     let <Bitwise#0>shift_left = fun l -> (fun r -> (LSL(l , r)))[@inline] in
     let <Bitwise#0>shift_right = fun l -> (fun r -> (LSR(l , r)))[@inline] in
+    let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <String#0>concat =
       fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
     let <String#0>sub =
@@ -2398,7 +2399,7 @@ let%expect_test _ =
            SLICE ;
            IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                                   b)))))[@inline] in
-    let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
+    let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <Bytes#0>concat =
       fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
     let <Bytes#0>sub =
@@ -2410,7 +2411,6 @@ let%expect_test _ =
            SLICE ;
            IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
                                                                   b)))))[@inline] in
-    let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <Crypto#0>blake2b = fun b -> (({ BLAKE2B })@(b))[@inline] in
     let <Crypto#0>sha256 = fun b -> (({ SHA256 })@(b))[@inline] in
     let <Crypto#0>sha512 = fun b -> (({ SHA512 })@(b))[@inline] in
@@ -2425,14 +2425,14 @@ let%expect_test _ =
     let assert =
       fun b ->
       (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
-    let assert_with_error =
-      fun b ->
-      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
     let abs = fun i -> (({ ABS })@(i))[@inline] in
     let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
+    let assert_with_error =
+      fun b ->
+      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
     let poly_failwith_15 = { FAILWITH }[@inline] in
     let poly_failwith_14 = { FAILWITH }[@inline] in
     let poly_failwith_13 = { FAILWITH }[@inline] in
