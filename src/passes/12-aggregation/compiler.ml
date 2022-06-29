@@ -114,17 +114,30 @@ module Path : sig
   val equal       : t -> t -> bool
   val add_to_path : t -> ModuleVar.t -> t
   val add_to_var  : t -> ValueVar.t -> ValueVar.t
-  val add_to_type_var  : t -> TypeVar.t -> TypeVar.t
   val get_from_module_path : ModuleVar.t List.t -> t
   val append : t -> t -> t
   val pp          : Format.formatter -> t -> unit
 end = struct
   type t = ModuleVar.t list
+  module PathVar (M: Map.OrderedType) = struct
+    type t = (ModuleVar.t list * M.t) [@deriving compare]
+    let compare (mvla,va) (mvlb,vb) =
+      let c = List.compare ModuleVar.compare mvla mvlb in
+      if c = 0 then M.compare va vb else c
+  end
+  module PathVarMap = Map.Make(PathVar(ValueVar))
+  let name_map = ref PathVarMap.empty
   let empty = []
   let equal p1 p2 = List.equal (ModuleVar.equal) p1 p2
   let add_to_path (p : t) s = s :: p
-  let add_to_var p v = ValueVar.set_namespace v (List.rev p)
-  let add_to_type_var p v = TypeVar.set_namespace v (List.rev p)
+  let add_to_var p v =
+    if List.is_empty p then v else
+    match PathVarMap.find_opt (p,v) !name_map with
+      Some (v) -> v
+    | None ->
+        let var = ValueVar.fresh_like v in
+        name_map := PathVarMap.add (p,v) var !name_map;
+        var
   let get_from_module_path lst = List.rev lst
   let append a b = a @ b
   let pp ppf path =
@@ -191,14 +204,12 @@ end = struct
 end
 
 
-let rec compile_type_expression ~raise path scope (type_expression : I.type_expression) =
+let rec compile_type_expression ~raise path scope (type_expression : I.type_expression) : O.type_expression =
   let self ?(path=path) ?(scope=scope) = compile_type_expression ~raise path scope in
   let return type_content = O.{type_content;location=type_expression.location;orig_var=type_expression.orig_var;source_type=Some type_expression } in
   match type_expression.type_content with
     T_variable type_variable ->
     (* Look up the path in the scope *)
-    let path = Scope.find_type_ scope type_variable in
-    let type_variable = Path.add_to_type_var path type_variable in
     return @@ T_variable type_variable
   | T_constant {language;injection;parameters} ->
     let parameters = List.map ~f:self parameters in
@@ -398,19 +409,17 @@ and compile_module_expr ~raise : Path.t -> Scope.t -> I.module_expr -> (Scope.t)
     )
 
 let preprocess_program program =
-  let scope,program = Deduplicate_module_binders.program program in
   let aliases,program = Resolve_module_aliases.program program in
-  scope,aliases,program
+  aliases,program
 
-let preprocess_expression ?scope ?aliases e =
-  let e = Deduplicate_module_binders.expression ?scope e in
+let preprocess_expression ?aliases e =
   let e = Resolve_module_aliases.expression ?aliases e in
   e
 
 let compile ~raise : I.expression -> I.program -> O.expression =
   fun hole program ->
-    let scope,aliases,program = preprocess_program program in
-    let hole = preprocess_expression ~scope ~aliases hole in
+    let aliases,program = preprocess_program program in
+    let hole = preprocess_expression ~aliases hole in
     let (scope), decls = compile_declaration_list ~raise Path.empty Scope.empty program in
     let init = compile_expression ~raise Path.empty scope hole in
     decls init
