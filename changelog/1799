@@ -1,0 +1,13 @@
+author: er433
+description: '### A new module `Test.PBT`\nThis new module is introduced to do simple
+  property-based testing. It''s composed of:\n- `val gen : ''a gen`: gives a generator
+  for type `''a` (must be annotated).\n- `val gen_small : ''a gen`: : gives a small
+  generator for type `''a` (must be annotated).\n- `val make_test : ''a gen -> (''a
+  -> bool) -> ''a pbt_test`: creates a test from a generator and a property.\n- `val
+  run : ''a pbt_test -> nat -> ''a pbt_result`: runs a test for a given number of
+  tries.\nThe introduced types are:\n- `type ''a gen`: represents a generator for
+  a type.\n- `type ''a pbt_test`: represents a test for a type.\n- `type ''a pbt_result
+  = Success | Fail of ''a`: represents the result of running a test.'
+merge_request: '1799'
+title: 'Testing framework: improvement on random generation and module PBT'
+type: added
