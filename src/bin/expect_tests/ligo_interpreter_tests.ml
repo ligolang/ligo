@@ -664,6 +664,16 @@ let () = Sys.chdir pwd
 let bad_test n = bad_test ("/interpreter_tests/"^n)
 
 let%expect_test _ =
+  run_ligo_bad ["run";"test" ; bad_test "test_random.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 6, characters 46-58:
+      5 |   (* We generate the property *)
+      6 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
+      7 |   (* And run it *)
+
+    Generator for type contract (int) is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated. |}]
+
+let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_failure1.mligo" ] ;
   [%expect {|
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
