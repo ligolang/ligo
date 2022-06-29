@@ -21,7 +21,7 @@ let nil_label  = T.Label "#NIL"
 
 let t_unit = AST.t_unit ()
 let wild_binder =
-  let var = AST.ValueVar.of_input_var "__" in
+  let var = AST.ValueVar.wildcard in
   let attributes = Stage_common.Helpers.empty_attribute in
   AST.{ var ; ascr = None ; attributes }
 

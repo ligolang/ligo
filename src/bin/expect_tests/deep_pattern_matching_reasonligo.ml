@@ -121,7 +121,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - [__, ...[]] |}]
+    - [_, ...[]] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.religo") ] ;
@@ -136,9 +136,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - {
-      a = None(),
-      b = __} |}]
+    - { a : None(),b : _ } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
@@ -153,7 +151,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - Cons__, __, Cons__, __ |}]
+    - Cons_, _, Cons_, _ |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.religo") ] ;

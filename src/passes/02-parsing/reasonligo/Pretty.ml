@@ -85,6 +85,26 @@ and pp_let_binding let_ (binding : let_binding) =
   | ERecord _ -> lhs ^^ rhs
   | _ -> prefix 2 0 lhs rhs
 
+and pp_ne_injection1 :
+  'a.('a -> document) -> 'a ne_injection reg -> document =
+  fun printer {value; _} ->
+    let {compound; ne_elements; attributes; _} = value in
+    let elements = pp_nsepseq1 "," printer ne_elements in
+    let inj =
+      match Option.map ~f:pp_compound compound with
+        None -> elements
+      | Some (opening, closing) ->
+          string opening ^^ string " " ^^ elements ^^ string " " ^^ string closing in
+    let inj = if List.is_empty attributes then inj
+              else break 0 ^^ pp_attributes attributes ^/^ inj
+    in inj
+
+and pp_nsepseq1 :
+  'a.string -> ('a -> document) -> ('a, lexeme Wrap.t) Utils.nsepseq -> document =
+  fun sep printer elements ->
+    let elems = Utils.nsepseq_to_list elements
+    and sep   = string sep
+    in separate_map sep printer elems
 and pp_pattern = function
   PConstr p -> pp_pconstr p
 | PUnit   _ -> string "()"
@@ -147,11 +167,11 @@ and pp_ptuple {value; _} =
      then nest 1 (pp_pattern head)
      else nest 1 (pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail))
 
-and pp_precord fields = pp_ne_injection pp_field_pattern fields
+and pp_precord fields = pp_ne_injection1 pp_field_pattern fields
 
 and pp_field_pattern {value; _} =
   let {field_name; pattern; _} = value in
-  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_pattern pattern)
+  prefix 2 1 (pp_ident field_name ^^ string " :") (pp_pattern pattern)
 
 and pp_ptyped {value; _} =
   let {pattern; type_expr; _} = value in

@@ -34,6 +34,7 @@ module ValueVar : sig
    (* Maybe bad *)
    val internal_get_name_and_counter : t -> (string * int)
    val add_prefix : string -> t -> t
+   val wildcard : t
 end
 
 module TypeVar : sig

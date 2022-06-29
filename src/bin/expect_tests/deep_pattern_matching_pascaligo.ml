@@ -111,7 +111,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - __ # nil |}]
+    - _ # nil |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.ligo") ] ;
@@ -126,7 +126,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - record [a = None (Unit); b = __] |}]
+    - record [a = None (Unit); b = _] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.ligo") ] ;
@@ -141,7 +141,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - (Cons ((__, __)), Cons ((__, __))) |}]
+    - (Cons ((_, _)), Cons ((_, _))) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.ligo") ] ;
