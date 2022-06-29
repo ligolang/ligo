@@ -25,7 +25,9 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?known_addre
   if is_t_unit type_expr then
     QCheck.Gen.(unit >>= fun _ -> return (v_unit ()))
   else if is_t_string type_expr then
-    QCheck.Gen.(string >>= fun s -> return (v_string s))
+    QCheck.Gen.((if small then string_size ~gen:printable small_nat else string_printable) >>= fun s -> return (v_string s))
+  else if is_t_bytes type_expr then
+    QCheck.Gen.((if small then map Bytes.of_string small_string else map Bytes.of_string string) >>= fun s -> return (v_bytes s))
   else if is_t_address type_expr then
     QCheck.Gen.(oneofl addresses >>= fun addr -> return (v_address addr))
   else if is_t_int type_expr then
@@ -34,6 +36,9 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?known_addre
   else if is_t_nat type_expr then
     QCheck.Gen.((if small then small_nat else int) >>= fun n ->
                 return (v_nat (Z.of_int n)))
+  else if is_t_tez type_expr then
+    QCheck.Gen.((if small then small_nat else int) >>= fun n ->
+                return (v_mutez (Z.of_int n)))
   else if is_t_list type_expr then
     match get_t_list type_expr with
     | Some type_value_r ->
@@ -75,5 +80,11 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?known_addre
        QCheck.Gen.((if small then small_list else list) (pair (value_gen ~raise ~small type_value_k) (value_gen ~raise ~small type_value_v)) >>= fun l ->
                    return (v_map l))
     | None -> raise.raise (Errors.generic_error type_expr.location "Expected map type")
+  else if is_t_big_map type_expr then
+    match get_t_big_map type_expr with
+    | Some (type_value_k, type_value_v) ->
+       QCheck.Gen.((if small then small_list else list) (pair (value_gen ~raise ~small type_value_k) (value_gen ~raise ~small type_value_v)) >>= fun l ->
+                   return (v_map l))
+    | None -> raise.raise (Errors.generic_error type_expr.location "Expected big_map type")
   else
-    raise.raise (Errors.generic_error type_expr.location @@ Format.asprintf "Test generator not implemented: %a" Ast_aggregated.PP.type_expression type_expr)
+    raise.raise (Errors.generic_error type_expr.location @@ Format.asprintf "Generator for type %a is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated." Ast_aggregated.PP.type_expression type_expr)

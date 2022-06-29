@@ -21,6 +21,9 @@ let v_unit : unit -> value =
 let v_string : string -> value =
   fun s -> V_Ct (C_string s)
 
+let v_bytes : bytes -> value =
+  fun b -> V_Ct (C_bytes b)
+
 let v_some : value -> value =
   fun v -> V_Construct ("Some", v)
 
@@ -29,6 +32,9 @@ let v_nat : Z.t -> value =
 
 let v_int : Z.t -> value =
   fun v -> V_Ct (C_int v)
+
+let v_mutez : Z.t -> value =
+  fun v -> V_Ct (C_mutez v)
 
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
