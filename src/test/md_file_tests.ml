@@ -127,18 +127,18 @@ let compile_groups ~raise filename grp_list =
       let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
       let core       = Ligo_compile.Of_sugar.compile sugar in
-      let stdlib     = Build.Stdlib.core ~options meta.syntax in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test protocol_version in
         let options = Compiler_options.set_init_env options init_env in
         let options = Compiler_options.set_test_flag options true in
-        let testlib    = Build.Testlib.core ~options meta.syntax in
-        let core = testlib @ stdlib @ core in
+        let stdlib     = Build.Stdlib.core ~options meta.syntax in
+        let core = stdlib @ core in
         let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let _ = Interpreter.eval_test ~options ~raise ~add_warning ~steps:5000 typed in
         ()
       | Object ->
+        let stdlib     = Build.Stdlib.core ~options meta.syntax in
         let core = stdlib @ core in
         let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
         let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
