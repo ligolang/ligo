@@ -9,11 +9,11 @@ module Test.Util
     -- * Test utilities
   , ShowThroughBuild (..)
   , TestBuildable (..)
+  , rmode'tb
   , (@?=)
   , (@@?=)
   , (@?)
   , (@@?)
-  , assertLeft
   , HUnit.testCase
   , HUnit.testCaseSteps
   , HUnit.assertFailure
@@ -27,6 +27,7 @@ import Language.LIGO.Debugger.CLI.Types (LigoType (..), LigoTypeConstant (..))
 import System.FilePath (takeExtension, (</>))
 import Test.Tasty.HUnit qualified as HUnit
 import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan.Core (RMode (..))
 import Text.Show qualified
 
 contractsDir :: FilePath
@@ -52,11 +53,21 @@ newtype TestBuildable a = TB
   { unTB :: a
   } deriving newtype (Eq, Ord)
 
+-- | Provide @tb@ rendering mode for nyan-interpolators.
+rmode'tb :: Buildable (TestBuildable a) => RMode a
+rmode'tb = RMode (build . TB)
+
 instance {-# OVERLAPPABLE #-} Buildable a => Buildable (TestBuildable a) where
   build = build . unTB
 
 instance Buildable (TestBuildable a) => Buildable (TestBuildable [a]) where
   build (TB l) = pretty $ blockListF' "-" (build . TB) l
+
+instance (Buildable (TestBuildable e), Buildable (TestBuildable a)) =>
+         Buildable (TestBuildable (Either e a)) where
+  build (TB res) = case res of
+    Right a -> build (TB a)
+    Left e -> "Failure: " <> build (TB e)
 
 instance (Buildable (TestBuildable a), Buildable (TestBuildable b)) =>
          Buildable (TestBuildable (a, b)) where
@@ -86,7 +97,7 @@ infix 1 @@?=
   => a -> (a -> Bool) -> m ()
 (@?) a p
   | p a = pass
-  | otherwise = liftIO $ HUnit.assertFailure [int||Unexpected value: #{TB a}|]
+  | otherwise = liftIO $ HUnit.assertFailure [int||Unexpected value: #tb{a}|]
 infix 1 @?
 
 -- | Similar to '@?' but checks monadic value.
@@ -95,13 +106,6 @@ infix 1 @?
   => m a -> (a -> Bool) -> m ()
 (@@?) am p = am >>= \a -> a @? p
 infix 1 @@?
-
-assertLeft
-  :: (Buildable (TestBuildable e), MonadIO m)
-  => Either e a -> m ()
-assertLeft = \case
-  Left e -> liftIO $ HUnit.assertFailure (pretty $ TB e)
-  Right _ -> pass
 
 intType :: LigoType
 intType = LTConstant $

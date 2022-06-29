@@ -2,59 +2,72 @@ import * as fs from 'fs'
 import * as vscode from 'vscode'
 
 function createLogDir(logDir: string): void | undefined {
-  if (!fs.existsSync(logDir)) {
-    fs.mkdir(logDir, { recursive: true } as fs.MakeDirectoryOptions, (err) => {
-      if (err) {
-        vscode.window.showErrorMessage(`Couldn't create a log directory: ${err}`)
-      }
-    })
-  }
+	if (!fs.existsSync(logDir)) {
+		fs.mkdir(logDir, { recursive: true } as fs.MakeDirectoryOptions, (err) => {
+			if (err) {
+				vscode.window.showErrorMessage(`Couldn't create a log directory: ${err}`)
+			}
+		})
+	}
 }
 
-export type InitializeLoggerAction = (file: string, logDir: string) => Promise<void>
+export interface AfterConfigResolvedInfo {
+		file: string
+		, entrypoint: string | null
+	, logDir: string
+}
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-  private readonly initializeLogger: InitializeLoggerAction
+	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>
 
-  constructor(initializeLogger: InitializeLoggerAction) {
-    this.initializeLogger = initializeLogger
-  }
+	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>) {
+		this.afterConfigResolved = afterConfigResolved
+	}
 
-  resolveDebugConfiguration(
-    _folder: vscode.WorkspaceFolder | undefined,
-    config: vscode.DebugConfiguration,
-    _token?: vscode.CancellationToken,
-  ): vscode.ProviderResult<vscode.DebugConfiguration> {
-    if (!config.type && !config.request && !config.name) {
-      const editor = vscode.window.activeTextEditor
-      if (editor && (editor.document.languageId === 'ligo' || editor.document.languageId === 'mligo' || editor.document.languageId === 'religo' || editor.document.languageId === 'jsligo')) {
-        config.type = 'ligo'
-        config.name = 'Launch LIGO'
-        config.request = 'launch'
-        config.program = '${file}'
-        config.stopOnEntry = true
-      }
-    }
+	async resolveDebugConfiguration(
+		_folder: vscode.WorkspaceFolder | undefined,
+		config: vscode.DebugConfiguration,
+		_token?: vscode.CancellationToken,
+	): Promise<vscode.DebugConfiguration> {
+		if (!config.type && !config.request && !config.name) {
+			const editor = vscode.window.activeTextEditor
+			if (editor && (editor.document.languageId === 'ligo' || editor.document.languageId === 'mligo' || editor.document.languageId === 'religo' || editor.document.languageId === 'jsligo')) {
+				config.type = 'ligo'
+				config.name = 'Launch LIGO'
+				config.request = 'launch'
+				config.program = '${file}'
+				config.parameter = "${command:AskForParameter}"
+				config.storage = "${command:AskForStorage}"
+			}
+		}
 
-    if (config.logDir === '') {
-      config.logDir = undefined
-    }
+		// User is allowed to omit this fields, they will be assigned to the default values
+		config.type ??= 'ligo'
+		config.request ??= 'launch'
+		config.stopOnEntry ??= true
+		config.program ??= '${file}'
 
-    if (!config.program) {
-      return vscode.window.showErrorMessage('Cannot find a program to debug').then((_) => undefined)
-    }
+		if (config.logDir === '') {
+			config.logDir = undefined
+		}
 
-    const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-    if (currentFilePath) {
-      const { logDir } = config
-      // Create logDir if needed
-      if (logDir) {
-        createLogDir(logDir)
-      }
+		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+		if (currentFilePath) {
+			const { logDir } = config
+			// Create logDir if needed
+			if (logDir) {
+				createLogDir(logDir)
+			}
 
-      this.initializeLogger(currentFilePath, logDir)
-    }
+			await this.afterConfigResolved(
+				{
+					file: currentFilePath
+					, entrypoint: config.entrypoint
+					, logDir
+				}
+			)
+		}
 
-    return config
-  }
+		return config
+	}
 }
