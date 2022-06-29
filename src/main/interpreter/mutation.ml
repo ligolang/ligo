@@ -16,11 +16,11 @@ let mutate_all_value : raise:interpreter_error raise -> Location.t -> LT.value -
     let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
     Fuzzer.all_mutate_expression expr
 
-let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?addresses:LT.mcontract list -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
-  fun ~raise ?(small = true) ?addresses type_expr ->
+let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?known_addresses:LT.mcontract list -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
+  fun ~raise ?(small = true) ?known_addresses type_expr ->
   let open Ast_aggregated in
   let open LC in
-  let addresses = [Michelson_to_value.contract_of_string ~raise "tz1fakefakefakefakefakefakefakcphLA5"] @ match addresses with
+  let addresses = [Michelson_to_value.contract_of_string ~raise "tz1fakefakefakefakefakefakefakcphLA5"] @ match known_addresses with
     | None -> [] | Some xs -> xs in
   if is_t_unit type_expr then
     QCheck.Gen.(unit >>= fun _ -> return (v_unit ()))
