@@ -634,3 +634,18 @@ type my_ticket = ticket(va);
 ```
 
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+
+A type used to identify accounts on transaction rollups’ legders. Values of type tx_rollup_l2_address are 20-byte hashes of a BLS public keys (with a string notation based of a base58 encoding, prefixed with tz4).

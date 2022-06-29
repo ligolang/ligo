@@ -793,6 +793,21 @@ let get_level : (_u : unit) => nat
 Get the current block level.
 
 <SyntaxTitle syntax="pascaligo">
+val min_block_time : unit -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val min_block_time : unit -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let min_block_time: unit => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let min_block_time: unit => nat;
+</SyntaxTitle>
+
+Returns the current minimal time between blocks, the value is obtained from the protocol’s minimal_block_delay constant.
+
+<SyntaxTitle syntax="pascaligo">
 val pairing_check : list (bls12_381_g1 * bls12_381_g2) -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -854,7 +869,7 @@ let voting_power: key_hash =>nat
 let voting_power: (key_hash:key_hash) => nat
 </SyntaxTitle>
 
-Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
+Return the voting power of a given contract. The voting power value is the full staking power of the delegate, currently expressed in mutez. Though, developers should not rely on `Tezos.voting_power` to query the staking power of a contract in mutez: the value returned by `Tezos.voting_power` is still of type` nat and it should only be considered relative to `Tezos.total_voting_power`.  
 
 ## Sapling
 
