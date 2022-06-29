@@ -21,7 +21,7 @@ let get_proto p =
   in
   match opt with
   | Some x -> x
-  | None -> failwith "unknown protocol"
+  | None -> failwith (Format.asprintf "unknown protocol %s" p)
 let current_proto = get_proto "current"
 (*
   Binds the snippets by (syntax, group_name).

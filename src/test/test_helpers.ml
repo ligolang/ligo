@@ -12,7 +12,7 @@ type test =
 let options =
   Compiler_options.make
     ~raw_options:Compiler_options.default_raw_options
-    ~protocol_version:Environment.Protocols.Ithaca ()
+    ~protocol_version:Environment.Protocols.in_use ()
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)
