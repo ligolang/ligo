@@ -227,53 +227,53 @@ let%expect_test _ =
     let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
     let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
     let <Tezos#0>open_chest =
-      fun gen#139 ->
-      (let (gen#594, gen#595) = gen#139 in
-       let (gen#596, gen#597) = gen#594 in
-       let ck = gen#596 in
-       let c = gen#597 in let n = gen#595 in OPEN_CHEST(ck , c , n))[@inline] in
+      fun gen#141 ->
+      (let (gen#606, gen#607) = gen#141 in
+       let (gen#608, gen#609) = gen#606 in
+       let ck = gen#608 in
+       let c = gen#609 in let n = gen#607 in OPEN_CHEST(ck , c , n))[@inline] in
     let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
     let <Bitwise#0>xor =
-      fun gen#158 ->
-      (let (gen#598, gen#599) = gen#158 in
-       let l = gen#598 in let r = gen#599 in XOR(l , r))[@inline] in
+      fun gen#160 ->
+      (let (gen#610, gen#611) = gen#160 in
+       let l = gen#610 in let r = gen#611 in XOR(l , r))[@inline] in
     let <Bitwise#0>shift_left =
-      fun gen#162 ->
-      (let (gen#600, gen#601) = gen#162 in
-       let l = gen#600 in let r = gen#601 in LSL(l , r))[@inline] in
+      fun gen#164 ->
+      (let (gen#612, gen#613) = gen#164 in
+       let l = gen#612 in let r = gen#613 in LSL(l , r))[@inline] in
     let <Bitwise#0>shift_right =
-      fun gen#166 ->
-      (let (gen#602, gen#603) = gen#166 in
-       let l = gen#602 in let r = gen#603 in LSR(l , r))[@inline] in
+      fun gen#168 ->
+      (let (gen#614, gen#615) = gen#168 in
+       let l = gen#614 in let r = gen#615 in LSR(l , r))[@inline] in
     let <String#0>concat =
-      fun gen#328 ->
-      (let (gen#604, gen#605) = gen#328 in
-       let b1 = gen#604 in
-       let b2 = gen#605 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
+      fun gen#330 ->
+      (let (gen#616, gen#617) = gen#330 in
+       let b1 = gen#616 in
+       let b2 = gen#617 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
     let <String#0>sub =
-      fun gen#332 ->
-      (let (gen#606, gen#607) = gen#332 in
-       let (gen#608, gen#609) = gen#606 in
-       let s = gen#608 in
-       let l = gen#609 in
-       let b = gen#607 in
+      fun gen#334 ->
+      (let (gen#618, gen#619) = gen#334 in
+       let (gen#620, gen#621) = gen#618 in
+       let s = gen#620 in
+       let l = gen#621 in
+       let b = gen#619 in
        ({ UNPAIR ;
          UNPAIR ;
          SLICE ;
          IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) , b)))[@inline] in
     let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
     let <Bytes#0>concat =
-      fun gen#345 ->
-      (let (gen#610, gen#611) = gen#345 in
-       let b1 = gen#610 in
-       let b2 = gen#611 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
+      fun gen#347 ->
+      (let (gen#622, gen#623) = gen#347 in
+       let b1 = gen#622 in
+       let b2 = gen#623 in ({ UNPAIR ; CONCAT })@(PAIR(b1 , b2)))[@inline] in
     let <Bytes#0>sub =
-      fun gen#349 ->
-      (let (gen#612, gen#613) = gen#349 in
-       let (gen#614, gen#615) = gen#612 in
-       let s = gen#614 in
-       let l = gen#615 in
-       let b = gen#613 in
+      fun gen#351 ->
+      (let (gen#624, gen#625) = gen#351 in
+       let (gen#626, gen#627) = gen#624 in
+       let s = gen#626 in
+       let l = gen#627 in
+       let b = gen#625 in
        ({ UNPAIR ;
          UNPAIR ;
          SLICE ;
@@ -286,21 +286,21 @@ let%expect_test _ =
     let <Crypto#0>keccak = fun b -> (({ KECCAK })@(b))[@inline] in
     let <Crypto#0>hash_key = fun k -> (({ HASH_KEY })@(k))[@inline] in
     let <Crypto#0>check =
-      fun gen#372 ->
-      (let (gen#616, gen#617) = gen#372 in
-       let (gen#618, gen#619) = gen#616 in
-       let k = gen#618 in
-       let s = gen#619 in
-       let b = gen#617 in
+      fun gen#374 ->
+      (let (gen#628, gen#629) = gen#374 in
+       let (gen#630, gen#631) = gen#628 in
+       let k = gen#630 in
+       let s = gen#631 in
+       let b = gen#629 in
        ({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))[@inline] in
     let assert =
       fun b ->
       (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
     let assert_with_error =
-      fun gen#379 ->
-      (let (gen#620, gen#621) = gen#379 in
-       let b = gen#620 in
-       let s = gen#621 in
+      fun gen#381 ->
+      (let (gen#632, gen#633) = gen#381 in
+       let b = gen#632 in
+       let s = gen#633 in
        ({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s)))[@inline] in
     let abs = fun i -> (({ ABS })@(i))[@inline] in
     let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
@@ -323,16 +323,16 @@ let%expect_test _ =
     let poly_failwith_2 = { FAILWITH }[@inline] in
     let poly_failwith_1 = { FAILWITH }[@inline] in
     let <Test#0>originate_from_file =
-      fun gen#412 ->
-      (let (gen#622, gen#623) = gen#412 in
-       let (gen#624, gen#625) = gen#622 in
-       let (gen#628, gen#629) = gen#624 in
-       let _fn = gen#628 in
-       let _e = gen#629 in
-       let (gen#626, gen#627) = gen#625 in
-       let _v = gen#626 in
-       let _s = gen#627 in
-       let _t = gen#623 in (poly_failwith_15)@(L("TEST MODE")))[@inline] in
+      fun gen#414 ->
+      (let (gen#634, gen#635) = gen#414 in
+       let (gen#636, gen#637) = gen#634 in
+       let (gen#640, gen#641) = gen#636 in
+       let _fn = gen#640 in
+       let _e = gen#641 in
+       let (gen#638, gen#639) = gen#637 in
+       let _v = gen#638 in
+       let _s = gen#639 in
+       let _t = gen#635 in (poly_failwith_15)@(L("TEST MODE")))[@inline] in
     let <Test#0>set_source =
       fun _a -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>set_baker =
@@ -340,37 +340,37 @@ let%expect_test _ =
     let <Test#0>set_baker_policy =
       fun _bp -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>transfer =
-      fun gen#430 ->
-      (let (gen#630, gen#631) = gen#430 in
-       let (gen#632, gen#633) = gen#630 in
-       let _a = gen#632 in
-       let _s = gen#633 in let _t = gen#631 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
+      fun gen#432 ->
+      (let (gen#642, gen#643) = gen#432 in
+       let (gen#644, gen#645) = gen#642 in
+       let _a = gen#644 in
+       let _s = gen#645 in let _t = gen#643 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>transfer_exn =
-      fun gen#435 ->
-      (let (gen#634, gen#635) = gen#435 in
-       let (gen#636, gen#637) = gen#634 in
-       let _a = gen#636 in
-       let _s = gen#637 in
-       let _t = gen#635 in (poly_failwith_12)@(L("TEST MODE")))[@inline] in
+      fun gen#437 ->
+      (let (gen#646, gen#647) = gen#437 in
+       let (gen#648, gen#649) = gen#646 in
+       let _a = gen#648 in
+       let _s = gen#649 in
+       let _t = gen#647 in (poly_failwith_12)@(L("TEST MODE")))[@inline] in
     let <Test#0>get_storage_of_address =
       fun _a -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>get_balance =
       fun _a -> ((poly_failwith_14)@(L("TEST MODE")))[@inline] in
     let <Test#0>michelson_equal =
-      fun gen#456 ->
-      (let (gen#638, gen#639) = gen#456 in
-       let _m1 = gen#638 in
-       let _m2 = gen#639 in (poly_failwith_13)@(L("TEST MODE")))[@inline] in
+      fun gen#458 ->
+      (let (gen#650, gen#651) = gen#458 in
+       let _m1 = gen#650 in
+       let _m2 = gen#651 in (poly_failwith_13)@(L("TEST MODE")))[@inline] in
     let <Test#0>reset_state =
-      fun gen#462 ->
-      (let (gen#640, gen#641) = gen#462 in
-       let _n = gen#640 in let _l = gen#641 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
+      fun gen#464 ->
+      (let (gen#652, gen#653) = gen#464 in
+       let _n = gen#652 in let _l = gen#653 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>reset_state_at =
-      fun gen#466 ->
-      (let (gen#642, gen#643) = gen#466 in
-       let (gen#644, gen#645) = gen#642 in
-       let _t = gen#644 in
-       let _n = gen#645 in let _l = gen#643 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
+      fun gen#468 ->
+      (let (gen#654, gen#655) = gen#468 in
+       let (gen#656, gen#657) = gen#654 in
+       let _t = gen#656 in
+       let _n = gen#657 in let _l = gen#655 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>get_voting_power =
       fun _kh -> ((poly_failwith_12)@(L("TEST MODE")))[@inline] in
     let <Test#0>get_total_voting_power =
@@ -382,19 +382,19 @@ let%expect_test _ =
     let <Test#0>last_originations =
       fun _u -> ((poly_failwith_11)@(L("TEST MODE")))[@inline] in
     let <Test#0>save_mutation =
-      fun gen#493 ->
-      (let (gen#646, gen#647) = gen#493 in
-       let _s = gen#646 in let _m = gen#647 in (poly_failwith_2)@(L("TEST MODE")))[@inline] in
+      fun gen#495 ->
+      (let (gen#658, gen#659) = gen#495 in
+       let _s = gen#658 in let _m = gen#659 in (poly_failwith_2)@(L("TEST MODE")))[@inline] in
     let <Test#0>add_account =
-      fun gen#515 ->
-      (let (gen#648, gen#649) = gen#515 in
-       let _s = gen#648 in let _k = gen#649 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
+      fun gen#517 ->
+      (let (gen#660, gen#661) = gen#517 in
+       let _s = gen#660 in let _k = gen#661 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>new_account =
       fun _u -> ((poly_failwith_10)@(L("TEST MODE")))[@inline] in
     let <Test#0>baker_account =
-      fun gen#521 ->
-      (let (gen#650, gen#651) = gen#521 in
-       let _p = gen#650 in let _o = gen#651 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
+      fun gen#523 ->
+      (let (gen#662, gen#663) = gen#523 in
+       let _p = gen#662 in let _o = gen#663 in (poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>bake_until_n_cycle_end =
       fun _n -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>register_delegate =
@@ -402,13 +402,13 @@ let%expect_test _ =
     let <Test#0>register_constant =
       fun _m -> ((poly_failwith_9)@(L("TEST MODE")))[@inline] in
     let <Test#0>create_chest =
-      fun gen#543 ->
-      (let (gen#652, gen#653) = gen#543 in
-       let _b = gen#652 in let _n = gen#653 in (poly_failwith_8)@(L("TEST MODE")))[@inline] in
+      fun gen#545 ->
+      (let (gen#664, gen#665) = gen#545 in
+       let _b = gen#664 in let _n = gen#665 in (poly_failwith_8)@(L("TEST MODE")))[@inline] in
     let <Test#0>create_chest_key =
-      fun gen#547 ->
-      (let (gen#654, gen#655) = gen#547 in
-       let _c = gen#654 in let _n = gen#655 in (poly_failwith_7)@(L("TEST MODE")))[@inline] in
+      fun gen#549 ->
+      (let (gen#666, gen#667) = gen#549 in
+       let _c = gen#666 in let _n = gen#667 in (poly_failwith_7)@(L("TEST MODE")))[@inline] in
     let <Test#0>constant_to_michelson_program =
       fun _s -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
     let <Test#0>restore_context =
@@ -420,28 +420,28 @@ let%expect_test _ =
     let <Test#0>read_contract_from_file =
       fun _fn -> ((poly_failwith_1)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
     let <Test#0>compile_contract_from_file =
-      fun gen#561 ->
-      (let (gen#656, gen#657) = gen#561 in
-       let (gen#658, gen#659) = gen#656 in
-       let _fn = gen#658 in
-       let _e = gen#659 in
-       let _v = gen#657 in
+      fun gen#563 ->
+      (let (gen#668, gen#669) = gen#563 in
+       let (gen#670, gen#671) = gen#668 in
+       let _fn = gen#670 in
+       let _e = gen#671 in
+       let _v = gen#669 in
        (poly_failwith_1)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))[@inline] in
     let <Test#0>originate_contract =
-      fun gen#568 ->
-      (let (gen#660, gen#661) = gen#568 in
-       let (gen#662, gen#663) = gen#660 in
-       let _c = gen#662 in
-       let _s = gen#663 in
-       let _t = gen#661 in (poly_failwith_6)@(L("TEST_ORIGINATE")))[@inline] in
+      fun gen#570 ->
+      (let (gen#672, gen#673) = gen#570 in
+       let (gen#674, gen#675) = gen#672 in
+       let _c = gen#674 in
+       let _s = gen#675 in
+       let _t = gen#673 in (poly_failwith_6)@(L("TEST_ORIGINATE")))[@inline] in
     let <Test#0>size = fun _c -> ((poly_failwith_5)@(L("TEST_SIZE")))[@inline] in
     let <Test#0>get_bootstrap_account =
       fun _n -> ((poly_failwith_4)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
     let <Test#0>sign =
-      fun gen#577 ->
-      (let (gen#664, gen#665) = gen#577 in
-       let _sk = gen#664 in
-       let _d = gen#665 in (poly_failwith_3)@(L("TEST_SIGN")))[@inline] in
+      fun gen#579 ->
+      (let (gen#676, gen#677) = gen#579 in
+       let _sk = gen#676 in
+       let _d = gen#677 in (poly_failwith_3)@(L("TEST_SIGN")))[@inline] in
     let <Test#0>chr = fun _n -> ((poly_failwith_2)@(L("TEST_CHR")))[@inline] in
     let <Test#0>nl = L("NEWLINE")[@inline] in
     let <Test#0>println =

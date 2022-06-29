@@ -513,10 +513,10 @@ let <../../test/contracts/build/B.mligo#0>toto = L(32) in
 let <../../test/contracts/build/B.mligo#0>titi =
   ADD(<../../test/contracts/build/A.mligo#0>toto , L(42)) in
 let <../../test/contracts/build/B.mligo#0>f =
-  fun gen#927 ->
-  (let (gen#3129, gen#3130) = gen#927 in
-   let gen#928 = gen#3129 in
-   let x = gen#3130 in
+  fun gen#952 ->
+  (let (gen#3199, gen#3200) = gen#952 in
+   let gen#953 = gen#3199 in
+   let x = gen#3200 in
    let x =
      ADD(ADD(x , <../../test/contracts/build/A.mligo#0>toto) ,
          <../../test/contracts/build/B.mligo#0>titi) in
@@ -1543,10 +1543,10 @@ let toto =
       <../../test/contracts/build/A.mligo#0>toto) in
 let fb = (L(1), toto, L(2), L(3)) in
 let main =
-  fun gen#3125 ->
-  (let (gen#3131, gen#3132) = gen#3125 in
-   let p = gen#3131 in
-   let s = gen#3132 in
+  fun gen#3195 ->
+  (let (gen#3201, gen#3202) = gen#3195 in
+   let p = gen#3201 in
+   let s = gen#3202 in
    let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) in
 L(unit) |}]
 

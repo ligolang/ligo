@@ -1048,6 +1048,9 @@ type test_exec_result = unit
 type michelson_contract = unit
 type mutation = unit
 type test_baker_policy = unit
+type 'a gen = unit
+type 'a pbt_test = unit
+type 'a pbt_result = unit
 
 module Test = struct
 
@@ -1115,6 +1118,12 @@ module Test = struct
   let print (_v : string) : unit = failwith "TEST_PRINT"
   let eprint (_v : string) : unit = failwith "TEST_EPRINTL"
   let to_string (type a) (_v : a) : string = failwith "TEST_TO_STRING"
+  module PBT = struct
+    let gen (type a) : a gen = failwith "TEST_RANDOM"
+    let gen_small (type a) : a gen = failwith "TEST_RANDOM"
+    let make_test (type a) ((_g, _p) : a gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
+    let run (type a) (_gp : a pbt_test) (_k : nat) : a pbt_result = failwith "TEST_RUN_TEST"
+  end
 
 #elif UNCURRY
 
@@ -1180,6 +1189,12 @@ module Test = struct
   let print (_v : string) : unit = failwith "TEST_PRINT"
   let eprint (_v : string) : unit = failwith "TEST_EPRINTL"
   let to_string (type a) (_v : a) : string = failwith "TEST_TO_STRING"
+  module PBT = struct
+    let gen (type a) : a gen = failwith "TEST_RANDOM"
+    let gen_small (type a) : a gen = failwith "TEST_RANDOM"
+    let make_test (type a) ((_g, _p) : a gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
+    let run (type a) ((_gp, _k) : a pbt_test * nat) : a pbt_result = failwith "TEST_RUN_TEST"
+  end
 
 #endif
 
