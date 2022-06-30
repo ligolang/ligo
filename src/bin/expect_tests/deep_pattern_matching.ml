@@ -152,7 +152,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - _ :: [] |}]
 
 let%expect_test _ =
@@ -166,7 +165,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - {a = None; b = _} |}]
 
 let%expect_test _ =
@@ -190,7 +188,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - (Cons (_, _), Cons (_, _)) |}]
 
 (* Positives *)
@@ -412,7 +409,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - (A, A, B, _, A, _) |}]
 
 let%expect_test _ =
@@ -429,7 +425,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - (B, _, B, _, B, _, B, _) |}]
 
 let%expect_test _ =

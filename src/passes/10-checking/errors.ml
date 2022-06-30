@@ -317,7 +317,7 @@ let rec error_ppformat : display_format:string display_format ->
         | None -> 
           let p = Tree_abstraction.Cameligo.decompile_pattern p in
           let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 p in
-          Buffer.contents p in s ^ "\n- " ^ s') in
+          Buffer.contents p in s ^ "- " ^ s' ^ "\n") in
       Format.fprintf f
         "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"
         Snippet.pp loc

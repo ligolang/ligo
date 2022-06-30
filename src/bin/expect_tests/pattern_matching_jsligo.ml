@@ -12,7 +12,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - Success |}]
 
 let%expect_test _ =
@@ -58,7 +57,6 @@ let%expect_test _ =
 
   Error : this pattern-matching is not exhaustive.
   Here are examples of cases that are not matched:
-
   - C |}]
 
 let%expect_test _ =

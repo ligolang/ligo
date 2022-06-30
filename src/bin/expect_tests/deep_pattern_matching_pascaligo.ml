@@ -110,7 +110,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - _ # nil |}]
 
 let%expect_test _ =
@@ -125,7 +124,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - record [a = None (Unit); b = _] |}]
 
 let%expect_test _ =
@@ -140,7 +138,6 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-
     - (Cons ((_, _)), Cons ((_, _))) |}]
 
 let%expect_test _ =
