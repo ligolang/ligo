@@ -1355,7 +1355,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#25. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#26. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -1404,7 +1404,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
      10 |   let toto : operation list = [ op ] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#35. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract.mligo" ] ;
   [%expect{|
@@ -2228,20 +2228,20 @@ let%expect_test _ =
              LAMBDA
                unit
                unit
-               { { /* x */ } }
+               { { /* x#15 */ } }
              /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */ ;
-             { /* f, _ */ } ;
+             { /* f#14, _ */ } ;
              SWAP ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s2, f */ } ;
+             { /* s2#16, f#14 */ } ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s3, f */ } ;
+             { /* s3#17, f#14 */ } ;
              EXEC ;
-             { /* s */ } ;
+             { /* s#18 */ } ;
              NIL operation
                  /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
              /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */ ;
@@ -2309,17 +2309,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "29" } } }, {}, {}, {},
-              { "environment": [ { "name": "x", "source_type": "0" } ] },
+              { "environment": [ { "name": "x#15", "source_type": "0" } ] },
               { "environment":
-                  [ { "name": "f", "source_type": "1" }, { "source_type": "0" } ] },
-              {}, {}, {}, {}, {},
+                  [ { "name": "f#14", "source_type": "1" },
+                    { "source_type": "0" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2", "source_type": "0" },
-                    { "name": "f", "source_type": "1" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#16", "source_type": "0" },
+                    { "name": "f#14", "source_type": "1" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3", "source_type": "0" },
-                    { "name": "f", "source_type": "1" } ] }, {},
-              { "environment": [ { "name": "s", "source_type": "0" } ] },
+                  [ { "name": "s3#17", "source_type": "0" },
+                    { "name": "f#14", "source_type": "1" } ] }, {},
+              { "environment": [ { "name": "s#18", "source_type": "0" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
@@ -2367,83 +2367,86 @@ const foo =
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
   [%expect {|
-    let <Tezos#0>balance = ({ DROP ; BALANCE })@(L(unit))[@inline] in
-    let <Tezos#0>amount = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
-    let <Tezos#0>now = ({ DROP ; NOW })@(L(unit))[@inline] in
-    let <Tezos#0>sender = ({ DROP ; SENDER })@(L(unit))[@inline] in
-    let <Tezos#0>source = ({ DROP ; SOURCE })@(L(unit))[@inline] in
-    let <Tezos#0>level = ({ DROP ; LEVEL })@(L(unit))[@inline] in
-    let <Tezos#0>self_address = SELF_ADDRESS()[@inline] in
-    let <Tezos#0>chain_id = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
-    let <Tezos#0>total_voting_power =
+    let balance#11 = ({ DROP ; BALANCE })@(L(unit))[@inline] in
+    let amount#12 = ({ DROP ; AMOUNT })@(L(unit))[@inline] in
+    let now#13 = ({ DROP ; NOW })@(L(unit))[@inline] in
+    let sender#14 = ({ DROP ; SENDER })@(L(unit))[@inline] in
+    let source#15 = ({ DROP ; SOURCE })@(L(unit))[@inline] in
+    let level#16 = ({ DROP ; LEVEL })@(L(unit))[@inline] in
+    let self_address#17 = SELF_ADDRESS()[@inline] in
+    let chain_id#18 = ({ DROP ; CHAIN_ID })@(L(unit))[@inline] in
+    let total_voting_power#19 =
       ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
-    let <Tezos#0>get_balance =
-      fun _u -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-    let <Tezos#0>get_amount =
-      fun _u -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-    let <Tezos#0>get_now = fun _u -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-    let <Tezos#0>get_sender =
-      fun _u -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-    let <Tezos#0>get_source =
-      fun _u -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-    let <Tezos#0>get_level = fun _u -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-    let <Tezos#0>get_self_address = fun _u -> (SELF_ADDRESS())[@inline] in
-    let <Tezos#0>get_chain_id =
-      fun _u -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
-    let <Tezos#0>get_total_voting_power =
-      fun _u -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
-    let <Tezos#0>voting_power = fun kh -> (({ VOTING_POWER })@(kh))[@inline] in
-    let <Tezos#0>implicit_account = fun kh -> (IMPLICIT_ACCOUNT(kh))[@inline] in
-    let <Tezos#0>pairing_check = fun l -> (({ PAIRING_CHECK })@(l))[@inline] in
-    let <Tezos#0>open_chest =
-      fun ck -> (fun c -> (fun n -> (OPEN_CHEST(ck , c , n))))[@inline] in
-    let <Tezos#0>set_delegate = fun o -> (SET_DELEGATE(o))[@inline] in
-    let <Bitwise#0>xor = fun l -> (fun r -> (XOR(l , r)))[@inline] in
-    let <Bitwise#0>shift_left = fun l -> (fun r -> (LSL(l , r)))[@inline] in
-    let <Bitwise#0>shift_right = fun l -> (fun r -> (LSR(l , r)))[@inline] in
-    let <String#0>concat =
-      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-    let <String#0>sub =
-      fun s ->
-      (fun l ->
-       (fun b ->
+    let get_balance#20 =
+      fun _u#26 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let get_amount#21 = fun _u#28 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let get_now#22 = fun _u#30 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let get_sender#23 = fun _u#32 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let get_source#24 = fun _u#34 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let get_level#25 = fun _u#36 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let get_self_address#26 = fun _u#38 -> (SELF_ADDRESS())[@inline] in
+    let get_chain_id#27 =
+      fun _u#40 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+    let get_total_voting_power#28 =
+      fun _u#42 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+    let voting_power#29 = fun kh#44 -> (({ VOTING_POWER })@(kh#44))[@inline] in
+    let implicit_account#31 = fun kh#48 -> (IMPLICIT_ACCOUNT(kh#48))[@inline] in
+    let pairing_check#37 = fun l#62 -> (({ PAIRING_CHECK })@(l#62))[@inline] in
+    let open_chest#38 =
+      fun ck#64 -> (fun c#65 -> (fun n#66 -> (OPEN_CHEST(ck#64 , c#65 , n#66))))[@inline] in
+    let set_delegate#42 = fun o#78 -> (SET_DELEGATE(o#78))[@inline] in
+    let xor#43 = fun l#80 -> (fun r#81 -> (XOR(l#80 , r#81)))[@inline] in
+    let shift_left#44 = fun l#83 -> (fun r#84 -> (LSL(l#83 , r#84)))[@inline] in
+    let shift_right#45 = fun l#86 -> (fun r#87 -> (LSR(l#86 , r#87)))[@inline] in
+    let concat#86 =
+      fun b1#217 ->
+      (fun b2#218 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#217 , b2#218))))[@inline] in
+    let sub#87 =
+      fun s#220 ->
+      (fun l#221 ->
+       (fun b#222 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
-                                                                  b)))))[@inline] in
-    let <String#0>length = fun b -> (({ SIZE })@(b))[@inline] in
-    let <Bytes#0>concat =
-      fun b1 -> (fun b2 -> (({ UNPAIR ; CONCAT })@(PAIR(b1 , b2))))[@inline] in
-    let <Bytes#0>sub =
-      fun s ->
-      (fun l ->
-       (fun b ->
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#220 ,
+                                                                       l#221) ,
+                                                                  b#222)))))[@inline] in
+    let length#88 = fun b#224 -> (({ SIZE })@(b#224))[@inline] in
+    let concat#91 =
+      fun b1#231 ->
+      (fun b2#232 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#231 , b2#232))))[@inline] in
+    let sub#92 =
+      fun s#234 ->
+      (fun l#235 ->
+       (fun b#236 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s , l) ,
-                                                                  b)))))[@inline] in
-    let <Bytes#0>length = fun b -> (({ SIZE })@(b))[@inline] in
-    let <Crypto#0>blake2b = fun b -> (({ BLAKE2B })@(b))[@inline] in
-    let <Crypto#0>sha256 = fun b -> (({ SHA256 })@(b))[@inline] in
-    let <Crypto#0>sha512 = fun b -> (({ SHA512 })@(b))[@inline] in
-    let <Crypto#0>sha3 = fun b -> (({ SHA3 })@(b))[@inline] in
-    let <Crypto#0>keccak = fun b -> (({ KECCAK })@(b))[@inline] in
-    let <Crypto#0>hash_key = fun k -> (({ HASH_KEY })@(k))[@inline] in
-    let <Crypto#0>check =
-      fun k ->
-      (fun s ->
-       (fun b ->
-        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k , s) , b)))))[@inline] in
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#234 ,
+                                                                       l#235) ,
+                                                                  b#236)))))[@inline] in
+    let length#95 = fun b#242 -> (({ SIZE })@(b#242))[@inline] in
+    let blake2b#96 = fun b#244 -> (({ BLAKE2B })@(b#244))[@inline] in
+    let sha256#97 = fun b#246 -> (({ SHA256 })@(b#246))[@inline] in
+    let sha512#98 = fun b#248 -> (({ SHA512 })@(b#248))[@inline] in
+    let sha3#99 = fun b#250 -> (({ SHA3 })@(b#250))[@inline] in
+    let keccak#100 = fun b#252 -> (({ KECCAK })@(b#252))[@inline] in
+    let hash_key#101 = fun k#254 -> (({ HASH_KEY })@(k#254))[@inline] in
+    let check#102 =
+      fun k#256 ->
+      (fun s#257 ->
+       (fun b#258 ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#256 , s#257) ,
+                                                       b#258)))))[@inline] in
     let assert =
-      fun b ->
-      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b))[@inline] in
+      fun b#260 ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#260))[@inline] in
     let assert_with_error =
-      fun b ->
-      (fun s -> (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b , s))))[@inline] in
-    let abs = fun i -> (({ ABS })@(i))[@inline] in
-    let is_nat = fun i -> (({ ISNAT })@(i))[@inline] in
+      fun b#262 ->
+      (fun s#263 ->
+       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#262 , s#263))))[@inline] in
+    let abs = fun i#275 -> (({ ABS })@(i#275))[@inline] in
+    let is_nat = fun i#277 -> (({ ISNAT })@(i#277))[@inline] in
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
@@ -2462,88 +2465,93 @@ let%expect_test _ =
     let poly_failwith_3 = { FAILWITH }[@inline] in
     let poly_failwith_2 = { FAILWITH }[@inline] in
     let poly_failwith_1 = { FAILWITH }[@inline] in
-    let <Test#0>originate_from_file =
-      fun _fn ->
-      (fun _e ->
-       (fun _v -> (fun _s -> (fun _t -> ((poly_failwith_15)@(L("TEST MODE")))))))[@inline] in
-    let <Test#0>set_source =
-      fun _a -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>set_baker =
-      fun _a -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>set_baker_policy =
-      fun _bp -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>transfer =
-      fun _a -> (fun _s -> (fun _t -> ((poly_failwith_1)@(L("TEST MODE")))))[@inline] in
-    let <Test#0>transfer_exn =
-      fun _a -> (fun _s -> (fun _t -> ((poly_failwith_12)@(L("TEST MODE")))))[@inline] in
-    let <Test#0>get_storage_of_address =
-      fun _a -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>get_balance =
-      fun _a -> ((poly_failwith_14)@(L("TEST MODE")))[@inline] in
-    let <Test#0>michelson_equal =
-      fun _m1 -> (fun _m2 -> ((poly_failwith_13)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>reset_state =
-      fun _n -> (fun _l -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>reset_state_at =
-      fun _t -> (fun _n -> (fun _l -> ((poly_failwith_1)@(L("TEST MODE")))))[@inline] in
-    let <Test#0>get_voting_power =
-      fun _kh -> ((poly_failwith_12)@(L("TEST MODE")))[@inline] in
-    let <Test#0>get_total_voting_power =
+    let originate_from_file#104 =
+      fun _fn#291 ->
+      (fun _e#292 ->
+       (fun _v#293 ->
+        (fun _s#294 -> (fun _t#295 -> ((poly_failwith_15)@(L("TEST MODE")))))))[@inline] in
+    let set_source#106 =
+      fun _a#301 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let set_baker#107 =
+      fun _a#303 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let set_baker_policy#108 =
+      fun _bp#305 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let transfer#109 =
+      fun _a#307 ->
+      (fun _s#308 -> (fun _t#309 -> ((poly_failwith_1)@(L("TEST MODE")))))[@inline] in
+    let transfer_exn#110 =
+      fun _a#311 ->
+      (fun _s#312 -> (fun _t#313 -> ((poly_failwith_12)@(L("TEST MODE")))))[@inline] in
+    let get_storage_of_address#114 =
+      fun _a#325 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let get_balance#115 =
+      fun _a#327 -> ((poly_failwith_14)@(L("TEST MODE")))[@inline] in
+    let michelson_equal#116 =
+      fun _m1#329 -> (fun _m2#330 -> ((poly_failwith_13)@(L("TEST MODE"))))[@inline] in
+    let reset_state#118 =
+      fun _n#334 -> (fun _l#335 -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
+    let reset_state_at#119 =
+      fun _t#337 ->
+      (fun _n#338 -> (fun _l#339 -> ((poly_failwith_1)@(L("TEST MODE")))))[@inline] in
+    let get_voting_power#120 =
+      fun _kh#341 -> ((poly_failwith_12)@(L("TEST MODE")))[@inline] in
+    let get_total_voting_power#121 =
       (poly_failwith_12)@(L("TEST MODE"))[@inline] in
-    let <Test#0>nth_bootstrap_contract =
-      fun _i -> ((poly_failwith_6)@(L("TEST MODE")))[@inline] in
-    let <Test#0>nth_bootstrap_account =
-      fun _i -> ((poly_failwith_6)@(L("TEST MODE")))[@inline] in
-    let <Test#0>last_originations =
-      fun _u -> ((poly_failwith_11)@(L("TEST MODE")))[@inline] in
-    let <Test#0>save_mutation =
-      fun _s -> (fun _m -> ((poly_failwith_2)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>add_account =
-      fun _s -> (fun _k -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>new_account =
-      fun _u -> ((poly_failwith_10)@(L("TEST MODE")))[@inline] in
-    let <Test#0>baker_account =
-      fun _p -> (fun _o -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>bake_until_n_cycle_end =
-      fun _n -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>register_delegate =
-      fun _kh -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>register_constant =
-      fun _m -> ((poly_failwith_9)@(L("TEST MODE")))[@inline] in
-    let <Test#0>create_chest =
-      fun _b -> (fun _n -> ((poly_failwith_8)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>create_chest_key =
-      fun _c -> (fun _n -> ((poly_failwith_7)@(L("TEST MODE"))))[@inline] in
-    let <Test#0>constant_to_michelson_program =
-      fun _s -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
-    let <Test#0>restore_context =
-      fun _u -> ((poly_failwith_1)@(L("TEST_POP_CONTEXT")))[@inline] in
-    let <Test#0>save_context =
-      fun _u -> ((poly_failwith_1)@(L("TEST_PUSH_CONTEXT")))[@inline] in
-    let <Test#0>drop_context =
-      fun _u -> ((poly_failwith_1)@(L("TEST_DROP_CONTEXT")))[@inline] in
-    let <Test#0>read_contract_from_file =
-      fun _fn -> ((poly_failwith_1)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
-    let <Test#0>compile_contract_from_file =
-      fun _fn ->
-      (fun _e ->
-       (fun _v -> ((poly_failwith_1)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
-    let <Test#0>originate_contract =
-      fun _c -> (fun _s -> (fun _t -> ((poly_failwith_6)@(L("TEST_ORIGINATE")))))[@inline] in
-    let <Test#0>size = fun _c -> ((poly_failwith_5)@(L("TEST_SIZE")))[@inline] in
-    let <Test#0>get_bootstrap_account =
-      fun _n -> ((poly_failwith_4)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
-    let <Test#0>sign =
-      fun _sk -> (fun _d -> ((poly_failwith_3)@(L("TEST_SIGN"))))[@inline] in
-    let <Test#0>chr = fun _n -> ((poly_failwith_2)@(L("TEST_CHR")))[@inline] in
-    let <Test#0>nl = L("NEWLINE")[@inline] in
-    let <Test#0>println =
-      fun _v -> ((poly_failwith_1)@(L("TEST_PRINTLN")))[@inline] in
-    let <Test#0>print =
-      fun _v -> ((poly_failwith_1)@(L("TEST_PRINT")))[@inline] in
-    let <Test#0>eprint =
-      fun _v -> ((poly_failwith_1)@(L("TEST_EPRINTL")))[@inline] in
-    let <Foo#0>x = L(54) in let <Foo#2>y = <Foo#0>x in L(unit) |}]
+    let nth_bootstrap_contract#123 =
+      fun _i#348 -> ((poly_failwith_6)@(L("TEST MODE")))[@inline] in
+    let nth_bootstrap_account#124 =
+      fun _i#350 -> ((poly_failwith_6)@(L("TEST MODE")))[@inline] in
+    let last_originations#126 =
+      fun _u#354 -> ((poly_failwith_11)@(L("TEST MODE")))[@inline] in
+    let save_mutation#129 =
+      fun _s#361 -> (fun _m#362 -> ((poly_failwith_2)@(L("TEST MODE"))))[@inline] in
+    let add_account#136 =
+      fun _s#379 -> (fun _k#380 -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
+    let new_account#137 =
+      fun _u#382 -> ((poly_failwith_10)@(L("TEST MODE")))[@inline] in
+    let baker_account#138 =
+      fun _p#384 -> (fun _o#385 -> ((poly_failwith_1)@(L("TEST MODE"))))[@inline] in
+    let bake_until_n_cycle_end#139 =
+      fun _n#387 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let register_delegate#140 =
+      fun _kh#389 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let register_constant#141 =
+      fun _m#391 -> ((poly_failwith_9)@(L("TEST MODE")))[@inline] in
+    let create_chest#146 =
+      fun _b#403 -> (fun _n#404 -> ((poly_failwith_8)@(L("TEST MODE"))))[@inline] in
+    let create_chest_key#147 =
+      fun _c#406 -> (fun _n#407 -> ((poly_failwith_7)@(L("TEST MODE"))))[@inline] in
+    let constant_to_michelson_program#148 =
+      fun _s#409 -> ((poly_failwith_1)@(L("TEST MODE")))[@inline] in
+    let restore_context#149 =
+      fun _u#411 -> ((poly_failwith_1)@(L("TEST_POP_CONTEXT")))[@inline] in
+    let save_context#150 =
+      fun _u#413 -> ((poly_failwith_1)@(L("TEST_PUSH_CONTEXT")))[@inline] in
+    let drop_context#151 =
+      fun _u#415 -> ((poly_failwith_1)@(L("TEST_DROP_CONTEXT")))[@inline] in
+    let read_contract_from_file#152 =
+      fun _fn#417 -> ((poly_failwith_1)@(L("TEST_READ_CONTRACT_FROM_FILE")))[@inline] in
+    let compile_contract_from_file#153 =
+      fun _fn#419 ->
+      (fun _e#420 ->
+       (fun _v#421 -> ((poly_failwith_1)@(L("TEST_COMPILE_CONTRACT_FROM_FILE")))))[@inline] in
+    let originate_contract#155 =
+      fun _c#425 ->
+      (fun _s#426 -> (fun _t#427 -> ((poly_failwith_6)@(L("TEST_ORIGINATE")))))[@inline] in
+    let size#156 = fun _c#429 -> ((poly_failwith_5)@(L("TEST_SIZE")))[@inline] in
+    let get_bootstrap_account#157 =
+      fun _n#431 -> ((poly_failwith_4)@(L("TEST_GET_BOOTSTRAP_ACCOUNT")))[@inline] in
+    let sign#158 =
+      fun _sk#433 -> (fun _d#434 -> ((poly_failwith_3)@(L("TEST_SIGN"))))[@inline] in
+    let chr#159 = fun _n#436 -> ((poly_failwith_2)@(L("TEST_CHR")))[@inline] in
+    let nl#160 = L("NEWLINE")[@inline] in
+    let println#161 =
+      fun _v#439 -> ((poly_failwith_1)@(L("TEST_PRINTLN")))[@inline] in
+    let print#162 =
+      fun _v#441 -> ((poly_failwith_1)@(L("TEST_PRINT")))[@inline] in
+    let eprint#163 =
+      fun _v#443 -> ((poly_failwith_1)@(L("TEST_EPRINTL")))[@inline] in
+    let x#165 = L(54) in let y#8 = x#165 in L(unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
@@ -2826,16 +2834,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "y" ; "--init-file" ; contract "extend_builtin.jsligo" ] ;
   [%expect{|
-File "../../test/contracts/extend_builtin.jsligo", line 2, characters 13-14:
-  1 | namespace Tezos {
-  2 |   export let x = 42;
-  3 |   export let f = (x  : int) : int => x + 2;
+File "../../test/contracts/extend_builtin.ligo", line 2, characters 8-9:
+  1 | module Tezos is {
+  2 |   const x = 42
+  3 |   function f (const x  : int) : int is x + 2
 
 Toplevel let declaration are silently change to const declaration.
 
-File "../../test/contracts/extend_builtin.jsligo", line 3, characters 13-14:
-  2 |   export let x = 42;
-  3 |   export let f = (x  : int) : int => x + 2;
+File "../../test/contracts/extend_builtin.ligo", line 3, characters 11-12:
+  2 |   const x = 42
+  3 |   function f (const x  : int) : int is x + 2
   4 | }
 
 Toplevel let declaration are silently change to const declaration.

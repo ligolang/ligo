@@ -12,6 +12,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "threshold",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -36,10 +37,7 @@ let%expect_test _ =
                 "point_bol": 17
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -47,10 +45,8 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -115,6 +111,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "max_proposal",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -139,10 +136,7 @@ let%expect_test _ =
                 "point_bol": 39
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -150,10 +144,8 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -218,6 +210,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "max_message_size",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -242,10 +235,7 @@ let%expect_test _ =
                 "point_bol": 64
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -253,10 +243,8 @@ let%expect_test _ =
             {
               "name": "nat",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -321,6 +309,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "state_hash",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -345,10 +334,7 @@ let%expect_test _ =
                 "point_bol": 93
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -356,10 +342,8 @@ let%expect_test _ =
             {
               "name": "bytes",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -424,6 +408,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "addr_set",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -448,10 +433,7 @@ let%expect_test _ =
                 "point_bol": 118
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -460,6 +442,7 @@ let%expect_test _ =
               "type_operator": {
                 "name": "set",
                 "counter": 0,
+                "generated": false,
                 "location": [
                   "File",
                   {
@@ -484,10 +467,7 @@ let%expect_test _ =
                       "point_bol": 118
                     }
                   }
-                ],
-                "generated": false,
-                "mutable_": false,
-                "namespace": []
+                ]
               },
               "arguments": [
                 {
@@ -496,10 +476,8 @@ let%expect_test _ =
                     {
                       "name": "address",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -595,6 +573,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "message_store",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -619,10 +598,7 @@ let%expect_test _ =
                 "point_bol": 149
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -631,6 +607,7 @@ let%expect_test _ =
               "type_operator": {
                 "name": "map",
                 "counter": 0,
+                "generated": false,
                 "location": [
                   "File",
                   {
@@ -655,10 +632,7 @@ let%expect_test _ =
                       "point_bol": 149
                     }
                   }
-                ],
-                "generated": false,
-                "mutable_": false,
-                "namespace": []
+                ]
               },
               "arguments": [
                 {
@@ -667,10 +641,8 @@ let%expect_test _ =
                     {
                       "name": "bytes",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -707,10 +679,8 @@ let%expect_test _ =
                     {
                       "name": "addr_set",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -806,6 +776,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "proposal_counters",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -830,10 +801,7 @@ let%expect_test _ =
                 "point_bol": 193
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -842,6 +810,7 @@ let%expect_test _ =
               "type_operator": {
                 "name": "map",
                 "counter": 0,
+                "generated": false,
                 "location": [
                   "File",
                   {
@@ -866,10 +835,7 @@ let%expect_test _ =
                       "point_bol": 193
                     }
                   }
-                ],
-                "generated": false,
-                "mutable_": false,
-                "namespace": []
+                ]
               },
               "arguments": [
                 {
@@ -878,10 +844,8 @@ let%expect_test _ =
                     {
                       "name": "address",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -918,10 +882,8 @@ let%expect_test _ =
                     {
                       "name": "nat",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -1017,6 +979,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "storage",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -1041,10 +1004,7 @@ let%expect_test _ =
                 "point_bol": 239
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -1058,10 +1018,8 @@ let%expect_test _ =
                      {
                        "name": "state_hash",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1103,10 +1061,8 @@ let%expect_test _ =
                      {
                        "name": "threshold",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1148,10 +1104,8 @@ let%expect_test _ =
                      {
                        "name": "max_proposal",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1193,10 +1147,8 @@ let%expect_test _ =
                      {
                        "name": "max_message_size",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1238,10 +1190,8 @@ let%expect_test _ =
                      {
                        "name": "addr_set",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1283,10 +1233,8 @@ let%expect_test _ =
                      {
                        "name": "message_store",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1328,10 +1276,8 @@ let%expect_test _ =
                      {
                        "name": "proposal_counters",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -1430,6 +1376,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "message",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -1454,10 +1401,7 @@ let%expect_test _ =
                 "point_bol": 572
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -1469,10 +1413,8 @@ let%expect_test _ =
                   {
                     "name": "bytes",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -1508,6 +1450,7 @@ let%expect_test _ =
                     "type_operator": {
                       "name": "list",
                       "counter": 0,
+                      "generated": false,
                       "location": [
                         "File",
                         {
@@ -1534,10 +1477,7 @@ let%expect_test _ =
                             "point_bol": 572
                           }
                         }
-                      ],
-                      "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      ]
                     },
                     "arguments": [
                       {
@@ -1546,10 +1486,8 @@ let%expect_test _ =
                           {
                             "name": "operation",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -1673,6 +1611,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "send_pt",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -1697,10 +1636,7 @@ let%expect_test _ =
                 "point_bol": 614
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -1708,10 +1644,8 @@ let%expect_test _ =
             {
               "name": "message",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -1776,6 +1710,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "withdraw_pt",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -1800,10 +1735,7 @@ let%expect_test _ =
                 "point_bol": 638
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -1811,10 +1743,8 @@ let%expect_test _ =
             {
               "name": "message",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -1879,6 +1809,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "default_pt",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -1903,10 +1834,7 @@ let%expect_test _ =
                 "point_bol": 666
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -1914,10 +1842,8 @@ let%expect_test _ =
             {
               "name": "unit",
               "counter": 0,
-              "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false,
-              "namespace": []
+              "location": [ "Virtual", "dummy" ]
             }
           ],
           "location": [
@@ -1982,6 +1908,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "return",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -2006,10 +1933,7 @@ let%expect_test _ =
                 "point_bol": 691
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -2022,6 +1946,7 @@ let%expect_test _ =
                     "type_operator": {
                       "name": "list",
                       "counter": 0,
+                      "generated": false,
                       "location": [
                         "File",
                         {
@@ -2048,10 +1973,7 @@ let%expect_test _ =
                             "point_bol": 691
                           }
                         }
-                      ],
-                      "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      ]
                     },
                     "arguments": [
                       {
@@ -2060,10 +1982,8 @@ let%expect_test _ =
                           {
                             "name": "operation",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -2129,10 +2049,8 @@ let%expect_test _ =
                   {
                     "name": "storage",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -2225,6 +2143,7 @@ let%expect_test _ =
         "type_binder": {
           "name": "parameter",
           "counter": 0,
+          "generated": false,
           "location": [
             "File",
             {
@@ -2249,10 +2168,7 @@ let%expect_test _ =
                 "point_bol": 734
               }
             }
-          ],
-          "generated": false,
-          "mutable_": false,
-          "namespace": []
+          ]
         },
         "type_expr": {
           "type_content": [
@@ -2266,10 +2182,8 @@ let%expect_test _ =
                      {
                        "name": "send_pt",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -2311,10 +2225,8 @@ let%expect_test _ =
                      {
                        "name": "withdraw_pt",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -2356,10 +2268,8 @@ let%expect_test _ =
                      {
                        "name": "default_pt",
                        "counter": 0,
-                       "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false,
-                       "namespace": []
+                       "location": [ "Virtual", "dummy" ]
                      }
                    ],
                    "location": [
@@ -2459,6 +2369,7 @@ let%expect_test _ =
           "var": {
             "name": "send",
             "counter": 0,
+            "generated": false,
             "location": [
               "File",
               {
@@ -2483,10 +2394,7 @@ let%expect_test _ =
                   "point_bol": 826
                 }
               }
-            ],
-            "generated": false,
-            "mutable_": false,
-            "namespace": []
+            ]
           },
           "ty": {
             "type_content": [
@@ -2502,10 +2410,8 @@ let%expect_test _ =
                           {
                             "name": "send_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -2542,10 +2448,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -2586,10 +2490,8 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -2633,10 +2535,8 @@ let%expect_test _ =
                 "var": {
                   "name": "parameters",
                   "counter": 2,
-                  "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false,
-                  "namespace": []
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -2648,10 +2548,8 @@ let%expect_test _ =
                           {
                             "name": "send_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -2688,10 +2586,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -2734,10 +2630,8 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -2776,10 +2670,8 @@ let%expect_test _ =
                         {
                           "name": "parameters",
                           "counter": 2,
-                          "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false,
-                          "namespace": []
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -2795,6 +2687,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "param",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -2821,10 +2714,7 @@ let%expect_test _ =
                                         "point_bol": 826
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2832,10 +2722,8 @@ let%expect_test _ =
                                     {
                                       "name": "send_pt",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -2875,6 +2763,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "s",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -2901,10 +2790,7 @@ let%expect_test _ =
                                         "point_bol": 826
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2912,10 +2798,8 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -2980,6 +2864,8 @@ let%expect_test _ =
                                                           {
                                                             "name": "Set",
                                                             "counter": 0,
+                                                            "generated":
+                                                              false,
                                                             "location": [
                                                               "File",
                                                               {
@@ -3016,16 +2902,13 @@ let%expect_test _ =
                                                                     951
                                                                 }
                                                               }
-                                                            ],
-                                                            "generated":
-                                                              false,
-                                                            "mutable_": false,
-                                                            "namespace": []
+                                                            ]
                                                           }
                                                         ],
                                                         "element": {
                                                           "name": "mem",
                                                           "counter": 0,
+                                                          "generated": false,
                                                           "location": [
                                                             "File",
                                                             {
@@ -3062,10 +2945,7 @@ let%expect_test _ =
                                                                   951
                                                               }
                                                             }
-                                                          ],
-                                                          "generated": false,
-                                                          "mutable_": false,
-                                                          "namespace": []
+                                                          ]
                                                         }
                                                       }
                                                     ],
@@ -3115,6 +2995,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3151,13 +3033,7 @@ let%expect_test _ =
                                                                     951
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -3165,6 +3041,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3201,13 +3079,7 @@ let%expect_test _ =
                                                                     951
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                   }
                                                                 ],
@@ -3346,6 +3218,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -3382,13 +3256,7 @@ let%expect_test _ =
                                                                     951
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -3576,6 +3444,7 @@ let%expect_test _ =
                                               {
                                                 "name": "failwith",
                                                 "counter": 0,
+                                                "generated": false,
                                                 "location": [
                                                   "File",
                                                   {
@@ -3602,10 +3471,7 @@ let%expect_test _ =
                                                       "point_bol": 1015
                                                     }
                                                   }
-                                                ],
-                                                "generated": false,
-                                                "mutable_": false,
-                                                "namespace": []
+                                                ]
                                               }
                                             ],
                                             "location": [
@@ -3749,6 +3615,7 @@ let%expect_test _ =
                                       "var": {
                                         "name": "message",
                                         "counter": 0,
+                                        "generated": false,
                                         "location": [
                                           "File",
                                           {
@@ -3775,10 +3642,7 @@ let%expect_test _ =
                                               "point_bol": 1111
                                             }
                                           }
-                                        ],
-                                        "generated": false,
-                                        "mutable_": false,
-                                        "namespace": []
+                                        ]
                                       },
                                       "ty": {
                                         "type_content": [
@@ -3786,12 +3650,10 @@ let%expect_test _ =
                                           {
                                             "name": "message",
                                             "counter": 0,
+                                            "generated": false,
                                             "location": [
                                               "Virtual", "dummy"
-                                            ],
-                                            "generated": false,
-                                            "mutable_": false,
-                                            "namespace": []
+                                            ]
                                           }
                                         ],
                                         "location": [
@@ -3830,6 +3692,7 @@ let%expect_test _ =
                                         {
                                           "name": "param",
                                           "counter": 0,
+                                          "generated": false,
                                           "location": [
                                             "File",
                                             {
@@ -3856,10 +3719,7 @@ let%expect_test _ =
                                                 "point_bol": 1111
                                               }
                                             }
-                                          ],
-                                          "generated": false,
-                                          "mutable_": false,
-                                          "namespace": []
+                                          ]
                                         }
                                       ],
                                       "location": [
@@ -3898,6 +3758,7 @@ let%expect_test _ =
                                             "var": {
                                               "name": "packed_msg",
                                               "counter": 0,
+                                              "generated": false,
                                               "location": [
                                                 "File",
                                                 {
@@ -3924,10 +3785,7 @@ let%expect_test _ =
                                                     "point_bol": 1147
                                                   }
                                                 }
-                                              ],
-                                              "generated": false,
-                                              "mutable_": false,
-                                              "namespace": []
+                                              ]
                                             },
                                             "ty": {
                                               "type_content": [
@@ -3935,12 +3793,10 @@ let%expect_test _ =
                                                 {
                                                   "name": "bytes",
                                                   "counter": 0,
+                                                  "generated": false,
                                                   "location": [
                                                     "Virtual", "dummy"
-                                                  ],
-                                                  "generated": false,
-                                                  "mutable_": false,
-                                                  "namespace": []
+                                                  ]
                                                 }
                                               ],
                                               "location": [
@@ -3985,6 +3841,7 @@ let%expect_test _ =
                                                         {
                                                           "name": "Bytes",
                                                           "counter": 0,
+                                                          "generated": false,
                                                           "location": [
                                                             "File",
                                                             {
@@ -4021,15 +3878,13 @@ let%expect_test _ =
                                                                   1147
                                                               }
                                                             }
-                                                          ],
-                                                          "generated": false,
-                                                          "mutable_": false,
-                                                          "namespace": []
+                                                          ]
                                                         }
                                                       ],
                                                       "element": {
                                                         "name": "pack",
                                                         "counter": 0,
+                                                        "generated": false,
                                                         "location": [
                                                           "File",
                                                           {
@@ -4066,10 +3921,7 @@ let%expect_test _ =
                                                                 1147
                                                             }
                                                           }
-                                                        ],
-                                                        "generated": false,
-                                                        "mutable_": false,
-                                                        "namespace": []
+                                                        ]
                                                       }
                                                     }
                                                   ],
@@ -4107,6 +3959,7 @@ let%expect_test _ =
                                                     {
                                                       "name": "message",
                                                       "counter": 0,
+                                                      "generated": false,
                                                       "location": [
                                                         "File",
                                                         {
@@ -4135,10 +3988,7 @@ let%expect_test _ =
                                                             "point_bol": 1147
                                                           }
                                                         }
-                                                      ],
-                                                      "generated": false,
-                                                      "mutable_": false,
-                                                      "namespace": []
+                                                      ]
                                                     }
                                                   ],
                                                   "location": [
@@ -4230,6 +4080,8 @@ let%expect_test _ =
                                                                     "Bytes",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4266,13 +4118,7 @@ let%expect_test _ =
                                                                     1200
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -4280,6 +4126,8 @@ let%expect_test _ =
                                                                     "length",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4316,13 +4164,7 @@ let%expect_test _ =
                                                                     1200
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -4372,6 +4214,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4408,13 +4252,7 @@ let%expect_test _ =
                                                                     1200
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4507,6 +4345,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -4543,13 +4383,7 @@ let%expect_test _ =
                                                                     1200
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4689,6 +4523,8 @@ let%expect_test _ =
                                                                     "failwith",
                                                                   "counter":
                                                                     0,
+                                                                  "generated":
+                                                                    false,
                                                                   "location": [
                                                                     "File",
                                                                     {
@@ -4725,13 +4561,7 @@ let%expect_test _ =
                                                                     1254
                                                                     }
                                                                     }
-                                                                  ],
-                                                                  "generated":
-                                                                    false,
-                                                                  "mutable_":
-                                                                    false,
-                                                                  "namespace":
-                                                                    []
+                                                                  ]
                                                                 }
                                                               ],
                                                               "location": [
@@ -4908,6 +4738,7 @@ let%expect_test _ =
                                                         "var": {
                                                           "name": "new_store",
                                                           "counter": 0,
+                                                          "generated": false,
                                                           "location": [
                                                             "File",
                                                             {
@@ -4944,10 +4775,7 @@ let%expect_test _ =
                                                                   1411
                                                               }
                                                             }
-                                                          ],
-                                                          "generated": false,
-                                                          "mutable_": false,
-                                                          "namespace": []
+                                                          ]
                                                         },
                                                         "ty": {
                                                           "type_content": [
@@ -4956,15 +4784,12 @@ let%expect_test _ =
                                                               "name":
                                                                 "addr_set",
                                                               "counter": 0,
+                                                              "generated":
+                                                                false,
                                                               "location": [
                                                                 "Virtual",
                                                                 "dummy"
-                                                              ],
-                                                              "generated":
-                                                                false,
-                                                              "mutable_":
-                                                                false,
-                                                              "namespace": []
+                                                              ]
                                                             }
                                                           ],
                                                           "location": [
@@ -5071,6 +4896,8 @@ let%expect_test _ =
                                                                     "Map",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5107,13 +4934,7 @@ let%expect_test _ =
                                                                     1452
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5121,6 +4942,8 @@ let%expect_test _ =
                                                                     "find_opt",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5157,13 +4980,7 @@ let%expect_test _ =
                                                                     1452
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -5217,6 +5034,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5253,13 +5072,7 @@ let%expect_test _ =
                                                                     1452
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5312,6 +5125,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5348,13 +5163,7 @@ let%expect_test _ =
                                                                     1452
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5537,6 +5346,8 @@ let%expect_test _ =
                                                                     "voters",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5573,13 +5384,7 @@ let%expect_test _ =
                                                                     1509
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -5610,6 +5415,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5646,13 +5453,7 @@ let%expect_test _ =
                                                                     1700
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5660,6 +5461,8 @@ let%expect_test _ =
                                                                     "mem",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5696,13 +5499,7 @@ let%expect_test _ =
                                                                     1700
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -5762,6 +5559,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5798,13 +5597,7 @@ let%expect_test _ =
                                                                     1700
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5812,6 +5605,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -5848,13 +5643,7 @@ let%expect_test _ =
                                                                     1700
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -5989,6 +5778,8 @@ let%expect_test _ =
                                                                     "voters",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6025,13 +5816,7 @@ let%expect_test _ =
                                                                     1700
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6205,6 +5990,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6241,13 +6028,7 @@ let%expect_test _ =
                                                                     1770
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -6268,6 +6049,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6304,13 +6087,7 @@ let%expect_test _ =
                                                                     1770
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6382,6 +6159,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6418,13 +6197,7 @@ let%expect_test _ =
                                                                     1770
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6432,6 +6205,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6468,13 +6243,7 @@ let%expect_test _ =
                                                                     1770
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -6626,6 +6395,8 @@ let%expect_test _ =
                                                                     "Map",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6662,13 +6433,7 @@ let%expect_test _ =
                                                                     1828
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6676,6 +6441,8 @@ let%expect_test _ =
                                                                     "find",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6712,13 +6479,7 @@ let%expect_test _ =
                                                                     1828
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -6778,6 +6539,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6814,13 +6577,7 @@ let%expect_test _ =
                                                                     1828
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6828,6 +6585,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -6864,13 +6623,7 @@ let%expect_test _ =
                                                                     1828
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -7009,6 +6762,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7045,13 +6800,7 @@ let%expect_test _ =
                                                                     1828
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7317,6 +7066,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7353,13 +7104,7 @@ let%expect_test _ =
                                                                     1770
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7617,6 +7362,8 @@ let%expect_test _ =
                                                                     "new_store",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7653,13 +7400,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -7682,6 +7423,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7718,13 +7461,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -7732,6 +7469,8 @@ let%expect_test _ =
                                                                     "add",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7768,13 +7507,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -7834,6 +7567,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7870,13 +7605,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -7884,6 +7613,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -7920,13 +7651,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -8061,6 +7786,8 @@ let%expect_test _ =
                                                                     "voters",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8097,13 +7824,7 @@ let%expect_test _ =
                                                                     1902
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8298,6 +8019,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8334,13 +8057,7 @@ let%expect_test _ =
                                                                     2058
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -8361,6 +8078,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8397,13 +8116,7 @@ let%expect_test _ =
                                                                     2058
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8475,6 +8188,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8511,13 +8226,7 @@ let%expect_test _ =
                                                                     2058
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8525,6 +8234,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8561,13 +8272,7 @@ let%expect_test _ =
                                                                     2058
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -8719,6 +8424,8 @@ let%expect_test _ =
                                                                     "Map",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8755,13 +8462,7 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8769,6 +8470,8 @@ let%expect_test _ =
                                                                     "find",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8805,13 +8508,7 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -8871,6 +8568,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8907,13 +8606,7 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8921,6 +8614,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -8957,13 +8652,7 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -9102,6 +8791,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9138,13 +8829,7 @@ let%expect_test _ =
                                                                     2111
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9410,6 +9095,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9446,13 +9133,7 @@ let%expect_test _ =
                                                                     2058
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9670,6 +9351,8 @@ let%expect_test _ =
                                                                     "new_store",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9706,13 +9389,7 @@ let%expect_test _ =
                                                                     2181
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -9739,6 +9416,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9775,13 +9454,7 @@ let%expect_test _ =
                                                                     2181
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -9789,6 +9462,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -9825,13 +9500,7 @@ let%expect_test _ =
                                                                     2181
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -10097,6 +9766,8 @@ let%expect_test _ =
                                                                     "sender_proposal_counter",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10133,13 +9804,7 @@ let%expect_test _ =
                                                                     2319
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -10149,16 +9814,12 @@ let%expect_test _ =
                                                                     "nat",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10216,6 +9877,8 @@ let%expect_test _ =
                                                                     "Map",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10252,13 +9915,7 @@ let%expect_test _ =
                                                                     2360
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -10266,6 +9923,8 @@ let%expect_test _ =
                                                                     "find",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10302,13 +9961,7 @@ let%expect_test _ =
                                                                     2360
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -10368,6 +10021,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10404,13 +10059,7 @@ let%expect_test _ =
                                                                     2360
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -10418,6 +10067,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10454,13 +10105,7 @@ let%expect_test _ =
                                                                     2360
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -10599,6 +10244,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10635,13 +10282,7 @@ let%expect_test _ =
                                                                     2360
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10835,6 +10476,8 @@ let%expect_test _ =
                                                                     "sender_proposal_counter",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10871,13 +10514,7 @@ let%expect_test _ =
                                                                     2419
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10930,6 +10567,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -10966,13 +10605,7 @@ let%expect_test _ =
                                                                     2419
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11112,6 +10745,8 @@ let%expect_test _ =
                                                                     "failwith",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11148,13 +10783,7 @@ let%expect_test _ =
                                                                     2467
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11344,6 +10973,8 @@ let%expect_test _ =
                                                                     "ret_ops",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11380,13 +11011,7 @@ let%expect_test _ =
                                                                     2554
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -11397,6 +11022,8 @@ let%expect_test _ =
                                                                     "list",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11433,13 +11060,7 @@ let%expect_test _ =
                                                                     2554
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "arguments": [
                                                                     {
@@ -11450,16 +11071,12 @@ let%expect_test _ =
                                                                     "operation",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11620,6 +11237,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11656,13 +11275,7 @@ let%expect_test _ =
                                                                     2598
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -11670,6 +11283,8 @@ let%expect_test _ =
                                                                     "cardinal",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11706,13 +11321,7 @@ let%expect_test _ =
                                                                     2598
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -11762,6 +11371,8 @@ let%expect_test _ =
                                                                     "new_store",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11798,13 +11409,7 @@ let%expect_test _ =
                                                                     2598
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11897,6 +11502,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -11933,13 +11540,7 @@ let%expect_test _ =
                                                                     2598
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12081,6 +11682,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12117,13 +11720,7 @@ let%expect_test _ =
                                                                     2652
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -12144,6 +11741,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12180,13 +11779,7 @@ let%expect_test _ =
                                                                     2652
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12252,6 +11845,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12288,13 +11883,7 @@ let%expect_test _ =
                                                                     2652
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12347,6 +11936,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12383,13 +11974,7 @@ let%expect_test _ =
                                                                     2652
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12611,6 +12196,8 @@ let%expect_test _ =
                                                                     "ret_ops",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12647,13 +12234,7 @@ let%expect_test _ =
                                                                     2702
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -12674,6 +12255,8 @@ let%expect_test _ =
                                                                     "message",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12710,13 +12293,7 @@ let%expect_test _ =
                                                                     2702
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12769,6 +12346,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -12805,13 +12384,7 @@ let%expect_test _ =
                                                                     2702
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12992,6 +12565,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13028,13 +12603,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -13055,6 +12624,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13091,13 +12662,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13125,6 +12690,8 @@ let%expect_test _ =
                                                                     "Crypto",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13161,13 +12728,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -13175,6 +12736,8 @@ let%expect_test _ =
                                                                     "sha256",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13211,13 +12774,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -13273,6 +12830,8 @@ let%expect_test _ =
                                                                     "Bytes",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13309,13 +12868,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -13323,6 +12876,8 @@ let%expect_test _ =
                                                                     "concat",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13359,13 +12914,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -13423,6 +12972,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13459,13 +13010,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13560,6 +13105,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13596,13 +13143,7 @@ let%expect_test _ =
                                                                     2774
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13853,6 +13394,8 @@ let%expect_test _ =
                                                                     "addr",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13889,13 +13432,7 @@ let%expect_test _ =
                                                                     2885
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     [
                                                                     "Some",
@@ -13904,6 +13441,8 @@ let%expect_test _ =
                                                                     "ctr",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13940,13 +13479,7 @@ let%expect_test _ =
                                                                     2885
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ]
                                                                     ],
@@ -13962,6 +13495,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -13998,13 +13533,7 @@ let%expect_test _ =
                                                                     2885
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14113,6 +13642,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14149,13 +13680,7 @@ let%expect_test _ =
                                                                     2936
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -14163,6 +13688,8 @@ let%expect_test _ =
                                                                     "mem",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14199,13 +13726,7 @@ let%expect_test _ =
                                                                     2936
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -14259,6 +13780,8 @@ let%expect_test _ =
                                                                     "addr",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14295,13 +13818,7 @@ let%expect_test _ =
                                                                     2936
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14350,6 +13867,8 @@ let%expect_test _ =
                                                                     "new_store",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14386,13 +13905,7 @@ let%expect_test _ =
                                                                     2936
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14523,6 +14036,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14559,13 +14074,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -14586,6 +14095,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14622,13 +14133,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14694,6 +14199,8 @@ let%expect_test _ =
                                                                     "addr",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14730,13 +14237,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14789,6 +14290,8 @@ let%expect_test _ =
                                                                     "abs",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14825,13 +14328,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14891,6 +14388,8 @@ let%expect_test _ =
                                                                     "ctr",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -14927,13 +14426,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15113,6 +14606,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15149,13 +14644,7 @@ let%expect_test _ =
                                                                     2978
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15484,6 +14973,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15520,13 +15011,7 @@ let%expect_test _ =
                                                                     3040
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -15547,6 +15032,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15583,13 +15070,7 @@ let%expect_test _ =
                                                                     3040
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15655,6 +15136,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15691,13 +15174,7 @@ let%expect_test _ =
                                                                     3040
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15746,6 +15223,8 @@ let%expect_test _ =
                                                                     "new_store",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15782,13 +15261,7 @@ let%expect_test _ =
                                                                     3040
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15841,6 +15314,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -15877,13 +15352,7 @@ let%expect_test _ =
                                                                     3040
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16143,6 +15612,8 @@ let%expect_test _ =
                                                                     "ret_ops",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -16179,13 +15650,7 @@ let%expect_test _ =
                                                                     3092
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16234,6 +15699,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -16270,13 +15737,7 @@ let%expect_test _ =
                                                                     3092
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16642,6 +16103,7 @@ let%expect_test _ =
           "var": {
             "name": "withdraw",
             "counter": 0,
+            "generated": false,
             "location": [
               "File",
               {
@@ -16666,10 +16128,7 @@ let%expect_test _ =
                   "point_bol": 3115
                 }
               }
-            ],
-            "generated": false,
-            "mutable_": false,
-            "namespace": []
+            ]
           },
           "ty": {
             "type_content": [
@@ -16685,10 +16144,8 @@ let%expect_test _ =
                           {
                             "name": "withdraw_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -16725,10 +16182,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -16769,10 +16224,8 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -16816,10 +16269,8 @@ let%expect_test _ =
                 "var": {
                   "name": "parameters",
                   "counter": 3,
-                  "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false,
-                  "namespace": []
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -16831,10 +16282,8 @@ let%expect_test _ =
                           {
                             "name": "withdraw_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -16871,10 +16320,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -16917,10 +16364,8 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -16959,10 +16404,8 @@ let%expect_test _ =
                         {
                           "name": "parameters",
                           "counter": 3,
-                          "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false,
-                          "namespace": []
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -16978,6 +16421,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "param",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -17004,10 +16448,7 @@ let%expect_test _ =
                                         "point_bol": 3115
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -17015,10 +16456,8 @@ let%expect_test _ =
                                     {
                                       "name": "withdraw_pt",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -17058,6 +16497,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "s",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -17084,10 +16524,7 @@ let%expect_test _ =
                                         "point_bol": 3115
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -17095,10 +16532,8 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -17142,6 +16577,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "message",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -17168,10 +16604,7 @@ let%expect_test _ =
                                         "point_bol": 3194
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -17179,10 +16612,8 @@ let%expect_test _ =
                                     {
                                       "name": "message",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -17221,6 +16652,7 @@ let%expect_test _ =
                                   {
                                     "name": "param",
                                     "counter": 0,
+                                    "generated": false,
                                     "location": [
                                       "File",
                                       {
@@ -17247,10 +16679,7 @@ let%expect_test _ =
                                           "point_bol": 3194
                                         }
                                       }
-                                    ],
-                                    "generated": false,
-                                    "mutable_": false,
-                                    "namespace": []
+                                    ]
                                   }
                                 ],
                                 "location": [
@@ -17289,6 +16718,7 @@ let%expect_test _ =
                                       "var": {
                                         "name": "packed_msg",
                                         "counter": 0,
+                                        "generated": false,
                                         "location": [
                                           "File",
                                           {
@@ -17315,10 +16745,7 @@ let%expect_test _ =
                                               "point_bol": 3230
                                             }
                                           }
-                                        ],
-                                        "generated": false,
-                                        "mutable_": false,
-                                        "namespace": []
+                                        ]
                                       },
                                       "ty": {
                                         "type_content": [
@@ -17326,12 +16753,10 @@ let%expect_test _ =
                                           {
                                             "name": "bytes",
                                             "counter": 0,
+                                            "generated": false,
                                             "location": [
                                               "Virtual", "dummy"
-                                            ],
-                                            "generated": false,
-                                            "mutable_": false,
-                                            "namespace": []
+                                            ]
                                           }
                                         ],
                                         "location": [
@@ -17376,6 +16801,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "Bytes",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -17402,15 +16828,13 @@ let%expect_test _ =
                                                           "point_bol": 3230
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "element": {
                                                   "name": "pack",
                                                   "counter": 0,
+                                                  "generated": false,
                                                   "location": [
                                                     "File",
                                                     {
@@ -17437,10 +16861,7 @@ let%expect_test _ =
                                                         "point_bol": 3230
                                                       }
                                                     }
-                                                  ],
-                                                  "generated": false,
-                                                  "mutable_": false,
-                                                  "namespace": []
+                                                  ]
                                                 }
                                               }
                                             ],
@@ -17478,6 +16899,7 @@ let%expect_test _ =
                                               {
                                                 "name": "message",
                                                 "counter": 0,
+                                                "generated": false,
                                                 "location": [
                                                   "File",
                                                   {
@@ -17504,10 +16926,7 @@ let%expect_test _ =
                                                       "point_bol": 3230
                                                     }
                                                   }
-                                                ],
-                                                "generated": false,
-                                                "mutable_": false,
-                                                "namespace": []
+                                                ]
                                               }
                                             ],
                                             "location": [
@@ -17591,6 +17010,8 @@ let%expect_test _ =
                                                                   "name": "s",
                                                                   "counter":
                                                                     0,
+                                                                  "generated":
+                                                                    false,
                                                                   "location": [
                                                                     "File",
                                                                     {
@@ -17627,13 +17048,7 @@ let%expect_test _ =
                                                                     3284
                                                                     }
                                                                     }
-                                                                  ],
-                                                                  "generated":
-                                                                    false,
-                                                                  "mutable_":
-                                                                    false,
-                                                                  "namespace":
-                                                                    []
+                                                                  ]
                                                                 }
                                                               ],
                                                               "location": [
@@ -17730,6 +17145,8 @@ let%expect_test _ =
                                                                 "name":
                                                                   "packed_msg",
                                                                 "counter": 0,
+                                                                "generated":
+                                                                  false,
                                                                 "location": [
                                                                   "File",
                                                                   {
@@ -17766,13 +17183,7 @@ let%expect_test _ =
                                                                     3284
                                                                     }
                                                                   }
-                                                                ],
-                                                                "generated":
-                                                                  false,
-                                                                "mutable_":
-                                                                  false,
-                                                                "namespace":
-                                                                  []
+                                                                ]
                                                               }
                                                             ],
                                                             "location": [
@@ -17856,6 +17267,8 @@ let%expect_test _ =
                                                           "var": {
                                                             "name": "voters",
                                                             "counter": 0,
+                                                            "generated":
+                                                              false,
                                                             "location": [
                                                               "File",
                                                               {
@@ -17892,11 +17305,7 @@ let%expect_test _ =
                                                                     3326
                                                                 }
                                                               }
-                                                            ],
-                                                            "generated":
-                                                              false,
-                                                            "mutable_": false,
-                                                            "namespace": []
+                                                            ]
                                                           },
                                                           "ty": null,
                                                           "const_or_var":
@@ -17913,6 +17322,8 @@ let%expect_test _ =
                                                               "name":
                                                                 "new_set",
                                                               "counter": 0,
+                                                              "generated":
+                                                                false,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -17949,12 +17360,7 @@ let%expect_test _ =
                                                                     3394
                                                                   }
                                                                 }
-                                                              ],
-                                                              "generated":
-                                                                false,
-                                                              "mutable_":
-                                                                false,
-                                                              "namespace": []
+                                                              ]
                                                             },
                                                             "ty": {
                                                               "type_content": [
@@ -17964,16 +17370,12 @@ let%expect_test _ =
                                                                     "addr_set",
                                                                   "counter":
                                                                     0,
+                                                                  "generated":
+                                                                    false,
                                                                   "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                  ],
-                                                                  "generated":
-                                                                    false,
-                                                                  "mutable_":
-                                                                    false,
-                                                                  "namespace":
-                                                                    []
+                                                                  ]
                                                                 }
                                                               ],
                                                               "location": [
@@ -18031,6 +17433,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18067,13 +17471,7 @@ let%expect_test _ =
                                                                     3394
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18081,6 +17479,8 @@ let%expect_test _ =
                                                                     "remove",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18117,13 +17517,7 @@ let%expect_test _ =
                                                                     3394
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                   ],
@@ -18183,6 +17577,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18219,13 +17615,7 @@ let%expect_test _ =
                                                                     3394
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18233,6 +17623,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18269,13 +17661,7 @@ let%expect_test _ =
                                                                     3394
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -18410,6 +17796,8 @@ let%expect_test _ =
                                                                     "voters",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18446,13 +17834,7 @@ let%expect_test _ =
                                                                     3394
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -18606,6 +17988,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18642,13 +18026,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18656,6 +18034,8 @@ let%expect_test _ =
                                                                     "cardinal",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18692,13 +18072,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -18748,6 +18122,8 @@ let%expect_test _ =
                                                                     "voters",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18784,13 +18160,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -18885,6 +18255,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18921,13 +18293,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18935,6 +18301,8 @@ let%expect_test _ =
                                                                     "cardinal",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -18971,13 +18339,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -19027,6 +18389,8 @@ let%expect_test _ =
                                                                     "new_set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19063,13 +18427,7 @@ let%expect_test _ =
                                                                     3584
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -19201,6 +18559,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19237,13 +18597,7 @@ let%expect_test _ =
                                                                     3646
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -19264,6 +18618,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19300,13 +18656,7 @@ let%expect_test _ =
                                                                     3646
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -19378,6 +18728,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19414,13 +18766,7 @@ let%expect_test _ =
                                                                     3646
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19428,6 +18774,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19464,13 +18812,7 @@ let%expect_test _ =
                                                                     3646
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -19609,6 +18951,8 @@ let%expect_test _ =
                                                                     "abs",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19645,13 +18989,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -19717,6 +19055,8 @@ let%expect_test _ =
                                                                     "Map",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19753,13 +19093,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19767,6 +19101,8 @@ let%expect_test _ =
                                                                     "find",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19803,13 +19139,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -19869,6 +19199,8 @@ let%expect_test _ =
                                                                     "Tezos",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19905,13 +19237,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19919,6 +19245,8 @@ let%expect_test _ =
                                                                     "get_sender",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -19955,13 +19283,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -20100,6 +19422,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -20136,13 +19460,7 @@ let%expect_test _ =
                                                                     3704
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20448,6 +19766,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -20484,13 +19804,7 @@ let%expect_test _ =
                                                                     3646
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20777,6 +20091,8 @@ let%expect_test _ =
                                                                     "Set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -20813,13 +20129,7 @@ let%expect_test _ =
                                                                     3917
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -20827,6 +20137,8 @@ let%expect_test _ =
                                                                     "cardinal",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -20863,13 +20175,7 @@ let%expect_test _ =
                                                                     3917
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     }
                                                                     ],
@@ -20919,6 +20225,8 @@ let%expect_test _ =
                                                                     "new_set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -20955,13 +20263,7 @@ let%expect_test _ =
                                                                     3917
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21139,6 +20441,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21175,13 +20479,7 @@ let%expect_test _ =
                                                                     3958
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -21202,6 +20500,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21238,13 +20538,7 @@ let%expect_test _ =
                                                                     3958
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21310,6 +20604,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21346,13 +20642,7 @@ let%expect_test _ =
                                                                     3958
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21405,6 +20695,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21441,13 +20733,7 @@ let%expect_test _ =
                                                                     3958
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21665,6 +20951,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21701,13 +20989,7 @@ let%expect_test _ =
                                                                     4016
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -21728,6 +21010,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21764,13 +21048,7 @@ let%expect_test _ =
                                                                     4016
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21836,6 +21114,8 @@ let%expect_test _ =
                                                                     "packed_msg",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21872,13 +21152,7 @@ let%expect_test _ =
                                                                     4016
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21927,6 +21201,8 @@ let%expect_test _ =
                                                                     "new_set",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -21963,13 +21239,7 @@ let%expect_test _ =
                                                                     4016
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -22022,6 +21292,8 @@ let%expect_test _ =
                                                                     "s",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "File",
                                                                     {
@@ -22058,13 +21330,7 @@ let%expect_test _ =
                                                                     4016
                                                                     }
                                                                     }
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -22484,6 +21750,8 @@ let%expect_test _ =
                                                             "type_operator": {
                                                               "name": "list",
                                                               "counter": 0,
+                                                              "generated":
+                                                                false,
                                                               "location": [
                                                                 "File",
                                                                 {
@@ -22520,12 +21788,7 @@ let%expect_test _ =
                                                                     4143
                                                                   }
                                                                 }
-                                                              ],
-                                                              "generated":
-                                                                false,
-                                                              "mutable_":
-                                                                false,
-                                                              "namespace": []
+                                                              ]
                                                             },
                                                             "arguments": [
                                                               {
@@ -22536,16 +21799,12 @@ let%expect_test _ =
                                                                     "operation",
                                                                     "counter":
                                                                     0,
+                                                                    "generated":
+                                                                    false,
                                                                     "location": [
                                                                     "Virtual",
                                                                     "dummy"
-                                                                    ],
-                                                                    "generated":
-                                                                    false,
-                                                                    "mutable_":
-                                                                    false,
-                                                                    "namespace":
-                                                                    []
+                                                                    ]
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -22663,6 +21922,7 @@ let%expect_test _ =
                                                     {
                                                       "name": "s",
                                                       "counter": 0,
+                                                      "generated": false,
                                                       "location": [
                                                         "File",
                                                         {
@@ -22691,10 +21951,7 @@ let%expect_test _ =
                                                             "point_bol": 4143
                                                           }
                                                         }
-                                                      ],
-                                                      "generated": false,
-                                                      "mutable_": false,
-                                                      "namespace": []
+                                                      ]
                                                     }
                                                   ],
                                                   "location": [
@@ -22892,6 +22149,7 @@ let%expect_test _ =
           "var": {
             "name": "default",
             "counter": 0,
+            "generated": false,
             "location": [
               "File",
               {
@@ -22916,10 +22174,7 @@ let%expect_test _ =
                   "point_bol": 4183
                 }
               }
-            ],
-            "generated": false,
-            "mutable_": false,
-            "namespace": []
+            ]
           },
           "ty": {
             "type_content": [
@@ -22935,10 +22190,8 @@ let%expect_test _ =
                           {
                             "name": "default_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -22975,10 +22228,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23019,10 +22270,8 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -23066,10 +22315,8 @@ let%expect_test _ =
                 "var": {
                   "name": "parameters",
                   "counter": 5,
-                  "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false,
-                  "namespace": []
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -23081,10 +22328,8 @@ let%expect_test _ =
                           {
                             "name": "default_pt",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23121,10 +22366,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23167,10 +22410,8 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -23209,10 +22450,8 @@ let%expect_test _ =
                         {
                           "name": "parameters",
                           "counter": 5,
-                          "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false,
-                          "namespace": []
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -23228,36 +22467,8 @@ let%expect_test _ =
                                 "var": {
                                   "name": "_",
                                   "counter": 4,
-                                  "location": [
-                                    "File",
-                                    {
-                                      "start": {
-                                        "byte": {
-                                          "pos_fname":
-                                            "../../test/contracts/multisig-v2.ligo",
-                                          "pos_lnum": 130,
-                                          "pos_bol": 4183,
-                                          "pos_cnum": 4207
-                                        },
-                                        "point_num": 4207,
-                                        "point_bol": 4183
-                                      },
-                                      "stop": {
-                                        "byte": {
-                                          "pos_fname":
-                                            "../../test/contracts/multisig-v2.ligo",
-                                          "pos_lnum": 130,
-                                          "pos_bol": 4183,
-                                          "pos_cnum": 4208
-                                        },
-                                        "point_num": 4208,
-                                        "point_bol": 4183
-                                      }
-                                    }
-                                  ],
                                   "generated": true,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  "location": [ "Virtual", "dummy" ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -23265,10 +22476,8 @@ let%expect_test _ =
                                     {
                                       "name": "default_pt",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -23308,6 +22517,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "s",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -23334,10 +22544,7 @@ let%expect_test _ =
                                         "point_bol": 4183
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -23345,10 +22552,8 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -23429,6 +22634,7 @@ let%expect_test _ =
                                           "type_operator": {
                                             "name": "list",
                                             "counter": 0,
+                                            "generated": false,
                                             "location": [
                                               "File",
                                               {
@@ -23455,10 +22661,7 @@ let%expect_test _ =
                                                   "point_bol": 4254
                                                 }
                                               }
-                                            ],
-                                            "generated": false,
-                                            "mutable_": false,
-                                            "namespace": []
+                                            ]
                                           },
                                           "arguments": [
                                             {
@@ -23467,12 +22670,10 @@ let%expect_test _ =
                                                 {
                                                   "name": "operation",
                                                   "counter": 0,
+                                                  "generated": false,
                                                   "location": [
                                                     "Virtual", "dummy"
-                                                  ],
-                                                  "generated": false,
-                                                  "mutable_": false,
-                                                  "namespace": []
+                                                  ]
                                                 }
                                               ],
                                               "location": [
@@ -23570,6 +22771,7 @@ let%expect_test _ =
                                   {
                                     "name": "s",
                                     "counter": 0,
+                                    "generated": false,
                                     "location": [
                                       "File",
                                       {
@@ -23596,10 +22798,7 @@ let%expect_test _ =
                                           "point_bol": 4254
                                         }
                                       }
-                                    ],
-                                    "generated": false,
-                                    "mutable_": false,
-                                    "namespace": []
+                                    ]
                                   }
                                 ],
                                 "location": [
@@ -23731,6 +22930,7 @@ let%expect_test _ =
           "var": {
             "name": "main",
             "counter": 0,
+            "generated": false,
             "location": [
               "File",
               {
@@ -23755,10 +22955,7 @@ let%expect_test _ =
                   "point_bol": 4289
                 }
               }
-            ],
-            "generated": false,
-            "mutable_": false,
-            "namespace": []
+            ]
           },
           "ty": {
             "type_content": [
@@ -23774,10 +22971,8 @@ let%expect_test _ =
                           {
                             "name": "parameter",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23814,10 +23009,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23858,10 +23051,8 @@ let%expect_test _ =
                     {
                       "name": "return",
                       "counter": 0,
-                      "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false,
-                      "namespace": []
+                      "location": [ "Virtual", "dummy" ]
                     }
                   ],
                   "location": [
@@ -23905,10 +23096,8 @@ let%expect_test _ =
                 "var": {
                   "name": "parameters",
                   "counter": 6,
-                  "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false,
-                  "namespace": []
+                  "location": [ "Virtual", "dummy" ]
                 },
                 "ty": {
                   "type_content": [
@@ -23920,10 +23109,8 @@ let%expect_test _ =
                           {
                             "name": "parameter",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -23960,10 +23147,8 @@ let%expect_test _ =
                           {
                             "name": "storage",
                             "counter": 0,
-                            "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false,
-                            "namespace": []
+                            "location": [ "Virtual", "dummy" ]
                           }
                         ],
                         "location": [
@@ -24006,10 +23191,8 @@ let%expect_test _ =
                   {
                     "name": "return",
                     "counter": 0,
-                    "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false,
-                    "namespace": []
+                    "location": [ "Virtual", "dummy" ]
                   }
                 ],
                 "location": [
@@ -24048,10 +23231,8 @@ let%expect_test _ =
                         {
                           "name": "parameters",
                           "counter": 6,
-                          "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false,
-                          "namespace": []
+                          "location": [ "Virtual", "dummy" ]
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -24067,6 +23248,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "param",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -24093,10 +23275,7 @@ let%expect_test _ =
                                         "point_bol": 4289
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -24104,10 +23283,8 @@ let%expect_test _ =
                                     {
                                       "name": "parameter",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -24147,6 +23324,7 @@ let%expect_test _ =
                                 "var": {
                                   "name": "s",
                                   "counter": 0,
+                                  "generated": false,
                                   "location": [
                                     "File",
                                     {
@@ -24173,10 +23351,7 @@ let%expect_test _ =
                                         "point_bol": 4289
                                       }
                                     }
-                                  ],
-                                  "generated": false,
-                                  "mutable_": false,
-                                  "namespace": []
+                                  ]
                                 },
                                 "ty": {
                                   "type_content": [
@@ -24184,10 +23359,8 @@ let%expect_test _ =
                                     {
                                       "name": "storage",
                                       "counter": 0,
-                                      "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false,
-                                      "namespace": []
+                                      "location": [ "Virtual", "dummy" ]
                                     }
                                   ],
                                   "location": [
@@ -24233,6 +23406,7 @@ let%expect_test _ =
                                   {
                                     "name": "param",
                                     "counter": 0,
+                                    "generated": false,
                                     "location": [
                                       "File",
                                       {
@@ -24259,10 +23433,7 @@ let%expect_test _ =
                                           "point_bol": 4361
                                         }
                                       }
-                                    ],
-                                    "generated": false,
-                                    "mutable_": false,
-                                    "namespace": []
+                                    ]
                                   }
                                 ],
                                 "location": [
@@ -24304,6 +23475,7 @@ let%expect_test _ =
                                         "var": {
                                           "name": "p",
                                           "counter": 0,
+                                          "generated": false,
                                           "location": [
                                             "File",
                                             {
@@ -24330,10 +23502,7 @@ let%expect_test _ =
                                                 "point_bol": 4512
                                               }
                                             }
-                                          ],
-                                          "generated": false,
-                                          "mutable_": false,
-                                          "namespace": []
+                                          ]
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -24350,6 +23519,7 @@ let%expect_test _ =
                                             {
                                               "name": "send",
                                               "counter": 0,
+                                              "generated": false,
                                               "location": [
                                                 "File",
                                                 {
@@ -24376,10 +23546,7 @@ let%expect_test _ =
                                                     "point_bol": 4512
                                                   }
                                                 }
-                                              ],
-                                              "generated": false,
-                                              "mutable_": false,
-                                              "namespace": []
+                                              ]
                                             }
                                           ],
                                           "location": [
@@ -24420,6 +23587,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "p",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -24446,10 +23614,7 @@ let%expect_test _ =
                                                           "point_bol": 4512
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
@@ -24486,6 +23651,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "s",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -24512,10 +23678,7 @@ let%expect_test _ =
                                                           "point_bol": 4512
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
@@ -24617,6 +23780,7 @@ let%expect_test _ =
                                         "var": {
                                           "name": "p",
                                           "counter": 0,
+                                          "generated": false,
                                           "location": [
                                             "File",
                                             {
@@ -24643,10 +23807,7 @@ let%expect_test _ =
                                                 "point_bol": 4580
                                               }
                                             }
-                                          ],
-                                          "generated": false,
-                                          "mutable_": false,
-                                          "namespace": []
+                                          ]
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -24663,6 +23824,7 @@ let%expect_test _ =
                                             {
                                               "name": "withdraw",
                                               "counter": 0,
+                                              "generated": false,
                                               "location": [
                                                 "File",
                                                 {
@@ -24689,10 +23851,7 @@ let%expect_test _ =
                                                     "point_bol": 4580
                                                   }
                                                 }
-                                              ],
-                                              "generated": false,
-                                              "mutable_": false,
-                                              "namespace": []
+                                              ]
                                             }
                                           ],
                                           "location": [
@@ -24733,6 +23892,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "p",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -24759,10 +23919,7 @@ let%expect_test _ =
                                                           "point_bol": 4580
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
@@ -24799,6 +23956,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "s",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -24825,10 +23983,7 @@ let%expect_test _ =
                                                           "point_bol": 4580
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
@@ -24930,6 +24085,7 @@ let%expect_test _ =
                                         "var": {
                                           "name": "p",
                                           "counter": 0,
+                                          "generated": false,
                                           "location": [
                                             "File",
                                             {
@@ -24956,10 +24112,7 @@ let%expect_test _ =
                                                 "point_bol": 4677
                                               }
                                             }
-                                          ],
-                                          "generated": false,
-                                          "mutable_": false,
-                                          "namespace": []
+                                          ]
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -24976,6 +24129,7 @@ let%expect_test _ =
                                             {
                                               "name": "default",
                                               "counter": 0,
+                                              "generated": false,
                                               "location": [
                                                 "File",
                                                 {
@@ -25002,10 +24156,7 @@ let%expect_test _ =
                                                     "point_bol": 4677
                                                   }
                                                 }
-                                              ],
-                                              "generated": false,
-                                              "mutable_": false,
-                                              "namespace": []
+                                              ]
                                             }
                                           ],
                                           "location": [
@@ -25046,6 +24197,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "p",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -25072,10 +24224,7 @@ let%expect_test _ =
                                                           "point_bol": 4677
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
@@ -25112,6 +24261,7 @@ let%expect_test _ =
                                                   {
                                                     "name": "s",
                                                     "counter": 0,
+                                                    "generated": false,
                                                     "location": [
                                                       "File",
                                                       {
@@ -25138,10 +24288,7 @@ let%expect_test _ =
                                                           "point_bol": 4677
                                                         }
                                                       }
-                                                    ],
-                                                    "generated": false,
-                                                    "mutable_": false,
-                                                    "namespace": []
+                                                    ]
                                                   }
                                                 ],
                                                 "location": [
