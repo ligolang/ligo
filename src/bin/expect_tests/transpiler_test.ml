@@ -243,7 +243,7 @@ let%expect_test _ =
     : action_transfer_single * storage -> return =
       (fun gen__parameters2 : action_transfer_single * storage ->
          match gen__parameters2 with
-         ((action, [@var] s)) ->
+         (action, [@var] s) ->
              let [@var] cards : cards = s.cards in
              let [@var] card : card =
                match Map.find_opt action.card_to_transfer cards
@@ -279,7 +279,7 @@ let%expect_test _ =
     let sell_single : action_sell_single * storage -> return =
       (fun gen__parameters3 : action_sell_single * storage ->
          match gen__parameters3 with
-         ((action, [@var] s)) ->
+         (action, [@var] s) ->
              let card : card =
                match Map.find_opt action.card_to_sell s.cards
                with
@@ -356,7 +356,7 @@ let%expect_test _ =
     let buy_single : action_buy_single * storage -> return =
       (fun gen__parameters4 : action_buy_single * storage ->
          match gen__parameters4 with
-         ((action, [@var] s)) ->
+         (action, [@var] s) ->
              let [@var] card_pattern : card_pattern =
                match Map.find_opt
                        action.card_to_buy
@@ -421,7 +421,7 @@ let%expect_test _ =
     let main : parameter * storage -> return =
       (fun gen__parameters5 : parameter * storage ->
          match gen__parameters5 with
-         ((action, s)) ->
+         (action, s) ->
              match action with
                Buy_single bs -> buy_single bs s
              | Sell_single as -> sell_single as s
@@ -1014,7 +1014,7 @@ type return = operation list * storage
 let main : parameter * storage -> return =
   (fun gen__parameters2 : parameter * storage ->
      match gen__parameters2 with
-     ((p, s)) ->
+     (p, s) ->
          begin
            match p with
              Zero n ->
@@ -1171,13 +1171,13 @@ let%expect_test _ =
     let rec sum : int * int -> int =
       (fun gen__parameters2 : int * int ->
          match gen__parameters2 with
-         ((n, acc)) ->
+         (n, acc) ->
              if (n < 1) then acc else sum (n - 1) (acc + n))
 
     let rec fibo : int * int * int -> int =
       (fun gen__parameters3 : int * int * int ->
          match gen__parameters3 with
-         ((n, n_1, n_0)) ->
+         (n, n_1, n_0) ->
              if (n < 2)
              then n_1
              else fibo (n - 1) (n_1 + n_0) n_1) |}];

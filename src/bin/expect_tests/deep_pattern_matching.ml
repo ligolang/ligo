@@ -191,7 +191,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - ((Cons ((_, _)), Cons ((_, _)))) |}]
+    - (Cons (_, _), Cons (_, _)) |}]
 
 (* Positives *)
 
@@ -413,7 +413,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - ((A, A, B, _, A, _)) |}]
+    - (A, A, B, _, A, _) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info" ; "measure-contract" ; (good_test "edge_case_S.mligo") ] ;
@@ -430,7 +430,7 @@ let%expect_test _ =
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
 
-    - ((B, _, B, _, B, _, B, _)) |}]
+    - (B, _, B, _, B, _, B, _) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;

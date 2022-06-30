@@ -160,9 +160,7 @@ and pp_ptuple {value; _} =
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
   in if List.is_empty tail
      then pp_pattern head
-     else string "(" ^^ 
-      pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail)
-      ^^ string ")"
+     else pp_pattern head ^^ string "," ^^ app (List.map ~f:snd tail)
 
 and pp_precord fields = group (pp_ne_injection pp_field_pattern fields)
 

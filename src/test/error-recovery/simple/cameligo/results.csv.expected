@@ -12,7 +12,7 @@ PASS,missing_argument_bracketR.mligo,2,15,13,5,1
 PASS,missing_arrow_in_lambda_expr.mligo,2,18,8,4,1
 PASS,missing_arrow_in_match_expr.mligo,0,0,0,0,0
 PASS,missing_colon_in_list_pat.mligo,2,12,4,3,1
-PASS,missing_comma_in_arguments.mligo,2,22,12,6,1
+PASS,missing_comma_in_arguments.mligo,2,22,12,4,1
 PASS,missing_curly_bracket_in_record_decl.mligo,0,0,0,0,0
 PASS,missing_end_kw_in_the_nested_module.mligo,4,222,4,2,0
 PASS,missing_eq_in_record_expr.mligo,0,0,0,0,0
