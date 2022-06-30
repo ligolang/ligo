@@ -85,7 +85,7 @@ let to_string = function
   | Chest_opening_result -> "chest_opening_result"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
-  | Gen                  -> "gen"
+  | Gen                  -> "pbt_gen"
 
   let of_string = function
   | "bool"                 -> Bool
@@ -130,7 +130,7 @@ let to_string = function
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
-  | "gen"                  -> Gen
+  | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let bool                 = Bool

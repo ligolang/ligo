@@ -766,7 +766,7 @@ type test_baker_policy =
   | By_account of address
   | Excluding of address list
 
-type 'a pbt_test = ('a gen) * ('a -> bool)
+type 'a pbt_test = ('a pbt_gen) * ('a -> bool)
 type 'a pbt_result = Success | Fail of 'a
 
 module Test = struct
@@ -808,7 +808,7 @@ module Test = struct
   let run (type a b) (f : a -> b) (v : a) : michelson_program = [%external ("TEST_RUN", f, v)]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
   let random (type a) (_u : unit) : a =
-    let g : a gen = [%external ("TEST_RANDOM", false)] in
+    let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
     [%external ("TEST_GENERATOR_EVAL", g)]
   let add_account (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
@@ -886,9 +886,9 @@ module Test = struct
   let println (v : string) : unit =
     print (v ^ nl)
   module PBT = struct
-    let gen (type a) : a gen = [%external ("TEST_RANDOM", false)]
-    let gen_small (type a) : a gen = [%external ("TEST_RANDOM", true)]
-    let make_test (type a) (g : a gen) (p : a -> bool) : a pbt_test = (g, p)
+    let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
+    let gen_small (type a) : a pbt_gen = [%external ("TEST_RANDOM", true)]
+    let make_test (type a) (g : a pbt_gen) (p : a -> bool) : a pbt_test = (g, p)
     let run (type a) ((g, p) : a pbt_test) (k : nat) : a pbt_result =
       let iter = fun ((n, _) : nat * a pbt_result) ->
                                        if n = k then
@@ -940,7 +940,7 @@ module Test = struct
   let run (type a b) ((f, v) : (a -> b) * a) : michelson_program = [%external ("TEST_RUN", f, v)]
   let decompile (type a) (m : michelson_program) : a = [%external ("TEST_DECOMPILE", m)]
   let random (type a) (_u : unit) : a =
-    let g : a gen = [%external ("TEST_RANDOM", false)] in
+    let g : a pbt_gen = [%external ("TEST_RANDOM", false)] in
     [%external ("TEST_GENERATOR_EVAL", g)]
   let add_account ((s, k) : string * key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
   let new_account (u : unit) : string * key = [%external ("TEST_NEW_ACCOUNT", u)]
@@ -1018,9 +1018,9 @@ module Test = struct
   let println (v : string) : unit =
     print (v ^ nl)
   module PBT = struct
-    let gen (type a) : a gen = [%external ("TEST_RANDOM", false)]
-    let gen_small (type a) : a gen = [%external ("TEST_RANDOM", true)]
-    let make_test (type a) ((g, p) : a gen * (a -> bool)) : a pbt_test = (g, p)
+    let gen (type a) : a pbt_gen = [%external ("TEST_RANDOM", false)]
+    let gen_small (type a) : a pbt_gen = [%external ("TEST_RANDOM", true)]
+    let make_test (type a) ((g, p) : a pbt_gen * (a -> bool)) : a pbt_test = (g, p)
     let run (type a) (((g, p), k) : a pbt_test * nat) : a pbt_result =
       let iter = fun ((n, _) : nat * a pbt_result) ->
                                        if n = k then
@@ -1048,7 +1048,7 @@ type test_exec_result = unit
 type michelson_contract = unit
 type mutation = unit
 type test_baker_policy = unit
-type 'a gen = unit
+type 'a pbt_gen = unit
 type 'a pbt_test = unit
 type 'a pbt_result = unit
 
@@ -1119,9 +1119,9 @@ module Test = struct
   let eprint (_v : string) : unit = failwith "TEST_EPRINTL"
   let to_string (type a) (_v : a) : string = failwith "TEST_TO_STRING"
   module PBT = struct
-    let gen (type a) : a gen = failwith "TEST_RANDOM"
-    let gen_small (type a) : a gen = failwith "TEST_RANDOM"
-    let make_test (type a) ((_g, _p) : a gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
+    let gen (type a) : a pbt_gen = failwith "TEST_RANDOM"
+    let gen_small (type a) : a pbt_gen = failwith "TEST_RANDOM"
+    let make_test (type a) ((_g, _p) : a pbt_gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
     let run (type a) (_gp : a pbt_test) (_k : nat) : a pbt_result = failwith "TEST_RUN_TEST"
   end
 
@@ -1190,9 +1190,9 @@ module Test = struct
   let eprint (_v : string) : unit = failwith "TEST_EPRINTL"
   let to_string (type a) (_v : a) : string = failwith "TEST_TO_STRING"
   module PBT = struct
-    let gen (type a) : a gen = failwith "TEST_RANDOM"
-    let gen_small (type a) : a gen = failwith "TEST_RANDOM"
-    let make_test (type a) ((_g, _p) : a gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
+    let gen (type a) : a pbt_gen = failwith "TEST_RANDOM"
+    let gen_small (type a) : a pbt_gen = failwith "TEST_RANDOM"
+    let make_test (type a) ((_g, _p) : a pbt_gen * (a -> bool)) : a pbt_test = failwith "TEST_MAKE_TEST"
     let run (type a) ((_gp, _k) : a pbt_test * nat) : a pbt_result = failwith "TEST_RUN_TEST"
   end
 
