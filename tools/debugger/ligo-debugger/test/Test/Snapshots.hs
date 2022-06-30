@@ -12,8 +12,8 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation, SourceType (..),
-  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs)
+  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation,
+  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs, Frozen)
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
@@ -22,6 +22,7 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 import Test.Util
+import Control.Lens (ix)
 
 data ContractRunData =
   forall param st.
@@ -58,11 +59,10 @@ testWithSnapshots
   :: ContractRunData
   -> StateT (DebuggerState InterpretSnapshot) IO ()
   -> Assertion
-testWithSnapshots runData@ContractRunData{ crdProgram = file } action = do
+testWithSnapshots runData action = do
   (allLocs, his) <- mkSnapshotsFor runData
   let st = DebuggerState
-        { _dsSourceOrigin = SourcePath file
-        , _dsSnapshots = playInterpretHistory his
+        { _dsSnapshots = playInterpretHistory his
         , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
         }
   evalStateT action st
@@ -297,4 +297,80 @@ test_Snapshots = testGroup "Snapshots collection"
             } -> pass
           sp -> unexpectedSnapshot sp
 
+  , testCaseSteps "multiple contracts" \step -> do
+      let modulePath = contractsDir </> "module_contracts"
+      let file = modulePath </> "importer.mligo"
+      let nestedFile = modulePath </> "imported.mligo"
+      let nestedFile2 = modulePath </> "imported2.ligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 10 :: Integer
+            }
+
+      testWithSnapshots runData do
+        -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
+        -- TODO; wrap this predicate when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58)
+        -- is merged.
+        let stopAtFile
+              :: (MonadState (DebuggerState InterpretSnapshot) m)
+              => FilePath
+              -> Frozen (DebuggerState InterpretSnapshot) m Bool
+            stopAtFile filePath = do
+              snap <- curSnapshot
+              let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
+              case locMb of
+                Just loc -> pure $ lrFile loc == filePath
+                Nothing -> pure False
+
+        lift $ step "Go to nested contract"
+        _ <- moveTill Forward $ stopAtFile nestedFile
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 15 5) (LigoPosition 15 10)
+                } :| []
+            } | file' == nestedFile -> pass
+          sp -> unexpectedSnapshot sp
+
+        lift $ step "Make sure that we went back"
+        _ <- moveTill Forward $ stopAtFile file
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 7 12) (LigoPosition 7 21)
+                } :| []
+            } | file' == file -> pass
+          sp -> unexpectedSnapshot sp
+
+        lift $ step "Check that we can go to more nested contract (and in another dialect)"
+        _ <- moveTill Forward $ stopAtFile nestedFile2
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 5 11) (LigoPosition 5 18)
+                } :| []
+            } | file' == nestedFile2 -> pass
+          sp -> unexpectedSnapshot sp
+
+        lift $ step "Make sure that we went back to \"imported.mligo\""
+        _ <- moveTill Forward $ stopAtFile nestedFile
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 19 57) (LigoPosition 19 64)
+                } :| []
+            } | file' == nestedFile -> pass
+          sp -> unexpectedSnapshot sp
+
+        lift $ step "Make sure that we went back to \"importer.mligo\""
+        _ <- moveTill Forward $ stopAtFile file
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 10 26) (LigoPosition 10 39)
+                } :| []
+            } | file' == file -> pass
+          sp -> unexpectedSnapshot sp
   ]

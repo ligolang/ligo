@@ -15,7 +15,7 @@ import Data.Text qualified as Text
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
 import Morley.Debugger.Core.Common (debuggerTcOptions)
-import Morley.Debugger.Core.Navigate (SourceLocation (..), SourceType (..))
+import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
@@ -28,6 +28,7 @@ import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
+import Morley.Debugger.Core.Snapshots (SourceType(..))
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list

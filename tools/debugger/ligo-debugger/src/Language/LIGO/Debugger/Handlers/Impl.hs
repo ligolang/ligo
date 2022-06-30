@@ -10,7 +10,7 @@ import Control.Lens (ix, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
 import Fmt (pretty)
 import Morley.Debugger.Core.Navigate
-  (DebugSource (..), DebuggerState (..), SourceType (..), curSnapshot, frozen, groupSourceLocations,
+  (DebugSource (..), DebuggerState (..), curSnapshot, frozen, groupSourceLocations,
   playInterpretHistory)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
@@ -152,6 +152,24 @@ instance HasSpecificMessages LIGO where
           EventExpressionEvaluated{} -> Just $ StopEventDesc "computed exp"
       in (shortDesc, Just event)
     _ -> (Nothing, Nothing)
+
+  handleVariablesRequest DAP.VariablesRequest{..} = do
+    let ref = DAP.variablesReferenceVariablesRequestArguments argumentsVariablesRequest
+    vars <- gets _dsVariables
+    case vars ^? ix ref of
+      Nothing -> do
+        pushMessage $ DAPResponse $ ErrorResponse $ DAP.defaultErrorResponse
+          { DAP.request_seqErrorResponse = seqVariablesRequest
+          , DAP.commandErrorResponse = commandVariablesRequest
+          }
+      Just vs ->
+        pushMessage $ DAPResponse $ VariablesResponse $ DAP.defaultVariablesResponse
+          { DAP.successVariablesResponse = True
+          , DAP.request_seqVariablesResponse = seqVariablesRequest
+          , DAP.bodyVariablesResponse = DAP.VariablesResponseBody vs
+          }
+
+  handleSetPreviousStack = pure ()
 
 handleInitializeLogger :: LigoInitializeLoggerRequest -> RIO LIGO ()
 handleInitializeLogger LigoInitializeLoggerRequest {..} = do
@@ -318,13 +336,12 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
         let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv
             ds = DebuggerState
-              { _dsSourceOrigin = SourcePath program
-              , _dsSnapshots = playInterpretHistory his
+              { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>
                   groupSourceLocations (toList $ lsAllLocs lServerState)
               }
-        pure $ DAPSessionState ds mempty program
+        pure $ DAPSessionState ds mempty mempty program
 
 checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a
 checkArgument _    (Just a) = pure a
