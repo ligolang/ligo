@@ -32,9 +32,6 @@ end
 module TypeVar : sig
    include VAR
    val is_name          : t -> string -> bool
-
-   (* Use for warning of deprecated polymorphic variable, should desapear *)
-   val is_generalizable : t -> bool
 end
 
 module ModuleVar : sig

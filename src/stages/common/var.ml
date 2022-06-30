@@ -62,7 +62,6 @@ let internal_get_name_and_counter var = (var.name, var.counter)
 
 let get_location var = var.location
 let set_location location var = {var with location}
-let is_generalizable var = String.is_prefix var.name ~prefix:"_"
 
 let is_generated var = var.generated
 
