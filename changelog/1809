@@ -1,0 +1,13 @@
+author: er433
+description: '### New functions: `Test.print`, `Test.println`, `Test.eprint`, `Test.to_string`,
+  `Test.nl` and `Test.chr`\n\nThese new functions provide more fine-grained printing.\n\n`val
+  Test.print : string -> unit` : prints an string to stdout.\n\n`val Test.println
+  : string -> unit` : prints an string to stdout, adding a newline at the end.\n\n`val
+  Test.eprint : string -> unit` : prints an string to stderr.\n\n`val Test.to_string
+  : ''a -> string` : turns a value of a given type into a `string` (internally using
+  the same conversion as `Test.log`)\n\n`val Test.nl : string` : a string containing
+  only a newline.\n\n`Test.chr : nat -> string option` : turns a nat in the range
+  [0, 255] to an string consisting of only the corresponding char.'
+merge_request: '1809'
+title: 'Testing framework: separate `Test.log` into printing and string conversion'
+type: added

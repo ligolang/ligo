@@ -300,26 +300,35 @@ let while_ expression ppf = fun {cond; body} ->
 
 (* matches *)
 
-let rec list_pattern type_expression ppf = fun pl ->
-  let mpp = match_pattern type_expression in
+let rec list_pattern ?pm type_expression ppf = fun pl ->
+  let mpp = match_pattern ?pm type_expression in
   match pl with
-  | Cons (pl,pr) -> fprintf ppf "%a :: %a" mpp pl mpp pr
-  | List pl -> fprintf ppf "[ %a ]" (list_sep mpp (tag " ; ")) pl
+  | Cons (pl,pr) -> fprintf ppf "%a::%a" mpp pl mpp pr
+  | List pl -> fprintf ppf "[%a]" (list_sep mpp (tag " ; ")) pl
 
-and match_pattern type_expression ppf = fun p ->
+and match_pattern ?(pm = false) type_expression ppf = fun p ->
+  let is_unit_pattern p =
+    let p = Location.unwrap p in
+    match p with
+      P_unit -> true
+    | _      -> false
+  in
   match p.wrap_content with
   | P_unit -> fprintf ppf "()"
+  | P_var _ when pm -> fprintf ppf "_"
   | P_var b -> fprintf ppf "%a" (binder type_expression) b
-  | P_list l -> list_pattern type_expression ppf l
-  | P_variant (l , p) -> fprintf ppf "%a %a" label l (match_pattern type_expression) p
+  | P_list l -> list_pattern ~pm type_expression ppf l
+  | P_variant (l , p) when is_unit_pattern p && pm -> fprintf ppf "%a" label l
+  | P_variant (l , p) when pm -> fprintf ppf "%a(%a)" label l (match_pattern ~pm type_expression) p
+  | P_variant (l , p) -> fprintf ppf "%a %a" label l (match_pattern ~pm type_expression) p
   | P_tuple pl ->
-    fprintf ppf "(%a)" (list_sep (match_pattern type_expression) (tag ",")) pl
+    fprintf ppf "(%a)" (list_sep (match_pattern ~pm type_expression) (tag ",")) pl
   | P_record (ll , pl) ->
     let x = List.zip_exn ll pl in
     let aux ppf (l,p) =
-      fprintf ppf "%a = %a" label l (match_pattern type_expression) p
+      fprintf ppf "%a = %a" label l (match_pattern ~pm type_expression) p
     in
-    fprintf ppf "{%a}" (list_sep aux (tag " ; ")) x
+    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
 
 let match_case expression type_expression ppf = fun {pattern ; body} ->
   fprintf ppf "@[| %a -> %a@]" (match_pattern type_expression) pattern expression body

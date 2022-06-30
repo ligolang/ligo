@@ -38,7 +38,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -48,7 +49,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -139,7 +141,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -149,7 +152,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -240,7 +244,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -250,7 +255,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -341,7 +347,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -351,7 +358,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -442,7 +450,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -477,7 +486,8 @@ let%expect_test _ =
                   }
                 ],
                 "generated": false,
-                "mutable_": false
+                "mutable_": false,
+                "namespace": []
               },
               "arguments": [
                 {
@@ -488,7 +498,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -610,7 +621,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -645,7 +657,8 @@ let%expect_test _ =
                   }
                 ],
                 "generated": false,
-                "mutable_": false
+                "mutable_": false,
+                "namespace": []
               },
               "arguments": [
                 {
@@ -656,7 +669,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -695,7 +709,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -817,7 +832,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -852,7 +868,8 @@ let%expect_test _ =
                   }
                 ],
                 "generated": false,
-                "mutable_": false
+                "mutable_": false,
+                "namespace": []
               },
               "arguments": [
                 {
@@ -863,7 +880,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -902,7 +920,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -1024,7 +1043,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -1040,7 +1060,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1084,7 +1105,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1128,7 +1150,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1172,7 +1195,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1216,7 +1240,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1260,7 +1285,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1304,7 +1330,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -1429,7 +1456,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -1443,7 +1471,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -1507,7 +1536,8 @@ let%expect_test _ =
                         }
                       ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     },
                     "arguments": [
                       {
@@ -1518,7 +1548,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -1668,7 +1699,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -1678,7 +1710,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -1769,7 +1802,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -1779,7 +1813,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -1870,7 +1905,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -1880,7 +1916,8 @@ let%expect_test _ =
               "counter": 0,
               "location": [ "Virtual", "dummy" ],
               "generated": false,
-              "mutable_": false
+              "mutable_": false,
+              "namespace": []
             }
           ],
           "location": [
@@ -1971,7 +2008,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -2012,7 +2050,8 @@ let%expect_test _ =
                         }
                       ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     },
                     "arguments": [
                       {
@@ -2023,7 +2062,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -2091,7 +2131,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -2210,7 +2251,8 @@ let%expect_test _ =
             }
           ],
           "generated": false,
-          "mutable_": false
+          "mutable_": false,
+          "namespace": []
         },
         "type_expr": {
           "type_content": [
@@ -2226,7 +2268,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -2270,7 +2313,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -2314,7 +2358,8 @@ let%expect_test _ =
                        "counter": 0,
                        "location": [ "Virtual", "dummy" ],
                        "generated": false,
-                       "mutable_": false
+                       "mutable_": false,
+                       "namespace": []
                      }
                    ],
                    "location": [
@@ -2440,7 +2485,8 @@ let%expect_test _ =
               }
             ],
             "generated": false,
-            "mutable_": false
+            "mutable_": false,
+            "namespace": []
           },
           "ty": {
             "type_content": [
@@ -2458,7 +2504,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -2497,7 +2544,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -2540,7 +2588,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -2586,7 +2635,8 @@ let%expect_test _ =
                   "counter": 2,
                   "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false
+                  "mutable_": false,
+                  "namespace": []
                 },
                 "ty": {
                   "type_content": [
@@ -2600,7 +2650,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -2639,7 +2690,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -2684,7 +2736,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -2725,7 +2778,8 @@ let%expect_test _ =
                           "counter": 2,
                           "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false
+                          "mutable_": false,
+                          "namespace": []
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -2769,7 +2823,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2779,7 +2834,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -2847,7 +2903,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -2857,7 +2914,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -2961,7 +3019,8 @@ let%expect_test _ =
                                                             ],
                                                             "generated":
                                                               false,
-                                                            "mutable_": false
+                                                            "mutable_": false,
+                                                            "namespace": []
                                                           }
                                                         ],
                                                         "element": {
@@ -3005,7 +3064,8 @@ let%expect_test _ =
                                                             }
                                                           ],
                                                           "generated": false,
-                                                          "mutable_": false
+                                                          "mutable_": false,
+                                                          "namespace": []
                                                         }
                                                       }
                                                     ],
@@ -3095,7 +3155,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -3143,7 +3205,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                   }
                                                                 ],
@@ -3322,7 +3386,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -3538,7 +3604,8 @@ let%expect_test _ =
                                                   }
                                                 ],
                                                 "generated": false,
-                                                "mutable_": false
+                                                "mutable_": false,
+                                                "namespace": []
                                               }
                                             ],
                                             "location": [
@@ -3710,7 +3777,8 @@ let%expect_test _ =
                                           }
                                         ],
                                         "generated": false,
-                                        "mutable_": false
+                                        "mutable_": false,
+                                        "namespace": []
                                       },
                                       "ty": {
                                         "type_content": [
@@ -3722,7 +3790,8 @@ let%expect_test _ =
                                               "Virtual", "dummy"
                                             ],
                                             "generated": false,
-                                            "mutable_": false
+                                            "mutable_": false,
+                                            "namespace": []
                                           }
                                         ],
                                         "location": [
@@ -3789,7 +3858,8 @@ let%expect_test _ =
                                             }
                                           ],
                                           "generated": false,
-                                          "mutable_": false
+                                          "mutable_": false,
+                                          "namespace": []
                                         }
                                       ],
                                       "location": [
@@ -3856,7 +3926,8 @@ let%expect_test _ =
                                                 }
                                               ],
                                               "generated": false,
-                                              "mutable_": false
+                                              "mutable_": false,
+                                              "namespace": []
                                             },
                                             "ty": {
                                               "type_content": [
@@ -3868,7 +3939,8 @@ let%expect_test _ =
                                                     "Virtual", "dummy"
                                                   ],
                                                   "generated": false,
-                                                  "mutable_": false
+                                                  "mutable_": false,
+                                                  "namespace": []
                                                 }
                                               ],
                                               "location": [
@@ -3951,7 +4023,8 @@ let%expect_test _ =
                                                             }
                                                           ],
                                                           "generated": false,
-                                                          "mutable_": false
+                                                          "mutable_": false,
+                                                          "namespace": []
                                                         }
                                                       ],
                                                       "element": {
@@ -3995,7 +4068,8 @@ let%expect_test _ =
                                                           }
                                                         ],
                                                         "generated": false,
-                                                        "mutable_": false
+                                                        "mutable_": false,
+                                                        "namespace": []
                                                       }
                                                     }
                                                   ],
@@ -4063,7 +4137,8 @@ let%expect_test _ =
                                                         }
                                                       ],
                                                       "generated": false,
-                                                      "mutable_": false
+                                                      "mutable_": false,
+                                                      "namespace": []
                                                     }
                                                   ],
                                                   "location": [
@@ -4195,7 +4270,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -4243,7 +4320,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -4333,7 +4412,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4466,7 +4547,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -4646,7 +4729,9 @@ let%expect_test _ =
                                                                   "generated":
                                                                     false,
                                                                   "mutable_":
-                                                                    false
+                                                                    false,
+                                                                  "namespace":
+                                                                    []
                                                                 }
                                                               ],
                                                               "location": [
@@ -4861,7 +4946,8 @@ let%expect_test _ =
                                                             }
                                                           ],
                                                           "generated": false,
-                                                          "mutable_": false
+                                                          "mutable_": false,
+                                                          "namespace": []
                                                         },
                                                         "ty": {
                                                           "type_content": [
@@ -4877,7 +4963,8 @@ let%expect_test _ =
                                                               "generated":
                                                                 false,
                                                               "mutable_":
-                                                                false
+                                                                false,
+                                                              "namespace": []
                                                             }
                                                           ],
                                                           "location": [
@@ -5024,7 +5111,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5072,7 +5161,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -5166,7 +5257,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5259,7 +5352,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -5482,7 +5577,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -5553,7 +5650,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5601,7 +5700,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -5701,7 +5802,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -5749,7 +5852,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -5924,7 +6029,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6138,7 +6245,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -6199,7 +6308,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -6311,7 +6422,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6359,7 +6472,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -6551,7 +6666,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6599,7 +6716,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -6699,7 +6818,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -6747,7 +6868,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -6926,7 +7049,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7232,7 +7357,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -7530,7 +7657,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -7593,7 +7722,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -7641,7 +7772,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -7741,7 +7874,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -7789,7 +7924,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -7964,7 +8101,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8199,7 +8338,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -8260,7 +8401,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -8372,7 +8515,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8420,7 +8565,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -8612,7 +8759,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8660,7 +8809,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -8760,7 +8911,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -8808,7 +8961,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -8987,7 +9142,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9293,7 +9450,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -9551,7 +9710,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -9618,7 +9779,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -9666,7 +9829,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -9972,7 +10137,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -9989,7 +10156,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10087,7 +10256,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -10135,7 +10306,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -10235,7 +10408,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -10283,7 +10458,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -10462,7 +10639,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10696,7 +10875,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10789,7 +10970,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -10969,7 +11152,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11199,7 +11384,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty": {
                                                                     "type_content": [
@@ -11250,7 +11437,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "arguments": [
                                                                     {
@@ -11268,7 +11457,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11469,7 +11660,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -11517,7 +11710,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -11607,7 +11802,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11740,7 +11937,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -11922,7 +12121,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -11983,7 +12184,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12089,7 +12292,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12182,7 +12387,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12444,7 +12651,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -12505,7 +12714,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12598,7 +12809,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12819,7 +13032,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -12880,7 +13095,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -12948,7 +13165,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -12996,7 +13215,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -13092,7 +13313,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -13140,7 +13363,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -13238,7 +13463,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13373,7 +13600,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13664,7 +13893,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     [
                                                                     "Some",
@@ -13713,7 +13944,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ]
                                                                     ],
@@ -13769,7 +14002,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -13918,7 +14153,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -13966,7 +14203,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -14060,7 +14299,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14149,7 +14390,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14320,7 +14563,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -14381,7 +14626,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14487,7 +14734,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14580,7 +14829,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14680,7 +14931,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -14900,7 +15153,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15269,7 +15524,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -15330,7 +15587,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15436,7 +15695,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15525,7 +15786,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15618,7 +15881,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -15918,7 +16183,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16007,7 +16274,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -16399,7 +16668,8 @@ let%expect_test _ =
               }
             ],
             "generated": false,
-            "mutable_": false
+            "mutable_": false,
+            "namespace": []
           },
           "ty": {
             "type_content": [
@@ -16417,7 +16687,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -16456,7 +16727,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -16499,7 +16771,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -16545,7 +16818,8 @@ let%expect_test _ =
                   "counter": 3,
                   "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false
+                  "mutable_": false,
+                  "namespace": []
                 },
                 "ty": {
                   "type_content": [
@@ -16559,7 +16833,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -16598,7 +16873,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -16643,7 +16919,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -16684,7 +16961,8 @@ let%expect_test _ =
                           "counter": 3,
                           "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false
+                          "mutable_": false,
+                          "namespace": []
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -16728,7 +17006,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -16738,7 +17017,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -16806,7 +17086,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -16816,7 +17097,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -16888,7 +17170,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -16898,7 +17181,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -16965,7 +17249,8 @@ let%expect_test _ =
                                       }
                                     ],
                                     "generated": false,
-                                    "mutable_": false
+                                    "mutable_": false,
+                                    "namespace": []
                                   }
                                 ],
                                 "location": [
@@ -17032,7 +17317,8 @@ let%expect_test _ =
                                           }
                                         ],
                                         "generated": false,
-                                        "mutable_": false
+                                        "mutable_": false,
+                                        "namespace": []
                                       },
                                       "ty": {
                                         "type_content": [
@@ -17044,7 +17330,8 @@ let%expect_test _ =
                                               "Virtual", "dummy"
                                             ],
                                             "generated": false,
-                                            "mutable_": false
+                                            "mutable_": false,
+                                            "namespace": []
                                           }
                                         ],
                                         "location": [
@@ -17117,7 +17404,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "element": {
@@ -17151,7 +17439,8 @@ let%expect_test _ =
                                                     }
                                                   ],
                                                   "generated": false,
-                                                  "mutable_": false
+                                                  "mutable_": false,
+                                                  "namespace": []
                                                 }
                                               }
                                             ],
@@ -17217,7 +17506,8 @@ let%expect_test _ =
                                                   }
                                                 ],
                                                 "generated": false,
-                                                "mutable_": false
+                                                "mutable_": false,
+                                                "namespace": []
                                               }
                                             ],
                                             "location": [
@@ -17341,7 +17631,9 @@ let%expect_test _ =
                                                                   "generated":
                                                                     false,
                                                                   "mutable_":
-                                                                    false
+                                                                    false,
+                                                                  "namespace":
+                                                                    []
                                                                 }
                                                               ],
                                                               "location": [
@@ -17478,7 +17770,9 @@ let%expect_test _ =
                                                                 "generated":
                                                                   false,
                                                                 "mutable_":
-                                                                  false
+                                                                  false,
+                                                                "namespace":
+                                                                  []
                                                               }
                                                             ],
                                                             "location": [
@@ -17601,7 +17895,8 @@ let%expect_test _ =
                                                             ],
                                                             "generated":
                                                               false,
-                                                            "mutable_": false
+                                                            "mutable_": false,
+                                                            "namespace": []
                                                           },
                                                           "ty": null,
                                                           "const_or_var":
@@ -17658,7 +17953,8 @@ let%expect_test _ =
                                                               "generated":
                                                                 false,
                                                               "mutable_":
-                                                                false
+                                                                false,
+                                                              "namespace": []
                                                             },
                                                             "ty": {
                                                               "type_content": [
@@ -17675,7 +17971,9 @@ let%expect_test _ =
                                                                   "generated":
                                                                     false,
                                                                   "mutable_":
-                                                                    false
+                                                                    false,
+                                                                  "namespace":
+                                                                    []
                                                                 }
                                                               ],
                                                               "location": [
@@ -17773,7 +18071,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -17821,7 +18121,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                   ],
@@ -17921,7 +18223,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -17969,7 +18273,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -18144,7 +18450,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -18338,7 +18646,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18386,7 +18696,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -18476,7 +18788,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -18611,7 +18925,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -18659,7 +18975,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -18749,7 +19067,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -18921,7 +19241,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -18982,7 +19304,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -19094,7 +19418,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19142,7 +19468,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -19321,7 +19649,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -19427,7 +19757,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19475,7 +19807,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -19575,7 +19909,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -19623,7 +19959,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -19802,7 +20140,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20148,7 +20488,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20475,7 +20817,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "element": {
@@ -20523,7 +20867,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     }
                                                                     ],
@@ -20613,7 +20959,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20831,7 +21179,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -20892,7 +21242,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -20998,7 +21350,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21091,7 +21445,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21349,7 +21705,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     },
                                                                     "ty":
                                                                     null,
@@ -21410,7 +21768,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21516,7 +21876,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21605,7 +21967,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -21698,7 +22062,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                     }
                                                                     ],
                                                                     "location": [
@@ -22158,7 +22524,8 @@ let%expect_test _ =
                                                               "generated":
                                                                 false,
                                                               "mutable_":
-                                                                false
+                                                                false,
+                                                              "namespace": []
                                                             },
                                                             "arguments": [
                                                               {
@@ -22176,7 +22543,9 @@ let%expect_test _ =
                                                                     "generated":
                                                                     false,
                                                                     "mutable_":
-                                                                    false
+                                                                    false,
+                                                                    "namespace":
+                                                                    []
                                                                   }
                                                                 ],
                                                                 "location": [
@@ -22324,7 +22693,8 @@ let%expect_test _ =
                                                         }
                                                       ],
                                                       "generated": false,
-                                                      "mutable_": false
+                                                      "mutable_": false,
+                                                      "namespace": []
                                                     }
                                                   ],
                                                   "location": [
@@ -22548,7 +22918,8 @@ let%expect_test _ =
               }
             ],
             "generated": false,
-            "mutable_": false
+            "mutable_": false,
+            "namespace": []
           },
           "ty": {
             "type_content": [
@@ -22566,7 +22937,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -22605,7 +22977,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -22648,7 +23021,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -22694,7 +23068,8 @@ let%expect_test _ =
                   "counter": 5,
                   "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false
+                  "mutable_": false,
+                  "namespace": []
                 },
                 "ty": {
                   "type_content": [
@@ -22708,7 +23083,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -22747,7 +23123,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -22792,7 +23169,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -22833,7 +23211,8 @@ let%expect_test _ =
                           "counter": 5,
                           "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false
+                          "mutable_": false,
+                          "namespace": []
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -22877,7 +23256,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": true,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -22887,7 +23267,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -22955,7 +23336,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -22965,7 +23347,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -23074,7 +23457,8 @@ let%expect_test _ =
                                               }
                                             ],
                                             "generated": false,
-                                            "mutable_": false
+                                            "mutable_": false,
+                                            "namespace": []
                                           },
                                           "arguments": [
                                             {
@@ -23087,7 +23471,8 @@ let%expect_test _ =
                                                     "Virtual", "dummy"
                                                   ],
                                                   "generated": false,
-                                                  "mutable_": false
+                                                  "mutable_": false,
+                                                  "namespace": []
                                                 }
                                               ],
                                               "location": [
@@ -23213,7 +23598,8 @@ let%expect_test _ =
                                       }
                                     ],
                                     "generated": false,
-                                    "mutable_": false
+                                    "mutable_": false,
+                                    "namespace": []
                                   }
                                 ],
                                 "location": [
@@ -23371,7 +23757,8 @@ let%expect_test _ =
               }
             ],
             "generated": false,
-            "mutable_": false
+            "mutable_": false,
+            "namespace": []
           },
           "ty": {
             "type_content": [
@@ -23389,7 +23776,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -23428,7 +23816,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -23471,7 +23860,8 @@ let%expect_test _ =
                       "counter": 0,
                       "location": [ "Virtual", "dummy" ],
                       "generated": false,
-                      "mutable_": false
+                      "mutable_": false,
+                      "namespace": []
                     }
                   ],
                   "location": [
@@ -23517,7 +23907,8 @@ let%expect_test _ =
                   "counter": 6,
                   "location": [ "Virtual", "dummy" ],
                   "generated": true,
-                  "mutable_": false
+                  "mutable_": false,
+                  "namespace": []
                 },
                 "ty": {
                   "type_content": [
@@ -23531,7 +23922,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -23570,7 +23962,8 @@ let%expect_test _ =
                             "counter": 0,
                             "location": [ "Virtual", "dummy" ],
                             "generated": false,
-                            "mutable_": false
+                            "mutable_": false,
+                            "namespace": []
                           }
                         ],
                         "location": [
@@ -23615,7 +24008,8 @@ let%expect_test _ =
                     "counter": 0,
                     "location": [ "Virtual", "dummy" ],
                     "generated": false,
-                    "mutable_": false
+                    "mutable_": false,
+                    "namespace": []
                   }
                 ],
                 "location": [
@@ -23656,7 +24050,8 @@ let%expect_test _ =
                           "counter": 6,
                           "location": [ "Virtual", "dummy" ],
                           "generated": true,
-                          "mutable_": false
+                          "mutable_": false,
+                          "namespace": []
                         }
                       ],
                       "location": [ "Virtual", "generated" ]
@@ -23700,7 +24095,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -23710,7 +24106,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -23778,7 +24175,8 @@ let%expect_test _ =
                                     }
                                   ],
                                   "generated": false,
-                                  "mutable_": false
+                                  "mutable_": false,
+                                  "namespace": []
                                 },
                                 "ty": {
                                   "type_content": [
@@ -23788,7 +24186,8 @@ let%expect_test _ =
                                       "counter": 0,
                                       "location": [ "Virtual", "dummy" ],
                                       "generated": false,
-                                      "mutable_": false
+                                      "mutable_": false,
+                                      "namespace": []
                                     }
                                   ],
                                   "location": [
@@ -23862,7 +24261,8 @@ let%expect_test _ =
                                       }
                                     ],
                                     "generated": false,
-                                    "mutable_": false
+                                    "mutable_": false,
+                                    "namespace": []
                                   }
                                 ],
                                 "location": [
@@ -23932,7 +24332,8 @@ let%expect_test _ =
                                             }
                                           ],
                                           "generated": false,
-                                          "mutable_": false
+                                          "mutable_": false,
+                                          "namespace": []
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -23977,7 +24378,8 @@ let%expect_test _ =
                                                 }
                                               ],
                                               "generated": false,
-                                              "mutable_": false
+                                              "mutable_": false,
+                                              "namespace": []
                                             }
                                           ],
                                           "location": [
@@ -24046,7 +24448,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [
@@ -24111,7 +24514,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [
@@ -24241,7 +24645,8 @@ let%expect_test _ =
                                             }
                                           ],
                                           "generated": false,
-                                          "mutable_": false
+                                          "mutable_": false,
+                                          "namespace": []
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -24286,7 +24691,8 @@ let%expect_test _ =
                                                 }
                                               ],
                                               "generated": false,
-                                              "mutable_": false
+                                              "mutable_": false,
+                                              "namespace": []
                                             }
                                           ],
                                           "location": [
@@ -24355,7 +24761,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [
@@ -24420,7 +24827,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [
@@ -24550,7 +24958,8 @@ let%expect_test _ =
                                             }
                                           ],
                                           "generated": false,
-                                          "mutable_": false
+                                          "mutable_": false,
+                                          "namespace": []
                                         },
                                         "ty": null,
                                         "const_or_var": "const"
@@ -24595,7 +25004,8 @@ let%expect_test _ =
                                                 }
                                               ],
                                               "generated": false,
-                                              "mutable_": false
+                                              "mutable_": false,
+                                              "namespace": []
                                             }
                                           ],
                                           "location": [
@@ -24664,7 +25074,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [
@@ -24729,7 +25140,8 @@ let%expect_test _ =
                                                       }
                                                     ],
                                                     "generated": false,
-                                                    "mutable_": false
+                                                    "mutable_": false,
+                                                    "namespace": []
                                                   }
                                                 ],
                                                 "location": [

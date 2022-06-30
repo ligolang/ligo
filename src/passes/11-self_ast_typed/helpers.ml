@@ -118,7 +118,6 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> self x.type_
   | T_for_all x -> self x.type_
@@ -229,7 +228,7 @@ and map_module : 'err mapper -> module_ -> module_ = fun m p ->
       return @@ Declaration_module {module_binder; module_; module_attr}
   in
   List.map ~f:(Location.map aux) p
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->

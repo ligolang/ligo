@@ -19,8 +19,7 @@ let pseq_to_list = function
   None -> []
 | Some seq -> npseq_to_list seq
 
-let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
-
+let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
 
 open Predefined.Tree_abstraction
 
@@ -229,10 +228,11 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     let arg = self op.arg in
     e_constant ~loc (Const op_type) [arg]
   in
-  let compile_pseudomodule_access ~loc : CST.expr -> string -> string = fun field module_name ->
+  let rec compile_pseudomodule_access : CST.expr -> string = fun field ->
     match field with
     | E_Var v -> v#payload
-    | E_ModPath _ -> raise.raise @@ unknown_constant module_name loc
+    | E_ModPath { value = { module_path ; field ; selector = _ } ; region = _ } ->
+       Utils.nsepseq_foldr (fun module_name b -> module_name#payload ^ "." ^ b) module_path (compile_pseudomodule_access field)
     | _ -> failwith "Corner case : This couldn't be produce by the parser"
   in
   match e with
@@ -296,11 +296,10 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       e_application ~loc func args
   )
   (*TODO: move to proper module*)
-  | E_Call ({ value=( E_ModPath { value={ module_path = (module_name,[]) ; field ; _ }; region=_ }, args ); region } as call)
-      when List.mem ~equal:String.equal build_ins module_name#payload -> (
+  | E_Call ({ value=( E_ModPath { value={ module_path = (module_name,[]) ; _ }; region=_ } as value, args ); region } as call)
+      when List.mem ~equal:String.equal built_ins module_name#payload -> (
     let loc = Location.lift region in
-    let fun_name = compile_pseudomodule_access ~loc field module_name#payload in
-    let var = module_name#payload ^ "." ^ fun_name in
+    let var = compile_pseudomodule_access value in
     match constants var with
     | Some const ->
        let (args, _) = r_split args in
@@ -349,10 +348,9 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
   | E_ModPath ma -> (
     let (ma, loc) = r_split ma in
     match ma.module_path with
-    | (module_name,[]) when List.mem ~equal:Caml.(=) build_ins module_name#payload -> (
+    | (module_name,[]) when List.mem ~equal:String.(=) built_ins module_name#payload -> (
       (*TODO: move to proper module*)
-      let fun_name = compile_pseudomodule_access ~loc ma.field module_name#payload in
-      let var = module_name#payload ^ "." ^ fun_name in
+      let var = compile_pseudomodule_access e in
       match constants var with
       | Some const -> e_constant ~loc const []
       | None -> (

@@ -1,0 +1,12 @@
+type p = ["Four"] | ["Five"] | ["Six"]
+
+type t = ["One", p] | ["Two", nat] | ["Three"]
+
+let s = (x : t) : unit => 
+  match(x, {
+  Two: (_ : nat) => unit,
+  Three: ()      => unit,
+  One: (c : p)   => (match(c, {  
+      Four: () => unit
+    }))
+  })

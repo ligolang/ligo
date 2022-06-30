@@ -116,3 +116,11 @@ let%expect_test _ =
                    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } ;
                  PAIR } ;
              PACK } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "view_tuple_storage.mligo" ] ;
+  [%expect {|
+    { parameter int ;
+      storage (pair (pair (pair string nat) string nat) string) ;
+      code { CDR ; NIL operation ; PAIR } ;
+      view "v" int mutez { DROP ; PUSH mutez 1000000 } } |}]

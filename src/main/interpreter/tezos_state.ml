@@ -232,7 +232,7 @@ let extract_lazy_storage_diff_from_result :
       | Internal_manager_operation_result ({source = _ ; _},Applied (Transaction_result (Transaction_to_contract_result x))) -> [x.lazy_storage_diff]
       | _ -> []
     in
-    (List.concat @@ List.map ~f:aux internal_operation_results) @ [y.lazy_storage_diff]
+    [y.lazy_storage_diff] @ (List.concat @@ List.map ~f:aux internal_operation_results)
   | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ ; balance_updates=_ } ->
     [x.lazy_storage_diff]
   | _ -> []
@@ -243,19 +243,15 @@ let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
     match x with
     | No_operation_metadata -> []
     | Operation_metadata { contents } -> (
-      let rec aux : type a . last_originations -> a Apply_results.contents_result_list -> last_originations =
-        fun acc x ->
+      let rec aux : type a . a Apply_results.contents_result_list -> last_originations =
+        fun x ->
           match x with
-          | Cons_result (hd, tl) -> (
-            let x = extract_origination_from_result top_src hd in
-            aux (acc @ x) tl
-          )
-          | Single_result x -> (
-            let x = extract_origination_from_result top_src x in
-            x @ acc
-          )
+          | Cons_result (hd, tl) ->
+            extract_origination_from_result top_src hd @ aux tl
+          | Single_result x ->
+            extract_origination_from_result top_src x
       in
-      aux [] contents
+      aux contents
     )
 
 let get_lazy_storage_diffs : Tezos_protocol.Protocol.operation_receipt ->
@@ -265,19 +261,15 @@ let get_lazy_storage_diffs : Tezos_protocol.Protocol.operation_receipt ->
     match x with
     | No_operation_metadata -> []
     | Operation_metadata { contents } -> (
-      let rec aux : type a . _ -> a Apply_results.contents_result_list -> _ =
-        fun acc x ->
+      let rec aux : type a . a Apply_results.contents_result_list -> _ =
+        fun x ->
           match x with
-          | Cons_result (hd, tl) -> (
-            let x = extract_lazy_storage_diff_from_result hd in
-            aux (acc @ x) tl
-          )
-          | Single_result x -> (
-            let x = extract_lazy_storage_diff_from_result x in
-            x @ acc
-          )
+          | Cons_result (hd, tl) ->
+            extract_lazy_storage_diff_from_result hd @ aux tl
+          | Single_result x ->
+            extract_lazy_storage_diff_from_result x
       in
-      aux [] contents
+      aux contents
     )
 
 let convert_lazy_storage_diffs (lazy_storage_diffs : Tezos_raw_protocol.Alpha_context.Lazy_storage.diffs) =
@@ -289,10 +281,10 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
   let lazy_storage_diffs = List.concat @@ List.filter_opt lazy_storage_diffs in
   let lazy_storage_diffs = convert_lazy_storage_diffs lazy_storage_diffs in
   let get_id id = Z.to_int (Tezos_raw_protocol.Lazy_storage_kind.Big_map.Id.unparse_to_z id) in
-  List.fold_right lazy_storage_diffs
+  List.fold_left lazy_storage_diffs
     ~init:bigmaps
     ~f:(
-      fun it bigmaps ->
+      fun bigmaps it ->
         match it with
         | Item (Big_map, id, Remove) ->
             List.Assoc.remove bigmaps ~equal:Int.equal (get_id id)
@@ -336,8 +328,8 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
             let state = List.fold kv_diff ~init:state ~f:aux in
             let data = { data with version = state } in
             List.Assoc.add bigmaps ~equal:Int.equal (get_id id) data
-        | _  -> bigmaps
-    )
+        | _  -> bigmaps)
+
 
 (* upd_context_of_receipts *)
 let upd_transduced_data : raise:r -> context -> Tezos_raw_protocol.Apply_results.packed_operation_metadata -> transduced =
@@ -351,10 +343,10 @@ type add_operation_outcome =
   | Success of (context * Z.t(* gas consumed *))
   | Fail of state_error
 
-let get_last_operation_result (incr : Tezos_alpha_test_helpers.Incremental.t) =
+let get_last_operations_result (incr : Tezos_alpha_test_helpers.Incremental.t) =
   match Tezos_alpha_test_helpers.Incremental.rev_tickets incr with
   | [] -> failwith "Tried to get last operation result in empty block"
-  | hd :: _ -> hd
+  | xs -> xs
 
 let get_single_tx_result (x : Tezos_raw_protocol.Apply_results.packed_operation_metadata) =
   match x with
@@ -391,12 +383,12 @@ let bake_ops : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> (T
     let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
     match List.fold_result ~f:aux ~init:incr operation with
     | Ok incr ->
-       let last_operation = get_last_operation_result incr in
-       let consum = get_consumed_gas last_operation in
+       let last_operations = get_last_operations_result incr in
+       let consum = get_consumed_gas (List.hd_exn last_operations) in
        let raw = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
                    Incremental.finalize_block incr in
-       let transduced = upd_transduced_data ~raise ctxt last_operation in
-       Success ({ ctxt with raw ; transduced }, consum)
+       let ctxt = List.fold_left ~f:(fun ctxt op -> { ctxt with transduced = upd_transduced_data ~raise ctxt op }) ~init:{ ctxt with raw } last_operations in
+       Success (ctxt, consum)
     | Error errs -> Fail errs
 
 let bake_op  : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tezos_op -> add_operation_outcome =
