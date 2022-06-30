@@ -335,7 +335,7 @@ let%expect_test _ =
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
     (fun y -> ((x)@(y)))[x := y] =
-    fun y -> ((y)@(y))
+    fun y#2 -> ((y)@(y#2))
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
@@ -369,7 +369,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (let y = x in (x)@(y))[x := y] =
-    let y = y in (y)@(y)
+    let y#3 = y in (y)@(y#3)
   |}] ;
 
   (* iter shadowed *)
@@ -402,7 +402,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (for_ITER y of (x)@(y) do ( (x)@(y) ))[x := y] =
-    for_ITER y of (y)@(y) do ( (y)@(y) )
+    for_ITER y#4 of (y)@(y) do ( (y)@(y#4) )
   |}] ;
 
   (* if_cons shadowed 1 *)
@@ -458,7 +458,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := y] =
-    y ?? y : (y :: z) -> (y)@((y)@(z))
+    y ?? y : (y#5 :: z) -> (y)@((y#5)@(z))
   |}] ;
 
   (* if_cons capture avoidance 2 *)
@@ -472,7 +472,7 @@ let%expect_test _ =
     ~expr:(var z) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := z] =
-    z ?? z : (y :: z) -> (z)@((y)@(z))
+    z ?? z : (y :: z#6) -> (z)@((y)@(z#6))
   |}] ;
 
   (* old bug *)
@@ -484,5 +484,5 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (fun y -> (fun y#2 -> ((x)@((y)@(y#2)))))[x := y] =
-    fun y -> (fun y#2 -> ((y)@((y)@(y#2))))
+    fun y#3 -> (fun y#2 -> ((y)@((y#3)@(y#2))))
   |}] ;
