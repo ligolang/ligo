@@ -70,7 +70,7 @@ let is_name var name = String.equal var.name name
 
 (* PP *)
 let pp ppf v =
-  if v.generated
+  if v.counter <> 0
   then Format.fprintf ppf "%s#%d"  v.name v.counter
   else Format.fprintf ppf "%s" v.name
 
