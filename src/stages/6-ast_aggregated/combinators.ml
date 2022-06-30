@@ -142,7 +142,7 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
 [@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "michelson_program", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
-[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
 let get_t_michelson_code (t:type_expression) : unit option = get_t_michelson_program t
@@ -186,7 +186,7 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-[@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
+[@@map (_type_, ("list", "set", "map", "typed_address", "big_map", "gen"))]
 
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Constant.Contract with
   | Some _ -> Some ()

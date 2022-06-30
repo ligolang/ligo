@@ -190,7 +190,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         Bls12_381_fr    | Address              | Key             | Chain_id | Signature         |
         Map             | Big_map              | Set             | Bool     | Baker_hash        | Pvss_key           |
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Michelson_contract |
-                          String               | Typed_address   | Mutation | List              | Chest              |
+        Gen             | String               | Typed_address   | Mutation | List              | Chest              |
         Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp          |
         Operation       | External _ | Tx_rollup_l2_address), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
