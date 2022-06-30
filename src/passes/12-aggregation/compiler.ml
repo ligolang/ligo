@@ -409,17 +409,19 @@ and compile_module_expr ~raise : Path.t -> Scope.t -> I.module_expr -> (Scope.t)
     )
 
 let preprocess_program program =
+  let scope,program = Deduplicate_module_binders.program program in
   let aliases,program = Resolve_module_aliases.program program in
-  aliases,program
+  scope,aliases,program
 
-let preprocess_expression ?aliases e =
+let preprocess_expression ?scope ?aliases e =
+  let e = Deduplicate_module_binders.expression ?scope e in
   let e = Resolve_module_aliases.expression ?aliases e in
   e
 
 let compile ~raise : I.expression -> I.program -> O.expression =
   fun hole program ->
-    let aliases,program = preprocess_program program in
-    let hole = preprocess_expression ~aliases hole in
+    let scope,aliases,program = preprocess_program program in
+    let hole = preprocess_expression ~scope ~aliases hole in
     let (scope), decls = compile_declaration_list ~raise Path.empty Scope.empty program in
     let init = compile_expression ~raise Path.empty scope hole in
     decls init
