@@ -227,6 +227,7 @@ test-suite ligo-debugger-test
     , containers
     , data-default
     , dir-traverse
+    , directory
     , filepath
     , fmt
     , lens
@@ -238,5 +239,6 @@ test-suite ligo-debugger-test
     , singletons
     , tasty
     , tasty-hunit-compat
+    , text
     , universum
   default-language: Haskell2010
