@@ -34,10 +34,10 @@ let rec value_gen : raise:interpreter_error raise -> ?small:bool -> ?known_addre
     QCheck.Gen.((if small then small_int else int) >>= fun n ->
                 return (v_int (Z.of_int n)))
   else if is_t_nat type_expr then
-    QCheck.Gen.((if small then small_nat else int) >>= fun n ->
+    QCheck.Gen.((if small then small_nat else nat) >>= fun n ->
                 return (v_nat (Z.of_int n)))
   else if is_t_tez type_expr then
-    QCheck.Gen.((if small then small_nat else int) >>= fun n ->
+    QCheck.Gen.((if small then small_nat else nat) >>= fun n ->
                 return (v_mutez (Z.of_int n)))
   else if is_t_list type_expr then
     match get_t_list type_expr with
