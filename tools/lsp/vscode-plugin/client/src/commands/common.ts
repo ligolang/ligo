@@ -14,6 +14,14 @@ type BinaryInfo = {
   path: string,
 }
 
+/* eslint-disable no-shadow */
+/* eslint-disable no-unused-vars  */
+export type ExecutionResult
+  = {t: 'Success'; result: string}
+  | {t: 'NoLigoPath'}
+  | {t: 'UnknownCommandType'}
+  | {t: 'LigoExecutionException'; error: string}
+
 function extToDialect(ext : string) {
   switch (ext) {
     case '.ligo': return 'pascaligo'
@@ -84,13 +92,13 @@ export async function executeCommand(
   commandArgs = CommandRequiredArguments.Path,
   showOutput = true,
   errorPrefix = undefined,
-): Promise<string | undefined> {
+): Promise<ExecutionResult> {
   const contractInfo = getLastContractPath()
   const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
 
   if (!ligoPath || ligoPath === '') {
     vscode.window.showWarningMessage('LIGO executable not found. Aborting ...');
-    return undefined;
+    return { t: 'NoLigoPath' };
   }
 
   let finalCommand;
@@ -109,7 +117,7 @@ export async function executeCommand(
       break;
     default:
       console.error('Unknown command')
-      return undefined;
+      return { t: 'UnknownCommandType' };
   }
   try {
     const requestType = new RequestType<null, string | null, void>('indexDirectory')
@@ -119,13 +127,14 @@ export async function executeCommand(
       ligoOutput.appendLine(result)
       ligoOutput.show();
     }
-    return result;
+    return { t: 'Success', result: result };
   } catch (error) {
     if (errorPrefix) {
       ligoOutput.appendLine(errorPrefix)
     }
     ligoOutput.appendLine(error.message);
     ligoOutput.show();
+
+    return { t: 'LigoExecutionException', error: error.message }
   }
-  return undefined
 }
