@@ -122,12 +122,6 @@ let rec evaluate_type ~raise (c:typing_context) (t:I.type_expression) : O.type_e
     let type_ = self ~context:c x.type_ in
     return (T_for_all {x with type_})
 
-and type_expression ~raise ~add_warning ~options : ?env:Environment.t -> ?tv_opt:O.type_expression -> I.expression -> O.expression
-  = fun ?env ?tv_opt e ->
-    let c   = Typing_context.init ?env () in
-    let res = type_expression' ~raise ~add_warning ~options (App_context.create tv_opt, c) ?tv_opt e in
-    res
-
 and infer_t_insts ~raise ~options ~loc app_context ( (tc,t) : O.expression_content * O.type_expression )  =
   match t with
   | { type_content = T_for_all _ ; type_meta = _; orig_var=_ ; location=_} -> (
@@ -165,9 +159,9 @@ and infer_t_insts ~raise ~options ~loc app_context ( (tc,t) : O.expression_conte
   )
   | _ -> tc, t
 
-and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun (app_context, context) ?tv_opt e ->
+and type_expression ~raise ~add_warning ~options : context -> ?tv_opt:O.type_expression -> I.expression -> O.expression = fun (app_context, context) ?tv_opt e ->
   Context.Hashes.set_context context ;
-  let self ?(raise=raise) ?(context = (app_context, context)) ?tv_opt e = type_expression' ~raise ~add_warning ~options context ?tv_opt e in
+  let self ?(raise=raise) ?(context = (app_context, context)) ?tv_opt e = type_expression ~raise ~add_warning ~options context ?tv_opt e in
   let return expr tv =
     let () =
       match tv_opt with
@@ -475,9 +469,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
      let let_result = self ?tv_opt ~context:(app_context, e') let_result in
      return (E_let_in {let_binder = {var;ascr=None;attributes}; rhs; let_result; attr }) let_result.type_expression
   | E_let_in {let_binder = {var ; ascr = Some tv ; attributes} ; rhs ; let_result; attr } ->
-    let av, tv = Ast_core.Helpers.destruct_for_alls tv in
-    let av', rhs = Ast_core.Combinators.get_type_abstractions rhs in
-    let av = av @ av' in
+    let av, rhs = Ast_core.Combinators.get_type_abstractions rhs in
     let pre_context = context in
     let context = List.fold av ~f:(fun c v -> Typing_context.add_type_var c v ()) ~init:context in
     let tv = evaluate_type ~raise context tv in
@@ -489,7 +481,7 @@ and type_expression' ~raise ~add_warning ~options : context -> ?tv_opt:O.type_ex
     let rhs = { rhs with type_expression } in
     let context = Typing_context.add_value pre_context var type_expression in
     let let_result = self ?tv_opt ~context:(app_context, context) let_result in
-    return (E_let_in {let_binder = {var;ascr=Some tv;attributes}; rhs; let_result; attr }) let_result.type_expression
+    return (E_let_in {let_binder = {var;ascr=Some rhs.type_expression;attributes}; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; rhs ; let_result} ->
     let rhs = evaluate_type ~raise context rhs in
     let e' = Typing_context.add_type context type_binder rhs in
@@ -643,7 +635,7 @@ and type_lambda ~raise ~add_warning ~options ~loc ~tv_opt (ac, e) { binder ; out
       in
       let input_type = trace_option ~raise (missing_funarg_annotation binder.var) input_type in
       let e' = Typing_context.add_value e binder.var input_type in
-      let body = type_expression' ~raise ~add_warning ~options ?tv_opt:output_type (ac, e') result in
+      let body = type_expression ~raise ~add_warning ~options ?tv_opt:output_type (ac, e') result in
       let output_type = body.type_expression in
       (({binder={binder with ascr=Some input_type}; result=body}:O.lambda),(t_arrow input_type output_type ()))
 
@@ -676,7 +668,7 @@ and type_module_expr ~raise ~add_warning ~init_context ~options : I.module_expr 
     let _ = access_module init_context v in
     return (O.M_variable v)
 
-and type_declaration' : raise: typer_error raise -> add_warning : _ -> options: Compiler_options.middle_end -> typing_context -> I.declaration -> typing_context * O.declaration =
+and type_declaration : raise: typer_error raise -> add_warning : _ -> options: Compiler_options.middle_end -> typing_context -> I.declaration -> typing_context * O.declaration =
 fun ~raise ~add_warning ~options c d ->
 let loc = d.location in
 let return ?(loc = loc) c (d : O.declaration_content) = c,Location.wrap ~loc d in
@@ -692,7 +684,7 @@ match Location.unwrap d with
     let c = List.fold_right av ~f:(fun v c -> Typing_context.add_type_var c v ()) ~init:c in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr None) @@
-      type_expression' ~options ~add_warning (App_context.create None, c) expr in
+      type_expression ~options ~add_warning (App_context.create None, c) expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
@@ -710,7 +702,7 @@ match Location.unwrap d with
     let tv = evaluate_type ~raise env tv in
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr (Some tv)) @@
-      type_expression' ~options ~add_warning ~tv_opt:tv (App_context.create @@ Some tv, env) expr in
+      type_expression ~options ~add_warning ~tv_opt:tv (App_context.create @@ Some tv, env) expr in
     let rec aux t = function
       | [] -> t
       | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
@@ -727,8 +719,10 @@ match Location.unwrap d with
 and type_module ~raise ~add_warning ~options ~init_context (p:I.module_) : O.module_ =
   (* This context use all the declaration so you can use private declaration to type the module. It should not be returned*)
   let (_c, lst) =
-      List.fold_map ~f:(type_declaration' ~raise ~add_warning ~options) ~init:init_context p in
+      List.fold_map ~f:(type_declaration ~raise ~add_warning ~options) ~init:init_context p in
   lst
 
 let type_program ~raise ~add_warning ~options ?env m = type_module ~raise ~add_warning ~options ~init_context:(Typing_context.init ?env ()) m
-let type_declaration ~raise ~add_warning ~options ?env d = snd @@ type_declaration' ~raise ~add_warning ~options (Typing_context.init ?env ()) d
+let type_declaration ~raise ~add_warning ~options ?env d = snd @@ type_declaration ~raise ~add_warning ~options (Typing_context.init ?env ()) d
+let type_expression ~raise ~add_warning ~options ?env ?tv_opt e =
+    type_expression ~raise ~add_warning ~options (App_context.create tv_opt, Typing_context.init ?env ()) ?tv_opt e
