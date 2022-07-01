@@ -8,7 +8,7 @@ let options = Compiler_options.make ~raw_options ()
 
 let make_init_state_cameligo ?(project_root=None) () = Repl.make_initial_state
                             (CameLIGO: Syntax_types.t)
-                            Environment.Protocols.Ithaca
+                            Environment.Protocols.in_use
                             dry_run_options project_root
                             options
 
@@ -16,7 +16,7 @@ let init_state_cameligo = make_init_state_cameligo ()
 
 let make_init_state_jsligo ?(project_root=None) () = Repl.make_initial_state
                           (JsLIGO: Syntax_types.t)
-                          Environment.Protocols.Ithaca
+                          Environment.Protocols.in_use
                           dry_run_options project_root
                           options
 
