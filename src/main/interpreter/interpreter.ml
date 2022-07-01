@@ -791,11 +791,17 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
                    AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_RANDOM , [ V_Ct (C_unit) ] ) ->
-      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise expr_ty)  in
-      let* value = eval_ligo expr_gen calltrace env in
-      return value
+    | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
+      let* gen_type = monad_option (Errors.generic_error loc "Expected typed address") @@ AST.get_t_gen expr_ty in
+      let>> ctxt : Tezos_state.context = Get_state () in
+      let known_addresses = ctxt.internals.bootstrapped @ List.concat (List.map ~f:snd ctxt.transduced.last_originations) in
+      let generator = Mutation.value_gen ~raise ~small ~known_addresses gen_type in
+      return (V_Gen { generator ; gen_type })
     | ( C_TEST_RANDOM , _  ) -> fail @@ error_type
+    | ( C_TEST_GENERATOR_EVAL , [ V_Gen { generator ; gen_type = _ } ] ) ->
+      let v = QCheck.Gen.generate1 generator in
+      return v
+    | ( C_TEST_GENERATOR_EVAL , _ ) -> fail @@ error_type
     | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
       let bigmap_ty = List.nth_exn types 1 in
       let>> () = Set_big_map (n, kv, bigmap_ty) in

@@ -46,7 +46,7 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
   ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
-[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
 let t_ext_int ?loc ?core t : type_expression = t_constant ?loc ?core (External "int") [t]
 let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "ediv") [t; t']
