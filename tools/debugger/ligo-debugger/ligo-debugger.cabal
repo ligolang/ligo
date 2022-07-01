@@ -16,11 +16,12 @@ library
       Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
+      Language.LIGO.Debugger.Common
+      Language.LIGO.Debugger.Handlers.Helpers
       Language.LIGO.Debugger.Handlers.Impl
       Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Snapshots
-      Language.LIGO.Debugger.Types
       Prelude
       Util
   other-modules:
@@ -36,6 +37,7 @@ library
       BlockArguments
       ConstraintKinds
       DataKinds
+      DefaultSignatures
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
@@ -82,6 +84,7 @@ library
     , filepath
     , fmt
     , lens
+    , lens-aeson
     , morley
     , morley-debugger
     , morley-prelude
@@ -94,6 +97,7 @@ library
     , text
     , universum
     , unliftio
+    , unordered-containers
     , vector
     , vinyl
     , with-utf8
@@ -114,6 +118,7 @@ executable ligo-debugger
       BlockArguments
       ConstraintKinds
       DataKinds
+      DefaultSignatures
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
@@ -162,6 +167,7 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.Breakpoints
       Test.DebugInfo
       Test.LigoCall
       Test.Snapshots
@@ -177,6 +183,7 @@ test-suite ligo-debugger-test
       BlockArguments
       ConstraintKinds
       DataKinds
+      DefaultSignatures
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
@@ -220,6 +227,7 @@ test-suite ligo-debugger-test
     , containers
     , data-default
     , dir-traverse
+    , directory
     , filepath
     , fmt
     , lens
@@ -227,8 +235,10 @@ test-suite ligo-debugger-test
     , morley
     , morley-debugger
     , nyan-interpolation
+    , nyan-interpolation-core
     , singletons
     , tasty
     , tasty-hunit-compat
+    , text
     , universum
   default-language: Haskell2010

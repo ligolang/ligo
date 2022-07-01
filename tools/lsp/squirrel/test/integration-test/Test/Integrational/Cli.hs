@@ -23,7 +23,7 @@ filterException e = asum
 
 checkFile :: HasCallStack => FilePath -> TestTree
 checkFile path = testCase path do
-  src <- pathToSrc path
+  src <- runNoLoggingT $ pathToSrc path
   let temp = TempSettings (takeDirectory path) $ GenerateDir ".temp"
   tryJust filterException (runNoLoggingT $ getLigoDefinitions temp src) >>= \case
     Left  _ -> pure ()
