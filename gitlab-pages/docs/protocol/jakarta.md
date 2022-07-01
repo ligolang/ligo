@@ -9,8 +9,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ## API
 
-> Important: This is only available for protocol Ithaca (i.e. `--protocol jakarta` command line option).
-
 ### New types
 
 #### Tezos
