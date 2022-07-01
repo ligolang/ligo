@@ -40,6 +40,13 @@ let uncons = function
   | hd :: tl ->
      Some (hd, tl)
 
+let repeat x n =
+  let rec aux n xs = 
+    if n <= 0 then xs
+    else aux (n - 1) (x::xs)
+  in
+  aux n []
+
 module Ne = struct
 
   type 'a t = 'a * 'a List.t

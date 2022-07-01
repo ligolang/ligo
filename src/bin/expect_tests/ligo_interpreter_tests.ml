@@ -263,7 +263,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "test_no_mutation.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value ().
     - test_mutation exited with value ().
@@ -636,6 +636,21 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_print.mligo" ] ;
+  [%expect {|
+    Hello world
+    @42
+    Everything at the top-level was executed.
+    - test exited with value "(true , 42n)". |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test_eprint.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value ().
+    Ooops |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -736,12 +751,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_mutation_loop.mligo" ; "--steps" ; "1000" ] ;
   [%expect {|
-    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
-      2 |     if rounds > 0 then
-      3 |         my_rec_fun (rounds - 1)
-      4 |     else
-
-    Replacing by: 2.
     File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 17, character 28 to line 18, character 83:
      16 |     | None -> ()
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
@@ -755,7 +764,13 @@ let%expect_test _ =
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
-    "Some mutation also passes the tests!" |}]
+    "Some mutation also passes the tests!"
+    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
+      2 |     if rounds > 0 then
+      3 |         my_rec_fun (rounds - 1)
+      4 |     else
+
+    Replacing by: 2. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source1.mligo" ] ;

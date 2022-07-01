@@ -3,7 +3,7 @@
  (public_name ligo.aggregation)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_aggregated ast_typed)
+ (libraries simple-utils ast_aggregated ast_typed self_ast_typed)
  (preprocess
   (pps ppx_poly_constructor))
  (flags

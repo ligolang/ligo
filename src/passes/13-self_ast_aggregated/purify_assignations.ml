@@ -324,36 +324,6 @@ let add_parameter read_effect read_effects effects_type rhs =
       e_recursive {fun_name;fun_type;lambda={binder=binder_eff;result}} fun_type
   | _ -> failwith "Add_parameters: not a function"
 
-let rec apply_for_all_on (binder : type_variable) (value : type_expression) (te : type_expression) =
-  let self = apply_for_all_on binder value in
-  let return tv' = make_t ~loc:te.location tv' in
-  match te.type_content with
-    T_variable var when TypeVar.equal binder var -> value
-  | T_variable  _ -> te
-  | T_constant  _ -> te
-  | T_singleton _ -> te
-  | T_arrow {type1;type2} ->
-      let type1 = self type1 in
-      let type2 = self type2 in
-      return @@ T_arrow {type1;type2}
-  | T_sum m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
-      let associated_type = self associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : row_element)
-    in
-    return @@ T_sum { m with content = LMap.map aux m.content }
-  )
-  | T_record m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
-      let associated_type = self associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : row_element)
-    in
-    return @@ T_sum { m with content = LMap.map aux m.content }
-  )
-  | T_for_all {ty_binder;kind;type_} ->
-    let type_ = self type_ in
-    return @@ T_for_all {ty_binder;kind;type_}
-
 let rec morph_function_application (effect : Effect.t) (e: expression) : _ * expression =
   let self = morph_function_application effect in
   let return returned_effect type_expression expression_content = returned_effect, { e with expression_content ; type_expression } in
@@ -371,7 +341,7 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
   | E_type_inst {forall;type_} ->
       let returned_effect,forall = self forall in
       let {ty_binder;kind=_;type_=ty} = get_t_for_all_exn forall.type_expression in
-      let ty = apply_for_all_on ty_binder type_ ty in
+      let ty = Helpers.subst_type ty_binder type_ ty in
       return returned_effect ty @@ E_type_inst {forall;type_}
   | E_application {lamb;args} ->
       let returned_effect,lamb = self lamb in
@@ -616,9 +586,6 @@ let expression ~add_warning e =
   (* Pretreatement especialy for JSLigo replace top-level let to const *)
   let e = silent_cast_top_level_var_to_const ~add_warning e in
   let e = Deduplicate_binders.program e in
-  (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in
-  (* Format.printf "test: %a\n%!" Effect.pp effect; *)
   let e = morph_expression effect e in
-  (* Format.printf "morphed: %a\n%!" PP.expression e; *)
   e

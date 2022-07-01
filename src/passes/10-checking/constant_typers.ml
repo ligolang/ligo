@@ -470,7 +470,9 @@ module Constant_types = struct
                     of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
                     of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_triplet (t_address ()) (t_key ()) (t_string ()));
-                    of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
+                    of_type C_TEST_PRINT O.(t_int () ^-> t_string () ^-> t_unit ());
+                    of_type C_TEST_TO_STRING O.(for_all "a" @@ fun a -> a ^-> t_string ());
+                    of_type C_TEST_UNESCAPE_STRING O.(t_string () ^-> t_string ());
                     of_type C_TEST_STATE_RESET O.(t_option (t_timestamp ()) ^-> t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());

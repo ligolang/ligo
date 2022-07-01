@@ -3,7 +3,6 @@ open Trace
 open Main_errors
 
 module Stdlib = Stdlib
-module Testlib = Testlib
 
 module type Params = sig
   val raise : all raise
@@ -53,8 +52,7 @@ module M (Params : Params) =
       fun env file_name meta c_unit ->
       let options = Compiler_options.set_init_env options env in
       let stdlib = Stdlib.typed ~options meta.syntax in
-      let testlib = Testlib.typed ~options meta.syntax in
-      let options = Compiler_options.set_init_env options (Environment.append stdlib (Environment.append testlib env)) in
+      let options = Compiler_options.set_init_env options (Environment.append stdlib env) in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
       let ast_core =
         let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
@@ -94,13 +92,12 @@ module Infer (Params : Params) = struct
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
     fun _ file_name meta c_unit ->
     let stdlib =  Stdlib.core ~options meta.syntax in
-    let testlib = Testlib.core ~options meta.syntax in
     let module_ = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
     let module_ =
       let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
       Helpers.inject_declaration ~options ~raise ~add_warning syntax module_
     in
-    testlib @ stdlib @ module_
+    stdlib @ module_
 
 end
 
@@ -175,9 +172,8 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_
          (module_, contract)
       | None ->
          let stdlib   = Stdlib.typed ~options syntax in
-         let testlib  = Testlib.typed ~options syntax in
-         let contract = Ligo_compile.Of_typed.compile_program ~raise (testlib @ stdlib) in
-         (testlib @ stdlib, contract)
+         let contract = Ligo_compile.Of_typed.compile_program ~raise stdlib in
+         (stdlib, contract)
     in
     let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options syntax expression contract in
     let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_exp aggregated_prg in

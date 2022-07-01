@@ -795,9 +795,10 @@ and end_module opening closing imp_path acc len state = parse
 (* Strings *)
 
 and in_string opening state = parse
-  "\\\"" { copy state lexbuf; in_string opening state lexbuf }
-| '"'    { copy state lexbuf; state                          }
+  '"'    { copy state lexbuf; state                          }
 | eof    { rollback lexbuf; state                            }
+| "\\\""
+| "\\\\"
 | _      { copy state lexbuf; in_string opening state lexbuf }
 
 and preproc state = parse

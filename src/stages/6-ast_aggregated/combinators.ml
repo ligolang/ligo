@@ -75,7 +75,7 @@ let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list)
 let t_bool ?loc ()       : type_expression = t_sum_ez ?loc
   [("True", t_unit ());("False", t_unit ())]
 
-let t_option ?loc typ : type_expression = 
+let t_option ?loc typ : type_expression =
   t_sum_ez ?loc [
     ("Some", typ) ;
     ("None", t_unit ());
@@ -101,7 +101,7 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0 -> Some ()
   | _ -> None
 
-let get_t_option (t:type_expression) : type_expression option = 
+let get_t_option (t:type_expression) : type_expression option =
   match t.type_content with
   | T_sum {content;_} ->
     let keys = LMap.keys content in
@@ -109,7 +109,7 @@ let get_t_option (t:type_expression) : type_expression option =
       [Label "Some" ; Label "None"]
     | [Label "None" ; Label "Some"] ->
         let some = LMap.find (Label "Some") content in
-        Some some.associated_type 
+        Some some.associated_type
     | _ -> None)
   | _ -> None
 

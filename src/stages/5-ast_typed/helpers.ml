@@ -337,7 +337,6 @@ let rec fold_type_expression : type a . type_expression -> init:a -> f:(a -> typ
     | T_arrow {type1; type2} -> (
         self type2 ~init:(self type1 ~init)
       )
-    | T_module_accessor _ -> init
     | T_singleton _ -> init
     | T_abstraction {type_; _}
     | T_for_all {type_; _} -> (

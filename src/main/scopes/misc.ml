@@ -71,33 +71,37 @@ let extract_variable_types :
     | Declaration_type _ -> prev
     | Declaration_module _ -> prev
 
+let generated_flag = "#?generated"
 let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
   if Ast_typed.ValueVar.is_generated v
-  then "generated"
+  then generated_flag
   else Ast_typed.ValueVar.to_name_exn v
 
 let get_type_binder_name : Ast_typed.TypeVar.t -> string = fun v ->
   if Ast_typed.TypeVar.is_generated v
-  then "generated"
+  then generated_flag
   else Ast_typed.TypeVar.to_name_exn v
 let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
   if Ast_typed.ModuleVar.is_generated v
-  then "generated"
+  then generated_flag
   else Ast_typed.ModuleVar.to_name_exn v
 
 let make_def_id name i =
   (name ^ "#" ^ (string_of_int i), i+1)
 
 let add_shadowing_def : (int * string) -> def -> def_map -> (int * def_map) =  fun (i,name) def env ->
-  let (definition_id,i) = make_def_id name i in
-  let shadow = Def_map.filter
-    (fun _ s_def -> match def, s_def with
-      | Variable _ , Variable _ | Type _ , Type _ ->
-        not @@ String.equal (get_def_name s_def) name
-      | _ -> true )
-    env in
-  let env = Def_map.add definition_id def shadow in
-  (i,env)
+  match get_def_name def with
+  | x when String.equal x generated_flag -> (i,env)
+  | _ ->
+    let (definition_id,i) = make_def_id name i in
+    let shadow = Def_map.filter
+      (fun _ s_def -> match def, s_def with
+        | Variable _ , Variable _ | Type _ , Type _ ->
+          not @@ String.equal (get_def_name s_def) name
+        | _ -> true )
+      env in
+    let env = Def_map.add definition_id def shadow in
+    (i,env)
 
 type type_ppx = Ast_typed.type_expression -> Ast_typed.type_expression
 
