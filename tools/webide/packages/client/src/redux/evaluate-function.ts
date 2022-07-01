@@ -35,7 +35,7 @@ type Action =
 const DEFAULT_STATE: EvaluateFunctionState = {
   entrypoint: '',
   parameters: '',
-  protocol: 'ithaca'
+  protocol: 'jakarta'
 };
 
 const evaluateFunction = (
