@@ -51,6 +51,9 @@ val trace : raise:('b,'w) raise -> ('a -> 'b) -> (raise:('a,'w) raise -> 'c) -> 
 (* Similar but erase the previous error instead of casting it *)
 val trace_strong : raise:('a,'w) raise -> 'a -> (raise:('b,'w) raise -> 'c) -> 'c
 
+(* collect multples errors into a list *)
+val collect : raise:('a list,'w) raise -> (raise:('a,'w) raise -> 'b) list -> 'b list
+
 (* Unwrap an option using our own error instead of exception *)
 val trace_option : raise:('a,'w) raise -> 'a -> 'b option -> 'b
 (* Check that option contains some value otherwise returns default and log error *)

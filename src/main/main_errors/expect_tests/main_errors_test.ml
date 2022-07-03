@@ -201,7 +201,7 @@ let%expect_test "self_ast_imperative" =
   |}]
 
 let%expect_test _ =
-  human_readable_error (purification_tracer (`Purification_corner_case "foo")) ;
+  human_readable_error (purification_tracer [`Purification_corner_case "foo"]) ;
   [%expect {|Corner case: foo|}] ;
   human_readable_error (depurification_tracer (`Purification_corner_case "foo")) ;
   [%expect {| |}]

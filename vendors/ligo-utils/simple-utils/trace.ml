@@ -147,6 +147,27 @@ let bind_or ~raise a b =
 let rec bind_exists ~raise = function | (x, []) -> x ~raise
                                       | (x, y :: ys) -> bind_or ~raise x (bind_exists (y, ys))
 
+let collect ~(raise:('a list,'w) raise) : (raise:('a,'w) raise -> 'b) list -> 'b list  =
+  fun lst ->
+  let errors = ref [] in
+  let warns  = ref [] in
+  let value = List.map lst ~f:(
+    fun f ->
+      try_with (fun ~raise ->
+        let v = f ~raise in
+        warns := raise.get_warnings () :: !warns;
+        Some (v)
+      ) ( fun ~raise a ->
+        warns := raise.get_warnings () :: !warns;
+        errors := a :: !errors;
+        None
+      )
+  ) in
+  List.iter ~f:raise.warning @@ List.concat !warns;
+  match Option.all value with
+    Some (v) -> v
+  | None -> raise.error !errors
+
 (* Dummy raise instance for debug and workarounds.
    Don't use it in production! *)
 let raise_failwith str = {

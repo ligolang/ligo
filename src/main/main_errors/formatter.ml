@@ -159,7 +159,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f e
     | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
-    | `Purification_tracer e -> Purification.Errors.error_ppformat ~display_format f e
+    | `Purification_tracer e -> List.iter ~f:(Purification.Errors.error_ppformat ~display_format f) e
     | `Depurification_tracer _e -> () (*no error in this pass*)
     | `Desugaring_tracer _e -> () (*no error in this pass*)
     | `Sugaring_tracer _e -> () (*no error in this pass*)
@@ -250,8 +250,8 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
     | `Main_view_rule_violated loc ->
-      Format.fprintf f "@[<hv>%a@.View rule violated: 
-      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas) 
+      Format.fprintf f "@[<hv>%a@.View rule violated:
+      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas)
       - Tezos.self can't be used because the entry-point does not make sense in a view@.@]"
       Snippet.pp loc
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
@@ -391,7 +391,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_jsonformat e
   | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_jsonformat e
-  | `Purification_tracer e -> Purification.Errors.error_jsonformat e
+  | `Purification_tracer e -> `List (List.map ~f:Purification.Errors.error_jsonformat e)
   | `Depurification_tracer _ -> `Null (*no error in this pass*)
   | `Desugaring_tracer _ -> `Null (*no error in this pass*)
   | `Sugaring_tracer _ -> `Null (*no error in this pass*)

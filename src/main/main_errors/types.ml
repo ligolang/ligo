@@ -36,7 +36,7 @@ type all =
  | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error
  | `Self_ast_imperative_tracer of Self_ast_imperative.Errors.self_ast_imperative_error
- | `Purification_tracer   of Purification.Errors.purification_error
+ | `Purification_tracer   of Purification.Errors.purification_error list
  | `Depurification_tracer of Purification.Errors.purification_error
  | `Desugaring_tracer of Desugaring.Errors.desugaring_error
  | `Sugaring_tracer   of Desugaring.Errors.desugaring_error
