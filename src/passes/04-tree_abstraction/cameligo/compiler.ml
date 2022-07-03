@@ -111,7 +111,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let c' = self c in
           return @@ t_michelson_or ~loc a' b' c' d'
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | "michelson_pair" -> (
         match args with
@@ -126,7 +126,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let c' = self c in
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | "sapling_state" -> (
         match args with
@@ -138,7 +138,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_state ~loc singleton
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | "sapling_transaction" -> (
         match args with
@@ -150,7 +150,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_transaction ~loc singleton
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
     | _ ->
       let operator = TypeVar.of_input_var operator.value in
@@ -171,8 +171,8 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
     let (name,loc) = r_split var in
     let v = TypeVar.of_input_var name in
     return @@ t_variable ~loc v
-  | TString _s -> raise.raise @@ unsupported_string_singleton te
-  | TInt _s -> raise.raise @@ unsupported_string_singleton te
+  | TString _s -> raise.error @@ unsupported_string_singleton te
+  | TInt _s -> raise.error @@ unsupported_string_singleton te
   | TArg var ->
     let (quoted_var,loc) = r_split var in
     let v = TypeVar.of_input_var (quote_var quoted_var.name.value) in
@@ -187,7 +187,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression = 
         return @@ t_module_accessor ~loc acc accessed_el
       | TModA ma ->
         aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-      | _ -> raise.raise (expected_access_to_variable (CST.type_expr_to_region ma.field))
+      | _ -> raise.error (expected_access_to_variable (CST.type_expr_to_region ma.field))
     in
     aux [module_name] ma.field
   )
@@ -374,7 +374,7 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
          return @@ e_accessor ~loc moda sels
       | EModA ma ->
          aux (acc @ [compile_mod_var ma.value.module_name]) ma.value.field
-      | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+      | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
     in
     (*TODO: move to proper module*)
     if List.mem ~equal:String.(=) built_ins module_name then
@@ -630,7 +630,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   | CST.PUnit u ->
     let loc = Location.lift u.region in
     Location.wrap ~loc @@ P_unit
-  | _ -> raise.raise @@ unsupported_pattern_type [p]
+  | _ -> raise.error @@ unsupported_pattern_type [p]
 
 and compile_matching_expr ~raise : 'a CST.case_clause CST.reg List.Ne.t -> (AST.expression, AST.ty_expr) AST.match_case list =
   fun cases ->
@@ -657,7 +657,7 @@ and untpar = function
 | _ as v -> v
 
 and check_annotation ~raise = function
-| CST.PVar var -> raise.raise (missing_funarg_annotation var.value.variable)
+| CST.PVar var -> raise.error (missing_funarg_annotation var.value.variable)
 | CST.PPar { value = { inside ; _ }; _ } -> check_annotation ~raise inside
 | CST.PTuple { value ; _ } ->
   let l = Utils.nsepseq_to_list value in
@@ -670,7 +670,7 @@ and check_annotation ~raise = function
     let no_of_tuple_components = List.length (Utils.nsepseq_to_list pval) in
     let no_of_tuple_type_components = List.length (Utils.nsepseq_to_list tval) in
     if (no_of_tuple_components <> no_of_tuple_type_components) then
-      raise.raise (funarg_tuple_type_mismatch region pattern type_expr)
+      raise.error (funarg_tuple_type_mismatch region pattern type_expr)
     else ())
   | _ -> ())
 | _ -> ()
@@ -681,7 +681,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     ({var; ascr; attributes }, fun_) in
   let return_1 ?ascr ?(attributes = Stage_common.Helpers.const_attribute) var = return ?ascr ~attributes (fun e -> e) var in
   match pattern with
-    PConstr _ -> raise.raise @@ unsupported_pattern_type [pattern]
+    PConstr _ -> raise.error @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ ValueVar.fresh ~loc ()
@@ -725,7 +725,7 @@ and compile_parameter ~raise : CST.pattern -> _ binder * (_ -> _) =
     let ascr = compile_type_expression ~raise type_expr in
     let ({var;attributes;  _}, exprs) = compile_parameter ~raise pattern in
     return ~ascr ~attributes exprs var
-  | _ -> raise.raise @@ unsupported_pattern_type [pattern]
+  | _ -> raise.error @@ unsupported_pattern_type [pattern]
 
 and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
   let return reg decl =

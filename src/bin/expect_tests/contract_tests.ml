@@ -69,7 +69,6 @@ let%expect_test _ =
 let%expect_test _  =
   run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
-    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
@@ -86,6 +85,8 @@ let%expect_test _  =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
+
+    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     "2042-01-01T00:00:29Z" |}]
 
 let%expect_test _ =
@@ -1009,13 +1010,21 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "amount_lambda.mligo" ] ;
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect {|
-    File "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13:
-      9 |
-     10 | let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
-     11 |   (([] : operation list), (if b then f1 () else f2 ()))
+    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
+      3 |   let amt : tez = Tezos.get_amount () in
+      4 |   fun (x : unit) -> amt
+      5 |
     :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
+
+    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
+      1 | (* should return a constant function *)
+      2 | let f1 (x : unit) : unit -> tez =
+      3 |   let amt : tez = Tezos.get_amount () in
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
 
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
@@ -1033,21 +1042,13 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
-      3 |   let amt : tez = Tezos.get_amount () in
-      4 |   fun (x : unit) -> amt
-      5 |
+    File "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13:
+      9 |
+     10 | let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
+     11 |   (([] : operation list), (if b then f1 () else f2 ()))
     :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
-      1 | (* should return a constant function *)
-      2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Tezos.get_amount () in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter bool ;
       storage (lambda unit mutez) ;
@@ -1097,9 +1098,9 @@ let%expect_test _ =
 let%expect_test _ =
     run_ligo_good [ "run" ; "dry-run" ; contract "redeclaration.ligo" ; "unit" ; "0" ] ;
     [%expect {|
-      File "../../test/contracts/redeclaration.ligo", line 6, characters 20-21:
-        5 |
-        6 | function foo (const p : unit) : int is 1
+      File "../../test/contracts/redeclaration.ligo", line 1, characters 20-21:
+        1 | function foo (const p : unit) : int is 0
+        2 |
       :
       Warning: unused variable "p".
       Hint: replace it by "_p" to prevent this warning.
@@ -1120,9 +1121,9 @@ let%expect_test _ =
       Warning: unused variable "s".
       Hint: replace it by "_s" to prevent this warning.
 
-      File "../../test/contracts/redeclaration.ligo", line 1, characters 20-21:
-        1 | function foo (const p : unit) : int is 0
-        2 |
+      File "../../test/contracts/redeclaration.ligo", line 6, characters 20-21:
+        5 |
+        6 | function foo (const p : unit) : int is 1
       :
       Warning: unused variable "p".
       Hint: replace it by "_p" to prevent this warning.
@@ -1343,6 +1344,22 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
+
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
       8 | let main (action, store : int * int) : return =
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
@@ -1366,22 +1383,6 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
-      4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
-      6 |  (([] : operation list), foo)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
-      4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
-      6 |  (([] : operation list), foo)
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 19-89:
       8 | let main (action, store : int * int) : return =
@@ -1854,9 +1855,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
-    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
-    Hint: You might want to add a type annotation.
-
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
       2 |   [@layout:comb]
       3 |     B of nat
@@ -1866,6 +1864,10 @@ let%expect_test _ =
       7 |
 
     Warning: layout attribute only applying to B, probably ignored.
+
+
+    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Hint: You might want to add a type annotation.
 
     (Left 42)
   |}]

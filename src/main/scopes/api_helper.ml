@@ -5,16 +5,14 @@ module Trace = Simple_utils.Trace
 
 let format_result :
       display_format:ex_display_format ->
-      (unit -> Main_warnings.all list) ->
-      (raise:Main_errors.all Trace.raise -> 'value) -> _ =
-  fun ~display_format warns value ->
-    let errors, info =
-      Trace.try_with' ~fast_fail:false
+      (raise:(Main_errors.all,_) Trace.raise -> 'value) -> _ =
+  fun ~display_format value ->
+    let errors, warns, info =
+      Trace.try_with ~fast_fail:false
           (fun ~raise -> let v = value ~raise
-                         in (raise.get_errors (),      Some v))
-          (fun ~raise e ->  (e :: raise.get_errors (), None))
+                         in (raise.get_errors (), raise.get_warnings (), Some v))
+          (fun ~raise e ->  (e :: raise.get_errors (), raise.get_warnings (), None))
     in
-    let warns = warns () in
     let output = Formatter.{errors; warns; info} in
     let disp = Displayable {value = output;
                             format = Formatter.get_scope_format} in

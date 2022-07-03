@@ -8,11 +8,11 @@ module Decompiler = Decompiler
 
 (** Convert a concrete PascaLIGO expression CST to the imperative
     expression AST used by the compiler. *)
-val compile_expression : raise:Errors.abs_error Simple_utils.Trace.raise -> CST.expr -> AST.expr
+val compile_expression : raise:(Errors.abs_error, Main_warnings.all) Simple_utils.Trace.raise -> CST.expr -> AST.expr
 
 (** Convert a concrete PascaLIGO module CST to the miperative module
     AST used by the compiler. *)
-val compile_declarations     : raise:Errors.abs_error Simple_utils.Trace.raise -> CST.declarations -> AST.module_
+val compile_declarations     : raise:(Errors.abs_error, Main_warnings.all) Simple_utils.Trace.raise -> CST.declarations -> AST.module_
 
 val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> CST.expr
 
