@@ -23,6 +23,7 @@ let run_ligo args =
   Mini_c.TypeVar.reset_counter ();
   Mini_c.ModuleVar.reset_counter ();
   Self_ast_aggregated.reset_counter ();
+  Cli.reset_return ();
   let argv = ("ligo" :: args) in
   let result = Cli.run ~argv () in
   result
