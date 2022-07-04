@@ -105,7 +105,7 @@ test_test =
         lift $ step "Go to next breakpoint (more nested file)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 19)))
 
         lift $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
@@ -115,5 +115,5 @@ test_test =
         lift $ step "Go to previous breakpoint"
         goToPreviousBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 4) (Pos 11)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile2) (SrcPos (Pos 1) (Pos 19)))
   ]

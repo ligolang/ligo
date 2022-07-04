@@ -25,7 +25,8 @@ test_Compilation = testGroup "Getting debug info"
           ]
 
         , [ LigoMereEnvInfo [LigoStackEntryNoVar intType] ]
-        , replicate 3 LigoEmptyLocationInfo
+        , [ LigoMereLocInfo ((2, 15) <-> (2, 17)) ]
+        , replicate 2 LigoEmptyLocationInfo
         , [ LigoMereLocInfo ((2, 11) <-> (2, 17)) ]
         , [ LigoMereEnvInfo [LigoStackEntryVar "s2" intType] ]
 

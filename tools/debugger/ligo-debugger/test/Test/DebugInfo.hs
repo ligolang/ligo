@@ -72,12 +72,20 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
+            (LigoRange file (LigoPosition 2 15) (LigoPosition 2 17))
+            ?- SomeInstr (T.PUSH $ T.VInt 42)
+
+        , LigoMereLocInfo
             (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
         , LigoMereEnvInfo
             [LigoStackEntryVar "s2" intType]
             ?- SomeInstr dummyInstr
+
+        , LigoMereLocInfo
+            (LigoRange file (LigoPosition 3 21) (LigoPosition 3 22))
+            ?- SomeInstr (T.PUSH $ T.VInt 2)
 
         , LigoMereLocInfo
             (LigoRange file (LigoPosition 3 11) (LigoPosition 3 18))
@@ -108,7 +116,9 @@ test_SourceMapper = testGroup "Reading source mapper"
         -- get de-duplicated.
         [ unknownSrcPos
         , SrcPos (Pos 1) (Pos 11)
+        , SrcPos (Pos 1) (Pos 15)
         , SrcPos (Pos 2) (Pos 11)
+        , SrcPos (Pos 2) (Pos 21)
         , SrcPos (Pos 3) (Pos 3)
         ]
   ]

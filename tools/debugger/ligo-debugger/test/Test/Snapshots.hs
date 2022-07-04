@@ -142,7 +142,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 2 11) (LigoPosition 2 17)
+                , sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
                 , sfStack =
                   [ StackItem
                     { siLigoDesc = LigoStackEntry
@@ -188,6 +188,21 @@ test_Snapshots = testGroup "Snapshots collection"
               ]
           in
           [ ( InterpretRunning . EventExpressionEvaluated . Just $
+                SomeLorentzValue (42 :: Integer)
+            , one
+              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
+              , stack0
+              )
+            )
+
+          , ( InterpretRunning EventExpressionPreview
+            , one
+              ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
+              , stack0
+              )
+            )
+
+          , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
@@ -251,7 +266,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                , sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -274,7 +289,7 @@ test_Snapshots = testGroup "Snapshots collection"
             InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                  { sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -303,7 +318,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 3 16) (LigoPosition 3 21)
+                { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 4 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -399,7 +414,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 15 5) (LigoPosition 15 10)
+                { sfLoc = LigoRange file' (LigoPosition 15 9) (LigoPosition 15 10)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -419,7 +434,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 5 11) (LigoPosition 5 18)
+                { sfLoc = LigoRange file' (LigoPosition 4 11) (LigoPosition 4 12)
                 } :| []
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
