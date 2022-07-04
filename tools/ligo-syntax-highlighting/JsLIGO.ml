@@ -386,7 +386,7 @@ let syntax_highlighting =
           arbitrary number of white space. Note that this doesn't handle
           comments.
         * Have a `type_parentheses` accept identifiers that check for the type
-          annotation as a negative lookahead, as well as a `type_annotation`.
+          annotation as a positive lookahead, as well as a `type_annotation`.
         * Let `=>` be handled by `type_operator`.
         This makes `type_parentheses` act as if it was the union of the two
         ambiguous expressions. It's good enough!
@@ -395,7 +395,7 @@ let syntax_highlighting =
         name = Name.type_fun_param;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.identifier_annotation_negative_lookahead, None)];
+          match_ = [(Regexp.identifier_annotation_positive_lookahead, None)];
         }
       };
       {

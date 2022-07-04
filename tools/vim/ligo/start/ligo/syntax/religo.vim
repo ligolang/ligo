@@ -38,17 +38,17 @@ syntax match typeoperator "\(=>\|\.\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\()\|}\|=\|,\|=>\)\@!" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\()\|}\|=\|,\|=>\)\@=" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(\<\(type\|module\|let\)\>\|;\|{\|^#\|\[@\)\@!" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(\<\(type\|module\|let\)\>\|;\|}\|^#\|\[@\)\@=" contains=typemodule,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
 " recordfield
 syntax match recordfield "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained nextgroup=recordfield___ 
 syntax match recordfield___ "\(\s*\)" contained nextgroup=recordfield______ 
-syntax region recordfield______ matchgroup=recordfield_______ start="\(:\)" end="\(,\|}\)\@!" contained contains=$self 
+syntax region recordfield______ matchgroup=recordfield_______ start="\(:\)" end="\(,\|}\)\@=" contained contains=$self 
 highlight link recordfield_______ Operator 
 
 " recordorblock

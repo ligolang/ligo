@@ -38,15 +38,15 @@ syntax match typeoperator "\(->\|\.\|\*\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotationlambda
-syntax region typeannotationlambda matchgroup=typeannotationlambda_ start="\(:\)" end="\()\|=\|;\|}\|->\)\@!" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotationlambda matchgroup=typeannotationlambda_ start="\(:\)" end="\()\|=\|;\|}\|->\)\@=" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\()\|=\|;\|}\)\@!" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\()\|=\|;\|}\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@!" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
 " identifierconstructor

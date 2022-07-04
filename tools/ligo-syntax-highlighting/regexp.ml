@@ -216,11 +216,11 @@ let let_binding_match1_jsligo: Core.regexp = {
 
 let let_binding_match2_jsligo: Core.regexp = let_binding_match3
 
-let identifier_annotation_negative_lookahead: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+let identifier_annotation_positive_lookahead: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)\\\\b[:space:]*:";
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(?=:)";
-  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>\\s*:\\@!";
+  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>\\s*:\\@=";
 }
 
 let control_keywords_match_jsligo: Core.regexp = {
@@ -275,20 +275,20 @@ let module_match2_jsligo: Core.regexp = {
 let property_expr_begin_jsligo: Core.regexp = colon_match
 
 let property_expr_end_jsligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ",\\\\|}";
   textmate = "(?=,|})";
-  vim      = "\\(,\\|})\\@!";
+  vim      = "\\(,\\|})\\@=";
 }
 
 (* follow(field_assignment) = RBRACE COMMA *)
 let field_expr_begin_reasonligo: Core.regexp = colon_match
 
 let field_expr_end_reasonligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ",\\\\|}";
   textmate = "(?=,|})";
-  vim      = "\\(,\\|}\\)\\@!";
+  vim      = "\\(,\\|}\\)\\@=";
 }
 
 let int_literal_match: Core.regexp = {
@@ -321,10 +321,10 @@ let type_definition_match: Core.regexp = {
 let type_definition_begin: Core.regexp = type_definition_match
 
 let type_definition_end: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead... too bad! *)
+  (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
   emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\b";
   textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b)";
-  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\)\\@!"
+  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\)\\@="
 }
 
 let type_name_match: Core.regexp = {
@@ -359,38 +359,38 @@ let type_operator_match: Core.regexp = {
 let type_annotation_begin: Core.regexp = colon_match
 
 let type_annotation_end: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ")\\\\|=\\\\|;\\\\|}";
   textmate = "(?=\\)|=|;|})";
-  vim      = "\\()\\|=\\|;\\|}\\)\\@!";
+  vim      = "\\()\\|=\\|;\\|}\\)\\@=";
 }
 
 let type_annotation_begin_lambda: Core.regexp = type_annotation_begin
 
 let type_annotation_end_lambda: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ")\\\\|=\\\\|;\\\\|}\\\\|->";
   textmate = "(?=\\)|=|;|}|->)";
-  vim      = "\\()\\|=\\|;\\|}\\|->\\)\\@!";
+  vim      = "\\()\\|=\\|;\\|}\\|->\\)\\@=";
 }
 
 let type_field_annotation_begin: Core.regexp = type_annotation_begin
 
 let type_field_annotation_end: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "\\\\(}\\\\|;\\\\)";
   textmate = "(?=}|;)";
-  vim      = "\\(}\\|;\\)\\@!";
+  vim      = "\\(}\\|;\\)\\@=";
 }
 
 (* follow(type_decl) = SEMI RBRACE Else EOF Default Case *)
 let type_definition_begin_jsligo: Core.regexp = type_definition_match
 
 let type_definition_end_jsligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ";\\\\|}\\\\|\\\\b\\\\(else\\\\|default\\\\|case\\\\)\\\\b";
   textmate = "(?=;|}|\\b(else|default|case)\\b)";
-  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\)\\>\\)\\@!"
+  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\)\\>\\)\\@="
 }
 
 let type_name_match_jsligo: Core.regexp = {
@@ -412,10 +412,10 @@ let type_operator_match_jsligo: Core.regexp = {
 let type_annotation_begin_jsligo: Core.regexp = type_annotation_begin
 
 let type_annotation_end_jsligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ")\\\\|=>\\\\|,\\\\|}\\\\|=";
   textmate = "(?=\\)|=>|,|}|=)";
-  vim      = "\\()\\|=>\\|,\\}\\|=\\)\\@!";
+  vim      = "\\()\\|=>\\|,\\}\\|=\\)\\@=";
 }
 
 (*
@@ -440,10 +440,10 @@ let type_as_begin_jsligo: Core.regexp = {
 }
 
 let type_as_end_jsligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "";
   textmate = "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
-  vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@!";
+  vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@=";
 }
 
 (*
@@ -454,20 +454,20 @@ let type_as_end_jsligo: Core.regexp = {
 let type_annotation_begin_ligo: Core.regexp = type_annotation_begin
 
 let type_annotation_end_ligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ";\\\\|)\\\\|}\\\\|\\\\bis\\\\b\\\\|=\\\\|:=";
   textmate = "(?=;|\\)|\\]|\\bis\\b|=|:=)";
-  vim      = "\\(;\\|)\\|}\\|\\<is\\>\\|=\\|:=\\)\\@!";
+  vim      = "\\(;\\|)\\|}\\|\\<is\\>\\|=\\|:=\\)\\@=";
 }
 
 (* follow(type_decl) = Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr *)
 let type_definition_begin_ligo: Core.regexp = type_definition_begin
 
 let type_definition_end_ligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "\\\\b\\\\(type\\\\|recursive\\\\|module\\\\|function\\\\|end\\\\|const\\\\)\\\\b\\\\|;\\\\|{\\\\|^#\\\\|\\\\[@";
   textmate = "(?=\\b(type|recursive|module|function|end|const)\\b|;|{|^#|\\[@)";
-  vim      = "\\(\\<\\(type\\|recursive\\|module\\|function\\|end\\|const\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@!";
+  vim      = "\\(\\<\\(type\\|recursive\\|module\\|function\\|end\\|const\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@=";
 }
 
 let type_operator_match_ligo: Core.regexp = {
@@ -480,30 +480,30 @@ let type_operator_match_ligo: Core.regexp = {
 let type_annotation_field_begin_ligo: Core.regexp = type_annotation_begin
 
 let type_annotation_field_end_ligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ";\\\\|\\\\]";
   textmate = "(?=;|\\])";
-  vim      = "\\(;\\|\\]\\)\\@!";
+  vim      = "\\(;\\|\\]\\)\\@=";
 }
 
 (* follow(type_annotation) = RPAR RBRACE EQ COMMA ARROW *)
 let type_annotation_begin_reasonligo: Core.regexp = type_annotation_begin
 
 let type_annotation_end_reasonligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
+  (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ")\\\\|}\\\\|=\\\\|,\\\\|=>";
   textmate = "(?=\\)|}|=|,|=>)";
-  vim      = "\\()\\|}\\|=\\|,\\|=>\\)\\@!";
+  vim      = "\\()\\|}\\|=\\|,\\|=>\\)\\@=";
 }
 
 (* follow(type_decl) = Type SEMI RBRACE Module Let EOF Directive Attr *)
 let type_definition_begin_reasonligo: Core.regexp = type_definition_begin
 
 let type_definition_end_reasonligo: Core.regexp = {
-  (* FIXME: Emacs doesn't support negative look-ahead *)
-  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|{\\\\|^#\\\\|\\\\[@";
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "\\\\b\\\\(type\\\\|module\\\\|let\\\\)\\\\b\\\\|;\\\\|}\\\\|^#\\\\|\\\\[@";
   textmate = "(?=\\b(type|module|let)\\b|;|}|^#|\\[@)";
-  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@!";
+  vim      = "\\(\\<\\(type\\|module\\|let\\)\\>\\|;\\|}\\|^#\\|\\[@\\)\\@=";
 }
 
 let type_operator_match_reasonligo: Core.regexp = {
