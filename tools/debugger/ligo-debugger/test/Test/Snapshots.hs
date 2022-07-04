@@ -12,9 +12,9 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), Frozen, SourceLocation (SourceLocation),
+  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation (SourceLocation),
   SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
-  tsAfterInstrs)
+  tsAfterInstrs, FrozenPredicate (FrozenPredicate))
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
@@ -158,7 +158,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- moveTill Forward (pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- moveTill Forward (FrozenPredicate $ pure False)
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -331,7 +331,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 } -> actualVal == expectedVal && expectedVar == actualVar
               _ -> False
 
-        N.continueUntilBreakpoint N.NextBreak
+        goToNextBreakpoint
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -339,8 +339,7 @@ test_Snapshots = testGroup "Snapshots collection"
           unless (any (checkStackItem "s1" $ T.SomeConstrainedValue (T.VInt 8)) stackItems) do
             unexpectedSnapshot snap
 
-        N.continueUntilBreakpoint N.NextBreak
-        N.continueUntilBreakpoint N.NextBreak
+        goToNextBreakpoint
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -362,8 +361,7 @@ test_Snapshots = testGroup "Snapshots collection"
           when (s1Count /= 1) do
             assertFailure [int||Expected 1 "s1" variable, found #{s1Count} "s1" variables|]
 
-        N.continueUntilBreakpoint N.NextBreak
-        N.continueUntilBreakpoint N.NextBreak
+        goToNextBreakpoint
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
 
@@ -385,13 +383,11 @@ test_Snapshots = testGroup "Snapshots collection"
 
       testWithSnapshots runData do
         -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
-        -- TODO; wrap this predicate when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58)
-        -- is merged.
         let stopAtFile
               :: (MonadState (DebuggerState InterpretSnapshot) m)
               => FilePath
-              -> Frozen (DebuggerState InterpretSnapshot) m Bool
-            stopAtFile filePath = do
+              -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+            stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
               let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
               case locMb of
