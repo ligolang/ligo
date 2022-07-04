@@ -40,9 +40,11 @@ export async function executeDeploy(client: LanguageClient) {
     'Attempt to compile contract failed with exception:',
   )
 
-  if (!code || !code.result) {
+  if (!code || code.result.t !== 'Success') {
     return undefined;
   }
+
+  const codeRes = code.result.result
 
   const storage = await executeCompileStorage(
     client,
@@ -53,9 +55,11 @@ export async function executeDeploy(client: LanguageClient) {
     'Attempt to compile storage failed with exception:',
   )
 
-  if (!storage || !storage.result) {
+  if (!storage || storage.result.t !== 'Success') {
     return undefined;
   }
+
+  const storageRes = storage.result.result
 
   const network = await createRememberingInputBox({
     title: 'Network',
@@ -89,8 +93,8 @@ export async function executeDeploy(client: LanguageClient) {
         })
 
         const op = await TezosNetwork.contract.originate({
-          code: JSON.parse(code.result),
-          init: JSON.parse(storage.result),
+          code: JSON.parse(codeRes),
+          init: JSON.parse(storageRes),
         });
         // TODO: Sometimes 'better-call.dev' link doesn't lead to the contract info.
         // (see: https://gitlab.com/serokell/ligo/ligo/-/merge_requests/282#note_921119098)
@@ -123,9 +127,11 @@ export async function executeGenerateDeployScript(client: LanguageClient) {
       false,
       'Attempt to compile contract failed with exception:',
     )
-    if (!codeJson || !codeJson.result) {
+    if (!codeJson || codeJson.result.t !== 'Success') {
       return undefined;
     }
+
+    const codeJsonRes = codeJson.result.result
 
     const storageJson = await executeCompileStorage(
       client,
@@ -136,16 +142,31 @@ export async function executeGenerateDeployScript(client: LanguageClient) {
       'Attempt to compile storage failed with exception:',
     )
 
-    if (!storageJson || !storageJson.result) {
+    if (!storageJson || (storageJson.result.t !== 'Success')) {
       return undefined;
     }
 
-    const code = await executeCompileContract(client, codeJson.entrypoint, 'text')
+    const storageJsonRes = storageJson.result.result
+
+    const code = await executeCompileContract(
+      client,
+      codeJson.entrypoint,
+      'text',
+      false,
+    )
+
     if (!code) {
       return undefined;
     }
 
-    const storage = await executeCompileStorage(client, storageJson.entrypoint, 'text', storageJson.storage)
+    const storage = await executeCompileStorage(
+      client,
+      storageJson.entrypoint,
+      'text',
+      storageJson.storage,
+      false,
+    )
+
     if (!storage) {
       return undefined;
     }
@@ -167,7 +188,7 @@ export async function executeGenerateDeployScript(client: LanguageClient) {
       {
         cancellable: false,
         location: vscode.ProgressLocation.Notification,
-        title: 'Generating deploy contract. It might take some time',
+        title: 'Generating deploy script. It might take some time',
       },
       async (progress) => {
         const TezosNetwork = Tezos(network)
@@ -182,8 +203,8 @@ export async function executeGenerateDeployScript(client: LanguageClient) {
         })
 
         const estimate = await TezosNetwork.estimate.originate({
-          code: JSON.parse(codeJson.result),
-          init: JSON.parse(storageJson.result),
+          code: JSON.parse(codeJsonRes),
+          init: JSON.parse(storageJsonRes),
         });
 
         const sourceAccount = vscode.workspace.getConfiguration().get<string>('ligoLanguageServer.tezos_source_account');

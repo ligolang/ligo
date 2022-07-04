@@ -1,22 +1,25 @@
 import { LanguageClient } from 'vscode-languageclient/node'
 import { createRememberingInputBox, createQuickPickBox, Maybe } from '../ui'
-import { CommandRequiredArguments, executeCommand } from './common';
+import {
+  CommandRequiredArguments, executeCommand, ExecutionResult,
+} from './common';
 
 type CompileContractResult = {
   entrypoint: string,
   format: string,
-  result: string
+  result: ExecutionResult
 }
 
 type CompileStorageResult = {
   entrypoint: string,
   format: string,
   storage : string,
-  result: string
+  result: ExecutionResult
 }
 
 export type SilentCompilationOptions = {
   entrypoint: string,
+  printToConsole: boolean,
   onPath: Maybe<string>,
   flags: string[]
 }
@@ -37,7 +40,7 @@ export async function executeSilentCompileContract(
     (path) => args.concat([path]),
     client,
     CommandRequiredArguments.Path,
-    options.onPath === undefined,
+    options.printToConsole,
   )
 }
 
@@ -158,7 +161,12 @@ export async function executeCompileExpression(client: LanguageClient) {
     1,
     false,
   )
-  const exp = listOfExpressions.toString().split(':')[1].replace(/\s+/g, ' ').split(' ').slice(1, -1);
+
+  if (listOfExpressions.t !== 'Success') {
+    return undefined
+  }
+
+  const exp = listOfExpressions.result.toString().split(':')[1].replace(/\s+/g, ' ').split(' ').slice(1, -1);
   const maybeExpression = await createQuickPickBox(exp, 'Expressions', 'Possible expressions for this contract')
 
   if (!maybeExpression) {

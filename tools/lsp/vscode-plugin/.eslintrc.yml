@@ -16,3 +16,4 @@ rules:
   semi: off
   no-console: off
   no-plusplus: off
+  object-shorthand: off
