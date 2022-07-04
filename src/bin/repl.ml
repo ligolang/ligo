@@ -129,13 +129,13 @@ let try_declaration ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
   try
-    try_with (fun ~raise ->
+    try_with (fun ~raise ~catch:_ ->
       let typed_prg,core_prg =
         Ligo_compile.Utils.type_program_string ~raise ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
-    (fun ~raise -> function
+    (fun ~catch:_ -> function
         (`Parser_tracer _ : Main_errors.all)
       | (`Cit_jsligo_tracer _ : Main_errors.all)
       | (`Cit_pascaligo_tracer _ : Main_errors.all)

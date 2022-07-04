@@ -21,21 +21,21 @@ let test_format : 'a Simple_utils.Display.format = {
 }
 
 let wrap_test_w name f =
-  try_with (fun ~raise ->
+  try_with (fun ~raise ~catch ->
   let () =
     f ~raise () in
     List.iter ~f:(fun w ->
       Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
-    ) @@ raise.get_warnings () ;
+    ) @@ catch.warnings () ;
   )
-  (fun ~raise error ->
+  (fun ~catch error ->
     let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
      let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
     List.iter ~f:(fun w ->
       Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
-    ) @@ raise.get_warnings () ;
+    ) @@ catch.warnings () ;
      Format.printf "%s\n" s ;
      Stdlib.raise Alcotest.Test_error
   )
@@ -55,8 +55,8 @@ let test_w_all name test =
   ) ["ligo";"mligo";"religo";"jsligo"]
 
 let wrap_test name f =
-    try_with (fun ~raise -> f ~raise ())
-    (fun ~raise:_ error ->
+    try_with (fun ~raise ~catch:_ -> f ~raise ())
+    (fun ~catch:_ error ->
     let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in

@@ -11,13 +11,16 @@ let warning_with f =
 type ('error,'warning) raise = {
   error        : 'a . 'error -> 'a;
   warning      : 'warning -> unit;
-  get_warnings : unit -> 'warning list;
   log_error    : 'error -> unit;
-  get_errors   : unit -> 'error list;
   fast_fail    : bool
 }
 
-let try_with ?(fast_fail = true) (type error warning) f catch =
+type ('error,'warning) catch = {
+  warnings : unit -> 'warning list;
+  errors   : unit -> 'error list;
+}
+
+let try_with ?(fast_fail = true) (type error warning) f g =
   let recoverable_errors  = ref [] in
   let warnings = ref [] in
   let exception Local of error in
@@ -26,62 +29,62 @@ let try_with ?(fast_fail = true) (type error warning) f catch =
     {
       error        = (fun x -> Stdlib.raise (Local x));
       warning      = (fun x -> warnings := x :: !warnings);
-      get_warnings = (fun () -> List.rev !warnings);
       log_error    = (fun x -> recoverable_errors := x :: !recoverable_errors);
-      get_errors   = (fun () -> !recoverable_errors);
       fast_fail    = false;
     }
     else
     {
       error        = (fun x -> Stdlib.raise (Local x));
       warning      = (fun x -> warnings := x :: !warnings);
-      get_warnings = (fun () -> List.rev !warnings);
       log_error    = (fun x -> Stdlib.raise (Local x));
-      get_errors   = (fun () -> !recoverable_errors);
       fast_fail    = true;
     }
   in
-  try f ~raise
-  with Local x -> catch ~raise x
+  let catch : (error,warning) catch = {
+      warnings = (fun () -> List.rev !warnings);
+      errors   = (fun () -> !recoverable_errors);
+  } in
+  try f ~raise~catch
+  with Local x -> g ~catch x
 
 let to_stdlib_result : (raise:('error,'warning) raise -> 'value) -> ('value * 'warning list, 'error * 'warning list) Stdlib.result =
   fun f ->
   try_with
-    (fun ~raise ->
+    (fun ~raise ~catch ->
       let v = f ~raise in
-      let warn = raise.get_warnings () in
+      let warn = catch.warnings () in
       Ok (v,warn)
     )
-    (fun ~raise e ->
-      let warn = raise.get_warnings () in
+    (fun ~catch e ->
+      let warn = catch.warnings () in
       Error (e,warn)
     )
 
 let extract_all_errors : (raise:('error,_) raise -> 'value) -> 'error list * 'value option =
   fun f ->
   try_with
-    (fun ~raise -> let v = f ~raise
-                   in (raise.get_errors (), Some v))
-    (fun ~raise e -> (e :: raise.get_errors (), None))
+    (fun ~raise ~catch -> let v = f ~raise
+                   in (catch.errors (), Some v))
+    (fun ~catch e -> (e :: catch.errors (), None))
 
-let move_errors raise1 raise2 tracer =
-  List.iter (raise1.get_errors ()) ~f:(fun e -> raise2.log_error (tracer e))
+let move_errors catch raise tracer =
+  List.iter (catch.errors ()) ~f:(fun e -> raise.log_error (tracer e))
 
 let trace_warnings ~raiser ~catcher () =
-  catcher.get_warnings ()
+  catcher.warnings ()
   |> List.iter ~f:(raiser.warning)
 
 let trace ~raise tracer f =
   let parent_raise = raise in
-  let try_body ~raise =
+  let try_body ~raise ~catch =
     let value = f ~raise in
-    trace_warnings ~raiser:parent_raise ~catcher:raise ();
-    move_errors raise parent_raise tracer;
+    trace_warnings ~raiser:parent_raise ~catcher:catch ();
+    move_errors catch parent_raise tracer;
     value
   in
-  let catch_body ~raise err =
-    trace_warnings ~raiser:parent_raise ~catcher:raise ();
-    move_errors raise parent_raise tracer;
+  let catch_body ~catch err =
+    trace_warnings ~raiser:parent_raise ~catcher:catch ();
+    move_errors catch parent_raise tracer;
     parent_raise.error @@ tracer err
   in try_with ~fast_fail:parent_raise.fast_fail try_body catch_body
 
@@ -106,10 +109,10 @@ let from_result ~raise = function
 
 (* Check if there is no error. Useful for tests. *)
 let to_bool f =
-  try_with (fun ~raise ->let _ = f ~raise in true) (fun ~raise _ -> false)
+  try_with (fun ~raise ~catch:_ ->let _ = f ~raise in true) (fun ~catch _ -> false)
 
 let to_option f =
-  try_with (fun ~raise -> Some (f ~raise)) (fun ~raise _ -> None)
+  try_with (fun ~raise ~catch:_ -> Some (f ~raise)) (fun ~catch _ -> None)
 
 
 (* Convert an option to a result, with a given error if the parameter
@@ -124,18 +127,18 @@ let trace_assert_option ~raise error = function
 
 
 let bind_map_or ~raise handler fa fb c =
-  let handler = fun ~raise ~raise_left:catcher_left ~raise_right:catcher_right a b ->
-    trace_warnings ~raiser:raise ~catcher:catcher_left  ();
-    trace_warnings ~raiser:raise ~catcher:catcher_right ();
+  let handler = fun ~raise ~catch_left ~catch_right a b ->
+    trace_warnings ~raiser:raise ~catcher:catch_left  ();
+    trace_warnings ~raiser:raise ~catcher:catch_right ();
     handler a
   in
   try_with
-    (fa c)
-    (fun ~raise:raise_left a ->
+    (fun ~raise ~catch -> fa c ~raise)
+    (fun ~catch:catch_left a ->
       try_with
-      (fb c)
-      (fun ~raise:raise_right b ->
-        handler ~raise ~raise_left ~raise_right a b
+      (fun ~raise ~catch -> fb c ~raise)
+      (fun ~catch:catch_right b ->
+        handler ~raise ~catch_left ~catch_right a b
       )
     )
 
@@ -144,8 +147,9 @@ let bind_or ~raise a b =
     (fun () -> a)
     (fun () -> b)
     ()
-let rec bind_exists ~raise = function | (x, []) -> x ~raise
-                                      | (x, y :: ys) -> bind_or ~raise x (bind_exists (y, ys))
+let rec bind_exists ~raise = function
+  | (x, []) -> x ~raise
+  | (x, y :: ys) -> bind_or ~raise x (bind_exists (y, ys))
 
 let collect ~(raise:('a list,'w) raise) : (raise:('a,'w) raise -> 'b) list -> 'b list  =
   fun lst ->
@@ -153,12 +157,12 @@ let collect ~(raise:('a list,'w) raise) : (raise:('a,'w) raise -> 'b) list -> 'b
   let warns  = ref [] in
   let value = List.map lst ~f:(
     fun f ->
-      try_with (fun ~raise ->
+      try_with (fun ~raise ~catch ->
         let v = f ~raise in
-        warns := raise.get_warnings () :: !warns;
+        warns := catch.warnings () :: !warns;
         Some (v)
-      ) ( fun ~raise a ->
-        warns := raise.get_warnings () :: !warns;
+      ) ( fun ~catch a ->
+        warns := catch.warnings () :: !warns;
         errors := a :: !errors;
         None
       )
@@ -173,9 +177,7 @@ let collect ~(raise:('a list,'w) raise) : (raise:('a,'w) raise -> 'b) list -> 'b
 let raise_failwith str = {
   error      = (fun _ -> failwith str);
   warning    = (fun _ -> ());
-  get_warnings = (fun () -> []);
   log_error  = (fun _ -> failwith str);
-  get_errors = (fun () -> []);
   fast_fail  = true; }
 
 (* Assertion module.
@@ -183,8 +185,8 @@ let raise_failwith str = {
 module Assert = struct
   let assert_fail ~raise:r err f =
     try_with
-      (fun ~raise -> let _ = f ~raise in r.error err)
-      (fun ~raise _ -> ())
+      (fun ~raise ~catch -> let _ = f ~raise in r.error err)
+      (fun ~catch _ -> ())
 
   let assert_true ~raise err = function
     | true -> ()

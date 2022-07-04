@@ -9,9 +9,9 @@ let format_result :
   fun ~display_format value ->
     let errors, warns, info =
       Trace.try_with ~fast_fail:false
-          (fun ~raise -> let v = value ~raise
-                         in (raise.get_errors (), raise.get_warnings (), Some v))
-          (fun ~raise e ->  (e :: raise.get_errors (), raise.get_warnings (), None))
+          (fun ~raise ~catch -> let v = value ~raise
+                         in (catch.errors (), catch.warnings (), Some v))
+          (fun ~catch e ->  (e :: catch.errors (), catch.warnings (), None))
     in
     let output = Formatter.{errors; warns; info} in
     let disp = Displayable {value = output;

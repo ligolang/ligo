@@ -148,12 +148,12 @@ type typer_table = error:[`TC of O.type_expression list] list ref -> raise:(Erro
 let typer_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer = fun ~error ~raise ~options ~loc lst tv_opt ->
   ignore options;
   let avs, lamb_type = O.Helpers.destruct_for_alls lamb_type in
-  Simple_utils.Trace.try_with (fun ~raise ->
+  Simple_utils.Trace.try_with (fun ~raise ~catch:_ ->
       let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) avs lamb_type lst tv_opt in
       let lamb_type = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       let _, tv = Ast_typed.Helpers.destruct_arrows_n lamb_type (List.length lst) in
       Some tv)
-    (fun ~raise:_ -> function
+    (fun ~catch:_ -> function
      | `Outer_error (loc, t', t) ->
         if fail then raise.error (assert_equal loc t' t) else None
      | _ ->
@@ -165,11 +165,11 @@ let typer_table_of_ligo_type ?(add_tc = true) ?(fail = true) lamb_type : typer_t
   ignore options;
   let original_type = lamb_type in
   let avs, lamb_type = O.Helpers.destruct_for_alls lamb_type in
-  Simple_utils.Trace.try_with (fun ~raise ->
+  Simple_utils.Trace.try_with (fun ~raise ~catch:_ ->
       let table = Inference.infer_type_applications ~raise ~loc ~default_error:(fun loc t t' -> `Outer_error (loc, t', t)) avs lamb_type lst tv_opt in
       let lamb_type = Inference.TMap.fold (fun tv t r -> Ast_typed.Helpers.subst_type tv t r) table lamb_type in
       Some (lamb_type, table, original_type))
-    (fun ~raise:_ -> function
+    (fun ~catch:_ -> function
      | `Outer_error (loc, t', t) ->
         if fail then raise.error (assert_equal loc t' t) else None
      | _ ->

@@ -479,8 +479,8 @@ let rec eval
   | Fail_ligo err -> raise.error err
   | Try_or (e', handler) ->
     try_with
-      (eval ~options e' state log)
-      (fun ~raise:_ -> function
+      (fun ~raise ~catch:_ -> eval ~raise ~options e' state log)
+      (fun ~catch:_ -> function
             `Main_interpret_target_lang_error _
           | `Main_interpret_target_lang_failwith _
           | `Main_interpret_meta_lang_eval _

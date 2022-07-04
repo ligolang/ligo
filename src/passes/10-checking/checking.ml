@@ -391,8 +391,8 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
           Some tv -> tv
         | None -> t_map tv_key tv_val
       in
-      let map' = try_with (fun ~raise -> self ~raise ~context:(app_context, context) ~tv_opt:tv map)
-               (fun ~raise:_ _ -> let tv = match tv_opt with
+      let map' = try_with (fun ~raise ~catch:_ -> self ~raise ~context:(app_context, context) ~tv_opt:tv map)
+               (fun ~catch:_ _ -> let tv = match tv_opt with
                              Some tv -> tv
                            | None -> t_big_map tv_key tv_val
                          in self ~tv_opt:tv map) in

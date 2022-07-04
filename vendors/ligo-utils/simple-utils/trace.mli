@@ -27,15 +27,21 @@
 type ('error,'warning) raise = {
   error        : 'a . 'error -> 'a;
   warning      : 'warning -> unit;
-  get_warnings : unit -> 'warning list;
   log_error    : 'error -> unit;
-  get_errors   : unit -> 'error list;
   fast_fail    : bool
+}
+
+type ('error,'warning) catch = {
+  warnings : unit -> 'warning list;
+  errors   : unit -> 'error list;
 }
 
 (* [try_with f handler] call [f] with [~raise] argument and in case of fatal
    error [err] call [handler err]. *)
-val try_with : ?fast_fail:bool -> (raise:('e,'w) raise -> 'b) -> (raise: ('e,'w) raise -> 'e -> 'b) -> 'b
+val try_with : ?fast_fail:bool ->
+  (raise:('error, 'warning) raise ->
+    catch:('error, 'warning) catch -> 'a) ->
+   (catch:('error, 'warning) catch -> 'error -> 'a) -> 'a
 (*
 Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]
  *)
