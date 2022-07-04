@@ -9,7 +9,7 @@ module Tezos_protocol = Tezos_protocol_013_PtJakart
 module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
 
-type r = Errors.interpreter_error raise
+type r = (Errors.interpreter_error,Main_warnings.all) raise
 
 type bootstrap_contract =
   int * unit Tezos_utils.Michelson.michelson * unit Tezos_utils.Michelson.michelson * Ast_aggregated.type_expression * Ast_aggregated.type_expression
@@ -97,11 +97,11 @@ let parse_constant ~raise ~loc ~calltrace code =
   let open Tezos_micheline.Micheline in
   let (code, errs) = Micheline_parser.tokenize code in
   let code = (match errs with
-              | _ :: _ -> raise.raise (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | _ :: _ -> raise.error (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
               | [] ->
                  let (code, errs) = Micheline_parser.parse_expression ~check:false code in
                  match errs with
-                 | _ :: _ -> raise.raise (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | _ :: _ -> raise.error (throw_obj_exc loc calltrace @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
                  | [] -> map_node (fun _ -> ()) (fun x -> x) code
              ) in
   code
@@ -377,7 +377,7 @@ let bake_ops : raise:r -> loc:Location.t -> calltrace:calltrace -> context -> (T
   fun ~raise ~loc ~calltrace ctxt operation ->
     let open Tezos_alpha_test_helpers in
     (* First check if baker is going to be successfully selected *)
-    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.raise (generic_error ~calltrace loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:ctxt.internals.baker_policy ctxt.raw) in
+    let _ = Trace.trace_tzresult_lwt ~raise (fun _ -> raise.error (generic_error ~calltrace loc "Baker cannot bake. Enough rolls? Enough cycles passed?")) @@ Block.(get_next_baker ~policy:ctxt.internals.baker_policy ctxt.raw) in
     let incr = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
                  Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw in
     let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
@@ -406,7 +406,7 @@ let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) ->
     ctxt
-  | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
+  | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   let open Tezos_alpha_test_helpers in
@@ -417,15 +417,15 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) -> (hash, ctxt)
-  | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
+  | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 let read_file_constants ~raise fn =
   try
     let buf = In_channel.read_all fn in
     let json = Yojson.Basic.from_string buf in
     json |> Yojson.Basic.Util.to_list |> List.map ~f:Yojson.Basic.Util.to_string
-  with Sys_error _ -> raise.Trace.raise (`Main_cannot_open_global_constants fn)
-     | Yojson.Json_error s -> raise.Trace.raise (`Main_cannot_parse_global_constants (fn, s))
+  with Sys_error _ -> raise.Trace.error (`Main_cannot_open_global_constants fn)
+     | Yojson.Json_error s -> raise.Trace.error (`Main_cannot_parse_global_constants (fn, s))
 
 let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
   let open Tezos_alpha_test_helpers in
@@ -443,7 +443,7 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
     let op = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value:constant in
     match bake_op ~raise ~loc ~calltrace ctxt op with
     | Success (ctxt,_) -> ctxt
-    | Fail errs -> raise.raise (target_lang_error loc calltrace errs) in
+    | Fail errs -> raise.error (target_lang_error loc calltrace errs) in
   let ctxt = List.fold_right ~f:aux ~init:ctxt constants in
   (hashes, ctxt)
 
@@ -502,7 +502,7 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
       let addr = v_address dst in
       let storage_tys = (dst, ligo_ty) :: (ctxt.internals.storage_tys) in
       (addr, {ctxt with internals = { ctxt.internals with storage_tys}})
-    | Fail errs -> raise.raise (target_lang_error loc calltrace errs)
+    | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 let get_bootstrapped_contract ~raise (n : int) =
   (* TODO-er: this function repeats work each time called... improve *)
@@ -565,7 +565,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
     | [] -> () (* if empty list: will be defaulted with coherent values*)
     | baker::_ -> (
       let max = Tezos_protocol_parameters.Default_parameters.constants_test.tokens_per_roll in
-      if (Tez.(<) (Alpha_context.Tez.of_mutez_exn baker) max) then raise.raise (Errors.not_enough_initial_accounts loc max) else ()
+      if (Tez.(<) (Alpha_context.Tez.of_mutez_exn baker) max) then raise.error (Errors.not_enough_initial_accounts loc max) else ()
     )
   in
   let storage_tys =
@@ -590,4 +590,4 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
     let internals = { protocol_version ; baker_policy = By_account baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->
-    raise.raise (bootstrap_not_enough loc)
+    raise.error (bootstrap_not_enough loc)

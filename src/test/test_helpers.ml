@@ -21,24 +21,23 @@ let test_format : 'a Simple_utils.Display.format = {
 }
 
 let wrap_test_w name f =
-  warning_with @@ fun add_warning get_warning ->
-  try_with (fun ~raise ->
+  try_with (fun ~raise ~catch ->
   let () =
-    f ~raise ~add_warning () in
+    f ~raise () in
     List.iter ~f:(fun w ->
       Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
-    ) @@ get_warning () ;
+    ) @@ catch.warnings () ;
   )
-  (fun error ->
+  (fun ~catch error ->
     let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
      let s = Simple_utils.Display.convert ~display_format:(Dev) disp in
     List.iter ~f:(fun w ->
       Format.printf "%a\n" (Main_warnings.pp ~display_format:Dev) w ;
-    ) @@ get_warning () ;
+    ) @@ catch.warnings () ;
      Format.printf "%s\n" s ;
-     raise Alcotest.Test_error
+     Stdlib.raise Alcotest.Test_error
   )
 
 let test_w name test =
@@ -51,13 +50,13 @@ let test_w_all name test =
   List.map ~f:(fun s ->
   let file = "./contracts/" ^ Str.(global_replace (regexp " ") "_" name) ^ "." ^ s in
   let name = Format.asprintf "%s (%s)" name s in
-  let f ~raise ~add_warning () = test ~raise ~add_warning file in
+  let f ~raise () = test ~raise file in
   test_w name f
   ) ["ligo";"mligo";"religo";"jsligo"]
 
 let wrap_test name f =
-    try_with (fun ~raise -> f ~raise ())
-    (fun error ->
+    try_with (fun ~raise ~catch:_ -> f ~raise ())
+    (fun ~catch:_ error ->
     let value = Error (test_err_tracer name error) in
      let format = Display.bind_format test_format Formatter.error_format in
      let disp = Simple_utils.Display.Displayable {value ; format} in
@@ -116,13 +115,13 @@ let wrap_ref file f =
 
 (* Common functions used in tests *)
 
-let type_file ~raise ~add_warning ?(st = "auto") f entry options =
+let type_file ~raise ?(st = "auto") f entry options =
   ignore st;
-  snd @@ Build.build_typed ~raise ~add_warning ~options entry f
+  snd @@ Build.build_typed ~raise ~options entry f
 
-let get_program ~raise ~add_warning ?(st = "auto") f entry =
+let get_program ~raise ?(st = "auto") f entry =
   wrap_ref f (fun s ->
-      let program = type_file ~raise ~add_warning ~st f entry options in
+      let program = type_file ~raise ~st f entry options in
       s := Some (program,f) ;
       program
     )
@@ -137,8 +136,8 @@ let pack_payload ~raise (program:Ast_typed.program) (payload:Ast_imperative.expr
   let code =
     let sugar     = Ligo_compile.Of_imperative.compile_expression ~raise payload in
     let core      = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
-    let typed      = Ligo_compile.Of_core.compile_expression ~raise ~add_warning:(fun _ -> ()) ~options ~init_prog:program core in
-    let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~add_warning:(fun _ -> ()) ~options:options.middle_end typed in
+    let typed      = Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program core in
+    let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end typed in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let payload_ty = code.expr_ty in
@@ -178,76 +177,76 @@ let sha_256_hash pl =
   let open Proto_alpha_utils.Memory_proto_alpha.Alpha_environment in
   Raw_hashes.sha256 pl
 
-let typed_program_to_michelson ~add_warning ~raise (program, env) =
+let typed_program_to_michelson ~raise (program, env) =
   ignore env;
-  let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~add_warning ~options:options.middle_end program in
+  let aggregated = Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end program in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let michelson = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let michelson = Ligo_compile.Of_michelson.build_contract ~disable_typecheck:false michelson in
   michelson
 
-let typed_program_with_imperative_input_to_michelson ~raise ~add_warning (program : Ast_typed.program) (entry_point: string) (input: Ast_imperative.expression) : Stacking.compiled_expression *  Ast_aggregated.type_expression =
+let typed_program_with_imperative_input_to_michelson ~raise (program : Ast_typed.program) (entry_point: string) (input: Ast_imperative.expression) : Stacking.compiled_expression *  Ast_aggregated.type_expression =
   Printexc.record_backtrace true;
   let sugar            = Ligo_compile.Of_imperative.compile_expression ~raise input in
   let core             = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
   let app              = Ligo_compile.Of_core.apply entry_point core in
-  let typed_app        = Ligo_compile.Of_core.compile_expression ~raise ~add_warning:(fun _ -> ()) ~options ~init_prog:program app in
+  let typed_app        = Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program app in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let program = Ligo_compile.Of_typed.compile_program ~raise program in
-  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_app program in
+  let aggregated = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_app program in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c, aggregated.type_expression
 
-let run_typed_program_with_imperative_input ~raise ~add_warning ?options (program : Ast_typed.program) (entry_point: string) (input: Ast_imperative.expression) : Ast_core.expression =
-  let michelson_program,ty = typed_program_with_imperative_input_to_michelson ~raise ~add_warning program entry_point input in
+let run_typed_program_with_imperative_input ~raise ?options (program : Ast_typed.program) (entry_point: string) (input: Ast_imperative.expression) : Ast_core.expression =
+  let michelson_program,ty = typed_program_with_imperative_input_to_michelson ~raise program entry_point input in
   let michelson_output  = Ligo_run.Of_michelson.run_no_failwith ~raise ?options michelson_program.expr michelson_program.expr_ty in
   let res =  Decompile.Of_michelson.decompile_expression ~raise ty (Runned_result.Success michelson_output) in
   match res with
   | Runned_result.Success exp -> exp
-  | Runned_result.Fail _ -> raise.raise test_not_expected_to_fail
+  | Runned_result.Fail _ -> raise.error test_not_expected_to_fail
 
-let expect ~raise ~add_warning ?options program entry_point input expecter =
+let expect ~raise ?options program entry_point input expecter =
   let result =
     trace ~raise (test_run_tracer entry_point) @@
-    run_typed_program_with_imperative_input ~add_warning ?options program entry_point input in
+    run_typed_program_with_imperative_input ?options program entry_point input in
   expecter result
 
-let expect_fail ~raise ~add_warning ?options program entry_point input =
+let expect_fail ~raise ?options program entry_point input =
   trace ~raise (test_run_tracer entry_point) @@
     fun ~raise -> Assert.assert_fail ~raise (test_expected_to_fail) @@
-    run_typed_program_with_imperative_input ~add_warning ?options program entry_point input
+    run_typed_program_with_imperative_input ?options program entry_point input
 
-let expect_string_failwith ~raise ~add_warning ?options program entry_point input expected_failwith =
-  let michelson_program,_ = typed_program_with_imperative_input_to_michelson ~raise ~add_warning program entry_point input in
+let expect_string_failwith ~raise ?options program entry_point input expected_failwith =
+  let michelson_program,_ = typed_program_with_imperative_input_to_michelson ~raise program entry_point input in
   let err = Ligo_run.Of_michelson.run_failwith ~raise
     ?options michelson_program.expr michelson_program.expr_ty in
   match err with
   | String (_,str) when String.equal str expected_failwith -> ()
-  | _ -> raise.raise test_expected_to_fail
+  | _ -> raise.error test_expected_to_fail
 
-let expect_eq ~raise ~add_warning ?options program entry_point input expected =
+let expect_eq ~raise ?options program entry_point input expected =
   let expected = expression_to_core ~raise expected in
   let expecter = fun result ->
     trace_option ~raise (test_expect_tracer expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
-  expect ~raise ~add_warning ?options program entry_point input expecter
+  expect ~raise ?options program entry_point input expecter
 
-let expect_eq_core ~raise ~add_warning ?options program entry_point input expected =
+let expect_eq_core ~raise ?options program entry_point input expected =
   let expecter = fun result ->
     trace_option ~raise (test_expect_tracer expected result) @@
     Ast_core.Misc.assert_value_eq (expected,result) in
-  expect ~raise ~add_warning ?options program entry_point input expecter
+  expect ~raise ?options program entry_point input expecter
 
-let expect_evaluate ~raise ~add_warning (program : Ast_typed.program) entry_point expecter =
+let expect_evaluate ~raise (program : Ast_typed.program) entry_point expecter =
   trace ~raise (test_run_tracer entry_point) @@
-  let aggregated      = Ligo_compile.Of_typed.apply_to_entrypoint ~raise ~add_warning ~options:options.middle_end program entry_point in
+  let aggregated      = Ligo_compile.Of_typed.apply_to_entrypoint ~raise ~options:options.middle_end program entry_point in
   let mini_c          = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let michelson_value = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let res_michelson   = Ligo_run.Of_michelson.run_no_failwith ~raise michelson_value.expr michelson_value.expr_ty in
   let res             = Decompile.Of_michelson.decompile_expression ~raise aggregated.type_expression (Runned_result.Success res_michelson) in
   let res' = match res with
   | Runned_result.Success exp -> exp
-  | Runned_result.Fail _ -> raise.raise test_not_expected_to_fail in
+  | Runned_result.Fail _ -> raise.error test_not_expected_to_fail in
   expecter res'
 
 let expect_eq_evaluate ~raise (program : Ast_typed.program) entry_point expected =
@@ -298,12 +297,12 @@ let expect_failwith_exp_trace_aux ~raise ?options explst program entry_point mak
   let _ = List.map ~f:aux explst in
   ()
 
-let expect_eq_n_aux ~raise ~add_warning ?options lst program entry_point make_input make_expected =
+let expect_eq_n_aux ~raise ?options lst program entry_point make_input make_expected =
   let aux n =
     let input = make_input n in
     let expected = make_expected n in
     trace ~raise (test_expect_eq_n_tracer n) @@
-      expect_eq ~add_warning ?options program entry_point input expected
+      expect_eq ?options program entry_point input expected
   in
   let () = List.iter ~f:aux lst in
   ()
@@ -318,12 +317,12 @@ let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 1 ; 2 ; 10 ; 33]
 let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
 let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]
 
-let expect_eq_b ~raise ~add_warning program entry_point make_expected =
+let expect_eq_b ~raise program entry_point make_expected =
   let open Ast_imperative in
   let aux b =
     let input = e_bool b in
     let expected = make_expected b in
-    expect_eq ~raise ~add_warning program entry_point input expected
+    expect_eq ~raise program entry_point input expected
   in
   let () = List.iter ~f:aux [false ; true] in
   ()
@@ -336,11 +335,11 @@ let expect_eq_b_bool a b c =
   let open Ast_imperative in
   expect_eq_b a b (fun bool -> e_bool (c bool))
 
-let compile_main ~raise ~add_warning f () =
-  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end (get_program ~raise ~add_warning f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
+let compile_main ~raise f () =
+  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end (get_program ~raise f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
   let mini_c    = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : _ Tezos_utils.Michelson.michelson =
     (* fails if the given entry point is not a valid contract *)
-    Ligo_compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version:Environment.Protocols.in_use michelson_prg [] in
+    Ligo_compile.Of_michelson.build_contract ~raise ~protocol_version:Environment.Protocols.in_use michelson_prg [] in
   ()

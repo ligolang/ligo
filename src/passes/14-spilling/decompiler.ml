@@ -181,11 +181,11 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       )
     | (Ticket, [_ty]) ->
       (* TODO: should we use a Michelson insertion? *)
-      raise.raise @@ bad_decompile v
+      raise.error @@ bad_decompile v
     | (Contract, _)  ->
-      raise.raise @@ bad_decompile v
+      raise.error @@ bad_decompile v
     | ((Michelson_pair | Michelson_or),_) ->
-      raise.raise @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
+      raise.error @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2       |
         Bls12_381_fr    | Address              | Key             | Chain_id | Signature         |
         Map             | Big_map              | Set             | Bool     | Baker_hash        | Pvss_key           |
@@ -194,7 +194,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp          |
         Operation       | External _ | Tx_rollup_l2_address), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
-      raise.raise @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
+      raise.error @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) ->
     (match v with
@@ -204,7 +204,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       return (E_constructor {constructor=Label "Some";element=sub})
     | D_none ->
       return (E_constructor {constructor=Label "None";element=make_e (e_unit ()) (t_unit ())})
-    | _ -> raise.raise @@ corner_case ~loc:"unspiller" "impossible"
+    | _ -> raise.error @@ corner_case ~loc:"unspiller" "impossible"
     )
   | T_sum {layout ; content} ->
       let lst = List.map ~f:(fun (k,({associated_type;_} : _ row_element_mini_c)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_sum ~layout content in
@@ -224,8 +224,8 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       let n = Ligo_string.Standard n in
       return (E_literal (Literal_string n))
   | T_variable _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
+    raise.error @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
   | T_singleton _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "no value is of type singleton"
+    raise.error @@ corner_case ~loc:__LOC__ "no value is of type singleton"
   | T_for_all _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"
+    raise.error @@ corner_case ~loc:__LOC__ "trying to decompile a quantified type (no such thing ?)"

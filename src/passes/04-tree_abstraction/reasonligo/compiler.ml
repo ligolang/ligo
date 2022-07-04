@@ -103,7 +103,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
           let c' = self c in
           return @@ t_michelson_or ~loc a' b' c' d'
           )
-        | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ ->raise.error @@ michelson_type_wrong_arity loc operator.value)
       | "michelson_pair" ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
@@ -118,7 +118,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
           let c' = self c in
           return @@ t_michelson_pair ~loc a' b' c' d'
           )
-        | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ ->raise.error @@ michelson_type_wrong_arity loc operator.value)
       | "sapling_state" ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
@@ -130,7 +130,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_state ~loc singleton
           )
-        | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ ->raise.error @@ michelson_type_wrong_arity loc operator.value)
       | "sapling_transaction" ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
@@ -142,7 +142,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           return @@ t_sapling_transaction ~loc singleton
           )
-        | _ ->raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ ->raise.error @@ michelson_type_wrong_arity loc operator.value)
     | _ ->
       let operators = compile_type_var operator in
       let lst = npseq_to_list args.value.inside in
@@ -162,8 +162,8 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
     let (name,loc) = r_split var in
     let v = TypeVar.of_input_var ~loc name in
     return @@ t_variable ~loc v
-  | TString _s -> raise.raise @@ unsupported_string_singleton te
-  | TInt _s -> raise.raise @@ unsupported_string_singleton te
+  | TString _s -> raise.error @@ unsupported_string_singleton te
+  | TInt _s -> raise.error @@ unsupported_string_singleton te
   | TModA ma -> (
     let (ma, loc) = r_split ma in
     let module_name = compile_mod_var ma.module_name in
@@ -174,7 +174,7 @@ let rec compile_type_expression ~raise : CST.type_expr -> type_expression =
         t_module_accessor ~loc acc accessed_el
       | TModA ma ->
         aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-      | _ -> raise.raise (expected_access_to_variable (CST.type_expr_to_region ma.field))
+      | _ -> raise.error (expected_access_to_variable (CST.type_expr_to_region ma.field))
     in
     return @@ aux [module_name] ma.field
   )
@@ -193,7 +193,7 @@ let compile_selection (selection : CST.selection) =
     let ((_,index), loc) = r_split comp in
     (Access_tuple index, loc)
 
-let rec compile_expression ~(raise:Errors.abs_error Simple_utils.Trace.raise) ?fun_rec : CST.expr -> AST.expr  = fun e ->
+let rec compile_expression ~(raise:(Errors.abs_error,_) Simple_utils.Trace.raise) ?fun_rec : CST.expr -> AST.expr  = fun e ->
   let self = compile_expression ~raise in
   let return e = e in
   let compile_tuple_expression ?loc tuple_expr =
@@ -391,7 +391,7 @@ let rec compile_expression ~(raise:Errors.abs_error Simple_utils.Trace.raise) ?f
               return @@ e_accessor ~loc moda sels
            | EModA ma ->
               aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-           | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+           | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
          in
          aux [ModuleVar.of_input_var ma.module_name.value] ma.field)
       )
@@ -409,7 +409,7 @@ let rec compile_expression ~(raise:Errors.abs_error Simple_utils.Trace.raise) ?f
           return @@ e_accessor ~loc moda sels
         | EModA ma ->
           aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-        | _ -> raise.raise (expected_access_to_variable (CST.expr_to_region ma.field))
+        | _ -> raise.error (expected_access_to_variable (CST.expr_to_region ma.field))
       in
       aux [ModuleVar.of_input_var ma.module_name.value] ma.field
   )
@@ -620,7 +620,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
       match p_inj.value.elements with
       | None ->
         Location.wrap ~loc @@ P_list (List [])
-      | Some _ -> raise.raise @@ unsupported_pattern_type p
+      | Some _ -> raise.error @@ unsupported_pattern_type p
     )
     | PCons p ->
       let loc = Location.lift p.region in
@@ -634,7 +634,7 @@ and conv ~raise : CST.pattern -> AST.ty_expr AST.pattern =
   | CST.PUnit p ->
     let loc = Location.lift p.region in
     Location.wrap ~loc @@ P_unit
-  | _ ->raise.raise @@ unsupported_pattern_type p
+  | _ ->raise.error @@ unsupported_pattern_type p
 
 and compile_tuple_let_destructuring ~raise :
   AST.expression -> AST.expression -> (CST.pattern, CST.comma) Utils.nsepseq CST.reg -> AST.expression =
@@ -701,7 +701,7 @@ and compile_let_binding ~raise ?kwd_rec attributes binding =
     let fun_binder = compile_variable name in
     let expr = compile_expression ~raise ?fun_rec:(Option.map ~f:(fun _ -> fun_binder) kwd_rec) let_rhs in
     return_1 @@ ({var=fun_binder;ascr=lhs_type;attributes = var_attributes}, attributes, expr)
-  | _ ->raise.raise @@ unsupported_pattern_type @@ binders
+  | _ ->raise.error @@ unsupported_pattern_type @@ binders
   in aux binders
 
 and compile_parameter ~raise : CST.pattern -> type_expression binder * (expression -> expression) =
@@ -710,7 +710,7 @@ and compile_parameter ~raise : CST.pattern -> type_expression binder * (expressi
     ({var; ascr; attributes}, fun_) in
   let return_1 ?ascr ?(attributes = Stage_common.Helpers.const_attribute) var = return ?ascr ~attributes (fun e -> e) var in
   match pattern with
-    PConstr _ ->raise.raise @@ unsupported_pattern_type pattern
+    PConstr _ ->raise.error @@ unsupported_pattern_type pattern
   | PUnit the_unit  ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ ValueVar.fresh ~loc ()
@@ -733,14 +733,14 @@ and compile_parameter ~raise : CST.pattern -> type_expression binder * (expressi
     return ?ascr expr var
   | PPar par ->
     compile_parameter ~raise par.value.inside
-  | PRecord _ ->raise.raise @@ unsupported_pattern_type pattern
+  | PRecord _ ->raise.error @@ unsupported_pattern_type pattern
   | PTyped tp ->
     let (tp, _loc) = r_split tp in
     let {pattern; type_expr; colon=_} : CST.typed_pattern = tp in
     let ascr = compile_type_expression ~raise type_expr in
     let ({var;attributes;_}, exprs) = compile_parameter ~raise pattern in
     return ~ascr ~attributes exprs var
-  | _ ->raise.raise @@ unsupported_pattern_type pattern
+  | _ ->raise.error @@ unsupported_pattern_type pattern
 
 and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
   let return reg decl =
@@ -823,3 +823,9 @@ and compile_declaration ~raise : CST.declaration -> _ = fun decl ->
 and compile_module ~raise : CST.ast -> AST.module_ = fun t ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list t.decl in
     List.concat lst
+
+let compile_program ~raise : CST.ast -> AST.program = fun t ->
+  nseq_to_list t.decl
+  |> List.map ~f:(fun a ~raise -> compile_declaration ~raise a)
+  |> Simple_utils.Trace.collect ~raise
+  |> List.concat

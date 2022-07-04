@@ -8,7 +8,7 @@ let check_linearity_record_fields ~raise : expression -> unit = fun exp ->
   match exp.expression_content with
   | E_record x ->
     let labels = List.map ~f:(fun (Label x,_) -> x) x in
-    if List.contains_dup ~compare:String.compare labels then raise.raise (non_linear_record exp)
+    if List.contains_dup ~compare:String.compare labels then raise.error (non_linear_record exp)
   | _ -> ()
 
 let check_linearity_patterns ~raise : expression -> unit = fun exp ->
@@ -28,18 +28,18 @@ let check_linearity_patterns ~raise : expression -> unit = fun exp ->
     List.iter _patterns
       ~f:(fun p ->
         let lst = aux [] p in
-        if List.contains_dup ~compare:ValueVar.compare lst then raise.raise (non_linear_pattern p)
+        if List.contains_dup ~compare:ValueVar.compare lst then raise.error (non_linear_pattern p)
       )
   | _ -> ()
 
-let checks_linearity : raise:[<Errors.self_ast_imperative_error] Trace.raise -> expression -> unit =
+let checks_linearity : raise:([<Errors.self_ast_imperative_error],_) Trace.raise -> expression -> unit =
   fun ~raise x ->
     check_linearity_record_fields ~raise x;
     check_linearity_patterns ~raise x;
     ()
 
 
-let linearity ~(raise:[<Errors.self_ast_imperative_error] Trace.raise) m = (fun x -> checks_linearity ~raise x ; x) m
+let linearity ~(raise:([<Errors.self_ast_imperative_error],_) Trace.raise) m = (fun x -> checks_linearity ~raise x ; x) m
 
 let reserved_names = (* Part of names in that list would be caught by some syntaxes *)
   List.map ~f:ValueVar.of_input_var
@@ -55,7 +55,7 @@ let check_reserved ~raise ~loc binder =
   | Some v ->
     let str : string = Format.asprintf "%a" ValueVar.pp v in
     let loc : Location.t = loc in
-    raise.raise (reserved_name str loc)
+    raise.error (reserved_name str loc)
   | None -> ()
 
 let reserved_names_exp ~raise : expression -> expression = fun exp ->
