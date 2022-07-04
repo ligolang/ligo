@@ -216,6 +216,7 @@ const siteConfig = {
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },
         { to: '/contact', label: 'Ask Questions', position: 'left' },
+        { to: '/docs/next/faq/intro', label: 'FAQ', position: 'left' },
         { to: '/docs/next/intro/changelog/', label: 'Changelog', position: 'left' }
       ],
     },
