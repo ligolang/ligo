@@ -280,9 +280,9 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.raise @@ bad_contract_io main_fname expr
+    |  _ -> raise.error @@ bad_contract_io main_fname expr
   )
-  | _ -> raise.raise @@ bad_contract_io main_fname expr
+  | _ -> raise.error @@ bad_contract_io main_fname expr
 
 type view_type = {
   arg : Ast_typed.type_expression ;
@@ -309,9 +309,9 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
   | Some { type1 = tin ; type2  = return } -> (
     match get_t_tuple tin with
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder.var)
+    | _ -> raise.error (expected_pair_in_view @@ ValueVar.get_location binder.var)
   )
-  | None -> raise.raise @@ bad_view_io main_fname expr
+  | None -> raise.error @@ bad_view_io main_fname expr
 
 
 module Free_variables :

@@ -260,4 +260,22 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
         O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; mut=false; let_result=recursive_call;attributes=[]}
 
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
-  Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) (fun a -> a) (fun a -> a) (fun a -> a) m
+  Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id Fn.id Fn.id m
+
+let compile_declaration ~raise : I.declaration -> O.declaration =
+  fun {wrap_content=declaration;location} ->
+  let return decl = Location.wrap ~loc:location decl in
+  match declaration with
+  | I.Declaration_type dt ->
+    let dt = Maps.declaration_type (compile_type_expression ~raise) Fn.id dt in
+    return @@ O.Declaration_type dt
+  | I.Declaration_constant dc ->
+    let dc = Maps.declaration_constant (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id dc in
+    return @@ O.Declaration_constant dc
+  | I.Declaration_module dm ->
+    let dm = Maps.declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id Fn.id Fn.id dm in
+    return @@ O.Declaration_module dm
+
+let compile_program ~raise : I.program -> O.program = fun p ->
+  Simple_utils.Trace.collect ~raise @@
+  List.map ~f:(fun a ~raise -> compile_declaration ~raise a) p

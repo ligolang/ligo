@@ -55,7 +55,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let els = List.map ~f:(fun (t,v) -> decompile_to_untyped_value ~raise ~bigmaps t v) (List.zip_exn ts vs) in
       let rec aux l : value =
         match l with
-        | [] -> raise.raise (untranspilable ty value)
+        | [] -> raise.error (untranspilable ty value)
         | [x] -> x
         | hd::tl -> (
             let tl' = aux tl in
@@ -130,7 +130,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -146,7 +146,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -199,7 +199,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   let amt' = decompile_to_mini_c ~raise ~bigmaps ty_nat amt in
    *   D_ticket (v', amt') *)
   | ty, v ->
-    raise.raise (untranspilable ty v)
+    raise.error (untranspilable ty v)
 
 let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_aggregated.type_expression) : value =
   let open Stage_common.Constant in
@@ -228,7 +228,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
     | (Big_map, [k_ty; v_ty]) -> (
         match get_nat v with
         | Some _ ->
-           raise.raise @@ corner_case ~loc:"unspiller" "Big map id not supported"
+           raise.error @@ corner_case ~loc:"unspiller" "Big map id not supported"
         | None ->
         let big_map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
         let big_map' =

@@ -26,7 +26,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then
-                        raise.raise @@ vars_captured fv_expr
+                        raise.error @@ vars_captured fv_expr
                       else
                         let vars = add_binder (is_var attributes) var vars in
                         (true, vars, expr)
@@ -50,7 +50,7 @@ let rec capture_expression ~raise : ?vars:expression_variable list -> expression
                       let fv_expr = Free_variables.expression expr in
                       let fv_expr = get_of fv_expr vars in
                       if not (List.is_empty fv_expr) then
-                        raise.raise @@ vars_captured fv_expr
+                        raise.error @@ vars_captured fv_expr
                       else
                         let vars = add_binder (is_var attributes) var vars in
                         (true, vars, expr)

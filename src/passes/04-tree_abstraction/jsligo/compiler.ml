@@ -119,7 +119,7 @@ module Compile_type = struct
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           Some (t_sapling_state ~loc singleton)
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value)
       )
       | "sapling_transaction" ->
            let lst = npseq_to_list args.value.inside in
@@ -132,7 +132,7 @@ module Compile_type = struct
              let singleton = t_singleton ~loc:sloc (Literal_int a') in
              Some (t_sapling_transaction ~loc singleton)
              )
-           | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value)
+           | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value)
       | _ -> None
     )
     | _ -> None
@@ -148,7 +148,7 @@ module Compile_type = struct
         let lst = npseq_to_list args.value.inside in
         let lst = match lst with
         | [TProd a] -> npseq_to_list a.inside.value.inside
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
         in
         match lst with
         | [a ; b ; c ; d ] -> (
@@ -162,13 +162,13 @@ module Compile_type = struct
           let c' = compile_type_expression ~raise c in
           Some (t_michelson_or ~loc a' b' c' d')
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | "michelson_pair" -> (
         let lst = npseq_to_list args.value.inside in
         let lst = match lst with
         | [TProd a] -> npseq_to_list a.inside.value.inside
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
         in
         match lst with
         | [a ; b ; c ; d ] -> (
@@ -182,7 +182,7 @@ module Compile_type = struct
           let c' = compile_type_expression ~raise c in
           Some (t_michelson_pair ~loc a' b' c' d')
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc operator.value
+        | _ -> raise.error @@ michelson_type_wrong_arity loc operator.value
       )
       | _ -> None
     )
@@ -269,8 +269,8 @@ module Compile_type = struct
       let (name,loc) = r_split var in
       let v = TypeVar.of_input_var ~loc name in
       return @@ t_variable ~loc v
-    | TString _s -> raise.raise @@ unsupported_string_singleton te
-    | TInt _s -> raise.raise @@ unsupported_string_singleton te
+    | TString _s -> raise.error @@ unsupported_string_singleton te
+    | TInt _s -> raise.error @@ unsupported_string_singleton te
     | TModA ma ->
       let (ma, loc) = r_split ma in
       let module_name = compile_mod_var ma.module_name in
@@ -281,7 +281,7 @@ module Compile_type = struct
           t_module_accessor ~loc acc accessed_el
         | TModA ma ->
           aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-        | _ -> raise.raise (expected_a_variable (CST.type_expr_to_region ma.field))
+        | _ -> raise.error (expected_a_variable (CST.type_expr_to_region ma.field))
       in
       return @@ aux [module_name] ma.field
 
@@ -291,11 +291,11 @@ open Compile_type
 
 let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | EVar var -> var
-  | _ as e -> raise.raise @@ expected_a_variable (CST.expr_to_region e)
+  | _ as e -> raise.error @@ expected_a_variable (CST.expr_to_region e)
 
 let compile_expression_to_int ~raise : CST.expr -> z = function
   | EArith (Int i) -> (snd (i.value))
-  | _ as e -> raise.raise @@ expected_an_int e
+  | _ as e -> raise.error @@ expected_an_int e
 
 let compile_selection ~raise : CST.selection -> _ access * location = fun selection ->
   match selection with
@@ -310,7 +310,7 @@ let compile_selection ~raise : CST.selection -> _ access * location = fun select
 let array_item_to_expression ~raise : CST.array_item -> CST.expr = function
   | Expr_entry expr -> expr
   | Rest_entry _ as r ->
-    raise.raise @@ expected_an_expression r
+    raise.error @@ expected_an_expression r
 
 let arguments_to_expr_nseq (args : CST.arguments) : CST.expr Utils.nseq * Location.t =
   match args with
@@ -330,8 +330,8 @@ type constr_types =
   Match_nil of AST.expression
 | Match_cons of AST.expression_variable * AST.expression_variable
 
-let rec compile_tuple_expression ~add_warning ~raise ?loc tuple_expr =
-  let lst = List.map ~f:(fun e -> compile_expression ~add_warning ~raise e) @@ nseq_to_list tuple_expr in
+let rec compile_tuple_expression ~raise ?loc tuple_expr =
+  let lst = List.map ~f:(fun e -> compile_expression ~raise e) @@ nseq_to_list tuple_expr in
   match lst with
     hd::[] -> hd
   | lst -> e_tuple ?loc lst
@@ -340,23 +340,23 @@ and compile_arguments ~raise (args: CST.arguments) =
   let (args,loc) = arguments_to_expr_nseq args in
   compile_tuple_expression ~raise ~loc args
 
-and compile_bin_op ~add_warning ~raise (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
-  let self = compile_expression ~add_warning ~raise in
+and compile_bin_op ~raise (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
+  let self = compile_expression ~raise in
   let return e = e in
   let (op, loc) = r_split op in
   let a = self op.arg1 in
   let b = self op.arg2 in
   return @@ e_constant ~loc (Const op_type) [a; b]
 
-and compile_un_op ~add_warning ~raise (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
-  let self = compile_expression ~add_warning ~raise in
+and compile_un_op ~raise (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
+  let self = compile_expression ~raise in
   let return e = e in
   let (op, loc) = r_split op in
   let arg = self op.arg in
   return @@ e_constant ~loc (Const op_type) [arg]
 
-and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
-  let self: CST.expr -> AST.expr = compile_expression ~add_warning ~raise in
+and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
+  let self: CST.expr -> AST.expr = compile_expression ~raise in
   let return e = e in
   match e with
     EVar var -> (
@@ -384,12 +384,12 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
   )
   | EArith arth ->
     ( match arth with
-      Add plus   -> compile_bin_op ~add_warning ~raise C_POLYMORPHIC_ADD plus
-    | Sub minus  -> compile_bin_op ~add_warning ~raise C_POLYMORPHIC_SUB minus
-    | Mult times -> compile_bin_op ~add_warning ~raise C_MUL times
-    | Div slash  -> compile_bin_op ~add_warning ~raise C_DIV slash
-    | Mod mod_   -> compile_bin_op ~add_warning ~raise C_MOD mod_
-    | Neg minus  -> compile_un_op ~add_warning ~raise C_NEG minus
+      Add plus   -> compile_bin_op ~raise C_POLYMORPHIC_ADD plus
+    | Sub minus  -> compile_bin_op ~raise C_POLYMORPHIC_SUB minus
+    | Mult times -> compile_bin_op ~raise C_MUL times
+    | Div slash  -> compile_bin_op ~raise C_DIV slash
+    | Mod mod_   -> compile_bin_op ~raise C_MOD mod_
+    | Neg minus  -> compile_un_op ~raise C_NEG minus
     | Int i ->
       let ((_,i), loc) = r_split i in
       return @@ e_int_z ~loc i
@@ -398,18 +398,18 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
     match logic with
       BoolExpr be -> (
       match be with
-        Or or_   -> compile_bin_op ~add_warning ~raise C_OR  or_
-      | And and_ -> compile_bin_op ~add_warning ~raise C_AND and_
-      | Not not_ -> compile_un_op ~add_warning ~raise  C_NOT not_
+        Or or_   -> compile_bin_op ~raise C_OR  or_
+      | And and_ -> compile_bin_op ~raise C_AND and_
+      | Not not_ -> compile_un_op ~raise  C_NOT not_
     )
     | CompExpr ce -> (
       match ce with
-        Lt lt    -> compile_bin_op ~add_warning ~raise C_LT  lt
-      | Leq le   -> compile_bin_op ~add_warning ~raise C_LE  le
-      | Gt gt    -> compile_bin_op ~add_warning ~raise C_GT  gt
-      | Geq ge   -> compile_bin_op ~add_warning ~raise C_GE  ge
-      | Equal eq -> compile_bin_op ~add_warning ~raise C_EQ  eq
-      | Neq ne   -> compile_bin_op ~add_warning ~raise C_NEQ ne
+        Lt lt    -> compile_bin_op ~raise C_LT  lt
+      | Leq le   -> compile_bin_op ~raise C_LE  le
+      | Gt gt    -> compile_bin_op ~raise C_GT  gt
+      | Geq ge   -> compile_bin_op ~raise C_GE  ge
+      | Equal eq -> compile_bin_op ~raise C_EQ  eq
+      | Neq ne   -> compile_bin_op ~raise C_NEQ ne
     )
   )
   | ECall {value = EProj {value = {expr = EVar {value = module_name; _} as value; selection = _}; _}, arguments; region} when
@@ -427,7 +427,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       let args = List.map ~f:(fun e -> self e) @@ nseq_to_list argsx in
       return @@ e_constant ~loc const args
     | None ->
-      raise.raise @@ unknown_constant var loc
+      raise.error @@ unknown_constant var loc
       )
   | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = Some (Expr_entry e, [(_, Rest_entry {value = {expr; _}; _})]); _}; _}, []); _}; _}); region } ->
     let loc = Location.lift region in
@@ -443,7 +443,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
     let lst = List.map ~f:(fun e ->
       match e with
         CST.Expr_entry e -> self e
-      | Rest_entry _ -> raise.raise (array_rest_not_supported e)
+      | Rest_entry _ -> raise.error (array_rest_not_supported e)
     ) items in
     return @@ e_list ~loc lst
   )
@@ -458,7 +458,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
       | EUnit u -> None, u.region
-      | _ as e -> raise.raise @@ unsupported_match_pattern e
+      | _ as e -> raise.error @@ unsupported_match_pattern e
       in
       aux p
     in
@@ -467,11 +467,11 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
         match value with
           EFun {value = {parameters; body; _}; _} ->
             let parameters_opt, parameters_region = compile_simple_pattern parameters in
-            let expr = compile_function_body_to_expression ~add_warning ~raise body in
+            let expr = compile_function_body_to_expression ~raise body in
             (region, (Label constr, parameters_opt, parameters_region), expr)
-        | _ as e -> raise.raise @@ invalid_case constr e (* TODO: improve error message *)
+        | _ as e -> raise.error @@ invalid_case constr e (* TODO: improve error message *)
       )
-    | _ as f -> raise.raise @@ unsupported_match_object_property f
+    | _ as f -> raise.error @@ unsupported_match_object_property f
     in
     let loc1 = Location.lift start in
     let loc2 = Location.lift finish in
@@ -505,7 +505,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
       | EUnit the_unit -> let (_,loc) = r_split the_unit in ValueVar.of_input_var ~loc "()";
-      | _ as e -> raise.raise @@ unsupported_match_pattern e
+      | _ as e -> raise.error @@ unsupported_match_pattern e
       in
       aux p
     in
@@ -518,14 +518,14 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       let tl = compile_simple_pattern tl in
       Match_cons (hd, tl)
     | _ as e ->
-      raise.raise @@ not_a_valid_parameter e
+      raise.error @@ not_a_valid_parameter e
     in
     let compile_case = function
       CST.EFun {value = {parameters; body; _}; _} ->
         let args = compile_parameter parameters in
-        let b    = compile_function_body_to_expression ~add_warning ~raise body in
+        let b    = compile_function_body_to_expression ~raise body in
         (args, b)
-    | _ as e -> raise.raise @@ expected_a_function e
+    | _ as e -> raise.error @@ expected_a_function e
     in
     (match args with
       [CST.Expr_entry a; CST.Expr_entry b]
@@ -550,9 +550,9 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
           {pattern ; body = body}
         in
         e_matching ~loc matchee [nil_case;cons_case]
-      | _ -> raise.raise @@ invalid_list_pattern_match args
+      | _ -> raise.error @@ invalid_list_pattern_match args
     )
-    | _ -> raise.raise @@ invalid_list_pattern_match args)
+    | _ -> raise.error @@ invalid_list_pattern_match args)
 
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
@@ -566,12 +566,12 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       return @@ e_constant ~loc:(Location.cover loc args_loc) const args
     | None ->
       let func = e_variable_ez ~loc:loc_var var in
-      let args = compile_arguments ~add_warning ~raise args in
+      let args = compile_arguments ~raise args in
       return @@ e_application ~loc func args
     )
   | EConstr constr ->
     let ((constr,args_o), loc) = r_split constr in
-    let args_o = Option.map ~f:(compile_tuple_expression ~add_warning ~raise <@ List.Ne.singleton) args_o in
+    let args_o = Option.map ~f:(compile_tuple_expression ~raise <@ List.Ne.singleton) args_o in
     let args = Option.value ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
   | ECall ({value=(EModA {value={module_name;field=_;selector=_};region=_} as value,args);region} as call) when List.mem ~equal:String.(=) built_ins module_name.value -> (
@@ -585,13 +585,13 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
     | None ->
       let ((func, args), loc) = r_split call in
       let func = self func in
-      let args = compile_arguments ~add_warning ~raise args in
+      let args = compile_arguments ~raise args in
       return @@ e_application ~loc func args
   )
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let func = self func in
-    let args = compile_arguments ~add_warning ~raise args in
+    let args = compile_arguments ~raise args in
     return @@ e_application ~loc func args
   | EArray items ->
     let (items, loc) = r_split items in
@@ -613,8 +613,8 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       | Property {value = {name = EVar name; value; _}; region} ->
           let expr = self value in
           ([Access_record name.value], expr, Location.lift region)
-      | Property_rest _ -> raise.raise @@ rest_not_supported_here p
-      | _ -> raise.raise @@ property_not_supported p
+      | Property_rest _ -> raise.error @@ rest_not_supported_here p
+      | _ -> raise.error @@ property_not_supported p
     in
     let updates = List.map ~f:aux rest in
     let aux e (path, update, loc) = e_update ~loc e path update in
@@ -635,7 +635,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
           (var.value , expr)
         )
       | Property_rest _ -> (
-          raise.raise @@ rest_not_supported_here fa
+          raise.error @@ rest_not_supported_here fa
         )
     in
     let obj = List.map ~f:aux @@ npseq_to_list obj.inside in
@@ -655,7 +655,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
          return @@ e_module_accessor ~loc acc accessed_el
       | EModA ma ->
          aux (acc @ [ModuleVar.of_input_var ma.value.module_name.value]) ma.value.field
-      | _ -> raise.raise (expected_a_variable (CST.expr_to_region ma.field))
+      | _ -> raise.error (expected_a_variable (CST.expr_to_region ma.field))
     in
     (*TODO: move to proper module*)
     if List.mem ~equal:String.equal built_ins module_name then
@@ -671,7 +671,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
     let ({parameters; lhs_type; body;arrow=_} : CST.fun_expr) = func in
     let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) lhs_type in
     let (binder,exprs) = compile_parameter ~raise parameters in
-    let body = compile_function_body_to_expression ~add_warning ~raise body in
+    let body = compile_function_body_to_expression ~raise body in
     let expr = exprs body  in
     return @@ e_lambda ~loc binder lhs_type expr
   | EAnnot {value = (EArith(Int i), _, TVar {value = "nat"; _}); region=_ } ->
@@ -744,7 +744,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
       | Mod_eq -> C_MOD
       )
       in
-      compile_bin_op ~add_warning ~raise ao {
+      compile_bin_op ~raise ao {
         value = {
           op   = Token.wrap lexeme op.region;
           arg1 = e1;
@@ -761,7 +761,7 @@ and compile_expression ~add_warning ~raise : CST.expr -> AST.expr = fun e ->
     let (sels, _) = compile_selection ~raise selection in
     e_assign_ez ~loc:outer_loc evar_value [sels] e2
   | EAssign _ as e ->
-    raise.raise @@ not_supported_assignment e
+    raise.error @@ not_supported_assignment e
 
 and conv ~raise : const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
   fun ~const p ->
@@ -782,11 +782,11 @@ and conv ~raise : const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
     let ps = List.map ~f:(conv ~raise ~const) @@ Utils.nsepseq_to_list record.inside in
     let labels = List.map
         (Utils.nsepseq_to_list record.inside)
-        ~f:(function PVar var -> AST.Label var.value.variable.value | _ -> raise.raise @@ unsupported_pattern_type p)
+        ~f:(function PVar var -> AST.Label var.value.variable.value | _ -> raise.error @@ unsupported_pattern_type p)
     in
     Location.wrap ~loc (AST.P_record (labels,ps))
   | (PRest _|PAssign _|PConstr _|PDestruct _) ->
-    raise.raise @@ unsupported_pattern_type p
+    raise.error @@ unsupported_pattern_type p
 
 and compile_array_let_destructuring ~raise : const:bool -> AST.expression -> CST.array_pattern -> AST.expression -> AST.expression =
   fun ~const matchee tuple ->
@@ -829,8 +829,8 @@ and compile_parameter ~raise : CST.expr -> _ binder * (expression -> expression)
     let array_item = function
         CST.Expr_entry EVar var ->
          return_1 @@ compile_variable var
-      | Rest_entry _ as r -> raise.raise @@ array_rest_not_supported r
-      | _ -> raise.raise @@ not_a_valid_parameter expr
+      | Rest_entry _ as r -> raise.error @@ array_rest_not_supported r
+      | _ -> raise.error @@ not_a_valid_parameter expr
     in
     let arguments = Utils.sepseq_to_list arguments in
     let aux (binder, fun_') (binder_lst, fun_) =
@@ -853,18 +853,18 @@ and compile_parameter ~raise : CST.expr -> _ binder * (expression -> expression)
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
     return_1 ~ascr:(t_unit ~loc ()) @@ ValueVar.fresh ~loc ~name:"()" ()
-  | _ -> raise.raise @@ not_a_valid_parameter expr
+  | _ -> raise.error @@ not_a_valid_parameter expr
 
 
-and compile_function_body_to_expression ~add_warning ~raise : CST.body -> AST.expression = fun body ->
+and compile_function_body_to_expression ~raise : CST.body -> AST.expression = fun body ->
   match body with
-  | FunctionBody statements -> compile_statements_to_expression ~add_warning ~raise statements.value.inside
-  | ExpressionBody expr -> compile_expression ~add_warning ~raise expr
+  | FunctionBody statements -> compile_statements_to_expression ~raise statements.value.inside
+  | ExpressionBody expr -> compile_expression ~raise expr
 
-and compile_let_to_declaration ~add_warning ~raise : const:bool -> CST.attributes -> CST.val_binding Region.reg -> AST.declaration list =
+and compile_let_to_declaration ~raise : const:bool -> CST.attributes -> CST.val_binding Region.reg -> AST.declaration list =
     fun ~const attributes let_binding ->
       let ({binders; type_params; lhs_type; expr = let_rhs; _} : CST.val_binding) = let_binding.value in
-      let lst = compile_let_binding ~add_warning ~raise ~const attributes let_rhs lhs_type type_params binders let_binding.region in
+      let lst = compile_let_binding ~raise ~const attributes let_rhs lhs_type type_params binders let_binding.region in
       let aux : (type_expression binder * Types.attributes * CST.type_generics option * expression) -> declaration =
         fun (binder,attr,type_params,expr) ->
           (* This handle polymorphic annotation *)
@@ -929,15 +929,15 @@ and compile_pattern ~raise : const:bool -> CST.pattern -> type_expression binder
     let binder_lst, fun_ = List.fold_right ~f:aux ~init:([], fun e -> e) @@ Utils.nsepseq_to_list tuple.inside in
     let expr = fun expr -> e_matching_tuple (e_variable var) binder_lst @@ fun_ expr in
     return expr var Stage_common.Helpers.empty_attribute
-  | _ -> raise.raise @@ unsupported_pattern_type pattern
+  | _ -> raise.error @@ unsupported_pattern_type pattern
 
 and filter_private (attributes: CST.attributes) =
   List.filter ~f:(fun v -> not @@ String.equal v.value "private") attributes
 
-and compile_let_binding ~add_warning ~raise : const:bool -> CST.attributes -> CST.expr -> (CST.colon * CST.type_expr) option -> CST.type_generics option -> CST.pattern -> Region.t -> (type_expression binder * Ast_imperative__.Types.attributes * _ * expression) list =
+and compile_let_binding ~raise : const:bool -> CST.attributes -> CST.expr -> (CST.colon * CST.type_expr) option -> CST.type_generics option -> CST.pattern -> Region.t -> (type_expression binder * Ast_imperative__.Types.attributes * _ * expression) list =
   fun ~const attributes let_rhs type_expr type_params binders _region ->
   let attributes = compile_attributes attributes in
-  let expr = compile_expression ~add_warning ~raise let_rhs in
+  let expr = compile_expression ~raise let_rhs in
   let lhs_type = Option.map ~f:(compile_type_expression ~raise <@ snd) type_expr in
   let aux = function
     | CST.PVar name -> (*function or const *)
@@ -966,11 +966,11 @@ and compile_let_binding ~add_warning ~raise : const:bool -> CST.attributes -> CS
       let aux i binder = Z.add i Z.one, (binder, attributes, type_params, e_accessor expr @@ [Access_tuple i]) in
       let lst = snd @@ List.fold_map ~f:aux ~init:Z.zero @@ lst in
       lst
-    | _ -> raise.raise @@ unsupported_pattern_type @@ binders
+    | _ -> raise.error @@ unsupported_pattern_type @@ binders
   in
   aux binders
 
-and compile_statements ?(wrap=false) ~add_warning ~raise : CST.statements -> statement_result
+and compile_statements ?(wrap=false) ~raise : CST.statements -> statement_result
 = fun statements ->
   let aux result = function
     (_, hd) :: tl ->
@@ -982,21 +982,21 @@ and compile_statements ?(wrap=false) ~add_warning ~raise : CST.statements -> sta
         };
           region = Region.ghost
       } in
-      let block = compile_statement ~wrap:false ~add_warning ~raise wrapper in
+      let block = compile_statement ~wrap:false ~raise wrapper in
       merge_statement_results result block
   | [] -> result
   in
   let hd  = fst statements in
   let snd_ = snd statements in
-  let init = compile_statement ~wrap ~add_warning ~raise hd in
+  let init = compile_statement ~wrap ~raise hd in
   aux init snd_
 
 
-and compile_statement ?(wrap=false) ~add_warning ~raise : CST.statement -> statement_result
+and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
 = fun statement ->
-  let self ?(wrap=false) = compile_statement ~wrap ~add_warning ~raise in
-  let self_expr = compile_expression ~add_warning ~raise in
-  let self_statements ?(wrap=false) = compile_statements ~wrap ~add_warning ~raise in
+  let self ?(wrap=false) = compile_statement ~wrap ~raise in
+  let self_expr = compile_expression ~raise in
+  let self_statements ?(wrap=false) = compile_statements ~wrap ~raise in
   let binding e = Binding (fun f -> e f) in
   let expr e = Expr e in
   let return r = (Return r : statement_result) in
@@ -1010,7 +1010,7 @@ and compile_statement ?(wrap=false) ~add_warning ~raise : CST.statement -> state
       let matchee = self_expr let_rhs in
       compile_object_let_destructuring ~raise ~const matchee o
     | _ ->
-      let lst = compile_let_binding ~add_warning ~raise ~const attributes let_rhs lhs_type type_params binders region in
+      let lst = compile_let_binding ~raise ~const attributes let_rhs lhs_type type_params binders region in
       let aux (binder,attr,type_params,rhs) expr =
         match rhs.expression_content with
           E_assign {binder={var;_}; _} ->
@@ -1066,7 +1066,7 @@ and compile_statement ?(wrap=false) ~add_warning ~raise : CST.statement -> state
     let compile_clause = function
       Binding e -> expr, (e @@ e_unit ())
     | Expr e when is_failwith_call e ->
-      add_warning (`Jsligo_deprecated_failwith_no_return e.location);
+      raise.warning (`Jsligo_deprecated_failwith_no_return e.location);
       return, e
     | Expr e -> expr, (e_sequence e (e_unit ()))
     | Break b -> return, (e_sequence b (e_unit ()))
@@ -1231,7 +1231,7 @@ and compile_statement ?(wrap=false) ~add_warning ~raise : CST.statement -> state
     ignore attributes;
     let module_binder = compile_mod_var name in
     let rhs =
-      let decls = compile_namespace ~add_warning ~raise rhs.value.inside in
+      let decls = compile_namespace ~raise rhs.value.inside in
       m_struct ~loc decls
     in
     binding (e_mod_in ~loc module_binder rhs)
@@ -1267,11 +1267,11 @@ and statement_result_to_expression: statement_result -> AST.expression = fun sta
   | Break r
   | Return r -> r
 
-and compile_statements_to_expression ~add_warning ~raise : CST.statements -> AST.expression = fun statements ->
-  let statement_result = compile_statements ~add_warning ~raise statements in
+and compile_statements_to_expression ~raise : CST.statements -> AST.expression = fun statements ->
+  let statement_result = compile_statements ~raise statements in
   statement_result_to_expression statement_result
 
-and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement -> AST.declaration list = fun statement ->
+and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.declaration list = fun statement ->
   match statement with
   | SType {value; region} ->
     let name = value.name in
@@ -1305,11 +1305,11 @@ and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement
         attributes
     in
     let fst_binding = fst bindings in
-    let fst_binding = compile_let_to_declaration ~add_warning ~raise ~const:false attributes fst_binding in
+    let fst_binding = compile_let_to_declaration ~raise ~const:false attributes fst_binding in
     let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
     let rec aux result = function
       binding :: remaining ->
-        let d = compile_let_to_declaration ~add_warning ~raise ~const:false attributes binding in
+        let d = compile_let_to_declaration ~raise ~const:false attributes binding in
         aux (d @ result) remaining
     | [] -> List.rev result
     in
@@ -1323,11 +1323,11 @@ and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement
         attributes
     in
     let fst_binding = fst bindings in
-    let fst_binding = compile_let_to_declaration ~add_warning ~raise ~const:true attributes fst_binding in
+    let fst_binding = compile_let_to_declaration ~raise ~const:true attributes fst_binding in
     let bindings = List.map ~f:(fun (_, b) -> b) @@ snd bindings in
     let rec aux result = function
       binding :: remaining ->
-        let d = compile_let_to_declaration ~add_warning ~raise ~const:true attributes binding in
+        let d = compile_let_to_declaration ~raise ~const:true attributes binding in
         aux (d @ result) remaining
     | [] -> List.rev result
     in
@@ -1346,7 +1346,7 @@ and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement
     let module_ =
       let loc = Location.lift region_in in
       Location.wrap ~loc @@
-        AST.M_struct (compile_namespace ~add_warning ~raise statements) in
+        AST.M_struct (compile_namespace ~raise statements) in
     let d = AST.Declaration_module  {module_binder; module_; module_attr=attributes} in
     [ Location.wrap ~loc d ]
   | SImport {value = {alias; module_path; _}; region} ->
@@ -1357,14 +1357,14 @@ and compile_statement_to_declaration ~add_warning ~raise ~export : CST.statement
     in
     let d = AST.Declaration_module { module_binder; module_ ; module_attr = [] } in
     [ Location.wrap ~loc:(Location.lift region) d ]
-  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~add_warning ~raise ~export:true s
+  | SExport {value = (_, s); _} -> compile_statement_to_declaration ~raise ~export:true s
   | _ ->
-    raise.raise @@ statement_not_supported_at_toplevel statement
+    raise.error @@ statement_not_supported_at_toplevel statement
 
-and compile_statements_to_program ~add_warning ~raise : CST.ast -> AST.module_ = fun ast ->
+and compile_statements_to_program ~raise : CST.ast -> AST.module_ = fun ast ->
   let aux : CST.toplevel_statement -> declaration list = fun statement ->
     match statement with
-      TopLevel (statement, _) -> compile_statement_to_declaration ~add_warning ~raise ~export:false statement
+      TopLevel (statement, _) -> compile_statement_to_declaration ~raise ~export:false statement
     | Directive _ -> []
   in
   let statements = nseq_to_list ast.statements in
@@ -1373,12 +1373,22 @@ and compile_statements_to_program ~add_warning ~raise : CST.ast -> AST.module_ =
   lst
 
 
-and compile_namespace ~add_warning ~raise :CST.statements -> AST.module_ = fun statements ->
+and compile_namespace ~raise :CST.statements -> AST.module_ = fun statements ->
   let statements = Utils.nsepseq_to_list statements in
-  let declarations = List.map ~f:(compile_statement_to_declaration ~add_warning ~raise ~export:false) statements in
+  let declarations = List.map ~f:(compile_statement_to_declaration ~raise ~export:false) statements in
   let lst = List.concat declarations in
   lst
 
-let compile_module ~add_warning ~raise : CST.ast -> AST.declaration list =
+let compile_module ~raise : CST.ast -> AST.declaration list =
   fun t ->
-    compile_statements_to_program ~add_warning ~raise t
+    compile_statements_to_program ~raise t
+
+let compile_program ~raise : CST.ast -> AST.program = fun ast ->
+  nseq_to_list ast.statements
+  |> List.map ~f:(fun a ~raise ->
+    match a with
+      CST.TopLevel (statement, _) -> compile_statement_to_declaration ~raise ~export:false statement
+    | Directive _ -> []
+    )
+  |> Simple_utils.Trace.collect ~raise
+  |> List.concat
