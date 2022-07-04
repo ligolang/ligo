@@ -12,7 +12,7 @@ val compile_expression : raise:(Errors.abs_error, Main_warnings.all) Simple_util
 
 (** Convert a concrete PascaLIGO module CST to the miperative module
     AST used by the compiler. *)
-val compile_declarations     : raise:(Errors.abs_error, Main_warnings.all) Simple_utils.Trace.raise -> CST.declarations -> AST.module_
+val compile_program    : raise:(Errors.abs_error list, Main_warnings.all) Simple_utils.Trace.raise -> CST.declarations -> AST.module_
 
 val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> CST.expr
 

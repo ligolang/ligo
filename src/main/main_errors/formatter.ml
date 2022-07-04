@@ -154,10 +154,10 @@ let rec error_ppformat : display_format:string display_format ->
     | `Preproc_tracer e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format f e
     | `Pretty_tracer _e -> () (*no error in this pass*)
-    | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
-    | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
-    | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
-    | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f e
+    | `Cit_pascaligo_tracer  e -> List.iter ~f:(Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_cameligo_tracer   e -> List.iter ~f:(Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_reasonligo_tracer e -> List.iter ~f:(Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_jsligo_tracer     e -> List.iter ~f:(Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f) e
     | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
     | `Purification_tracer e -> List.iter ~f:(Purification.Errors.error_ppformat ~display_format f) e
     | `Depurification_tracer _e -> () (*no error in this pass*)
@@ -386,10 +386,10 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
   | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
   | `Pretty_tracer _ -> `Null (*no error in this pass*)
-  | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
-  | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
-  | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
-  | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_jsonformat e
+  | `Cit_pascaligo_tracer  e -> `List (List.map ~f:Tree_abstraction.Pascaligo.Errors.error_jsonformat e)
+  | `Cit_cameligo_tracer   e -> `List (List.map ~f:Tree_abstraction.Cameligo.Errors.error_jsonformat e)
+  | `Cit_reasonligo_tracer e -> `List (List.map ~f:Tree_abstraction.Reasonligo.Errors.error_jsonformat e)
+  | `Cit_jsligo_tracer     e -> `List (List.map ~f:Tree_abstraction.Jsligo.Errors.error_jsonformat e)
   | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_jsonformat e
   | `Purification_tracer e -> `List (List.map ~f:Purification.Errors.error_jsonformat e)
   | `Depurification_tracer _ -> `Null (*no error in this pass*)

@@ -1382,3 +1382,13 @@ and compile_namespace ~raise :CST.statements -> AST.module_ = fun statements ->
 let compile_module ~raise : CST.ast -> AST.declaration list =
   fun t ->
     compile_statements_to_program ~raise t
+
+let compile_program ~raise : CST.ast -> AST.program = fun ast ->
+  nseq_to_list ast.statements
+  |> List.map ~f:(fun a ~raise ->
+    match a with
+      CST.TopLevel (statement, _) -> compile_statement_to_declaration ~raise ~export:false statement
+    | Directive _ -> []
+    )
+  |> Simple_utils.Trace.collect ~raise
+  |> List.concat

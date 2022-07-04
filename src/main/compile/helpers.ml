@@ -49,7 +49,7 @@ let parse_and_abstract_pascaligo ~raise buffer file_path =
     Parsing.Pascaligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_declarations raw.decl
+    Tree_abstraction.Pascaligo.compile_program raw.decl
   in imperative
 
 let parse_and_abstract_expression_pascaligo ~raise buffer =
@@ -57,7 +57,7 @@ let parse_and_abstract_expression_pascaligo ~raise buffer =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_expression buffer in
   let imperative =
-    trace ~raise cit_pascaligo_tracer @@
+    trace ~raise (Fn.compose cit_pascaligo_tracer List.return) @@
     Tree_abstraction.Pascaligo.compile_expression raw
   in imperative
 
@@ -67,7 +67,7 @@ let parse_and_abstract_cameligo ~raise buffer file_path =
     Parsing.Cameligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_module raw
+    Tree_abstraction.Cameligo.compile_program raw
   in imperative
 
 let parse_and_abstract_expression_cameligo ~raise buffer =
@@ -75,7 +75,7 @@ let parse_and_abstract_expression_cameligo ~raise buffer =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_expression buffer in
   let imperative =
-    trace ~raise cit_cameligo_tracer @@
+    trace ~raise (Fn.compose cit_cameligo_tracer List.return) @@
     Tree_abstraction.Cameligo.compile_expression raw
   in imperative
 
@@ -85,7 +85,7 @@ let parse_and_abstract_reasonligo ~raise buffer file_path =
     Parsing.Reasonligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_module raw
+    Tree_abstraction.Reasonligo.compile_program raw
   in imperative
 
 let parse_and_abstract_expression_reasonligo ~raise buffer =
@@ -93,7 +93,7 @@ let parse_and_abstract_expression_reasonligo ~raise buffer =
     trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_expression buffer in
   let imperative =
-    trace ~raise cit_reasonligo_tracer @@
+    trace ~raise (Fn.compose cit_reasonligo_tracer List.return) @@
     Tree_abstraction.Reasonligo.compile_expression raw
   in imperative
 
@@ -103,7 +103,7 @@ let parse_and_abstract_jsligo ~raise buffer file_path =
     Parsing.Jsligo.parse_file buffer file_path in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_module raw
+    Tree_abstraction.Jsligo.compile_program raw
   in imperative
 
 let parse_and_abstract_expression_jsligo ~raise buffer =
@@ -111,7 +111,7 @@ let parse_and_abstract_expression_jsligo ~raise buffer =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
   let imperative =
-    trace ~raise cit_jsligo_tracer @@
+    trace ~raise (Fn.compose cit_jsligo_tracer List.return) @@
     Tree_abstraction.Jsligo.compile_expression raw
   in imperative
 
@@ -155,7 +155,7 @@ let parse_and_abstract_string_reasonligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_string buffer in
   let imperative = trace ~raise cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_module raw
+    Tree_abstraction.Reasonligo.compile_program raw
   in imperative
 
 let parse_and_abstract_string_pascaligo ~raise buffer =
@@ -164,7 +164,7 @@ let parse_and_abstract_string_pascaligo ~raise buffer =
     Parsing.Pascaligo.parse_string buffer in
   let imperative =
     trace ~raise cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_declarations raw.decl
+    Tree_abstraction.Pascaligo.compile_program raw.decl
   in imperative
 
 let parse_and_abstract_string_cameligo ~raise buffer =
@@ -173,7 +173,7 @@ let parse_and_abstract_string_cameligo ~raise buffer =
     Parsing.Cameligo.parse_string buffer in
   let imperative =
     trace ~raise cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_module raw
+    Tree_abstraction.Cameligo.compile_program raw
   in imperative
 
 let parse_and_abstract_string_jsligo ~raise buffer =
@@ -182,7 +182,7 @@ let parse_and_abstract_string_jsligo ~raise buffer =
     Parsing.Jsligo.parse_string buffer in
   let imperative =
     trace ~raise cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_module raw
+    Tree_abstraction.Jsligo.compile_program raw
   in imperative
 
 let parse_and_abstract_string ~raise (syntax: Syntax_types.t) buffer =

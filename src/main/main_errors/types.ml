@@ -31,10 +31,10 @@ type all =
  | `Preproc_tracer of Preprocessing.Errors.t
  | `Parser_tracer of Parsing.Errors.t
  | `Pretty_tracer of Parsing.Errors.t
- | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error
- | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error
- | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error
- | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error
+ | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error list
+ | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error list
+ | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error list
+ | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error list
  | `Self_ast_imperative_tracer of Self_ast_imperative.Errors.self_ast_imperative_error
  | `Purification_tracer   of Purification.Errors.purification_error list
  | `Depurification_tracer of Purification.Errors.purification_error

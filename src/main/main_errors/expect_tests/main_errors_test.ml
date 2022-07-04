@@ -217,21 +217,21 @@ let%expect_test "main_cit_pascaligo" =
   let pvar = P_Var (Wrap.wrap "foo" default_region1) in
   let type_expr = T_String (Wrap.wrap "yolo" default_region1) in
   let location_t = File default_location in
-  error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
+  error [`Concrete_pascaligo_unsupported_pattern_type pvar] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid case pattern.
       Can't match on values.|}] ;
-  error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
+  error [`Concrete_pascaligo_unsupported_string_singleton type_expr] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
-  error (`Concrete_pascaligo_michelson_type_wrong (type_expr, "foo")) ;
+  error [`Concrete_pascaligo_michelson_type_wrong (type_expr, "foo")] ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
@@ -239,14 +239,14 @@ let%expect_test "main_cit_pascaligo" =
   Invalid "foo" type.
   At this point, an annotation, in the form of a string, is expected for the preceding type.
   |}] ;
-  error (`Concrete_pascaligo_michelson_type_wrong_arity (location_t, "zzz")) ;
+  error [`Concrete_pascaligo_michelson_type_wrong_arity (location_t, "zzz")] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid "zzz" type.
       An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}] ;
-  error (`Concrete_pascaligo_untyped_recursive_fun location_t) ;
+  error [`Concrete_pascaligo_untyped_recursive_fun location_t] ;
   [%expect
     {|
   File "a dummy file name", line 20, character 5:
@@ -263,34 +263,34 @@ let%expect_test "main_cit_cameligo" =
   let pvar = PVar {value = { variable ; attributes = []} ; region = default_region1} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_cameligo_untyped_recursive_fun default_region1) ;
+  error [`Concrete_cameligo_untyped_recursive_fun default_region1] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid function declaration.
       Recursive functions are required to have a type annotation (for now).|}] ;
-  error (`Concrete_cameligo_unsupported_pattern_type [pvar]) ;
+  error [`Concrete_cameligo_unsupported_pattern_type [pvar]] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern.
       Can't match on values.|}] ;
-  error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
+  error [`Concrete_cameligo_unsupported_string_singleton type_expr] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
-  error (`Concrete_cameligo_recursion_on_non_function location_t) ;
+  error [`Concrete_cameligo_recursion_on_non_function location_t] ;
   [%expect {|
     File "a dummy file name", line 20, character 5:
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
-  error (`Concrete_cameligo_michelson_type_wrong (type_expr, "foo")) ;
+  error [`Concrete_cameligo_michelson_type_wrong (type_expr, "foo")] ;
   [%expect
     {|
 File "a dummy file name", line 20, character 5:
@@ -298,14 +298,14 @@ File "a dummy file name", line 20, character 5:
 Invalid "foo" type.
 At this point, an annotation, in the form of a string, is expected for the preceding type.
 |}] ;
-  error (`Concrete_cameligo_michelson_type_wrong_arity (location_t, "zzz")) ;
+  error [`Concrete_cameligo_michelson_type_wrong_arity (location_t, "zzz")] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid "zzz" type.
       An even number of 2 or more arguments is expected, where each odd item is a type annotated by the following string.|}];
-  error(`Concrete_cameligo_missing_funarg_annotation variable);
+  error [`Concrete_cameligo_missing_funarg_annotation variable];
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
@@ -320,41 +320,41 @@ let%expect_test "main_cit_reasonligo" =
   let pvar = PVar  {value= {variable; attributes = []}; region= default_region1} in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_reasonligo_untyped_recursive_fun location_t) ;
+  error [`Concrete_reasonligo_untyped_recursive_fun location_t] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid function declaration.
       Recursive functions are required to have a type annotation (for now).|}] ;
-  error (`Concrete_reasonligo_unsupported_pattern_type pvar) ;
+  error [`Concrete_reasonligo_unsupported_pattern_type pvar] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid pattern matching.
       Can't match on values.|}] ;
-  error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
+  error [`Concrete_reasonligo_unsupported_string_singleton type_expr] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:
 
       Invalid type.
       It's not possible to assign a string to a type.|}] ;
-  error (`Concrete_reasonligo_recursion_on_non_function location_t) ;
+  error [`Concrete_reasonligo_recursion_on_non_function location_t] ;
   [%expect {|
     File "a dummy file name", line 20, character 5:
 
     Invalid let declaration.
     Only functions can be recursive.|}] ;
-  error (`Concrete_reasonligo_michelson_type_wrong (Location.lift default_region1, "foo")) ;
+  error [`Concrete_reasonligo_michelson_type_wrong (Location.lift default_region1, "foo")] ;
   [%expect
     {|
         File "a dummy file name", line 20, character 5:
 
         Invalid "foo" type.
         At this point, an annotation, in the form of a string, is expected for the preceding type.|}] ;
-  error (`Concrete_reasonligo_michelson_type_wrong_arity (location_t, "bar")) ;
+  error [`Concrete_reasonligo_michelson_type_wrong_arity (location_t, "bar")] ;
   [%expect
     {|
       File "a dummy file name", line 20, character 5:

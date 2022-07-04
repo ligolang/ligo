@@ -276,6 +276,6 @@ let compile_declaration ~raise : I.declaration -> O.declaration =
     let dm = Maps.declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id Fn.id Fn.id dm in
     return @@ O.Declaration_module dm
 
-let compile_program ~raise : I.program -> O.program = fun m ->
+let compile_program ~raise : I.program -> O.program = fun p ->
   Simple_utils.Trace.collect ~raise @@
-  List.map ~f:(fun a ~raise -> compile_declaration ~raise a) m
+  List.map ~f:(fun a ~raise -> compile_declaration ~raise a) p
