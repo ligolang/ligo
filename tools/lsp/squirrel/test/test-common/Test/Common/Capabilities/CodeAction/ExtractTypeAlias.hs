@@ -12,6 +12,7 @@ import Data.HashMap.Strict qualified as HM
 import Data.Text qualified as T
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
+import System.Directory (makeAbsolute)
 import System.FilePath ((</>))
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -91,7 +92,7 @@ extractTextEdits action = unwrapEdits edits
 
 makeTest :: forall parser. ScopeTester parser => TestInfo -> Assertion
 makeTest TestInfo{tiContract, tiCursor, tiExpectedEdits} = do
-  let contractPath = contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
+  contractPath <- makeAbsolute $ contractsDir </> "code-action" </> "extract-type-definition" </> tiContract
   tree <- readContractWithScopes @parser contractPath
   let [action] = typeExtractionCodeAction tiCursor (J.filePathToUri contractPath) tree
   let resultingEdits = extractTextEdits action

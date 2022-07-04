@@ -55,6 +55,7 @@ depends: [
   "pure-splitmix"
   "resto-cohttp-self-serving-client"
   "tezos-rust-libs"
+  "crunch"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
@@ -81,7 +82,7 @@ pin-depends: [
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/src/lib_p2p" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/src/lib_p2p_services" ]
   [ "tezos-protocol-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol" ]
-  [ "tezos-protocol-013-PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
+  [ "PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
   [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/src/lib_protocol_compiler" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
   [ "tezos-protocol-plugin-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_plugin" ]

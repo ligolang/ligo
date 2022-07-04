@@ -5,11 +5,11 @@ let contract basename =
 
 let%expect_test _ =
   run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo"; "1" ; "-e"; "failer"; "--no-warn" ] ;
-  [%expect{| failwith(42) |}]
+  [%expect{| failed with: 42 |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "evaluate-call" ; contract "failwith.ligo" ; "1" ; "-e" ; "failer" ; "--format";"json" ; "--no-warn" ] ;
-  [%expect{| { "value": null, "failure": "failwith(42)" } |}]
+  [%expect{| { "value": null, "failure": "42" } |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "dry-run" ; contract "subtle_nontail_fail.mligo" ; "()" ; "()" ] ;
@@ -21,7 +21,7 @@ let%expect_test _ =
     Warning: unused variable "ps".
     Hint: replace it by "_ps" to prevent this warning.
 
-    failwith("This contract always fails") |}]
+    failed with: "This contract always fails" |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "interpret" ; "assert(1=1)" ; "--syntax";"pascaligo" ] ;
@@ -31,7 +31,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run"; "interpret" ; "assert(1=2)" ; "--syntax";"pascaligo" ] ;
   [%expect {|
-    failwith("failed assertion") |}]
+    failed with: "failed assertion" |}]
 
 let%expect_test _ =
   run_ligo_good ["run"; "interpret" ; "assert(1=1)" ; "--syntax";"cameligo" ] ;
@@ -41,4 +41,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["run"; "interpret" ; "assert(1=2)" ; "--syntax";"cameligo" ] ;
   [%expect {|
-    failwith("failed assertion") |}]
+    failed with: "failed assertion" |}]
+
+let%expect_test _ =
+  run_ligo_good ["run"; "interpret" ; "(failwith (1,2n) : unit)" ; "--syntax";"cameligo" ] ;
+  [%expect {|
+    failed with: (Pair 1 2) |}]

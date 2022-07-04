@@ -33,6 +33,7 @@ type t =
   | Never
   | Ticket
   | Michelson_program
+  | Michelson_contract
   | Typed_address
   | Mutation
   | Chest
@@ -40,7 +41,8 @@ type t =
   | Chest_opening_result
   | Tx_rollup_l2_address 
   | External of string
-  [@@deriving ord, eq]
+  | Gen
+  [@@deriving ord, eq, hash]
 
 let to_string = function
   | Bool                 -> "bool"
@@ -75,6 +77,7 @@ let to_string = function
   | Never                -> "never"
   | Ticket               -> "ticket"
   | Michelson_program    -> "michelson_program"
+  | Michelson_contract   -> "michelson_contract"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
   | Chest                -> "chest"
@@ -82,6 +85,7 @@ let to_string = function
   | Chest_opening_result -> "chest_opening_result"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
+  | Gen                  -> "pbt_gen"
 
   let of_string = function
   | "bool"                 -> Bool
@@ -116,16 +120,17 @@ let to_string = function
   | "never"                -> Never
   | "ticket"               -> Ticket
   | "michelson_program"    -> Michelson_program
+  | "michelson_contract"   -> Michelson_contract
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
   | "chest"                -> Chest
   | "chest_key"            -> Chest_key
   | "chest_opening_result" -> Chest_opening_result
   | "tx_rollup_l2_address" -> Tx_rollup_l2_address
-  | "external_failwith"    -> External "failwith"
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
+  | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let bool                 = Bool
@@ -160,6 +165,7 @@ let bls12_381_fr         = Bls12_381_fr
 let never                = Never
 let ticket               = Ticket
 let michelson_program    = Michelson_program
+let michelson_contract   = Michelson_contract
 let typed_address        = Typed_address
 let mutation             = Mutation
 let chest                = Chest
@@ -170,6 +176,7 @@ let external_failwith    = External "failwith"
 let external_int         = External "int"
 let external_ediv        = External "ediv"
 let external_u_ediv      = External "u_ediv"
+let gen                  = Gen
 
 let v_bool                 : type_variable = TypeVar.of_input_var (to_string Bool)
 let v_string               : type_variable = TypeVar.of_input_var (to_string String)
@@ -204,13 +211,14 @@ let v_bls12_381_fr         : type_variable = TypeVar.of_input_var (to_string Bls
 let v_never                : type_variable = TypeVar.of_input_var (to_string Never)
 let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
+let v_michelson_contract   : type_variable = TypeVar.of_input_var (to_string Michelson_contract)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
 let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
 let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
 let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
-let v_external_failwith    : type_variable = TypeVar.of_input_var (to_string @@ External "failwith")
 let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
 let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
 let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")
+let v_gen                  : type_variable = TypeVar.of_input_var (to_string @@ Gen)

@@ -72,6 +72,10 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
   | E_global_constant (hash, args) ->
       let args = List.map ~f:self args in
       return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+      let args = List.map ~f:self args in
+      let code = self code in
+      return @@ E_create_contract (p, s, ((x, t), code), args)
 
 let map_sub_level_expression : mapper -> anon_function -> anon_function = fun f e ->
   let {binder ; body} : anon_function = e in

@@ -1,4 +1,4 @@
-let initAccount = ([accList, k]: [list<address>, key]) : list<address> => {
+const initAccount = ([accList, k]: [list<address>, key]) : list<address> => {
     let hk : key_hash = Crypto.hash_key(k);
     let c : contract<unit> = Tezos.implicit_account(hk);
     let a : address = Tezos.address(c);
@@ -8,6 +8,6 @@ let initAccount = ([accList, k]: [list<address>, key]) : list<address> => {
     return list([Tezos.address(c) , ...accList]); 
 };
   
-let keys : list<key> = list([("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key)]);
+const keys : list<key> = list([("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key)]);
 
-let test_addresses : list<address> = List.fold(initAccount, keys, list([]) as list<address>);
+const test_addresses : list<address> = List.fold(initAccount, keys, list([]) as list<address>);

@@ -136,9 +136,6 @@ and get_fv expr =
      let env = {env with used_var=VVarSet.remove let_binder.var env.used_var} in
      let env', rhs = self rhs in
      return (merge_env env env') @@ E_let_in {let_binder; rhs; let_result; attr}
-  | E_type_in {type_binder;rhs;let_result} ->
-     let env,let_result = self let_result in
-     return env @@ E_type_in {type_binder;rhs;let_result}
   | E_mod_in { module_binder; rhs ; let_result } ->
      let env,let_result = (self let_result) in
      (match MVarMap.find_opt module_binder env.env with

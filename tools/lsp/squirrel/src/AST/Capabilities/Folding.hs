@@ -29,9 +29,12 @@ foldingAST = execWriter . visit' handlers
       , Visit @Expr \(getRange -> r) -> \case
           If {} -> tell [r]
           Case {} -> tell [r]
+          SwitchStm {} -> tell [r]
           Seq {} -> tell [r]
           Lambda {} -> tell [r]
           ForLoop {} -> tell [r]
+          ForOfLoop {} -> tell [r]
+          WhileLoop {} -> tell [r]
           ForBox {} -> tell [r]
           _ -> pure ()
       ]

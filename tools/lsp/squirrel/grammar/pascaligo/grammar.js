@@ -554,7 +554,6 @@ module.exports = grammar({
           field("type", $._type_expr),
         )
       ),
-      optional(common.par(common.sepBy(',', field("argument", $._expr)))),
       ']'
     ),
 
@@ -793,7 +792,7 @@ module.exports = grammar({
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
-    String: $ => choice(/\"(\\.|[^"])*\"/, /{\|(\\.|[^\|])*\|}/),
+    String: $ => choice(/\"(\\.|[^"\n])*\"/, /{\|(\\.|[^\|])*\|}/),
     Int: $ => /-?([1-9][0-9_]*|0)/,
     Nat: $ => /([1-9][0-9_]*|0)n/,
     Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,

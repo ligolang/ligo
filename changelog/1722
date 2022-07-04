@@ -1,0 +1,5 @@
+author: nicolas.van.phan
+description: Closes(https://gitlab.com/ligolang/ligo/-/issues/1390)
+merge_request: '1722'
+title: Typer context - Replace lists by maps
+type: fixed

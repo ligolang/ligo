@@ -3,7 +3,7 @@ const x :
   0
 
 const y :
-    int = block {
+    int = {
   const z :
       list(int)
     = list []

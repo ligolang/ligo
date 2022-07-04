@@ -13,13 +13,13 @@ type user = {
 (source_file
   (type_decl
     (TypeName)
-      (object_type
+      (record_type
         (field_decl
-          (FieldName) (type_annotation (TypeName)))
+          (FieldName) (TypeName))
         (field_decl
-          (FieldName) (type_annotation (TypeName)))
+          (FieldName) (TypeName))
         (field_decl
-          (FieldName) (type_annotation (TypeName))))))
+          (FieldName) (TypeName)))))
 
 =========
 record value decl
@@ -34,18 +34,18 @@ let alice : user = {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (object_literal
-      (property
-        (property_name (Name))
-        (type_as_annotation (Int) (TypeName)))
-      (property
-        (property_name (Name))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (record
+      (record_field
+        (FieldName)
+        (Nat))
+      (record_field
+        (FieldName)
         (True_kwd))
-      (property
-        (property_name (Name))
+      (record_field
+        (FieldName)
         (String)))))
 
 =========
@@ -57,10 +57,68 @@ let alice_admin: bool = alice.is_admin;
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (projection (Name) (Name))))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (data_projection (Name) (FieldName))))
+
+=========
+record field punning
+=========
+
+let alice : user = {
+  id,
+  is_admin,
+  name
+};
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern
+      (NameDecl))
+      (TypeName)
+      (record
+        (capture (FieldName))
+        (capture (FieldName))
+        (capture (FieldName)))))
+
+=========
+record update & punning
+=========
+
+let alice : user = {
+  ...bob,
+  is_admin,
+  name     : "Alice"
+};
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (record_update
+      (spread (Name))
+      (capture (FieldName))
+      (record_field (FieldName) (String)))))
+
+=========
+record desctructuring
+=========
+
+let { a , b } = x ;
+
+---
+
+(source_file
+  (toplevel_binding
+    (record_pattern
+      (record_capture_pattern (NameDecl))
+      (record_capture_pattern (NameDecl)))
+    (Name)))
 
 =========
 tuple type decl
@@ -73,7 +131,7 @@ type full_name = [string, string]
 (source_file
   (type_decl
     (TypeName)
-    (type_tuple (TypeName) (TypeName))))
+    (tuple_type (TypeName) (TypeName))))
 
 =========
 tuple value decl
@@ -84,10 +142,10 @@ let full_name: full_name = ["Alice", "Johnson"];
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (array_literal
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (tuple
       (String)
       (String))))
 
@@ -100,11 +158,11 @@ let [first_name, last_name]: full_name = full_name;
 ---
 
 (source_file
-  (let_decl
-    (array_pattern
-      (var_pattern (Name))
-      (var_pattern (Name)))
-    (type_annotation (TypeName))
+  (toplevel_binding
+    (tuple_pattern
+      (var_pattern (NameDecl))
+      (var_pattern (NameDecl)))
+    (TypeName)
     (Name)))
 
 =========
@@ -116,16 +174,16 @@ let first_name_fun = ([first_name, _]: full_name):string => first_name;
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-      (fun_expr
-        (parameter
-          (array_literal
-            (Name)
+  (toplevel_binding
+    (var_pattern (NameDecl))
+      (lambda
+        (fun_arg
+          (tuple_pattern
+            (var_pattern (NameDecl))
             (wildcard))
-          (type_annotation (TypeName)))
-      (type_annotation (TypeName))
-      (body (Name)))))
+          (TypeName))
+      (TypeName)
+      (Name))))
 
 =========
 tuple access elements
@@ -136,9 +194,24 @@ let first_name_component: string = full_name[0];
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (projection
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (indexing
       (Name)
       (Int))))
+
+=========
+tuple access multiple
+=========
+
+let x = y[0][1][2]
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (indexing
+      (indexing
+        (indexing (Name) (Int)) (Int)) (Int))))

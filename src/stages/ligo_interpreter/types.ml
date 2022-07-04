@@ -11,10 +11,13 @@ type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 
 type mutation = Location.t * Ast_aggregated.expression
 
-type env_item =
-  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool }
+type env_item = {
+    item: value_expr ;
+    no_mutation : bool ;
+    inline : bool
+  }
 
-and env = env_item list
+and env = (expression_variable * env_item) list
 
 and func_val = {
     rec_name : expression_variable option ;
@@ -32,7 +35,6 @@ and thunk_val = {
 and typed_michelson_code = { code_ty : mcode ; code : mcode; ast_ty : Ast_aggregated.type_expression }
 
 and michelson_code =
-  | Contract of mcode
   | Ty_code of typed_michelson_code
   | Untyped_code of mcode
 
@@ -63,6 +65,10 @@ and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
 
 and value_expr = { ast_type : Ast_aggregated.type_expression ;
                    eval_term : value }
+
+and gen = { generator : value QCheck.Gen.t ;
+            gen_type : Ast_aggregated.type_expression }
+  
 and value =
   | V_Ct of constant_val
   | V_List of value list
@@ -71,9 +77,11 @@ and value =
   | V_Set of value list
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
+  | V_Michelson_contract of mcode
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Thunk of thunk_val
+  | V_Gen of gen
 
 and calltrace = Location.t list
 

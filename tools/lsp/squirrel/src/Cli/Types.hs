@@ -2,6 +2,8 @@
 module Cli.Types
   ( LigoClientEnv (..)
   , HasLigoClient(..)
+  , TempDir (..)
+  , TempSettings (..)
   , ligoBinaryPath
   ) where
 
@@ -48,3 +50,16 @@ instance HasLigoClient m => HasLigoClient (LogT m) where
 
 instance HasLigoClient m => HasLigoClient (NoLoggingT m) where
   getLigoClientEnv = lift getLigoClientEnv
+
+data TempDir
+  = GenerateDir String
+  -- ^ Generate a new temporary directory using the given name template.
+  | UseDir FilePath
+  -- ^ Use an existing directory.
+
+data TempSettings = TempSettings
+  { tsProjectPath :: FilePath
+    -- ^ The absolute path to the root directory where indexing occurs.
+  , tsTemporaryDir :: TempDir
+    -- ^ The name template or path for the temporary directory.
+  }

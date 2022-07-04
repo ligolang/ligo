@@ -1,12 +1,11 @@
 variables:
-  GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_TAG: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide:${CI_COMMIT_SHORT_SHA}"
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
   - pretooling                      # changelog
-  - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - build                    # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
@@ -22,11 +21,16 @@ include:
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
 
+.submodule-clone:
+  before_script:
+    - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
+    - git submodule sync --recursive
+    - git submodule update --init --recursive --remote
 .nix:
+  extends: .submodule-clone
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
-
 changelog:
   stage: pretooling
   extends : .nix
@@ -58,9 +62,31 @@ to_dos:
     paths:
       - to-dos.html
 
+esy:
+  tags:
+    - windows
+  stage: build
+  only:
+  - merge_requests
+  - dev
+  - /^.*-run-dev$/
+  - /^release/.*$/
+  - /[0-9]+\.[0-9]+\.[0-9]+/
+  script:
+    - $env:GIT_CURL_VERBOSE = 1
+    - $env:GIT_TRACE = 1
+    - $env:GIT_TRACE_PACKET = 1
+    - git config http.postBuffer 1048576000
+    - npm i -g esy@beta --force
+    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - esy -vvv
+    - rm -Recurse -Force _esy
+
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
-  stage: docker-build
+  extends: .submodule-clone
+  stage: build
   dependencies:
     - changelog
   only:
@@ -70,7 +96,7 @@ docker_build:
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - docker build .
+    - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
       --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
@@ -101,8 +127,6 @@ docker_extract:
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/coverage .
-    - cat coverage/coverage-summary
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
@@ -113,7 +137,6 @@ docker_extract:
     paths:
       - ligo
       - ligo.deb
-      - coverage
       - doc
       - highlighting
 
@@ -220,32 +243,6 @@ webide-backend-build-and-push-backend:
     - docker push "${WEBIDE_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_IMAGE_TAG}" >/dev/null 2>&1 || true
-
-release:
-  stage: push
-  image: registry.gitlab.com/gitlab-org/release-cli
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
-  dependencies:
-    - docker_extract
-    - changelog
-    - initialize-git
-  ## FIXME find a better solution to upload the binary
-  artifacts:
-    expire_in: 1000 yrs
-    paths:
-      - ligo
-      - ligo.deb
-  script:
-    - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
-      # git cli initialized in .ci/gitlab-ci.yml. Update release branch metadata
-    - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git" 
-    - git fetch
-    - git checkout release/$CI_COMMIT_TAG  
-    - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_TAG_JOB_ID $CI_JOB_ID 
-    - git commit -am "[Bot] Update release metadata $CI_COMMIT_TAG"
-    - git push -o ci.variable="TRIGGER_DOC_UPDATE='true'" origin HEAD:release/$CI_COMMIT_TAG
 
 .website:
   stage: push

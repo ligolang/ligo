@@ -40,19 +40,19 @@ type action is
 |  GetBalance     of getBalance
 |  GetTotalSupply of getTotalSupply
 
-function transfer (const p : transfer; const s: storage) : list (operation) * storage is block {
+function transfer (const p : transfer; const s: storage) : list (operation) * storage is {
    var new_allowances : allowances := Big_map.empty;
-  if Tezos.sender = p.address_from
+  if Tezos.get_sender() = p.address_from
   then { new_allowances := s.allowances; }
   else {
     var authorized_value : nat :=
-    case (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) of [
+    case (Big_map.find_opt ((Tezos.get_sender(),p.address_from), s.allowances)) of [
         Some (value) -> value
       |  None       -> 0n
     ];
     if (authorized_value < p.value)
     then { failwith("Not Enough Allowance")}
-    else { new_allowances := Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }
+    else { new_allowances := Big_map.update ((Tezos.get_sender(),p.address_from), (Some (abs(authorized_value - p.value))), s.allowances) }
   };
   var sender_balance : nat :=
      case (Big_map.find_opt (p.address_from, s.tokens)) of [
@@ -73,9 +73,9 @@ function transfer (const p : transfer; const s: storage) : list (operation) * st
   }
 } with ((nil: list (operation)), s with record [tokens = new_tokens; allowances = new_allowances])
 
-function approve (const p : approve; const s : storage) : list (operation) * storage is block {
+function approve (const p : approve; const s : storage) : list (operation) * storage is {
   var previous_value : nat :=
-    case Big_map.find_opt ((p.spender, Tezos.sender), s.allowances) of [
+    case Big_map.find_opt ((p.spender, Tezos.get_sender()), s.allowances) of [
       Some (value) -> value
     | None -> 0n
     ];
@@ -83,11 +83,11 @@ function approve (const p : approve; const s : storage) : list (operation) * sto
   if previous_value > 0n and p.value > 0n
   then failwith ("Unsafe Allowance Change")
   else {
-    new_allowances := Big_map.update ((p.spender, Tezos.sender), (Some (p.value)), s.allowances);
+    new_allowances := Big_map.update ((p.spender, Tezos.get_sender()), (Some (p.value)), s.allowances);
   }
 } with ((nil: list (operation)), s with record [allowances = new_allowances])
 
-function getAllowance (const p : getAllowance; const s : storage) : list (operation) * storage is block {
+function getAllowance (const p : getAllowance; const s : storage) : list (operation) * storage is {
   var value : nat := case Big_map.find_opt ((p.owner, p.spender), s.allowances) of [
     Some (value) -> value
   |  None -> 0n
@@ -95,7 +95,7 @@ function getAllowance (const p : getAllowance; const s : storage) : list (operat
   var op : operation := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op],s)
 
-function getBalance (const p : getBalance; const s : storage) : list (operation) * storage is block {
+function getBalance (const p : getBalance; const s : storage) : list (operation) * storage is {
   var value : nat := case Big_map.find_opt (p.owner, s.tokens) of [
     Some (value) -> value
   |  None -> 0n
@@ -103,7 +103,7 @@ function getBalance (const p : getBalance; const s : storage) : list (operation)
   var op : operation := Tezos.transaction (value, 0mutez, p.callback);
 } with (list [op],s)
 
-function getTotalSupply (const p : getTotalSupply; const s : storage) : list (operation) * storage is block {
+function getTotalSupply (const p : getTotalSupply; const s : storage) : list (operation) * storage is {
   var total : nat := s.total_amount;
   var op : operation := Tezos.transaction (total, 0mutez, p.callback);
 } with (list [op],s)
@@ -118,11 +118,11 @@ function main (const a : action; const s : storage) : list (operation) * storage
   |  GetTotalSupply (p) -> getTotalSupply (p,s)
   ];
 
-function main (const p : key_hash) : address is block {
+function main (const p : key_hash) : address is {
   const c : contract (unit) = Tezos.implicit_account (p);
 } with Tezos.address (c)
 function check (const p : unit) : int is
-  block {
+  {
     var result : int := 0;
     if amount = 100tez then result := 42 else result := 0
   } with result
@@ -153,21 +153,21 @@ function div_op   (const n : int) : int is n / 2
 function int_op   (const n : nat) : int is int (n)
 function neg_op   (const n : int) : int is -n
 function ediv_op  (const n : int) : option (int * nat) is ediv (n,2)
-function main (var i : int) : int is block {i := i + 1} with i
+function main (var i : int) : int is {i := i + 1} with i
 [@annot] const x : int = 1;
 
 [@inline] function foo (const a : int) : int is
-  block {
+  {
     [@inline] const test : int = 2 + a;
   } with test;
 
 [@inline][@other] const y : int = 1;
 
 function bar (const b : int) : int is
-  block {
+  {
     [@inline][@foo][@bar]
     function test (const z : int) : int is
-      block {
+      {
         const r : int = 2 + b + z
       } with r;
   } with test (b)
@@ -192,13 +192,13 @@ type storage is tez
 type return is list (operation) * storage
 
 function main (const param : parameter; const store: storage) : return is
-  ((nil : list (operation)), Tezos.balance)
+  ((nil : list (operation)), Tezos.get_balance())
 type parameter is unit
 type storage is big_map (int, int) * unit
 type return is list (operation) * storage
 
 function main (const p : parameter; var s : storage) : return is
-  block {
+  {
     var toto : option (int) := Some (0);
     toto := s.0[23];
     s.0[2] := 444
@@ -207,13 +207,13 @@ function main (const p : parameter; var s : storage) : return is
 
 type foo is big_map (int, int)
 
-function set_ (var n : int; var m : foo) : foo is block {
+function set_ (var n : int; var m : foo) : foo is {
   m[23] := n
 } with m
 
 function add (var n : int ; var m : foo) : foo is set_ (n,m)
 
-function rm (var m : foo) : foo is block {
+function rm (var m : foo) : foo is {
   remove 42 from map m
 } with m
 
@@ -223,7 +223,7 @@ const empty_big_map : big_map (int,int) = big_map []
 
 const big_map1 : big_map (int,int) = big_map [23 -> 0; 42 -> 0]
 
-function mutimaps (const m : foo; var n : foo) : foo is block {
+function mutimaps (const m : foo; var n : foo) : foo is {
   var bar : foo := m;
   bar[42] := 0;
   n[42] := get_force (42, bar)
@@ -244,28 +244,28 @@ function not_bool  (const b : bool) : bool is not b
 function concat_op (const s : bytes) : bytes is Bytes.concat (s, 0x7070)
 function slice_op  (const s : bytes) : bytes is Bytes.sub (1n, 2n, s)
 function hasherman (const s : bytes) : bytes is Crypto.sha256 (s)
-function id_string (const p : string) : option (string) is block {
+function id_string (const p : string) : option (string) is {
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (string))
 
-function id_int (const p : int) : option (int) is block {
+function id_int (const p : int) : option (int) is {
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (int))
 
-function id_address (const p : address) : option (address) is block {
+function id_address (const p : address) : option (address) is {
   const packed : bytes = Bytes.pack (p)
 } with (Bytes.unpack (packed) : option (address))
-function chain_id (const tt : chain_id) : chain_id is Tezos.chain_id
+function chain_id (const tt : chain_id) : chain_id is Tezos.get_chain_id()
 function check_signature (const pk     : key;
                           const signed : signature;
                           const msg    : bytes) : bool
 is Crypto.check (pk, signed, msg)
 function foo (const i : int) : int is
-  block {
+  {
     function add (const j : int) : int is i+j
   } with add (i)
 function foobar (const i : int) : int is
-  block {
+  {
     const j : int = 3;
     function add (const k : int) : int is i+j+k
   } with add (42)
@@ -274,13 +274,13 @@ function foobar (const i : int) : int is
 // https://gitlab.com/ligolang/ligo/commit/faf3bbc06106de98189f1c1673bd57e78351dc7e
 
 function foobar (const i : int) : int is
-  block {
+  {
     const j : int = 3;
     const k : int = 4;
     function add (const l : int) : int is i+j+k+l
   } with add (42)
 function toto (const i : int) : int is
-  block {
+  {
     function tata (const j : int) : int is i+j;
     function titi (const j : int) : int is i+j
   } with tata (i) + titi (i)
@@ -332,7 +332,7 @@ type parameter is
 
 function transfer_single (const action : action_transfer_single;
                           var s : storage) : return is
-  block {
+  {
     var cards : cards := s.cards;
     var card : card :=
       case cards[action.card_to_transfer] of [
@@ -348,7 +348,7 @@ function transfer_single (const action : action_transfer_single;
 
 function sell_single (const action : action_sell_single;
                       var s : storage) : return is
-  block {
+  {
     const card : card =
       case s.cards[action.card_to_sell] of [
         Some (card) -> card
@@ -370,7 +370,7 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
       ];
@@ -380,7 +380,7 @@ function sell_single (const action : action_sell_single;
 
 function buy_single (const action : action_buy_single;
                      var s : storage) : return is
-  block {
+  {
     // Check funds
     var card_pattern : card_pattern :=
       case s.card_patterns[action.card_to_buy] of [
@@ -413,19 +413,19 @@ function main (const action : parameter; const s : storage) : return is
   ]
 function main (const i : int) : int is if 1 = 1 then 42 else 0
 function main (const i : int) : int is
-  block {
+  {
     var result : int := 23;
     if i = 2 then result := 42 else result := 0
   } with result
 
 function foo (const b : bool) : int is
-  block {
+  {
     const x : int = 41
   } with 1 + (if b then x else main (x))
 type t is int
 
 function main (const p : int; const s : t) : list (operation) * int is
-  block {
+  {
     skip
   } // skip is a do nothing instruction, needed for empty blocks
   with ((nil : list (operation)), p+s)
@@ -433,7 +433,7 @@ function hasherman512    (const s : bytes) : bytes is Crypto.sha512 (s)
 function hasherman_blake (const s : bytes) : bytes is Crypto.blake2b (s)
 // Test PasaLIGO variable declarations inside of a block
 
-function main (const i : int) : int is block {
+function main (const i : int) : int is {
   const j : int = 42
 } with j
 const foo : int = 42
@@ -448,7 +448,7 @@ type ppi is record [x : pii; y : pii]
 type ppp is ppi * ppi
 
 function main (const toto : unit) : int is
-  block {
+  {
     var a : ppp :=
      (record [x = (0,1); y = (10,11)],
       record [x = (100,101); y = (110,111)]);
@@ -457,7 +457,7 @@ function main (const toto : unit) : int is
 
 
 function asymetric_tuple_access (const foo : unit) : int is
-  block {
+  {
     var tuple : int * (int * (int * int)) := (0,(1,(2,3)))
   } with tuple.0 + tuple.1.0 + tuple.1.1.0 + tuple.1.1.1
 
@@ -465,7 +465,7 @@ type nested_record_t is
   record [nesty : record [mymap : map (int, string)]]
 
 function nested_record (var nee : nested_record_t) : string is
-  block {
+  {
     nee.nesty.mymap[1] := "one"
   } with case nee.nesty.mymap[1] of [
            Some (s) -> s
@@ -497,7 +497,7 @@ function main(const p : parameter; const s : storage) : return is
   ((nil : list(operation)), s+1)
 
 function main (const p : parameter; const s : storage) : return is
-  block {
+  {
     const ret : return = main (p, s)
   } with (ret.0, ret.1 + 1)
 type storage is michelson_or (int,"foo",string,"bar")
@@ -506,7 +506,7 @@ type foobar is michelson_or (int,"baz",int,"fooo")
 type return is list (operation) * storage
 
 function main (const action : unit; const store : storage) : return is
-block {
+{
   const foo : storage = (M_right ("one") : storage);
   const bar : foobar = (M_right (1) : foobar)
 } with
@@ -524,13 +524,13 @@ type storage is unit
 type return is list (operation) * storage
 
 function cb (const a : address; const s : storage) : return is
-  block {
+  {
     const c : contract (unit) = get_entrypoint ("%cb", a)
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 
 function cbo (const a : address; const s : storage) : return is
-  block {
+  {
     const c : contract (unit) =
       case (get_entrypoint_opt ("%cbo", a) : option (contract (unit))) of [
         Some (c) -> c
@@ -538,7 +538,7 @@ function cbo (const a : address; const s : storage) : return is
       ]
   } with (list [Tezos.transaction (unit, 0tez, c)], s)
 function main (const a : bool; const b : bool) : int is
-  block {
+  {
     var result : int := 27;
     if a = b then result := 999 else result := 1
   } with result
@@ -556,7 +556,7 @@ type storage is unit
 type return is list (operation) * storage
 
 function main (const p : parameter; const s : storage) : return is
-  block {
+  {
     case p of [
       Zero (n) -> if n > 0n then failwith ("fail")
     | Pos (n)  -> if not (n > 0n) then failwith ("fail")
@@ -565,7 +565,7 @@ function main (const p : parameter; const s : storage) : return is
   with ((nil : list (operation)), s)
 
 function foobar (var i : int) : int is
-  block {
+  {
     var p : parameter := Zero (42n);
     if i > 0 then {
       i := i + 1;
@@ -586,16 +586,16 @@ function foobar (var i : int) : int is
       | Pos (n)  -> (failwith ("waaaa") : int)
       ]
 
-function failer (const p : int) : int is block {
+function failer (const p : int) : int is {
   if p = 1 then failwith (42)
 } with p
 function main (const a : int) : int is
-  block { for i := 0 to 100 block { skip } } with i
+  { for i := 0 to 100 { skip } } with i
 const x : int = (function (const i : int) : int is i + 1)(41)
 // Test a PascaLIGO function with more complex logic than function.ligo
 
 function main (const i : int) : int is
-  block {
+  {
     var j : int := 0;
     var k : int := 1;
     j := k + i;
@@ -614,15 +614,15 @@ function main (const i : int) : int is i
 type storage is unit
 type return is list (operation) * storage
 
-function cb (const s : storage) : return is block {
-  const c : contract (unit) = get_contract (Tezos.sender)
+function cb (const s : storage) : return is {
+  const c : contract (unit) = get_contract (Tezos.get_sender())
 } with (list [Tezos.transaction (unit, 0tez, c)], s)
 
 
 function cbo (const s : unit) : return is
-  block {
+  {
     const c : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("contract not found") : contract (unit))
       ]
@@ -642,7 +642,7 @@ function is_empty (const h : heap) : bool is size (h) = 0n
 function get_top (const h : heap) : heap_elt is get_force (1n, h)
 
 function pop_switch (var h : heap) : heap is
-  block {
+  {
    const result : heap_elt = get_top (h);
    const s : nat = Map.size (h);
    const last : heap_elt =
@@ -655,7 +655,7 @@ function pop_switch (var h : heap) : heap is
   } with h
 
 function pop_ (var h : heap) : nat is
-  block {
+  {
     const result : heap_elt = get_top (h);
     const s : nat = Map.size (h);
     var current : heap_elt :=
@@ -678,12 +678,12 @@ function pop_ (var h : heap) : nat is
   } with largest
 
 function insert (var h : heap ; const e : heap_elt) : heap is
-  block {
+  {
     var i : nat := size (h) + 1n;
     h[i] := e;
     var largest : nat := i;
     var parent : nat := 0n;
-    while largest =/= i block {
+    while largest =/= i {
       parent := i/2n;
       largest := i;
       if parent >= 1n then {
@@ -698,7 +698,7 @@ function insert (var h : heap ; const e : heap_elt) : heap is
   } with h
 
 function pop (var h : heap) : heap * heap_elt * nat is
-  block {
+  {
     const result : heap_elt = get_top (h);
     var s : nat := size (h);
     const last : heap_elt = get_force (s,h);
@@ -710,7 +710,7 @@ function pop (var h : heap) : heap * heap_elt * nat is
     var left : nat := 0n;
     var right : nat := 0n;
     var c : nat := 0n;
-    while largest =/= i block {
+    while largest =/= i {
       c := c + 1n;
       i := largest;
       left := 2n * i;
@@ -738,7 +738,7 @@ function pop (var h : heap) : heap * heap_elt * nat is
    argument *)
 
 function foobar (const i : int) : int is
-  block {
+  {
     function foo (const i : int) : int is i;
     function bar (const f : int -> int) : int is f (i);
   } with bar (foo)
@@ -748,14 +748,14 @@ function foobar (const i : int) : int is
 function higher2 (const i : int; const f : int -> int): int is f (i)
 
 function foobar2 (const i : int) : int is
-  block {
+  {
     function foo2 (const i : int) : int is i
   } with higher2 (i, foo2)
 
 const a : int = 0
 
 function foobar3 (const i : int) : int is
-  block {
+  {
     function foo2 (const i : int) : int is a+i
   } with higher2 (i, foo2)
 
@@ -770,7 +770,7 @@ function higher3 (const i : int;
                   const g : int -> int) : int is f (g (i))
 
 function foobar5 (const i : int) : int is
-  block {
+  {
     const a : int = 0;
     function foo (const i : int) : int is a+i;
     function goo (const i : int) : int is foo (i)
@@ -944,7 +944,7 @@ const bar : int = foo
 function main (const i : int) : option (nat) is is_nat (i)
 function check_hash_key (const kh1 : key_hash;
                          const k2 : key) : bool * key_hash is
-  block {
+  {
     var kh2 : key_hash := Crypto.hash_key (k2);
   } with ((kh1 = kh2), kh2)
 type storage is record [
@@ -980,23 +980,23 @@ function size_ (const m : foobar) : nat is size (m)
 const bl : foobar = list [144; 51; 42; 120; 421]
 
 function fold_op (const s : list (int)) : int is
-  block {
+  {
     function aggregate (const prec: int; const cur: int) : int is prec+cur
   } with List.fold (aggregate, s, 10)
 
 function iter_op (const s : list (int)) : int is
-  block {
+  {
     var r : int := 0;
     function aggregate (const i : int) : unit is
-      block { skip (* r := r + 1 *) } with unit;
+      { skip (* r := r + 1 *) } with unit;
     List.iter (aggregate, s)
   } with r
 
 function map_op (const s : list (int)) : list (int) is
-  block {
+  {
     function increment (const i : int) : int is i+1
   } with List.map (increment, s)
-function local_type (var u : unit) : int is block {
+function local_type (var u : unit) : int is {
   type toto is int;
   var titi : toto := 1;
   titi := titi + 2
@@ -1004,71 +1004,71 @@ function local_type (var u : unit) : int is block {
 // Test while loops in PascaLIGO
 
 function counter (var n : nat) : nat is
-  block {
+  {
     var i : nat := 0n;
-    while i < n block {
+    while i < n {
       i := i + 1n
     }
   } with i
 
 function while_sum (var n : nat) : nat is
-  block {
+  {
     var i : nat := 0n;
     var r : nat := 0n;
-    while i < n block {
+    while i < n {
       i := i + 1n;
       r := r + i
     }
   } with r
 
 function for_sum (var n : nat) : int is
-  block {
+  {
     var acc : int := 0;
     for i := 1 to int (n)
-      block {
+      {
         acc := acc + i
       }
   } with acc
 
 function for_sum_step (var n : nat) : int is
-  block {
+  {
     var acc : int := 0;
     for i := 1 to int (2n*n) step 2
-      block {
+      {
         acc := acc + i
       }
   } with acc
 
 function for_collection_list (var nee : unit) : (int * string) is
-  block {
+  {
     var acc : int := 0;
     var st : string := "to";
     var mylist : list (int) := list [1; 1; 1];
     for x in list mylist
-      block {
+      {
         acc := acc + x;
         st := st ^ "to"
       }
   } with (acc, st)
 
 function for_collection_set (var nee : unit) : int * string is
-  block {
+  {
     var acc : int := 0;
     var st : string := "to";
     var myset : set (int) := set [1; 2; 3];
-    for x in set myset block {
+    for x in set myset {
       acc := acc + x;
       st := st ^ "to"
     }
   } with (acc, st)
 
 function for_collection_if_and_local_var (var nee : unit) : int is
-  block {
+  {
     var acc : int := 0;
     const theone : int = 1;
     const thetwo : int = 2;
     var myset : set (int) := set [1; 2; 3];
-    for x in set myset block {
+    for x in set myset {
       if x = theone then acc := acc + x
       else if x = thetwo then acc := acc + thetwo
       else acc := acc + 10
@@ -1076,21 +1076,21 @@ function for_collection_if_and_local_var (var nee : unit) : int is
   } with acc
 
 function for_collection_rhs_capture (var nee : unit) : int is
-  block {
+  {
     var acc : int := 0;
     const mybigint : int = 1000;
     var myset : set (int) := set [1; 2; 3];
-    for x in set myset block {
+    for x in set myset {
       if x = 1 then acc := acc + mybigint
       else acc := acc + 10
     }
   } with acc
 
 function for_collection_proc_call (var nee : unit) : int is
-  block {
+  {
     var acc : int := 0;
     var myset : set (int) := set [1; 2; 3];
-    for x in set myset block {
+    for x in set myset {
       if x = 1 then
         acc := acc + for_collection_rhs_capture (unit)
       else acc := acc + 10
@@ -1098,58 +1098,58 @@ function for_collection_proc_call (var nee : unit) : int is
   } with acc
 
 function for_collection_comp_with_acc (var nee : unit) : int is
-  block {
+  {
     var myint : int := 0;
     var mylist : list (int) := list [1; 10; 15];
-    for x in list mylist block {
+    for x in list mylist {
       if x < myint then skip
       else myint := myint + 10
     }
   } with myint
 
 function for_collection_with_patches (var nee : unit) : map (string,int) is
-  block {
+  {
     var myint : int := 12;
     var mylist : list (string) := list ["I"; "am"; "foo"];
     var mymap : map (string,int) := map [];
-    for x in list mylist block {
+    for x in list mylist {
       patch mymap with map [x -> myint]
     }
   } with mymap
 
 function for_collection_empty (var nee : unit) : int is
-  block {
+  {
     var acc : int := 0;
     var myset : set(int) := set [1; 2; 3];
-    for x in set myset block {
+    for x in set myset {
       skip
     }
   } with acc
 
 function for_collection_map_kv (var nee : unit) : int * string is
-  block {
+  {
     var acc : int := 0;
     var st : string := "";
     var mymap : map (string, int) := map ["1" -> 1; "2" -> 2; "3" -> 3];
-    for k -> v in map mymap block {
+    for k -> v in map mymap {
       acc := acc + v;
       st := st ^ k;
     }
   } with (acc, st)
 
 function nested_for_collection (var nee : unit) : int * string is
-  block {
+  {
     var myint : int := 0;
     var mystoo : string := "";
     var mylist : list(int) := list [1; 2; 3];
     var mymap : map (string, string) := map [" one" -> ","; "two" -> " "];
-    for i in list mylist block {
+    for i in list mylist {
       myint := myint + i;
       var myset : set (string) := set ["1"; "2"; "3"];
-      for st in set myset block {
+      for st in set myset {
         myint := myint + i;
         mystoo := mystoo ^ st;
-        for k -> v in map mymap block {
+        for k -> v in map mymap {
           mystoo := mystoo ^ k ^ v
         }
       }
@@ -1157,15 +1157,15 @@ function nested_for_collection (var nee : unit) : int * string is
   } with (myint, mystoo)
 
 function nested_for_collection_local_var (var nee : unit) : int*string is
-  block {
+  {
     var myint : int := 0;
     var myst : string := "";
     var mylist : list (int) := list [1; 2; 3];
-    for i in list mylist block {
+    for i in list mylist {
       var myst_loc : string := "";
       myint := myint + i;
       var myset : set (string) := set ["1"; "2"; "3"];
-      for st in set myset block {
+      for st in set myset {
         myint := myint + i;
         myst_loc := myst_loc ^ st;
       };
@@ -1173,36 +1173,36 @@ function nested_for_collection_local_var (var nee : unit) : int*string is
     }
   } with (myint, myst)
 
-function dummy (const n : nat) : nat is block {
-  while False block { skip }
+function dummy (const n : nat) : nat is {
+  while False { skip }
 } with n
 
 function inner_capture_in_conditional_block (var nee : unit) : bool * int is
-  block {
+  {
     var count : int := 1;
     var ret : bool := False;
     var mylist : list (int) := list [1; 2; 3];
-    for it1 in list mylist block {
-      for it2 in list mylist block {
+    for it1 in list mylist {
+      for it2 in list mylist {
         if count = it2 then ret := not (ret)
       };
       count := count + 1
     }
   } with (ret, count)
-function shadowing_in_body (var nee : unit) : string is block {
+function shadowing_in_body (var nee : unit) : string is {
   var st : string := "";
   var list1 : list (string) := list ["to"; "to"];
-  for x in list list1 block {
+  for x in list list1 {
     const x : string = "ta";
     st := st ^ x;
   }
 } with st
 (* should be "tata" *)
 
-function shadowing_assigned_in_body (var nee : unit) : string is block {
+function shadowing_assigned_in_body (var nee : unit) : string is {
   var st : string := "";
   var list1 : list (string) := list ["to"; "to"];
-  for x in list list1 block {
+  for x in list list1 {
     st := st ^ x;
     var st : string := "ta";
     st := st ^ x;
@@ -1224,22 +1224,22 @@ const map1 : foobar = map [
 
 const map2 : foobar = map [23 -> 0; 42 -> 0]
 
-function set_ (var n : int; var m : foobar) : foobar is block {
+function set_ (var n : int; var m : foobar) : foobar is {
   m[23] := n
 } with m
 
 function add (var n : int ; var m : foobar) : foobar is set_(n,m)
 
-function rm (var m : foobar) : foobar is block {
+function rm (var m : foobar) : foobar is {
   remove 42 from map m
 } with m
 
-function patch_ (var m : foobar) : foobar is block {
+function patch_ (var m : foobar) : foobar is {
   patch m with map [0 -> 5; 1 -> 6; 2 -> 7]
 } with m
 
 function patch_deep (var m : foobar * nat) : foobar * nat is
-  block { patch m.0 with map [1 -> 9] } with m
+  { patch m.0 with map [1 -> 9] } with m
 
 function size_ (const m : foobar) : nat is Map.size (m)
 
@@ -1248,24 +1248,24 @@ function get (const m : foobar) : option (int) is m[42]
 function mem (const k: int; const m: foobar) : bool is Map.mem (k, m)
 
 function iter_op (const m : foobar) : unit is
-  block {
+  {
     function aggregate (const i : int; const j : int) : unit is block
-      { if i=j then skip else failwith ("fail") } with unit
+      { if i=/=j then failwith ("fail") } with unit
   } with Map.iter (aggregate, m)
 
 function map_op (const m : foobar) : foobar is
-  block {
+  {
     function increment (const i : int; const j : int) : int is j+1
   } with Map.map (increment, m)
 
 function fold_op (const m : foobar) : int is
-  block {
+  {
     function aggregate (const i : int; const j : int * int) : int is
       i + j.0 + j.1
   } with Map.fold (aggregate, m, 10)
 
 function deep_op (var m : foobar) : foobar is
-  block {
+  {
     var coco : int * foobar := (0, m);
     remove 42 from map coco.1;
     coco.1[32] := 16
@@ -1273,7 +1273,7 @@ function deep_op (var m : foobar) : foobar is
 // Test the pattern matching functionality of PascaLIGO
 
 function match_bool (const i : int) : int is
-  block {
+  {
     var result : int := 23;
     case i = 2 of [
       True  -> result := 42
@@ -1282,7 +1282,7 @@ function match_bool (const i : int) : int is
   } with result
 
 function match_option (const o : option (int)) : int is
-  block {
+  {
     var result : int := 23;
     case o of [
       None -> skip
@@ -1309,7 +1309,7 @@ function match_expr_list (const l : list (int)) : int is
   ]
 // Test michelson insertion in PascaLIGO
 
-function michelson_add (var n : nat * nat ) : nat is block {
+function michelson_add (var n : nat * nat ) : nat is {
   const f : (nat * nat -> nat)= [%Michelson ({| { UNPAIR; ADD } |} : nat *nat -> nat)];
 } with f (n)
 type inner_storage is michelson_or(int,"one",nat,"two")
@@ -1317,7 +1317,7 @@ type storage is michelson_or (int,"three",inner_storage,"four")
 
 type return is list(operation) * storage
 
-function main (const action : unit; const store : storage) : return is block {
+function main (const action : unit; const store : storage) : return is {
   const foo : storage = (M_right ((M_left(1) : inner_storage)) : storage) ;
 } with ((nil : list(operation)), (foo: storage))
 type inner_storage is michelson_or(int,"one",nat,"two")
@@ -1325,7 +1325,7 @@ type storage is michelson_or (int,"three",inner_storage,"")
 
 type return is list(operation) * storage
 
-function main (const action : unit; const store : storage) : return is block {
+function main (const action : unit; const store : storage) : return is {
   const foo : storage = (M_right ((M_left(1) : inner_storage)) : storage) ;
 } with ((nil : list(operation)), (foo: storage))
 type inner_storage is michelson_pair(int,"one",nat,"two")
@@ -1333,14 +1333,14 @@ type storage is michelson_pair (string,"three",inner_storage,"four")
 
 type return is list(operation) * storage
 
-function main (const action : unit; const store : storage) : return is block {
+function main (const action : unit; const store : storage) : return is {
   const foo : storage = ("foo",(1,2n)) ;
 } with ((nil : list(operation)), (foo: storage))type inner_storage is michelson_pair(int,"one",nat,"two")
 type storage is michelson_pair (string,"three",inner_storage,"")
 
 type return is list(operation) * storage
 
-function main (const action : unit; const store : storage) : return is block {
+function main (const action : unit; const store : storage) : return is {
   const foo : storage = ("foo",(1,2n)) ;
 } with ((nil : list(operation)), (foo: storage))
 // Test functions with several parameters in PascaLIGO
@@ -1393,20 +1393,18 @@ type parameter is
 | Default  of default_pt
 
 function send (const param : send_pt; var s : storage) : return is
-  block {
+  {
     // check sender against the authorized addresses
 
-    if not Set.mem (Tezos.sender, s.authorized_addresses)
-    then failwith("Unauthorized address")
-    else skip;
+    if not Set.mem (Tezos.get_sender(), s.authorized_addresses)
+    then failwith("Unauthorized address");
 
     // check message size against the stored limit
 
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
     if Bytes.length (packed_msg) > s.max_message_size
-    then failwith ("Message size exceed maximum limit")
-    else skip;
+    then failwith ("Message size exceed maximum limit");
 
     (* compute the new set of addresses associated with the message and
        update counters *)
@@ -1415,33 +1413,31 @@ function send (const param : send_pt; var s : storage) : return is
 
     case map_get (packed_msg, s.message_store) of [
       Some (voters) ->
-        block {
+        {
           (* The message is already stored.
              Increment the counter only if the sender is not already
              associated with the message. *)
-          if Set.mem (Tezos.sender, voters)
-          then skip
-          else s.proposal_counters[Tezos.sender] :=
-                 get_force (Tezos.sender, s.proposal_counters) + 1n;
-                 new_store := Set.add (Tezos.sender,voters)
+          if not Set.mem (Tezos.get_sender(), voters)
+          then s.proposal_counters[Tezos.get_sender()] :=
+                 get_force (Tezos.get_sender(), s.proposal_counters) + 1n;
+                 new_store := Set.add (Tezos.get_sender(),voters)
         }
     | None ->
-        block {
+        {
           // the message has never been received before
           s.proposal_counters[sender] :=
-             get_force (Tezos.sender, s.proposal_counters) + 1n;
-             new_store := set [Tezos.sender]
+             get_force (Tezos.get_sender(), s.proposal_counters) + 1n;
+             new_store := set [Tezos.get_sender()]
         }
     ];
 
     // check sender counters against the maximum number of proposal
 
     var sender_proposal_counter : nat :=
-      get_force (Tezos.sender, s.proposal_counters);
+      get_force (Tezos.get_sender(), s.proposal_counters);
 
     if sender_proposal_counter > s.max_proposal
-    then failwith ("Maximum number of proposal reached")
-    else skip;
+    then failwith ("Maximum number of proposal reached");
 
     // check the threshold
 
@@ -1453,32 +1449,30 @@ function send (const param : send_pt; var s : storage) : return is
       // update the state hash
       s.state_hash := Crypto.sha256 (Bytes.concat (s.state_hash, packed_msg));
       // decrement the counters
-      for addr -> ctr in map s.proposal_counters block {
+      for addr -> ctr in map s.proposal_counters {
         if Set.mem (addr, new_store) then
           s.proposal_counters[addr] := abs (ctr - 1n)
-        else skip
       }
     } else s.message_store[packed_msg] := new_store
   } with (ret_ops, s)
 
 function withdraw (const param : withdraw_pt; var s : storage) : return is
-  block {
+  {
     var message : message := param;
     const packed_msg : bytes = Bytes.pack (message);
 
     case s.message_store[packed_msg] of [
       Some (voters) ->
-        block {
+        {
           // The message is stored
-          const new_set : addr_set = Set.remove (Tezos.sender, voters);
+          const new_set : addr_set = Set.remove (Tezos.get_sender(), voters);
 
           (* Decrement the counter only if the sender was already
              associated with the message *)
 
           if Set.cardinal (voters) =/= Set.cardinal (new_set)
-          then s.proposal_counters[Tezos.sender] :=
-                 abs (get_force (Tezos.sender, s.proposal_counters) - 1n)
-          else skip;
+          then s.proposal_counters[Tezos.get_sender()] :=
+                 abs (get_force (Tezos.get_sender(), s.proposal_counters) - 1n);
 
           (* If the message is left without any associated addresses,
              remove the corresponding message_store field *)
@@ -1539,21 +1533,21 @@ type return is list (operation) * storage
 type parameter is CheckMessage of check_message_pt
 
 function check_message (const param : check_message_pt;
-                        var s : storage) : return is block {
+                        var s : storage) : return is {
   var message : message := param.message;
 
   if param.counter =/= s.counter then
     failwith ("Counters does not match")
   else {
     const packed_payload : bytes =
-      Bytes.pack ((message, param.counter, s.id, Tezos.chain_id));
+      Bytes.pack ((message, param.counter, s.id, Tezos.get_chain_id()));
     var valid : nat := 0n;
 
     var keys : authorized_keys := s.auth;
-    for pkh_sig in list param.signatures block {
+    for pkh_sig in list param.signatures {
       case keys of [
         nil -> skip
-      | key # tl -> block {
+      | key # tl -> {
           keys := tl;
           if pkh_sig.0 = Crypto.hash_key (key) then
             if Crypto.check (key, pkh_sig.1, packed_payload)
@@ -1579,7 +1573,7 @@ const s : foobar = Some (42)
 const n : foobar = None
 
 function assign (var m : int) : foobar is
-  block {
+  {
     var coco : foobar := None;
     coco := Some (m);
     coco := (None : foobar); //temporary annotation added until type inference
@@ -1609,12 +1603,12 @@ const c : int = abc.c
 function projection (const r : foobar) : int is r.foo + r.bar
 
 function modify (var r : foobar) : foobar is
-  block {
+  {
     r.foo := 256
   } with r
 
 function modify_abc (var r : abc) : abc is
-  block {
+  {
     const c : int = 42;
     r := r with record [b=2048; c=c]
   } with r
@@ -1627,7 +1621,7 @@ const br : big_record =
 type double_record is record [inner : abc]
 
 function modify_inner (var r : double_record) : double_record is
-  block {
+  {
     r := r with record [inner.b = 2048]
   } with r
 // Test while loops in PascaLIGO
@@ -1660,13 +1654,13 @@ type entry_point_t is
 
 function change_address (const param : change_addr_pt;
                          const s : storage_t) : contract_return_t is
-  block {
+  {
     if sender =/= s then failwith ("Unauthorized sender")
   } with ((nil : list (operation)), param)
 
 function pass_message (const param: pass_message_pt;
                        const s : storage_t ) : contract_return_t is
-  block {
+  {
     if sender =/= s then failwith("Unauthorized sender");
     var message : pass_message_pt := param
   } with (param (unit), s)
@@ -1677,14 +1671,14 @@ function main (const param : entry_point_t; const s : storage_t) :
     Change_address (p) -> change_address (p,s)
   | Pass_message (p)   -> pass_message (p,s)
   ]
-function main (const p : unit) : address is Tezos.self_address
+function main (const p : unit) : address is Tezos.get_self_address()
 type parameter is nat
 type storage is int
 type return is list (operation) * storage
 
 
 function main (const p : parameter; const s : storage) : return is
-  block {
+  {
     const self_contract: contract(parameter) = Tezos.self("%default") ;
   }
   with ((nil: list(operation)), s)
@@ -1695,7 +1689,7 @@ type return is list (operation) * storage
 
 
 function main (const p : parameter; const s : storage) : return is
-  block {
+  {
     // const v : string = "%toto" ;
     const self_contract: contract(int) = Tezos.self("%toto") ;
     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
@@ -1706,24 +1700,24 @@ type return is list (operation) * storage
 
 
 function main (const p : parameter; const s : storage) : return is
-  block {
+  {
     const self_contract: contract(int) = Tezos.self("%default") ;
     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
   }
   with (list [op], s)// Test set iteration in PascaLIGO
 
 function iter_op (const s : set (int)) : int is
-  block {
+  {
     var r : int := 0;
     function aggregate (const i : int) : unit is
-      block {
+      {
         skip
       } with unit;
     set_iter (aggregate, s)
   } with r // ALWAYS RETURNS 0
 
 function fold_op (const s : set (int)) : int is
-  block {
+  {
     function aggregate (const i : int; const j : int) : int is
       i + j
   } with set_fold (aggregate, s, 15)
@@ -1741,26 +1735,26 @@ function remove_op (const s : set (string)) : set (string) is
 
 // Test the PascaLIGO syntactic sugar for set removal vs. the function call
 function remove_syntax (var s : set (string)) : set (string) is
-  block {remove "foobar" from set s} with s
+  {remove "foobar" from set s} with s
 
 function remove_deep (var s : set (string) * nat) : set (string) * nat is
-  block {remove "foobar" from set s.0} with s
+  {remove "foobar" from set s.0} with s
 
 function patch_op (var s : set (string)) : set (string) is
-  block {patch s with set ["foobar"]} with s
+  {patch s with set ["foobar"]} with s
 
 function patch_op_deep (var s : set (string) * nat) : set (string) * nat is
-  block {patch s.0 with set ["foobar"]} with s
+  {patch s.0 with set ["foobar"]} with s
 
 function mem_op (const s : set (string)) : bool is
   set_mem ("foobar", s)
 function main (const p : key_hash) : list (operation) is
-  block {
+  {
     const unused : operation = set_delegate (Some (p));
     const dummy : list (operation) = nil
   } with dummy
 function foo (const i : int) : int is
-  block {
+  {
     function bar (const i : int) : int is i
   } with bar (0)
 //Test simple_access in PascaLIGO
@@ -1772,7 +1766,7 @@ type rpi is record [x : int; y : int]
 type mpi is map (string, int)
 
 function main (const toto : tpi) : int is
-  block {
+  {
     var a : tpi := toto;
     var b : rpi := record [x=0; y=1];
     var m : mpi := map ["y" -> 1];
@@ -1837,8 +1831,8 @@ type entry_point_t is
 | Default of default_pt
 
 function call (const p : call_pt; const s : storage_t) : contract_return_t is
-  block {
-    if s >= now then failwith ("Contract is still time locked") else skip;
+  {
+    if s >= now then failwith ("Contract is still time locked");
     const message : message_t = p;
     const ret_ops : list (operation) = message (unit)
   } with (ret_ops, s)
@@ -1865,7 +1859,7 @@ type abc is int * int * int
 function projection_abc (const tpl : abc) : int is tpl.1
 
 function modify_abc (var tpl : abc) : abc is
-  block {
+  {
     tpl.1 := 2048
   } with tpl
 
@@ -1880,7 +1874,7 @@ type big_tuple is int * int * int * int * int * int * int * int * int * int * in
 const br : big_tuple = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 function update (var tpl : big_tuple) : big_tuple is
-  block {
+  {
     tpl.11 := 2048
   } with tpl
 type toto is int

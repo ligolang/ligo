@@ -12,7 +12,7 @@ let%expect_test _ =
              OPEN_CHEST ;
              IF_LEFT
                { RIGHT (or unit unit) }
-               { IF { UNIT ; LEFT unit ; LEFT bytes } { UNIT ; RIGHT unit ; LEFT bytes } } ;
+               { IF { UNIT ; LEFT unit } { UNIT ; RIGHT unit } ; LEFT bytes } ;
              IF_LEFT
                { IF_LEFT { DROP ; PUSH bytes 0x01 } { DROP ; PUSH bytes 0x00 } }
                {} ;
@@ -26,9 +26,8 @@ let%expect_test _ =
       storage (or (or (unit %fail_decrypt) (unit %fail_timelock)) (bytes %ok_opening)) ;
       code { CAR ;
              IF_LEFT
-               { IF_LEFT
-                   { DROP ; UNIT ; LEFT unit ; LEFT bytes }
-                   { DROP ; UNIT ; RIGHT unit ; LEFT bytes } }
+               { IF_LEFT { DROP ; UNIT ; LEFT unit } { DROP ; UNIT ; RIGHT unit } ;
+                 LEFT bytes }
                { RIGHT (or unit unit) } ;
              NIL operation ;
              PAIR } } |}]

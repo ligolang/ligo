@@ -78,8 +78,9 @@ testRenameFail fp pos = do
       Ok _ -> expectationFailure "Should not return edits"
 
 renameFail :: forall impl. ScopeTester impl => Assertion
-renameFail =
-  testRenameFail @impl (contractsDir </> "id.ligo") (1, 16)
+renameFail = do
+  fp <- makeAbsolute (contractsDir </> "id.ligo")
+  testRenameFail @impl fp (1, 16)
 
 renameId :: forall impl. ScopeTester impl => Assertion
 renameId = do

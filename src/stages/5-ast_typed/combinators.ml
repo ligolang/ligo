@@ -42,13 +42,12 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
 [@@map (_type_, (
     "signature","chain_id", "string", "bytes", "key", "key_hash", "int", "address", "operation", "nat", "tez",
     "timestamp", "unit", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "never", "mutation", "pvss_key", "baker_hash",
-    "chest_key", "chest" , "tx_rollup_l2_address"
+    "chest_key", "chest" , "tx_rollup_l2_address", "michelson_contract"
   ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
-[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
-let t_ext_failwith ?loc ?core t : type_expression = t_constant ?loc ?core (External "failwith") [t]
 let t_ext_int ?loc ?core t : type_expression = t_constant ?loc ?core (External "int") [t]
 let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "ediv") [t; t']
 let t_ext_u_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "u_ediv") [t; t']
@@ -137,6 +136,8 @@ let t_test_exec_error ?loc ?core () : type_expression = t_sum_ez ?loc ?core [
   ]
 let t_test_exec_result ?loc ?core () : type_expression = t_sum_ez ?loc ?core
   [ ("Success" ,t_nat ()); ("Fail", t_test_exec_error ())]
+let t_test_baker_policy ?loc ?core () : type_expression = t_sum_ez ?loc ?core
+  [ ("By_round" ,t_int ()); ("By_account", t_address ()); ("Excluding", t_list (t_address ()))]
 
 let t_arrow param result ?loc ?s () : type_expression = t_arrow ?loc ?type_meta:s {type1=param; type2=result} ()
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -279,7 +280,7 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 [@@map (_ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty"))]
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [p] }
-[@@map (_ct_, ("some", "contract_opt", "contract", "failwith"))]
+[@@map (_ct_, ("some", "contract_opt", "contract"))]
 
 let e__ct_ p p' : expression_content = E_constant { cons_name = C__CT_; arguments = [p; p']}
 [@@map (_ct_, ("cons", "set_add", "map_remove", "contract_entrypoint", "contract_entrypoint_opt"))]

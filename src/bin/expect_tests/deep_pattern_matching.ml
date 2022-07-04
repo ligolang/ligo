@@ -25,7 +25,7 @@ let%expect_test _ =
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
 
-    Pattern not of the expected type record[one -> int , two -> int] |}]
+    Pattern not of the expected type parameter |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -42,12 +42,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail14.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 6-8:
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 11-14:
       1 | let main (_ : unit * unit) : operation list * unit =
       2 |   let () = 42n in
       3 |   (([] : operation list), ())
 
-    Variant pattern argument is expected of type nat but is of type unit. |}]
+    Invalid type(s).
+    Expected: "unit", but got: "nat". |}]
 
 
 (* Trying to match on values *)
@@ -82,7 +83,7 @@ let%expect_test _ =
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
       7 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail2.mligo") ] ;
@@ -92,7 +93,7 @@ let%expect_test _ =
       5 |   | Nil , (a,b,c) -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern not of the expected type sum[Cons -> ( int * int ) , Nil -> unit] |}]
+    Pattern not of the expected type myt |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail5.mligo") ] ;
@@ -132,13 +133,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
-      3 | let t = fun (x: myt * ( int * int * int)) ->
-      4 |   match x with
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 6, characters 4-16:
       5 |   | xs , (a,b,c) -> 1
       6 |   | xs , (c,b,a) -> 2
 
-    Redundant pattern matching |}]
+    Error : this match case is unused. |}]
 
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
@@ -151,7 +150,9 @@ let%expect_test _ =
       3 |   | hd::(hd2::tl) -> hd + hd2
       4 |   | [] -> 0
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - _::[] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.mligo") ] ;
@@ -162,7 +163,9 @@ let%expect_test _ =
       5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
       6 |   | { a = Some (hd::tl) ; b = [] } -> hd
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - { a = None ; b = _ } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.mligo") ] ;
@@ -183,7 +186,9 @@ let%expect_test _ =
       5 |   | Nil , ys  -> 1
       6 |   | xs  , Nil -> 2
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - (Cons((_,_)),Cons((_,_))) |}]
 
 (* Positives *)
 
@@ -372,6 +377,57 @@ let%expect_test _ =
     4 |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "interpret" ; "nested_record_pm { a = 1 ; b = E }" ; "--init-file" ; (good_test "pm_test.mligo") ] ;
+  [%expect{|
+    5 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; (good_test "nested_record_sum.mligo") ] ;
+  [%expect{|
+    142 bytes |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; (good_test "edge_case_I.mligo") ] ;
+  [%expect{|
+    354 bytes |}]
+      
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; (good_test "edge_case_T.mligo") ] ;
+  [%expect{|
+    3920 bytes |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "info" ; "measure-contract" ; (good_test "edge_case_V.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts//deep_pattern_matching/edge_case_V.mligo", line 6, character 7 to line 10, character 20:
+      5 | let main (p, _ : p * int) : operation list * int =
+      6 |   [], (match p with
+      7 |     A,A,A,_,_,_ -> 1
+      8 |   | B,_,_,A,A,_ -> 2
+      9 |   | _,B,_,B,_,A -> 3
+     10 |   | _,_,B,_,B,B -> 4)
+
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - (A,A,B,_,A,_) |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "info" ; "measure-contract" ; (good_test "edge_case_S.mligo") ] ;
+  [%expect{|
+    File "../../test/contracts//deep_pattern_matching/edge_case_S.mligo", line 6, character 7 to line 11, character 31:
+      5 | let main (p, _ : p * int) : operation list * int =
+      6 |   [], (match p with
+      7 |     A, A, _, _, _, _, _, _ -> 1
+      8 |   | _, _, A, A, _, _, _, _ -> 2
+      9 |   | _, _, _, _, A, A, _, _ -> 3
+     10 |   | _, _, _, _, _, _, A, A -> 4
+     11 |   | A, B, A, B, A, B, A, B -> 5)
+
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - (B,_,B,_,B,_,B,_) |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.mligo") ] ;
   [%expect{|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
@@ -396,15 +452,17 @@ let%expect_test _ =
              UNPAIR ;
              CAR ;
              SWAP ;
-             IF_NONE { NIL operation ; PAIR } { SWAP ; DROP ; NIL operation ; PAIR } } } |}]
+             IF_NONE {} { SWAP ; DROP } ;
+             NIL operation ;
+             PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-core" ; (good_test "list_pattern.mligo") ] ;
   [%expect{|
     const a =
        match CONS(1 , LIST_EMPTY()) with
-        | [  ] -> 1
-        | a :: b :: c :: [  ] -> 2
+        | [] -> 1
+        | a::b::c::[] -> 2
         | _#2 -> 3 |}]
 
 

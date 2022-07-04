@@ -123,6 +123,13 @@ lsp-check-generated-highlighting:
     - scripts/diff_dir.sh highlighting/vscode tools/lsp/vscode-plugin/syntaxes
     - scripts/diff_dir.sh highlighting/textmate tools/ligo-syntax-highlighting/textmate
 
+vscode-extension-publish-checks:
+  stage: lsp
+  only: [merge_requests, tooling]
+  script:
+    - nix run -f nix/vsce.nix -c vsce --help
+    - nix run -f nix/vsce.nix -c ovsx --help
+
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:
   stage: push
@@ -130,7 +137,8 @@ vscode-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix -p "$MICROSOFT_MARKETPLACE_TOKEN"
+    - nix run -f nix/vsce.nix -c vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix run -f nix/vsce.nix -c ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:

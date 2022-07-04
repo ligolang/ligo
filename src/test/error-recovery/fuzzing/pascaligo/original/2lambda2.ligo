@@ -5,6 +5,6 @@ type storage is unit;
    *)
 
 function main(const _unit :unit;const _storage:unit) : unit is
-   block {
+   {
       const toto : (unit -> unit) -> unit = function (const f : (unit -> unit)) : unit is f (Unit); 
    } with toto(function (const _unit : unit) is Unit)

@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1756'
+title: Remove C_LIST_HEAD_OPT / C_LIST_TAIL_OPT
+type: internal

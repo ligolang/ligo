@@ -17,7 +17,7 @@ let triples (n : int) =
   M.bind (interval 1 n) (fun (x : int) ->
   M.bind (interval 1 n) (fun (y : int) ->
   M.bind (interval 1 n) (fun (z : int) ->
-  M.ret (x, y, z))))
+  M.ret (x, y, z)))) (* List of all triples (x,y,z) with x,y,z in [1,n] *)
 
 let solve (n : int) =
   M.bind (triples n) (fun ((x, y, z) : int * int * int) ->

@@ -1,12 +1,10 @@
 Ligo Syntax Highlighting
 ===
-A tool to create syntax highlighting for ReasonLIGO, CameLIGO, and PascaLIGO. 
-JsLIGO is not supported for now, as this can be done by existing JS / TS 
-syntax highlighting. 
+A tool to create syntax highlighting for ReasonLIGO, CameLIGO, JsLIGO and PascaLIGO. 
 
 Usage
 ---
-Change one of the definition files, CameLIGO.ml, ReasonLIGO.ml, and PascaLIGO.ml, as needed.
+Change one of the definition files, CameLIGO.ml, ReasonLIGO.ml, JsLIGO.ml and PascaLIGO.ml, as needed.
 
 Run the following command:
 

@@ -34,7 +34,7 @@ let main (p, s : parameter * storage) : return =
       (failwith "Counters does not match" : storage)
     else
       let packed_payload : bytes =
-        Bytes.pack (payload, p.counter, s.id, Tezos.chain_id) in
+        Bytes.pack (payload, p.counter, s.id, Tezos.get_chain_id ()) in
       let valid : nat = 0n in
       let keys : authorized_keys = s.auth in
       let aux =

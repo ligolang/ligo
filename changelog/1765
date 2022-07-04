@@ -1,0 +1,7 @@
+author: lesenechal.remi
+description: \nfix a bug where top-level let declaration within a Jsligo Namespace
+  wouldn't compile
+merge_request: '1765'
+title: 'jsligo: let bindings nested in a module would not be silently morphed into
+  constants'
+type: fixed

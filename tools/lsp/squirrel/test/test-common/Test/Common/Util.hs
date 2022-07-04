@@ -1,3 +1,5 @@
+-- For some reason, GHC thinks the HasCallStack constraint is redundant.
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 module Test.Common.Util
   ( ScopeTester
   , testDir
@@ -6,30 +8,42 @@ module Test.Common.Util
   , readContract
   , readContractWithMessages
   , readContractWithScopes
+  , parseContractsWithDependencies
+  , parseContractsWithDependenciesScopes
+  , parseDirectoryWithScopes
   , supportedExtensions
   ) where
 
+import Control.Monad ((<=<))
 import Control.Monad.IO.Class (liftIO)
 import Data.Functor ((<&>))
-import Data.List (isSuffixOf)
+import Data.List (isPrefixOf, isSuffixOf)
+import GHC.Stack (HasCallStack)
 import Language.Haskell.TH.Syntax (liftString)
 import System.Directory (listDirectory)
 import System.Environment (getEnv)
-import System.FilePath ((</>))
+import System.FilePath (splitDirectories, takeDirectory, (</>))
 import System.IO.Error (isDoesNotExistError)
 import UnliftIO.Exception (catch, throwIO)
 
-import AST.Includes (insertPreprocessorRanges)
-import AST.Parser (parsePreprocessed, parseWithScopes)
-import AST.Scope.Common (ContractInfo, HasScopeForest, Info', contractTree)
+import AST.Includes (Includes, includesGraph, insertPreprocessorRanges)
+import AST.Parser (parseContracts, parsePreprocessed, parseWithScopes)
+import AST.Scope
+  ( ContractInfo, ContractInfo', HasScopeForest, Info', ParsedContractInfo
+  , addScopes, contractTree
+  )
 import AST.Skeleton (SomeLIGO)
-
+import Cli.Types (TempDir (..), TempSettings (..))
 import Extension (supportedExtensions)
 import Log (NoLoggingT (..))
 import Parser (ParsedInfo)
 import ParseTree (pathToSrc)
+import Progress (noProgress)
 
-type ScopeTester impl = HasScopeForest impl (NoLoggingT IO)
+type ScopeTester impl = (HasCallStack, HasScopeForest impl (NoLoggingT IO))
+
+tempTemplate :: String
+tempTemplate = ".ligo-test"
 
 testDir, contractsDir :: FilePath
 testDir =
@@ -57,13 +71,39 @@ readContract filepath = do
   pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO ContractInfo
-readContractWithMessages filepath = do
+readContractWithMessages filepath = runNoLoggingT $ do
   src <- pathToSrc filepath
-  runNoLoggingT $ parsePreprocessed src
+  let temp = TempSettings (takeDirectory filepath) $ GenerateDir tempTemplate
+  parsePreprocessed temp src
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
   => FilePath -> IO (SomeLIGO Info')
-readContractWithScopes filepath = do
-  src <- pathToSrc filepath
-  contractTree <$> runNoLoggingT (parseWithScopes @parser src)
+readContractWithScopes filepath =
+  contractTree <$> parseWithScopes @parser filepath
+
+parseContractsWithDependencies
+  :: TempSettings
+  -> FilePath
+  -> IO (Includes ParsedContractInfo)
+parseContractsWithDependencies tempSettings top =
+  let ignore = not . any (tempTemplate `isPrefixOf`) . splitDirectories in
+  runNoLoggingT $ includesGraph
+    =<< parseContracts (parsePreprocessed tempSettings) noProgress ignore top
+
+parseContractsWithDependenciesScopes
+  :: forall impl
+   . ScopeTester impl
+  => TempSettings
+  -> FilePath
+  -> IO (Includes ContractInfo')
+parseContractsWithDependenciesScopes tempSettings =
+  runNoLoggingT
+  . addScopes @impl tempSettings noProgress <=< parseContractsWithDependencies tempSettings
+
+parseDirectoryWithScopes
+  :: forall impl. ScopeTester impl
+  => FilePath -> IO (Includes ContractInfo')
+parseDirectoryWithScopes dir = do
+  let temp = TempSettings dir $ GenerateDir tempTemplate
+  parseContractsWithDependenciesScopes @impl temp dir

@@ -5,11 +5,22 @@
   (:standard \ -open Core)
   -w
   "-33-39")
- (libraries zarith tezos-micheline))
+ (libraries core zarith tezos-micheline sexplib)
+ (preprocess
+  (pps ppx_sexp_conv)))
 
 (coq.extraction
  (prelude extraction)
- (extracted_modules Datatypes Nat PeanoNat List BinInt BinPos Specif
-   micheline co_de_bruijn ligo compiler)
+ (extracted_modules
+   ;; Coq stuff (hmm)
+   Datatypes
+   Bool
+   Nat
+   PeanoNat
+   List
+   Specif
+   ;; LIGO /src/coq stuff
+   ope
+   compiler)
  (theories ligo_coq)
  (libraries zarith))

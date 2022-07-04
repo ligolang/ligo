@@ -7,7 +7,7 @@ type rpi is record [x : int; y : int]
 type mpi is map (string, int)
 
 function main (const toto : tpi) : int is
-  block {
+  {
     var a : tpi := toto;
     var b : rpi := record [x=0; y=1];
     var m : mpi := map ["y" -> 1];

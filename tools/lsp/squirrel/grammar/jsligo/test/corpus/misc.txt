@@ -1,0 +1,98 @@
+=========
+misc: if no else
+=========
+
+let a = (x: bool): bool => {
+    let _a = 2;
+    if (x == true) {
+      _a = 1; // to ensure this doesn't cause issues.
+      return true
+    }
+    return false
+  }
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (var_pattern (NameDecl)) (TypeName))
+      (TypeName)
+      (block_statement
+        (let_binding
+          (var_pattern (NameDecl))
+          (Int))
+        (if_else_statement
+          (binary_call (Name) (True_kwd))
+          (block_statement
+            (assignment_operator (Name) (Int))
+            (comment)
+            (return_statement (True_kwd))))
+        (return_statement (False_kwd))))))
+
+=========
+misc: local type decl
+=========
+
+let local_type = (_ : unit) : int => {
+	type toto = int;
+	let titi : toto = 1;
+	let titi2 = titi + 2;
+	return titi2
+};
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (wildcard) (TypeName))
+      (TypeName)
+      (block_statement
+        (type_decl (TypeName) (TypeName))
+        (let_binding
+          (var_pattern (NameDecl))
+          (TypeName)
+          (Int))
+        (let_binding
+          (var_pattern (NameDecl))
+          (binary_call (Name) (Int)))
+        (return_statement (Name))))))
+
+=========
+misc: function last statement unit
+=========
+
+let aux = (unit : unit) : unit => {
+  let _x : int = 42 * (42 as nat) ;
+  let _y : int = (23 as nat) * 23 ;
+  let _z : int = 144 * 144 ;
+  let _w : nat = (7 as nat) * (7 as nat) ;
+  unit
+}
+
+---
+
+(source_file
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg (Unit_kwd) (TypeName)) (TypeName)
+      (block_statement
+        (let_binding (var_pattern (NameDecl)) (TypeName)
+          (binary_call (Int) (paren_expr (Nat))))
+        (let_binding (var_pattern (NameDecl)) (TypeName)
+          (binary_call
+            (paren_expr (Nat))
+            (Int)))
+        (let_binding
+          (var_pattern (NameDecl)) (TypeName)
+          (binary_call (Int) (Int)))
+        (let_binding
+          (var_pattern (NameDecl)) (TypeName)
+          (binary_call
+            (paren_expr (Nat))
+            (paren_expr (Nat))))
+        (Unit_kwd)))))

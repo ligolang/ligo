@@ -15,3 +15,22 @@ let typer_2 ~raise : Location.t -> string -> (type_expression -> type_expression
 
 let eq_1 a cst = type_expression_eq (a , cst)
 let eq_2 (a , b) cst = type_expression_eq (a , cst) && type_expression_eq (b , cst)
+
+(*
+  [first_success] ~raise [f] [lst]:
+    Applies [f] to all elements of [lst] (from left to right) and returns the first call that succeeded.
+    If all calls failed, raises the first encountered error
+*)
+let first_success ~raise f (lst : 'a List.Ne.t) =
+  let rec aux first_err f lst =
+    let hd,tl = lst in
+    let res = to_stdlib_result (fun ~raise -> f ~raise hd) in
+    match res,tl with
+    | Ok x      , _        -> x
+    | Error err , []       -> raise.raise (Option.value ~default:err first_err)
+    | Error err , hd'::tl' -> (
+      let first_err = if Option.is_none first_err then Some err else first_err in
+      aux first_err f (hd',tl')
+    )
+  in
+  aux None f lst

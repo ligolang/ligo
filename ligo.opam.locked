@@ -32,6 +32,7 @@ depends: [
   "bos" {= "0.2.1"}
   "ca-certs" {= "0.2.2"}
   "cmdliner" {= "1.1.0"}
+  "crunch" {= "3.2.0" }
   "cohttp" {= "5.0.0"}
   "cohttp-lwt" {= "5.0.0"}
   "cohttp-lwt-unix" {= "5.0.0"}
@@ -246,7 +247,7 @@ pin-depends: [
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/src/lib_p2p" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/src/lib_p2p_services" ]
   [ "tezos-protocol-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol" ]
-  [ "tezos-protocol-013-PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
+  [ "PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
   [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/src/lib_protocol_compiler" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
   [ "tezos-protocol-plugin-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_plugin" ]

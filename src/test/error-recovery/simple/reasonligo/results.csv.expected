@@ -33,7 +33,7 @@ PASS,missing_vbar_in_type_declaration.religo,2,13,5,5,0
 PASS,missing_vertical_bar.religo,3,27,13,11,1
 FAIL,two_extra_parenthesis_in_function_application.religo,-1,-1,-1,-1,-1
 PASS,typo_in_switch_kw.religo,6,31,21,17,3
-PASS,unfinished_code00.religo,1,373,7,5,0
+PASS,unfinished_code00.religo,1,381,7,5,0
 PASS,unfinished_code01.religo,2,2,2,2,0
 PASS,unfinished_code02.religo,2,9,7,9,0
 FAIL,unfinished_code03.religo,-1,-1,-1,-1,-1

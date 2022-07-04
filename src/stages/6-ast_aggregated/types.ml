@@ -91,7 +91,6 @@ and expression_content =
   | E_type_abstraction of expr type_abs
   | E_recursive of recursive
   | E_let_in of let_in
-  | E_type_in of (expr, ty_expr) type_in
   | E_raw_code of raw_code
   | E_type_inst of type_inst
   (* Variant *)

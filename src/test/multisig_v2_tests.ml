@@ -57,7 +57,7 @@ let wrong_addr ~raise ~add_warning () =
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let () =
     let exp_failwith = "Unauthorized address" in
-    expect_string_failwith ~raise ~options program "main"
+    expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair (send_param empty_message) init_storage) exp_failwith in
   ()
 
@@ -73,7 +73,7 @@ let message_size_exceeded ~raise ~add_warning () =
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let () =
     let exp_failwith = "Message size exceed maximum limit" in
-    expect_string_failwith ~raise ~options program "main"
+    expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair (send_param empty_message)  init_storage) exp_failwith in
   ()
 
@@ -91,7 +91,7 @@ let maximum_number_of_proposal ~raise ~add_warning () =
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let () =
     let exp_failwith = "Maximum number of proposal reached" in
-    expect_string_failwith ~raise ~options program "main"
+    expect_string_failwith ~raise ~add_warning ~options program "main"
       (e_pair (send_param empty_message2) init_storage) exp_failwith in
   ()
 
@@ -108,7 +108,7 @@ let send_already_accounted ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list init_storage)
 
 (* sender message isn't stored in the message store *)
@@ -129,7 +129,7 @@ let send_never_accounted ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair (send_param empty_message) init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to one address in the message store *)
@@ -150,7 +150,7 @@ let withdraw_already_accounted_one ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message is already binded to two addresses in the message store *)
@@ -171,7 +171,7 @@ let withdraw_already_accounted_two ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* triggers the threshold and check that all the participants get their counters decremented *)
@@ -194,7 +194,7 @@ let counters_reset ~raise ~add_warning () =
   let options =
     let sender = contract 3 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list final_storage)
 
 (* sender withdraw message was never accounted *)

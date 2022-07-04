@@ -26,8 +26,8 @@ type return is list(operation) * storage
 
 function commit (const p : bytes; var s: ) : return is // TODO
   begin
-    const commit : commit = record [date = Tezos.now + 86_400; salted_hash = p];
-    const updated_map: commit_set = Big_map.update(Tezos.sender, Some(commit), s.commits);
+    const commit : commit = record [date = Tezos.get_now() + 86_400; salted_hash = p];
+    const updated_map: commit_set = Big_map.update(Tezos.get_sender(), Some(commit), s.commits);
     s := s with record [commits = updated_map];
   end with ((nil : list(operation)), s)
 
@@ -40,7 +40,7 @@ function reveal (const p: reveal; var s: storage) : return is
     | Some (c) -> commit := c
     | None -> failwith("You have not made a commitment to hash against yet.")
     ];
-    if Tezos.now < commit.date
+    if Tezos.get_now() < commit.date
     then failwith("It has not been 24 hours since your commit yet.");
     const salted : bytes =
       Crypto.sha256(

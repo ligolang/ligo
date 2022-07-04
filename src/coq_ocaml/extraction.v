@@ -15,10 +15,11 @@
 (* The above copyright notice and this permission notice shall be included *)
 (* in all copies or substantial portions of the Software. *)
 
-From ligo_coq Require Import compiler co_de_bruijn.
+From ligo_coq Require Import compiler ope.
 From Coq Require Extraction.
 Require ExtrOcamlBasic.
 Require ExtrOcamlNativeString.
+(*
 Require Import ZArith NArith.
 
 (* Mapping Z to the OCaml library Zarith. *)
@@ -34,8 +35,9 @@ Extract Inductive Z =>
 
 Extract Inductive N => "Zarith.t"
  [ "Zarith.zero" "" ] "(fun b1 b2 x -> Zarith.(if x > zero then b2 x else b1 ()))".
+*)
 
 (* TODO *)
 Local Set Warnings "-extraction-logical-axiom".
 
-Separate Extraction compiler union.
+Separate Extraction compile_ope compile_expr compile_binds strengthen_prog.

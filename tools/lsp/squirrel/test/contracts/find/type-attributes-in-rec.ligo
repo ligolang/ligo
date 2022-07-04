@@ -4,8 +4,7 @@ type sum_aggregator is
     sum : int
 ]
 
-recursive function counter (const n : int) : int is
-  block {
+recursive function counter (const n : int) : int is {
     const initial : sum_aggregator = record [ counter = 0; sum = 0 ];
     recursive function aggregate (const prev : sum_aggregator) : int is
       if prev.counter <= n

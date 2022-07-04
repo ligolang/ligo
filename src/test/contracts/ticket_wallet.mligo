@@ -23,7 +23,7 @@ type storage =
 
 let main (arg : parameter * storage) : operation list * storage =
   begin
-    assert (Tezos.amount = 0mutez);
+    assert (Tezos.get_amount () = 0mutez);
     let (p,storage) = arg in
     let {manager = manager ; tickets = tickets } = storage in
     ( match p with
@@ -42,7 +42,7 @@ let main (arg : parameter * storage) : operation list * storage =
         let (_, tickets) = Big_map.get_and_update ticketer (Some ticket) tickets in
         (([] : operation list), {manager = manager; tickets = tickets})
       | Send send -> begin
-        assert (Tezos.sender = manager) ;
+        assert (Tezos.get_sender () = manager) ;
         let (ticket, tickets) = Big_map.get_and_update send.ticketer (None : unit ticket option) tickets in
         ( match ticket with
           | None -> (failwith "no tickets" : operation list * storage)

@@ -1,11 +1,7 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module AST.Scope.FromCompiler
   ( FromCompiler
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
-import Control.Arrow ((&&&))
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
 import Control.Lens (view)
@@ -17,37 +13,24 @@ import Data.Map (Map)
 import Data.Map qualified as Map
 import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
-import UnliftIO.MVar (modifyMVar, newMVar)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
+import Diagnostic (Message)
 import ListZipper (atLocus, find, withListZipper)
-import Log (Log, i)
-import Parser (Message)
-import ParseTree (srcPath)
-import Progress (Progress (..), (%))
+import Log (Log)
 import Range
-import Util.Graph (forAMConcurrently)
 
 data FromCompiler
 
--- FIXME: If one contract throws an exception, the entire thing will fail. Standard
--- scopes will use Fallback. (LIGO-208)
 instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
-  scopeForest reportProgress (Includes graph) = Includes <$> do
-    let nContracts = G.vertexCount graph
-    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
-    -- 'StateT'. It's best to avoid using this class for stateful monads.
-    counter <- newMVar 0
-    forAMConcurrently graph \(FindContract src (SomeLIGO dialect _) msgs) -> do
-      n <- modifyMVar counter (pure . (succ &&& id))
-      reportProgress $ Progress (n % nContracts) [i|Fetching LIGO scopes for #{srcPath src}|]
-      (defs, _) <- getLigoDefinitions src
-      (forest, msgs') <- fromCompiler dialect defs
-      pure $ FindContract src forest (msgs <> msgs')
+  scopeContract tempSettings (FindContract src (SomeLIGO dialect _) msgs) = do
+    defs <- getLigoDefinitions tempSettings src
+    (forest, msgs') <- fromCompiler dialect defs
+    pure $ FindContract src forest (msgs <> msgs')
 
 -- | Extract `ScopeForest` from LIGO scope dump.
 fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])

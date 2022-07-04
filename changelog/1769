@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: \nyou can now pass an expression to `ligo run test` using command line
+  option `--arg`, this value will be accessible through variable `cli_arg`
+merge_request: '1769'
+title: injectable cli expression
+type: added

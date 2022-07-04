@@ -30,7 +30,7 @@ PASS,missing_then_kw.ligo,2,13,7,3,0
 PASS,missing_vertical_bar.ligo,2,22,14,4,1
 PASS,missing_with_kw_in_block_expr.ligo,0,0,0,0,0
 PASS,typo_in_case_kw.ligo,4,32,24,9,4
-PASS,typo_in_function_kw.ligo,4,60,18,8,1
+PASS,typo_in_function_kw.ligo,4,58,16,7,1
 PASS,typo_in_with_kw_in_record_update.ligo,2,24,14,2,0
 PASS,unfinished_code00.ligo,2,6,6,5,0
 PASS,unfinished_code01.ligo,2,2,2,2,0

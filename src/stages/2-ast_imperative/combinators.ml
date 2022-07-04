@@ -45,7 +45,7 @@ let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_inp
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
 let t__type_ ?loc () : type_expression = t_variable ?loc v__type_
-[@@map (_type_, ("bool", "string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
+[@@map (_type_, ("bool", "string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "chain_id"))]
 let t__type_ ?loc t : type_expression = t_app ?loc v__type_ [t]
 [@@map (_type_, ("option", "list", "set", "contract"))]
 let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']

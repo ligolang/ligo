@@ -3,16 +3,18 @@ module RIO.Indexing
   , indexOptionsPath
   , prettyIndexOptions
   , ligoProjectName
+  , tryGetIgnoredPaths
   , getIndexDirectory
   , handleProjectFileChanged
   ) where
 
-import Control.Applicative ((<|>))
 import Control.Lens (view)
-import Control.Monad (void)
-import Control.Monad.Reader (asks)
+import Control.Monad (void, when)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Reader (asks)
+import Data.Aeson (eitherDecodeFileStrict', encodeFile)
 import Data.Bool (bool)
+import Data.Default (def)
 import Data.List (inits)
 import Data.Maybe (catMaybes)
 import Data.Text qualified as T
@@ -20,16 +22,16 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
-import UnliftIO.Directory (findFile)
-import UnliftIO.Environment (lookupEnv)
+import System.IO (IOMode (ReadMode), hFileSize, withFile)
+import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
 import UnliftIO.Exception (displayException, tryIO)
-import UnliftIO.MVar (tryPutMVar, tryReadMVar, tryTakeMVar)
+import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 import Witherable (ordNubOn)
 
-import Language.LSP.Util (sendInfo)
+import Language.LSP.Util (sendError, sendInfo)
 import Log qualified
-import RIO.Types (IndexOptions (..), RIO, RioEnv (..))
+import RIO.Types (IndexOptions (..), ProjectSettings (..), RIO, RioEnv (..))
 
 indexOptionsPath :: IndexOptions -> Maybe FilePath
 indexOptionsPath = \case
@@ -37,7 +39,7 @@ indexOptionsPath = \case
   DoNotIndex -> Nothing
   FromRoot path -> Just path
   FromGitProject path -> Just path
-  FromLigoProject path -> Just path
+  FromLigoProject path _ -> Just path
 
 prettyIndexOptions :: IndexOptions -> String
 prettyIndexOptions = \case
@@ -45,10 +47,23 @@ prettyIndexOptions = \case
   DoNotIndex -> "Do not index"
   FromRoot path -> path
   FromGitProject path -> path
-  FromLigoProject path -> path
+  FromLigoProject path _ -> path
 
 ligoProjectName :: FilePath
 ligoProjectName = ".ligoproject"
+
+projectIndexingMarkdownLink :: String
+projectIndexingMarkdownLink =
+  "[docs/project-indexing.md](https://gitlab.com/serokell/ligo/ligo/-/tree/tooling/tools/lsp/vscode-plugin/docs/project-indexing.md)"
+
+-- | If there is a LIGO project file and the user has provided ignored paths,
+-- then this function will return it.
+tryGetIgnoredPaths :: RIO (Maybe [FilePath])
+tryGetIgnoredPaths = do
+  indexOptsM <- tryReadMVar =<< asks reIndexOpts
+  pure case indexOptsM of
+    Just (FromLigoProject _ ProjectSettings{psIgnorePaths}) -> psIgnorePaths
+    _ -> Nothing
 
 -- | Given a path /foo/bar/baz, check for a `.ligoproject` file in the specified
 -- path and all of its parent directories, in this order, for the first matching
@@ -59,13 +74,45 @@ checkForLigoProjectFile = liftIO
   . flip findFile ligoProjectName
   . map joinPath . reverse . drop 1 . inits . splitPath
 
+decodeProjectSettings :: FilePath -> RIO ProjectSettings
+decodeProjectSettings projectDir = do
+  eitherSettings <- liftIO $ eitherDecodeFileStrict' $ projectDir </> ligoProjectName
+  case eitherSettings of
+    Left err -> do
+      $(Log.err) [Log.i|Failed to read project settings.\n#{err}|]
+      sendError [Log.i|Failed to read project settings. Using default settings. Check the logs for more information.|]
+      pure def
+    Right settings -> do
+      canonicalizedPaths <-
+        withCurrentDirectory projectDir $
+          traverse (traverse canonicalizePath) $ psIgnorePaths settings
+      pure settings
+        { psIgnorePaths = canonicalizedPaths
+        }
+
+upgradeProjectSettingsFormat :: FilePath -> RIO ()
+upgradeProjectSettingsFormat projectPath = do
+  size <- liftIO $ withFile projectPath ReadMode hFileSize
+  when (size == 0) do
+    sendInfo [Log.i|Found an old version of #{ligoProjectName}, upgrading to a new version. For more information, see #{projectIndexingMarkdownLink}.|]
+    liftIO $ encodeFile projectPath $ def @ProjectSettings
+
 -- FIXME: The user choice is not updated right away due to a limitation in LSP.
 -- Check the comment in `askForIndexDirectory` for more information.
 getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
-  indexOptsM <- tryReadMVar =<< asks reIndexOpts
-  ligoProjectFileM <- checkForLigoProjectFile contractDir
-  maybe (askForIndexDirectory contractDir) pure (indexOptsM <|> fmap FromLigoProject ligoProjectFileM)
+  ligoProjectDirM <- checkForLigoProjectFile contractDir
+  case ligoProjectDirM of
+    Nothing -> do
+      indexOptsM <- tryReadMVar =<< asks reIndexOpts
+      maybe (askForIndexDirectory contractDir) pure indexOptsM
+    Just ligoProjectDir -> do
+      upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+      projectSettings <- decodeProjectSettings ligoProjectDir
+      let indexOpts = FromLigoProject ligoProjectDir projectSettings
+      indexOptsVar <- asks reIndexOpts
+      hasNoOpts <- isEmptyMVar indexOptsVar
+      indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
 askForIndexDirectory contractDir = do
@@ -73,21 +120,16 @@ askForIndexDirectory contractDir = do
   gitDirectoryM <- mkGitDirectory
   let
     suggestions = ordNubOn indexOptionsPath $ catMaybes
-      [ FromRoot <$> rootDirectoryM
-      , FromGitProject <$> gitDirectoryM
+      [ FromGitProject <$> gitDirectoryM
+      , FromRoot <$> rootDirectoryM
       , Just DoNotIndex
       ]
 
-  env <- lookupEnv "LIGO_ENV"
-
-  if
-    -- On tests we want the directory to be indexed and we assume it's set.
-    | Just "testing" <- env
-    , Just rootDirectory <- rootDirectoryM -> pure $ FromRoot rootDirectory
+  case suggestions of
     -- Not a git directory, and has no root in VS Code. Do nothing.
-    | [DoNotIndex] <- suggestions -> pure DoNotIndex
+    [DoNotIndex] -> pure DoNotIndex
     -- Ask the user what to do.
-    | otherwise -> do
+    _ -> do
       indexVar <- asks reIndexOpts
       -- Wait for user input before proceeding.
       void $ S.sendRequest J.SWindowShowMessageRequest
@@ -96,20 +138,23 @@ askForIndexDirectory contractDir = do
           let choice = handleParams gitDirectoryM rootDirectoryM response
           _ <- tryPutMVar indexVar choice
           handleChosenOption choice)
-      -- lsp provides no easy way to get the callback of a request and MVars
-      -- will block indefinitely. We don't index for now with the hope that it
-      -- will be indexed later.
-      -- https://github.com/haskell/lsp/issues/405
+      -- FIXME (LIGO-490): lsp provides no easy way to get the callback of a
+      -- request and MVars will block indefinitely. We don't index for now with
+      -- the hope that it will be indexed later.
+      -- See also:
+      -- * https://github.com/haskell/lsp/issues/405
+      -- * https://github.com/haskell/lsp/issues/409
+      -- * https://github.com/haskell/lsp/issues/417
       pure IndexChoicePending
   where
     handleChosenOption :: IndexOptions -> RIO ()
     handleChosenOption (indexOptionsPath -> Just path) = do
       let
-        projectPath = path </> ".ligoproject"
+        projectPath = path </> ligoProjectName
         don'tCreate =
-          sendInfo [Log.i|To remember the directory, create an empty .ligoproject file in #{path}|]
+          sendInfo [Log.i|To remember the directory, create an empty #{ligoProjectName} file in #{path}|]
         doCreate = do
-          liftIO $ writeFile projectPath ""
+          liftIO $ encodeFile projectPath $ def @ProjectSettings
           sendInfo [Log.i|Created #{projectPath}|]
       void $ S.sendRequest J.SWindowShowMessageRequest
         J.ShowMessageRequestParams
@@ -135,7 +180,7 @@ askForIndexDirectory contractDir = do
     mkRequest :: [IndexOptions] -> J.ShowMessageRequestParams
     mkRequest suggestions = J.ShowMessageRequestParams
       { _xtype = J.MtInfo
-      , _message = "Choose a directory to index LIGO files. See [docs/project-indexing.md](https://gitlab.com/serokell/ligo/ligo/-/tree/tooling/tools/lsp/vscode-plugin/docs/project-indexing.md) for more details."
+      , _message = [Log.i|Choose a directory to index LIGO files. See #{projectIndexingMarkdownLink} for more details.|]
       , _actions = Just $ J.MessageActionItem . T.pack . prettyIndexOptions <$> suggestions
       }
 

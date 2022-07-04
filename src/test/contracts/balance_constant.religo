@@ -13,6 +13,6 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 type storage = tez;
 
 let main2 = (_ : unit, _: storage) =>
-  ([]: list (operation), Tezos.balance);
+  ([]: list (operation), Tezos.get_balance ());
 
 let main = (x : (unit, storage)) => main2 (x[0], x[1]);

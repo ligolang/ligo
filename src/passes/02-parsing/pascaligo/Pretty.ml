@@ -214,7 +214,7 @@ and print_D_Fun (node : fun_decl reg) =
   let thread = thread ^^ group return
   in thread
 
-and print_parameters p = print_nsepseq print_param_decl p
+and print_parameters p = print_sepseq print_param_decl p
 
 and print_nsepseq :
   'a.('a -> document) -> ('a, lexeme wrap) Utils.nsepseq -> document =
@@ -225,6 +225,11 @@ and print_nsepseq :
         let elems = Utils.nsepseq_to_list elements
         and sep   = string sep#payload ^^ break 1
         in separate_map sep print elems
+
+and print_sepseq :
+  'a.('a -> document) -> ('a, lexeme wrap) Utils.sepseq -> document =
+  fun print ->
+    function None -> empty | Some seq -> print_nsepseq print seq
 
 and print_param_decl (node : param_decl reg) =
   let {param_kind; pattern; param_type} = node.value in
@@ -534,8 +539,11 @@ and print_I_Call (node : call) = print_call node
 and print_call (node : call) =
   let node              = node.value in
   let lambda, arguments = node in
-  let arguments         = print_tuple print_expr arguments in
+  let arguments         = print_call_args arguments in
   group (print_expr lambda ^^ nest 2 (break 1 ^^ arguments))
+
+and print_call_args (node : call_args) =
+  print_par (print_sepseq print_expr) node
 
 (* Case *)
 
@@ -923,7 +931,7 @@ and print_bin_op (node : lexeme wrap bin_op reg) =
 
 (* Application to data constructors *)
 
-and print_E_App (node : (expr * arguments option) reg) =
+and print_E_App (node : (expr * expr tuple option) reg) =
   match node.value with
     ctor, None -> print_expr ctor
   | ctor, Some tuple ->
@@ -1029,7 +1037,7 @@ and print_E_Fun (node : fun_expr reg) =
   and ret_type    = node.ret_type
   and ret_expr    = print_expr node.return
   in
-  let thread   = string "function " in
+  let thread   = string "function" in
   let thread   = print_type_params thread type_params in
   let thread   = group (thread ^^ nest 2 (break 1 ^^ parameters)) in
   let thread   = print_opt_type thread ret_type in

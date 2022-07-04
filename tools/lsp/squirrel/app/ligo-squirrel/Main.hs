@@ -8,7 +8,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (asks, void, when)
 import Data.Aeson qualified as Aeson
 import Data.Bool (bool)
-import Data.Default
+import Data.Default (def)
 import Data.Foldable (for_)
 import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
@@ -19,13 +19,14 @@ import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import Prettyprinter qualified as PP
-import System.Exit
+import System.Exit (ExitCode (ExitFailure), exitSuccess, exitWith)
+import System.FilePath (splitDirectories, takeDirectory)
 import System.IO (stdin, stdout)
 import UnliftIO.Exception (SomeException (..), displayException, withException)
 import UnliftIO.MVar (modifyMVar_, tryReadMVar)
 
 import AST
-import Cli.Impl (getLigoVersion)
+import Cli (TempSettings, getLigoVersion)
 import Config (Config (..))
 import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
@@ -36,7 +37,7 @@ import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
-import Range
+import Range (Range, fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import Util (toLocation)
 
 main :: IO ()
@@ -158,6 +159,7 @@ handlers = mconcat
   , S.notificationHandler J.SWorkspaceDidChangeWatchedFiles handleDidChangeWatchedFiles
 
   , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
+  , S.requestHandler (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
@@ -240,24 +242,27 @@ handleTypeDefinitionRequest req respond = do
     $(Log.debug) [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
+formatImpl :: J.Uri -> RIO (TempSettings, SomeLIGO Info')
+formatImpl uri = do
+  let nuri = J.toNormalizedUri uri
+  FindContract (Source path _) tree _ <- Document.fetch Document.BestEffort nuri
+  Document.invalidate nuri
+  (, tree) <$> Document.getTempPath (takeDirectory path)
+
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-    nuri = J.toNormalizedUri uri
-  tree <- contractTree <$> Document.fetch Document.BestEffort nuri
-  Document.invalidate nuri
-  respond . Right =<< AST.formatDocument tree
+  (temp, tree) <- formatImpl uri
+  respond . Right =<< AST.formatDocument temp tree
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
 handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-    nuri = J.toNormalizedUri uri
     pos = fromLspRange $ req ^. J.params . J.range
-  tree <- contractTree <$> Document.fetch Document.BestEffort nuri
-  Document.invalidate nuri
-  respond . Right =<< AST.formatAt pos tree
+  (temp, tree) <- formatImpl uri
+  respond . Right =<< AST.formatAt temp pos tree
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
@@ -406,7 +411,9 @@ handleDidChangeWatchedFiles notif = do
   for_ changes \(J.FileEvent (J.toNormalizedUri -> uri) change) ->
     for_ (J.uriToNormalizedFilePath uri) \nfp -> do
       let fp = J.fromNormalizedFilePath nfp
-      bool Indexing.handleProjectFileChanged Document.handleLigoFileChanged (isLigoFile fp) nfp change
+      -- We don't want to react on changes within the temporary directory.
+      when (Document.tempDirTemplate `notElem` splitDirectories fp) $
+        bool Indexing.handleProjectFileChanged Document.handleLigoFileChanged (isLigoFile fp) nfp change
 
 handleCustomMethod'BuildGraph
   :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
@@ -415,8 +422,16 @@ handleCustomMethod'BuildGraph req respond =
     Aeson.Null -> do
       buildGraphM <- tryReadMVar =<< asks reBuildGraph
       respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
-    _ ->
-      respond $ Left $ J.ResponseError J.InvalidRequest "This request expects null" Nothing
+    other -> do
+      let msg = [i|This message expects Null, but got #{other}|]
+      respond $ Left $ J.ResponseError J.InvalidRequest msg Nothing
+
+handleCustomMethod'IndexDirectory
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'IndexDirectory _req respond = do
+  indexOptsM <- tryReadMVar =<< asks reIndexOpts
+  let pathM = Indexing.indexOptionsPath =<< indexOptsM
+  respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

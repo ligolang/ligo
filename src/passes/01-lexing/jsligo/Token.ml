@@ -1044,7 +1044,7 @@ module T =
 
     let mk_lang _lang _region =
       Error (Wrong_lang_syntax
-               "Example: \"(Michelson `{UNPAIR; ADD}`\
+               "Example: \"(Michelson `{UNPAIR; ADD}` \
                          as ((n: [nat, nat]) => nat))\".")
 
     (* PREDICATES *)

@@ -1,3 +1,4 @@
+import { LanguageClient } from 'vscode-languageclient/node'
 import { createRememberingInputBox, createQuickPickBox, Maybe } from '../ui'
 import { CommandRequiredArguments, executeCommand } from './common';
 
@@ -14,10 +15,35 @@ type CompileStorageResult = {
   result: string
 }
 
+export type SilentCompilationOptions = {
+  entrypoint: string,
+  onPath: Maybe<string>,
+  flags: string[]
+}
+
 const ligoBinaryInfo = { name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }
+
+export async function executeSilentCompileContract(
+  client: LanguageClient,
+  options: SilentCompilationOptions,
+) {
+  let args = ['compile', 'contract', '-e', options.entrypoint].concat(options.flags)
+  if (options.onPath) {
+    args = args.concat(['--output-file', options.onPath])
+  }
+
+  return executeCommand(
+    ligoBinaryInfo,
+    (path) => args.concat([path]),
+    client,
+    CommandRequiredArguments.Path,
+    options.onPath === undefined,
+  )
+}
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
+  client: LanguageClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   showOutput = true,
@@ -51,6 +77,7 @@ export async function executeCompileContract(
       '--michelson-format',
       format,
     ],
+    client,
     CommandRequiredArguments.Path,
     showOutput,
     errorPrefix,
@@ -65,6 +92,7 @@ export async function executeCompileContract(
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileStorage(
+  client: LanguageClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   storage: Maybe<string> = undefined,
@@ -108,6 +136,7 @@ export async function executeCompileStorage(
       '--michelson-format',
       format,
     ],
+    client,
     CommandRequiredArguments.Path,
     showOutput,
     errorPrefix,
@@ -121,18 +150,36 @@ export async function executeCompileStorage(
   };
 }
 
-export async function executeCompileExpression() {
-  const listOfExpressions = await executeCommand(ligoBinaryInfo, (path : string) => ['info', 'list-declarations', path], 1, false)
+export async function executeCompileExpression(client: LanguageClient) {
+  const listOfExpressions = await executeCommand(
+    ligoBinaryInfo,
+    (path : string) => ['info', 'list-declarations', path],
+    client,
+    1,
+    false,
+  )
   const exp = listOfExpressions.toString().split(':')[1].replace(/\s+/g, ' ').split(' ').slice(1, -1);
   const maybeExpression = await createQuickPickBox(exp, 'Expressions', 'Possible expressions for this contract')
 
   if (!maybeExpression) {
     return undefined;
   }
-  return executeCommand(ligoBinaryInfo, (path: string, syntax: string) => ['compile', 'expression', syntax, maybeExpression, '--init-file', path], CommandRequiredArguments.PathAndExt);
+  return executeCommand(
+    ligoBinaryInfo,
+    (path: string, syntax: string) => [
+      'compile',
+      'expression',
+      syntax,
+      maybeExpression,
+      '--init-file',
+      path,
+    ],
+    client,
+    CommandRequiredArguments.PathAndExt,
+  )
 }
 
-export async function executeDryRun() {
+export async function executeDryRun(client: LanguageClient) {
   const maybeParameter = await createRememberingInputBox({
     title: 'Parameter',
     placeHolder: 'Entrypoint parameter',
@@ -154,10 +201,14 @@ export async function executeDryRun() {
   if (!maybeParameter || !maybeStorage || !maybeEntrypoint) {
     return undefined;
   }
-  return executeCommand(ligoBinaryInfo, (path: string) => ['run', 'dry-run', path, maybeParameter, maybeStorage, '-e', maybeEntrypoint]);
+  return executeCommand(
+    ligoBinaryInfo,
+    (path: string) => ['run', 'dry-run', path, maybeParameter, maybeStorage, '-e', maybeEntrypoint],
+    client,
+  )
 }
 
-export async function executeEvaluateFunction() {
+export async function executeEvaluateFunction(client: LanguageClient) {
   const maybeEntrypoint = await createRememberingInputBox({
     title: 'Entrypoint',
     placeHolder: 'Enter function to compile',
@@ -173,10 +224,14 @@ export async function executeEvaluateFunction() {
   if (!maybeExpr || !maybeEntrypoint) {
     return undefined;
   }
-  return executeCommand(ligoBinaryInfo, (path: string) => ['run', 'evaluate-call', path, maybeExpr, '-e', maybeEntrypoint]);
+  return executeCommand(
+    ligoBinaryInfo,
+    (path: string) => ['run', 'evaluate-call', path, maybeExpr, '-e', maybeEntrypoint],
+    client,
+  )
 }
 
-export async function executeEvaluateValue() {
+export async function executeEvaluateValue(client: LanguageClient) {
   const maybeEntrypoint = await createRememberingInputBox({
     title: 'Entrypoint',
     placeHolder: 'Enter an value or a function to compile',
@@ -186,5 +241,9 @@ export async function executeEvaluateValue() {
   if (!maybeEntrypoint) {
     return undefined;
   }
-  return executeCommand(ligoBinaryInfo, (path: string) => ['run', 'evaluate-expr', path, '-e', maybeEntrypoint]);
+  return executeCommand(
+    ligoBinaryInfo,
+    (path: string) => ['run', 'evaluate-expr', path, '-e', maybeEntrypoint],
+    client,
+  )
 }

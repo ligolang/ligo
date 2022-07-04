@@ -21,7 +21,6 @@ type self_ast_typed_error = [
   | `Self_ast_typed_expected_pair_in of Location.t * [`View | `Contract]
   | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_pattern_matching_anomaly of Location.t
-  | `Self_ast_typed_expected_obj_ligo of Location.t
   | `Self_ast_typed_storage_view_contract of Location.t * Ast_typed.expression_variable * Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [`In | `Out]
 ] [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
@@ -92,7 +91,7 @@ let error_ppformat : display_format:string display_format ->
         desc
     | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\". @]"
         Snippet.pp e.location
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_bad_view_io (entrypoint, e) ->
@@ -102,7 +101,7 @@ let error_ppformat : display_format:string display_format ->
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\".@.\
         We expected a list of operations but we got %a@]"
         Snippet.pp e.location
         PP.expression_variable entrypoint
@@ -123,10 +122,6 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_typed_expected_pair_out loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as return value.@]"
-        Snippet.pp loc
-    | `Self_ast_typed_expected_obj_ligo loc ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid call to Test primitive.@]"
         Snippet.pp loc
   )
 
@@ -304,16 +299,6 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_expected_pair_out loc ->
     let message = `String "badly typed contract" in
     let description = `String "expected a pair as return type" in
-    let content = `Assoc [
-       ("message", message);
-       ("location", Location.to_yojson loc);
-       ("description", description);
-       ]
-    in
-    json_error ~stage ~content
-  | `Self_ast_typed_expected_obj_ligo loc ->
-    let message = `String "unexpected Test primitive" in
-    let description = `String "these Test primitive or type cannot be used in code to be compiled or run" in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);

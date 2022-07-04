@@ -74,7 +74,7 @@ let%expect_test _ =
 
 (* view restrictions on primitives *)
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view1" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view1" ; "--protocol" ; "jakarta" ] ;
   [%expect {| 
     File "../../test/contracts/view_restrictions.mligo", line 7, characters 10-70:
       6 | let bad_view1 (n,s: int * int) : int =
@@ -86,7 +86,7 @@ let%expect_test _ =
           - Tezos.self can't be used because the entry-point does not make sense in a view |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view2" ] ;
+  run_ligo_bad [ "compile" ; "contract" ; contract "view_restrictions.mligo" ; "--views" ; "bad_view2" ; "--protocol" ; "jakarta"  ] ;
   [%expect {| 
     File "../../test/contracts/view_restrictions.mligo", line 17, characters 26-47:
      16 | let bad_view2 ((),_: unit * int) : unit contract =
@@ -116,3 +116,11 @@ let%expect_test _ =
                    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } ;
                  PAIR } ;
              PACK } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "view_tuple_storage.mligo" ] ;
+  [%expect {|
+    { parameter int ;
+      storage (pair (pair (pair string nat) string nat) string) ;
+      code { CDR ; NIL operation ; PAIR } ;
+      view "v" int mutez { DROP ; PUSH mutez 1000000 } } |}]

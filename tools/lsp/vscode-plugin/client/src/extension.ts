@@ -16,6 +16,8 @@ import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
+import { extensions } from './common'
+
 let client: LanguageClient;
 let ligoOptionButton: vscode.StatusBarItem;
 let deployOptionButton: vscode.StatusBarItem;
@@ -32,7 +34,7 @@ function updateLigoButton(button: vscode.StatusBarItem) {
     return;
   }
 
-  if (ext === '.ligo' || ext === '.mligo' || ext === '.religo') {
+  if (extensions.includes(ext)) {
     button.show();
   } else {
     button.hide();
@@ -92,6 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
       { scheme: 'file', language: 'ligo' },
       { scheme: 'file', language: 'mligo' },
       { scheme: 'file', language: 'religo' },
+      { scheme: 'file', language: 'jsligo' },
     ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace

@@ -1,0 +1,6 @@
+type t = ["One", int] | ["Two", nat] | ["Three"]
+
+let s = (x : t) : unit => 
+  match(x, {
+    Two: (_ : nat) => unit,
+  })

@@ -93,8 +93,6 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     self_binder [fun_name; binder.var] result
   | E_let_in { let_binder; rhs; let_result; attr = _ } ->
     usages [self rhs; self_binder [let_binder.var] let_result]
-  | E_type_in { type_binder = _; rhs = _; let_result } ->
-    self let_result
   | E_raw_code _ ->
     Unused
   | E_constructor { constructor = _; element } ->
@@ -229,9 +227,6 @@ let rec uncurry_in_expression ~raise
     let rhs = self rhs in
     let let_result = self_binder [let_binder.var] let_result in
     return (E_let_in { let_binder; rhs; let_result; attr })
-  | E_type_in { type_binder; rhs; let_result } ->
-    let let_result = self let_result in
-    return (E_type_in { type_binder; rhs; let_result })
   | E_raw_code _ ->
     return_id
   | E_constructor { constructor; element } ->

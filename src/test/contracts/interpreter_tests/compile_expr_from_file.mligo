@@ -2,7 +2,6 @@ let test1 =
   type r_comb = [@layout:comb] { one : int ; two : nat ; three : string ; four : bytes ; five : unit } in
   let d_one = Test.compile_value (1 + 3 + 5) in
   let v = {one = 1 + 3 + 5 ; two = 1n +2n ; three = "a"^"b" ; four = 0xFF00 ; five = ()} in
-  let x = Test.run (fun () -> {one = 1 + 3 + 5 ; two = 1n +2n ; three = "a"^"b" ; four = 0xFF00 ; five = ()}) () in
   let ret = Test.run (fun (x:r_comb) -> x.one ) v in
   assert (Test.michelson_equal d_one ret)
 

@@ -1,7 +1,7 @@
 
 
  function main ( const i : int ) : int is
- block {
+ {
  var _j : int := 0 ;
  var recursive k : int := 1 ;
  _j := k + i ;

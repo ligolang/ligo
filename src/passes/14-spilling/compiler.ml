@@ -17,169 +17,10 @@ let temp_unwrap_loc_list = List.map ~f:Location.unwrap
 
 let compile_variable : AST.expression_variable -> Mini_c.expression_variable = fun v -> v
 
-let compile_constant' : AST.constant' -> constant' = function
-  | C_UNIT -> C_UNIT
-  | C_NIL -> C_NIL
-  | C_SOME -> C_SOME
-  | C_NONE -> C_NONE
-  | C_UNOPT -> C_UNOPT
-  | C_UNOPT_WITH_ERROR -> C_UNOPT_WITH_ERROR
-  | C_ASSERT_INFERRED -> C_ASSERT_INFERRED
-  | C_FAILWITH -> C_FAILWITH
-  | C_UPDATE -> C_UPDATE
-  (* Loops *)
-  | C_ITER -> C_ITER
-  | C_LOOP_LEFT -> C_LOOP_LEFT
-  | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
-  | C_LOOP_STOP -> C_LOOP_STOP
-  | C_FOLD -> C_FOLD
-  | C_FOLD_LEFT -> C_FOLD_LEFT
-  | C_FOLD_RIGHT -> C_FOLD_RIGHT
-  (* MATH *)
-  | C_NEG -> C_NEG
-  | C_ADD -> C_ADD
-  | C_SUB -> C_SUB
-  | C_MUL -> C_MUL
-  | C_DIV -> C_DIV
-  | C_MOD -> C_MOD
-  | C_SUB_MUTEZ -> C_SUB_MUTEZ
-  (* LOGIC *)
-  | C_NOT -> C_NOT
-  | C_AND -> C_AND
-  | C_OR -> C_OR
-  | C_XOR -> C_XOR
-  | C_LSL -> C_LSL
-  | C_LSR -> C_LSR
-  (* COMPARATOR *)
-  | C_EQ -> C_EQ
-  | C_NEQ -> C_NEQ
-  | C_LT -> C_LT
-  | C_GT -> C_GT
-  | C_LE -> C_LE
-  | C_GE -> C_GE
-  (* Bytes/ String *)
-  | C_CONCAT -> C_CONCAT
-  | C_BYTES_UNPACK -> C_BYTES_UNPACK
-  | C_CONS -> C_CONS
-  (* Pair *)
-  | C_PAIR -> C_PAIR
-  | C_CAR -> C_CAR
-  | C_CDR -> C_CDR
-  | C_LEFT -> C_LEFT
-  | C_RIGHT -> C_RIGHT
-  | C_TRUE -> C_TRUE
-  | C_FALSE -> C_FALSE
-  (* Set *)
-  | C_SET_EMPTY -> C_SET_EMPTY
-  | C_SET_LITERAL -> C_SET_LITERAL
-  | C_SET_ADD -> C_SET_ADD
-  | C_SET_REMOVE -> C_SET_REMOVE
-  | C_SET_ITER -> C_SET_ITER
-  | C_SET_FOLD -> C_SET_FOLD
-  | C_SET_FOLD_DESC -> C_SET_FOLD_DESC
-  | C_SET_MEM -> C_SET_MEM
-  | C_SET_UPDATE -> C_SET_UPDATE
-  (* List *)
-  | C_LIST_EMPTY -> C_LIST_EMPTY
-  | C_LIST_LITERAL -> C_LIST_LITERAL
-  | C_LIST_ITER -> C_LIST_ITER
-  | C_LIST_MAP -> C_LIST_MAP
-  | C_LIST_FOLD -> C_LIST_FOLD
-  | C_LIST_FOLD_LEFT -> C_LIST_FOLD_LEFT
-  | C_LIST_FOLD_RIGHT -> C_LIST_FOLD_RIGHT
-  | C_LIST_HEAD_OPT -> C_LIST_HEAD_OPT
-  | C_LIST_TAIL_OPT -> C_LIST_TAIL_OPT
-  (* Maps *)
-  | C_MAP -> C_MAP
-  | C_MAP_EMPTY -> C_MAP_EMPTY
-  | C_MAP_LITERAL -> C_MAP_LITERAL
-  | C_MAP_GET -> C_MAP_GET
-  | C_MAP_GET_FORCE -> C_MAP_GET_FORCE
-  | C_MAP_ADD -> C_MAP_ADD
-  | C_MAP_REMOVE -> C_MAP_REMOVE
-  | C_MAP_UPDATE -> C_MAP_UPDATE
-  | C_MAP_ITER -> C_MAP_ITER
-  | C_MAP_MAP -> C_MAP_MAP
-  | C_MAP_FOLD -> C_MAP_FOLD
-  | C_MAP_FIND -> C_MAP_FIND
-  | C_MAP_FIND_OPT -> C_MAP_FIND_OPT
-  (* Big Maps *)
-  | C_BIG_MAP -> C_BIG_MAP
-  | C_BIG_MAP_EMPTY -> C_BIG_MAP_EMPTY
-  | C_BIG_MAP_LITERAL -> C_BIG_MAP_LITERAL
-  (* Blockchain *)
-  | C_CALL -> C_CALL
-  | C_CONTRACT -> C_CONTRACT
-  | C_CONTRACT_WITH_ERROR -> C_CONTRACT_WITH_ERROR
-  | C_CONTRACT_OPT -> C_CONTRACT_OPT
-  | C_CONTRACT_ENTRYPOINT -> C_CONTRACT_ENTRYPOINT
-  | C_CONTRACT_ENTRYPOINT_OPT -> C_CONTRACT_ENTRYPOINT_OPT
-  | C_ADDRESS -> C_ADDRESS
-  | C_SELF -> C_SELF
-  | C_SELF_ADDRESS -> C_SELF_ADDRESS
-  | C_IMPLICIT_ACCOUNT -> C_IMPLICIT_ACCOUNT
-  | C_SET_DELEGATE -> C_SET_DELEGATE
-  | C_CREATE_CONTRACT -> C_CREATE_CONTRACT
-  | C_MAP_GET_AND_UPDATE -> C_MAP_GET_AND_UPDATE
-  | C_BIG_MAP_GET_AND_UPDATE -> C_BIG_MAP_GET_AND_UPDATE
-  | C_SAPLING_EMPTY_STATE -> C_SAPLING_EMPTY_STATE
-  | C_SAPLING_VERIFY_UPDATE -> C_SAPLING_VERIFY_UPDATE
-  | C_POLYMORPHIC_ADD -> C_POLYMORPHIC_ADD
-  | C_POLYMORPHIC_SUB -> C_POLYMORPHIC_SUB
-  | C_OPEN_CHEST -> C_OPEN_CHEST
-  | C_VIEW -> C_VIEW
-  | C_OPTION_MAP -> C_OPTION_MAP
-  | C_GLOBAL_CONSTANT -> C_GLOBAL_CONSTANT
-  | (   C_TEST_ORIGINATE
-      | C_TEST_SET_SOURCE
-      | C_TEST_SET_BAKER
-      | C_TEST_EXTERNAL_CALL_TO_CONTRACT
-      | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN
-      | C_TEST_EXTERNAL_CALL_TO_ADDRESS
-      | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-      | C_TEST_GET_STORAGE
-      | C_TEST_GET_STORAGE_OF_ADDRESS
-      | C_TEST_GET_BALANCE
-      | C_TEST_MICHELSON_EQUAL
-      | C_TEST_LOG
-      | C_TEST_GET_NTH_BS
-      | C_TEST_STATE_RESET
-      | C_TEST_BOOTSTRAP_CONTRACT
-      | C_TEST_NTH_BOOTSTRAP_CONTRACT
-      | C_TEST_LAST_ORIGINATIONS
-      | C_TEST_RUN
-      | C_TEST_EVAL
-      | C_TEST_COMPILE_CONTRACT
-      | C_TEST_DECOMPILE
-      | C_TEST_TO_CONTRACT
-      | C_TEST_TO_ENTRYPOINT
-      | C_TEST_TO_TYPED_ADDRESS
-      | C_TEST_RANDOM
-      | C_TEST_SET_BIG_MAP
-      | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
-      | C_TEST_ORIGINATE_FROM_FILE
-      | C_TEST_COMPILE_META_VALUE
-      | C_TEST_MUTATE_VALUE
-      | C_TEST_MUTATION_TEST
-      | C_TEST_MUTATION_TEST_ALL
-      | C_TEST_CAST_ADDRESS
-      | C_TEST_CREATE_CHEST
-      | C_TEST_CREATE_CHEST_KEY
-      | C_TEST_ADD_ACCOUNT
-      | C_TEST_NEW_ACCOUNT
-      | C_TEST_BAKER_ACCOUNT
-      | C_TEST_REGISTER_DELEGATE
-      | C_TEST_BAKE_UNTIL_N_CYCLE_END
-      | C_TEST_SAVE_MUTATION
-      | C_TEST_GET_VOTING_POWER
-      | C_TEST_GET_TOTAL_VOTING_POWER
-      | C_TEST_REGISTER_CONSTANT
-      | C_TEST_CONSTANT_TO_MICHELSON
-      | C_TEST_REGISTER_FILE_CONSTANTS
-      | C_TEST_PUSH_CONTEXT
-      | C_TEST_POP_CONTEXT
-    ) as c ->
-    failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
+let compile_constant' : constant' -> constant' = fun x ->
+  if AST.ppx_is_only_interpreter x then
+    failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant x)
+  else x
 
 let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   let compile_type = compile_type ~raise in
@@ -193,6 +34,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     match injection , parameters with
     | (Bool,            []) -> return (T_base TB_bool)
     | (Unit,            []) -> return (T_base TB_unit)
+    | (Michelson_program,[]) -> return (T_base TB_unit) (* hit when testing framwork need to compile 'failwith "x" : michelson_program' *)
     | (Int,             []) -> return (T_base TB_int)
     | (Nat,             []) -> return (T_base TB_nat)
     | (Timestamp,       []) -> return (T_base TB_timestamp)
@@ -243,23 +85,23 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
-        Ticket                     | Michelson_program    | Sapling_state       |
+        Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             |
-        List            | External _), [])
+        List            | External _ | Gen), [])
         -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
-      Baker_hash   | Pvss_key  |
+      Baker_hash   | Pvss_key  | Michelson_contract   |
       Chest        | Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key |
+      Never        | Chest_key | Gen                  |
       Typed_address| Mutation  | Bytes                |
       List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
   )
@@ -377,9 +219,6 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     let rhs' = self rhs in
     let result' = self let_result in
     return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
-  | E_type_in {type_binder=_; rhs=_; let_result} ->
-    let result' = self let_result in
-    result'
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (compile_variable name)
@@ -544,15 +383,28 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
               let i' = self i in
               return @@ E_iterator (iterator_name , f' , i')
           )
+          | (code :: args), C_CREATE_CONTRACT -> (
+              let code' = expression_to_iterator_body code in
+              let args' = List.map ~f:self args in
+              let code_type = compile_type ~raise code.type_expression in
+              let (code_input_type, _) =
+                trace_option ~raise (corner_case ~loc:__LOC__ "Wrong type : expecting function for CREATE_CONTRACT script")
+                  (get_t_function code_type) in
+              let (p, s) =
+                trace_option ~raise (corner_case ~loc:__LOC__ "Wrong type : expecting function for CREATE_CONTRACT script")
+                  (get_t_pair code_input_type) in
+              return @@ E_create_contract (p, s, code', args')
+            )
           | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold, fold_left, fold_right,loop_left) = iterator_generator C_ITER,
-                                                       iterator_generator C_MAP,
-                                                       iterator_generator C_FOLD,
-                                                       iterator_generator C_FOLD_LEFT,
-                                                       iterator_generator C_FOLD_RIGHT,
-                                                       iterator_generator C_LOOP_LEFT
-                                                       in
+      let iter = iterator_generator C_ITER in
+      let map = iterator_generator C_MAP in
+      let fold = iterator_generator C_FOLD in
+      let fold_left = iterator_generator C_FOLD_LEFT in
+      let fold_right = iterator_generator C_FOLD_RIGHT in
+      let loop_left = iterator_generator C_LOOP_LEFT in
+      (* wait what *)
+      let create_contract = iterator_generator C_CREATE_CONTRACT in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -568,6 +420,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
       | (C_SET_FOLD_DESC , lst) -> fold_right lst
       | (C_LOOP_LEFT, lst) -> loop_left lst
+      | (C_CREATE_CONTRACT , lst) -> create_contract lst
       | _ -> (
           let lst' = List.map ~f:(self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}

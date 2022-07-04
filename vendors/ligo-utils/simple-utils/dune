@@ -10,5 +10,6 @@
    result
    unix
    str)
+  (preprocess (pps ppx_hash))
   (flags (:standard -open Core))
 )

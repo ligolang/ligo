@@ -40,6 +40,13 @@ let uncons = function
   | hd :: tl ->
      Some (hd, tl)
 
+let repeat x n =
+  let rec aux n xs = 
+    if n <= 0 then xs
+    else aux (n - 1) (x::xs)
+  in
+  aux n []
+
 module Ne = struct
 
   type 'a t = 'a * 'a List.t
@@ -77,5 +84,20 @@ module Ne = struct
     match cmp hd hd' with
       0 -> compare cmp tl tl'
     | c -> c
-
+  
+  let length = fun (_,tl) -> 1 + List.length tl
+  
+  (* [head_permute] [lst] : if lst == [A ; B ; C] returns [A ; B ; C] [B ; C ; A] [C ; A ; B] *)
+  let head_permute : 'a t -> 'a t t = fun lst ->
+    let rec aux (acc: 'a t t) (lst: 'a t) =
+      if length acc = length lst then acc
+      else (
+        let (hd,tl) = lst in
+        (* match lst with *)
+        (* | [] -> raise (Failure "List.head_permute") *)
+        (* | hd::tl -> *)
+          let p = append (of_list tl) (singleton hd) in aux (cons p acc) p
+      )
+    in
+    rev @@ aux (singleton lst) lst
 end

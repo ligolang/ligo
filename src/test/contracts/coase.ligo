@@ -46,16 +46,15 @@ type parameter is
 
 function transfer_single (const action : action_transfer_single;
                           var s : storage) : return is
-  block {
+  {
     var cards : cards := s.cards;
     var card : card :=
       case cards[action.card_to_transfer] of [
         Some (card) -> card
       | None -> (failwith ("transfer_single: No card.") : card)
       ];
-    if card.card_owner =/= Tezos.sender then
-      failwith ("This card doesn't belong to you")
-    else skip;
+    if card.card_owner =/= Tezos.get_sender() then
+      failwith ("This card doesn't belong to you");
     card.card_owner := action.destination;
     cards[action.card_to_transfer] := card;
     s.cards := cards
@@ -63,15 +62,14 @@ function transfer_single (const action : action_transfer_single;
 
 function sell_single (const action : action_sell_single;
                       var s : storage) : return is
-  block {
+  {
     const card : card =
       case s.cards[action.card_to_sell] of [
         Some (card) -> card
       | None -> (failwith ("sell_single: No card.") : card)
       ];
-    if card.card_owner =/= Tezos.sender
-    then failwith ("This card doesn't belong to you")
-    else skip;
+    if card.card_owner =/= Tezos.get_sender()
+    then failwith ("This card doesn't belong to you");
     var card_pattern : card_pattern :=
       case s.card_patterns[card.card_pattern] of [
         Some (pattern) -> pattern
@@ -86,7 +84,7 @@ function sell_single (const action : action_sell_single;
     s.cards := cards;
     const price : tez = card_pattern.coefficient * card_pattern.quantity;
     const receiver : contract (unit) =
-      case (Tezos.get_contract_opt (Tezos.sender) : option (contract (unit))) of [
+      case (Tezos.get_contract_opt (Tezos.get_sender()) : option (contract (unit))) of [
         Some (contract) -> contract
       | None -> (failwith ("sell_single: No contract.") : contract (unit))
       ];
@@ -96,7 +94,7 @@ function sell_single (const action : action_sell_single;
 
 function buy_single (const action : action_buy_single;
                      var s : storage) : return is
-  block {
+  {
     // Check funds
     var card_pattern : card_pattern :=
       case s.card_patterns[action.card_to_buy] of [
@@ -105,7 +103,7 @@ function buy_single (const action : action_buy_single;
       ];
     const price : tez =
       card_pattern.coefficient * (card_pattern.quantity + 1n);
-    if price > Tezos.amount then failwith ("Not enough money") else skip;
+    if price > Tezos.get_amount() then failwith ("Not enough money");
     // Increase quantity
     card_pattern.quantity := card_pattern.quantity + 1n;
     var card_patterns : card_patterns := s.card_patterns;
@@ -114,7 +112,7 @@ function buy_single (const action : action_buy_single;
     // Add card
     var cards : cards := s.cards;
     cards[s.next_id] := record [
-      card_owner   = Tezos.sender;
+      card_owner   = Tezos.get_sender();
       card_pattern = action.card_to_buy
     ];
     s.cards := cards;

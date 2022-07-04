@@ -11,7 +11,7 @@ let decompile_value ~raise (output_type:Ast_aggregated.type_expression) (ty, val
   let core       = Checking.untype_expression typed in
   core
 
-(* this function is used by - today dry-run - when the application of a contract to its arguments
+(* this function is used when applying a contract to its arguments (today dry-run)
    is done at michelson level (i.e. pushing the arguments onto the stack).
 *)
 let decompile_value_from_contract_execution ~raise (output_type: Ast_aggregated.type_expression) runned_result =

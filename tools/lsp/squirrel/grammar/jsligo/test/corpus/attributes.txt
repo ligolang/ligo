@@ -12,9 +12,9 @@ type foo = /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (ConstrName))
+          (ConstrNameType))
         (variant
-          (ConstrName)))))
+          (ConstrNameType)))))
 
 =========
 sum
@@ -29,8 +29,8 @@ type foo = /* @boom */ | ["True"] | ["False"]
     (TypeName)
       (sum_type
         (attr)
-        (variant (ConstrName))
-        (variant (ConstrName)))))
+        (variant (ConstrNameType))
+        (variant (ConstrNameType)))))
 
 =========
 constr with bar
@@ -46,9 +46,9 @@ type foo = | /* @boom */ ["True"] | ["False"]
       (sum_type
         (variant
           (attr)
-          (ConstrName))
+          (ConstrNameType))
         (variant
-          (ConstrName)))))
+          (ConstrNameType)))))
 
 =========
 record
@@ -63,12 +63,11 @@ type person = /* @layout:comb */ {
 (source_file
   (type_decl
     (TypeName)
-    (object_type
+    (record_type
       (attr)
       (field_decl
         (FieldName)
-        (type_annotation
-          (TypeName))))))
+        (TypeName)))))
 
 =========
 field twice
@@ -83,12 +82,12 @@ type person = {
 (source_file
   (type_decl
     (TypeName)
-    (object_type
+    (record_type
       (field_decl
         (attr)
         (attr)
         (FieldName)
-        (type_annotation (TypeName))))))
+        (TypeName)))))
 
 =========
 let decl
@@ -99,10 +98,10 @@ let decl
 ---
 
 (source_file
-  (let_decl
+  (toplevel_binding
     (attr)
-    (var_pattern (Name))
-    (type_annotation (TypeName))
+    (var_pattern (NameDecl))
+    (TypeName)
     (Int)))
 
 =========
@@ -114,11 +113,11 @@ let decl twice
 ---
 
 (source_file
-  (let_decl
+  (toplevel_binding
     (attr)
     (attr)
-    (var_pattern (Name))
-    (type_annotation (TypeName))
+    (var_pattern (NameDecl))
+    (TypeName)
     (Int)))
 
 =========
@@ -134,20 +133,19 @@ let bar = (b : int) : int => {
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
-        (Name)
-        (type_annotation (TypeName)))
-      (type_annotation
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
         (TypeName))
-          (body
-      (let_decl (attr) (attr)
-        (var_pattern (Name))
-        (Int))
-      (return_statement
-        (Name))))))
+      (TypeName)
+        (block_statement
+          (let_binding
+            (attr) (attr)
+            (var_pattern (NameDecl))
+            (Int))
+          (return_statement (Name))))))
 
 =========
 const expr
@@ -162,20 +160,19 @@ const bar = (b : int) : int => {
 ---
 
 (source_file
-  (const_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
-        (Name)
-        (type_annotation (TypeName)))
-      (type_annotation
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
         (TypeName))
-          (body
-      (const_decl (attr) (attr)
-        (var_pattern (Name))
-        (Int))
-      (return_statement
-        (Name))))))
+      (TypeName)
+      (block_statement
+        (const_binding
+          (attr) (attr)
+          (var_pattern (NameDecl))
+          (Int))
+        (return_statement (Name))))))
 
 =========
 const decl
@@ -186,10 +183,10 @@ const decl
 ---
 
 (source_file
-  (const_decl
+  (toplevel_binding
     (attr)
-    (var_pattern (Name))
-    (type_annotation (TypeName))
+    (var_pattern (NameDecl))
+    (TypeName)
     (Int)))
 
 =========
@@ -201,9 +198,113 @@ const decl twice
 ---
 
 (source_file
-  (const_decl
+  (toplevel_binding
     (attr)
     (attr)
-    (var_pattern (Name))
-    (type_annotation (TypeName))
+    (var_pattern (NameDecl))
+    (TypeName)
     (Int)))
+
+=========
+inline annotation
+=========
+
+// @inline
+const fst = (p: [nat, nat]): nat => p[0];
+
+---
+
+(source_file
+  (toplevel_binding
+    (attr)
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (tuple_type (TypeName) (TypeName)))
+        (TypeName)
+        (indexing
+          (Name)
+          (Int)))))
+
+=========
+variant type layout:comb annotation
+=========
+
+type animal =
+// @layout:comb
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+
+---
+
+(source_file
+  (type_decl (TypeName)
+  (sum_type
+    (attr)
+    (variant (ConstrNameType))
+    (variant (ConstrNameType))
+    (variant (ConstrNameType)))))
+
+=========
+recod type layout:comb annotation
+=========
+
+type artist =
+// @layout:comb
+{
+  genre : string,
+  since : timestamp,
+  name  : string
+};
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (record_type
+      (attr)
+      (field_decl (FieldName) (TypeName))
+      (field_decl (FieldName) (TypeName))
+      (field_decl (FieldName) (TypeName)))))
+
+=========
+variant type @annot
+=========
+
+type animal =
+| /* @annot:memory */ ["Elephant"]
+| /* @annot:face */ ["Dog"]
+| /* @annot:fish */ ["Cat"]
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (sum_type
+      (variant (attr) (ConstrNameType))
+      (variant (attr) (ConstrNameType))
+      (variant (attr) (ConstrNameType)))))
+
+=========
+record type @annot
+=========
+
+type artist = {
+  /* @annot:style */ genre: string,
+  /* @annot:from */ since: timestamp,
+  /* @annot:performer */ name: string
+}
+
+---
+
+(source_file
+  (type_decl
+    (TypeName)
+    (record_type
+      (field_decl (attr) (FieldName) (TypeName))
+      (field_decl (attr) (FieldName) (TypeName))
+      (field_decl (attr) (FieldName) (TypeName)))))

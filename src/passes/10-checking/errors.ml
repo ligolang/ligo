@@ -5,6 +5,42 @@ open Simple_utils.Display
 
 let stage = "typer"
 
+let type_improve t =
+  let open Ast_typed in
+  let make_type (module_path, element) =
+    match module_path with
+      [] -> (t_variable element ())
+    | _ -> failwith "toto" in
+  match t.type_content with
+  | T_constant { parameters ; _ } when List.length parameters = 0 -> t
+  | _ ->
+  match Context.Hashes.find_type t with
+  | Some t -> let t = make_type t in { t with type_meta = t.type_meta ; orig_var = t.orig_var }
+  | _ -> t
+
+let rec type_mapper ~f (t : Ast_typed.type_expression) =
+  let open Ast_typed in
+  let t = f t in
+  match t.type_content with
+  | T_arrow { type1 ; type2 } ->
+     let type1 = type_mapper ~f type1 in
+     let type2 = type_mapper ~f type2 in
+     { t with type_content = T_arrow { type1 ; type2 } }
+  | T_constant { language ; injection ; parameters } ->
+     let parameters = List.map ~f:(type_mapper ~f) parameters in
+     { t with type_content = T_constant { language ; injection ; parameters } }
+  | T_record { content ; layout } ->
+     let content = LMap.map (fun { associated_type ; michelson_annotation ; decl_pos } -> { associated_type = type_mapper ~f associated_type ; michelson_annotation ; decl_pos }) content in
+     { t with type_content = T_record { content ; layout } }
+  | T_sum { content ; layout } ->
+     let content = LMap.map (fun { associated_type ; michelson_annotation ; decl_pos } -> { associated_type = type_mapper ~f associated_type ; michelson_annotation ; decl_pos }) content in
+     { t with type_content = T_sum { content ; layout } }
+  | _ -> t
+
+let type_improve t =
+  Context.Hashes.hash_types ();
+  type_mapper ~f:type_improve t
+
 type typer_error = [
   | `Typer_missing_funarg_annotation of Ast_typed.expression_variable
   | `Typer_unbound_module_variable of Ast_typed.module_variable * Location.t
@@ -36,6 +72,8 @@ type typer_error = [
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
+  | `Typer_pattern_missing_cases of Location.t * Ast_core.type_expression Ast_core.pattern list
+  | `Typer_pattern_redundant_case of Location.t
   | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_constant_since_protocol of Location.t * string * Environment.Protocols.t
@@ -150,13 +188,13 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression expected
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression (type_improve expected)
+        Ast_typed.PP.type_expression (type_improve actual)
     | `Typer_should_be_a_function_type (actual,e) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\". @]"
         Snippet.pp e.location
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression (type_improve actual)
     | `Typer_bad_record_access (field,e,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid record field \"%a\" in record \"%a\". @]"
@@ -171,7 +209,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Bounded loop over a value with an incorrect type.@.Expected a value with type: \"list\", \"set\" or \"map\", but got a value of type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression t
+        Ast_typed.PP.type_expression (type_improve t)
     | `Typer_expression_tracer (_,err) -> error_ppformat ~display_format f err
     | `Typer_not_annotated l ->
       Format.fprintf f "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
@@ -184,18 +222,18 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression_orig expected
-        Ast_typed.PP.type_expression_orig actual
+        Ast_typed.PP.type_expression_orig (type_improve expected)
+        Ast_typed.PP.type_expression_orig (type_improve actual)
     | `Typer_expected_record (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument of type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression t
+        Ast_typed.PP.type_expression (type_improve t)
     | `Typer_expected_variant (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected a variant, but got an argument of type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression t
+        Ast_typed.PP.type_expression (type_improve t)
     | `Typer_wrong_param_number (loc,name,expected,actual) ->
       Format.fprintf f
         "@[<hv>%a@.Function \"%s\" called with wrong number of arguments.@.Expected %d arguments, got %d arguments. @]"
@@ -206,24 +244,24 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected a map, but got an argument of type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression e
+        Ast_typed.PP.type_expression (type_improve e)
     | `Typer_expected_option (loc,e) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected an option, but got an argument of type \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression e
+        Ast_typed.PP.type_expression (type_improve e)
     | `Typer_not_matching (loc,t1,t2) ->
       Format.fprintf f
         "@[<hv>%a@.These types are not matching:@. - %a@. - %a@]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression t1
-        Ast_typed.PP.type_expression t2
+        Ast_typed.PP.type_expression (type_improve t1)
+        Ast_typed.PP.type_expression (type_improve t2)
     | `Typer_uncomparable_types (loc,a,b) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression a
-        Ast_typed.PP.type_expression b
+        Ast_typed.PP.type_expression (type_improve a)
+        Ast_typed.PP.type_expression (type_improve b)
     | `Typer_typeclass_error (loc,exps,acts) ->
       let open Simple_utils.PP_helpers in
       let printl printer ppf args =
@@ -248,10 +286,19 @@ let rec error_ppformat : display_format:string display_format ->
       in
       Format.fprintf f
         "@[<hv>%a@.Pattern %anot of the expected type %a @]"
-        Snippet.pp p.location pf p Ast_typed.PP.type_expression t
+        Snippet.pp p.location pf p Ast_typed.PP.type_expression (type_improve t)
     | `Typer_redundant_pattern loc ->
       Format.fprintf f
         "@[<hv>%a@.Redundant pattern matching@]"
+        Snippet.pp loc
+    | `Typer_pattern_missing_cases (loc, ps) ->
+      Format.fprintf f
+        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%a@]"
+        Snippet.pp loc
+        Ast_typed.PP.pp_patterns ps
+    | `Typer_pattern_redundant_case loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Error : this match case is unused.@]"
         Snippet.pp loc
     | `Typer_constant_since_protocol (loc, constant, protocol) ->
       let protocol_name = Environment.Protocols.variant_to_string protocol in
@@ -468,8 +515,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_assert_equal (loc,expected,actual) ->
     let message = `String "bad types" in
-    let expected = Ast_typed.Yojson.type_expression expected in
-    let actual = Ast_typed.Yojson.type_expression actual in
+    let expected = Ast_typed.Yojson.type_expression (type_improve expected) in
+    let actual = Ast_typed.Yojson.type_expression (type_improve actual) in
     let content = `Assoc [
       ("location", Location.to_yojson loc);
       ("message" , message);
@@ -608,6 +655,22 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("type", t);
       ("pattern", pattern);
       ("location", Location.to_yojson p.location);
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_missing_cases (loc,ps) ->
+    let message = `String "pattern-matching is not exhaustive." in
+    let pattern = List.map ps ~f:(Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) in
+    let content = `Assoc [
+      ("message", message);
+      ("patterns", `List pattern);
+      ("location", Location.to_yojson loc);
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_redundant_case loc -> 
+    let message = `String "redundant case in pattern-matching" in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
   | `Typer_constant_since_protocol (loc, constant, protocol) ->

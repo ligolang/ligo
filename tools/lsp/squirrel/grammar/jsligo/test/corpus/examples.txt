@@ -16,35 +16,38 @@ import US_DOLLAR = EURO;
 type storage = EURO.t;
 let uno : storage = EURO.one;
 
+let foo = x as my_typ;
+
 ---
 (source_file
   (namespace_statement (ModuleName)
-    (export_statement
-      (type_decl (TypeName) (TypeName)))
-    (export_statement
-      (let_decl
-        (var_pattern (Name))
-        (type_annotation (TypeName))
-        (type_as_annotation (Int) (TypeName))))
+    (type_decl (TypeName) (TypeName))
+    (toplevel_binding
+      (var_pattern (NameDecl))
+      (TypeName)
+      (Nat))
     (namespace_statement (ModuleName)
-      (let_decl
-        (var_pattern (Name))
-        (type_annotation (TypeName))
-        (type_as_annotation (Int) (TypeName)))
-      (let_decl
-        (var_pattern (Name))
-        (type_annotation (TypeName))
-        (type_as_annotation (Int) (TypeName)))))
+      (toplevel_binding
+        (var_pattern (NameDecl))
+        (TypeName)
+        (Nat))
+      (toplevel_binding
+        (var_pattern (NameDecl))
+        (TypeName)
+        (Nat))))
   (import_statement (ModuleName) (ModuleName))
   (type_decl
     (TypeName)
     (module_access_t
       (ModuleName)
-      (Name)))
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (module_access (ModuleName) (FieldName))))
+      (TypeName)))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (module_access (ModuleName) (FieldName)))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (type_as_annotation (Name) (TypeName))))
 
 =========
 nested function calls
@@ -55,18 +58,15 @@ let x : int = foo(bar(baz(1)))
 ----
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (call_expr
-      (lambda (Name))
-      (arguments
-        (call_expr
-          (lambda (Name))
-          (arguments
-            (call_expr
-              (lambda (Name))
-              (arguments (Int)))))))))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply
+      (Name)
+      (apply
+        (Name)
+          (apply
+            (Name) (Int))))))
 
 =========
 module access function call
@@ -77,16 +77,14 @@ let x : int = int(List.List.List.length(x))
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
-    (call_expr
-      (lambda (Name))
-      (arguments
-        (call_expr
-          (lambda
-            (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName)))
-            (arguments (Name)))))))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
+    (apply
+      (Name)
+      (apply
+        (module_access (ModuleName) (ModuleName) (ModuleName) (FieldName))
+        (Name)))))
 
 =========
 automatic semicolon insertion
@@ -107,18 +105,17 @@ let foo = () : int => 1
 
 (source_file
   (namespace_statement (ModuleName)
-    (export_statement
-      (type_decl (TypeName) (TypeName))))
+    (type_decl (TypeName) (TypeName)))
   (import_statement (ModuleName) (ModuleName))
   (type_decl
     (TypeName)
-    (module_access_t (ModuleName) (Name)))
-  (let_decl
-    (var_pattern (Name))
-    (type_annotation (TypeName))
+    (module_access_t (ModuleName) (TypeName)))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (TypeName)
     (module_access (ModuleName) (FieldName)))
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (type_annotation (TypeName))
-      (body (Int)))))
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (TypeName)
+      (Int))))

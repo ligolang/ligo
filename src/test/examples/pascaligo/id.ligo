@@ -138,21 +138,20 @@ be to deter people from doing it just to chew up address space.
 
 function buy (const parameter : buy; const storage : storage) : list(operation) * storage is
   begin
-    if Tezos.amount = storage.name_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if (Tezos.get_amount() =/= storage.name_price)
+    then failwith("Incorrect amount paid.");
     const profile : bytes = parameter.profile;
     const initial_controller : option(address) = parameter.initial_controller;
     var identities : big_map (id, id_details) := storage.identities;
     const new_id : int = storage.next_id;
     const controller : address =
-      case initial_controller of
+      case initial_controller of [
         Some(addr) -> addr
-      | None -> Tezos.sender
-      end;
+      | None -> Tezos.get_sender()
+      ];
     const new_id_details: id_details =
       record [
-              owner = Tezos.sender ;
+              owner = Tezos.get_sender() ;
               controller = controller ;
               profile = profile ;
       ];
@@ -167,22 +166,21 @@ function buy (const parameter : buy; const storage : storage) : list(operation) 
 function update_owner (const parameter : update_owner; const storage : storage) :
          list(operation) * storage is
   begin
-    if (Tezos.amount =/= 0mutez)
+    if (Tezos.get_amount() =/= 0mutez)
     then
       begin
         failwith("Updating owner doesn't cost anything.");
-      end
-    else skip;
+      end;
     const id : int = parameter.id;
     const new_owner : address = parameter.new_owner;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details : id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
+      ];
     var is_allowed : bool := False;
-    if Tezos.sender = id_details.owner
+    if Tezos.get_sender() = id_details.owner
     then is_allowed := True
     else failwith("You are not the owner of this ID.");
     id_details.owner := new_owner;
@@ -197,33 +195,32 @@ function update_owner (const parameter : update_owner; const storage : storage) 
 function update_details (const parameter : update_details; const storage : storage ) :
          list(operation) * storage is
   begin
-    if (Tezos.amount =/= 0mutez)
-    then failwith("Updating details doesn't cost anything.")
-    else skip;
+    if (Tezos.get_amount() =/= 0mutez)
+    then failwith("Updating details doesn't cost anything.");
     const id : int = parameter.id;
     const new_profile : option(bytes) = parameter.new_profile;
     const new_controller : option(address) = parameter.new_controller;
     var identities : big_map (id, id_details) := storage.identities;
     var id_details: id_details :=
-      case identities[id] of
+      case identities[id] of [
         Some(id_details) -> id_details
       | None -> (failwith("This ID does not exist."): id_details)
-      end;
+      ];
     var is_allowed : bool := False;
-    if (Tezos.sender = id_details.controller) or (Tezos.sender = id_details.owner)
+    if (Tezos.get_sender() = id_details.controller) or (Tezos.get_sender() = id_details.owner)
     then is_allowed := True
     else failwith("You are not the owner or controller of this ID.");
     const owner: address = id_details.owner;
     const profile: bytes =
-      case new_profile of
+      case new_profile of [
         None -> (* Default *) id_details.profile
       | Some(new_profile) -> new_profile
-      end;
+      ];
     const controller: address =
-    case new_controller of
+    case new_controller of [
       None -> (* Default *) id_details.controller
     | Some(new_controller) -> new_controller
-    end;
+    ];
     id_details.owner := owner;
     id_details.controller := controller;
     id_details.profile := profile;
@@ -238,9 +235,8 @@ function update_details (const parameter : update_details; const storage : stora
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 function skip_ (const p: unit; const storage: storage) : list(operation) * storage is
   begin
-    if Tezos.amount = storage.skip_price
-    then skip
-    else failwith("Incorrect amount paid.");
+    if Tezos.get_amount() =/= storage.skip_price
+    then failwith("Incorrect amount paid.");
   end with ((nil: list(operation)), record [
                                      identities = storage.identities;
                                      next_id = storage.next_id + 1;
@@ -249,9 +245,9 @@ function skip_ (const p: unit; const storage: storage) : list(operation) * stora
                                    ])
 
 function main (const action : action; const storage : storage) : list(operation) * storage is
-  case action of
+  case action of [
   | Buy(b) -> buy (b, storage)
   | Update_owner(uo) -> update_owner (uo, storage)
   | Update_details(ud) -> update_details (ud, storage)
   | Skip(s) -> skip_ (unit, storage)
-  end;
+  ];

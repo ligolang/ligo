@@ -1,8 +1,8 @@
 #import "rec.jsligo" "Contract"
 
-let _test = (_ : unit) : int => {
+const _test = (_ : unit) : int => {
    let [_, _, n] = Test.originate(Contract.main, 0, 0 as tez);
    return n;
 };
 
-let test = _test(unit);
+const test = _test(unit);

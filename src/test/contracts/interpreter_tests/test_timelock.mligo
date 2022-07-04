@@ -32,16 +32,16 @@ let test =
     assert (s = expected)
   in
 
-  let test1 = (* chest key/payload and time matches -> OK *)
+  let _test1 = (* chest key/payload and time matches -> OK *)
     let (chest,chest_key) = Test.create_chest payload 10n in
     test_open (chest_key,chest) payload
   in
-  let test2 = (* chest key/payload do not match -> Fail_decrypt *)
+  let _test2 = (* chest key/payload do not match -> Fail_decrypt *)
     let (chest,_) = Test.create_chest payload 10n in
     let (_,chest_key) = Test.create_chest 0x2020 10n in
     test_open (chest_key,chest) 0x01
   in
-  let test3 = (* chest time do not match -> Fail_timelock *)
+  let _test3 = (* chest time do not match -> Fail_timelock *)
     let (chest,_) = Test.create_chest payload 2n in
     let chest_key = Test.create_chest_key chest 10n in
     test_open (chest_key,chest) 0x00

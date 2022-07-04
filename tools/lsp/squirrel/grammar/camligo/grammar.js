@@ -234,6 +234,7 @@ module.exports = grammar({
 
     _pattern: $ => choice(
       $._literal,
+      $.Verbatim,
       $.constr_pattern,
       $.list_pattern,
       $.list_con_pattern,
@@ -415,6 +416,7 @@ module.exports = grammar({
       $.ConstrName,
       $.Name,
       $._literal,
+      $.Verbatim,
       $.paren_expr,
       $.annot_expr,
       $.record_expr,
@@ -552,19 +554,12 @@ module.exports = grammar({
       '[%Michelson',
       common.par(
         seq(
-          field("code", $.michelson_code),
+          field("code", $._expr),
           ':',
           field("type", $._type_expr),
         )
       ),
-      optional(common.par(common.sepBy(',', field("argument", $._sub_expr)))),
       ']'
-    ),
-
-    michelson_code: $ => seq(
-      '{|',
-      repeat(/([^\|]|\|[^}])/),
-      '|}'
     ),
 
     /// PREPROCESSOR
@@ -635,10 +630,11 @@ module.exports = grammar({
 
     attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
 
-    String: $ => /\"(\\.|[^"])*\"/,
+    String: $ => /\"(\\.|[^"\n])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,
     Nat: $ => /([1-9][0-9_]*|0)n/,
     Tez: $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
+    Verbatim: $ => seq('{|', repeat(/([^\|]|\|[^}])/), '|}'),
     Bytes: $ => /0x[0-9a-fA-F]+/,
 
     _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,

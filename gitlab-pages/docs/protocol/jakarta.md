@@ -1,13 +1,11 @@
 ---
-id: hangzhou
-title: Hangzhou
-description: Hangzhou changes
+id: jakarta
+title: Jakarta
+description: Jakarta changes
 ---
 
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
-
-> Important: This is only available for protocol Ithaca (i.e. `--protocol jakarta` command line option).
 
 ## API
 

@@ -42,15 +42,15 @@ type action =
 
 let transfer (p,s : transfer * storage) : operation list * storage =
    let new_allowances =
-		if Tezos.sender = p.address_from then s.allowances
+		if Tezos.get_sender () = p.address_from then s.allowances
 		else
-			let authorized_value = match Big_map.find_opt (Tezos.sender,p.address_from) s.allowances with
+			let authorized_value = match Big_map.find_opt (Tezos.get_sender (),p.address_from) s.allowances with
 				Some value -> value
 			|	None       -> 0n
 			in
 			if (authorized_value < p.value)
 			then (failwith "Not Enough Allowance" : allowances)
-			else Big_map.update (Tezos.sender,p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
+			else Big_map.update (Tezos.get_sender (),p.address_from) (Some (abs(authorized_value - p.value))) s.allowances
    in
 	let sender_balance = match Big_map.find_opt p.address_from s.tokens with
 		Some value -> value
@@ -68,14 +68,14 @@ let transfer (p,s : transfer * storage) : operation list * storage =
 		([]:operation list), {s with tokens = new_tokens; allowances = new_allowances}
 
 let approve (p,s : approve * storage) : operation list * storage =
-	let previous_value = match Big_map.find_opt (p.spender, Tezos.sender) s.allowances with
+	let previous_value = match Big_map.find_opt (p.spender, Tezos.get_sender ()) s.allowances with
 		Some value -> value
 	|	None -> 0n
 	in
 	if previous_value > 0n && p.value > 0n
 	then (failwith "Unsafe Allowance Change" : operation list * storage)
 	else
-		let new_allowances = Big_map.update (p.spender, Tezos.sender) (Some (p.value)) s.allowances in
+		let new_allowances = Big_map.update (p.spender, Tezos.get_sender ()) (Some (p.value)) s.allowances in
 		([] : operation list), {s with allowances = new_allowances}
 
 let getAllowance (p,s : getAllowance * storage) : operation list * storage =
@@ -110,7 +110,7 @@ let main (a,s:action * storage) =
 let main (p : key_hash) =
   let c : unit contract = Tezos.implicit_account p
   in Tezos.address c
-let check_ (p : unit) : int = if Tezos.amount = 100tez then 42 else 0
+let check_ (p : unit) : int = if Tezos.get_amount () = 100tez then 42 else 0
 (* should return a constant function *)
 let f1 (x : unit) : unit -> tez =
   let amt : tez = Current.amount in
@@ -328,7 +328,7 @@ type storage = tez
 type return = operation list * storage
 
 let main (p, s : parameter * storage) : return =
-  ([] : operation list), Tezos.balance
+  ([] : operation list), Tezos.get_balance ()
 type toto = int
 
 let foo : toto = 42 + 127
@@ -554,7 +554,7 @@ type return = operation list * storage
 let attempt (p, store : param * storage) : return =
   (* if p.attempt <> store.challenge then failwith "Failed challenge" else *)
   let contract : unit contract =
-    match (Tezos.get_contract_opt Tezos.sender : unit contract option) with
+    match (Tezos.get_contract_opt Tezos.get_sender () : unit contract option) with
       Some contract -> contract
     | None ->  (failwith "No contract" : unit contract)
   in
@@ -590,9 +590,9 @@ type return = operation list * storage
 
 let commit (p, s : bytes * storage) : return =
   let commit : commit =
-    {date = Tezos.now + 86_400; salted_hash = p} in
+    {date = Tezos.get_now () + 86_400; salted_hash = p} in
   let updated_map: commit_set =
-    Big_map.update Tezos.sender (Some commit) s.commits in
+    Big_map.update Tezos.get_sender () (Some commit) s.commits in
   let s = {s with commits = updated_map}
   in ([] : operation list), s
 
@@ -608,7 +608,7 @@ let reveal (p, s : reveal * storage) : return =
        (failwith "You have not made a commitment to hash against yet."
         : commit)
     in
-    if Tezos.now < commit.date
+    if Tezos.get_now () < commit.date
     then
       (failwith "It has not been 24 hours since your commit yet.": return)
     else
@@ -1565,7 +1565,7 @@ let main (tr, store : parameter * storage) : return =
     match Tezos.sapling_verify_update tr es with
    | Some x -> x
    | None -> (failwith "failed" : storage)
- )let main (p : unit) : address = Tezos.self_address
+ )let main (p : unit) : address = Tezos.get_self_address ()
 let y (_ : unit) : nat =
   let x : nat = 1n in
   begin
@@ -1662,18 +1662,18 @@ type storage =
 
 let main (arg : parameter * storage) : operation list * storage =
   begin
-    assert (Tezos.amount = 0mutez);
+    assert (Tezos.get_amount () = 0mutez);
     let (p,s) = arg in
     match p with
     | Burn ticket ->
       begin
         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
-        assert (ticketer = Tezos.self_address);
+        assert (ticketer = Tezos.get_self_address ());
         (([] : operation list), s)
       end
     | Mint mint ->
       begin
-        assert (Tezos.sender = s.admin);
+        assert (Tezos.get_sender () = s.admin);
         let ticket = Tezos.create_ticket () mint.amount in
         let op = Tezos.transaction ticket 0mutez mint.destination in
         ([op], s)
@@ -1704,7 +1704,7 @@ type storage =
 
 let main (arg : parameter * storage) : operation list * storage =
   begin
-    assert (Tezos.amount = 0mutez);
+    assert (Tezos.get_amount () = 0mutez);
     let (p,storage) = arg in
     let {manager = manager ; tickets = tickets } = storage in
     ( match p with
@@ -1723,7 +1723,7 @@ let main (arg : parameter * storage) : operation list * storage =
         let (_, tickets) = Big_map.get_and_update ticketer (Some ticket) tickets in
         (([] : operation list), {manager = manager; tickets = tickets})
       | Send send -> begin
-        assert (Tezos.sender = manager) ;
+        assert (Tezos.get_sender () = manager) ;
         let (ticket, tickets) = Big_map.get_and_update send.ticketer (None : unit ticket option) tickets in
         ( match ticket with
           | None -> (failwith "no tickets" : operation list * storage)
@@ -1758,8 +1758,8 @@ type storage = {
 type return = operation list * storage
 
 let main (action, store : parameter * storage) : return =
-  (* Multiple evaluations of Tezos.now give different values *)
-  let my_now : timestamp = Tezos.now in
+  (* Multiple evaluations of Tezos.get_now () give different values *)
+  let my_now : timestamp = Tezos.get_now () in
   if my_now > store.next_use
   then
     let store : storage =
@@ -1849,10 +1849,10 @@ let reset (reset, _ : reset * storage) : return =
    finish_time = reset.finish_time}
 
 let vote (vote, store : vote * storage) : return =
-  let my_now = Tezos.now in
+  let my_now = Tezos.get_now () in
   (* let _ =
      assert (my_now >= store.start_time && store.finish_time > my_now) in *)
-  let addr = Tezos.sender in
+  let addr = Tezos.get_sender () in
   (* let _ = assert (not Set.mem addr store.voters) in *)
   let store =
     match vote with

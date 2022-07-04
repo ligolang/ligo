@@ -2,7 +2,7 @@ type prod is (((int * (bool * nat))))
 
 function cause_of_this_defect (const inp : list(unit)) : unit is
   case test of [
-    x -> block {
+    x -> {
       const bar = unit
     } with bar
   ]

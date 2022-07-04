@@ -3,7 +3,6 @@ open Trace
 open Main_errors
 
 module Stdlib = Stdlib
-module Testlib = Testlib
 
 module type Params = sig
   val raise : all raise
@@ -53,11 +52,13 @@ module M (Params : Params) =
       fun env file_name meta c_unit ->
       let options = Compiler_options.set_init_env options env in
       let stdlib = Stdlib.typed ~options meta.syntax in
-      let testlib = Testlib.typed ~options meta.syntax in
-      let options = Compiler_options.set_init_env options (Environment.append testlib (Environment.append stdlib env)) in
+      let options = Compiler_options.set_init_env options (Environment.append stdlib env) in
       let ast_core = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-      let ast_typed = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core in
-      ast_typed
+      let ast_core =
+        let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+        Helpers.inject_declaration ~options ~raise ~add_warning syntax ast_core
+      in
+      Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Ligo_compile.Of_core.Env ast_core
 
   end
 
@@ -91,9 +92,12 @@ module Infer (Params : Params) = struct
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
     fun _ file_name meta c_unit ->
     let stdlib =  Stdlib.core ~options meta.syntax in
-    let testlib = Testlib.core ~options meta.syntax in
     let module_ = Ligo_compile.Utils.to_core ~raise ~add_warning ~options ~meta c_unit file_name in
-    stdlib @ testlib @ module_
+    let module_ =
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+      Helpers.inject_declaration ~options ~raise ~add_warning syntax module_
+    in
+    stdlib @ module_
 
 end
 
@@ -168,12 +172,11 @@ let build_expression ~raise ~add_warning : options:Compiler_options.t -> Syntax_
          (module_, contract)
       | None ->
          let stdlib   = Stdlib.typed ~options syntax in
-         let testlib  = Testlib.typed ~options syntax in
-         let contract = Ligo_compile.Of_typed.compile_program ~raise (stdlib @ testlib) in
-         (stdlib @ testlib, contract)
+         let contract = Ligo_compile.Of_typed.compile_program ~raise stdlib in
+         (stdlib, contract)
     in
     let typed_exp       = Ligo_compile.Utils.type_expression ~raise ~add_warning ~options syntax expression contract in
-    let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp aggregated_prg in
+    let aggregated      = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_exp aggregated_prg in
     let mini_c_exp      = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)
 
@@ -182,7 +185,7 @@ let build_contract ~raise ~add_warning : options:Compiler_options.t -> string ->
   fun ~options entry_point file_name ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
     let typed_prg, contract = build_typed ~raise ~add_warning ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
-    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
+    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end typed_prg entry_point in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let michelson  = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
     michelson, contract
@@ -210,7 +213,7 @@ let build_views ~raise ~add_warning :
     | [] -> []
     | _ ->
     let _, contract  = build_typed ~raise ~add_warning:(fun _ -> ()) ~options (Ligo_compile.Of_core.View (views,main_name)) source_file in
-    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise ~options:options.middle_end contract views in
+    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise ~add_warning ~options:options.middle_end contract views in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression mini_c in
     let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
@@ -224,5 +227,7 @@ let build_views ~raise ~add_warning :
     let views = List.mapi ~f:aux views in
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
     let michelsons = List.map ~f:aux views in
-    let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in 
+    let () = if Environment.Protocols.(equal Jakarta options.middle_end.protocol_version) then
+      Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) else ()
+    in
     michelsons

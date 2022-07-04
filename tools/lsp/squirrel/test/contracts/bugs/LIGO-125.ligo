@@ -1,5 +1,5 @@
 function main (const parameter : int; const storage : unit) is
-block {
+{
   const nop = (list [] : list (operation));
   const result = (nop, Unit);
   if parameter =/= 100 then

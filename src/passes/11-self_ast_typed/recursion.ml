@@ -27,8 +27,6 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
   | E_let_in {rhs;let_result;_} ->
     check_recursive_call ~raise n false rhs;
     check_recursive_call ~raise n final_path let_result
-  | E_type_in {rhs=_;let_result;_} ->
-    check_recursive_call ~raise n final_path let_result
   | E_mod_in {rhs=_;let_result;_} ->
     check_recursive_call ~raise n final_path let_result
   | E_raw_code _ -> ()

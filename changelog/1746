@@ -1,0 +1,10 @@
+author: er433
+description: '### New `Test.set_baker_policy`\n\nThere is a new `Test.set_baker_policy
+  : test_baker_policy -> unit` that allows to set different baker policies as available
+  in the testing helpers provided by the protocol. The type `test_baker_policy` is
+  defined as the sum type:\n\n```\ntype test_baker_policy =\n | By_round of int\n
+  | By_account of address\n | Excluding of address list\n```\n\nIn particular, `Test.set_baker
+  addr` is equivalent to `Test.set_baker_policy (By_account addr)`.'
+merge_request: '1746'
+title: 'Testing framework: implement other baking policies'
+type: added

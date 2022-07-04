@@ -50,7 +50,7 @@ let%expect_test _ =
     File "../../test/contracts/double_michelson_or.ligo", line 6, characters 21-27:
       5 |
       6 | function main (const action : unit; const store : storage) : return is
-      7 | block {
+      7 | {
     :
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
@@ -58,7 +58,7 @@ let%expect_test _ =
     File "../../test/contracts/double_michelson_or.ligo", line 6, characters 42-47:
       5 |
       6 | function main (const action : unit; const store : storage) : return is
-      7 | block {
+      7 | {
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
@@ -105,7 +105,7 @@ let%expect_test _ =
   [%expect {|
     File "../../test/contracts/michelson_or_tree_intermediary.ligo", line 6, characters 21-27:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = (M_right ((M_left(1) : inner_storage)) : storage) ;
     :
     Warning: unused variable "action".
@@ -113,7 +113,7 @@ let%expect_test _ =
 
     File "../../test/contracts/michelson_or_tree_intermediary.ligo", line 6, characters 42-47:
       5 |
-      6 | function main (const action : unit; const store : storage) : return is block {
+      6 | function main (const action : unit; const store : storage) : return is {
       7 |   const foo : storage = (M_right ((M_left(1) : inner_storage)) : storage) ;
     :
     Warning: unused variable "store".

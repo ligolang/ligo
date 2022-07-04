@@ -11,14 +11,14 @@ module AST.Skeleton
   , Tree'
   , RawLigoList
   , Lang (..)
-  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords
+  , reasonLIGOKeywords, cameLIGOKeywords, pascaLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
-  , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
-  , TypeParams (..), PatchableExpr (..)
+  , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
   , getLIGO
   , setLIGO
@@ -36,6 +36,7 @@ import GHC.Generics (Generic)
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
+import Diagnostic (MessageDetail)
 import Product (Product)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
@@ -68,9 +69,9 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
+  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
-  , ModuleName, ModuleAccess, TypeParams
+  , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -78,6 +79,7 @@ data Lang
   = Pascal
   | Caml
   | Reason
+  | Js
   deriving stock Show
 
 pascaLIGOKeywords :: HashSet Text
@@ -99,6 +101,12 @@ reasonLIGOKeywords :: HashSet Text
 reasonLIGOKeywords = HashSet.fromList
   [ "rec", "if", "else", "switch", "let", "module", "type", "or", "mod", "land"
   , "lor", "lxor", "lsl", "lsr"
+  ]
+
+jsLIGOKeywords :: HashSet Text
+jsLIGOKeywords = HashSet.fromList
+  [ "else", "if", "let", "const", "type", "return", "switch", "case", "default"
+  , "as", "break", "namespace", "import", "export", "while", "for", "of"
   ]
 
 -- Let 'Accessor' be either 'FieldName' or a 'Text'ual representation of an
@@ -138,6 +146,7 @@ data Type it
   | TString   it       -- ^ (TString)
   | TWildcard
   | TVariable it       -- ^ (TypeVariableName)
+  | TParen    it       -- ^ (Type)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it
@@ -159,7 +168,8 @@ data Expr it
   | Op        Text
   | Record    [it] -- [Assignment]
   | If        it it (Maybe it) -- (Expr) (Expr) (Expr)
-  | Assign    it it -- (LHS) (Expr)
+  | Assign    it it    -- (Name) (Expr)
+  | AssignOp  it it it -- (Name) Text (Expr)
   | List      [it] -- [Expr]
   | ListAccess it [it] -- (Name) [Indexes]
   | Set       [it] -- [Expr]
@@ -171,15 +181,19 @@ data Expr it
   | Remove    it it it -- (Expr) (Collection) (Expr)
   | Case      it [it]                  -- (Expr) [Alt]
   | Skip
+  | Break
+  | Return    (Maybe it) -- (Expr)
+  | SwitchStm it [it]    -- (Expr) [CaseOrDefaultStm]
   | ForLoop   it it it (Maybe it) it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
+  | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
   | Block     [it]                     -- [Declaration]
   | Lambda    [it] (Maybe it) it               -- [VarDecl] (Maybe (Type)) (Expr)
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
+  | Michelson it it -- (Verbatim) (Type)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
@@ -198,8 +212,8 @@ data Collection it
   | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
-newtype MichelsonCode it
-  = MichelsonCode Text
+newtype Verbatim it
+  = Verbatim Text
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -210,6 +224,11 @@ newtype Preprocessor it
 
 data Alt it
   = Alt it it -- (Pattern) (Expr)
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+data CaseOrDefaultStm it
+  = CaseStm it [it] -- (Expr) [Expr]
+  | DefaultStm [it] -- [Expr]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data MapBinding it
@@ -300,7 +319,7 @@ newtype FieldName it = FieldName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-data Error it = Error Text [it]
+data Error it = Error MessageDetail [it]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 --------------------------------------------------------------------------------
@@ -430,6 +449,7 @@ instance Eq1 Type where
   liftEq f (TString x) (TString y) = f x y
   liftEq _ TWildcard TWildcard = True
   liftEq f (TVariable a) (TVariable b) = f a b
+  liftEq f (TParen a) (TParen b) = f a b
   liftEq _ _ _ = False
 
 instance Eq1 Variant where
@@ -459,4 +479,11 @@ instance Eq1 Pattern where
   liftEq f (IsSpread a) (IsSpread b) = f a b
   liftEq f (IsList xa) (IsList xb) = liftEqList f xa xb
   liftEq f (IsTuple xa) (IsTuple xb) = liftEqList f xa xb
+  liftEq _ _ _ = False
+
+instance Eq1 CaseOrDefaultStm where
+  liftEq f (CaseStm c s) (CaseStm c' s') =
+    f c c' && liftEq f s s'
+  liftEq f (DefaultStm s) (DefaultStm s') =
+    liftEq f s s'
   liftEq _ _ _ = False

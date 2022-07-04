@@ -3,7 +3,7 @@ PASS,16tuples_sequences_functions.jsligo,50,648,216,94,37
 PASS,1assignment_operators.jsligo,20,124,6,4,1
 PASS,1high-order.jsligo,15,197,35,16,5
 PASS,1never.jsligo,13,181,77,29,13
-PASS,2amount.jsligo,3,57,13,9,2
+PASS,2amount.jsligo,3,59,19,13,2
 PASS,2bytes_unpack.jsligo,13,166,40,13,9
 PASS,2counter.jsligo,7,95,13,6,1
 PASS,2if_if_return.jsligo,3,35,7,2,1
@@ -11,7 +11,7 @@ PASS,2key_hash.jsligo,14,138,24,13,4
 PASS,2local_type_decl.jsligo,5,106,8,2,2
 PASS,2match_bis.jsligo,25,244,76,33,14
 PASS,2super-counter.jsligo,9,181,45,21,11
-PASS,4balance_constant.jsligo,10,123,39,13,5
+PASS,4balance_constant.jsligo,10,133,43,17,5
 PASS,4check_signature.jsligo,11,93,47,16,8
 PASS,4if_if_return.jsligo,0,0,0,0,0
 PASS,4lambda2.jsligo,9,118,14,10,2

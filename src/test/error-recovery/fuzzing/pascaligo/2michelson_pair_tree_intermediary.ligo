@@ -3,7 +3,7 @@
 
  type return is list ( operation ) * storage
 
- function main ( const action if unit ; const store : storage ) : return is block {
+ function main ( const action if unit ; const store : storage ) : return is {
  const foo : storage = ( "foo" , ( 1 , 2n ) ) ;
  } with ( ( nil : list ( operation ) ) , ( foo : storage ) )
 

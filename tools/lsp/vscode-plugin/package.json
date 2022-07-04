@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.4.11",
+    "version": "0.4.13",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -19,7 +19,8 @@
     "activationEvents": [
         "onLanguage:ligo",
         "onLanguage:mligo",
-        "onLanguage:religo"
+        "onLanguage:religo",
+        "onLanguage:jsligo"
     ],
     "icon": "logo.png",
     "main": "./client/out/extension",
@@ -66,6 +67,20 @@
                     "dark": "logo.png"
                 },
                 "configuration": "./syntaxes/religo.configuration.json"
+            },
+            {
+                "id": "jsligo",
+                "aliases": [
+                    "JsLIGO"
+                ],
+                "extensions": [
+                    ".jsligo"
+                ],
+                "icon": {
+                    "light": "logo.png",
+                    "dark": "logo.png"
+                },
+                "configuration": "./syntaxes/jsligo.configuration.json"
             }
         ],
         "grammars": [
@@ -83,6 +98,11 @@
                 "language": "religo",
                 "scopeName": "source.religo",
                 "path": "./syntaxes/religo.tmLanguage.json"
+            },
+            {
+                "language": "jsligo",
+                "scopeName": "source.jsligo",
+                "path": "./syntaxes/jsligo.tmLanguage.json"
             }
         ],
         "configuration": {
@@ -170,6 +190,11 @@
                 "command": "ligo.generateDeployScript",
                 "title": "Tezos: Generate deploy script",
                 "description": "Generates deploy script for a given contract"
+            },
+            {
+                "command": "ligo.silentCompileContract",
+                "title": "LIGO: Silently compile contract",
+                "description": "Compiles the current LIGO contract without UI interactions. Additional compile flags can be provided through an array."
             }
         ]
     },

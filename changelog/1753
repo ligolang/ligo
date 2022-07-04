@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \n- improvement of pattern matching type-checking
+merge_request: '1753'
+title: 'pattern matching: some \"inference\"'
+type: fixed

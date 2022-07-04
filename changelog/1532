@@ -1,0 +1,7 @@
+author: er433
+description: A new optimization has been added in contract compilation. By default,
+  it will not use type information (for better compilation performance), but it can
+  be enabled using `--enable-michelson-typed-opt`.
+merge_request: '1532'
+title: 'Michelson optimization: factor out common last actions in conditionals'
+type: internal

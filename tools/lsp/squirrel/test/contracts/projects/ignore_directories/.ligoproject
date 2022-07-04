@@ -1,0 +1,7 @@
+{
+    "ignorePaths": [
+        "ignore_me.mligo",
+        "dir/ignore_me.mligo",
+        "ignore_dir"
+    ]
+}

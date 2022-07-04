@@ -6,16 +6,16 @@ let check_new_origination (src :address) : address =
     | Some new_lst -> (
       let () = assert (List.length new_lst = 1n) in
       match new_lst with
-      | new_acc::rst -> new_acc
+      | new_acc::_rst -> new_acc
       | [] -> (failwith "more than one originated account" : address)
     )
     | None -> (failwith "source did not originate anything" : address)
 
 let test =
-  let baker = Test.nth_bootstrap_account 0 in
+  let _baker = Test.nth_bootstrap_account 0 in
   let src = Test.nth_bootstrap_account 1 in
 
-  let (typed_addr, code, size) = Test.originate main (None : storage) 0tez in
+  let (typed_addr, _code, size) = Test.originate main (None : storage) 0tez in
   let () = assert ((None : storage) = (Test.get_storage typed_addr : storage)) in
   let () = assert (size < 300) in
   let new_account1 = check_new_origination src in

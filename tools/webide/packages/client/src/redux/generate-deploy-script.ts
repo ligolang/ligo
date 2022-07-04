@@ -52,7 +52,7 @@ const DEFAULT_STATE: GenerateDeployScriptState = {
   entrypoint: '',
   storage: '',
   originationAccount: '',
-  protocol: 'ithaca',
+  protocol: 'jakarta',
   burnCap: 0,
 };
 

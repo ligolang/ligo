@@ -123,7 +123,6 @@ let expression_tag expr =
   | E_type_abstraction _ -> 6
   | E_recursive       _ -> 7
   | E_let_in          _ -> 8
-  | E_type_in         _ -> 9
   | E_raw_code        _ -> 10
   | E_type_inst       _ -> 11
   (* Variant *)
@@ -153,7 +152,6 @@ and expression_content a b =
   | E_type_abstraction a, E_type_abstraction b -> type_abs a b
   | E_recursive a, E_recursive b -> recursive a b
   | E_let_in a, E_let_in b -> let_in a b
-  | E_type_in a, E_type_in b -> type_in a b
   | E_raw_code a, E_raw_code b -> raw_code a b
   | E_constructor a, E_constructor b -> constructor a b
   | E_type_inst a, E_type_inst b -> type_inst a b
@@ -162,8 +160,8 @@ and expression_content a b =
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
   | E_assign a, E_assign b -> assign a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _) ->
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_type_abstraction _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_type_inst _ | E_assign _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =

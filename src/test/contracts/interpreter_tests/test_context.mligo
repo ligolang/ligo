@@ -31,3 +31,15 @@ let test_move =
   let () = Test.restore_context () in
   let () = Test.log (Test.get_balance to_) in
   ()
+
+let test_drop =
+  let () = Test.log "test_drop:" in
+  let _ = Test.reset_state 4n ([] : tez list) in
+  let to_ = Test.nth_bootstrap_account 2 in
+  let () = Test.log (Test.get_balance to_) in
+  let () = Test.save_context () in
+  let _ = Test.transfer_exn to_ (Test.eval ()) 100tez in
+  let () = Test.log (Test.get_balance to_) in
+  let () = Test.drop_context () in
+  let () = Test.log (Test.get_balance to_) in
+  ()

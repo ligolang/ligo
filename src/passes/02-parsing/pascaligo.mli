@@ -8,7 +8,6 @@ module Trace = Simple_utils.Trace
 
 module CST    = Cst_pascaligo.CST
 module Errors = Parsing_shared.Errors
-module Self_tokens = Lexing_pascaligo.Self_tokens
 
 (* Parsing *)
 

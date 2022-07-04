@@ -61,7 +61,7 @@ recognise (SomeRawTree dialect rawTree)
         "annot_expr"        -> Annot      <$> field  "expr"      <*> field "type"
         "binary_op_app"     -> BinOp      <$> field  "left"      <*> field "op"    <*> field "right"
         "unary_op_app"      -> UnOp       <$> field  "negate"    <*> field "arg"
-        "michelson_interop" -> Michelson  <$> field  "code"       <*> field "type"  <*> fields "argument"
+        "michelson_interop" -> Michelson  <$> field  "code"      <*> field "type"
         _                   -> fallthrough
 
     -- QualifiedName
@@ -150,11 +150,11 @@ recognise (SomeRawTree dialect rawTree)
         ("Tez",    i) -> return $ Tez i
         _             -> fallthrough
 
-    -- MichelsonCode
+    -- Verbatim
   , Descent do
       boilerplate' \case
-        ("michelson_code", code) -> return $ MichelsonCode code
-        _                        -> fallthrough
+        ("Verbatim", code) -> pure $ Verbatim code
+        _                  -> fallthrough
 
     -- Name
   , Descent do

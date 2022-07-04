@@ -1,0 +1,32 @@
+{
+  "name": "esy-hidapi",
+  "version": "0.10.1",
+  "description": "A Simple library for communicating with USB and Bluetooth HID devices on Linux, Mac, and Windows",
+  "source": "https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644",
+  "override": {
+    "build": [
+      "libtoolize",
+      "autoreconf --install --verbose --force",
+      [
+        "./configure",
+        "--prefix=#{self.install}",
+        "#{os == 'windows' ? '--host=x86_64-w64-mingw32' : ''}",
+        "--disable-dependency-tracking"
+      ],
+      "make"
+    ],
+    "exportedEnv": {
+      "PKG_CONFIG_PATH": {
+        "scope": "global",
+        "val": "#{$PKG_CONFIG_PATH : self.lib / 'pkgconfig'}"
+      }
+    },
+    "install": "make install",
+    "buildsInSource": true,
+    "dependencies": {
+      "autoconf": "esy-packages/esy-autoconf#ea58671a08c7ebf89b0cebd41f4950ca67157b01",
+      "automake": "esy-packages/esy-automake#f4fecab89169dd64cc363ec902d828c55c257fc0",
+      "libtool": "esy-packages/esy-libtools#0fe768722d345533f86df32f4de3b6a374160e2e"
+    }
+  }
+}

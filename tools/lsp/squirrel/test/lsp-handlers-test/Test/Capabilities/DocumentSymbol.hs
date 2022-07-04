@@ -3,6 +3,7 @@ module Test.Capabilities.DocumentSymbol
   , unit_document_symbols_example_access
   , unit_document_symbols_example_let_camligo
   , unit_document_symbols_example_let_religo
+  , unit_document_symbols_example_let_jsligo
   ) where
 
 import Control.Lens ((^.))
@@ -91,4 +92,15 @@ unit_document_symbols_example_let_religo = mkUnitTest "let.religo"
 
     , ("const f", SkConstant, (3, 6), (3, 7))
     , ("const h", SkConstant, (3, 14), (3, 15))
+    ]
+
+unit_document_symbols_example_let_jsligo :: Assertion
+unit_document_symbols_example_let_jsligo = mkUnitTest "let.jsligo"
+    [ ("const a", SkConstant, (0, 4), (0, 5))
+
+    , ("const b", SkConstant, (1, 5), (1, 6))
+    , ("const c", SkConstant, (1, 13), (1, 14))
+
+    , ("const d", SkConstant, (2, 5), (2, 6))
+    , ("const e", SkConstant, (2, 8), (2, 9))
     ]

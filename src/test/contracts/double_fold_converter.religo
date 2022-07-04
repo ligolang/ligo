@@ -46,7 +46,7 @@ let transferContentsIterator = ((accumulator, transferContentsMichelson): (trans
     (storage, from_)
 };
 let allowOnlyOwnTransfer = (from: tokenOwner): unit => {
-    if (from != Tezos.sender) {
+    if (from != Tezos.get_sender ()) {
         failwith(errorNotOwner)
     } else { (); }
 }

@@ -50,10 +50,21 @@
    (:standard -ccopt -static -cclib "-lgmp"))))
 
 (executable
+ (name configurator)
+ (modules configurator)
+ (flags (:standard))
+ (libraries core dune-configurator))
+
+(rule
+ (targets win32-flags.sexp)
+ (action (run ./configurator.exe)))
+
+(executable
  (name runligo)
  (public_name ligo)
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils cmdliner ligo cli)
+ (flags -open Core (:include win32-flags.sexp))
  (modules runligo)
  (package ligo))

@@ -56,9 +56,6 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
       let res = self res let_result in
       res
     )
-  | E_type_in { type_binder=_; rhs = _ ; let_result} ->
-    let res = self init let_result in
-    res
   | E_mod_in { module_binder = _ ; rhs ; let_result } -> (
     let res = fold_expression_in_module_expr self init rhs in
     let res = self res let_result in
@@ -121,7 +118,6 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> self x.type_
   | T_for_all x -> self x.type_
@@ -163,10 +159,6 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_in { let_binder ; rhs ; let_result; attr }
-  )
-  | E_type_in {type_binder; rhs; let_result} -> (
-    let let_result = self let_result in
-    return @@ E_type_in {type_binder; rhs; let_result}
   )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
     let rhs = map_expression_in_module_expr f rhs in
@@ -236,7 +228,7 @@ and map_module : 'err mapper -> module_ -> module_ = fun m p ->
       return @@ Declaration_module {module_binder; module_; module_attr}
   in
   List.map ~f:(Location.map aux) p
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
@@ -380,8 +372,6 @@ module Free_variables :
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in
       merge (self rhs) {modVarSet;moduleEnv;varSet=fv2}
-    | E_type_in {let_result;type_binder=_;rhs=_} ->
-      self let_result
     | E_mod_in { module_binder; rhs ; let_result } ->
       let {modVarSet;moduleEnv;varSet} = (self let_result) in
       let modVarSet = ModVarSet.remove module_binder modVarSet in

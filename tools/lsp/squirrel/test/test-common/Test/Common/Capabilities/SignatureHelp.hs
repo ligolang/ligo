@@ -13,18 +13,15 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.SignatureHelp (SignatureInformation (..), findSignature, toLspParameters)
-import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Scope.Common (contractTree, lookupContract)
 import AST.Scope.ScopedDecl (Parameter (..), Pattern (..), Type (..))
 import AST.Skeleton (nestedLIGO)
 import Extension (getExt)
-import Log (runNoLoggingT)
-import Progress (noProgress)
 import Range (Range, point)
 
 import Test.Common.Capabilities.Util (contractsDir)
 import Test.Common.FixedExpectations (shouldBe)
-import Test.Common.Util (ScopeTester)
+import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
 
 data TestInfo = TestInfo
   { tiContract :: FilePath
@@ -63,7 +60,7 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "no-semicolon-in-block-after-var-decl.ligo"
-    , tiCursor = point 5 24
+    , tiCursor = point 4 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
@@ -71,7 +68,7 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "no-semicolon-in-block-after-const-decl.ligo"
-    , tiCursor = point 5 24
+    , tiCursor = point 4 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
@@ -207,11 +204,38 @@ caseInfos =
       ]
     , tiActiveParamNo = 1
     }
+  , TestInfo
+    { tiContract = "all-okay.jsligo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "no-params.jsligo"
+    , tiCursor = point 3 35
+    , tiFunction = "bar"
+    , tiLabel = "let bar = (i: int)"
+    , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
+    , tiActiveParamNo = 0
+    }
+  , TestInfo
+    { tiContract = "active-parameter-is-2nd.jsligo"
+    , tiCursor = point 3 38
+    , tiFunction = "bar"
+    , tiLabel = "let foo = (a: int, b: int)"
+    , tiParameters =
+      [ ParameterBinding (IsVar "a") (Just $ AliasType "int")
+      , ParameterBinding (IsVar "b") (Just $ AliasType "int")
+      ]
+    , tiActiveParamNo = 1
+    }
   ]
 
 simpleFunctionCallDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
 simpleFunctionCallDriver testCases = do
-  graph <- runNoLoggingT $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress (contractsDir </> "signature-help")
+  graph <- parseDirectoryWithScopes @parser (contractsDir </> "signature-help")
   pure $ testGroup "Signature Help on a simple function call" $ map (makeTestCase graph) testCases
   where
     makeTestCase graph info = testCase (tiContract info) (makeTest graph info)

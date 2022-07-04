@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
--- | Pretty printers for all 3 dialects and core s-expressions
+-- | Pretty printers for all 4 dialects and core s-expressions
 -- and their corresponding `Show` instances for @AST.Skeleton@ types.
 
 module AST.Pretty
@@ -15,7 +15,6 @@ module AST.Pretty
   ) where
 
 import Data.Kind (Type)
-import Data.Maybe (isJust)
 import Data.Sum
 import Data.Text (Text)
 import Data.Text qualified as Text (pack)
@@ -101,7 +100,7 @@ instance
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
 instance LPP1 d Error where
-  lpp1 (Error msg _) = lpp @d msg
+  lpp1 (Error msg _) = pp msg
 
 -- class LPPProd (dialect :: Lang) xs where
 --   lppProd :: Product xs -> Doc
@@ -194,6 +193,7 @@ instance Pretty1 AST.Type where
     TString   t         -> sexpr "TSTRING" [pp t]
     TWildcard           -> "_"
     TVariable v         -> sexpr "'" [v]
+    TParen    t         -> sexpr "par" [t]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -223,16 +223,21 @@ instance Pretty1 Expr where
     -- Indexing  a j        -> sexpr "index" [a, j]
     Case      s az       -> sexpr "case" (s : az)
     Skip                 -> "skip"
+    Return    e          -> sexpr "return" [pp e]
+    Break                -> "break"
     ForLoop   j s f d b  -> sexpr "for" [j, s, f, pp d, b]
     ForBox    k mv t z b -> sexpr "for_box" [k, pp mv, pp t, z, b]
+    ForOfLoop v c b      -> sexpr "for_of" [v, c, b]
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
     Block     es         -> sexpr "block" es
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
     Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
-    Michelson c t args   -> sexpr "%Michelson" (c : t : args)
+    Michelson c t        -> sexpr "%Michelson" [c, t]
     Paren     e          -> "(" <> pp e <> ")"
+    SwitchStm s cs       -> sexpr "switch" (s : cs)
+    AssignOp  l o r      -> sop l (ppToText o) [r]
 
 instance Pretty1 PatchableExpr where
   pp1 = \case
@@ -244,9 +249,9 @@ instance Pretty1 Collection where
     CMap  -> "map"
     CSet  -> "set"
 
-instance Pretty1 MichelsonCode where
+instance Pretty1 Verbatim where
   pp1 = \case
-    MichelsonCode _ -> "<SomeMichelsonCode>"
+    Verbatim v -> pp v
 
 instance Pretty1 Alt where
   pp1 = \case
@@ -350,6 +355,11 @@ instance Pretty LineMarkerType where
   pp IncludedFile = "1"
   pp ReturnToFile = "2"
 
+instance Pretty1 CaseOrDefaultStm where
+  pp1 = \case
+    CaseStm  c s -> sexpr "case"    [c, pp s]
+    DefaultStm s -> sexpr "default" [pp s]
+
 -- Orphans
 instance Pretty J.UInt where
   pp = pp . Text.pack . show
@@ -400,7 +410,7 @@ instance LPP1 d Preprocessor where
 instance LPP1 d PreprocessorCommand where
   lpp1 = pp1
 
-instance LPP1 d MichelsonCode where
+instance LPP1 d Verbatim where
   lpp1 = pp
 
 --instance LPP1 d LineMarker where
@@ -433,6 +443,7 @@ instance LPP1 'Pascal AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Pascal TypeVariableName where
   lpp1 = \case
@@ -565,6 +576,11 @@ instance LPP1 'Pascal MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
 
+instance LPP1 'Pascal CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
+
 ----------------------------------------------------------------------------
 -- Reason
 ----------------------------------------------------------------------------
@@ -580,6 +596,7 @@ instance LPP1 'Reason AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Reason TypeVariableName where
   lpp1 = \case
@@ -589,11 +606,11 @@ instance LPP1 'Reason Binding where
   lpp1 = \case
     BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
     BConst        name ty body  -> foldr (<+>) empty
-      [ "let", name, if isJust ty then ":" <+> lpp ty else "", "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
+      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ] -- TODO: maybe append ";" to *all* the expressions in the contract
     BAttribute    name          -> brackets ("@" <.> name)
     BInclude      fname         -> "#include" <+> pp fname
     BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
-    BParameter    name ty       -> pp name <> if isJust ty then ":" <+> lpp ty else ""
+    BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Reason TypeParams where
@@ -628,7 +645,7 @@ instance LPP1 'Reason Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ tuple ps, if isJust ty then ":" <+> lpp ty else "", "=> {", lpp b, "}" ]
+      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
@@ -680,6 +697,142 @@ instance LPP1 'Reason MapBinding where
   lpp1 = \case
     MapBinding k v -> lpp k <+> "->" <+> lpp v
 
+instance LPP1 'Reason CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
+
+----------------------------------------------------------------------------
+-- Js
+----------------------------------------------------------------------------
+
+tupleJsLIGO :: forall p . LPP 'Js p => [p] -> Doc
+tupleJsLIGO = brackets . train @'Js @p ","
+
+instance LPP1 'Js AST.Type where
+  lpp1 = \case
+    TArrow    dom codom -> dom <+> "=>" <+> codom
+    TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
+    TProduct  [element] -> element
+    TProduct  elements  -> tupleJsLIGO elements
+    TSum      (x:xs)    -> x <.> blockWith ("| "<.>) xs
+    TSum      []        -> error "malformed TSum type" -- never called
+    TApply    f xs      -> f <+> tuple xs
+    TString   t         -> "\"" <.> lpp t <.> "\""
+    TWildcard           -> "_"
+    TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
+
+instance LPP1 'Js TypeVariableName where
+  lpp1 = \case
+    TypeVariableName raw -> lpp raw
+
+instance LPP1 'Js Binding where
+  lpp1 = \case
+    BTypeDecl     n    tys ty   -> "type" <+> lpp tys <+> n <+> "=" <+> lpp ty
+    BConst        name ty body  -> foldr (<+>) empty
+      [ "let", name, maybe "" ((":" <+>) . lpp) ty, "=", lpp body, ";" ]
+    BAttribute    name          -> "/* @" <.> name <.> " */"
+    BInclude      fname         -> "#include" <+> pp fname
+    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
+    BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
+    BModuleDecl   mname body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
+    BModuleAlias  mname alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
+    node                        -> error "unexpected `Binding` node failed with: " <+> pp node
+
+instance LPP1 'Js TypeParams where
+  lpp1 = \case
+    TypeParam  t  -> "<" <.> pp t <.> ">"
+    TypeParams ts -> "<" <.> train "," ts <.> ">"
+
+instance LPP1 'Js Variant where
+  lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
+    Variant ctor ty -> brackets ("\"" <.> lpp ctor <.> "\"" <.> "," <+> lpp ty)
+
+instance LPP1 'Js Expr where
+  lpp1 = \case
+    Apply     f xs       -> f <+> tuple xs
+    BinOp     l o r      -> l <+> o <+> r
+    UnOp        o r      -> lpp o <+> lpp r
+    Op          o        -> lpp o
+    Record    az         -> "{" `indent` blockWith (<.> ",") az `above` "}"
+    If        b t e      -> "if" <+> parens b <+> braces (lpp t) <+> "else" <+> braces (lpp e)
+    List      l          -> lpp l
+    ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
+    Tuple     l          -> tupleJsLIGO l
+    Annot     n t        -> parens (n <+> ":" <+> t)
+    Case      s az       -> foldr (<+>) empty
+      [ "match("
+      , lpp s
+      , ","
+      , "{\n"
+      , foldr above empty $ lpp <$> az
+      , "\n}"
+      ]
+    Seq       es         -> train ";" es
+    Lambda    ps ty b    -> foldr (<+>) empty
+      [ tuple ps, maybe "" ((":" <+>) . lpp) ty, "=> {", lpp b, "}" ]
+    Paren     e          -> "(" <+> lpp e <+> ")"
+    ForOfLoop v c b      -> "for" <+> "(const" <+> v <+> "of" <+> c <+> ") {" `indent` lpp b `above` "}"
+    AssignOp l o r       -> l <+> o <+> r
+    WhileLoop f b        -> "while (" <+> f <+> ") {" `indent` lpp b `above` "}"
+    SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
+    Return    e          -> "return " <+> lpp e
+    RecordUpd s fs       -> lpp s <+> train "," fs
+    Michelson c t        -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
+    node                 -> error "unexpected `Expr` node failed with: " <+> pp node
+
+instance LPP1 'Js PatchableExpr where
+  lpp1 node = error "unexpected `PatchableExpr` node failed with:" <+> pp node
+
+instance LPP1 'Js Alt where
+  lpp1 = \case
+    Alt p b -> "(" <+> lpp p <+> ")" <+> "=>" <+> lpp b <+> ","
+
+instance LPP1 'Js FieldAssignment where
+  lpp1 = \case
+    FieldAssignment n e -> lpp n <+> ":" <+> lpp e
+    Spread n -> "..." <.> n
+    Capture n -> lpp n
+
+instance LPP1 'Js Constant where
+  lpp1 = \case
+    Int           z   -> lpp z
+    Nat           z   -> lpp z <+> "as nat"
+    String        z   -> lpp z
+    Float         z   -> lpp z
+    Bytes         z   -> lpp z
+    Tez           z   -> lpp z <+> "as tez"
+
+instance LPP1 'Js Pattern where
+  lpp1 = \case
+    IsConstr     ctor arg  -> ctor <+> lpp arg
+    IsVar        name      -> name
+    IsAnnot      s t       -> parens (lpp s <+> ":" <+> lpp t)
+    IsWildcard             -> "_"
+    IsSpread     n         -> "..." <.> lpp n
+    IsList       l         -> brackets $ train "," l
+    IsTuple      t         -> brackets $ train "," t
+    IsRecord     fields    -> "{" <+> train "," fields <+> "}"
+    pat                    -> error "unexpected `Pattern` node failed with: " <+> pp pat
+
+instance LPP1 'Js RecordFieldPattern where
+  lpp1 = \case
+    IsRecordField name body -> name <+> ":" <+> body
+    IsRecordCapture name -> name
+
+instance LPP1 'Js TField where
+  lpp1 = \case
+    TField      n t -> n <.> maybe "" (":" `indent`) t
+
+instance LPP1 'Js MapBinding where
+  lpp1 = error "unexpected `MapBinding` node"
+
+instance LPP1 'Js CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm c  b -> "case " <+> c <+> ": " <+> lpp b
+    DefaultStm b -> "default: " <+> lpp b
+
 ----------------------------------------------------------------------------
 -- Caml
 ----------------------------------------------------------------------------
@@ -700,6 +853,7 @@ instance LPP1 'Caml AST.Type where
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
     TVariable v         -> v
+    TParen    t         -> "(" <+> lpp t <+> ")"
 
 instance LPP1 'Caml TypeVariableName where
   lpp1 = \case
@@ -718,7 +872,7 @@ instance LPP1 'Caml Binding where
         , ["rec" | isRec]
         , [name]
         , params
-        , [if isJust ty then ":" <+> lpp ty else empty]
+        , [maybe empty ((":" <+>) . lpp) ty]
         , ["=", body]
         ]
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
@@ -754,7 +908,7 @@ instance LPP1 'Caml Expr where
       ]
     Seq       es         -> train " " es
     Lambda    ps ty b    -> foldr (<+>) empty
-      [ train "," ps, if isJust ty then ":" <+> lpp ty else "", "=>", lpp b ]
+      [ train "," ps, maybe "" ((":" <+>) . lpp) ty, "=>", lpp b ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
@@ -804,13 +958,19 @@ instance LPP1 'Caml TField where
   lpp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
 
-type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr)
+instance LPP1 'Caml CaseOrDefaultStm where
+  lpp1 = \case
+    CaseStm _ _  -> error "unexpected `CaseStm` node"
+    DefaultStm _ -> error "unexpected `DefaultStm` node"
+
+type TotalLPP expr = (LPP 'Pascal expr, LPP 'Caml expr, LPP 'Reason expr, LPP 'Js expr)
 
 lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
   Pascal -> lpp @'Pascal
-  Caml -> lpp @'Caml
+  Caml   -> lpp @'Caml
   Reason -> lpp @'Reason
+  Js     -> lpp @'Js
 
 docToText :: Doc -> Text
 docToText = Text.pack . show

@@ -1,0 +1,19 @@
+{
+  "buildEnv": {
+    "EXE": "#{os == 'windows' ? '.exe': ''}"
+  },    
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
+    ],
+    ["make", "all"],
+    ["make", "doc"]
+  ],
+  "install": [
+    "make EXE=#{$EXE} BINDIR=#{self.bin} LIBDIR=#{self.lib} install",
+    "make BINDIR=#{self.bin} LIBDIR=#{self.lib} install-doc"
+  ]
+}
+    

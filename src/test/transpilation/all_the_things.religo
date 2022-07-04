@@ -42,14 +42,14 @@ type action =
 
 let transfer = ((p,s) : (transfer, storage)) : (list (operation), storage) => {
    let new_allowances =   
-		if (Tezos.sender == p.address_from) { s.allowances; }
+		if (Tezos.get_sender () == p.address_from) { s.allowances; }
 		else {
-			let authorized_value = switch (Big_map.find_opt ((Tezos.sender,p.address_from), s.allowances)) {
+			let authorized_value = switch (Big_map.find_opt ((Tezos.get_sender (),p.address_from), s.allowances)) {
 			|	Some value => value
 			|	None       => 0n
 			};
 			if (authorized_value < p.value) { (failwith ("Not Enough Allowance") : allowances); }
-			else { Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances); };
+			else { Big_map.update ((Tezos.get_sender (),p.address_from), (Some (abs(authorized_value - p.value))), s.allowances); };
 		};
 	let sender_balance = switch (Big_map.find_opt (p.address_from, s.tokens)) {
 	|	Some value => value
@@ -68,14 +68,14 @@ let transfer = ((p,s) : (transfer, storage)) : (list (operation), storage) => {
 };
 
 let approve = ((p,s) : (approve, storage)) : (list (operation), storage) => {
-	let previous_value = switch (Big_map.find_opt ((p.spender, Tezos.sender), s.allowances)){
+	let previous_value = switch (Big_map.find_opt ((p.spender, Tezos.get_sender ()), s.allowances)){
 	|	Some value => value
 	|	None => 0n
 	};
 	if (previous_value > 0n && p.value > 0n)
 	{ (failwith ("Unsafe Allowance Change") : (list (operation), storage)); }
 	else {
-		let new_allowances = Big_map.update ((p.spender, Tezos.sender), (Some (p.value)), s.allowances);
+		let new_allowances = Big_map.update ((p.spender, Tezos.get_sender ()), (Some (p.value)), s.allowances);
 		(([] : list (operation)), { ...s, allowances : new_allowances});
 	};
 };
@@ -118,7 +118,7 @@ let main = (p : key_hash) : address => {
   Tezos.address(c);
 };
 let check_ = (p : unit) : int =>
-  if (Tezos.amount == 100tez) { 42; } else { 0; };
+  if (Tezos.get_amount () == 100tez) { 42; } else { 0; };
 /* Test ReasonLIGO arithmetic operators */
 
 let mod_op   = (n : int) : nat => n mod 42;
@@ -173,7 +173,7 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 type storage = tez;
 
 let main2 = (p : unit, s: storage) =>
-  ([]: list (operation), Tezos.balance);
+  ([]: list (operation), Tezos.get_balance ());
 
 let main = (x : (unit, storage)) => main2 (x[0], x[1]);
 type toto = int;
@@ -305,7 +305,7 @@ let errorNotOwner = "NOT_OWNER";
 let errorInsufficientBalance = "INSUFFICIENT_BALANCE";
 type transferContentsIteratorAccumulator = (storage, tokenOwner);
 let allowOnlyOwnTransfer = (from: tokenOwner): unit => {
-    if (from != Tezos.sender) {
+    if (from != Tezos.get_sender ()) {
         failwith(errorNotOwner)
     } else { (); }
 }
@@ -1049,7 +1049,7 @@ let donate = ((p,s): (unit, storage)) : (list(operation), storage) => {
 };
 
 let distribute = ((p,s): ((unit => list(operation)), storage)) : (list(operation), storage) => {
-  if (Tezos.sender == s) {
+  if (Tezos.get_sender () == s) {
     (p(),s);
   }
   else {
@@ -1125,7 +1125,7 @@ let rec sum = ((n, acc) : (int,int)): int =>
 
 let rec fibo = ((n, n_1, n_0) : (int,int,int)): int =>
     if (n < 2) {n_1;} else {fibo ((n-1,n_1+n_0,n_1));};
-let main = (p: unit) : address => Tezos.self_address;
+let main = (p: unit) : address => Tezos.get_self_address ();
 /* Test set operations in ReasonLIGO */
 
 let literal_op = (p: unit) : set (string) =>

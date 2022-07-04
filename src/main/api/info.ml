@@ -14,7 +14,7 @@ let measure_contract (raw_options : Compiler_options.raw) source_file display_fo
       let Compiler_options.{ views ; _ } = options.backend in
       let michelson,e =  Build.build_contract ~raise ~add_warning ~options entry_point source_file in
       let views = Build.build_views ~raise ~add_warning ~options entry_point (views,e) source_file in
-      let contract = Compile.Of_michelson.build_contract ~raise ~add_warning ~protocol_version michelson views in
+      let contract = Compile.Of_michelson.build_contract ~raise ~add_warning ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version michelson views in
       Compile.Of_michelson.measure ~raise contract
 
 let list_declarations (raw_options : Compiler_options.raw) source_file display_format () =

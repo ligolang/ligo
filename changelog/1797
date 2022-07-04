@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1797'
+title: 'Testing framework: make `Test.cast_address` record type information'
+type: fixed

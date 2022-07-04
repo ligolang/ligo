@@ -13,7 +13,6 @@ and type_content =
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
-  | T_module_accessor of type_variable module_access
   | T_singleton of literal
   | T_abstraction of ty_expr abstraction
   | T_for_all of ty_expr abstraction
@@ -38,9 +37,9 @@ and row_element = type_expression row_element_mini_c
 
 and type_expression = {
     type_content: type_content;
-    type_meta: type_meta;
-    orig_var: type_variable option ;
-    location: location;
+    type_meta: type_meta [@hash.ignore] ;
+    orig_var: type_variable option [@hash.ignore] ;
+    location: location [@hash.ignore] ;
   }
 and ty_expr = type_expression
 
@@ -106,10 +105,9 @@ and expression_content =
   | E_application of application
   | E_lambda of lambda
   | E_recursive of recursive
-  | E_let_in of let_in
-  | E_type_in of (expr, ty_expr) type_in
-  | E_mod_in of mod_in
-  | E_raw_code of raw_code
+  | E_let_in    of let_in
+  | E_mod_in    of mod_in
+  | E_raw_code  of raw_code
   | E_type_inst of type_inst
   | E_type_abstraction of expr type_abs
   (* Variant *)
@@ -181,9 +179,4 @@ and record_update = {
 and matching = {
     matchee: expression ;
     cases: matching_expr ;
-  }
-
-and ascription = {
-    anno_expr: expression ;
-    type_annotation: type_expression ;
   }

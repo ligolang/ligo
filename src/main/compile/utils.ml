@@ -24,18 +24,33 @@ let type_file ~raise ~add_warning ~(options : Compiler_options.t) f stx form : A
   let typed         = Of_core.typecheck ~raise ~add_warning ~options form core in
   typed
 
-let type_expression_string ~add_warning ~raise ~options syntax expression init_prog =
-  let meta              = Of_source.make_meta_from_syntax syntax in
+let to_mini_c ~raise ~add_warning ~options f stx env =
+  let typed  = type_file ~raise ~add_warning ~options f stx env in
+  let mini_c = Of_typed.compile_program typed in
+  mini_c
+
+let compile_file ~raise ~add_warning ~options f stx ep =
+  let typed    = type_file ~raise ~add_warning ~options f stx @@ Contract ep in
+  let aggregated = Of_typed.apply_to_entrypoint_contract ~raise ~add_warning ~options:options.middle_end typed ep in
+  let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
+  let michelson  = Of_mini_c.compile_contract ~raise ~options mini_c in
+  let contract   = Of_michelson.build_contract ~raise michelson in
+  contract
+
+let core_expression_string ~raise ~add_warning syntax expression =
+  let meta              =  Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _     = Of_source.compile_string_without_preproc expression in
   let imperative_exp    = Of_c_unit.compile_expression ~add_warning ~raise ~meta c_unit_exp in
   let sugar_exp         = Of_imperative.compile_expression ~raise imperative_exp in
-  let core_exp          = Of_sugar.compile_expression ~raise sugar_exp in
-  let typed_exp         = Of_core.compile_expression ~add_warning ~raise ~options ~init_prog core_exp in
-  typed_exp
+  Of_sugar.compile_expression ~raise sugar_exp
+
+let type_expression_string ~add_warning ~raise ~options syntax expression init_prog =
+  let core_exp          = core_expression_string ~raise ~add_warning syntax expression in
+  Of_core.compile_expression ~add_warning ~raise ~options ~init_prog core_exp
 
 let type_program_string ~raise ~add_warning ~options syntax expression =
   let meta          = Of_source.make_meta_from_syntax syntax in
-  let c_unit, _     = Of_source.compile_string_without_preproc expression in
+  let c_unit, _     = Of_source.compile_string ~raise ~options:(Compiler_options.(options.frontend)) ~meta expression in
   let imperative    = Of_c_unit.compile_string ~raise ~add_warning ~meta c_unit in
   let sugar         = Of_imperative.compile ~raise imperative in
   let core          = Of_sugar.compile sugar in
@@ -59,7 +74,7 @@ let compile_contract_input ~raise ~add_warning ~options parameter storage syntax
   let sugar      = Of_imperative.compile_expression ~raise imperative in
   let core       = Of_sugar.compile_expression ~raise sugar in
   let typed      = Of_core.compile_expression ~raise ~add_warning ~options ~init_prog core in
-  let aggregated = Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed aggregated_prg  in
+  let aggregated = Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed aggregated_prg  in
   let mini_c     = Of_aggregated.compile_expression ~raise aggregated in
   let compiled   = Of_mini_c.compile_expression ~raise ~options mini_c in
   compiled

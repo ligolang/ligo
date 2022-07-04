@@ -168,7 +168,9 @@ let get_attributes (node : CST.pattern) =
 (* END HEADER *)
 %}
 
-(* See [ParToken.mly] for the definition of tokens. *)
+(* See [ParToken.mly] for the definition of the tokens. *)
+
+(* Menhir attributes used for error recovery *)
 
 %attribute nsepseq(statement,SEMI) [@recover.cost 1004]
 
@@ -660,7 +662,7 @@ type_params:
   chevrons(nsepseq(variable,",")) { $1 }
 
 parameters:
-  par(nsepseq(param_decl,";")) { $1 }
+  par(ioption(nsepseq(param_decl,";"))) { $1 }
 
 param_decl:
   param_kind parameter ioption(type_annotation) {
@@ -1419,7 +1421,7 @@ tuple(item):
 (* Function calls *)
 
 call_expr:
-  path_expr par(nsepseq(fun_arg,",")) {
+  path_expr par(ioption(nsepseq(fun_arg,","))) {
     let region = cover (expr_to_region $1) $2.region
     in mk_reg region ($1,$2) }
 

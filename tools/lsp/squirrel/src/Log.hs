@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 -- | Provides a façade to Katip's logger.
 module Log
   ( Severity (..)
@@ -18,6 +19,7 @@ module Log
   ) where
 
 import Control.Monad.IO.Unlift (MonadIO (..), MonadUnliftIO)
+import Control.Monad.Trans (lift)
 import Data.String.Interpolate.IsString (i)
 import Data.Text (pack)
 import Katip
@@ -29,6 +31,9 @@ import System.FilePath ((</>))
 import System.IO (stderr)
 import System.IO.Temp (getCanonicalTemporaryDirectory)
 import UnliftIO.Exception (bracket)
+
+instance MonadFail m => MonadFail (NoLoggingT m) where
+  fail = lift . fail
 
 type LogT = KatipContextT
 type Log = KatipContext

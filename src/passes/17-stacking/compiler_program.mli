@@ -9,10 +9,11 @@ type compiled_expression = {
   expr : (meta, string) node ;
 }
 
-open Ligo_coq_ocaml
-open Co_de_bruijn
-open Ligo
+open Ligo_coq_ocaml.Compiler
 
-val compile_expr: raise:Errors.stacking_error Simple_utils.Trace.raise -> Environment.Protocols.t -> (meta, string) node list -> splitting -> (meta, constant', literal) expr -> (meta, string) node
+(* TODO ugh *)
+(* type ('meta, 'base_type, 'op, 'lit, 'static_args, 'micheline) expr *)
 
-val compile_function_body : raise:Errors.stacking_error Simple_utils.Trace.raise -> Environment.Protocols.t -> (meta, constant', literal) binds -> (meta, string) node
+val compile_expr: (meta, (meta, string) Tezos_micheline.Micheline.node) ty list -> (meta, (meta, string) node, literal, (meta, string) node) expr -> (meta, string) node
+
+val compile_function_body : (meta, (meta, string) node, literal, (meta, string) node) binds -> (meta, string) node

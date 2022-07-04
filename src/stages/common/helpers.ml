@@ -70,21 +70,3 @@ let rec map_pattern_t : ('a binder -> 'b binder) -> 'a pattern -> 'b pattern =
 let var_attribute = { const_or_var = Some `Var }
 let const_attribute = { const_or_var = Some `Const }
 let empty_attribute = { const_or_var = None }
-
-let compare_option_patterns = (fun ({pattern=a;_} : _ match_case) ({pattern=b;_} : _ match_case) -> 
-  match (a.wrap_content, b.wrap_content) with
-    P_variant (Label "Some",_), P_variant (Label "Some",_) ->  0
-  | P_variant (Label "None",_), P_variant (Label "None",_) ->  0
-  | P_variant (Label "Some",_), P_variant (Label "None",_) -> -1
-  | P_variant (Label "None",_), P_variant (Label "Some",_) ->  1
-  | _ -> 0  
-)
-
-let compare_bool_patterns = (fun ({pattern=a;_} : _ Types.match_case) ({pattern=b;_} : _ Types.match_case) -> 
-  match (a.wrap_content, b.wrap_content) with
-    P_variant (Label "True" ,_), P_variant (Label "True" ,_) ->  0
-  | P_variant (Label "False",_), P_variant (Label "False",_) ->  0
-  | P_variant (Label "False",_), P_variant (Label "True" ,_) -> -1
-  | P_variant (Label "True" ,_), P_variant (Label "False",_) ->  1
-  | _ -> 0  
-)

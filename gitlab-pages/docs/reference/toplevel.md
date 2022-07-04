@@ -446,16 +446,16 @@ A helper to create a unit.
 
 <a name="failwith"></a>
 <SyntaxTitle syntax="pascaligo">
-val failwith&lt;a&gt; : a -> unit
+val failwith&lt;a&gt; : a -> b
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val failwith : 'a -> unit
+val failwith : 'a -> 'b
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let failwith: 'a => unit
+let failwith: 'a => 'b
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let failwith: (message: &apos;a) => unit
+let failwith: (message: &apos;a) => &apos;b
 </SyntaxTitle>
 
 Cause the contract to fail with an error message or integer. Other types are
@@ -634,3 +634,18 @@ type my_ticket = ticket(va);
 ```
 
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
+
+A type used to identify accounts on transaction rollups’ legders. Values of type tx_rollup_l2_address are 20-byte hashes of a BLS public keys (with a string notation based of a base58 encoding, prefixed with tz4).

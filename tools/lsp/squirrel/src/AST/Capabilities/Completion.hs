@@ -102,6 +102,7 @@ completeKeyword pos tree@(SomeLIGO dialect _) = do
       Caml   -> cameLIGOKeywords
       Pascal -> pascaLIGOKeywords
       Reason -> reasonLIGOKeywords
+      Js     -> jsLIGOKeywords
 
 completeField
   :: CompletionLIGO xs => Scope -> Range -> SomeLIGO xs -> Maybe [Completion]
@@ -165,6 +166,7 @@ completeFromTSpec TypeDeclSpecifics {_tdsInit} = case _tdsInit of
   AliasType _ -> CiVariable
   ArrowType _ _ -> CiFunction
   VariableType _ -> CiTypeParameter
+  ParenType t -> completeFromTSpec t
 
 defCompletionItem :: Text -> CompletionItem
 defCompletionItem label = CompletionItem

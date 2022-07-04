@@ -111,6 +111,8 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     Unused
   | E_global_constant (_hash, args) ->
     usages (List.map ~f:self args)
+  | E_create_contract (_p, _s, _code, args) ->
+    usages (List.map ~f:self args)
 
 let comb_type (ts : type_expression list) : type_expression =
   { type_content = T_tuple (List.map ~f:(fun t -> (None, t)) ts);
@@ -246,6 +248,9 @@ let rec uncurry_in_expression
   | E_global_constant (hash, args) ->
     let args = List.map ~f:self args in
     return (E_global_constant (hash, args))
+  | E_create_contract (p, s, code, args) ->
+    let args = List.map ~f:self args in
+    return (E_create_contract (p, s, code, args))
 
 (* hack to specialize map_expression to identity monad since there are
    no errors here *)

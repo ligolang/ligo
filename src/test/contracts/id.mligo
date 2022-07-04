@@ -59,7 +59,7 @@ from doing it just to chew up address space.  *)
 
 let buy (parameter, storage: buy * storage) =
   let () : unit =
-    if Tezos.amount = storage.name_price
+    if Tezos.get_amount () = storage.name_price
     then ()
     else (failwith "Incorrect amount paid.": unit)
   in
@@ -70,9 +70,9 @@ let buy (parameter, storage: buy * storage) =
   let controller: address =
     match initial_controller with
     | Some addr -> addr
-    | None -> Tezos.sender in
+    | None -> Tezos.get_sender () in
   let new_id_details: id_details = {
-    owner = Tezos.sender;
+    owner = Tezos.get_sender ();
     controller = controller;
     profile = profile} in
   let updated_identities : (id, id_details) big_map =
@@ -83,7 +83,7 @@ let buy (parameter, storage: buy * storage) =
                         }
 
 let update_owner (parameter, storage: update_owner * storage) =
-  if (Tezos.amount <> 0mutez)
+  if (Tezos.get_amount () <> 0mutez)
   then (failwith "Updating owner doesn't cost anything.": (operation list) * storage)
   else
   let id = parameter.id in
@@ -95,7 +95,7 @@ let update_owner (parameter, storage: update_owner * storage) =
     | None -> (failwith "This ID does not exist.": id_details)
   in
   let () : unit =
-    if Tezos.sender = current_id_details.owner
+    if Tezos.get_sender () = current_id_details.owner
     then ()
     else failwith "You are not the owner of this ID."
   in
@@ -109,7 +109,7 @@ let update_owner (parameter, storage: update_owner * storage) =
   ([]: operation list), {storage with identities = updated_identities}
 
 let update_details (parameter, storage: update_details * storage) =
-  if (Tezos.amount <> 0mutez)
+  if (Tezos.get_amount () <> 0mutez)
   then (failwith "Updating details doesn't cost anything.": (operation list) * storage)
   else
   let id = parameter.id in
@@ -122,7 +122,7 @@ let update_details (parameter, storage: update_details * storage) =
     | None -> (failwith "This ID does not exist.": id_details)
   in
   let () : unit =
-    if (Tezos.sender = current_id_details.controller) || (Tezos.sender = current_id_details.owner)
+    if (Tezos.get_sender () = current_id_details.controller) || (Tezos.get_sender () = current_id_details.owner)
     then ()
     else failwith ("You are not the owner or controller of this ID.")
   in
@@ -150,7 +150,7 @@ let update_details (parameter, storage: update_details * storage) =
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (_,storage: unit * storage) =
   let () : unit =
-    if Tezos.amount = storage.skip_price
+    if Tezos.get_amount () = storage.skip_price
     then ()
     else failwith "Incorrect amount paid."
   in

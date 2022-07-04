@@ -88,7 +88,6 @@ library:
     - bytestring
     - containers
     - data-default
-    - directory
     - dlist
     - fastsum
     - filepath
@@ -185,18 +184,18 @@ tests:
       - aeson
       - algebraic-graphs
       - data-default
+      - directory
+      - filepath
+      - hspec-expectations
+      - HUnit
+      - lens
       - ligo-squirrel
       - lsp-test
-      - tasty
-      - HUnit
-      - hspec-expectations
-      - tasty-hunit
-      - filepath
-      - directory
       - lsp-types
-      - text
-      - lens
+      - tasty
+      - tasty-hunit
       - template-haskell
+      - text
       - unliftio
       - unordered-containers
 
@@ -225,6 +224,7 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
+      - algebraic-graphs
       - HUnit
       - directory
       - filepath
@@ -232,8 +232,10 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
+      - QuickCheck
       - tasty
       - tasty-hunit
+      - tasty-quickcheck
       - template-haskell
       - text
       - unliftio

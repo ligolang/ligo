@@ -12,7 +12,7 @@ module A is {
 
 module D is A
 
-const toto : D.titi = block {
+const toto : D.titi = {
     module E is A.C;
 } with E.toto
 

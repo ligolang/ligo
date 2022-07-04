@@ -7,10 +7,10 @@ let x = 1 + 2;
 ---
 
 (source_file
-  (let_decl
+  (toplevel_binding
     (var_pattern
-      (Name))
-    (binary_operator (Int) (Int))))
+      (NameDecl))
+    (binary_call (Int) (Int))))
 
 =========
 assignment operator
@@ -22,10 +22,10 @@ let x = () => { x += 2; return x };
 ---
 
 (source_file
-  (let_decl
-  (var_pattern (Name))
-  (fun_expr
-    (body
+  (toplevel_binding
+  (var_pattern (NameDecl))
+  (lambda
+    (block_statement
       (assignment_operator (Name) (Int))
       (return_statement (Name))))))
 
@@ -38,10 +38,10 @@ let x = true || false;
 ---
 
 (source_file
-  (let_decl
+  (toplevel_binding
     (var_pattern
-      (Name))
-    (binary_operator (True_kwd) (False_kwd))))
+      (NameDecl))
+    (binary_call (True_kwd) (False_kwd))))
 
 =========
 unary operator
@@ -52,7 +52,7 @@ let x = - 1;
 ---
 
 (source_file
-  (let_decl
+  (toplevel_binding
     (var_pattern
-      (Name))
-    (unary_operator (Int))))
+      (NameDecl))
+    (unary_call (negate) (Int))))

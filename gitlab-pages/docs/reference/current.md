@@ -9,16 +9,16 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-val balance : tez
+val get_balance : unit -> tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val balance : tez
+val get_balance : unit -> tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let balance: tez
+let get_balance: unit => tez
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let balance: tez
+let get_balance: (_u: unit) => tez
 </SyntaxTitle>
 
 Get the balance for the contract.
@@ -27,14 +27,14 @@ Get the balance for the contract.
 
 ```pascaligo
 function main (const p : unit; const s : tez) : list (operation) * tez is
-  ((nil : list (operation)), Tezos.balance)
+  ((nil : list (operation)), Tezos.get_balance ())
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
+let main (p,s : unit * tez) = ([] : operation list), Tezos.get_balance()
 ```
 
 </Syntax>
@@ -42,7 +42,7 @@ let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 
 ```reasonligo
 let main = ((p,s) : (unit, tez)) =>
-  ([]: list (operation), Tezos.balance);
+  ([]: list (operation), Tezos.get_balance());
 ```
 
 </Syntax>
@@ -50,23 +50,23 @@ let main = ((p,s) : (unit, tez)) =>
 
 ```jsligo
 let main = ([p, s] : [unit, tez]):[list<operation>, tez] =>
-  [(list([]) as list<operation>), Tezos.balance];
+  [(list([]) as list<operation>), Tezos.get_balance()];
 ```
 
 </Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
-val now : timestamp
+val get_now : unit -> timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val now : timestamp
+val get_now : unit -> timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let now: timestamp
+let get_now: unit => timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let now: timestamp
+let get_now: (_u : unit) => timestamp
 </SyntaxTitle>
 
 Returns the current time as a [UNIX timestamp](https://en.wikipedia.org/wiki/Unix_time).
@@ -82,7 +82,7 @@ smart contracts like this:
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=b
-const today         : timestamp = Tezos.now;
+const today         : timestamp = Tezos.get_now();
 const one_day       : int = 86_400;
 const in_24_hrs     : timestamp = today + one_day;
 const some_date     : timestamp = ("2000-01-01T10:10:10Z" : timestamp);
@@ -93,7 +93,7 @@ const one_day_later : timestamp = some_date + one_day;
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-let today         : timestamp = Tezos.now
+let today         : timestamp = Tezos.get_now ()
 let one_day       : int = 86_400
 let in_24_hrs     : timestamp = today + one_day
 let some_date     : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
@@ -104,7 +104,7 @@ let one_day_later : timestamp = some_date + one_day
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=b
-let today         : timestamp = Tezos.now;
+let today         : timestamp = Tezos.get_now();
 let one_day       : int = 86_400;
 let in_24_hrs     : timestamp = today + one_day;
 let some_date     : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
@@ -115,7 +115,7 @@ let one_day_later : timestamp = some_date + one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let today         : timestamp = Tezos.now;
+let today         : timestamp = Tezos.get_now();
 let one_day       : int = 86_400;
 let in_24_hrs     : timestamp = today + one_day;
 let some_date     : timestamp = ("2000-01-01t10:10:10Z" as timestamp);
@@ -131,7 +131,7 @@ let one_day_later : timestamp = some_date + one_day;
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
-const today     : timestamp = Tezos.now
+const today     : timestamp = Tezos.get_now()
 const one_day   : int = 86_400
 const in_24_hrs : timestamp = today - one_day
 ```
@@ -140,7 +140,7 @@ const in_24_hrs : timestamp = today - one_day
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-let today     : timestamp = Tezos.now
+let today     : timestamp = Tezos.get_now ()
 let one_day   : int = 86_400
 let in_24_hrs : timestamp = today - one_day
 ```
@@ -149,7 +149,7 @@ let in_24_hrs : timestamp = today - one_day
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
-let today     : timestamp = Tezos.now;
+let today     : timestamp = Tezos.get_now();
 let one_day   : int = 86_400;
 let in_24_hrs : timestamp = today - one_day;
 ```
@@ -158,7 +158,7 @@ let in_24_hrs : timestamp = today - one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let today     : timestamp = Tezos.now;
+let today     : timestamp = Tezos.get_now();
 let one_day   : int = 86_400;
 let in_24_hrs : timestamp = today - one_day;
 ```
@@ -175,44 +175,44 @@ for numbers
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
-const not_tommorow : bool = (Tezos.now = in_24_hrs)
+const not_tommorow : bool = (Tezos.get_now() = in_24_hrs)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-let not_tomorrow : bool = (Tezos.now = in_24_hrs)
+let not_tomorrow : bool = (Tezos.get_now () = in_24_hrs)
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
-let not_tomorrow: bool = (Tezos.now == in_24_hrs);
+let not_tomorrow: bool = (Tezos.get_now() == in_24_hrs);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let not_tomorrow: bool = (Tezos.now == in_24_hrs);
+let not_tomorrow: bool = (Tezos.get_now() == in_24_hrs);
 ```
 
 </Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
-val amount : tez
+val get_amount : unit -> tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val amount : tez
+val get_amount : unit -> tez
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let amount: tez
+let get_amount: unit => tez
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let amount: tez
+let get_amount: (_u : unit) => tez
 </SyntaxTitle>
 
 Get the amount of tez provided by the sender to complete this
@@ -224,14 +224,14 @@ transaction.
 
 ```pascaligo
 function threshold (const p : unit) : int is
-  if Tezos.amount = 100tz then 42 else 0
+  if Tezos.get_amount() = 100tz then 42 else 0
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
+let threshold (p : unit) : int = if Tezos.get_amount () = 100tz then 42 else 0
 ```
 
 </Syntax>
@@ -239,7 +239,7 @@ let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 
 ```reasonligo
 let threshold = (p : unit) : int =>
-  if (Tezos.amount == 100tz) { 42; } else { 0; };
+  if (Tezos.get_amount() == 100tz) { 42; } else { 0; };
 ```
 
 </Syntax>
@@ -247,23 +247,23 @@ let threshold = (p : unit) : int =>
 
 ```jsligo
 let threshold = (p : unit) : int => {
-  if (Tezos.amount == (100 as tez)) { return 42; } else { return 0; };
+  if (Tezos.get_amount() == (100 as tez)) { return 42; } else { return 0; };
 };
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-val sender : address
+val get_sender : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val sender : address
+val get_sender : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let sender: address
+let get_sender: unit => address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sender: address
+let get_sender: (_u : unit) => address
 </SyntaxTitle>
 
 Get the address that initiated the current transaction.
@@ -273,28 +273,28 @@ Get the address that initiated the current transaction.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) : address is Tezos.sender
+function main (const p : unit) : address is Tezos.get_sender()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) : address = Tezos.sender
+let main (p : unit) : address = Tezos.get_sender ()
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let main = (p : unit) : address => Tezos.sender;
+let main = (p : unit) : address => Tezos.get_sender ();
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let main = (p : unit) : address => Tezos.sender;
+let main = (p : unit) : address => Tezos.get_sender ();
 ```
 
 </Syntax>
@@ -357,16 +357,16 @@ let main = (p : key_hash): address => {
 
 
 <SyntaxTitle syntax="pascaligo">
-val self_address : address
+val get_self_address : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val self_address : address
+val get_self_address : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let self_address: address
+let get_self_address: unit => address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let self_address: address
+let get_self_address: (_u : unit) => address
 </SyntaxTitle>
 
 Get the address of the currently running contract.
@@ -376,28 +376,28 @@ Get the address of the currently running contract.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) : address is Tezos.self_address
+function main (const p : unit) : address is Tezos.get_self_address()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) : address = Tezos.self_address
+let main (p : unit) : address = Tezos.get_self_address ()
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let main = (p : unit) : address => Tezos.self_address;
+let main = (p : unit) : address => Tezos.get_self_address ();
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let main = (p : unit): address => Tezos.self_address;
+let main = (p : unit): address => Tezos.get_self_address();
 ```
 
 </Syntax>
@@ -505,37 +505,37 @@ let main = (kh: key_hash): contract<unit> =>
 
 
 <SyntaxTitle syntax="pascaligo">
-val source : address
+val get_source : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val source : address
+val get_source : unit -> address
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let source: address
+let get_source: unit => address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let source: address
+let get_source: (_u : unit) => address
 </SyntaxTitle>
 
 Get the _originator_ (address) of the current transaction. That is, if
 a chain of transactions led to the current execution get the address
-that began the chain. Not to be confused with `Tezos.sender`, which
+that began the chain. Not to be confused with `Tezos.get_sender`, which
 gives the address of the contract or user which directly caused the
 current transaction.
 
 > ⚠️ There are a few caveats you should keep in mind before using
-> `Tezos.source` over `Tezos.sender`:
+> `Tezos.get_source` over `Tezos.get_sender`:
 >
-> 1. `Tezos.source` will never be a contract, so if you want to allow
+> 1. `Tezos.get_source` will never be a contract, so if you want to allow
 >    contracts (multisigs etc) to operate your contract, you need to
->    use `Tezos.sender`
+>    use `Tezos.get_sender`
 > 2. https://vessenes.com/tx-origin-and-ethereum-oh-my/ -- in general
->    it is somewhat unsafe to assume that `Tezos.source` understands
+>    it is somewhat unsafe to assume that `Tezos.get_source` understands
 >    everything that is going to happen in a transaction. If
->    `Tezos.source` transfers to a malicious (or sufficiently
+>    `Tezos.get_source` transfers to a malicious (or sufficiently
 >    attackable) contract, that contract might potentially transfer to
->    yours, without `Tezos.source`'s consent. So if you are using
->    `Tezos.source` for authentication, you risk being confused. A
+>    yours, without `Tezos.get_source`'s consent. So if you are using
+>    `Tezos.get_source` for authentication, you risk being confused. A
 >    good historical example of this is bakers paying out delegation
 >    rewards. Naive bakers did (and probably still do) just use
 >    tezos-client to transfer to whatever KT1 delegates they had, even
@@ -546,28 +546,28 @@ current transaction.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) : address is Tezos.source
+function main (const p : unit) : address is Tezos.get_source()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) : address = Tezos.source
+let main (p : unit) : address = Tezos.get_source ()
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-let main = (p : unit) : address => Tezos.source;
+let main = (p : unit) : address => Tezos.get_source ();
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=j
-let main = (p : unit) : address => Tezos.source;
+let main = (p : unit) : address => Tezos.get_source();
 ```
 
 </Syntax>
@@ -590,16 +590,16 @@ let failwith: (message: &apos;a) => unit
 
 
 <SyntaxTitle syntax="pascaligo">
-val chain_id : chain_id
+val get_chain_id : unit chain_id
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val chain_id : chain_id
+val get_chain_id : unit -> chain_id
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let chain_id: chain_id
+let get_chain_id: unit => chain_id
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let chain_id: chain_id
+let get_chain_id: (_u : unit) => chain_id
 </SyntaxTitle>
 
 Get the identifier of the chain to distinguish between main and test chains.
@@ -613,7 +613,7 @@ only be used together with `Bytes.pack` and `Bytes.unpack`.
 type storage is bytes
 
 function main (const ignore : unit; const storage: storage) : list (operation) * storage is {
-  const packed : bytes = Bytes.pack (Tezos.chain_id);
+  const packed : bytes = Bytes.pack (Tezos.get_chain_id());
   if storage =/= packed then failwith ("wrong chain");
 } with ((nil: list (operation)), packed)
 ```
@@ -625,7 +625,7 @@ function main (const ignore : unit; const storage: storage) : list (operation) *
 type storage = bytes
 
 let main ((ignore, storage): (unit * storage)) =
-  let packed = Bytes.pack Tezos.chain_id in
+  let packed = Bytes.pack (Tezos.get_chain_id ()) in
   if (storage <> packed) then
     (failwith "wrong chain" : (operation list * storage))
   else
@@ -639,7 +639,7 @@ let main ((ignore, storage): (unit * storage)) =
 type storage = bytes;
 
 let main = ((ignore, storage): (unit, storage)) => {
-  let packed = Bytes.pack(Tezos.chain_id);
+  let packed = Bytes.pack(Tezos.get_chain_id());
   if (storage != packed) {
     (failwith("wrong chain"): (list(operation), storage));
   } else {
@@ -655,7 +655,7 @@ let main = ((ignore, storage): (unit, storage)) => {
 type storage = bytes;
 
 let main = ([ignore, storage]: [unit, storage]):[list<operation>, storage] => {
-  let packed = Bytes.pack(Tezos.chain_id);
+  let packed = Bytes.pack(Tezos.get_chain_id());
   if (storage != packed) {
     return failwith("wrong chain") as [list<operation>, storage];
   } else {
@@ -778,19 +778,34 @@ When no contract is found or the contract doesn't match the type,
 `None` is returned.
 
 <SyntaxTitle syntax="pascaligo">
-val level : nat
+val get_level : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val level : nat
+val get_level : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let level : nat
+let get_level : unit => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let level : nat
+let get_level : (_u : unit) => nat
 </SyntaxTitle>
 
 Get the current block level.
+
+<SyntaxTitle syntax="pascaligo">
+val min_block_time : unit -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val min_block_time : unit -> nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let min_block_time: unit => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let min_block_time: unit => nat;
+</SyntaxTitle>
+
+Returns the current minimal time between blocks, the value is obtained from the protocol’s minimal_block_delay constant.
 
 <SyntaxTitle syntax="pascaligo">
 val pairing_check : list (bls12_381_g1 * bls12_381_g2) -> bool
@@ -826,16 +841,16 @@ Eliminate a value of the type `never` using the instruction `NEVER`
 from Michelson.
 
 <SyntaxTitle syntax="pascaligo">
-function total_voting_power : nat
+function get_total_voting_power : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val total_voting_power : nat
+val get_total_voting_power : unit -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let total_voting_power: nat
+let get_total_voting_power: unit => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let total_voting_power: nat
+let get_total_voting_power: (_u : unit) => nat
 </SyntaxTitle>
 
 Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
@@ -854,7 +869,7 @@ let voting_power: key_hash =>nat
 let voting_power: (key_hash:key_hash) => nat
 </SyntaxTitle>
 
-Return the voting power of a given contract. This voting power coincides with the weight of the contract in the voting listings (i.e., the rolls count) which is calculated at the beginning of every voting period.
+Return the voting power of a given contract. The voting power value is the full staking power of the delegate, currently expressed in mutez. Though, developers should not rely on `Tezos.voting_power` to query the staking power of a contract in mutez: the value returned by `Tezos.voting_power` is still of type` nat and it should only be considered relative to `Tezos.total_voting_power`.  
 
 ## Sapling
 

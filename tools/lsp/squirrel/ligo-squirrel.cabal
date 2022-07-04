@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.34.7.
 --
 -- see: https://github.com/sol/hpack
 
@@ -27,6 +27,7 @@ library
       AST.Includes
       AST.Parser
       AST.Parser.Camligo
+      AST.Parser.Jsligo
       AST.Parser.Pascaligo
       AST.Parser.Reasonligo
       AST.Pretty
@@ -43,6 +44,7 @@ library
       Cli.Json
       Cli.Types
       Config
+      Diagnostic
       Extension
       ListZipper
       Log
@@ -120,7 +122,6 @@ library
     , bytestring
     , containers
     , data-default
-    , directory
     , dlist
     , duplo
     , fastsum
@@ -595,6 +596,7 @@ test-suite lsp-test
       Test.Capabilities.SelectionRange
       Test.Capabilities.SignatureHelp
       Test.Diagnostics
+      Test.Graph
       Test.Parsers
       Test.Scope.ScopedDecl
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
@@ -661,6 +663,8 @@ test-suite lsp-test
       tasty-discover:tasty-discover
   build-depends:
       HUnit
+    , QuickCheck
+    , algebraic-graphs
     , base
     , directory
     , duplo
@@ -672,6 +676,7 @@ test-suite lsp-test
     , lsp-types
     , tasty
     , tasty-hunit
+    , tasty-quickcheck
     , template-haskell
     , text
     , unliftio

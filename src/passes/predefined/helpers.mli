@@ -1,4 +1,4 @@
-module Stacking : sig
+module Michelson : sig
   open Tezos_utils.Michelson
 
   type predicate

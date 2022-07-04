@@ -68,7 +68,7 @@ let rec error_ppformat : display_format:string display_format ->
           generator
     | `Main_invalid_syntax_name syntax ->
       Format.fprintf f
-        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', or 'reasonligo'. @]"
+        "@[<hv>Invalid syntax option: '%s'. @.Use 'pascaligo', 'cameligo', 'reasonligo', or 'jsligo'. @]"
           syntax
     | `Main_invalid_dialect_name syntax ->
       Format.fprintf f
@@ -85,7 +85,7 @@ let rec error_ppformat : display_format:string display_format ->
         actual
     | `Main_invalid_extension extension ->
       Format.fprintf f
-        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, or the --syntax option.@]"
+        "@[<hv>Invalid file extension '%s'. @.Use '.ligo' for PascaLIGO, '.mligo' for CameLIGO, '.religo' for ReasonLIGO, '.jsligo' for JsLIGO, or the --syntax option.@]"
         extension
 
     | `Main_unparse_tracer errs ->
@@ -111,20 +111,13 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided storage does not have the correct type for the contract.@ %a@]"
         (error_ppformat ~display_format) err
 
-    | `Main_unknown_failwith_type ->
-      Format.fprintf f "@[<v>The contract failed to dry run, and returned an unsupported failwith type. Only int, string, and bytes are supported as failwith types for dry-run.@]"
-
     | `Main_unknown ->
       Format.fprintf f "@[<v>An unknown error occurred.@]"
 
-    | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
-      let value = match fw with
-        | Failwith_int i -> string_of_int i
-        | Failwith_string s -> s
-        | Failwith_bytes b -> Bytes.to_string b in
+    | `Main_execution_failed v ->
       Format.fprintf f
-        "@[<hv>An error occurred while evaluating an expression: %s@]"
-        value
+        "@[<hv>An error occurred while evaluating an expression: %a@]"
+        Tezos_utils.Michelson.pp v
     | `Main_entrypoint_not_a_function -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not a function.@]"
     | `Main_view_not_a_function var -> Format.fprintf f "@[<hv>Invalid command line argument. @.View \"%a\" is not a function.@]" Ast_typed.PP.expression_variable var
     | `Main_entrypoint_not_found -> Format.fprintf f "@[<hv>Invalid command line argument. @.The provided entrypoint is not found in the contract.@]"
@@ -176,6 +169,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_ppformat ~display_format f e
     | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_ppformat ~display_format f e
     | `Spilling_tracer e -> Spilling.Errors.error_ppformat ~display_format f  e
+    | `Scoping_tracer e -> Scoping.Errors.error_ppformat ~display_format f e
     | `Stacking_tracer e -> Stacking.Errors.error_ppformat ~display_format f e
 
     | `Main_interpret_not_enough_initial_accounts (loc,max) ->
@@ -200,35 +194,27 @@ let rec error_ppformat : display_format:string display_format ->
            (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
            Snippet.pp (List.hd_exn calltrace)
            (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
-    | `Main_interpret_target_lang_failwith (loc, Failwith_int n) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (int): %d@]"
+    | `Main_interpret_target_lang_failwith (loc, v) ->
+      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith: %a@]"
         Snippet.pp loc
-        n
-    | `Main_interpret_target_lang_failwith (loc, Failwith_bytes b) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (bytes): %s@]"
-        Snippet.pp loc
-        (Bytes.to_string b)
-    | `Main_interpret_target_lang_failwith (loc, Failwith_string s) ->
-      Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith (string): %s@]"
-        Snippet.pp loc
-        s
+        Tezos_utils.Michelson.pp v
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc
     | `Main_interpret_meta_lang_eval (loc,[],reason) ->
-      Format.fprintf f "@[<hv>%a@.%s@]"
+      Format.fprintf f "@[<hv>%a@.%a@]"
         Snippet.pp loc
-        reason
+        Ligo_interpreter.PP.pp_value reason
     | `Main_interpret_meta_lang_eval (loc,calltrace,reason) ->
       if not (is_dummy_location loc) || List.is_empty calltrace then
-        Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@]"
+        Format.fprintf f "@[<hv>%a@.%a@.Trace:@.%a@]"
           Snippet.pp loc
-          reason
+          Ligo_interpreter.PP.pp_value reason
           (PP_helpers.list_sep_d Location.pp) calltrace
       else
-        Format.fprintf f "@[<hv>%a@.%s@.Trace:@.%a@.%a@]"
+        Format.fprintf f "@[<hv>%a@.%a@.Trace:@.%a@.%a@]"
           Snippet.pp loc
-          reason
+          Ligo_interpreter.PP.pp_value reason
           Snippet.pp (List.hd_exn calltrace)
           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_meta_lang_failwith (loc,[],value) ->
@@ -338,18 +324,15 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
         ~message:"Passed storage does not match the contract type"
         ~child:(error_jsonformat err) ()
 
-  | `Main_unknown_failwith_type ->
-    json_error ~stage:"michelson execution" ~message:"unknown failwith type" ()
   | `Main_unknown ->
     json_error ~stage:"michelson execution" ~message:"unknown error" ()
 
-  | `Main_execution_failed (fw:Simple_utils.Runned_result.failwith) ->
-    let value = match fw with
-      | Failwith_int i -> `Assoc [("value", `Int i) ; ("type", `String "int")]
-      | Failwith_string s -> `Assoc [("value", `String s) ; ("type", `String "int")]
-      | Failwith_bytes b -> `Assoc [("value", `String (Bytes.to_string b)) ; ("type", `String "bytes")]
+  | `Main_execution_failed v ->
+    let value =
+      Format.asprintf "%a"
+      Tezos_utils.Michelson.pp v
     in
-    let extra_content = [("failwith", value)] in
+    let extra_content = [("failwith", `String value)] in
     json_error ~stage:"michelson execution" ~extra_content ()
 
   | `Main_invalid_amount a ->
@@ -418,6 +401,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Self_ast_aggregated_tracer e -> Self_ast_aggregated.Errors.error_jsonformat e
   | `Spilling_tracer e -> Spilling.Errors.error_jsonformat e
   | `Self_mini_c_tracer e -> Self_mini_c.Errors.error_jsonformat e
+  | `Scoping_tracer e -> Scoping.Errors.error_jsonformat e
   | `Stacking_tracer e -> Stacking.Errors.error_jsonformat e
 
   | `Main_interpret_test_entry_not_found _

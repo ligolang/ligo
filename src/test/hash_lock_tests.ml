@@ -63,7 +63,7 @@ let commit ~raise ~add_warning () =
   let post_commits = e_big_map [((e_address first_committer), commit)]
   in
   let post_storage = storage test_hash true post_commits in
-  expect_eq ~raise ~options program "commit"
+  expect_eq ~raise ~add_warning ~options program "commit"
     (e_pair salted_hash init_storage) (e_pair empty_op_list post_storage)
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
@@ -79,7 +79,7 @@ let reveal_no_commit ~raise ~add_warning () =
                                                               ("salted_hash", (t_bytes ()))])
   in
   let init_storage = storage test_hash true pre_commits in
-  expect_string_failwith ~raise program "reveal"
+  expect_string_failwith ~raise ~add_warning program "reveal"
     (e_pair reveal init_storage)
     "You have not made a commitment to hash against yet."
 
@@ -112,7 +112,7 @@ let reveal_young_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~options program "reveal"
+  expect_string_failwith ~raise ~add_warning ~options program "reveal"
     (e_pair reveal init_storage)
     "It has not been 24 hours since your commit yet."
 
@@ -144,7 +144,7 @@ let reveal_breaks_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~options program "reveal"
+  expect_string_failwith ~raise ~add_warning ~options program "reveal"
     (e_pair reveal init_storage)
     "This reveal does not match your commitment."
 
@@ -176,7 +176,7 @@ let reveal_wrong_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~options program "reveal"
+  expect_string_failwith ~raise ~add_warning ~options program "reveal"
     (e_pair reveal init_storage)
     "Your commitment did not match the storage hash."
 
@@ -208,7 +208,7 @@ let reveal_no_reuse ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~options program "reveal"
+  expect_string_failwith ~raise ~add_warning ~options program "reveal"
     (e_pair reveal init_storage)
     "This contract has already been used."
 
@@ -241,7 +241,7 @@ let reveal ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_eq ~raise ~options program "reveal"
+  expect_eq ~raise ~add_warning ~options program "reveal"
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
 let main = test_suite "Hashlock (CameLIGO)" [

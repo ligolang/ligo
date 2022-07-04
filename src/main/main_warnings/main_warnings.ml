@@ -9,20 +9,15 @@ type all =
   | `Checking_ambiguous_contructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of Location.t * Stage_common.Types.TypeVar.t
+  | `Self_ast_imperative_warning_deprecated_constant of Location.t * Ast_imperative.expression * Ast_imperative.expression * Ast_imperative.type_expression
   | `Main_view_ignored of Location.t
-  | `Pascaligo_deprecated_case of Location.t
-  | `Pascaligo_deprecated_semi_before_else of Location.t
   | `Michelson_typecheck_failed_with_different_protocol of (Environment.Protocols.t * Tezos_error_monad.Error_monad.error list)
   | `Jsligo_deprecated_failwith_no_return of Location.t
   | `Jsligo_deprecated_toplevel_let of Location.t
-
+  | `Use_meta_ligo of Location.t
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
-
-let pascaligo_deprecated_case loc = `Pascaligo_deprecated_case loc
-
-let pascaligo_deprecated_semi_before_else loc = `Pascaligo_deprecated_semi_before_else loc
 
 let pp : display_format:string display_format ->
   Format.formatter -> all -> unit =
@@ -30,6 +25,10 @@ let pp : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Use_meta_ligo loc ->
+      Format.fprintf f "@[<hv>%a@ You are using Michelson failwith primitive (loaded from standard library).@.\
+      Consider using `Test.failwith` for throwing a testing framework failure.@.@]"
+        Snippet.pp loc
     | `Michelson_typecheck_failed_with_different_protocol (user_proto,errs) -> (
       let open Environment.Protocols in
       Format.fprintf f
@@ -48,12 +47,6 @@ let pp : display_format:string display_format ->
       Stage_common.PP.type_variable tv_possible
     | `Main_view_ignored loc ->
       Format.fprintf f "@[<hv>%a@ Warning: This view will be ignored, command line option override [@ view] annotation@.@]"
-      Snippet.pp loc
-    | `Pascaligo_deprecated_case loc ->
-      Format.fprintf f "@[<hv>%a@ Warning: Deprecated syntax behind `of`. An opening bracket `[` is expected behind `of` and `end` is expected to be replaced with a closing bracket `]`.@.@]"
-      Snippet.pp loc
-    | `Pascaligo_deprecated_semi_before_else loc ->
-      Format.fprintf f "@[<hv>%a@ Warning: Deprecated semicolon `;` before the `else` keyword. Please remove the semicolon.@.@]"
       Snippet.pp loc
     | `Self_ast_typed_warning_unused (loc, s) ->
         Format.fprintf f
@@ -75,6 +68,13 @@ let pp : display_format:string display_format ->
         Format.fprintf f
           "@[<hv>%a@ Warning: %a is not recognize as a polymorphic variable anymore. If you want to make a polymorphic function, please consult the online documentation @.@]"
           Snippet.pp loc Stage_common.Types.TypeVar.pp name
+    | `Self_ast_imperative_warning_deprecated_constant (l, curr, alt, ty) ->
+       Format.fprintf f
+         "@[<hv>%a@ Warning: the constant %a is soon to be deprecated. Use instead %a : %a. @]"
+         Snippet.pp l
+         Ast_imperative.PP.expression curr
+         Ast_imperative.PP.expression alt
+         Ast_imperative.PP.type_expression ty
     | `Jsligo_deprecated_failwith_no_return loc ->
       Format.fprintf f "@[<hv>%a@.Deprecated `failwith` without `return`: `failwith` is just a function.@.Please add an explicit `return` before `failwith` if you meant the built-in `failwith`.@.For now, compilation proceeds adding such `return` automatically.@.@]"
       Snippet.pp loc
@@ -90,6 +90,15 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Use_meta_ligo loc ->
+    let message = `String "You are using Michelson failwith primitive (loaded from standard library).\
+    Consider using `Test.failwith` for throwing a testing framework failure" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage:"Interpreter" ~content
   | `Michelson_typecheck_failed_with_different_protocol (user_proto,_) ->
     let open Environment.Protocols in
     let message = `String "Typechecking the produced Michelson contract against the next protocol failed" in
@@ -113,24 +122,6 @@ let to_json : all -> Yojson.Safe.t = fun a ->
     let message = `String "command line option overwrites annotated views" in
     let stage   = "Main" in
     let loc = Location.to_yojson loc in
-    let content = `Assoc [
-                      ("message", message);
-                      ("location", loc);
-                    ] in
-    json_warning ~stage ~content
-  | `Pascaligo_deprecated_case loc ->
-    let message = `String "deprecated case syntax" in
-    let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let content = `Assoc [
-                      ("message", message);
-                      ("location", loc);
-                    ] in
-    json_warning ~stage ~content
-  | `Pascaligo_deprecated_semi_before_else loc ->
-    let message = `String "deprecated semicolon before else" in
-    let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
@@ -162,7 +153,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
       let message = `String "unused recursion in function" in
       let stage   = "self_ast_typed" in
       let description = `String s in
-      let loc = `String (Format.asprintf "%a" Location.pp loc) in
+      let loc = Location.to_yojson loc in
       let content = `Assoc [
                         ("message", message);
                         ("location", loc);
@@ -180,17 +171,26 @@ let to_json : all -> Yojson.Safe.t = fun a ->
     json_warning ~stage ~content
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
     let message = `String (Format.asprintf "Deprecated polymorphic var %a" Stage_common.Types.TypeVar.pp name) in
-     let stage   = "self_ast_imperative" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let stage   = "self_ast_imperative" in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
     ] in
     json_warning ~stage ~content
+  | `Self_ast_imperative_warning_deprecated_constant (loc, _, _, _) ->
+    let message = `String "Constant soon to be deprecated." in
+    let stage   = "self_ast_imperative" in
+    let loc = Location.to_yojson loc in
+    let content = `Assoc [
+                      ("message", message);
+                      ("location", loc);
+                    ] in
+    json_warning ~stage ~content
   | `Jsligo_deprecated_failwith_no_return loc ->
     let message = `String "deprecated use of failwith without return" in
     let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);
@@ -199,7 +199,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
   | `Jsligo_deprecated_toplevel_let loc ->
     let message = `String "Toplevel let declarations are silently convert to const declarations" in
     let stage   = "lexer" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
+    let loc = Location.to_yojson loc in
     let content = `Assoc [
                       ("message", message);
                       ("location", loc);

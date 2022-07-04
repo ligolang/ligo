@@ -244,10 +244,6 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let (res,let_result) = self res let_result in
       (res, return @@ E_let_in { let_binder ; rhs ; let_result ; attr })
     )
-  | E_type_in { type_binder ; rhs ; let_result} -> (
-      let (res,let_result) = self init let_result in
-      (res, return @@ E_type_in { type_binder ; rhs ; let_result })
-    )
   | E_mod_in { module_binder ; rhs ; let_result } -> (
     let (res,let_result) = self init let_result in
     let (res,rhs) = fold_map_expression_in_module_expr f res rhs in
@@ -324,3 +320,170 @@ and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 
     return res (M_struct decls)
   | M_module_path _ as x -> return acc x
   | M_variable _ as x -> return acc x
+
+let rec fold_type_expression : type a . type_expression -> init:a -> f:(a -> type_expression -> a) -> a =
+  fun te ~init ~f ->
+    let self te = fold_type_expression te ~f in
+    let init = f init te in
+    match te.type_content with
+    | T_variable _ -> init
+    | T_constant {parameters; _} -> (
+        List.fold parameters ~init ~f
+      )
+    | T_sum {content; _}
+    | T_record {content; _} -> (
+        LMap.fold (fun _ row acc -> self ~init:acc row.associated_type) content init
+      )
+    | T_arrow {type1; type2} -> (
+        self type2 ~init:(self type1 ~init)
+      )
+    | T_singleton _ -> init
+    | T_abstraction {type_; _}
+    | T_for_all {type_; _} -> (
+        self type_ ~init
+      )
+
+
+(* An [IdMap] is a [Map] augmented with an [id] field (which is wrapped around the map [value] field).
+  Using a map instead of a list makes shadowed modules inaccessible,
+  since they are overwritten from the map when adding the shadower, whilst they were kept when using lists.
+  The [id] field in the map values is used to infer the type to which a constructor belong when they are not annotated
+  e.g. we need to keep the declaration order to infer that 'c' has type z in:
+
+    type x = A of int | B
+    module M = struct
+      type y = A of int
+    end
+    type z = A of int | AA
+
+    let c = A 2
+*)
+
+let global_id = ref 0
+module IdMap = struct
+  module type OrderedType = Caml.Map.OrderedType
+
+  module type IdMapSig = sig
+    type key
+    type 'a t
+    type 'a kvi_list = (key * 'a * int) list
+
+    val empty : 'a t
+    val add : 'a t -> key -> 'a -> 'a t
+    (* In case of merge conflict between two values with same keys, this merge function keeps the value with the highest id.
+        This follows the principle that this map always keeps the latest value in case of conflict *)
+    val merge : 'a t -> 'a t -> 'a t
+    (* Converts the map into an unsorted (key * value * id) 3-uple *)
+    val to_kvi_list : 'a t -> (key * 'a * int) list
+    (* Converts the kvi_list into a id-sorted kv_list *)
+    val sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list
+    val to_kv_list : 'a t -> (key * 'a) list
+  end (* of module type S *)
+
+  module Make (Ord : OrderedType) : IdMapSig with type key = Ord.t = struct
+    module Map = Simple_utils.Map.Make(Ord)
+
+    type key = Ord.t
+
+    type 'a id_wrapped = {
+      id : int; (* This is is used in [filter_values], to return a list of matching values in chronological order *)
+      value : 'a
+    }
+    type 'a t = ('a id_wrapped) Map.t
+    type 'a kvi_list = (key * 'a * int) list
+
+    let empty = Map.empty
+
+    let add : 'a t -> key -> 'a -> 'a t =
+      fun map key value ->
+        global_id := !global_id + 1;
+        let id = !global_id in
+        let id_value = { id ; value } in
+        Map.add key id_value map
+
+    let merge : 'a t -> 'a t -> 'a t =
+      fun m1 m2 ->
+        let merger : key -> 'a id_wrapped option -> 'a id_wrapped option -> 'a id_wrapped option =
+          fun _ v1 v2 ->
+            match (v1, v2) with
+            | None,   None   -> None
+            | Some v, None   -> Some v
+            | None,   Some v -> Some v
+            | Some v1, Some v2 ->
+              if v1.id > v2.id then Some v1 else Some v2
+        in
+        Map.merge merger m1 m2
+
+    let to_kvi_list : 'a t -> (key * 'a * int) list =
+      fun map ->
+        List.map ~f:(fun (key, value) -> (key, value.value, value.id)) @@ Map.to_kv_list map
+
+    let sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list =
+      fun list ->
+        let sorted_list = List.sort list ~compare:(fun (_, _, id1) (_, _, id2) -> Int.compare id2 id1) in
+        List.map ~f:(fun (k, v, _) -> (k, v)) sorted_list
+
+    let to_kv_list : 'a t -> (key * 'a) list =
+      fun map ->
+        sort_to_kv_list @@ to_kvi_list map
+
+  end (* of module IdMap.Make*)
+
+end (* of module IdMap *)
+
+(*
+    Add the shadowed t_sum types nested in the fetched types.
+
+    After using [get_modules_types], we have the ctxt types, i.e. all types declared current scope and submodules.
+    There is no shadowed type in ctxt types (since ctxt is a map, shadowed types are removed when adding the shadower).
+    However we want shadowed types when they are nested in another type :
+      type a = Foo of int | Bar of string
+      type a = a list
+    Here, we want [Foo of int | Bar of string] to be found
+    But we want to add nested t_sum types _only_ if they are shadowed, we don't want to add them in that case for example :
+      type foo_variant = Foo of int | Bar of string
+      type foo_record = { foo : foo_variant ; bar : foo_variant}
+    Because [foo_variant] would appear three times in the list instead of one.
+
+    NOTE : We could append nested types on top of the [module_types] list we have so far,
+    but having a final list with all nested-types before toplevel types triggers some errors.
+
+    NOTE : We can't just do a final id-sort of the list to have everything in declarartion order
+    because the fetched nested types don't have id, only the ones retrieved from the ctxt do.
+
+    So, if we have ctxt types :
+      [t1; t2; t3]
+    After adding the shadowed t_sums, we want the final list :
+      [t1; tsum_shadowed_by_t1; t2; tsum_shadowed_by_t2; t3; tsum_shadowed_by_t3]
+
+    NOTE : When [fold_type_expression] is used on t1, it will add tsum types nested in t1,
+    but it might also add t1 (or not), we don't know.
+    However, we want to make sure t1 is in the final list *exactly once*.
+      - If it's not here, we'll lose a type and have incorrect "type [t1] not found" errors
+      - If it's here more than once, we'll have a false "warning, [t1] inferred but could also be of type [t1]"
+    To ensure [t1] appears once exactly, we tweak the fold function by passing a [is_top] boolean
+    to ensure it will fold over all nested type in [t1] but not the toplevel one (i.e. [t1]),
+    we then add [t1] manually to the list.
+*)
+let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
+  let add_if_shadowed_t_sum :
+    type_variable -> (type_variable * type_expression) list * bool -> type_expression -> (type_variable * type_expression) list * bool =
+    fun shadower_tv (accu, is_top) te ->
+      let ret x = (x, false) in
+      match (te.type_content, te.orig_var) with
+      | T_sum _, Some tv -> (
+          if (TypeVar.equal tv shadower_tv) && (not is_top)
+          then ret ((tv, te) :: accu)
+          else ret accu
+        )
+      | T_sum _, None -> ret accu (* TODO : What should we do with those sum types with no binder ? *)
+      | _ -> ret accu
+
+  in
+  let (nested_t_sums, _) : (type_variable * type_expression) list * bool =
+    fold_type_expression
+    te
+    ~init:(tsum_list, true)
+    ~f:(add_if_shadowed_t_sum tv)
+  in
+  (tv, te) :: nested_t_sums

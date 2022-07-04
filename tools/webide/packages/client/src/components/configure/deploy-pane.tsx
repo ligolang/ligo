@@ -46,11 +46,11 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
       <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Ithaca}
+          value={protocolType.Jakarta}
           onChange={ev =>
             dispatch({ ...new ChangeProtocolAction(ev.target.value) })
           }>
-          <Option value={protocolType.Ithaca}>Ithaca</Option>
+          <Option value={protocolType.Jakarta}>Jakarta</Option>
         </SelectCommand>
       <Label htmlFor="storage">Choose a Network</Label>
       <SelectCommand
@@ -66,7 +66,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
               }
           }}
         >
-          <Option value={networkType.Ithacanet}>Ithacanet</Option>
+          <Option value={networkType.Jakartanet}>Jakartanet</Option>
           <Option value={networkType.Mainnet}>Mainnet</Option>
         </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
@@ -89,7 +89,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }
         ></Textarea>
       </Group>
-      {useNetwork && ( useNetwork === networkType.Ithacanet) &&
+      {useNetwork && ( useNetwork === networkType.Jakartanet) &&
       <HGroup>
         <Checkbox
           checked={true}

@@ -16,18 +16,6 @@ let lmap_sep value sep ppf m =
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
-let record_sep value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
-  let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
-let tuple_sep value sep ppf m =
-  assert (Helpers.is_tuple_lmap m);
-  let lst = Helpers.tuple_of_record m in
-  let new_pp ppf (_, v) = fprintf ppf "%a" value v in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
-
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
   let lst = List.dedup_and_sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) lst in
@@ -35,20 +23,15 @@ let record_sep_t value sep ppf (m : 'a label_map) =
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let tuple_sep_t value sep ppf m =
-  assert (Helpers.is_tuple_lmap m);
-  let lst = Helpers.tuple_of_record m in
+  assert (Stage_common.Helpers.is_tuple_lmap m);
+  let lst = Stage_common.Helpers.tuple_of_record m in
   let new_pp ppf (_, v) = fprintf ppf "%a" value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
 (* Prints records which only contain the consecutive fields
    0..(cardinal-1) as tuples *)
-let tuple_or_record_sep value format_record sep_record format_tuple sep_tuple ppf m =
-  if Helpers.is_tuple_lmap m then
-    fprintf ppf format_tuple (tuple_sep value (tag sep_tuple)) m
-  else
-    fprintf ppf format_record (record_sep value (tag sep_record)) m
 let tuple_or_record_sep_t value format_record sep_record format_tuple sep_tuple ppf m =
-  if Helpers.is_tuple_lmap m then
+  if Stage_common.Helpers.is_tuple_lmap m then
     fprintf ppf format_tuple (tuple_sep_t value (tag sep_tuple)) m
   else
     fprintf ppf format_record (record_sep_t value (tag sep_record)) m
@@ -59,7 +42,6 @@ let lmap_sep_short x ~sep ~assoc ppf m =
   let lst = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) m in
   list_sep (kv_short x ~assoc) (tag sep) ppf lst
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
-let tuple_or_record_sep_expr value = tuple_or_record_sep value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " ,@ "
 let tuple_or_record_sep_type value = tuple_or_record_sep_t value "@[<h>record[%a]@]" " ,@ " "@[<h>( %a )@]" " *@ "
 
 open Format
@@ -156,11 +138,6 @@ and expression_content ppf (ec: expression_content) =
         rhs option_inline inline option_no_mutation no_mutation expression let_result
   | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true} } ->
       fprintf ppf "@[<h>%a@]" expression let_result
-  | E_type_in   {type_binder; rhs; let_result} ->
-      fprintf ppf "@[let %a =@;<1 2>%a in@ %a@]"
-        type_variable type_binder
-        type_expression rhs
-        expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_type_inst {forall;type_} ->
@@ -191,3 +168,6 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "| @[%a@] ->@ @[%a@]"
         (tuple_or_record_sep_expr expression_variable) fields
         f body
+
+and program ppf : expression program -> unit = fun prg ->
+  fprintf ppf "%a" expression (prg @@ Combinators.e_a_unit ())

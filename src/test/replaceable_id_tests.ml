@@ -27,7 +27,7 @@ let change_addr_success ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
 let change_addr_fail ~raise ~add_warning () =
@@ -38,7 +38,7 @@ let change_addr_fail ~raise ~add_warning () =
     let sender = contract 3 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~raise ~options program "main"
+  expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) exp_failwith
 
 let pass_message_success ~raise ~add_warning () =
@@ -48,7 +48,7 @@ let pass_message_success ~raise ~add_warning () =
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
 let pass_message_fail ~raise ~add_warning () =
@@ -59,7 +59,7 @@ let pass_message_fail ~raise ~add_warning () =
     let sender = contract 2 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~raise ~options program "main"
+  expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair param init_storage) exp_failwith
 
 let main = test_suite "Replaceable ID" [

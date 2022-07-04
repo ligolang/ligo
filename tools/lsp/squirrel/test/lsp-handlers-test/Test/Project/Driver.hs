@@ -3,6 +3,8 @@ module Test.Project.Driver
   , unit_two_project_files
   , unit_backward_include
   , unit_no_edge
+  , unit_ignore_paths
+  , unit_ignore_included
   ) where
 
 import Algebra.Graph.AdjacencyMap qualified as AM
@@ -59,3 +61,12 @@ unit_backward_include = do
 
 unit_no_edge :: Assertion
 unit_no_edge = checkBuildGraph "no_edge" "a.mligo" $ G.vertices ["a.mligo", "b.mligo"]
+
+unit_ignore_paths :: Assertion
+unit_ignore_paths =
+  checkBuildGraph "ignore_directories" "include_me.mligo" $
+    G.edge "include_me.mligo" ("dir" </> "include_me.mligo")
+
+unit_ignore_included :: Assertion
+unit_ignore_included =
+  checkBuildGraph "ignore_included" "include_me.ligo" $ G.vertex "include_me.ligo"

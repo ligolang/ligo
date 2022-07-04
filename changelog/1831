@@ -1,0 +1,6 @@
+author: pewulfman
+description: ''
+merge_request: '1831'
+title: 'Clean checking : add abstraction to avoid futur conflict and remove etection
+  of polymorphic var'
+type: internal

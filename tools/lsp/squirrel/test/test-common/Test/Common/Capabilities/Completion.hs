@@ -10,15 +10,12 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import AST.Capabilities.Completion
-import AST.Parser (parseContractsWithDependenciesScopes, parsePreprocessed)
 import AST.Scope (contractTree, lookupContract)
-import Log (runNoLoggingT)
-import Progress (noProgress)
 import Range (point)
 
 import Test.Common.Capabilities.Util qualified (contractsDir)
 import Test.Common.FixedExpectations (expectationFailure, shouldMatchList)
-import Test.Common.Util (ScopeTester)
+import Test.Common.Util (ScopeTester, parseDirectoryWithScopes)
 
 contractsDir :: FilePath
 contractsDir = Test.Common.Capabilities.Util.contractsDir </> "completion"
@@ -92,6 +89,18 @@ caseInfos =
       , CompletionKeyword (NameCompletion "switch")
       ]
     }
+  , TestInfo
+    { tiContract = "type-attribute.jsligo"
+    , tiPosition = (13, 33)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "id") (Just $ TypeCompletion "nat") (DocCompletion "")
+      , Completion (Just CiField) (NameCompletion "is_admin") (Just $ TypeCompletion "bool") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "if")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "while")
+      , CompletionKeyword (NameCompletion "import")
+      ]
+    }
 
   , TestInfo
     { tiContract = "type-constructor.ligo"
@@ -109,6 +118,13 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "type-constructor.religo"
+    , tiPosition = (5, 19)
+    , tiExpected =
+      [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
+      ]
+    }
+  , TestInfo
+    { tiContract = "type-constructor.jsligo"
     , tiPosition = (5, 19)
     , tiExpected =
       [ Completion (Just CiConstructor) (NameCompletion "Increment") (Just $ TypeCompletion "action") (DocCompletion "")
@@ -164,6 +180,20 @@ caseInfos =
       ]
     }
   , TestInfo
+    { tiContract = "nested-fields.jsligo"
+    , tiPosition = (18, 35)
+    , tiExpected =
+      [ Completion (Just CiField) (NameCompletion "series") (Just $ TypeCompletion "int") (DocCompletion "")
+      , CompletionKeyword (NameCompletion "as")
+      , CompletionKeyword (NameCompletion "switch")
+      , CompletionKeyword (NameCompletion "namespace")
+      , CompletionKeyword (NameCompletion "case")
+      , CompletionKeyword (NameCompletion "else")
+      , CompletionKeyword (NameCompletion "const")
+      ]
+    }
+
+  , TestInfo
     { tiContract = "incr.mligo"
     , tiPosition = (3, 13)
     , tiExpected =
@@ -176,7 +206,7 @@ caseInfos =
 
 completionDriver :: forall parser. ScopeTester parser => [TestInfo] -> IO TestTree
 completionDriver testInfos = do
-  graph <- runNoLoggingT $ parseContractsWithDependenciesScopes @parser parsePreprocessed noProgress contractsDir
+  graph <- parseDirectoryWithScopes @parser contractsDir
   pure $ testGroup "Completion" $ map (makeTestCase graph) testInfos
   where
     makeTestCase graph info =

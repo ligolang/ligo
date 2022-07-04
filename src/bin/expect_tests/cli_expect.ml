@@ -19,6 +19,10 @@ let run_ligo args =
   Ast_typed.ValueVar.reset_counter ();
   Ast_typed.TypeVar.reset_counter ();
   Ast_typed.ModuleVar.reset_counter ();
+  Mini_c.ValueVar.reset_counter ();
+  Mini_c.TypeVar.reset_counter ();
+  Mini_c.ModuleVar.reset_counter ();
+  Self_ast_aggregated.reset_counter ();
   let argv = ("ligo" :: args) in
   let result = Cli.run ~argv () in
   result

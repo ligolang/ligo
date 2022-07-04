@@ -309,8 +309,6 @@ module Constant_types = struct
                     of_type C_LIST_FOLD O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> t_list a ^-> b ^-> b);
                     of_type C_LIST_FOLD_LEFT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair b a ^-> b) ^-> b ^-> t_list a ^-> b);
                     of_type C_LIST_FOLD_RIGHT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> b) ^-> t_list a ^-> b ^-> b);
-                    of_type C_LIST_HEAD_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option a);
-                    of_type C_LIST_TAIL_OPT O.(for_all "a" @@ fun a -> t_list a ^-> t_option (t_list a));
                     (* SET *)
                     of_type C_SET_EMPTY O.(for_all "a" @@ fun a -> t_set a);
                     of_type C_SET_LITERAL O.(for_all "a" @@ fun a -> t_list a ^-> t_set a);
@@ -332,7 +330,6 @@ module Constant_types = struct
                     of_type C_UNOPT_WITH_ERROR O.(for_all "a" @@ fun a -> t_option a ^-> t_string () ^-> a);
                     of_type C_OPTION_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> t_option a ^-> t_option b);
                     (* GLOBAL *)
-                    of_type C_FAILWITH O.(for_all "a" @@ fun a -> t_ext_failwith a);
                     of_type C_ADDRESS O.(for_all "a" @@ fun a -> t_contract a ^-> t_address ());
                     of_type C_CONTRACT O.(for_all "a" @@ fun a -> t_address () ^-> t_contract a);
                     of_type C_CONTRACT_OPT O.(for_all "a" @@ fun a -> t_address () ^-> t_option (t_contract a));
@@ -461,24 +458,27 @@ module Constant_types = struct
                     of_type C_LSL O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     (* TEST *)
-                    of_type C_TEST_ORIGINATE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_triplet (t_typed_address a b) (t_michelson_code ()) (t_int ()));
+                    of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_michelson_contract ());
+                    of_type C_TEST_SIZE O.(t_michelson_contract () ^-> t_int ());
+                    of_type C_TEST_ORIGINATE O.(t_michelson_contract () ^-> t_michelson_code () ^-> t_mutez () ^-> t_address ());
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
                     of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
                     of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
-                    of_type C_TEST_SET_BAKER O.(t_address () ^-> t_unit ());
+                    of_type C_TEST_SET_BAKER O.(t_test_baker_policy () ^-> t_unit ());
                     of_type C_TEST_NTH_BOOTSTRAP_CONTRACT O.(t_nat () ^-> t_address ());
-                    of_type C_TEST_GET_STORAGE O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_typed_address a b ^-> b);
                     of_type C_TEST_GET_STORAGE_OF_ADDRESS O.(t_address () ^-> t_michelson_code ());
                     of_type C_TEST_GET_BALANCE O.(t_address () ^-> t_mutez ());
-                    of_type C_TEST_MICHELSON_EQUAL O.(t_michelson_code () ^-> t_michelson_code () ^-> t_bool ());
-                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_address ());
-                    of_type C_TEST_LOG O.(for_all "a" @@ fun a -> a ^-> t_unit ());
-                    of_type C_TEST_STATE_RESET O.(t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
+                    of_type C_TEST_GET_NTH_BS O.(t_int () ^-> t_triplet (t_address ()) (t_key ()) (t_string ()));
+                    of_type C_TEST_PRINT O.(t_int () ^-> t_string () ^-> t_unit ());
+                    of_type C_TEST_TO_STRING O.(for_all "a" @@ fun a -> a ^-> t_string ());
+                    of_type C_TEST_UNESCAPE_STRING O.(t_string () ^-> t_string ());
+                    of_type C_TEST_STATE_RESET O.(t_option (t_timestamp ()) ^-> t_nat () ^-> t_list (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_GET_VOTING_POWER O.(t_key_hash () ^-> t_nat ());
                     of_type C_TEST_GET_TOTAL_VOTING_POWER O.(t_nat ());
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
-                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_unit () ^-> a);
+                    of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_bool () ^-> t_gen a);
+                    of_type C_TEST_GENERATOR_EVAL O.(for_all "a" @@ fun a -> t_gen a ^-> a);
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));
@@ -486,14 +486,10 @@ module Constant_types = struct
                     of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
                     of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));
                     of_type C_TEST_RUN O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b) ^-> a ^-> t_michelson_code ());
-                    of_type C_TEST_EVAL O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
-                    of_type C_TEST_COMPILE_META_VALUE O.(for_all "a" @@ fun a -> a ^-> t_michelson_code ());
                     of_type C_TEST_DECOMPILE O.(for_all "a" @@ fun a -> t_michelson_code () ^-> a);
                     of_type C_TEST_TO_TYPED_ADDRESS O.(for_all "a" @@ fun a -> (for_all "b" @@ fun b -> t_contract a ^-> t_typed_address a b));
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_test_exec_result ());
-                    of_type C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN O.(for_all "a" @@ fun a -> t_contract a ^-> a ^-> t_mutez () ^-> t_nat ());
-                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
-                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_michelson_code () ^-> t_mutez () ^-> t_nat ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS O.(t_address () ^-> t_option (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_test_exec_result ());
+                    of_type C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN O.(t_address () ^-> t_option (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_nat ());
                     of_type C_TEST_SET_BIG_MAP O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_int () ^-> t_big_map a b ^-> t_unit ());
                     of_type C_TEST_BAKER_ACCOUNT O.(t_pair (t_string ()) (t_key ()) ^-> t_option (t_mutez ()) ^-> t_unit ());
                     of_type C_TEST_REGISTER_DELEGATE O.(t_key_hash () ^-> t_unit ());
@@ -502,13 +498,18 @@ module Constant_types = struct
                     of_type C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
                     of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
                     of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
-                    of_type C_TEST_ORIGINATE_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_code () ^-> t_mutez () ^-> t_triplet (t_address ()) (t_michelson_code ()) (t_int ()));
+                    of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_contract ());
                     of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
                     of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
                     of_type C_TEST_TO_ENTRYPOINT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> for_all "c" @@ fun c -> (t_string () ^-> t_typed_address a b ^-> t_contract c));
+                    of_type C_TEST_FAILWITH (for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> b));
                     of_type C_TEST_PUSH_CONTEXT O.(t_unit () ^-> t_unit ());
                     of_type C_TEST_POP_CONTEXT O.(t_unit () ^-> t_unit ());
+                    of_type C_TEST_DROP_CONTEXT O.(t_unit () ^-> t_unit ());
+                    of_type C_TEST_READ_CONTRACT_FROM_FILE O.(t_string () ^-> t_michelson_contract ());
+                    of_type C_TEST_SIGN O.(t_string () ^-> t_bytes () ^-> t_signature ());
+                    of_type C_TEST_GET_ENTRYPOINT O.(for_all "a" @@ fun a -> t_contract a ^-> t_option (t_string ()));
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
                     of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));
@@ -552,8 +553,6 @@ end
 let external_typers ~raise ~options loc s =
   let typer =
     match s with
-    | "failwith" ->
-       Constant_types.failwith_typer
     | "int" ->
        Constant_types.int_typer
     | "ediv" ->

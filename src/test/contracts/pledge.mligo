@@ -19,7 +19,7 @@ type parameter =
 let donate ((_,s): unit * storage) : operation list * storage = ([]: operation list), s
 
 let distribute ((p,s): (unit -> operation list) * storage) : operation list * storage =
-  if Tezos.sender = s
+  if Tezos.get_sender () = s
   then p (),s
   else (failwith "You're not the oracle for this distribution.":
           operation list * storage)

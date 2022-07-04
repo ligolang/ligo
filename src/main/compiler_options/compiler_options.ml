@@ -23,6 +23,7 @@ type tools = {
 
 type test_framework = {
   steps : int ;
+  cli_expr_inj : string option ;
 }
 
 type middle_end = {
@@ -35,6 +36,7 @@ type middle_end = {
 type backend = {
   protocol_version : Protocols.t ;
   disable_michelson_typechecking : bool ;
+  enable_typed_opt : bool ;
   without_run : bool ;
   views : string list ;
   constants : string list ;
@@ -84,6 +86,7 @@ let make :
       } in
       let test_framework = {
         steps = raw_options.steps;
+        cli_expr_inj = raw_options.cli_expr_inj;
       } in
       let middle_end = {
         test = raw_options.test;
@@ -94,6 +97,7 @@ let make :
       let backend = {
         protocol_version ;
         disable_michelson_typechecking = raw_options.disable_michelson_typechecking;
+        enable_typed_opt = raw_options.enable_typed_opt;
         without_run = raw_options.without_run;
         views = raw_options.views ;
         constants = raw_options.constants ;

@@ -1,0 +1,8 @@
+{
+  "esy": {
+    "build": "hello"
+  },
+  "dependencies": {
+    "esy-libtool": "*"
+  }
+}

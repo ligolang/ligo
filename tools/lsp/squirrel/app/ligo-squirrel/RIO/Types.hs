@@ -1,13 +1,19 @@
 module RIO.Types
   ( Contract (..)
   , IndexOptions (..)
+  , ProjectSettings (..)
   , RioEnv (..)
   , RIO (..)
   ) where
 
+import Control.Lens (_head, over)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, mapReaderT)
 import Control.Monad.Trans (lift)
+import Data.Aeson (Options (..), defaultOptions)
+import Data.Aeson.TH (deriveJSON)
+import Data.Default (Default (def))
+import Data.Char (toLower)
 import Data.HashSet (HashSet)
 import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
@@ -40,10 +46,11 @@ data IndexOptions
   | FromGitProject FilePath
   -- ^ Index the project from the output of `git rev-parse --show-toplevel`, if
   -- Git is set.
-  | FromLigoProject FilePath
+  | FromLigoProject FilePath ProjectSettings
   -- ^ Index from the directory where the first `.ligoproject` file is found, if
   -- it exists. This option has precedence over all others, and if this file is
   -- present, all other options will be ignored.
+  deriving stock (Eq, Show)
 
 -- | Stores information about the current language server environment, such as
 -- loaded files, files in the project, etc. This is meant to be used inside a
@@ -64,6 +71,15 @@ data RioEnv = RioEnv
   , reBuildGraph :: MVar (Includes FilePath)
   -- ^ Represents the build graph for all files that were looked up.
   }
+
+newtype ProjectSettings = ProjectSettings
+  { psIgnorePaths :: Maybe [FilePath]
+  } deriving stock (Eq, Show)
+
+instance Default ProjectSettings where
+  def = ProjectSettings
+    { psIgnorePaths = Nothing
+    }
 
 newtype RIO a = RIO
   { unRio :: ReaderT RioEnv (S.LspT Config (LogT IO)) a
@@ -93,3 +109,8 @@ instance KatipContext RIO where
 
 instance HasLigoClient RIO where
   getLigoClientEnv = fmap (LigoClientEnv . _cLigoBinaryPath) S.getConfig
+
+$(deriveJSON defaultOptions
+  { fieldLabelModifier = over _head toLower . drop 2, omitNothingFields = True
+  }
+  ''ProjectSettings)

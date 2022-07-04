@@ -11,37 +11,31 @@ let weird_length = (v : list<int>) : int =>
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (app_type (TypeName) (TypeName)))
+      (TypeName)
+      (pattern_match
         (Name)
-        (type_annotation
-          (type_ctor_app (TypeName) (TypeName))))
-      (type_annotation (TypeName))
-      (body
-        (match_expr
-          (Name)
-          (list_case
-            (array_literal)
-            (type_annotation
-              (type_ctor_app (TypeName) (TypeName)))
-                (body (Int)))
-          (list_case
-            (array_literal
+        (list_case
+          (list_pattern)
+          (app_type (TypeName) (TypeName))
+          (Int))
+        (list_case
+          (list_pattern
+            (var_pattern (NameDecl))
+            (spread_pattern (var_pattern (NameDecl))))
+          (app_type (TypeName) (TypeName))
+          (binary_call
+            (Int)
+            (apply
               (Name)
-              (array_item_rest_expr (Name)))
-            (type_annotation
-              (type_ctor_app (TypeName) (TypeName)))
-            (body
-              (binary_operator
-                (Int)
-                (call_expr
-                  (lambda (Name))
-                  (arguments
-                    (call_expr
-                      (lambda (Name))
-                      (arguments (Name)))))))))))))
+              (apply
+                (Name)
+                (Name)))))))))
 
 =========
 pattern-matching: constructors
@@ -56,40 +50,39 @@ let int_of_color = (c : color) : int =>
 ---
 
 (source_file
-  (let_decl
-    (var_pattern (Name))
-    (fun_expr
-      (parameter
+  (toplevel_binding
+    (var_pattern (NameDecl))
+    (lambda
+      (fun_arg
+        (var_pattern (NameDecl))
+        (TypeName))
+      (TypeName)
+      (pattern_match
         (Name)
-        (type_annotation (TypeName)))
-      (type_annotation (TypeName))
-      (body
-        (match_expr
-          (Name)
-          (ctor_case
+        (ctor_case
+          (constr_pattern
             (ConstrName)
-            (ctor_param
-              (Name)
-              (type_annotation (type_tuple (TypeName) (TypeName) (TypeName))))
-            (body
-              (binary_operator
-                (binary_operator
-                  (binary_operator
-                    (Int)
-                    (projection (Name) (Int)))
-                  (binary_operator
-                    (projection (Name) (Int))
-                    (Int)))
-                (binary_operator
-                  (projection (Name) (Int))
-                  (Int)))))
-          (ctor_case
+            (ctor_params
+              (ctor_param
+                (var_pattern (NameDecl))
+                (tuple_type (TypeName) (TypeName) (TypeName)))))
+          (binary_call
+            (binary_call
+              (binary_call
+                (Int)
+                (indexing (Name) (Int)))
+              (binary_call
+                (indexing (Name) (Int))
+                (Int)))
+            (binary_call
+              (indexing (Name) (Int))
+              (Int))))
+        (ctor_case
+          (constr_pattern
             (ConstrName)
-            (ctor_param
-              (Name)
-              (type_annotation (TypeName)))
-            (body
-              (binary_operator (Int) (Name))))
-          (ctor_case
-            (ConstrName)
-              (body (Int))))))))
+            (ctor_params
+             (ctor_param (var_pattern (NameDecl)) (TypeName))))
+          (binary_call (Int) (Name)))
+        (ctor_case
+          (constr_pattern (ConstrName))
+          (Int))))))

@@ -53,7 +53,6 @@ let rec untype_type_expression (t:O.type_expression) : I.type_expression =
     let arguments = List.map ~f:self parameters in
     let type_operator = I.TypeVar.fresh ~name:(Stage_common.Constant.to_string injection) () in
     return @@ I.T_app {type_operator;arguments}
-  | O.T_module_accessor ma -> return @@ I.T_module_accessor ma
   | O.T_singleton l ->
     return @@ I.T_singleton l
   | O.T_abstraction x ->
@@ -154,10 +153,6 @@ and untype_expression_content ty (ec:O.expression_content) : I.expression =
       let rhs = untype_expression rhs in
       let result = untype_expression let_result in
       return (e_let_in {let_binder with ascr=(Some tv)} rhs result attr)
-  | E_type_in {type_binder;rhs;let_result} ->
-      let rhs = untype_type_expression rhs in
-      let let_result = untype_expression let_result in
-      return @@ make_e @@ E_type_in {type_binder; rhs; let_result }
   | E_mod_in {module_binder;rhs;let_result} ->
       let rhs = untype_module_expr rhs in
       let result = untype_expression let_result in

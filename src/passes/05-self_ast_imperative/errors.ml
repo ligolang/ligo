@@ -23,7 +23,6 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_non_linear_row of type_expression
   | `Self_ast_imperative_duplicate_parameter of expression
   | `Self_ast_imperative_reserved_name of (string * location)
-
 ] [@@deriving poly_constructor { prefix = "self_ast_imperative_" }]
 
 let error_ppformat : display_format:string display_format ->

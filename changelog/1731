@@ -1,0 +1,5 @@
+author: rinderkn
+description: '### Description details: Restricted strings to 7-bit ASCII, as in Michelson.'
+merge_request: '1731'
+title: Restricted strings to 7-bit ASCII, as in Michelson.
+type: fixed

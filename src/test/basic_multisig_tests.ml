@@ -94,7 +94,7 @@ let not_enough_1_of_2 ~raise ~add_warning f () =
   let keys = gen_keys () in
   let test_params = params ~raise ~add_warning 0 empty_payload [keys] [true] f in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender:first_contract ()) in
-  let () = expect_string_failwith ~raise
+  let () = expect_string_failwith ~raise ~add_warning
     program ~options "main" (e_pair test_params (init_storage 2 0 [keys;gen_keys()])) exp_failwith in
   ()
 
@@ -103,7 +103,7 @@ let unmatching_counter ~raise ~add_warning f () =
   let exp_failwith = "Counters does not match" in
   let keys = gen_keys () in
   let test_params = params ~raise ~add_warning 1 empty_payload [keys] [true] f in
-  let () = expect_string_failwith ~raise
+  let () = expect_string_failwith ~raise ~add_warning
     program "main" (e_pair test_params (init_storage 1 0 [keys])) exp_failwith in
   ()
 
@@ -114,7 +114,7 @@ let invalid_1_of_1 ~raise ~add_warning f () =
   let exp_failwith = "Invalid signature" in
   let keys = [gen_keys ()] in
   let test_params = params ~raise ~add_warning 0 empty_payload keys [false] f in
-  let () = expect_string_failwith ~raise
+  let () = expect_string_failwith ~raise ~add_warning
     program "main" (e_pair test_params (init_storage 1 0 keys)) exp_failwith in
   ()
 
@@ -158,7 +158,7 @@ let invalid_3_of_3 ~raise ~add_warning f () =
   let st_keys = valid_keys @ [gen_keys ()] in
   let test_params = params ~raise ~add_warning 0 empty_payload param_keys [false;true;true] f in
   let exp_failwith = "Invalid signature" in
-  let () = expect_string_failwith ~raise
+  let () = expect_string_failwith ~raise ~add_warning
     program "main" (e_pair test_params (init_storage 2 0 st_keys)) exp_failwith in
   ()
 
@@ -169,7 +169,7 @@ let not_enough_2_of_3 ~raise ~add_warning f () =
   let st_keys = gen_keys () :: valid_keys  in
   let test_params = params ~raise ~add_warning 0 empty_payload (valid_keys) [true;true] f in
   let exp_failwith = "Not enough signatures passed the check" in
-  let () = expect_string_failwith ~raise
+  let () = expect_string_failwith ~raise ~add_warning
     program "main" (e_pair test_params (init_storage 3 0 st_keys)) exp_failwith in
   ()
 

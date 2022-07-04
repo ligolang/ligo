@@ -1,13 +1,12 @@
 module I = Mini_c
-module O = Ligo_coq_ocaml.Ligo
-open Ligo_coq_ocaml.Co_de_bruijn
+module O = Ligo_coq_ocaml.Compiler
+module Micheline = Tezos_micheline.Micheline
 module Location    = Simple_utils.Location
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Option      = Simple_utils.Option
 module Var = Stage_common.Types.ValueVar
-open Ligo_coq_ocaml.Micheline
-open Ligo_coq_ocaml.Micheline_wrapper
+module Errors = Errors
 
 type meta = Mini_c.meta
 type binder_meta = Mini_c.binder_meta
@@ -18,15 +17,9 @@ let nil : meta =
     env = [];
     binder = None }
 
-(* Maybe add a field annotation to x, which is expected to be a prim: *)
-let annotate (ann : string option) (x : (meta, string) node) : (meta, string) node =
-  match ann with
-  | None -> x
-  | Some ann ->
-    match x with
-    | Prim (l, p, args, anns) ->
-      Prim (l, p, args, ("%"^ann) :: anns)
-    | x -> x
+type base_type = (meta, string) Micheline.node
+
+type oty = (meta, base_type) O.ty
 
 let binder_meta (var : Var.t option) (source_type : I.type_expression) : binder_meta option =
   Option.map var
@@ -36,7 +29,7 @@ let binder_meta (var : Var.t option) (source_type : I.type_expression) : binder_
                     : binder_meta))
 
 (* Next stage uses Micheline for its types: *)
-let rec translate_type ?var : I.type_expression -> (meta, string) node =
+let rec translate_type ?var : I.type_expression -> oty =
   fun a ->
   let nil : meta =
     { location = Location.generated;
@@ -46,74 +39,65 @@ let rec translate_type ?var : I.type_expression -> (meta, string) node =
   | I.T_tuple ts ->
     tuple_comb ts
   | I.T_or ((ann1, a1), (ann2, a2)) ->
-    Prim (nil, "or", [annotate ann1 (translate_type a1);
-                      annotate ann2 (translate_type a2)], [])
+    O.T_or (nil, ann1, ann2, translate_type a1, translate_type a2)
   | I.T_function (a1, a2) ->
-    Prim (nil, "lambda", [translate_type a1; translate_type a2], [])
-  | I.T_base I.TB_unit -> Prim (nil, "unit", [], [])
-  | I.T_base I.TB_bool -> Prim (nil, "bool", [], [])
-  | I.T_base I.TB_string -> Prim (nil, "string", [], [])
-  | I.T_base I.TB_bytes -> Prim (nil, "bytes", [], [])
-  | I.T_base I.TB_nat -> Prim (nil, "nat", [], [])
-  | I.T_base I.TB_int -> Prim (nil, "int", [], [])
-  | I.T_base I.TB_mutez -> Prim (nil, "mutez", [], [])
-  | I.T_base I.TB_operation -> Prim (nil, "operation", [], [])
-  | I.T_base I.TB_address -> Prim (nil, "address", [], [])
-  | I.T_base I.TB_key -> Prim (nil, "key", [], [])
-  | I.T_base I.TB_key_hash -> Prim (nil, "key_hash", [], [])
-  | I.T_base I.TB_chain_id -> Prim (nil, "chain_id", [], [])
-  | I.T_base I.TB_signature -> Prim (nil, "signature", [], [])
-  | I.T_base I.TB_timestamp -> Prim (nil, "timestamp", [], [])
-  | I.T_base I.TB_baker_hash -> Prim (nil, "baker_hash", [], [])
-  | I.T_base I.TB_pvss_key -> Prim (nil, "pvss_key", [], [])
-  | I.T_base I.TB_baker_operation -> Prim (nil, "baker_operation", [], [])
-  | I.T_base I.TB_bls12_381_g1 -> Prim (nil, "bls12_381_g1", [], [])
-  | I.T_base I.TB_bls12_381_g2 -> Prim (nil, "bls12_381_g2", [], [])
-  | I.T_base I.TB_bls12_381_fr -> Prim (nil, "bls12_381_fr", [], [])
-  | I.T_base I.TB_never -> Prim (nil, "never", [], [])
-  | I.T_base I.TB_chest -> Prim (nil, "chest", [], [])
-  | I.T_base I.TB_chest_key -> Prim (nil, "chest_key", [], [])
-  | I.T_base I.TB_tx_rollup_l2_address -> Prim (nil, "tx_rollup_l2_address", [], [])
-  | I.T_ticket x -> Prim (nil, "ticket", [translate_type x], [])
-  | I.T_sapling_transaction memo_size -> Prim (nil, "sapling_transaction", [Int (nil, memo_size)], [])
-  | I.T_sapling_state memo_size -> Prim (nil, "sapling_state", [Int (nil, memo_size)], [])
-  | I.T_map (a1, a2) ->
-    Prim (nil, "map", [translate_type a1; translate_type a2], [])
-  | I.T_big_map (a1, a2) ->
-    Prim (nil, "big_map", [translate_type a1; translate_type a2], [])
-  | I.T_list a ->
-    Prim (nil, "list", [translate_type a], [])
-  | I.T_set a ->
-    Prim (nil, "set", [translate_type a], [])
-  | I.T_contract a ->
-    Prim (nil, "contract", [translate_type a], [])
-  | I.T_option a ->
-    Prim (nil, "option", [translate_type a], [])
+    O.T_func (nil, translate_type a1, translate_type a2)
+  | I.T_base I.TB_unit -> T_base (nil, Prim (nil, "unit", [], []))
+  | I.T_base I.TB_bool -> T_base (nil, Prim (nil, "bool", [], []))
+  | I.T_base I.TB_string -> T_base (nil, Prim (nil, "string", [], []))
+  | I.T_base I.TB_bytes -> T_base (nil, Prim (nil, "bytes", [], []))
+  | I.T_base I.TB_nat -> T_base (nil, Prim (nil, "nat", [], []))
+  | I.T_base I.TB_int -> T_base (nil, Prim (nil, "int", [], []))
+  | I.T_base I.TB_mutez -> T_base (nil, Prim (nil, "mutez", [], []))
+  | I.T_base I.TB_operation -> T_base (nil, Prim (nil, "operation", [], []))
+  | I.T_base I.TB_address -> T_base (nil, Prim (nil, "address", [], []))
+  | I.T_base I.TB_key -> T_base (nil, Prim (nil, "key", [], []))
+  | I.T_base I.TB_key_hash -> T_base (nil, Prim (nil, "key_hash", [], []))
+  | I.T_base I.TB_chain_id -> T_base (nil, Prim (nil, "chain_id", [], []))
+  | I.T_base I.TB_signature -> T_base (nil, Prim (nil, "signature", [], []))
+  | I.T_base I.TB_timestamp -> T_base (nil, Prim (nil, "timestamp", [], []))
+  | I.T_base I.TB_baker_hash -> T_base (nil, Prim (nil, "baker_hash", [], []))
+  | I.T_base I.TB_pvss_key -> T_base (nil, Prim (nil, "pvss_key", [], []))
+  | I.T_base I.TB_baker_operation -> T_base (nil, Prim (nil, "baker_operation", [], []))
+  | I.T_base I.TB_bls12_381_g1 -> T_base (nil, Prim (nil, "bls12_381_g1", [], []))
+  | I.T_base I.TB_bls12_381_g2 -> T_base (nil, Prim (nil, "bls12_381_g2", [], []))
+  | I.T_base I.TB_bls12_381_fr -> T_base (nil, Prim (nil, "bls12_381_fr", [], []))
+  | I.T_base I.TB_never -> T_base (nil, Prim (nil, "never", [], []))
+  | I.T_base I.TB_chest -> T_base (nil, Prim (nil, "chest", [], []))
+  | I.T_base I.TB_chest_key -> T_base (nil, Prim (nil, "chest_key", [], []))
+  | I.T_base I.TB_tx_rollup_l2_address -> T_base (nil, Prim (nil, "tx_rollup_l2_address", [], []))
+  | I.T_ticket x -> T_ticket (nil, translate_type x)
+  | I.T_sapling_transaction memo_size -> T_base (nil, Prim (nil, "sapling_transaction", [Int (nil, memo_size)], []))
+  | I.T_sapling_state memo_size -> T_base (nil, Prim (nil, "sapling_state", [Int (nil, memo_size)], []))
+  | I.T_map (a1, a2) -> T_map  (nil, translate_type a1, translate_type a2)
+  | I.T_big_map (a1, a2) -> T_big_map (nil, translate_type a1, translate_type a2)
+  | I.T_list a -> T_list (nil, translate_type a)
+  | I.T_set a -> T_set (nil, translate_type a)
+  | I.T_contract a -> T_contract (nil, translate_type a)
+  | I.T_option a -> T_option (nil, translate_type a)
 
 (* could consider delaying this to the next pass, in Coq, but
    currently the Coq pass type translation is the identity *)
-and tuple_comb ts =
+and tuple_comb_ann ts =
   match ts with
-  | [] -> Prim (nil, "unit", [], [])
-  | [(_ann, t)] -> translate_type t
-  | ts ->
-    (* It is convenient to emit "comb" n-ary pairs like [pair a b c]
-       here for code size efficiency. The next phase in Coq currently
-       doesn't consider [pair a b c] to be a type, but the compiler
-       will still work correctly since it is not at all
-       type-directed. We could alternatively do it in a peephole
-       optimiser, or do it using Tezos. *)
-    let ts = List.map ~f:(fun (ann, t) -> annotate ann (translate_type t)) ts in
-    Prim (nil, "pair", ts, [])
+  | [] -> (None, O.T_unit nil)
+  | [(ann, t)] -> (ann, translate_type t)
+  | (ann1, t1) :: ts ->
+    let t1 = translate_type t1 in
+    let (ann, ts) = tuple_comb_ann ts in
+    (None, O.T_pair (nil, ann1, ann, t1, ts))
+
+and tuple_comb ts =
+  snd (tuple_comb_ann ts)
+
+let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
+  if x <= 0
+  then O
+  else S (int_to_nat (x - 1))
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
   let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.ValueVar.pp x in
-  let usages = List.repeat idx Drop
-               @ [ Keep ]
-               @ List.repeat (List.length env - idx - 1) Drop in
-  (O.E_var m, usages)
-
-let use_nothing env = List.repeat (List.length env) Drop
+  (O.E_var (m, int_to_nat idx))
 
 (* probably should use result monad for conformity? but all errors
    here are supposed to be impossible, under the assumption that the
@@ -124,11 +108,6 @@ let internal_error loc msg =
        "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
        loc msg)
 
-let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
-  if x <= 0
-  then O
-  else S (int_to_nat (x - 1))
-
 (* The translation. Given an expression in an environment, returns a
    "co-de Bruijn" expression with an embedding (`list usage`) showing
    which things in the environment were used. *)
@@ -136,15 +115,21 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
 (* Let |-I and |-O be the input and output typing judgments. If
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
-let rec translate_expression (expr : I.expression) (env : I.environment) =
+let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.environment) :
+  (meta, base_type, I.literal, (meta, string) Micheline.node) O.expr =
   let meta : meta =
     { location = expr.location;
       env = [];
       binder = None } in
   let ty = expr.type_expression in
+  let translate_expression = translate_expression ~raise ~proto in
+  let translate_args = translate_args ~raise ~proto in
+  let translate_binder = translate_binder ~raise ~proto in
+  let translate_binder2 = translate_binder2 ~raise ~proto in
+  let translate_binderN = translate_binderN ~raise ~proto in
   match expr.content with
   | E_literal lit ->
-    (O.E_literal (meta, lit), use_nothing env)
+    O.E_literal (meta, lit)
   | E_variable x ->
     translate_var meta x env
   | E_closure { binder; body } ->
@@ -156,143 +141,127 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
       | None -> internal_error __LOC__ "type of lambda is not a function type"
       | Some t -> t in
     let binder = (binder, binder_type) in
-    let (binder, usages) = translate_binder (binder, body) env in
-    (O.E_lam (meta, binder, translate_type return_type), usages)
+    let binder = translate_binder (binder, body) env in
+    O.E_lam (meta, binder, translate_type return_type)
   | E_constant constant ->
-    let ((cons_name, static_args, args), usages) = translate_constant constant expr.type_expression env in
-    (O.E_operator (meta, cons_name, static_args, args), usages)
+    let (mich, args) = translate_constant ~raise ~proto meta constant expr.type_expression env in
+    O.E_inline_michelson (meta, mich, args)
   | E_application (f, x) ->
-    let (args, us) = translate_args [f; x] env in
-    (E_app (meta, args), us)
+    let args = translate_args [f; x] env in
+    E_app (meta, args)
   | E_iterator (name, body, expr) ->
-    let (body, body_usages) = translate_binder body env in
-    let (expr, expr_usages) = translate_expression expr env in
-    let (ss, us) = union body_usages expr_usages in
+    let body = translate_binder body env in
+    let expr = translate_expression expr env in
     (match name with
-     | C_ITER -> (O.E_iter (meta, ss, body, expr), us)
-     | C_MAP -> (O.E_map (meta, ss, body, expr), us)
+     | C_ITER -> O.E_iter (meta, body, expr)
+     | C_MAP -> O.E_map (meta, body, expr)
      | C_LOOP_LEFT ->
        let b = translate_type ty in
-       (O.E_loop_left (meta, ss, body, b, expr), us)
+       O.E_loop_left (meta, body, b, expr)
      | _ -> internal_error __LOC__ "invalid iterator constant")
   | E_fold (body, coll, init) ->
-    let (body, body_usages) = translate_binder body env in
-    let (coll, coll_usages) = translate_expression coll env in
-    let (init, init_usages) = translate_expression init env in
-    let (ss1, us1) = union coll_usages body_usages in
-    let (ss2, us2) = union init_usages us1 in
-    (O.E_fold (meta, ss2, init, ss1, coll, body), us2)
+    let body = translate_binder body env in
+    let coll = translate_expression coll env in
+    let init = translate_expression init env in
+    O.E_fold (meta, init, coll, body)
   | E_fold_right (body, (coll, elem_type), init) ->
     let elem_type = translate_type elem_type in
-    let (body, body_usages) = translate_binder body env in
-    let (coll, coll_usages) = translate_expression coll env in
-    let (init, init_usages) = translate_expression init env in
-    let (ss1, us1) = union coll_usages body_usages in
-    let (ss2, us2) = union init_usages us1 in
-    (O.E_fold_right (meta, elem_type, ss2, init, ss1, coll, body), us2)
+    let body = translate_binder body env in
+    let coll = translate_expression coll env in
+    let init = translate_expression init env in
+    E_fold_right (meta, elem_type, init, coll, body)
   | E_if_bool (e1, e2, e3) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_expression e2 env in
-    let (e3, us3) = translate_expression e3 env in
-    let (inner, inner_us) = union us2 us3 in
-    let (outer, outer_us) = union us1 inner_us in
-    (E_if_bool (meta, Cond (outer, e1, inner, Binds ([], [], e2), Binds ([], [], e3))), outer_us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_expression e2 env in
+    let e3 = translate_expression e3 env in
+    E_if_bool (meta, e1, e2, e3)
   | E_if_none (e1, e2, e3) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_expression e2 env in
-    let (e3, us3) = translate_binder e3 env in
-    let (inner, inner_us) = union us2 us3 in
-    let (outer, outer_us) = union us1 inner_us in
-    (E_if_none (meta, Cond (outer, e1, inner, Binds ([], [], e2), e3)), outer_us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_expression e2 env in
+    let e3 = translate_binder e3 env in
+    E_if_none (meta, e1, e2, e3)
   (* NB: flipping around because it is backwards in Mini_c *)
   | E_if_cons (e1, e3, e2) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder2 e2 env in
-    let (e3, us3) = translate_expression e3 env in
-    let (inner, inner_us) = union us2 us3 in
-    let (outer, outer_us) = union us1 inner_us in
-    (E_if_cons (meta, Cond (outer, e1, inner, e2, Binds([], [], e3))), outer_us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_binder2 e2 env in
+    let e3 = translate_expression e3 env in
+    E_if_cons (meta, e1, e2, e3)
   | E_if_left (e1, e2, e3) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder e2 env in
-    let (e3, us3) = translate_binder e3 env in
-    let (inner, inner_us) = union us2 us3 in
-    let (outer, outer_us) = union us1 inner_us in
-    (E_if_left (meta, Cond (outer, e1, inner, e2, e3)), outer_us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_binder e2 env in
+    let e3 = translate_binder e3 env in
+    E_if_left (meta, e1, e2, e3)
   | E_let_in (e1, _inline, _thunk, e2) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder e2 env in
-    let (ss, us) = union us1 us2 in
-    (E_let_in (meta, ss, e1, e2), us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_binder e2 env in
+    E_let_in (meta, e1, e2)
   | E_tuple exprs ->
-    let (exprs, us) = translate_args exprs env in
-    (E_tuple (meta, exprs), us)
+    let exprs = translate_args exprs env in
+    E_tuple (meta, exprs)
   | E_let_tuple (e1, e2) ->
-    let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binderN e2 env in
-    let (ss, us) = union us1 us2 in
-    (E_let_tuple (meta, ss, e1, e2), us)
+    let e1 = translate_expression e1 env in
+    let e2 = translate_binderN e2 env in
+    E_let_tuple (meta, e1, e2)
   | E_proj (e, i, n) ->
-    let (e, us) = translate_expression e env in
-    (E_proj (meta, e, int_to_nat i, int_to_nat n), us)
+    let e = translate_expression e env in
+    E_proj (meta, e, int_to_nat i, int_to_nat n)
   | E_update (e1, i, e2, n) ->
-    let (args, us) = translate_args [e2; e1] env in
-    (E_update (meta, args, int_to_nat i, int_to_nat n), us)
+    let args = translate_args [e2; e1] env in
+    E_update (meta, args, int_to_nat i, int_to_nat n)
   | E_raw_michelson code ->
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
       | None -> internal_error __LOC__ "type of Michelson insertion ([%Michelson ...]) is not a function type"
       | Some (a, b) -> (a, b) in
-    (E_raw_michelson (meta, translate_type a, translate_type b,
-                      List.map
-                        ~f:(fun node -> backward (Tezos_micheline.Micheline.map_node
-                                                    (fun l -> ({location = l; env = []; binder = None} : meta))
-                                                    (fun p -> p)
-                                                    node))
-                        code),
-     use_nothing env)
+    let wipe_locations l e =
+      Tezos_micheline.Micheline.(inject_locations (fun _ -> l) (strip_locations e)) in
+    let code = List.map ~f:(wipe_locations nil) code in
+    E_raw_michelson (meta, translate_type a, translate_type b, code)
   | E_global_constant (hash, args) ->
-    let (args, us) = translate_args args env in
+    let args = translate_args args env in
     let output_ty = translate_type ty in
-    (E_global_constant (meta, output_ty, hash, args), us)
+    E_global_constant (meta, output_ty, hash, args)
+  | E_create_contract (p, s, code, args) ->
+    let p = translate_type p in
+    let s = translate_type s in
+    let code = translate_binder code [] in
+    let args = translate_args args env in
+    E_create_contract (meta, p, s, code, args)
 
-and translate_binder (binder, body) env =
+and translate_binder ~raise ~proto (binder, body) env =
   let env' = I.Environment.add binder env in
-  let (body, usages) = translate_expression body env' in
+  let body = translate_expression ~raise ~proto body env' in
   let (binder, binder_type) = binder in
-  (O.Binds ([List.hd_exn usages], [translate_type ~var:binder binder_type], body), List.tl_exn usages)
+  O.Binds (nil,
+           [translate_type ~var:binder binder_type],
+           body)
 
-and translate_binder2 ((binder1, binder2), body) env =
+and translate_binder2 ~raise ~proto ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
-  let (body, usages) = translate_expression body env' in
+  let body = translate_expression ~raise ~proto body env' in
   let (binder1, binder1_type) = binder1 in
   let (binder2, binder2_type) = binder2 in
-  (O.Binds ([List.hd_exn usages; List.hd_exn (List.tl_exn usages)],
-            [translate_type ~var:binder1 binder1_type; translate_type ~var:binder2 binder2_type],
-            body),
-   List.tl_exn (List.tl_exn usages))
+  O.Binds (nil,
+           [translate_type ~var:binder1 binder1_type; translate_type ~var:binder2 binder2_type],
+           body)
 
-and translate_binderN (vars, body) env =
+and translate_binderN ~raise ~proto (vars, body) env =
   let env' = List.fold_right ~f:I.Environment.add vars ~init:env in
-  let (body, usages) = translate_expression body env' in
-  let n = List.length vars in
-  (O.Binds (List.take usages n,
-            List.map ~f:(fun (var, ty) -> translate_type ~var ty) vars,
-            body),
-   List.drop usages n)
+  let body = translate_expression ~raise ~proto body env' in
+  O.Binds (nil,
+           List.map ~f:(fun (var, ty) -> translate_type ~var ty) vars,
+           body)
 
-and translate_args (arguments : I.expression list) env : _ O.args * usage list =
+and translate_args ~raise ~proto (arguments : I.expression list) env : _ O.args =
   let arguments = List.rev arguments in
-  let arguments = List.map ~f:(fun argument -> translate_expression argument env) arguments in
+  let arguments = List.map ~f:(fun argument -> translate_expression ~raise ~proto argument env) arguments in
   List.fold_right
-    ~f:(fun (arg, arg_usages) (args, args_usages) ->
-       let (ss, us) = union arg_usages args_usages in
-       (O.Args_cons (ss, arg, args), us))
+    ~f:(fun arg args -> O.Args_cons (nil, arg, args))
     arguments
-    ~init:(O.Args_nil, use_nothing env)
+    ~init:(O.Args_nil nil)
 
-and translate_constant (expr : I.constant) (ty : I.type_expression) env :
-  (Stage_common.Types.constant' * _ O.static_args * _ O.args) * usage list =
+and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.type_expression) env :
+  (_ Micheline.node list * _ O.args) =
   let module Let_syntax = struct
     let bind : 'a option -> f:('a -> 'b option) -> 'b option =
       fun x ~f ->
@@ -308,14 +277,33 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
 
      First we translate any static args and return the rest of the
      non-static arguments, if any: *)
-  let special : (_ O.static_args * I.expression list) option =
-    let return (x : _ O.static_args * I.expression list) : _ = Some x in
+
+  let translate_type t = Stacking.To_micheline.translate_type (translate_type t) in
+  let translate_args = translate_args ~raise ~proto in
+  (* This is for compatibility with the existing stuff in
+     Predefined.Michelson and below. I believe this stuff should be
+     simplified away but don't want to do it right now. *)
+  let module O = struct
+    type static_args =
+      | Type_args of string option * (meta, string) Micheline.node list
+    let apply_static_args : string -> static_args -> _ Micheline.node =
+      fun prim args ->
+      match args with
+      | Type_args (annot, types) ->
+        Prim (nil, prim, types, Option.to_list annot)
+    let wipe_locations l e =
+      Tezos_micheline.Micheline.(inject_locations (fun _ -> l) (strip_locations e))
+  end in
+  let open O in
+
+  let special : (static_args * I.expression list) option =
+    let return (x : static_args * I.expression list) : _ = Some x in
     match expr.cons_name with
     | C_GLOBAL_CONSTANT -> (
       match expr.arguments with
       | { content = E_literal (Literal_string hash); type_expression = _ ; _} :: arguments ->
         let hash = Ligo_string.extract hash in
-        return (O.Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
+        return (Type_args (None, [translate_type ty; Prim (nil, "constant", [String (nil, hash)], [])]), arguments)
       | _ -> None
     )
     | C_VIEW -> (
@@ -356,9 +344,6 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
       let* (_, b) =
         Option.(map_pair_or (Mini_c.get_t_map , Mini_c.get_t_big_map) ty) in
       return (Type_args (None, [translate_type b]), expr.arguments)
-    | C_LIST_HEAD_OPT | C_LIST_TAIL_OPT ->
-      let* a = Mini_c.get_t_option ty in
-      return (Type_args (None, [translate_type a]), expr.arguments)
     | C_CONTRACT | C_CONTRACT_WITH_ERROR ->
       let* a = Mini_c.get_t_contract ty in
       return (Type_args (None, [translate_type a]), expr.arguments)
@@ -381,14 +366,15 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
-    | C_CREATE_CONTRACT ->
-      (match expr.arguments with
-       | { content= E_closure body ; type_expression = closure_ty ; location =_ } :: arguments ->
-         let* (input_ty, _) = Mini_c.get_t_function closure_ty in
-         let* (p, s) = Mini_c.get_t_pair input_ty in
-         let body = translate_closed_function body input_ty in
-         return (O.Script_arg (O.Script (translate_type p, translate_type s, body)), arguments)
-       | _ -> None)
+    (* TODO handle CREATE_CONTRACT sooner *)
+    (* | C_CREATE_CONTRACT -> *)
+    (*   (match expr.arguments with *)
+    (*    | { content= E_closure body ; type_expression = closure_ty ; location =_ } :: arguments -> *)
+    (*      let* (input_ty, _) = Mini_c.get_t_function closure_ty in *)
+    (*      let* (p, s) = Mini_c.get_t_pair input_ty in *)
+    (*      let body = translate_closed_function ~raise ~proto body input_ty in *)
+    (*      return (Script_arg (O.Script (translate_type p, translate_type s, body)), arguments) *)
+    (*    | _ -> None) *)
     | C_SAPLING_EMPTY_STATE ->
       let* memo_size = Mini_c.get_t_sapling_state ty in
       return (Type_args (None, [Int (nil, memo_size)]), expr.arguments)
@@ -401,9 +387,22 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
   let arguments = match special with
     | Some (_, arguments) -> arguments
     | None -> expr.arguments in
-  let (arguments, usages) = translate_args arguments env in
-  ((expr.cons_name, static_args, arguments), usages)
+  let arguments = translate_args arguments env in
+  match Predefined.Michelson.get_operators proto expr.cons_name with
+  | Some x ->
+    ([(* Handle predefined (and possibly special) operators, applying
+         any type/annot/script args using apply_static_args. *)
+      (Predefined.Michelson.unpredicate
+         meta
+         (fun prim -> wipe_locations () (apply_static_args prim static_args))
+         x)],
+      arguments)
+  | None ->
+    let open Simple_utils.Trace in
+    (raise.raise) (Errors.unsupported_primitive expr.cons_name proto)
 
-and translate_closed_function ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
-  let (body, usages) = translate_expression body (Mini_c.Environment.add (binder, input_ty) env) in
-  Binds (usages, [translate_type ~var:binder input_ty], body)
+and translate_closed_function ~raise ~proto ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
+  let body = translate_expression ~raise ~proto body (Mini_c.Environment.add (binder, input_ty) env) in
+  Binds (nil,
+         [translate_type input_ty],
+         body)

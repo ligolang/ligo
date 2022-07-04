@@ -32,7 +32,7 @@ let early_call ~raise ~add_warning () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ()) in
   let exp_failwith = "Contract is still time locked" in
-  expect_string_failwith ~raise ~options program "main"
+  expect_string_failwith ~raise ~add_warning ~options program "main"
     (e_pair (call empty_message)  init_storage) exp_failwith
 
 let call_on_time ~raise ~add_warning () =
@@ -42,7 +42,7 @@ let call_on_time ~raise ~add_warning () =
   let init_storage = storage lock_time in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ()) in
-  expect_eq ~raise ~options program "main"
+  expect_eq ~raise ~add_warning ~options program "main"
     (e_pair (call empty_message) init_storage) (e_pair empty_op_list init_storage)
 
 let main = test_suite "Time lock" [

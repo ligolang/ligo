@@ -43,7 +43,7 @@ let preprocess_string ~raise ~(options:Compiler_options.frontend) ~(meta: meta) 
 
 type file_path = string
 
-let parse_and_abstract_pascaligo ~add_warning ~raise buffer file_path =
+let parse_and_abstract_pascaligo ~raise ~add_warning buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_file ~add_warning buffer file_path in
@@ -52,7 +52,7 @@ let parse_and_abstract_pascaligo ~add_warning ~raise buffer file_path =
     Tree_abstraction.Pascaligo.compile_declarations raw.decl
   in imperative
 
-let parse_and_abstract_expression_pascaligo ~add_warning ~raise buffer =
+let parse_and_abstract_expression_pascaligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_expression ~add_warning buffer in
@@ -61,7 +61,7 @@ let parse_and_abstract_expression_pascaligo ~add_warning ~raise buffer =
     Tree_abstraction.Pascaligo.compile_expression raw
   in imperative
 
-let parse_and_abstract_cameligo ~add_warning ~raise buffer file_path =
+let parse_and_abstract_cameligo ~raise ~add_warning buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_file ~add_warning buffer file_path in
@@ -70,7 +70,7 @@ let parse_and_abstract_cameligo ~add_warning ~raise buffer file_path =
     Tree_abstraction.Cameligo.compile_module raw
   in imperative
 
-let parse_and_abstract_expression_cameligo ~add_warning ~raise buffer =
+let parse_and_abstract_expression_cameligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_expression ~add_warning buffer in
@@ -79,7 +79,7 @@ let parse_and_abstract_expression_cameligo ~add_warning ~raise buffer =
     Tree_abstraction.Cameligo.compile_expression raw
   in imperative
 
-let parse_and_abstract_reasonligo ~add_warning ~raise buffer file_path =
+let parse_and_abstract_reasonligo ~raise ~add_warning buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_file ~add_warning buffer file_path in
@@ -88,7 +88,7 @@ let parse_and_abstract_reasonligo ~add_warning ~raise buffer file_path =
     Tree_abstraction.Reasonligo.compile_module raw
   in imperative
 
-let parse_and_abstract_expression_reasonligo ~add_warning ~raise buffer =
+let parse_and_abstract_expression_reasonligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_expression ~add_warning buffer in
@@ -97,7 +97,7 @@ let parse_and_abstract_expression_reasonligo ~add_warning ~raise buffer =
     Tree_abstraction.Reasonligo.compile_expression raw
   in imperative
 
-let parse_and_abstract_jsligo ~add_warning ~raise buffer file_path =
+let parse_and_abstract_jsligo ~raise ~add_warning buffer file_path =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_file ~add_warning buffer file_path in
@@ -106,7 +106,7 @@ let parse_and_abstract_jsligo ~add_warning ~raise buffer file_path =
     Tree_abstraction.Jsligo.compile_module ~add_warning raw
   in imperative
 
-let parse_and_abstract_expression_jsligo ~add_warning ~raise buffer =
+let parse_and_abstract_expression_jsligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_expression ~add_warning buffer in
@@ -131,7 +131,7 @@ let parse_and_abstract ~raise ~(meta: meta) ~add_warning buffer file_path
     Self_ast_imperative.all_module abstracted ~js_style_no_shadowing ~add_warning in
   applied
 
-let parse_and_abstract_expression ~add_warning ~raise ~(meta: meta) buffer =
+let parse_and_abstract_expression ~raise ~add_warning ~(meta: meta) buffer =
   let parse_and_abstract =
     match meta.syntax with
       PascaLIGO _ ->
@@ -148,17 +148,17 @@ let parse_and_abstract_expression ~add_warning ~raise ~(meta: meta) buffer =
   let js_style_no_shadowing = Caml.(=) meta.syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_expression ~js_style_no_shadowing abstracted
+    Self_ast_imperative.all_expression ~add_warning ~js_style_no_shadowing abstracted
   in applied
 
-let parse_and_abstract_string_reasonligo ~add_warning ~raise buffer =
+let parse_and_abstract_string_reasonligo ~raise ~add_warning buffer =
   let raw = trace ~raise parser_tracer @@
     Parsing.Reasonligo.parse_string ~add_warning buffer in
   let imperative = trace ~raise cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_module raw
   in imperative
 
-let parse_and_abstract_string_pascaligo ~add_warning ~raise buffer =
+let parse_and_abstract_string_pascaligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Pascaligo.parse_string ~add_warning buffer in
@@ -167,7 +167,7 @@ let parse_and_abstract_string_pascaligo ~add_warning ~raise buffer =
     Tree_abstraction.Pascaligo.compile_declarations raw.decl
   in imperative
 
-let parse_and_abstract_string_cameligo ~add_warning ~raise buffer =
+let parse_and_abstract_string_cameligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Cameligo.parse_string ~add_warning buffer in
@@ -176,7 +176,7 @@ let parse_and_abstract_string_cameligo ~add_warning ~raise buffer =
     Tree_abstraction.Cameligo.compile_module raw
   in imperative
 
-let parse_and_abstract_string_jsligo ~add_warning ~raise buffer =
+let parse_and_abstract_string_jsligo ~raise ~add_warning buffer =
   let raw =
     trace ~raise parser_tracer @@
     Parsing.Jsligo.parse_string ~add_warning buffer in
@@ -185,7 +185,7 @@ let parse_and_abstract_string_jsligo ~add_warning ~raise buffer =
     Tree_abstraction.Jsligo.compile_module ~add_warning raw
   in imperative
 
-let parse_and_abstract_string ~add_warning ~raise (syntax: Syntax_types.t) buffer =
+let parse_and_abstract_string ~raise ~add_warning (syntax: Syntax_types.t) buffer =
   let parse_and_abstract =
     match syntax with
       PascaLIGO _ ->
@@ -216,7 +216,7 @@ let pretty_print_reasonligo_cst =
 let pretty_print_jsligo_cst =
   Parsing.Jsligo.pretty_print_cst
 
-let pretty_print_cst ~add_warning ~raise ~(meta: meta) buffer file_path=
+let pretty_print_cst ~raise ~add_warning ~(meta: meta) buffer file_path=
   let print =
     match meta.syntax with
       PascaLIGO _ -> pretty_print_pascaligo_cst
@@ -237,7 +237,7 @@ let pretty_print_reasonligo =
 let pretty_print_jsligo =
   Parsing.Jsligo.pretty_print_file
 
-let pretty_print ~add_warning ~raise ~(meta: meta) buffer file_path =
+let pretty_print ~raise ~add_warning ~(meta: meta) buffer file_path =
   let print =
     match meta.syntax with
       PascaLIGO _ -> pretty_print_pascaligo

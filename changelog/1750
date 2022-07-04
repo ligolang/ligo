@@ -1,0 +1,6 @@
+author: er433
+description: By default, `Test.to_entrypoint` expected string argument not to begin
+  with `%`. From now on, the starting '%' (if present) is removed.
+merge_request: '1750'
+title: 'Testing framework: make `Test.to_entrypoint` remove the starting ''%'''
+type: changed

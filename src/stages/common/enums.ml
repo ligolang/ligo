@@ -1,5 +1,5 @@
 type z = Z.t [@@deriving ord]
-type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord]
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving yojson, ord, hash]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
@@ -15,7 +15,10 @@ let bytes_to_yojson b = `String (Bytes.to_string b)
 
 type layout =
   | L_comb
-  | L_tree
+  | L_tree [@@deriving hash]
+
+let hash_fold_bytes st b = Hash.fold_string st (Bytes.to_string b)
+let hash_fold_z st z = Hash.fold_int64 st (Z.to_int64 z)
 
 type literal =
   | Literal_unit
@@ -36,7 +39,7 @@ type literal =
   | Literal_bls12_381_fr of bytes
   | Literal_chest of bytes
   | Literal_chest_key of bytes
-[@@deriving yojson, ord]
+[@@deriving yojson, ord, hash]
 
 let literal_to_enum = function
   | Literal_unit        ->  1
@@ -66,7 +69,6 @@ type constant' =
   | C_UNOPT
   | C_UNOPT_WITH_ERROR
   | C_ASSERT_INFERRED
-  | C_FAILWITH
   | C_UPDATE
   (* Loops *)
   | C_ITER
@@ -127,8 +129,6 @@ type constant' =
   | C_LIST_FOLD
   | C_LIST_FOLD_LEFT
   | C_LIST_FOLD_RIGHT
-  | C_LIST_HEAD_OPT
-  | C_LIST_TAIL_OPT
   (* Maps *)
   | C_MAP
   | C_MAP_EMPTY
@@ -165,35 +165,32 @@ type constant' =
   | C_OPEN_CHEST
   | C_VIEW
   (* Tests - ligo interpreter only *)
+  | C_TEST_SIZE [@only_interpreter]
   | C_TEST_ORIGINATE [@only_interpreter]
-  | C_TEST_GET_STORAGE [@only_interpreter]
   | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
   | C_TEST_GET_BALANCE [@only_interpreter]
   | C_TEST_SET_SOURCE [@only_interpreter]
   | C_TEST_SET_BAKER [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT [@only_interpreter]
-  | C_TEST_EXTERNAL_CALL_TO_CONTRACT_EXN [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
-  | C_TEST_MICHELSON_EQUAL [@only_interpreter]
   | C_TEST_GET_NTH_BS [@only_interpreter]
-  | C_TEST_LOG [@only_interpreter]
+  | C_TEST_PRINT [@only_interpreter]
+  | C_TEST_TO_STRING [@only_interpreter]
+  | C_TEST_UNESCAPE_STRING [@only_interpreter]
   | C_TEST_STATE_RESET [@only_interpreter]
   | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
-  | C_TEST_COMPILE_META_VALUE [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
   | C_TEST_MUTATION_TEST [@only_interpreter]
   | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
   | C_TEST_SAVE_MUTATION [@only_interpreter]
   | C_TEST_RUN [@only_interpreter]
-  | C_TEST_EVAL [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
   | C_TEST_DECOMPILE [@only_interpreter]
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
-  | C_TEST_ORIGINATE_FROM_FILE [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]
@@ -201,6 +198,7 @@ type constant' =
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   | C_TEST_RANDOM [@only_interpreter]
+  | C_TEST_GENERATOR_EVAL [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]
   | C_TEST_NEW_ACCOUNT [@only_interpreter]
   | C_TEST_BAKER_ACCOUNT [@only_interpreter]
@@ -213,6 +211,11 @@ type constant' =
   | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
   | C_TEST_PUSH_CONTEXT [@only_interpreter]
   | C_TEST_POP_CONTEXT [@only_interpreter]
+  | C_TEST_DROP_CONTEXT [@only_interpreter]
+  | C_TEST_FAILWITH [@only_interpreter]
+  | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
+  | C_TEST_SIGN [@only_interpreter]
+  | C_TEST_GET_ENTRYPOINT [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE

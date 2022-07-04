@@ -1,4 +1,7 @@
-module Test.Capabilities.Completion (unit_completion) where
+module Test.Capabilities.Completion
+  ( unit_completion
+  , unit_completion_jsligo
+  ) where
 
 import Control.Lens ((^.))
 import Data.List (sort)
@@ -28,3 +31,14 @@ unit_completion = do
     [ "id", "is_admin"
     , "begin", "big_map", "contains", "function", "if", "in", "is", "list", "nil", "recursive", "skip", "while"
     ]
+
+unit_completion_jsligo :: Assertion
+unit_completion_jsligo = do
+  let filename = "type-attribute.jsligo"
+
+  completions <- runHandlersTest contractsDir $ do
+    doc <- openLigoDoc filename
+    getCompletions doc (Position 12 32)
+
+  sort (fmap (^. label) completions) `shouldMatchList`
+    ["id", "if", "import", "is_admin", "switch", "while"]

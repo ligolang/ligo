@@ -41,6 +41,9 @@ let print_list :
 let print_nsepseq state ?region label print node =
   print_list state ?region label print (Utils.nsepseq_to_list node)
 
+let print_sepseq state ?region label print node =
+  print_list state ?region label print (Utils.sepseq_to_list node)
+
 let print_nseq state ?region label print node =
   print_list state ?region label print (Utils.nseq_to_list node)
 
@@ -166,8 +169,8 @@ and print_type_params state (node : type_params chevrons reg) =
                 node.value.inside
 
 and print_parameters state (node : parameters) =
-  print_nsepseq state "<parameters>" print_param_decl
-                node.value.inside
+  print_sepseq state "<parameters>" print_param_decl
+               node.value.inside
 
 and print_param_decl state (node : param_decl reg) =
   let Region.{value; region} = node in
@@ -459,8 +462,8 @@ and print_call state label (node : call) =
   and mk_func state =
     Tree.print_unary state "<function>" print_expr
 
-  and mk_args state (node : (expr, comma) nsepseq par reg) =
-    print_nsepseq state "<arguments>" print_expr node.value.inside in
+  and mk_args state (node : (expr, comma) Utils.sepseq par reg) =
+    print_sepseq state "<arguments>" print_expr node.value.inside in
 
   let children = [
     Tree.mk_child mk_func func;
@@ -893,7 +896,7 @@ and print_E_And state (node : kwd_and bin_op reg) =
 
 (* Constructor application (or constant constructor) as expressions *)
 
-and print_E_App state (node : (expr * arguments option) reg) =
+and print_E_App state (node : (expr * expr tuple option) reg) =
   let Region.{value; region} = node in
   let ctor, args = value in
   let children = [

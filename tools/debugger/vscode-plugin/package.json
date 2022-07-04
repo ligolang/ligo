@@ -1,0 +1,239 @@
+{
+    "name": "ligo-debugger-vscode",
+    "description": "VSCode debugger extension for LIGO.",
+    "author": "Serokell",
+    "license": "MIT",
+    "version": "0.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/ligolang/ligo"
+    },
+    "publisher": "ligolang-publish",
+    "categories": [
+        "Programming Languages",
+        "Debuggers"
+    ],
+    "keywords": [],
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "activationEvents": [
+        "onDebugResolve:ligo",
+        "onDebugResolve:mligo",
+        "onDebugResolve:religo",
+        "onDebugResolve:jsligo",
+        "onCommand:extension.ligo-debugger.requestMichelsonEntrypoint",
+        "onCommand:extension.ligo-debugger.requestParameterValue",
+        "onCommand:extension.ligo-debugger.requestStorageValue"
+    ],
+    "icon": "logo.png",
+    "main": "./out/extension",
+    "contributes": {
+        "breakpoints": [
+            {
+                "language": "ligo"
+            },
+            {
+                "language": "mligo"
+            },
+            {
+                "language": "religo"
+            },
+            {
+                "language": "jsligo"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "ligo",
+                "label": "LIGO Debugger",
+                "languages": [
+                    "ligo",
+                    "mligo",
+                    "religo",
+                    "jsligo"
+                ],
+                "configurationAttributes": {
+                    "launch": {
+                        "required": [
+                            "parameter",
+                            "storage"
+                        ],
+                        "properties": {
+                            "program": {
+                                "type": "string",
+                                "description": "Absolute path to contract code",
+                                "default": "${file}"
+                            },
+                            "stopOnEntry": {
+                                "type": "boolean",
+                                "description": "Whether to automatically stop after launch",
+                                "default": true
+                            },
+                            "entrypoint": {
+                                "type": "string",
+                                "description": "Entry point of the contract (`main` method)",
+                                "default": "main"
+                            },
+                            "michelsonEntrypoint": {
+                                "type": "string",
+                                "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
+                                "default": "${command:AskForMichelsonEntrypoint}"
+                            },
+                            "parameter": {
+                                "type": "string",
+                                "description": "Parameter value",
+                                "default": "${command:AskForParameter}"
+                            },
+                            "storage": {
+                                "type": "string",
+                                "description": "Initial storage value",
+                                "default": "${command:AskForStorage}"
+                            },
+                            "logDir": {
+                                "type": "string",
+                                "description": "Path to a directory where the debug adapter will create a logging file",
+                                "default": "/tmp/ligo-debugger"
+                            },
+                            "contractEnv": {
+                                "type": "object",
+                                "description": "Constants that form the contract environment",
+                                "properties": {
+                                    "now": {
+                                        "default": "2020-01-01T00:00:00Z",
+                                        "description": "Value returned by `NOW` instruction"
+                                    },
+                                    "level": {
+                                        "default": 0,
+                                        "description": "Value returned by `LEVEL` instruction"
+                                    },
+                                    "sender": {
+                                        "type": "string",
+                                        "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+                                        "description": "Value returned by SENDER instruction"
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+                                        "description": "Value returned by SOURCE instruction"
+                                    },
+                                    "self": {
+                                        "type": "string",
+                                        "default": "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b",
+                                        "description": "Value returned by SELF_ADDRESS instruction"
+                                    },
+                                    "amount": {
+                                        "default": 0,
+                                        "description": "Value returned by AMOUNT instruction"
+                                    },
+                                    "balance": {
+                                        "default": 0,
+                                        "description": "Value returned by BALANCE instruction"
+                                    },
+                                    "chainId": {
+                                        "type": "string",
+                                        "default": "NetXH12Aer3be93",
+                                        "description": "Value returned by CHAIN_ID instruction"
+                                    },
+                                    "votingPowers": {
+                                        "type": "object",
+                                        "description": "Voting power distribution, affects VOTING_POWER and TOTAL_VOTING_POWER instructions",
+                                        "properties": {
+                                            "kind": {
+                                                "enum": "simple"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                        "type": "ligo",
+                        "request": "launch",
+                        "name": "Launch LIGO",
+                        "logDir": "",
+                        "parameter": "${command:AskForParameter}",
+                        "storage": "${command:AskForStorage}"
+                    }
+                ],
+                "configurationSnippets": [
+                    {
+                        "label": "LIGO: Simple",
+                        "description": "Minimalistic LIGO Debugger configuration",
+                        "body": {
+                            "type": "ligo",
+                            "request": "launch",
+                            "name": "Launch ${1:LIGO contract}",
+                            "parameter": "${2|${command:AskForParameter}|}",
+                            "storage": "${3|${command:AskForStorage}|}"
+                        }
+                    },
+                    {
+                        "label": "LIGO: Custom",
+                        "description": "LIGO debugger configuration with all values customized",
+                        "body": {
+                            "type": "ligo",
+                            "request": "launch",
+                            "name": "Launch ${1:LIGO contract}",
+                            "logDir": "",
+                            "program": "^\"\\${file}\"",
+                            "stopOnEntry": true,
+                            "michelsonEntrypoint": "${2|${command:AskForMichelsonEntrypoint},default|}",
+                            "parameter": "${3|${command:AskForParameter}|}",
+                            "storage": "${4|${command:AskForStorage}|}",
+                            "contractEnv": {
+                                "now": "${5:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
+                                "level": "${6:10000}",
+                                "sender": "${7:tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY}",
+                                "source": "${8:$8}",
+                                "self": "${9:KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b}",
+                                "amount": "${10:0}",
+                                "balance": "${11:1000000}",
+                                "chainId": "${12:NetXH12Aer3be93}",
+                                "votingPowers": {
+                                    "kind": "simple",
+                                    "contents": {
+                                        "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "10$0"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "variables": {
+                    "AskForMichelsonEntrypoint": "extension.ligo-debugger.requestMichelsonEntrypoint",
+                    "AskForParameter": "extension.ligo-debugger.requestParameterValue",
+                    "AskForStorage": "extension.ligo-debugger.requestStorageValue"
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "compile": "npm run esbuild-base -- --sourcemap",
+        "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=./out/extension.js --external:vscode --format=cjs --platform=node",
+        "watch": "tsc -b -w",
+        "package": "vsce package",
+        "lint": "eslint src/*.ts"
+    },
+    "dependencies": {
+        "@vscode/debugadapter-testsupport": "1.55.1",
+        "@vscode/debugprotocol": "1.55.1"
+    },
+    "devDependencies": {
+        "@types/node": "^15.14.9",
+        "@types/vscode": "^1.67.0",
+        "@typescript-eslint/eslint-plugin": "^4.33.0",
+        "@typescript-eslint/parser": "^4.27.0",
+        "esbuild": "^0.13.4",
+        "eslint": "^7.32.0",
+        "eslint-config-airbnb-base": "^14.2.1",
+        "eslint-plugin-import": "^2.26.0",
+        "typescript": "^4.7.2",
+        "vsce": "^2.8.0",
+        "@vscode/debugadapter": "1.55.1"
+    }
+}

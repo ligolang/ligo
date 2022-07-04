@@ -5,7 +5,7 @@
     tezos-error-monad
     tezos-stdlib-unix
     tezos-protocol-013-PtJakart
-    tezos-protocol-013-PtJakart-parameters
+    PtJakart-parameters
     tezos-client-013-PtJakart
     tezos-memory-proto-alpha
     data-encoding

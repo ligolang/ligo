@@ -15,4 +15,4 @@ type storage = tez
 type return = operation list * storage
 
 let main (_, _ : parameter * storage) : return =
-  ([] : operation list), Tezos.balance
+  ([] : operation list), Tezos.get_balance ()

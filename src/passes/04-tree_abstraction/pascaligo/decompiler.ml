@@ -191,6 +191,7 @@ let get_e_tuple : AST.expression -> _ = fun expr ->
   | E_literal _
   | E_constant _
   | E_module_accessor _
+  | E_application _
   | E_lambda _ -> [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -283,6 +284,13 @@ and decompile_to_tuple_expr : dialect -> AST.expression list -> CST.expr CST.tup
   let tuple_expr = list_to_nsepseq ~sep:Token.ghost_comma tuple_expr in
   Region.wrap_ghost @@ par @@ tuple_expr
 
+and decompile_arguments
+  : dialect -> AST.expression list -> CST.call_args =
+  fun dialect e_list ->
+    let list = List.map ~f:(decompile_expression ~dialect) e_list in
+    let sepseq = list_to_sepseq ~sep:Token.ghost_comma list
+    in Region.wrap_ghost @@ par @@ sepseq
+
 and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.t option)* CST.expr option) = fun dialect output expr ->
   let return (a,b) = (a,b) in
   let return_expr expr = return @@ (None, Some expr) in
@@ -300,7 +308,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     match arguments with
       [] -> return_expr @@ expr
     | _ -> (
-      let arguments = decompile_to_tuple_expr dialect arguments in
+      let arguments = decompile_arguments dialect arguments in
       let const : CST.call = Region.wrap_ghost (expr, arguments) in
       match output with
       | Expression -> return_expr (CST.E_Call const)
@@ -369,9 +377,9 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
       | Literal_chest _ | Literal_chest_key _ -> failwith "chest / chest_key not allowed in the syntax (only tests need this type)"
     )
   | E_application {lamb;args} ->
-    let lamb = decompile_expression ~dialect lamb in
-    let args = (decompile_to_tuple_expr dialect) @@ get_e_tuple args in
-    (match output with
+     let lamb = decompile_expression ~dialect lamb in
+     let args = decompile_arguments dialect @@ get_e_tuple args in
+     (match output with
       Expression ->
       return_expr @@ CST.E_Call (Region.wrap_ghost (lamb,args))
     | Statements ->
@@ -693,7 +701,7 @@ and decompile_lambda : dialect -> (AST.expr, AST.ty_expr) AST.lambda -> CST.para
     let var = decompile_variable binder.var in
     let param_type = Option.map ~f:(prefix_colon <@ decompile_type_expr dialect) binder.ascr in
     let param_const : CST.param_decl = { param_kind = `Const Token.ghost_const ; pattern = CST.P_Var var ; param_type } in
-    let parameters : CST.parameters = Region.wrap_ghost @@ par (list_to_nsepseq ~sep:Token.ghost_comma [Region.wrap_ghost param_const]) in
+    let parameters : CST.parameters = Region.wrap_ghost @@ par (list_to_sepseq ~sep:Token.ghost_comma [Region.wrap_ghost param_const]) in
     let result,ret_type =
       match result.expression_content with
       | AST.E_ascription {anno_expr; type_annotation} ->
@@ -778,7 +786,7 @@ and decompile_module_expression ~dialect : AST.module_expr -> CST.module_expr = 
       | [] -> failwith "impossible"
       | field:: tl' -> (field, tl')
     in
-    let module_path = nelist_to_npseq ~sep:Token.ghost_dot @@ 
+    let module_path = nelist_to_npseq ~sep:Token.ghost_dot @@
       List.Ne.map (fun (x: AST.module_variable) -> Wrap.ghost (AST.ModuleVar.to_name_exn x)) (hd,tl')
     in
     let field = Wrap.ghost (AST.ModuleVar.to_name_exn field) in

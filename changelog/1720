@@ -1,0 +1,10 @@
+author: lesenechal.remi
+description: '\n- JSLIGO patterns in function parameters are now compiled to pattern
+  matching, which improves the generated code in general\n- JSLIGO \"let-destructuring\"
+  will now work on objects (record type) and arrays (tuple type) as in:\n```\nlet
+  destruct_tuple = (x : [ int , [int , nat] ]) : nat => {\n let [a,[b,c]] = x ;\n
+  c\n};\n\nlet destruct_record = (x : { a : int , b : string }) : int => {\n let {
+  a , b } = x ; (* Note: nested pattern in record are not yet available *)\n a\n};\n```'
+merge_request: '1720'
+title: '[jsligo] function parameter destructuring, and let destructuring improvement'
+type: added

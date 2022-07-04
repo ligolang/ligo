@@ -1,0 +1,12 @@
+author: lesenechal.remi
+description: '\nThe `failwith` primitive now accepts arbitrary type as input. \n\n###
+  breaking changes\n\n`failwith` is now typed as `forall a b . a -> b`, instead of
+  applying an ad-hoc rule giving `unit` as a default return type.\nIn general, this
+  will require more type annotations, as in:\n```\nlet toplevel_failwith = failwith
+  \"I am failing\" (* will not type anymore *)\nlet toplevel_failwith : unit = failwith
+  \"I am failing\"\n\nlet f = fun (_ : unit) -> failwith (x + x + String.length y)
+  (* will not type anymore *)\nlet f = fun (_ : unit) : unit -> failwith (x + x +
+  String.length y)\n```\n\nCloses #193'
+merge_request: '1748'
+title: failwith now accepts arbitrary type as input
+type: breaking

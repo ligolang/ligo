@@ -107,6 +107,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
   | E_global_constant (hash, args) ->
     let args = List.map ~f:replace args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:replace args in
+    let x = replace_var x in
+    let code = replace code in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
@@ -254,6 +259,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
   | E_global_constant (hash, args) ->
     let args = List.map ~f:self args in
     return @@ E_global_constant (hash, args)
+  | E_create_contract (p, s, ((x, t), code), args) ->
+    let args = List.map ~f:self args in
+    let (x, code) = self_binder1 ~body:(x, code) in
+    return @@ E_create_contract (p, s, ((x, t), code), args)
 
 let%expect_test _ =
   let dummy_type = Expression.make_t @@ T_base TB_unit in
@@ -326,7 +335,7 @@ let%expect_test _ =
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
     (fun y -> ((x)@(y)))[x := y] =
-    fun y -> ((y)@(y))
+    fun y#2 -> ((y)@(y#2))
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
@@ -360,7 +369,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (let y = x in (x)@(y))[x := y] =
-    let y = y in (y)@(y)
+    let y#3 = y in (y)@(y#3)
   |}] ;
 
   (* iter shadowed *)
@@ -393,7 +402,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (for_ITER y of (x)@(y) do ( (x)@(y) ))[x := y] =
-    for_ITER y of (y)@(y) do ( (y)@(y) )
+    for_ITER y#4 of (y)@(y) do ( (y)@(y#4) )
   |}] ;
 
   (* if_cons shadowed 1 *)
@@ -449,7 +458,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := y] =
-    y ?? y : (y :: z) -> (y)@((y)@(z))
+    y ?? y : (y#5 :: z) -> (y)@((y#5)@(z))
   |}] ;
 
   (* if_cons capture avoidance 2 *)
@@ -463,7 +472,7 @@ let%expect_test _ =
     ~expr:(var z) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := z] =
-    z ?? z : (y :: z) -> (z)@((y)@(z))
+    z ?? z : (y :: z#6) -> (z)@((y)@(z#6))
   |}] ;
 
   (* old bug *)
@@ -475,5 +484,5 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (fun y -> (fun y#2 -> ((x)@((y)@(y#2)))))[x := y] =
-    fun y -> (fun y#2 -> ((y)@((y)@(y#2))))
+    fun y#3 -> (fun y#2 -> ((y)@((y#3)@(y#2))))
   |}] ;

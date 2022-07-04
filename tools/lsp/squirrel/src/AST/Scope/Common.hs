@@ -68,6 +68,7 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
 import UnliftIO.Exception (Exception (..), throwIO)
+import UnliftIO.MVar (modifyMVar, newMVar)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -81,13 +82,15 @@ import AST.Skeleton
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
+import Diagnostic (Message)
+import Log qualified
 import ParseTree
-import Parser
+import Parser (Info, LineMarker, ParsedInfo)
 import Product
-import Progress (ProgressCallback)
+import Progress (Progress (..), ProgressCallback, (%))
 import Range
 import Util (findKey, unionOrd)
-import Util.Graph (traverseAMConcurrently)
+import Util.Graph (forAMConcurrently, traverseAMConcurrently)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.
@@ -134,9 +137,29 @@ addLigoErrsToMsg errs = getContract . cMsgs %~ (errs <>)
 
 class HasLigoClient m => HasScopeForest impl m where
   scopeForest
-    :: ProgressCallback m
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ProgressCallback m
+    -- ^ A callback allowing reporting of the progress to the user.
     -> Includes ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
     -> m (Includes (FindFilepath ScopeForest))
+  scopeForest tempSettings reportProgress (Includes graph) = Includes <$> do
+    let nContracts = G.vertexCount graph
+    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
+    -- 'StateT'. It's best to avoid using this class for stateful monads.
+    counter <- newMVar 0
+    forAMConcurrently graph \contract -> do
+      n <- modifyMVar counter (pure . (succ &&& id))
+      reportProgress $ Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
+      scopeContract @impl tempSettings contract
+
+  scopeContract
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
+    -> m (FindFilepath ScopeForest)
 
 data Level = TermLevel | TypeLevel
   deriving stock (Eq, Show)
@@ -323,12 +346,13 @@ addLocalScopes tree forest =
 addScopes
   :: forall impl m
    . HasScopeForest impl m
-  => ProgressCallback m
+  => TempSettings
+  -> ProgressCallback m
   -> Includes ParsedContractInfo
   -> m (Includes ContractInfo')
-addScopes reportProgress graph = do
+addScopes tempSettings reportProgress graph = do
   -- Bottom-up: add children forests into their parents
-  forestGraph <- scopeForest @impl reportProgress graph
+  forestGraph <- scopeForest @impl tempSettings reportProgress graph
   let
     universe = nubForest $ foldr (mergeScopeForest OnUnion . contractTree) emptyScopeForest $ G.vertexList forestGraph
     -- Traverse the graph, uniting decls at each intersection, essentially

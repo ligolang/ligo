@@ -1,0 +1,7 @@
+let main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+  if (s > 10) {
+    failwith("no branches????")
+  }
+
+  return [(list([]) as list<operation>), s]
+};
