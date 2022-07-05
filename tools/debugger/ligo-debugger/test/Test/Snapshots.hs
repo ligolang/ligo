@@ -12,19 +12,23 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), Frozen, SourceLocation (SourceLocation),
+  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation (SourceLocation),
   SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
-  tsAfterInstrs)
+  tsAfterInstrs, FrozenPredicate (FrozenPredicate))
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
-import Control.Lens (ix, makeLensesWith, (?~))
+import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
+import Morley.Debugger.Core.Breakpoint qualified as N
+import Morley.Debugger.Core.Snapshots qualified as N
+import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Typed (SomeValue)
 import Morley.Util.Lens (postfixLFields)
 import System.Directory (listDirectory)
 import System.FilePath (dropExtension)
@@ -154,7 +158,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- moveTill Forward (pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- moveTill Forward (FrozenPredicate $ pure False)
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -303,6 +307,67 @@ test_Snapshots = testGroup "Snapshots collection"
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
+  , testCaseSteps "check shadowing" \_step -> do
+      let file = contractsDir </> "shadowing.religo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 4 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 12) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 13) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 18) (Pos 0))
+
+        let checkStackItem :: Text -> SomeValue -> StackItem -> Bool
+            checkStackItem expectedVar expectedVal = \case
+              StackItem
+                { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                    { leseDeclaration = Just (LigoVariable actualVar)
+                    }
+                , siValue = actualVal
+                } -> actualVal == expectedVal && expectedVar == actualVar
+              _ -> False
+
+        goToNextBreakpoint
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+
+          -- check that current snapshot has "s1" variable and it's type is @VInt@
+          unless (any (checkStackItem "s1" $ T.SomeConstrainedValue (T.VInt 8)) stackItems) do
+            unexpectedSnapshot snap
+
+        goToNextBreakpoint
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+
+          -- we should be confident that we have only one "s1" variable in snapshot
+          let s1Count = stackItems
+                & filter \case
+                    StackItem
+                      { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                          { leseDeclaration = Just (LigoVariable "s1")
+                          }
+                      } -> True
+                    _ -> False
+                & length
+
+          -- check that current snapshot has "s1" variable and it's type is @VOption VInt@
+          unless (any (checkStackItem "s1" $ T.SomeConstrainedValue (T.VOption (Just (T.VInt 16)))) stackItems) do
+            unexpectedSnapshot snap
+
+          when (s1Count /= 1) do
+            assertFailure [int||Expected 1 "s1" variable, found #{s1Count} "s1" variables|]
+
+        goToNextBreakpoint
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+
+          -- check that current snapshot has "s" variable and it's value not 4
+          unless (any (checkStackItem "s" $ T.SomeConstrainedValue (T.VInt 96)) stackItems) do
+            unexpectedSnapshot snap
 
   , testCaseSteps "multiple contracts" \step -> do
       let modulePath = contractsDir </> "module_contracts"
@@ -318,13 +383,11 @@ test_Snapshots = testGroup "Snapshots collection"
 
       testWithSnapshots runData do
         -- Predicate for @moveTill@ which stops on a snapshot with specified file name in loc.
-        -- TODO; wrap this predicate when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58)
-        -- is merged.
         let stopAtFile
               :: (MonadState (DebuggerState InterpretSnapshot) m)
               => FilePath
-              -> Frozen (DebuggerState InterpretSnapshot) m Bool
-            stopAtFile filePath = do
+              -> FrozenPredicate (DebuggerState InterpretSnapshot) m
+            stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
               let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
               case locMb of

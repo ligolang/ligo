@@ -14,7 +14,6 @@ import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Language.LIGO.Debugger.Snapshots
 import Test.Snapshots
 import Test.Util
-import Morley.Debugger.Core.Navigate (DebuggerState)
 
 test_test :: [TestTree]
 test_test =
@@ -59,27 +58,6 @@ test_test =
           view N.slSrcPos <<$>> N.getExecutedPosition @@?= Just (SrcPos (Pos 2) (Pos 11))
 
   , testCaseSteps "Pausing in different contracts" \step -> do
-      -- TODO; remove these functions when (https://gitlab.com/morley-framework/morley-debugger/-/merge_requests/58) is merged
-      let goToNextBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
-          goToNextBreakpoint = do
-            oldPosMb <- N.frozen N.getExecutedPosition
-            N.continueUntilBreakpoint N.NextBreak
-            whenJust oldPosMb \oldPos -> do
-              newPosMb <- N.frozen N.getExecutedPosition
-              whenJust newPosMb \newPos -> do
-                unless (oldPos /= newPos) do
-                  goToNextBreakpoint
-
-      let goToPreviousBreakpoint :: (MonadState (DebuggerState InterpretSnapshot) m) => m ()
-          goToPreviousBreakpoint = do
-            oldPosMb <- N.frozen N.getExecutedPosition
-            N.reverseContinue N.NextBreak
-            whenJust oldPosMb \oldPos -> do
-              newPosMb <- N.frozen N.getExecutedPosition
-              whenJust newPosMb \newPos -> do
-                unless (oldPos /= newPos) do
-                  goToPreviousBreakpoint
-
       let modulePath = contractsDir </> "module_contracts"
       let file = modulePath </> "importer.mligo"
       let runData = ContractRunData
