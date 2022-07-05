@@ -72,6 +72,9 @@ export type ContractFileData = {
 }
 
 export function getLastContractPath() {
+  if (!vscode.window.activeTextEditor) {
+    return undefined
+  }
   let path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
   if (!extensions.includes(ext)) {
