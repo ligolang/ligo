@@ -26,6 +26,10 @@ let deployOptionButton: vscode.StatusBarItem;
 // If currently active text window is not an opened file (terminal, explorer, etc.)
 // button will remain in it's previous state
 function updateLigoButton(button: vscode.StatusBarItem) {
+  if (!vscode.window.activeTextEditor) {
+    button.hide()
+    return;
+  }
   const path = vscode.window.activeTextEditor.document.uri.fsPath;
   const ext = extname(path);
 
