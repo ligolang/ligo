@@ -5,6 +5,7 @@ type 'a command = {
   value: 'a;
   contained: bool;
   contained_in: string list;
+  contains: string list;
   next_groups: string list
 }
 
@@ -21,7 +22,6 @@ type match_group = {
 type region_inside = {
   start: string option;
   end_: string option;
-  contains: string list;
   match_groups: match_group list
 }
 
@@ -57,16 +57,17 @@ module Print = struct
       fprintf fmt " "
 
   let rec print_syntax fmt = function
-    Match {group_name; value=regexp; contained; contained_in; next_groups} ->
+    Match {group_name; value=regexp; contained; contained_in; next_groups; contains} ->
       fprintf fmt "syntax match %s \"%s\" " group_name regexp;
       if contained then 
         fprintf fmt "contained ";
       print_list fmt "containedin=" contained_in;
+      print_list fmt "contains=" contains;
       print_list fmt "nextgroup=" next_groups;
       if next_groups <> [] then
         fprintf fmt "skipempty skipwhite";
       fprintf fmt "\n"
-  | Region {group_name; value={start; end_; contains; match_groups}; next_groups; contained; contained_in; } ->
+  | Region {group_name; value={start; end_; match_groups}; next_groups; contained; contained_in; contains} ->
       fprintf fmt "syntax region %s " group_name;
       print_match_groups fmt match_groups;
       (match start with 
@@ -171,7 +172,6 @@ module Convert = struct
               value = ({                
                 start = (match highlight_start with Some _ -> None | None -> Some start.Core.vim);
                 end_ = (match highlight_end with Some _ -> None | None -> Some end_.Core.vim);
-                contains = patterns;
                 match_groups = 
                   (match highlight_start with 
                     Some _ -> [{
@@ -192,6 +192,7 @@ module Convert = struct
               next_groups = (match rest with [] -> [] | _ -> [name ^ "___"]);
               contained = not (List.mem name toplevel);
               contained_in = [];
+              contains = patterns;
             }) :: 
           result) [] rest
       | (match_, highlight) :: rest, end_ -> 
@@ -206,6 +207,7 @@ module Convert = struct
                 next_groups = [name ^ "___"];
                 contained = not (List.mem name toplevel);
                 contained_in = []; 
+                contains = [];
               })
               :: 
              result
@@ -222,6 +224,7 @@ module Convert = struct
             next_groups = (match rest_e with [] -> [] | _ -> [name ^ "___"]);
             contained = not (List.mem name toplevel);
             contained_in = []; 
+            contains = [];
           })
           :: 
           result
@@ -247,6 +250,7 @@ module Convert = struct
           value = regexp.Core.vim;
           contained = not (List.mem name toplevel);
           contained_in = [];
+          contains = [];
           next_groups = (match rest with _ :: _ -> [name ^ "_"] | _ -> [])
         })]
         @ 
@@ -271,6 +275,8 @@ module Convert = struct
 
   let to_vim: Core.t -> t = fun t ->
     let toplevel = t.syntax_patterns in
+    (List.fold_left (fun a c -> (pattern_to_vim toplevel c) @ a ) [] t.repository)
+    @
     [VIMComment "string"]
     @
     (List.map (fun d ->
@@ -279,46 +285,46 @@ module Convert = struct
           value = {
             start        = Some d.Core.vim;
             end_         = Some d.Core.vim;
-            contains     = [];
             match_groups = []
           };
           contained = false;
           contained_in = [];
+          contains = ["@Spell"];
           next_groups = []
         })
-            
     ) t.language_features.string_delimiters)
     @
     [Highlight (Link {group_name = "string"; highlight = Core.String})]
     @
-    [VIMComment "comment"]
+    [VIMComment "linecomment"]
     @
     [Syntax (Match {
-      group_name   = "comment";
+      group_name   = "linecomment";
       value        = t.language_features.comments.line_comment.Core.vim;
       contained    = false;
-      contained_in = [];
+      contained_in = ["ALLBUT"; "string"; "blockcomment"];
+      contains     = ["@Spell"];
       next_groups  = []
     })]
     @
+    [Highlight (Link {group_name = "linecomment"; highlight = Core.Comment})]
+    @
+    [VIMComment "blockcomment"]
+    @
     [Syntax (Region {
-      group_name   = "comment";
+      group_name   = "blockcomment";
       value        = {
         start        = Some ((fst t.language_features.comments.block_comment).Core.vim);
         end_         = Some ((snd t.language_features.comments.block_comment).Core.vim);
-        contains     = [];
         match_groups = []
       };
       contained    = false;
-      contained_in = [];
+      contained_in = ["ALLBUT"; "string"; "linecomment"];
+      contains     = ["@Spell"];
       next_groups  = []
     })]
-    
     @
-    [Highlight (Link {group_name = "comment"; highlight = Core.Comment})]
-    @
-    (List.fold_left (fun a c -> (pattern_to_vim toplevel c) @ a ) [] t.repository)
-    
+    [Highlight (Link {group_name = "blockcomment"; highlight = Core.Comment})]
 end
   
 let to_vim: Core.t -> string = fun t ->

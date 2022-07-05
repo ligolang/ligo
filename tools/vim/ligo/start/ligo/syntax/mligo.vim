@@ -2,15 +2,6 @@ if exists("b:current_syntax")
     finish
 endif
 
-" string
-syntax region string start="\"" end="\"" 
-highlight link string String 
-
-" comment
-syntax match comment "\/\/.*$" 
-syntax region comment start="(\*" end="\*)" 
-highlight link comment Comment 
-
 " typeproduct
 syntax region typeproduct start="{" end="}" contained contains=identifier,typeannotation,semicolon 
 
@@ -101,5 +92,17 @@ highlight link macro PreProc
 " attribute
 syntax match attribute "\[@.*\]" 
 highlight link attribute PreProc 
+
+" string
+syntax region string start="\"" end="\"" contains=@Spell 
+highlight link string String 
+
+" linecomment
+syntax match linecomment "\/\/.*$" containedin=ALLBUT,string,blockcomment contains=@Spell 
+highlight link linecomment Comment 
+
+" blockcomment
+syntax region blockcomment start="(\*" end="\*)" containedin=ALLBUT,string,linecomment contains=@Spell 
+highlight link blockcomment Comment 
 
 let b:current_syntax = "mligo"
