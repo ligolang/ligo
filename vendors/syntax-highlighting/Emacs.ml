@@ -362,6 +362,7 @@ For debugging.
     fprintf fmt ")\n" *)
   
   let print_pre fmt = 
+    fprintf fmt ";;; THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
     fprintf fmt ";;; ligo-mode.el --- A major mode for editing LIGO source code\n\n";
 
     fprintf fmt ";; Version: 0.2.0\n";

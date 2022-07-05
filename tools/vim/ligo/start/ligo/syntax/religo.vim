@@ -1,3 +1,4 @@
+" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.
 if exists("b:current_syntax")
     finish
 endif

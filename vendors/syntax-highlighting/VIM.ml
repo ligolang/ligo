@@ -332,6 +332,7 @@ let to_vim: Core.t -> string = fun t ->
   let buffer = Buffer.create 100 in
   let open Format in
   let fmt = formatter_of_buffer buffer in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
   fprintf fmt "if exists(\"b:current_syntax\")\n";
   fprintf fmt "    finish\n";
   fprintf fmt "endif\n";

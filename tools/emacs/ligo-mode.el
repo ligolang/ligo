@@ -1,3 +1,4 @@
+;;; THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.
 ;;; ligo-mode.el --- A major mode for editing LIGO source code
 
 ;; Version: 0.2.0
