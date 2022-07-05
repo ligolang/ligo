@@ -131,16 +131,15 @@ create_docker_stable_version:
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
-  variables:
-    STABLE_VERSION: "${STABLE_VERSION}"
   needs:
     - job: determine_new_stable_version
       artifacts: true
   script:
-    - docker pull ligolang/ligo:$STABLE_VERSION
+    - STABLE_VERSION_WITHOUT_QUOTE=$(echo ${STABLE_VERSION} | tr -d '"')
+    - docker pull ligolang/ligo:$STABLE_VERSION_WITHOUT_QUOTE
     - |
       if [[ $DRY_RUN_RELEASE == "" ]]; then
-        docker tag ligolang/ligo:$STABLE_VERSION ligolang/ligo:stable
+        docker tag ligolang/ligo:$STABLE_VERSION_WITHOUT_QUOTE ligolang/ligo:stable
         docker push ligolang/ligo:stable
       fi
 
