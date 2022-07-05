@@ -83,6 +83,8 @@ test_test =
         N.switchBreakpoint (N.SourcePath nestedFile2) (SrcPos (Pos 0) (Pos 0))
 
         lift $ step "Go to first breakpoint"
+        -- here we need to skip breakpoint on 'what' function.
+        goToNextBreakpoint
         goToNextBreakpoint
         N.frozen do
           N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 5) (Pos 21)))
@@ -102,6 +104,11 @@ test_test =
         N.frozen do
           N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 11) (Pos 18)))
 
+        lift $ step "Go to next breakpoint (go to start file)"
+        goToNextBreakpoint
+        N.frozen do
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 8) (Pos 27)))
+
         lift $ step "Go to next breakpoint (more nested file)"
         goToNextBreakpoint
         N.frozen do
@@ -110,7 +117,7 @@ test_test =
         lift $ step "Go to next breakpoint (go back)"
         goToNextBreakpoint
         N.frozen do
-          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath nestedFile) (SrcPos (Pos 18) (Pos 45)))
+          N.getExecutedPosition @@?= Just (N.SourceLocation (N.SourcePath file) (SrcPos (Pos 9) (Pos 3)))
 
         lift $ step "Go to previous breakpoint"
         goToPreviousBreakpoint

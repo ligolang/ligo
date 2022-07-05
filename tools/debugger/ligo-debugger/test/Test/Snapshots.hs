@@ -142,19 +142,19 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
+                , sfLoc = LigoRange file' (LigoPosition 1 10) (LigoPosition 1 14)
                 , sfStack =
                   [ StackItem
-                    { siLigoDesc = LigoStackEntry
-                        -- should name name "s", but debug info is yet buggy
-                        (LigoExposedStackEntry Nothing _)
-                    , siValue = SomeLorentzValue (0 :: Integer)
+                    { siLigoDesc = LigoHiddenStackEntry
+                    , siValue = SomeLorentzValue ((), 0 :: Integer)
                     }
                   ]
                 } :| []
             } | file == file'
               -> pass
           sp -> unexpectedSnapshot sp
+
+        _ <- move Forward
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
@@ -176,9 +176,6 @@ test_Snapshots = testGroup "Snapshots collection"
           )
           @?=
           let
-            stack0 =
-              [ (Nothing, SomeLorentzValue (0 :: Integer))
-              ]
             stackWithS2 =
               [ ( Just LigoVariable
                   { lvName = "s2"
@@ -186,19 +183,33 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (42 :: Integer)
                 )
               ]
+            stackWithS =
+              [ ( Just LigoVariable
+                  { lvName = "s"
+                  }
+                , SomeLorentzValue (0 :: Integer)
+                )
+              ]
           in
-          [ ( InterpretRunning . EventExpressionEvaluated . Just $
+          [ ( InterpretRunning EventExpressionPreview
+            , one
+              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
+              , stackWithS
+              )
+            )
+
+          , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
-              , stack0
+              , stackWithS
               )
             )
 
           , ( InterpretRunning EventExpressionPreview
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
-              , stack0
+              , stackWithS
               )
             )
 
@@ -206,7 +217,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 SomeLorentzValue (42 :: Integer)
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
-              , stack0
+              , stackWithS
               )
             )
 
@@ -266,7 +277,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
+                , sfLoc = LigoRange _ (LigoPosition 1 14) (LigoPosition 1 18)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -282,7 +293,9 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          -- Skip starting snapshot
+          -- Skipping snapshots till snapshot with 'int' variable
+          _ <- move Forward
+          _ <- move Forward
           _ <- move Forward
 
           checkSnapshot \case
@@ -318,10 +331,11 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 4 17)
+                { sfLoc = LigoRange _ (LigoPosition 1 10) (LigoPosition 1 14)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
+
   , testCaseSteps "check shadowing" \_step -> do
       let file = contractsDir </> "shadowing.religo"
       let runData = ContractRunData
@@ -414,7 +428,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 15 9) (LigoPosition 15 10)
+                { sfLoc = LigoRange file' (LigoPosition 3 9) (LigoPosition 3 13)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -424,7 +438,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 7 12) (LigoPosition 7 21)
+                { sfLoc = LigoRange file' (LigoPosition 5 10) (LigoPosition 5 14)
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -434,7 +448,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 4 11) (LigoPosition 4 12)
+                { sfLoc = LigoRange file' (LigoPosition 2 19) (LigoPosition 2 20)
                 } :| []
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp

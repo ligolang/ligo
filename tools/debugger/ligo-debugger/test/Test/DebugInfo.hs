@@ -18,6 +18,7 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 import Test.Util
+import Morley.Michelson.Typed.Util (dsGoToValues)
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -30,9 +31,10 @@ instance Buildable SomeInstr where
 
 -- | Get instructions with associated 'InstrNo' metas.
 collectMetas :: T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
-collectMetas = T.dfsFoldInstr def \case
-  T.Meta (T.SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) i ->
-    one (meta, SomeInstr i)
+collectMetas = T.dfsFoldInstr def { dsGoToValues = True } \case
+  T.Meta (T.SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) i -> case i of
+    T.LAMBDA _ -> mempty
+    _ -> one (meta, SomeInstr i)
   _ -> mempty
 
 (?-) :: a -> b -> (a, b)
@@ -61,6 +63,7 @@ test_SourceMapper = testGroup "Reading source mapper"
       let metasAndInstrs =
             filter (hasn't (_1 . _Empty)) $
             toList $ collectMetas (T.cCode contract)
+
       metasAndInstrs
         @?=
         [ LigoMereEnvInfo
@@ -68,7 +71,19 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
+            [LigoHiddenStackEntry]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
             [LigoStackEntryNoVar intType]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [LigoStackEntryNoVar intType]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [LigoStackEntryVar "s" intType]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -107,6 +122,12 @@ test_SourceMapper = testGroup "Reading source mapper"
             (LigoRange file (LigoPosition 4 3) (LigoPosition 4 28))
             ?- SomeInstr T.PAIR
 
+        , LigoMereEnvInfo
+            [ LigoStackEntryVar "main" (LTArrow $ LigoTypeArrow LTUnresolved LTUnresolved)
+            , LigoHiddenStackEntry
+            ]
+            ?- SomeInstr dummyInstr
+
         ]
 
       (_slSrcPos <$> toList allLocs)
@@ -115,6 +136,7 @@ test_SourceMapper = testGroup "Reading source mapper"
         -- end positions - since we account for only the former, they
         -- get de-duplicated.
         [ unknownSrcPos
+        , SrcPos (Pos 0) (Pos 10)
         , SrcPos (Pos 1) (Pos 11)
         , SrcPos (Pos 1) (Pos 15)
         , SrcPos (Pos 2) (Pos 11)

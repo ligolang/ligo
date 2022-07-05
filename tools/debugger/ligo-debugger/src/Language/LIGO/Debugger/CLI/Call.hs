@@ -101,6 +101,7 @@ compileLigoContractDebug entrypoint file =
     , "--michelson-comments", "location"
     , "--michelson-comments", "env"
     , "-e", entrypoint
+    , "--experimental-disable-optimizations-for-debugging"
     , file
     ]
     >>= throwLeftWith (BadLigoOutput "decoding source mapper" . toText)

@@ -20,16 +20,11 @@ test_Compilation = testGroup "Getting debug info"
       take 15 (toList $ lmLocations res) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
-        , [ LigoMereEnvInfo [LigoHiddenStackEntry]
-          , LigoEmptyLocationInfo
-          ]
+        , [ LigoMereEnvInfo [LigoHiddenStackEntry]          ]
 
-        , [ LigoMereEnvInfo [LigoStackEntryNoVar intType] ]
-        , [ LigoMereLocInfo ((2, 15) <-> (2, 17)) ]
-        , replicate 2 LigoEmptyLocationInfo
-        , [ LigoMereLocInfo ((2, 11) <-> (2, 17)) ]
-        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" intType] ]
+        , [ LigoMereLocInfo ((1, 10) <-> (1, 14)) ]
 
+        , replicate 6 LigoEmptyLocationInfo
         ]
 
   ]
