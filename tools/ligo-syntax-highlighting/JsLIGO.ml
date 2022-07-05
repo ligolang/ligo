@@ -265,7 +265,6 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [
             (Regexp.identifier_constructor_match, Some Label);
-            (Regexp.whitespace_match, None);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -278,7 +277,6 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [
             (Regexp.int_literal_match, Some Number);
-            (Regexp.whitespace_match, None);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -291,7 +289,6 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [
             (Regexp.string_literal_match, Some String);
-            (Regexp.whitespace_match, None);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -304,7 +301,6 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [
             (Regexp.let_binding_match2_jsligo, None);
-            (Regexp.whitespace_match, None);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];

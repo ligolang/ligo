@@ -31,10 +31,9 @@ syntax match typeoperator "\(->\|\.\||\|\*\)" contained
 highlight link typeoperator Operator 
 
 " typeproduct
-syntax match typeproduct "\<record\>" contained nextgroup=typeproduct___ 
+syntax match typeproduct "\<record\>" contained nextgroup=typeproduct___ skipempty skipwhite
 highlight link typeproduct Keyword 
-syntax match typeproduct___ "\(\s*\)" contained nextgroup=typeproduct______ 
-syntax region typeproduct______ start="\[" end="\]" contained contains=identifier,typeannotationfield,semicolon 
+syntax region typeproduct___ start="\[" end="\]" contained contains=identifier,typeannotationfield,semicolon 
 
 " typeannotationfield
 syntax region typeannotationfield matchgroup=typeannotationfield_ start="\(:\)" end="\(;\|\]\)\@=" contained contains=typemodule,ofkeyword,identifierconstructor,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
@@ -62,7 +61,7 @@ syntax match identifier "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained
 " module
 syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
 highlight link module_ Identifier 
-syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ 
+syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ skipempty skipwhite
 highlight link module Structure 
 
 " iskeyword
@@ -87,7 +86,7 @@ highlight link numericliterals Number
 " function
 syntax match function_ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
 highlight link function_ Statement 
-syntax match function "\(function\)\W" nextgroup=function_ 
+syntax match function "\<function\>" nextgroup=function_ skipempty skipwhite
 highlight link function Keyword 
 
 " controlkeywords

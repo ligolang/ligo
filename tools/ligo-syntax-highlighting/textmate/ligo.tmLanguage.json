@@ -71,7 +71,7 @@
     "operators": {
       "name": "keyword.operator.ligo",
       "match":
-        "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\s+",
+        "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
@@ -84,7 +84,7 @@
       "captures": { "1": { "name": "keyword.other.ligo" } }
     },
     "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.ligo" },
         "1": { "name": "storage.class.ligo" }
@@ -156,7 +156,7 @@
       ]
     },
     "typeproduct": {
-      "begin": "\\b(record)\\b(\\s*)(\\[)",
+      "begin": "\\b(record)\\b\\s*(\\[)",
       "end": "(\\])",
       "beginCaptures": { "1": { "name": "keyword.other.ligo" } },
       "endCaptures": {},

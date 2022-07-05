@@ -281,14 +281,14 @@
 		(,"\\b\\(case\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\|is\\|from\\|skip\\|block\\|contains\\|to\\|step\\|of\\|while\\|for\\|remove\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
-		(,"\\b\\(function\\)\\b[ ]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)"
+		(,"\\b\\(function\\)\\b[:space:]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)"
 			(1 font-lock-keyword-face)
 			(2 font-lock-variable-name-face)
 		)
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
 			. ligo-font-lock-number-face
 		)
-		(,"[ ]*\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)[ ]*"
+		(,"\\b\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\b"
 			. ligo-font-lock-operator-face
 		)
 		(,";"
@@ -299,7 +299,7 @@
 		(,"\\b\\(is)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
+		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.[:space:]*\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-structure-face)
 			(2 font-lock-variable-name-face)
 		)
@@ -314,7 +314,7 @@
 		(,"\\b\\(type\\)\\b" ( 1 font-lock-keyword-face))
 		(,"\\(:\\)" ( 1 ligo-font-lock-operator-face))
 		(,"\\(:\\)" ( 1 ligo-font-lock-operator-face))
-		(,"\\brecord\\b\\([:space:]*\\)\\[" ( 1 font-lock-keyword-face))
+		(,"\\brecord\\b[:space:]*\\[" ( 1 font-lock-keyword-face))
 		(,"\\(->\\|\\.\\||\\|\\*\\)"
 			. ligo-font-lock-operator-face
 		)
@@ -378,7 +378,7 @@
 		(,"\\b\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
-		(,"\\b\\(let\\)\\b[ ]*\\b\\(rec\\|\\)\\b[ ]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b"
+		(,"\\b\\(let\\)\\b[:space:]*\\(\\brec\\b\\|\\)[:space:]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b"
 			(1 font-lock-keyword-face)
 			(2 ligo-font-lock-storage-class-face)
 			(3 font-lock-variable-name-face)
@@ -386,7 +386,7 @@
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
 			. ligo-font-lock-number-face
 		)
-		(,"[ ]*\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)[ ]*"
+		(,"\\b\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)\\b"
 			. ligo-font-lock-operator-face
 		)
 		(,";"
@@ -395,7 +395,7 @@
 			(1 font-lock-keyword-face)
 		)
 		(,"\\b\\(fun\\)\\b" ( 1 ligo-font-lock-statement-face))
-		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
+		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.[:space:]*\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-structure-face)
 			(2 font-lock-variable-name-face)
 		)
@@ -473,7 +473,7 @@
 		(,"\\b\\(switch\\|if\\|else\\|assert\\|failwith\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
-		(,"\\b\\(let\\)\\b[ ]*\\b\\(rec\\|\\)\\b[ ]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b"
+		(,"\\b\\(let\\)\\b[:space:]*\\(\\brec\\b\\|\\)[:space:]*\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b"
 			(1 font-lock-keyword-face)
 			(2 ligo-font-lock-storage-class-face)
 			(3 font-lock-variable-name-face)
@@ -481,12 +481,12 @@
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
 			. ligo-font-lock-number-face
 		)
-		(,"[ ]*\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)[ ]*"
+		(,"\\b\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)\\b"
 			. ligo-font-lock-operator-face
 		)
 		(,","
 		)
-		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
+		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.[:space:]*\\([a-z_][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-structure-face)
 			(2 font-lock-variable-name-face)
 		)
@@ -496,7 +496,7 @@
 			(1 ligo-font-lock-label-face)
 		)
 		(,"{" ())
-		(,"\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b\\([:space:]*\\)\\(:\\)" ( 3 ligo-font-lock-operator-face))
+		(,"\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\b[:space:]*\\(:\\)" ( 2 ligo-font-lock-operator-face))
 		(,"\\b\\(type\\)\\b" ( 1 font-lock-keyword-face))
 		(,"\\(:\\)" ( 1 ligo-font-lock-operator-face))
 		(,"\\(=>\\|\\.\\||\\)"

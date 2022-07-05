@@ -294,13 +294,14 @@ module Print = struct
       ()
     
   let print_font_lock fmt syntax repository =
+    let spaces = "[:space:]*" in
     fprintf fmt "(defvar %s-font-lock-defaults\n" syntax;
     fprintf fmt "\t`(\n";
     List.iter (fun i -> 
       match i.Core.kind with 
         Match {match_; match_name} ->
           let regexps, highlights = List.split match_ in
-          let match_regexp = String.concat "" (List.map (fun f -> f.Core.emacs) regexps) in
+          let match_regexp = String.concat spaces (List.map (fun f -> f.Core.emacs) regexps) in
           fprintf fmt "\t\t(,\"%s\"\n" match_regexp;
           (match highlight_to_opt match_name with 
           | Some highlight ->
@@ -330,8 +331,12 @@ module Print = struct
         in
         let all = highlight_opt_to_string " . " meta_name in
         let rec aux regexp_begin highlights counter = function
-          (regexp, highlight) :: rest ->
+        | [(regexp, highlight)] ->
             let regexp = regexp_begin ^ regexp.Core.emacs in
+            let highlights = highlights ^ highlight_opt_to_string (" " ^ string_of_int counter ^ " ") highlight in
+            aux regexp highlights (counter + 1) []
+        | (regexp, highlight) :: rest ->
+            let regexp = regexp_begin ^ regexp.Core.emacs ^ spaces in
             let highlights = highlights ^ highlight_opt_to_string (" " ^ string_of_int counter ^ " ") highlight in
             aux regexp highlights (counter + 1) rest
         | [] -> 

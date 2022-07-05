@@ -46,10 +46,9 @@ syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end
 highlight link typedefinition_ Keyword 
 
 " recordfield
-syntax match recordfield "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained nextgroup=recordfield___ 
-syntax match recordfield___ "\(\s*\)" contained nextgroup=recordfield______ 
-syntax region recordfield______ matchgroup=recordfield_______ start="\(:\)" end="\(,\|}\)\@=" contained contains=$self 
-highlight link recordfield_______ Operator 
+syntax match recordfield "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained nextgroup=recordfield___ skipempty skipwhite
+syntax region recordfield___ matchgroup=recordfield____ start="\(:\)" end="\(,\|}\)\@=" contained contains=$self 
+highlight link recordfield____ Operator 
 
 " recordorblock
 syntax region recordorblock start="{" end="}" contains=recordfield,comma,$self 
@@ -64,7 +63,7 @@ syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained
 " module
 syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
 highlight link module_ Identifier 
-syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ 
+syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ skipempty skipwhite
 highlight link module Structure 
 
 " comma
@@ -81,9 +80,9 @@ highlight link numericliterals Number
 " letbinding
 syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
 highlight link letbinding__ Statement 
-syntax match letbinding_ "rec\W\|" contained nextgroup=letbinding__ 
+syntax match letbinding_ "\<rec\>\|" contained nextgroup=letbinding__ skipempty skipwhite
 highlight link letbinding_ StorageClass 
-syntax match letbinding "\(let\)\W" nextgroup=letbinding_ 
+syntax match letbinding "\<\(let\)\>" nextgroup=letbinding_ skipempty skipwhite
 highlight link letbinding Keyword 
 
 " controlkeywords

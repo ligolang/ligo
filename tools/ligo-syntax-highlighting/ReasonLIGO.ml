@@ -227,7 +227,6 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [
             (Regexp.let_binding_match3, None);
-            (Regexp.whitespace_match, None);
             (Regexp.field_expr_begin_reasonligo, Some Operator);
           ];
           end_ = [(Regexp.field_expr_end_reasonligo, None)];

@@ -58,7 +58,8 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let)\\b\\s*\\b(rec|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
+      "match":
+        "\\b(let)\\b\\s*(\\brec\\b|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
         "3": { "name": "entity.name.function.religo" },
         "2": { "name": "storage.modifier.religo" },
@@ -73,12 +74,12 @@
     "operators": {
       "name": "keyword.operator.religo",
       "match":
-        "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+",
+        "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\b",
       "captures": {}
     },
     "comma": { "match": "(,)", "captures": {} },
     "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.religo" },
         "1": { "name": "storage.class.religo" }
@@ -104,9 +105,9 @@
       ]
     },
     "recordfield": {
-      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b(\\s*)(:)",
+      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(:)",
       "end": "(?=,|})",
-      "beginCaptures": { "3": { "name": "keyword.operator.religo" } },
+      "beginCaptures": { "2": { "name": "keyword.operator.religo" } },
       "endCaptures": {},
       "patterns": [ { "include": "$self" } ]
     },

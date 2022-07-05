@@ -255,9 +255,11 @@ let syntax_highlighting =
         name = Name.type_product;
         kind = Begin_end {
           meta_name = None;
+          (* FIXME: `record\n`[ will not work properly in VS Code. We likely
+             want to make `record` be a keyword, and always interpret a `[` at
+             type-level as as a `type_record` regardless. *)
           begin_ = [
             (Regexp.record_keyword_match, Some Keyword);
-            (Regexp.whitespace_match, None);
             (Regexp.brackets_begin, None);
           ];
           end_ = [(Regexp.brackets_end, None)];

@@ -56,7 +56,8 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let)\\b\\s*\\b(rec|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
+      "match":
+        "\\b(let)\\b\\s*(\\brec\\b|)\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
         "3": { "name": "entity.name.function.mligo" },
         "2": { "name": "storage.modifier.mligo" },
@@ -71,7 +72,7 @@
     "operators": {
       "name": "keyword.operator.mligo",
       "match":
-        "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+",
+        "\\b(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
@@ -87,7 +88,7 @@
       "patterns": [ { "include": "#typeannotationlambda" } ]
     },
     "module": {
-      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.([a-z][a-zA-Z0-9_$]*)",
+      "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\.\\s*([a-z][a-zA-Z0-9_$]*)",
       "captures": {
         "2": { "name": "storage.var.mligo" },
         "1": { "name": "storage.class.mligo" }

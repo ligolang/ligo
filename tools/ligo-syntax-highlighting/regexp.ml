@@ -1,21 +1,15 @@
 module Core = SyntaxHighlighting.Core
 
-let whitespace_match: Core.regexp = {
-  emacs    = "\\\\([:space:]*\\\\)";
-  textmate = "(\\s*)";
-  vim      = "\\(\\s*\\)";
-}
-
 let let_binding_match1: Core.regexp = {
-  emacs    = "\\\\b\\\\(let\\\\)\\\\b[ ]*"; 
-  textmate = "\\b(let)\\b\\s*";
-  vim      = "\\(let\\)\\W";
+  emacs    = "\\\\b\\\\(let\\\\)\\\\b";
+  textmate = "\\b(let)\\b";
+  vim      = "\\<\\(let\\)\\>";
 }
 
 let let_binding_match2: Core.regexp = {
-  emacs    = "\\\\b\\\\(rec\\\\|\\\\)\\\\b[ ]*"; 
-  textmate = "\\b(rec|)\\s*";
-  vim      = "rec\\W\\|";
+  emacs    = "\\\\(\\\\brec\\\\b\\\\|\\\\)";
+  textmate = "(\\brec\\b|)";
+  vim      = "\\<rec\\>\\|";
 }
 
 let let_binding_match3: Core.regexp = {
@@ -25,9 +19,9 @@ let let_binding_match3: Core.regexp = {
 }
 
 let let_binding_match1_ligo: Core.regexp = {
-  emacs    = "\\\\b\\\\(function\\\\)\\\\b[ ]*"; 
-  textmate = "\\b(function)\\b\\s*";
-  vim      = "\\(function\\)\\W";
+  emacs    = "\\\\b\\\\(function\\\\)\\\\b";
+  textmate = "\\b(function)\\b";
+  vim      = "\\<function\\>";
 }
 
 let let_binding_match2_ligo: Core.regexp = {
@@ -39,7 +33,7 @@ let let_binding_match2_ligo: Core.regexp = {
 let lambda_begin: Core.regexp = {
   emacs    = "\\\\b\\\\(fun\\\\)\\\\b";
   textmate = "\\b(fun)\\b";
-  vim      = "\\(fun\\)\\W"
+  vim      = "\\<fun\\>"
 }
 
 let lambda_end: Core.regexp = {
@@ -85,20 +79,20 @@ let control_keywords_match_ligo: Core.regexp = {
 }
 
 let operators_match: Core.regexp = {
-  emacs    = "[ ]*\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)[ ]*";
-  textmate = "\\s+(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\s+";
+  emacs    = "\\\\b\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)\\\\b";
+  textmate = "\\b(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\b";
   vim      = "\\<\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)\\>"
 }
 
 let operators_match_reasonligo: Core.regexp = {
-  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)[ ]*";
-  textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\s+";
+  emacs    = "\\\\b\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|!=\\\\|<=\\\\|>=\\\\)\\\\b";
+  textmate = "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|!=|<=|=>|<|>)\\b";
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|!=\\|<=\\|>=\\)\\>"
 }
 
 let operators_match_ligo: Core.regexp = {
-  emacs    = "[ ]*\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)[ ]*";
-  textmate = "\\s+(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\s+";
+  emacs    = "\\\\b\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)\\\\b";
+  textmate = "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\b";
   vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
 }
 
@@ -231,31 +225,31 @@ let control_keywords_match_jsligo: Core.regexp = {
 
 let operators_match_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+";
+  textmate = "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b";
   vim      = ""
 }
 
 let module_alias_match1_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b(import)\\b\\s*";
+  textmate = "\\b(import)\\b";
   vim      = ""
 }
 
 let module_alias_match2_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
   vim      = ""
 }
 
 let module_declaration_match1_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b(namespace)\\b\\s*";
+  textmate = "\\b(namespace)\\b";
   vim      = ""
 }
 
 let module_declaration_match2_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)";
+  textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
   vim      = ""
 }
 
@@ -267,7 +261,7 @@ let module_match1_jsligo: Core.regexp = {
 
 let module_match2_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "([a-zA-Z0-9_$]*)";
+  textmate = "\\b([a-zA-Z0-9_$]*)\\b";
   vim      = ""
 }
 

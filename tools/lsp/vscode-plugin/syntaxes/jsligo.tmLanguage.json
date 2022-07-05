@@ -56,7 +56,7 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let|const)\\b\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
+      "match": "\\b(let|const)\\b\\s*\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": {
         "2": { "name": "entity.name.function.jsligo" },
         "1": { "name": "keyword.other.jsligo" }
@@ -76,7 +76,7 @@
     "operators": {
       "name": "keyword.operator.jsligo",
       "match":
-        "\\s+(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\s+",
+        "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
@@ -90,21 +90,21 @@
       "captures": { "1": { "name": "variable.other.enummember.jsligo" } }
     },
     "moduleaccess ": {
-      "match": "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.([a-zA-Z0-9_$]*)",
+      "match": "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.\\s*\\b([a-zA-Z0-9_$]*)\\b",
       "captures": {
         "2": { "name": "storage.var.jsligo" },
         "1": { "name": "storage.class.jsligo" }
       }
     },
     "modulealias": {
-      "match": "\\b(import)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "match": "\\b(import)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": {
         "2": { "name": "storage.class.jsligo" },
         "1": { "name": "keyword.control.jsligo" }
       }
     },
     "moduledeclaration": {
-      "match": "\\b(namespace)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)",
+      "match": "\\b(namespace)\\b\\s*\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": {
         "2": { "name": "storage.class.jsligo" },
         "1": { "name": "keyword.other.jsligo" }
@@ -125,39 +125,39 @@
       ]
     },
     "objectpropertyctor": {
-      "begin": "\\b([A-Z][a-zA-Z0-9_$]*)\\b(\\s*)(:)",
+      "begin": "\\b([A-Z][a-zA-Z0-9_$]*)\\b\\s*(:)",
       "end": "(?=,|})",
       "beginCaptures": {
-        "3": { "name": "keyword.operator.jsligo" },
+        "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "variable.other.enummember.jsligo" }
       },
       "endCaptures": {},
       "patterns": [ { "include": "$self" } ]
     },
     "objectpropertyint": {
-      "begin": "\\b([0-9]+)\\b(\\s*)(:)",
+      "begin": "\\b([0-9]+)\\b\\s*(:)",
       "end": "(?=,|})",
       "beginCaptures": {
-        "3": { "name": "keyword.operator.jsligo" },
+        "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "constant.numeric.jsligo" }
       },
       "endCaptures": {},
       "patterns": [ { "include": "$self" } ]
     },
     "objectpropertystring": {
-      "begin": "(\\\".*\\\")(\\s*)(:)",
+      "begin": "(\\\".*\\\")\\s*(:)",
       "end": "(?=,|})",
       "beginCaptures": {
-        "3": { "name": "keyword.operator.jsligo" },
+        "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "string.quoted.double.jsligo" }
       },
       "endCaptures": {},
       "patterns": [ { "include": "$self" } ]
     },
     "objectproperty": {
-      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b(\\s*)(:)",
+      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(:)",
       "end": "(?=,|})",
-      "beginCaptures": { "3": { "name": "keyword.operator.jsligo" } },
+      "beginCaptures": { "2": { "name": "keyword.operator.jsligo" } },
       "endCaptures": {},
       "patterns": [ { "include": "$self" } ]
     },

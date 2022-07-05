@@ -63,6 +63,8 @@ module Print = struct
         fprintf fmt "contained ";
       print_list fmt "containedin=" contained_in;
       print_list fmt "nextgroup=" next_groups;
+      if next_groups <> [] then
+        fprintf fmt "skipempty skipwhite";
       fprintf fmt "\n"
   | Region {group_name; value={start; end_; contains; match_groups}; next_groups; contained; contained_in; } ->
       fprintf fmt "syntax region %s " group_name;
@@ -78,6 +80,8 @@ module Print = struct
       print_list fmt "containedin=" contained_in;
       print_list fmt "contains=" contains;
       print_list fmt "nextgroup=" next_groups;
+      if next_groups <> [] then
+        fprintf fmt "skipempty skipwhite";
       fprintf fmt "\n"  
 
     and print_match_groups fmt = function 

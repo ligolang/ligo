@@ -40,6 +40,8 @@ module JSON = struct
   | FunctionName      -> "entity.name.function." ^ syntax
 
   let make_reference r = if r = "$self" then r else "#" ^ r
+
+  let spaces = "\\s*"
   
   let rec capture syntax (i: int * Core.highlight_name) = 
     (string_of_int (fst i), `Assoc [("name", `String (highlight_to_textmate syntax (snd i)))])
@@ -76,8 +78,8 @@ module JSON = struct
           (1, []) 
           end_ 
       in
-      let begin_ = String.concat "" (List.map (fun f -> (fst f).Core.textmate) begin_) in
-      let end_ = String.concat "" (List.map (fun f -> (fst f).Core.textmate) end_) in
+      let begin_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) begin_) in
+      let end_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) end_) in
       (match meta_name with 
         Some s -> [("name", `String (highlight_to_textmate syntax s))];
       | None -> [])
@@ -92,7 +94,7 @@ module JSON = struct
   | Match {match_; match_name} -> 
     let match_, regexps  = List.split match_ in
     let match_ = List.map (fun f -> f.Core.textmate) match_ in
-    let match_ = String.concat "" match_ in
+    let match_ = String.concat spaces match_ in
     let _, captures_ = List.fold_left (fun (count, captures) cur ->
       match cur with 
         Some c -> (count + 1, (count + 1, c) :: captures)
