@@ -10,7 +10,11 @@ let type_improve t =
   let make_type (module_path, element) =
     match module_path with
       [] -> (t_variable element ())
-    | _ -> failwith "toto" in
+    | _ ->
+      let open Simple_utils.PP_helpers in
+      let x = Format.asprintf "%a" (list_sep ModuleVar.pp (tag ".")) module_path in
+      (t_variable (TypeVar.of_input_var x) ())
+  in
   match t.type_content with
   | T_constant { parameters ; _ } when List.length parameters = 0 -> t
   | _ ->
