@@ -14,7 +14,7 @@ import Test.Tasty.HUnit (Assertion)
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation (SourceLocation),
   SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
-  tsAfterInstrs, FrozenPredicate (FrozenPredicate))
+  tsAfterInstrs, FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition))
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
@@ -472,6 +472,59 @@ test_Snapshots = testGroup "Snapshots collection"
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
+
+    -- [LIGO-658]: write a test that checks that we have 'pair1' and 'pair2' in 'not-inlined-fst.mligo' contract.
+
+  , testCaseSteps "functions and variables are not inlined" \step -> do
+      let file = contractsDir </> "funcs-and-vars-no-inline.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 4 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 1) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 2) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 6) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 7) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
+
+        let checkLinePosition pos = do
+              goToNextBreakpoint
+              frozen getExecutedPosition >>= \case
+                Just (SourceLocation _ (SrcPos (Pos actualPos) _))
+                  | actualPos == pos -> pass
+                loc -> lift $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
+
+        lift $ step "check \"func\" function call stepping"
+        checkLinePosition 6
+
+        lift $ step "check stepping inside \"func\""
+        checkLinePosition 1
+        checkLinePosition 2
+
+        lift $ step "check stopping at constant assignment"
+        checkLinePosition 7
+
+        lift $ step "check that \"s2\" is not inlined"
+        goToNextBreakpoint
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+          let s2ItemMb = stackItems
+                & find \case
+                    StackItem
+                      { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                          { leseDeclaration = Just (LigoVariable "s2")
+                          }
+                      } -> True
+                    _ -> False
+
+          case s2ItemMb of
+            Nothing -> assertFailure [int||Can't find "s2" variable in snapshot #{snap}|]
+            _ -> pass
+
   ]
 
 -- | Special options for checking contract.
