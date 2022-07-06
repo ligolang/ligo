@@ -548,7 +548,7 @@ unit_Contracts_locations_are_sensible :: Assertion
 unit_Contracts_locations_are_sensible = do
   contracts <- listDirectory contractsDir
 
-  let ligoContracts = filter hasLigoExtension contracts
+  let ligoContracts = filter (hasLigoExtension && flip notElem badContracts) contracts
   forM_ ligoContracts testContract
   where
     testContract :: FilePath -> Assertion
@@ -578,4 +578,11 @@ unit_Contracts_locations_are_sensible = do
     specialContracts = M.fromList
       [ ("if-no-else", def & coCheckSourceLocationsL .~ False)
       , ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
+      ]
+
+    -- Valid contracts that can't be used in debugger for some reason.
+    badContracts :: [FilePath]
+    badContracts =
+      [ "self.mligo" -- this contract doesn't typecheck in Michelson
+      , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
       ]
