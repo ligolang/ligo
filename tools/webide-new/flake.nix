@@ -181,7 +181,7 @@
                 ${setupSources ./ligo-webide-frontend/ligo-ide}
                   ${yarnInstall}
                   yarn build:react
-                  cp -r build $out
+                  cp -rL build $out
                 popd
               '';
             in

@@ -7,18 +7,31 @@ on:
 
 jobs:
 
-  # build:
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     matrix:
-  #       os:
-  #         - ubuntu-latest
+  build-webide:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
 
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: cachix/install-nix-action@v16
-  #     - name: Building default package
-  #       run: nix build .
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v16
+      - name: Building webide
+        run: nix build .#webide -L --accept-flake-config
+
+  build-backend:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v16
+      - name: Building backend
+        run: nix build .#backend -L --accept-flake-config
 
   check:
     runs-on: ${{ matrix.os }}
