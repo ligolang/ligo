@@ -3,6 +3,8 @@ if exists("b:current_syntax")
     finish
 endif
 
+syntax cluster top contains=TOP
+
 " typeproduct
 syntax region typeproduct start="{" end="}" contained contains=identifier,typeannotation,semicolon 
 
@@ -11,18 +13,18 @@ syntax match typeint "\<[0-9]+\>" contained
 highlight link typeint Number 
 
 " typemodule
-syntax match typemodule "\<\([A-Z][a-zA-Z0-9_$]*\)\." contained 
+syntax match typemodule "\<[A-Z][a-zA-Z0-9_$]*\." contained 
 highlight link typemodule Identifier 
 
 " typeparentheses
 syntax region typeparentheses start="(" end=")" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 
 " typevar
-syntax match typevar "'\<\([a-z_][a-zA-Z0-9_]*\)\>" contained 
+syntax match typevar "'\<[a-z_][a-zA-Z0-9_]*\>" contained 
 highlight link typevar Type 
 
 " typename
-syntax match typename "\<\([a-z_][a-zA-Z0-9_]*\)\>" contained 
+syntax match typename "\<[a-z_][a-zA-Z0-9_]*\>" contained 
 highlight link typename Type 
 
 " typeoperator
@@ -30,28 +32,28 @@ syntax match typeoperator "\(->\|\.\|\*\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotationlambda
-syntax region typeannotationlambda matchgroup=typeannotationlambda_ start="\(:\)" end="\()\|=\|;\|}\|->\)\@=" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" end="\()\|=\|;\|}\|->\)\@=" contained contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start="\(:\)" end="\()\|=\|;\|}\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<\(type\)\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\)\@=" contains=typemodule,ofkeyword,identifierconstructor,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
 highlight link typedefinition_ Keyword 
 
 " identifierconstructor
-syntax match identifierconstructor "\<\([A-Z][a-zA-Z0-9_$]*\)\>" 
+syntax match identifierconstructor "\<[A-Z][a-zA-Z0-9_$]*\>" 
 highlight link identifierconstructor Label 
 
 " identifier
-syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
+syntax match identifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
 
 " module
 syntax match module_ "[a-z_][a-zA-Z0-9_$]*" contained 
 highlight link module_ Identifier 
-syntax match module "\<\([A-Z][a-zA-Z0-9_$]*\)\." nextgroup=module_ skipempty skipwhite
+syntax match module "\<[A-Z][a-zA-Z0-9_$]*\." nextgroup=module_ skipempty skipwhite
 highlight link module Structure 
 
 " lambda
@@ -75,7 +77,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " letbinding
-syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\|\)\>" contained 
+syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
 highlight link letbinding__ Statement 
 syntax match letbinding_ "\<rec\>\|" contained nextgroup=letbinding__ skipempty skipwhite
 highlight link letbinding_ StorageClass 

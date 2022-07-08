@@ -13,9 +13,9 @@ let let_binding_match2: Core.regexp = {
 }
 
 let let_binding_match3: Core.regexp = {
-  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)\\\\b"; 
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)\\\\b";
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b";
-  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\|\\)\\>";
+  vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>";
 }
 
 let let_binding_match1_ligo: Core.regexp = {
@@ -25,7 +25,7 @@ let let_binding_match1_ligo: Core.regexp = {
 }
 
 let let_binding_match2_ligo: Core.regexp = {
-  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\|\\\\)"; 
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)"; 
   textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
   vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
 }
@@ -100,7 +100,7 @@ let operators_match_ligo: Core.regexp = {
 let module_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\.";
-  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\."
+  vim      = "\\<[A-Z][a-zA-Z0-9_$]*\\.";
 }
 
 let module_match2: Core.regexp = {
@@ -113,7 +113,7 @@ let module_match2: Core.regexp = {
 let identifier_constructor_match: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
-  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\>";
+  vim      = "\\<[A-Z][a-zA-Z0-9_$]*\\>";
 }
 
 let parentheses_begin: Core.regexp = {
@@ -177,15 +177,15 @@ let comma_match: Core.regexp = {
 }
 
 let colon_match: Core.regexp = {
-  emacs    = "\\\\(:\\\\)";
+  emacs    = ":";
   textmate = "(:)";
-  vim      = "\\(:\\)";
+  vim      = ":";
 }
 
 let multiplication_match: Core.regexp = {
   emacs    = "\\\\(*\\\\)";
   textmate = "(*)";
-  vim      = "\\(*\\)"
+  vim      = "*";
 }
 
 let const_or_var: Core.regexp = {
@@ -299,9 +299,9 @@ let string_literal_match: Core.regexp = {
 
 (* Types *)
 let type_definition_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(type\\\\)\\\\b";
+  emacs    = "\\\\btype\\\\b";
   textmate = "\\b(type)\\b";
-  vim      = "\\<\\(type\\)\\>"
+  vim      = "\\<type\\>";
 }
 
 (*
@@ -324,7 +324,7 @@ let type_definition_end: Core.regexp = {
 let type_name_match: Core.regexp = {
   emacs    = "\\\\b[a-z_][a-zA-Z0-9]\\\\*\\\\b";
   textmate = "\\b([a-z_][a-zA-Z0-9_]*)\\b";
-  vim      = "\\<\\([a-z_][a-zA-Z0-9_]*\\)\\>";
+  vim      = "\\<[a-z_][a-zA-Z0-9_]*\\>";
 }
 
 let type_var_match: Core.regexp = {

@@ -192,7 +192,7 @@ module Convert = struct
               next_groups = (match rest with [] -> [] | _ -> [name ^ "___"]);
               contained = not (List.mem name toplevel);
               contained_in = [];
-              contains = patterns;
+              contains = List.map (fun p -> if p = "$self" then "@top" else p) patterns;
             }) :: 
           result) [] rest
       | (match_, highlight) :: rest, end_ -> 
@@ -336,6 +336,8 @@ let to_vim: Core.t -> string = fun t ->
   fprintf fmt "if exists(\"b:current_syntax\")\n";
   fprintf fmt "    finish\n";
   fprintf fmt "endif\n";
+  fprintf fmt "\n";
+  fprintf fmt "syntax cluster top contains=TOP\n";
   Print.print fmt v;
   let name = match Filename.extension t.scope_name with 
       "" -> t.scope_name
