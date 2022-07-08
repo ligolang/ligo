@@ -67,7 +67,7 @@ highlight link ofkeyword Keyword
 syntax match semicolon ";" contained 
 
 " operators
-syntax match operators "\<\(::\|-\|+\|/\|mod\|land\|lor\|lxor\|lsl\|lsr\|&&\|||\|<\|>\|<>\|<=\|>=\)\>" 
+syntax match operators "::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=" 
 highlight link operators Operator 
 
 " numericliterals

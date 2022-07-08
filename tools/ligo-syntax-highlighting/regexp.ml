@@ -79,9 +79,9 @@ let control_keywords_match_ligo: Core.regexp = {
 }
 
 let operators_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(::\\\\|-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=\\\\)\\\\b";
-  textmate = "\\b(::|\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|<>|<=|=>|<|>)\\b";
-  vim      = "\\<\\(::\\|-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\)\\>"
+  emacs    = "::\\\\|-\\\\|+\\\\|/\\\\|\\\\b\\\\(mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\)\\\\b\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=";
+  textmate = "::|\\-|\\+|\\b(mod|land|lor|lxor|lsl|lsr)\\b|&&|\\|\\||>|<>|<=|=>|<|>";
+  vim      = "::\\|-\\|+\\|/\\|\\<\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\>\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>="
 }
 
 let operators_match_reasonligo: Core.regexp = {
