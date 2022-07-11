@@ -94,13 +94,6 @@ let protocol_version =
   let spec  = optional_with_default Default_options.protocol_version string in
   flag ~doc ~aliases:["--protocol"] "p" spec
 
-let dialect =
-  let open Command.Param in
-  let name = "--pascaligo-dialect" in
-  let doc  = "DIALECT the pascaligo dialect that will be used. Currently supported dialects are \"terse\" and \"verbose\". By default the dialect is \"terse\"." in
-  let spec = optional_with_default Default_options.dialect string in
-  flag ~doc ~aliases:["d";"dialect"] name spec
-
 let cli_expr_inj =
   let open Command.Param in
   let doc  = "EXPRESSION a expression passed to LIGO interpreter, accessible through variable 'cli_arg'" in
@@ -382,9 +375,9 @@ let compile_group = Command.group ~summary:"compile a ligo program to michelson"
 
 (** Transpile commands *)
 let transpile_contract =
-  let f source_file new_syntax syntax new_dialect display_format output_file () =
+  let f source_file new_syntax syntax display_format output_file () =
     return_result ~return ?output_file @@
-    Api.Transpile.contract source_file new_syntax syntax new_dialect display_format
+    Api.Transpile.contract source_file new_syntax syntax display_format
   in
   let summary   = "transpile a contract to another syntax (BETA)." in
   let readme () = "This sub-command transpiles a source file to another \
@@ -392,20 +385,20 @@ let transpile_contract =
                   source file is preprocessed. Comments are currently \
                   not transpiled. Please use at your own risk." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> req_syntax <*> syntax <*> dialect <*> display_format <*> output_file)
+  (f <$> source_file <*> req_syntax <*> syntax <*> display_format <*> output_file)
 
 
 let transpile_expression =
-  let f syntax expression new_syntax new_dialect display_format () =
+  let f syntax expression new_syntax display_format () =
     return_result ~return @@
-    Api.Transpile.expression expression new_syntax syntax new_dialect display_format
+    Api.Transpile.expression expression new_syntax syntax display_format
   in
   let summary   = "transpile an expression to another syntax (BETA)." in
   let readme () = "This sub-command transpiles a LIGO expression to \
                   another syntax. Comments are currently not \
                   transpiled. Please use at your own risk." in
   Command.basic ~summary ~readme
-  (f <$> req_syntax <*> expression "" <*> req_syntax <*> dialect <*> display_format)
+  (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format)
 
 let transpile_group =
   Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
