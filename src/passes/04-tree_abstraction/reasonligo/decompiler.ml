@@ -750,7 +750,7 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_tuple lst ->
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq pl in
-      CST.PTuple (wrap pl)
+      CST.PPar (wrap (par (CST.PTuple (wrap pl))))
     | AST.P_record (llst,lst) ->
       let pl = List.map ~f:decompile_pattern lst in
       let fields_name = List.map ~f:(fun (AST.Label x) -> wrap x) llst in

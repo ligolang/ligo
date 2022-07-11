@@ -464,7 +464,7 @@ let transfer_single
   ((gen__parameters2: (action_transfer_single, storage))
    : return =>
      switch  gen__parameters2 {
-     | action, [@var] s =>
+     | (action, [@var] s) =>
          let [@var] cards: cards = s.cards;
          let [@var] card: card =
            switch
@@ -505,7 +505,7 @@ let transfer_single
 let sell_single: (action_sell_single, storage) => return =
   ((gen__parameters3: (action_sell_single, storage)): return =>
      switch  gen__parameters3 {
-     | action, [@var] s =>
+     | (action, [@var] s) =>
          let card: card =
            switch Map.find_opt(action.card_to_sell, s.cards) {
            | Some card => card
@@ -590,7 +590,7 @@ let sell_single: (action_sell_single, storage) => return =
 let buy_single: (action_buy_single, storage) => return =
   ((gen__parameters4: (action_buy_single, storage)): return =>
      switch  gen__parameters4 {
-     | action, [@var] s =>
+     | (action, [@var] s) =>
          let [@var] card_pattern: card_pattern =
            switch
            Map.find_opt(action.card_to_buy, s.card_patterns) {
@@ -661,7 +661,7 @@ let buy_single: (action_buy_single, storage) => return =
 let main: (parameter, storage) => return =
   ((gen__parameters5: (parameter, storage)): return =>
      switch  gen__parameters5 {
-     | action, s =>
+     | (action, s) =>
          switch  action {
          | Buy_single bs => buy_single(bs, s)
          | Sell_single as => sell_single(as, s)
@@ -1072,7 +1072,7 @@ type return = (list(operation), storage);
 let main: (parameter, storage) => return =
   ((gen__parameters2: (parameter, storage)): return =>
      switch  gen__parameters2 {
-     | p, s =>
+     | (p, s) =>
          {
            switch  p {
            | Zero n =>
@@ -1186,7 +1186,7 @@ let%expect_test _ =
     let rec sum: (int, int) => int =
       ((gen__parameters2: (int, int)): int =>
          switch  gen__parameters2 {
-         | n, acc =>
+         | (n, acc) =>
              if(((n) < (1))) {
                acc
              } else {
@@ -1198,7 +1198,7 @@ let%expect_test _ =
     let rec fibo: (int, int, int) => int =
       ((gen__parameters3: (int, int, int)): int =>
          switch  gen__parameters3 {
-         | n, n_1, n_0 =>
+         | (n, n_1, n_0) =>
              if(((n) < (2))) {
                n_1
              } else {
