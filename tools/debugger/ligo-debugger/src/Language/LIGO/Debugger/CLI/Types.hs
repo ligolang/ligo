@@ -116,11 +116,11 @@ instance FromJSON LigoType where
       asum
         [ LTConstant <$> parseJSON typ
         , LTVariable <$> parseJSON typ
+        , LTApp <$> parseJSON typ
+        , LTArrow <$> parseJSON typ
         , flip (withObject "t_record") typ \o' -> do -- "t_record"
             parsed <- sequence $ parseJSON <$> o'
             pure $ LTRecord parsed
-        , LTApp <$> parseJSON typ
-        , LTArrow <$> parseJSON typ
         , pure LTUnresolved
         ]
 
