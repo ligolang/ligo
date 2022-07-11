@@ -19,7 +19,7 @@ let rec assign_expression ~raise : ?vars:expression_variable list -> expression 
                   | E_assign {binder={var;_};expression=_;access_path=_} -> (
                     match List.find ~f:(fun v -> ValueVar.equal var v) vars with
                     | Some (v:expression_variable) ->
-                      raise.raise @@ const_assigned (ValueVar.get_location v) var
+                      raise.error @@ const_assigned (ValueVar.get_location v) var
                     | None -> (true, vars, expr)
                   )
                   | E_lambda {binder={var;ascr=_;attributes};output_type=_;result=_} ->

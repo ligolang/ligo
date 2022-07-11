@@ -32,6 +32,7 @@ import AST.Scope.ScopedDecl
 import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics, parseTypeParams)
 import AST.Skeleton hiding (Type, TypeParams (..))
 import Cli.Types
+import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
 import Parser
 import Product
@@ -50,7 +51,7 @@ data TreeDoesNotContainName =
 
 toMsg :: TreeDoesNotContainName -> Message
 toMsg (TreeDoesNotContainName tree range name) =
-  Message [i|Expected to find a #{name}, but got `#{tree}`|] SeverityError range
+  Message (FromLanguageServer [i|Expected to find a #{name}, but got `#{tree}`|]) SeverityError range
 
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeContract _ (FindContract src (SomeLIGO dialect ligo) msgs) = do

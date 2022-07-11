@@ -1,9 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Parser
-  ( Severity (..)
-  , Message (..)
-  , ParserM
+  ( ParserM
   , LineMarkerType (..)
   , LineMarker (..)
   , UnrecognizedFieldException (..)
@@ -43,6 +41,7 @@ import Duplo.Pretty
 import Duplo.Tree
 
 import AST.Skeleton (Error (..), SomeLIGO, getLIGO)
+import Diagnostic (Message (..), MessageDetail (..), Severity (..))
 import ParseTree
 import Product
 import Range
@@ -74,22 +73,6 @@ runParserM p = liftIO $ (\(a, _, errs) -> (a, errs)) <$> runRWST p initEnv ([], 
       , peNodeType = ""
       , peNodeRange = point 0 0
       }
-
-data Severity
-  = SeverityError
-  | SeverityWarning
-  deriving stock (Eq, Ord, Show)
-
--- | Represents some diagnostic (error, warning, etc) that may be contained
--- together with some node.
---
--- Note that this is different from @Error@, which is a node by itself, and not
--- something extra that is associated with some node.
-data Message = Message
-  { mMessage :: Text
-  , mSeverity :: Severity
-  , mRange :: Range
-  } deriving stock (Eq, Ord, Show)
 
 type ParserM = RWST ParserEnv [Message] ([Text], [Text]) IO
 
@@ -184,7 +167,7 @@ allErrors = mapMaybe extractUnnamedError
     extractUnnamedError :: RawTree -> Maybe Message
     extractUnnamedError tree = case only tree of
       ((r, ""), ParseTree "ERROR" _ _)
-        -> Just (Message ("Unexpected: " <> getBody tree) SeverityError r)
+        -> Just (Message (Unexpected $ getBody tree) SeverityError r)
       _ -> Nothing
 
 getBody :: RawTree -> Text
@@ -288,5 +271,5 @@ fallthrough = lift $ throwIO HandlerFailed
 noMatch :: RawInfo -> ParseTree it -> ParserM (Product Info, Error it)
 noMatch (r, _) (ParseTree _ children source) = withComments $ pure
   ( [] :> r :> CodeSource source :> Nil
-  , Error ("Unrecognized: " <> source) children
+  , Error (Unrecognized source) children
   )

@@ -1,15 +1,3 @@
-(*
-Warning with is a wrapper for warning.
-It creates a function to add warning to a list and get the list of warning.
-Theses function is then pass the function given.
-Generally the wrapper will be use as such:
-warning_with @@ fun add_warning get_warnings ->
-  let result = function_that_emit_warnings ~add_warning in
-  let warnings = get_warnings () in
-  rest_of_the processing ()
-*)
-val warning_with : (('a -> unit) -> (unit -> 'a list) -> 'b) -> 'b
-
 
 (* [try_with] is a wrapper for error that may works in two modes:
    - [fast_fail = false] i.e. recovery mode that allows raise a fatal error by
@@ -36,69 +24,84 @@ val warning_with : (('a -> unit) -> (unit -> 'a list) -> 'b) -> 'b
         (fun ~raise err -> (err :: raise.get_errors (), 0)
    ] *)
 
-type 't raise = { raise : 'a . 't -> 'a;
-                 log_error : 't -> unit;
-                 get_errors : unit -> 't list;
-                 fast_fail : bool; }
+type ('error,'warning) raise = {
+  error        : 'a . 'error -> 'a;
+  warning      : 'warning -> unit;
+  log_error    : 'error -> unit;
+  fast_fail    : bool
+}
+
+type ('error,'warning) catch = {
+  warnings : unit -> 'warning list;
+  errors   : unit -> 'error list;
+}
+
 (* [try_with f handler] call [f] with [~raise] argument and in case of fatal
    error [err] call [handler err]. *)
-val try_with  : ?fast_fail:bool -> (raise:'t raise -> 'b) -> ('t -> 'b) -> 'b
-(* Similar to [try_with] but allows use [~raise] in the handler *)
-val try_with' : ?fast_fail:bool -> (raise:'t raise -> 'b) -> (raise: 't raise -> 't -> 'b) -> 'b
+val try_with : ?fast_fail:bool ->
+  (raise:('error, 'warning) raise ->
+    catch:('error, 'warning) catch -> 'a) ->
+   (catch:('error, 'warning) catch -> 'error -> 'a) -> 'a
 (*
 Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]
  *)
-val to_stdlib_result : (raise:'error raise -> 'value) -> ('value, 'error) result
+val to_stdlib_result : (raise:('error,'warn) raise -> 'value) -> ('value * 'warn list, 'error * 'warn list) result
 
 (* Wrap [try_wait'] and return value and all logged errors with fatal one if it happens *)
-val extract_all_errors : (raise:'error raise -> 'value) -> 'error list * 'value option
+val extract_all_errors : (raise:('error,_) raise -> 'value) -> 'error list * 'value option
 
 (*
 Act as a map for the propagated error. Save [fast_fail] mode.
 *)
-val trace : raise:'b raise -> ('a -> 'b) -> (raise:'a raise -> 'c) -> 'c
+val trace : raise:('b,'w) raise -> ('a -> 'b) -> (raise:('a,'w) raise -> 'c) -> 'c
 (* Similar but erase the previous error instead of casting it *)
-val trace_strong : raise:'a raise -> 'a -> (raise:'b raise -> 'c) -> 'c
+val trace_strong : raise:('a,'w) raise -> 'a -> (raise:('b,'w) raise -> 'c) -> 'c
+
+(* collect multples errors into a list *)
+val collect : raise:('a list,'w) raise -> (raise:('a,'w) raise -> 'b) list -> 'b list
 
 (* Unwrap an option using our own error instead of exception *)
-val trace_option : raise:'a raise -> 'a -> 'b option -> 'b
+val trace_option : raise:('a,'w) raise -> 'a -> 'b option -> 'b
 (* Check that option contains some value otherwise returns default and log error *)
-val validate_option : raise:'a raise -> err:'a -> default:'b -> 'b option -> 'b
+val validate_option : raise:('a,'w) raise -> err:'a -> default:'b -> 'b option -> 'b
 
 (* Raise error if the option is Some *)
-val trace_assert_fail_option : raise:'a raise -> 'a -> 'b option -> unit
+val trace_assert_fail_option : raise:('a,'w) raise -> 'a -> 'b option -> unit
 
 (* Raise error if the option is None *)
-val trace_assert_option : raise:'a raise -> 'a -> 'b option -> unit
+val trace_assert_option : raise:('a,'w) raise -> 'a -> 'b option -> unit
 
 (* Unwrap the result, raising the error if needed *)
-val from_result  : raise:'b raise -> ('a,'b) result -> 'a
+val from_result  : raise:('b,'w) raise -> ('a,'b) result -> 'a
 
 (* Check if the function is not failing *)
-val to_bool : (raise:'b raise -> 'a) -> bool
+val to_bool : (raise:('b,'w) raise -> 'a) -> bool
 
 (* Return the evaluation of the functino as Some(res) | None *)
-val to_option : (raise:'b raise -> 'a) -> 'a option
+val to_option : (raise:('b,'w) raise -> 'a) -> 'a option
 
 (* Run the second function if the first fails *)
-val bind_or : raise:'a raise -> (raise:'b raise -> 'c) -> (raise:'a raise -> 'c) -> 'c
-val bind_exists : raise:'a raise -> ((raise:'a raise -> 'b) * (raise:'a raise -> 'b) list) -> 'b
+val bind_or : raise:('a,'w) raise -> (raise:('a,'w) raise -> 'c) -> (raise:('b,'w) raise -> 'c) -> 'c
+val bind_exists : raise:('a,'w) raise -> ((raise:('a,'w) raise -> 'b) * (raise:('a,'w) raise -> 'b) list) -> 'b
 val bind_map_or :
-  ('a -> 'b) -> ('c -> raise:'d raise -> 'b) -> ('c -> raise:'a raise -> 'b) ->
+  raise:('e,'w) raise ->
+  ('a -> 'b) ->
+  ('c -> raise:('a,'w) raise -> 'b) ->
+  ('c -> raise:('d,'w) raise -> 'b) ->
   'c -> 'b
 
 (* Dummy raise instance for debug and workarounds.
    Don't use it in production! *)
-val raise_failwith : string -> 't raise
+val raise_failwith : string -> ('e,'w) raise
 
 (*
 Assert module, raise exception if the assertion is false
 *)
 module Assert :
 sig
-  val assert_fail : raise:'a raise -> 'a -> (raise:'b raise -> 'c) -> unit
-  val assert_true : raise:'a raise -> 'a -> bool -> unit
-  val assert_list_size : raise:'a raise -> 'a -> 'b list -> int -> unit
-  val assert_list_empty : raise:'a raise -> 'a -> 'b list -> unit
-  val assert_list_same_size : raise:'a raise -> 'a -> 'b list -> 'c list -> unit
+  val assert_fail           : raise:('a,'w) raise -> 'a -> (raise:('b,'w) raise -> 'c) -> unit
+  val assert_true           : raise:('a,'w) raise -> 'a -> bool -> unit
+  val assert_list_size      : raise:('a,'w) raise -> 'a -> 'b list -> int -> unit
+  val assert_list_empty     : raise:('a,'w) raise -> 'a -> 'b list -> unit
+  val assert_list_same_size : raise:('a,'w) raise -> 'a -> 'b list -> 'c list -> unit
 end

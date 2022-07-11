@@ -8,7 +8,8 @@ import AST.Scope
   ( pattern FindContract, HasScopeForest, ContractInfo, addShallowScopes, contractFile
   )
 import Cli.Types (TempDir (..), TempSettings (..))
-import Parser (Message, collectTreeErrors)
+import Diagnostic (Message)
+import Parser (collectTreeErrors)
 import Progress (noProgress)
 
 import Test.Common.FixedExpectations (Expectation, HasCallStack, expectationFailure)

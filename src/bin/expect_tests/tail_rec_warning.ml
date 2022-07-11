@@ -23,13 +23,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good ["compile"; "contract" ; contract "unused_recursion.mligo" ; "--warn-unused-rec" ] ;
   [%expect {|
-    File "../../test/contracts/unused_recursion.mligo", line 15, characters 10-13:
-     14 |   (* fun_name shadowed in body *)
-     15 |   let rec bar : int -> t = fun (x : int) ->
-     16 |     let bar = x in
+    File "../../test/contracts/unused_recursion.mligo", line 9, characters 10-14:
+      8 |   (* parameter shadows fun_name: simple *)
+      9 |   let rec toto : int -> int = fun (toto:int) : int -> let number = toto in number + 1 in
+     10 |
     :
     Warning: unused recursion .
-    Hint: remove recursion from the function "bar" to prevent this warning.
+    Hint: remove recursion from the function "toto" to prevent this warning.
 
     File "../../test/contracts/unused_recursion.mligo", line 12, characters 10-13:
      11 |   (* parameter shadows fun_name: complex *)
@@ -39,13 +39,13 @@ let%expect_test _ =
     Warning: unused recursion .
     Hint: remove recursion from the function "foo" to prevent this warning.
 
-    File "../../test/contracts/unused_recursion.mligo", line 9, characters 10-14:
-      8 |   (* parameter shadows fun_name: simple *)
-      9 |   let rec toto : int -> int = fun (toto:int) : int -> let number = toto in number + 1 in
-     10 |
+    File "../../test/contracts/unused_recursion.mligo", line 15, characters 10-13:
+     14 |   (* fun_name shadowed in body *)
+     15 |   let rec bar : int -> t = fun (x : int) ->
+     16 |     let bar = x in
     :
     Warning: unused recursion .
-    Hint: remove recursion from the function "toto" to prevent this warning.
+    Hint: remove recursion from the function "bar" to prevent this warning.
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;

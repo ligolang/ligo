@@ -73,3 +73,6 @@ and let_in = {
 }
 
 and matching = (expression , type_expression) match_exp
+
+and program = declaration list
+

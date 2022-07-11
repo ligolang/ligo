@@ -11,9 +11,9 @@ let map_lmap_t f map =
       {field with associated_type = field'})
     map
 
-type ('a,'err) folder = raise:'err raise -> 'a -> expression -> 'a
+type ('a,'err,'warn) folder = raise:('err,'warn) raise -> 'a -> expression -> 'a
 
-let rec fold_expression ~raise : ('a, 'err) folder -> 'a -> expression -> 'a = fun f init e ->
+let rec fold_expression ~raise : ('a, 'err, 'warn) folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression ~raise f in
   let idle = fun acc _ -> acc in
   let init = f ~raise init e in
@@ -64,10 +64,10 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
   | M_module_path _
   | M_variable _ -> acc
 
-type 'err exp_mapper = raise:'err raise -> expression -> expression
-type 'err ty_exp_mapper = raise:'err raise -> type_expression -> type_expression
+type ('err,'warn) exp_mapper = raise:('err,'warn) raise -> expression -> expression
+type ('err,'warn) ty_exp_mapper = raise:('err,'warn) raise -> type_expression -> type_expression
 
-let rec map_expression ~raise : 'err exp_mapper -> expression -> expression = fun f e ->
+let rec map_expression ~raise : ('err,'warn) exp_mapper -> expression -> expression = fun f e ->
   let self = map_expression ~raise f in
   let e' = f ~raise e in
   let return expression_content = { e' with expression_content } in
@@ -162,7 +162,8 @@ and map_expression_in_module_expr : (expression -> expression) -> module_expr ->
   | M_module_path _
   | M_variable _ -> x
 
-and map_type_expression ~raise : 'err ty_exp_mapper -> type_expression -> type_expression =
+
+and map_type_expression ~raise : ('err,'warn) ty_exp_mapper -> type_expression -> type_expression =
     fun f te ->
   let self = map_type_expression ~raise f in
   let te' = f ~raise te in

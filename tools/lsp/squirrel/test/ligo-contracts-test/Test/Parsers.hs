@@ -79,6 +79,7 @@ okayTests =
       , "negative" </> "polymorphism" </> "cases_annotation.mligo"
       , "negative" </> "polymorphism" </> "constants.mligo"
       , "negative" </> "polymorphism" </> "error_monad.mligo"
+      , "negative" </> "polymorphism" </> "unresolved" </> "contract2.mligo"
 
         -- LIGO-477
       , "negative" </> "missing_funarg_annotation.religo"
@@ -217,17 +218,6 @@ badTests =
       ]
     , tdIgnoreDirs = []
     }
-  , TestDir
-    { tdRoot = testDir </> "preprocessor"
-    , tdIgnoreFiles =
-      [ --LIGO-475
-        "directive_inside_line.ligo"
-      ]
-    , tdIgnoreDirs = []
-    }
-  , TestContract $ contractsDir </> "negative" </> "vars_consts" </> "capture_var_params.mligo"
-  , TestContract $ contractsDir </> "negative" </> "error_function_arguments.religo"
-  , TestContract $ contractsDir </> "negative" </> "error_syntax.ligo"
   ]
 
 getContracts :: [TestContracts] -> IO [FilePath]

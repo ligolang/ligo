@@ -126,14 +126,18 @@ and defuse_of_record defuse {body;fields;_} =
   let defuse = List.fold_left ~f:(fun m (v, v') -> replace_opt v v' m) ~init:defuse vars' in
   (defuse, unused)
 
-let rec unused_map_module ~add_warning : module_ -> module_ = function m ->
+let defuse_of_expr defuse expr =
+  let _,unused = defuse_of_expr defuse expr in
+  List.rev unused
+
+let rec unused_map_module ~raise : module_ -> module_ = function m ->
   let update_annotations annots =
-    List.iter ~f:add_warning annots in
+    List.iter ~f:raise.Simple_utils.Trace.warning annots in
   let aux = fun (x : declaration) ->
     match Location.unwrap x with
     | Declaration_constant {expr ; _} -> (
       let defuse,_ = defuse_neutral in
-      let _,unused = defuse_of_expr defuse expr in
+      let unused = defuse_of_expr defuse expr in
       let warn_var v =
         `Self_ast_typed_warning_unused
           (V.get_location v, Format.asprintf "%a" V.pp v) in
@@ -142,15 +146,15 @@ let rec unused_map_module ~add_warning : module_ -> module_ = function m ->
     )
     | Declaration_type _ -> ()
     | Declaration_module {module_; module_binder=_;module_attr=_} ->
-      let _ = unused_map_module_expr ~add_warning module_ in
+      let _ = unused_map_module_expr ~raise module_ in
       ()
   in
   let () = List.iter ~f:aux m in
   m
 
-and unused_map_module_expr ~add_warning : module_expr -> module_expr = function m ->
+and unused_map_module_expr ~raise : module_expr -> module_expr = function m ->
   let return wrap_content = { m with wrap_content } in
   match Location.unwrap m with
-  | M_struct x -> return @@ M_struct (unused_map_module ~add_warning x)
+  | M_struct x -> return @@ M_struct (unused_map_module ~raise x)
   | M_variable _ -> m
   | M_module_path _ -> m

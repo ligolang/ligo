@@ -23,11 +23,11 @@ export const EvaluateValuePaneComponent = () => {
         <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Ithaca}
+          value={protocolType.Jakarta}
           onChange={ev =>
             dispatch({ ...new ChangeProtocolAction(ev.target.value) })
           }>
-          <Option value={protocolType.Ithaca}>Ithaca</Option>
+          <Option value={protocolType.Jakarta}>Jakarta</Option>
         </SelectCommand>
         <Label htmlFor="entrypoint">Expression</Label>
         <Input

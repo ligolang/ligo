@@ -3,8 +3,8 @@ open Test_helpers
 
 let get_program = get_program "./contracts/replaceable_id.ligo"
 
-let compile_main ~raise ~add_warning () =
-  Test_helpers.compile_main ~raise ~add_warning "./contracts/replaceable_id.ligo" ()
+let compile_main ~raise () =
+  Test_helpers.compile_main ~raise "./contracts/replaceable_id.ligo" ()
 
 open Ast_imperative
 
@@ -20,46 +20,46 @@ let entry_change_addr id = e_constructor "Change_address"
 let entry_pass_message = e_constructor "Pass_message"
   @@ empty_message
 
-let change_addr_success ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let change_addr_success ~raise () =
+  let program = get_program ~raise () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~add_warning ~options program "main"
+  expect_eq ~raise ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list (storage 2))
 
-let change_addr_fail ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let change_addr_fail ~raise () =
+  let program = get_program ~raise () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 3 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~raise ~add_warning ~options program "main"
+  expect_string_failwith ~raise ~options program "main"
     (e_pair param init_storage) exp_failwith
 
-let pass_message_success ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let pass_message_success ~raise () =
+  let program = get_program ~raise () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
-  expect_eq ~raise ~add_warning ~options program "main"
+  expect_eq ~raise ~options program "main"
     (e_pair param init_storage) (e_pair empty_op_list init_storage)
 
-let pass_message_fail ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let pass_message_fail ~raise () =
+  let program = get_program ~raise () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
     let sender = contract 2 in
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender ()) in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~raise ~add_warning ~options program "main"
+  expect_string_failwith ~raise ~options program "main"
     (e_pair param init_storage) exp_failwith
 
 let main = test_suite "Replaceable ID" [

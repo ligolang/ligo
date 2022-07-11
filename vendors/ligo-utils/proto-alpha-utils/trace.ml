@@ -18,31 +18,31 @@ let trace_decoding_error :
     | Error err -> Error (f err)
 
 let trace_alpha_tzresult :
-  raise:'b raise -> (tezos_alpha_error list -> 'b) -> 'a AE.Error_monad.tzresult -> 'a =
+  raise:('b,'w) raise -> (tezos_alpha_error list -> 'b) -> 'a AE.Error_monad.tzresult -> 'a =
   fun ~raise tracer err -> match err with
   | Ok x -> x
   | Error errs ->
-    raise.raise @@ tracer (List.map ~f:of_tz_error @@ AE.wrap_tztrace errs)
+    raise.error @@ tracer (List.map ~f:of_tz_error @@ AE.wrap_tztrace errs)
 
 let trace_alpha_tzresult_lwt ~raise tracer (x:_ AE.Error_monad.tzresult Lwt.t) : _ =
   trace_alpha_tzresult ~raise tracer @@ Lwt_main.run x
 
 let trace_alpha_shell_tzresult :
-  raise:'b raise -> (tezos_alpha_error list -> 'b) -> 'a AE.Error_monad.shell_tzresult -> 'a =
+  raise:('b,'w) raise -> (tezos_alpha_error list -> 'b) -> 'a AE.Error_monad.shell_tzresult -> 'a =
   fun ~raise tracer err -> match err with
   | Ok x -> x
   | Error errs ->
-    raise.raise @@ tracer (List.map ~f:of_tz_error @@ errs)
+    raise.error @@ tracer (List.map ~f:of_tz_error @@ errs)
 
 let trace_alpha_shell_tzresult_lwt ~raise tracer (x:_ AE.Error_monad.shell_tzresult Lwt.t) : _ =
   trace_alpha_shell_tzresult ~raise tracer @@ Lwt_main.run x
 
 let trace_tzresult :
-  raise: 'b raise ->
+  raise: ('b,'w) raise ->
   (tezos_alpha_error list -> _) -> ('a, TP.error list) Stdlib.result -> 'a =
   fun ~raise tracer err -> match err with
   | Ok x -> x
-  | Error errs -> raise.raise @@ tracer (List.map ~f:of_tz_error errs)
+  | Error errs -> raise.error @@ tracer (List.map ~f:of_tz_error errs)
 
 let tz_result_to_bool : ('a, TP.error list) Stdlib.result -> bool =
   fun err ->
@@ -54,12 +54,12 @@ let trace_tzresult_lwt ~raise err (x:_ TP.tzresult Lwt.t) : _ =
   trace_tzresult ~raise err @@ Lwt_main.run x
 
 let warn_on_tzresult :
-  add_warning: ('a -> unit) ->
+  raise: (_,'a) raise ->
   (TP.error list -> 'a) -> ('b, TP.error list) Stdlib.result -> unit =
-  fun ~add_warning f_warning err ->
+  fun ~raise f_warning err ->
     match err with
     | Ok _ -> ()
-    | Error errs -> add_warning (f_warning errs)
+    | Error errs -> raise.warning (f_warning errs)
 
-let warn_on_tzresult_lwt ~add_warning err (x:_ TP.tzresult Lwt.t) : _ =
-  warn_on_tzresult ~add_warning err @@ Lwt_main.run x
+let warn_on_tzresult_lwt ~raise err (x:_ TP.tzresult Lwt.t) : _ =
+  warn_on_tzresult ~raise err @@ Lwt_main.run x

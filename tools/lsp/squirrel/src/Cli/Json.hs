@@ -47,10 +47,11 @@ import Text.Read (readEither)
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 
 import AST.Skeleton hiding (String)
+import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
-import Parser
+import Parser (CodeSource (..), Info)
 import Product
 import Range hiding (startLine)
 
@@ -643,7 +644,7 @@ fromLigoErrorToMsg LigoError
       , _lecLocation = fmap fromLigoRangeOrDef -> at
       }
   , _leStatus
-  } = Message err status (fromMaybe (point 0 0) at)
+  } = Message (FromLIGO err) status (fromMaybe (point 0 0) at)
   where
     status = case _leStatus of
       "error"   -> SeverityError
@@ -820,7 +821,7 @@ fromLigoTypeFull = enclose . \case
     defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil
 
 mkLigoError :: Product Info -> Text -> LIGO Info
-mkLigoError p msg = make' . (p,) $ Error msg [p :< inject (Name "ligo error")]
+mkLigoError p msg = make' . (p,) $ Error (FromLIGO msg) []
 
 -- | Variant of `make` that constructs a tree out of annotation and node
 -- that recovers range from previous subnodes by merging them, this helps to

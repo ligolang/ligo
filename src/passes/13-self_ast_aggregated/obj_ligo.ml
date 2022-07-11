@@ -40,15 +40,15 @@ let check_obj_ligo ~raise (t : AST.expression) =
   let folder_constant () expr = match expr.AST.expression_content with
     | E_constant {cons_name}
          when AST.ppx_is_only_interpreter cons_name ->
-       raise.Trace.raise @@ Errors.expected_obj_ligo expr.location
+       raise.Trace.error @@ Errors.expected_obj_ligo expr.location
     | E_literal (Literal_string s) when not (check_string @@ Ligo_string.extract s) ->
-       raise.Trace.raise @@ Errors.expected_obj_ligo expr.location
+       raise.Trace.error @@ Errors.expected_obj_ligo expr.location
     | _ -> () in
   let traverser_types loc expr = match expr.AST.type_content with
     | T_constant { injection = Stage_common.Constant.Michelson_program ; _ }
     | T_constant { injection = Stage_common.Constant.Typed_address     ; _ }
     | T_constant { injection = Stage_common.Constant.Mutation          ; _ }
-        -> raise.raise @@ Errors.expected_obj_ligo loc
+        -> raise.error @@ Errors.expected_obj_ligo loc
     | _ -> () in
   let folder_types () (expr : AST.expression) =
     traverse_type_expression (traverser_types expr.location) expr.type_expression in
