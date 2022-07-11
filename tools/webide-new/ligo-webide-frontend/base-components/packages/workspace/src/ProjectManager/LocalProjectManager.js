@@ -103,6 +103,30 @@ export default class LocalProjectManager extends BaseProjectManager {
     }
   }
 
+  async loadProjectFileTree() {
+    const rootDirectory = await this.loadRootDirectory()
+
+    for (let i = 0; i < rootDirectory.children.length; i++) {
+      if (rootDirectory.children[i].type === 'folder') {
+        rootDirectory.children[i].children = await this.loadDirectoryRecursively(rootDirectory.children[i])
+      }
+    }
+
+    return rootDirectory
+  }
+
+  async loadDirectoryRecursively(node) {
+    const children = await this.loadDirectory(node)
+
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].type === 'folder') {
+        children[i].children = await this.loadDirectoryRecursively(children[i])
+      }
+    }
+
+    return children
+  }
+
   async loadDirectory(node) {
     const result = await this.readDirectory(node.path)
     const rawData = result.map(item => ({
@@ -174,7 +198,7 @@ export default class LocalProjectManager extends BaseProjectManager {
       throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`)
     }
 
-    await this.refreshDirectory(basePath)
+    await this.refreshDirectory({type: 'newFile', basePath, name, path: filePath})
     return filePath
   }
 
@@ -191,7 +215,7 @@ export default class LocalProjectManager extends BaseProjectManager {
       throw new Error(`File <b>${JSON.stringify(e)}</b> already exists.`)
     }
 
-    await this.refreshDirectory(basePath)
+    await this.refreshDirectory({type: 'newDirectory', basePath, name, path: folderPath})
   }
 
   // TODO turn on drag events
@@ -245,6 +269,7 @@ export default class LocalProjectManager extends BaseProjectManager {
     const path = fileOps.pathHelper
     const { dir } = path.parse(oldPath)
     const newPath = path.join(dir, name)
+    const isFile = await fileOps.isFile(oldPath)
 
     try {
       await fileOps.rename(oldPath, newPath)
@@ -254,7 +279,7 @@ export default class LocalProjectManager extends BaseProjectManager {
       throw new Error(`Fail to rename <b>${oldPath}</b>.`)
     }
 
-    await this.refreshDirectory(dir)
+    await this.refreshDirectory({type: isFile ? 'renameFile' : 'renameDirectory', oldPath, newName: name, newPath})
   }
 
   async deleteFile(node) {
@@ -270,13 +295,11 @@ export default class LocalProjectManager extends BaseProjectManager {
       }
     }
 
-    const { dir } = fileOps.pathHelper.parse(node.path)
-    await this.refreshDirectory(dir)
+    await this.refreshDirectory({type: node.children ? 'deleteDirectory' : 'deleteFile', path: node.path})
   }
 
-  async refreshDirectory (dir) {
-    const children = await this.loadDirectory({ path: dir })
-    BaseProjectManager.channel.trigger('refresh-directory', { path: dir, children })
+  async refreshDirectory (data) {
+    BaseProjectManager.channel.trigger('refresh-directory', data)
   }
 
   toggleTerminal(terminal) {

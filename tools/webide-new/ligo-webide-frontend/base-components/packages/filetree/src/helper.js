@@ -73,7 +73,61 @@ const travelTree = (treeData, fn, extraValue, stopCheck) => {
   travel(treeData, fn)
 }
 
+const findInTree = (treeData, fn) => {
+  const find = (tree, fn) => {
+    for (let node of tree) {
+      if (fn(node)) {
+        return node
+      }
+      if (node.children) {
+        const result = find(node.children, fn)
+        if (result) {
+          return result
+        }
+      }
+    }
+  }
+  return find(treeData, fn)
+}
+
+const mapTree = (treeData, fn) => {
+  const mapT = (tree, fn) => {
+    for (let node of tree) {
+      fn(node)
+      if (node.children) {
+        mapT(node.children, fn)
+      }
+    }
+  }
+  return mapT(treeData, fn)
+}
+
+const filterFolder = (file) => {
+  return file.filter((item) => item.type === 'folder')
+}
+
+const filterFile = (file) => {
+  return file.filter((item) => item.type === 'file')
+}
+
+const compareUnicode = (file) => {
+  return file.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+const compose = (...funcs) => {
+  return funcs.reduce((a, b) => (...args) => a(b(...args)))
+}
+
+const sortFile = (file) => {
+  const sortedFolder = compose(filterFolder, compareUnicode)(file)
+  const sortedFile = compose(filterFile, compareUnicode)(file)
+  return sortedFolder.concat(sortedFile)
+}
+
 export {
   updateErrorInfo,
-  travelTree
+  travelTree,
+  findInTree,
+  sortFile,
+  mapTree
 }

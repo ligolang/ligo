@@ -7,7 +7,7 @@ import { Menu, Item, useContextMenu, Separator } from 'react-contexify'
 import 'react-contexify/dist/ReactContexify.min.css'
 import platform from '@obsidians/platform'
 import StatusTitle from './statusTitle'
-import { travelTree, updateErrorInfo } from './helper'
+import { travelTree, updateErrorInfo, findInTree, sortFile, mapTree } from './helper'
 import { modelSessionManager } from '@obsidians/code-editor'
 
 const renderIcon = ({ data }) => {
@@ -110,15 +110,18 @@ const replaceTreeNode = (treeData, curKey, child) => {
 const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, ref) => {
   const treeRef = React.useRef()
   const [treeData, setTreeData] = useState([])
+  const treeDataRef = useRef()
+  treeDataRef.current = treeData
   const [autoExpandParent, setAutoExpandParent] = useState(true)
   const [expandedKeys, setExpandKeys] = useState([])
+  const expandKeysRef = useRef()
+  expandKeysRef.current = expandedKeys
   const [selectedKeys, setSelectedKeys] = useState([])
   const [selectNode, setSelectNode] = useState(null)
   const [enableCopy, setEnableCopy] = useState(false)
-  const prevTreeData = useRef()
   const [isBlankAreaRightClick, setIsBlankAreaRightClick] = useState(false)
   const [isTreeDataRoot, setIsTreeDataRoot] = useState(false)
-  prevTreeData.current = treeData
+
   let treeNodeContextMenu = typeof contextMenu === 'function' ? contextMenu(selectNode) : contextMenu
 
   if (readOnly) {
@@ -227,67 +230,64 @@ const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, r
 
     const loadTree = async projectManager => {
       projectManager.onRefreshDirectory(refreshDirectory)
-      const treeData = await projectManager.loadRootDirectory()
+      const treeData = await projectManager.loadProjectFileTree()
       setLeaf([treeData], treeData.path)
 
       setTreeData([treeData])
       setSelectNode(treeData)
       setExpandKeys([treeData.path])
-      treeRef.current && (treeRef.current.state.loadedKeys = [])
     }
 
-    const getRoot = (path) => {
-      return path.indexOf('/', 11) === -1 ? path : path.substring(0, path.indexOf('/', 11))
-    }
+    const refreshDirectory = async (data) => {
+      if (data.type === 'newFile' || data.type === 'newDirectory') {
+        const tempTree = cloneDeep(treeDataRef.current)
+        const newNode = data.type === 'newFile'
+          ? { type: 'file', title: data.name, key: data.path, name: data.name, path: data.path, remote: true, isLeaf: true }
+          : { type: 'folder', title: data.name, key: data.path, children: [], isLeaf: false, name: data.name, path: data.path, loading: true, remote: true }
+        const parentNode = findInTree(tempTree, (node) => node.path === data.basePath)
 
-    const refreshDirectory = async (directory) => {
-      const rootPath = getRoot(directory.path)
-      if (directory.path === rootPath) {
-        await loadTree(projectManager)
-      } else {
-        const tempTree = cloneDeep(prevTreeData.current)
-        if (!directory) {
-          return
+        if (parentNode) {
+          parentNode.children.push(newNode)
+          parentNode.children = sortFile(parentNode.children)
+          setTreeData([...tempTree])
         }
-
-        replaceTreeNode(tempTree, directory.path, directory.children)
-        setLeaf(tempTree, tempTree[0].path)
-        setTreeData(tempTree)
-        setSelectNode(tempTree[0])
-
-        if (treeRef.current) {
-          treeRef.current.state.loadedKeys = treeRef.current.state.loadedKeys.filter(key => !key.includes(directory.path))
-  
-          const newExpandedKeys = treeRef.current.state.expandedKeys.filter(key => {
-            return key === directory.path || !key.includes(directory.path)
-          })
-  
-          setExpandKeys(newExpandedKeys)
-        }
-
       }
-    }
 
-    const handleLoadData = treeNode => {
-      return new Promise(resolve => {
-        if (!treeNode.children) {
-          resolve()
-        } else {
-          const tempTreeData = cloneDeep(treeData)
-          projectManager.loadDirectory(treeNode).then(newData => {
-            if (newData.length === 0) {
-              resolve()
-              return
-            }
-            setTimeout(() => {
-              getNewTreeData(tempTreeData, treeNode.path, newData)
-              setTreeData(tempTreeData)
-              updateTitle(...tempTreeData)
-              resolve()
-            }, 500)
+      if (data.type === 'renameFile' || data.type === 'renameDirectory') {
+        const tempTree = cloneDeep(treeDataRef.current)
+        const node = findInTree(tempTree, (node) => node.path === data.oldPath)
+        if (node) {
+          node.title = data.newName
+          node.key = data.newPath
+          node.name = data.newName
+          node.path = data.newPath
+        }
+        if (node && data.type === 'renameDirectory') {
+          mapTree(node.children, (nd) => {
+            nd.key = nd.key.replace(data.oldPath, data.newPath)
+            nd.path = nd.path.replace(data.oldPath, data.newPath)
           })
         }
-      })
+        if (node) {
+          setTreeData([...tempTree])
+          if (data.type === 'renameDirectory') {
+            setExpandKeys(expandKeysRef.current.map(key => key.replace(data.oldPath, data.newPath)))
+          }
+        }
+      }
+
+      if (data.type === 'deleteFile' || data.type === 'deleteDirectory') {
+        const tempTree = cloneDeep(treeDataRef.current)
+        const parentNode = findInTree(tempTree, (node) => node.path === data.path.substring(0, data.path.lastIndexOf('/')))
+        if (parentNode) {
+          parentNode.children = parentNode.children.filter(node => node.path !== data.path)
+          setTreeData([...tempTree])
+
+          if (data.type === 'deleteDirectory') {
+            setExpandKeys(expandKeysRef.current.filter(key => !key.includes(data.path)))
+          }
+        }
+      }
     }
 
     const handleSelect = (_, { node }) => {
@@ -354,7 +354,6 @@ const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, r
           icon={renderIcon}
           treeData={treeData}
           dropIndicatorRender={() => null}
-          loadData={handleLoadData}
           expandedKeys={expandedKeys}
           selectedKeys={selectedKeys}
           autoExpandParent={autoExpandParent}
@@ -365,7 +364,6 @@ const FileTree = ({ projectManager, onSelect, contextMenu, readOnly = false }, r
           onClick={handleClick}
           onExpand={handleExpand}
           onSelect={handleSelect}
-          onLoad={handleLoadData}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
         />
