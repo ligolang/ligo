@@ -14,7 +14,7 @@ import Test.Tasty.HUnit (Assertion)
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation (SourceLocation),
   SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
-  tsAfterInstrs, FrozenPredicate (FrozenPredicate))
+  tsAfterInstrs, FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition))
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
@@ -142,19 +142,19 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 2 11) (LigoPosition 2 17)
+                , sfLoc = LigoRange file' (LigoPosition 1 10) (LigoPosition 1 14)
                 , sfStack =
                   [ StackItem
-                    { siLigoDesc = LigoStackEntry
-                        -- should name name "s", but debug info is yet buggy
-                        (LigoExposedStackEntry Nothing _)
-                    , siValue = SomeLorentzValue (0 :: Integer)
+                    { siLigoDesc = LigoHiddenStackEntry
+                    , siValue = SomeLorentzValue ((), 0 :: Integer)
                     }
                   ]
                 } :| []
             } | file == file'
               -> pass
           sp -> unexpectedSnapshot sp
+
+        _ <- move Forward
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
@@ -176,9 +176,6 @@ test_Snapshots = testGroup "Snapshots collection"
           )
           @?=
           let
-            stack0 =
-              [ (Nothing, SomeLorentzValue (0 :: Integer))
-              ]
             stackWithS2 =
               [ ( Just LigoVariable
                   { lvName = "s2"
@@ -186,12 +183,41 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (42 :: Integer)
                 )
               ]
+            stackWithS =
+              [ ( Just LigoVariable
+                  { lvName = "s"
+                  }
+                , SomeLorentzValue (0 :: Integer)
+                )
+              ]
           in
-          [ ( InterpretRunning . EventExpressionEvaluated . Just $
+          [ ( InterpretRunning EventExpressionPreview
+            , one
+              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
+              , stackWithS
+              )
+            )
+
+          , ( InterpretRunning . EventExpressionEvaluated . Just $
+                SomeLorentzValue (42 :: Integer)
+            , one
+              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
+              , stackWithS
+              )
+            )
+
+          , ( InterpretRunning EventExpressionPreview
+            , one
+              ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
+              , stackWithS
+              )
+            )
+
+          , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
-              , stack0
+              , stackWithS
               )
             )
 
@@ -251,7 +277,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                , sfLoc = LigoRange _ (LigoPosition 1 14) (LigoPosition 1 18)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -267,14 +293,16 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          -- Skip starting snapshot
+          -- Skipping snapshots till snapshot with 'int' variable
+          _ <- move Forward
+          _ <- move Forward
           _ <- move Forward
 
           checkSnapshot \case
             InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 2 17)
+                  { sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -303,10 +331,11 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 3 16) (LigoPosition 3 21)
+                { sfLoc = LigoRange _ (LigoPosition 1 10) (LigoPosition 1 14)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
+
   , testCaseSteps "check shadowing" \_step -> do
       let file = contractsDir </> "shadowing.religo"
       let runData = ContractRunData
@@ -399,7 +428,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 15 5) (LigoPosition 15 10)
+                { sfLoc = LigoRange file' (LigoPosition 3 9) (LigoPosition 3 13)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -409,7 +438,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 7 12) (LigoPosition 7 21)
+                { sfLoc = LigoRange file' (LigoPosition 5 10) (LigoPosition 5 14)
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -419,7 +448,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 5 11) (LigoPosition 5 18)
+                { sfLoc = LigoRange file' (LigoPosition 2 19) (LigoPosition 2 20)
                 } :| []
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
@@ -443,6 +472,59 @@ test_Snapshots = testGroup "Snapshots collection"
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
+
+    -- [LIGO-658]: write a test that checks that we have 'pair1' and 'pair2' in 'not-inlined-fst.mligo' contract.
+
+  , testCaseSteps "functions and variables are not inlined" \step -> do
+      let file = contractsDir </> "funcs-and-vars-no-inline.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 4 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 1) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 2) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 6) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 7) (Pos 0))
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 8) (Pos 0))
+
+        let checkLinePosition pos = do
+              goToNextBreakpoint
+              frozen getExecutedPosition >>= \case
+                Just (SourceLocation _ (SrcPos (Pos actualPos) _))
+                  | actualPos == pos -> pass
+                loc -> lift $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
+
+        lift $ step "check \"func\" function call stepping"
+        checkLinePosition 6
+
+        lift $ step "check stepping inside \"func\""
+        checkLinePosition 1
+        checkLinePosition 2
+
+        lift $ step "check stopping at constant assignment"
+        checkLinePosition 7
+
+        lift $ step "check that \"s2\" is not inlined"
+        goToNextBreakpoint
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+          let s2ItemMb = stackItems
+                & find \case
+                    StackItem
+                      { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                          { leseDeclaration = Just (LigoVariable "s2")
+                          }
+                      } -> True
+                    _ -> False
+
+          case s2ItemMb of
+            Nothing -> assertFailure [int||Can't find "s2" variable in snapshot #{snap}|]
+            _ -> pass
+
   ]
 
 -- | Special options for checking contract.
@@ -466,7 +548,7 @@ unit_Contracts_locations_are_sensible :: Assertion
 unit_Contracts_locations_are_sensible = do
   contracts <- listDirectory contractsDir
 
-  let ligoContracts = filter hasLigoExtension contracts
+  let ligoContracts = filter (hasLigoExtension && flip notElem badContracts) contracts
   forM_ ligoContracts testContract
   where
     testContract :: FilePath -> Assertion
@@ -496,4 +578,11 @@ unit_Contracts_locations_are_sensible = do
     specialContracts = M.fromList
       [ ("if-no-else", def & coCheckSourceLocationsL .~ False)
       , ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
+      ]
+
+    -- Valid contracts that can't be used in debugger for some reason.
+    badContracts :: [FilePath]
+    badContracts =
+      [ "self.mligo" -- this contract doesn't typecheck in Michelson
+      , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
       ]
