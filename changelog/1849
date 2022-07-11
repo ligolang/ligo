@@ -1,0 +1,8 @@
+author: pewulfman
+description: As ReasonLigo doesn't seem to have any advantages over Cameligo and JSligo
+  and it seems that it is not used much. We decided to remove the support of the syntax,
+  in order to focus our effort on other parts of the compiler. We have added a warning
+  that we will leave for a few versions and remove ReasonLigo then.
+merge_request: '1849'
+title: Prepare Deprecate of Reasonligo
+type: deprecated
