@@ -27,6 +27,9 @@ build: grammar
 werror: grammar
 	$(STACK_DEV) $(GHC_OPTIONS_WITH_WERROR)
 
+werror-watch: grammar
+	$(STACK_DEV) $(GHC_OPTIONS_WITH_WERROR) --file-watch
+
 watch: grammar
 	$(STACK_DEV) $(GHC_OPTIONS_WITHOUT_WERROR) --file-watch
 

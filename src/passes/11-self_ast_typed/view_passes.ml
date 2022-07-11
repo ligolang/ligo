@@ -17,7 +17,7 @@ let check_view_type ~raise : err_data:(Location.t*Ast_typed.expression_variable*
         | T_constant { injection = Big_map       ; _ }
         | T_constant { injection = Sapling_state ; _ }
         | T_constant { injection = Operation     ; _ }
-        | T_constant { injection = Ticket        ; _ } -> raise.raise err
+        | T_constant { injection = Ticket        ; _ } -> raise.error err
         | _ -> ()
       in
       Helpers.iter_type_expression aux t

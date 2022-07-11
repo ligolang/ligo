@@ -43,10 +43,10 @@ let rec internalize_core ?(inner = false) (ds : Ast_core.module_) =
 (* [inject_declaration] [syntax] [module_] fetch expression argument passed through CLI options and inject a declaration `let cli_arg = [options.cli_expr_inj]`
          on top of an existing core program
 *)
-let inject_declaration ~options ~raise ~add_warning : Syntax_types.t -> Ast_core.module_ -> Ast_core.module_ = fun syntax prg ->
+let inject_declaration ~options ~raise : Syntax_types.t -> Ast_core.module_ -> Ast_core.module_ = fun syntax prg ->
   let inject_arg_declaration arg =
     let open Ast_core in
-    let expr = Ligo_compile.Utils.core_expression_string ~raise ~add_warning syntax arg in
+    let expr = Ligo_compile.Utils.core_expression_string ~raise syntax arg in
     let attr = { inline = false ; no_mutation = true ; thunk = false ; view = false ; public = false ; hidden = false } in
     let d = Location.wrap @@ Declaration_constant { binder = make_binder (ValueVar.of_input_var "cli_arg") ; expr ; attr } in
     d::prg
@@ -64,7 +64,6 @@ module LanguageMap = Simple_utils.Map.Make(struct
 end)
 type cache = (Ast_typed.module_ * Ast_core.module_) LanguageMap.t
 let std_lib_cache = ref (LanguageMap.empty : cache)
-let test_lib_cache = ref (LanguageMap.empty : cache)
-let build_key ~options syntax = 
+let build_key ~options syntax =
   let open Compiler_options in
   (syntax, options.middle_end.protocol_version, options.middle_end.test)

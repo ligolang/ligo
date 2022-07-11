@@ -54,7 +54,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
      (* Decompile expression *)
      let n_syntax     = Trace.to_stdlib_result (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file)) in
      let n_syntax     = match n_syntax with
-       | Ok r -> r
+       | Ok (r,_w) -> r
        | Error _ -> failwith "Cannot detect syntax" in
      let typed        = Aggregation.decompile ~raise _expr in
      let core         = Decompile.Of_typed.decompile_expression typed in

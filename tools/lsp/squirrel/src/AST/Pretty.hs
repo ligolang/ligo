@@ -100,7 +100,7 @@ instance
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
 instance LPP1 d Error where
-  lpp1 (Error msg _) = lpp @d msg
+  lpp1 (Error msg _) = pp msg
 
 -- class LPPProd (dialect :: Lang) xs where
 --   lppProd :: Product xs -> Doc

@@ -1,7 +1,7 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match1.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match1.jsligo") ; "--test" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 11 to line 4, character 4:
       1 | let test_foo = (x : test_exec_result) : string => {
@@ -15,7 +15,7 @@ let%expect_test _ =
     - Success |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match2.jsligo") ; "--test" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 13-15:
       2 |   match(x, {
@@ -25,7 +25,7 @@ let%expect_test _ =
     Variant pattern argument is expected of type nat but is of type unit. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match5.jsligo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match5.jsligo") ; "--test" ] ;
   [%expect{|
     File "../../test/contracts/negative/pattern_match5.jsligo", line 3, characters 14-30:
       2 |   match(x, {
@@ -60,14 +60,14 @@ let%expect_test _ =
   - C |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ] ;
-  [%expect{xxx|
+  run_ligo_good [ "print" ; "ast-typed" ; (test "pattern_match4.jsligo") ; "--test" ] ;
+  [%expect{|
     const test_foo =
-      lambda (x : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( unit * address )] , Success -> nat]) return
+      lambda (x : sum[Fail -> sum[Balance_too_low -> record[contract_balance -> tez , contract_too_low -> address , spend_request -> tez] , Other -> string , Rejected -> ( michelson_program * address )] , Success -> nat]) return
        match x with
         | Fail _#3 ->
           "" | Success _#2 ->
-               ""[@private] |xxx}]
+               ""[@private] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pattern_match7.jsligo") ] ;

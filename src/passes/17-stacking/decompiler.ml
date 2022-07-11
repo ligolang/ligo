@@ -29,7 +29,7 @@ let normalize_edo_comb_value =
       | x -> x)
   | _ -> fun x -> x
 
-let rec decompile_value ~(raise : stacking_error raise) :
+let rec decompile_value ~(raise : (stacking_error,_) raise) :
   ('l, string) node -> ('l, string) node -> value =
   fun ty value ->
   let ty = normalize_edo_comb_type ty in
@@ -39,7 +39,7 @@ let rec decompile_value ~(raise : stacking_error raise) :
       let els = List.map ~f:(fun (t,v) -> decompile_value ~raise t v) (List.zip_exn ts vs) in
       let rec aux l : value =
         match l with
-        | [] -> raise.raise (untranspilable ty value)
+        | [] -> raise.error (untranspilable ty value)
         | [x] -> x
         | hd::tl -> (
             let tl' = aux tl in
@@ -115,7 +115,7 @@ let rec decompile_value ~(raise : stacking_error raise) :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -131,7 +131,7 @@ let rec decompile_value ~(raise : stacking_error raise) :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -168,4 +168,4 @@ let rec decompile_value ~(raise : stacking_error raise) :
     let amt' = decompile_value ~raise ty_nat amt in
     D_ticket (v', amt')
  | ty, v ->
-      raise.raise (untranspilable ty v)
+      raise.error (untranspilable ty v)

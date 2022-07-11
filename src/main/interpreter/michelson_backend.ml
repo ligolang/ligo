@@ -98,11 +98,11 @@ let create_chest (payload:Bytes.t) (time:int) : _ =
   let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
   (chest_bytes, chest_key_bytes)
 
-let compile_contract ~raise ~add_warning ~options source_file entry_point declared_views =
+let compile_contract ~raise ~options source_file entry_point declared_views =
   let open Ligo_compile in
-  let michelson,env = Build.build_contract ~raise ~add_warning ~options entry_point source_file in
-  let views = Build.build_views ~raise ~add_warning ~options entry_point (declared_views,env) source_file in
-  Of_michelson.build_contract ~raise ~add_warning ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
+  let michelson,env = Build.build_contract ~raise ~options entry_point source_file in
+  let views = Build.build_views ~raise ~options entry_point (declared_views,env) source_file in
+  Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
@@ -162,7 +162,7 @@ let run_expression_unwrap ~raise ?ctxt ?(loc = Location.generated) (c_expr : Sta
      let expr, expr_ty = clean_locations expr expr_ty in
      (expr, expr_ty)
   | Fail _ ->
-     raise.raise @@ Errors.generic_error loc "Running failed"
+     raise.error @@ Errors.generic_error loc "Running failed"
 
 let compile_value ~raise ~options aggregated_exp =
   let open Ligo_compile in
@@ -239,7 +239,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
       | None -> (
         match get_t_chest_key ty with
         | Some () -> e_a_chest_key b
-        | None -> raise.raise (Errors.generic_error loc (Format.asprintf "Expected bytes, chest, or chest_key but got %a" Ast_aggregated.PP.type_expression ty))
+        | None -> raise.error (Errors.generic_error loc (Format.asprintf "Expected bytes, chest, or chest_key but got %a" Ast_aggregated.PP.type_expression ty))
         )
     )
   )
@@ -249,7 +249,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let x = string_of_contract a in
      e_a_address x
   | V_Ct (C_address _) ->
-     raise.raise @@ (Errors.generic_error loc (Format.asprintf "Expected address but got %a" Ast_aggregated.PP.type_expression ty))
+     raise.error @@ (Errors.generic_error loc (Format.asprintf "Expected address but got %a" Ast_aggregated.PP.type_expression ty))
   | V_Ct (C_contract c) when is_t_contract ty ->
      let ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected contract but got %a" Ast_aggregated.PP.type_expression ty))
                  (get_t_contract ty) in
@@ -261,7 +261,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
         e_a_contract_entrypoint (e_a_string (Ligo_string.Standard ("%" ^ e))) (e_a_address x) ty in
      t
   | V_Ct (C_contract _) ->
-     raise.raise @@ (Errors.generic_error loc (Format.asprintf "Expected contract but got %a" Ast_aggregated.PP.type_expression ty))
+     raise.error @@ (Errors.generic_error loc (Format.asprintf "Expected contract but got %a" Ast_aggregated.PP.type_expression ty))
   | V_Ct (C_key_hash kh) ->
      let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected key_hash but got %a" Ast_aggregated.PP.type_expression ty))
                  (get_t_key_hash ty) in
@@ -298,7 +298,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let arg = val_to_ast ~raise ~loc arg ty' in
      e_a_constructor ctor arg ty
   | V_Construct _ ->
-     raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)
+     raise.error @@ Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)
   | V_Func_val v ->
      make_ast_func ~raise ?name:v.rec_name v.env v.arg_binder v.body v.orig_lambda
   | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty }) ->
@@ -309,7 +309,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record_opt ty in
      make_ast_record ~raise ~loc map_ty map
   | V_Record _ ->
-     raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)
+     raise.error @@ Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)
   | V_List l ->
      let ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected list but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_list ty in
      make_ast_list ~raise ~loc ty l
@@ -323,15 +323,17 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      let (key_ty, value_ty) = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected map but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_map ty in
      make_ast_map~raise ~loc key_ty value_ty kv
   | V_Map _ ->
-     raise.raise @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
+     raise.error @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
   | V_Michelson_contract _ ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
   | V_Michelson (Untyped_code _) ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
-     raise.raise @@ Errors.generic_error loc "Cannot be abstracted: mutation"
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: mutation"
   | V_Thunk { value ; _ } ->
      value
+  | V_Gen _ ->
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: generator"
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
@@ -396,9 +398,9 @@ and make_subst_ast_env_exp ~raise env expr =
   let open Ligo_interpreter.Types in
   let get_fv expr =
    Self_ast_aggregated.Helpers.Free_variables.expression expr in
-  let rec aux (fv) acc = function
+  let rec aux fv acc = function
     | [] -> acc
-    | Expression { name; item ; no_mutation ; inline } :: tl ->
+    | (name, { item ; no_mutation ; inline }) :: tl ->
        if List.mem fv name ~equal:ValueVar.equal then
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          let expr_fv = get_fv expr in
@@ -420,7 +422,7 @@ let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code :
   | Seq (_, s) ->
      Tezos_utils.Michelson.(seq ([i_push arg_ty arg] @ s))
   | _ ->
-     raise.raise (Errors.generic_error Location.generated "Could not parse") in
+     raise.error (Errors.generic_error Location.generated "Could not parse") in
   let options = make_options ~raise (Some ctxt) in
   match Ligo_run.Of_michelson.run_expression ~raise ~options func func_ty with
   | Success (ty, value) ->
@@ -432,18 +434,18 @@ let parse_code ~raise code =
   let open Tezos_micheline in
   let (code, errs) = Micheline_parser.tokenize code in
   let code = (match errs with
-              | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
+              | _ :: _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
               | [] ->
                  let (code, errs) = Micheline_parser.parse_expression ~check:false code in
                  match errs with
-                 | _ :: _ -> raise.raise (Errors.generic_error Location.generated "Could not parse")
+                 | _ :: _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
                  | [] ->
                     let code = Micheline.map_node (fun _ -> ()) (fun x -> x) code in
                     match code with
                     | Seq (_, s) ->
                        Tezos_utils.Michelson.(seq s)
                     | _ ->
-                       raise.raise (Errors.generic_error Location.generated "Could not parse")
+                       raise.error (Errors.generic_error Location.generated "Could not parse")
              ) in
   code
 

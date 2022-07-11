@@ -36,6 +36,7 @@ import GHC.Generics (Generic)
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
+import Diagnostic (MessageDetail)
 import Product (Product)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
@@ -318,7 +319,7 @@ newtype FieldName it = FieldName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-data Error it = Error Text [it]
+data Error it = Error MessageDetail [it]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 --------------------------------------------------------------------------------

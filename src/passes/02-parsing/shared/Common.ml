@@ -120,18 +120,18 @@ module MakeParser
 
     (* Lifting [Stdlib.result] to [Trace]. *)
 
-    let lift ~(raise:Errors.t Trace.raise) = function
+    let lift ~(raise:(Errors.t, Main_warnings.all) Trace.raise) = function
       Ok tree -> tree
-    | Error msg -> raise.raise @@ `Parsing msg
+    | Error msg -> raise.error @@ `Parsing msg
 
-    let lift_recov ~(raise:Errors.t Trace.raise)
+    let lift_recov ~(raise:(Errors.t, Main_warnings.all) Trace.raise)
       = function
           Ok (tree, errors)     -> List.iter (List.rev errors)
                                        ~f:(fun e -> raise.log_error @@ `Parsing e);
                                    tree
         | Error (error, errors) -> List.iter (List.rev errors)
                                        ~f:(fun e -> raise.log_error @@ `Parsing e);
-                                   raise.raise @@ `Parsing error
+                                   raise.error @@ `Parsing error
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
@@ -142,7 +142,7 @@ module MakeParser
 
     (* Parsing a file *)
 
-    let from_file ~add_warning ~raise buffer file_path : CST.tree =
+    let from_file ~raise buffer file_path : CST.tree =
       let module File =
         struct
           let input        = Some file_path
@@ -151,10 +151,10 @@ module MakeParser
           let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
-      let module Warning = struct let add_warning = add_warning end in
+      let module Raiser = struct let add_warning = raise.Trace.warning end in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Raiser) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) (CLI.ParserConfig) in
       let string = Buffer.contents buffer in
@@ -170,7 +170,7 @@ module MakeParser
 
     (* Parsing a string *)
 
-    let from_string ~add_warning ~raise buffer : CST.tree =
+    let from_string ~raise buffer : CST.tree =
       let module File =
         struct
           let input        = None
@@ -179,7 +179,7 @@ module MakeParser
           let project_root = None
         end in
       let module CLI = CLI (File) (Comments) in
-      let module Warning = struct let add_warning = add_warning end in
+      let module Warning = struct let add_warning = raise.Trace.warning end in
       let module MainLexer =
         LexerMainGen.Make
           (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
@@ -262,7 +262,7 @@ module MakeTwoParsers
                                      and module CST = CST) =
   struct
     type file_path = string
-    type 'a parser = raise:Errors.t Trace.raise -> Buffer.t -> 'a
+    type 'a parser = raise:(Errors.t, Main_warnings.all) Trace.raise -> Buffer.t -> 'a
     module Errors = Errors
 
     (* Results *)

@@ -3,7 +3,7 @@
     "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.4.12",
+    "version": "0.4.13",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -190,6 +190,11 @@
                 "command": "ligo.generateDeployScript",
                 "title": "Tezos: Generate deploy script",
                 "description": "Generates deploy script for a given contract"
+            },
+            {
+                "command": "ligo.silentCompileContract",
+                "title": "LIGO: Silently compile contract",
+                "description": "Compiles the current LIGO contract without UI interactions. Additional compile flags can be provided through an array."
             }
         ]
     },

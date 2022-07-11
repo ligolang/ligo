@@ -6,7 +6,7 @@ type all =
   | `Self_ast_typed_warning_unused of Location.t * string
   | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_typed_warning_unused_rec of Location.t * string
-  | `Checking_ambiguous_contructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable
+  | `Checking_ambiguous_constructor of Location.t * Stage_common.Types.type_variable * Stage_common.Types.type_variable
   | `Self_ast_imperative_warning_layout of (Location.t * Ast_imperative.label)
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of Location.t * Stage_common.Types.TypeVar.t
   | `Self_ast_imperative_warning_deprecated_constant of Location.t * Ast_imperative.expression * Ast_imperative.expression * Ast_imperative.type_expression
@@ -40,7 +40,7 @@ let pp : display_format:string display_format ->
           (variant_to_string in_use)
           (variant_to_string in_use)
     )
-    | `Checking_ambiguous_contructor (loc,tv_chosen,tv_possible) ->
+    | `Checking_ambiguous_constructor (loc,tv_chosen,tv_possible) ->
       Format.fprintf f "@[<hv>%a@ Warning: The type of this value is ambiguous: Inferred type is %a but could be of type %a.@ Hint: You might want to add a type annotation. @.@]"
       Snippet.pp loc
       Stage_common.PP.type_variable tv_chosen
@@ -59,7 +59,7 @@ let pp : display_format:string display_format ->
     | `Self_ast_typed_warning_unused_rec (loc, s) ->
       Format.fprintf f
         "@[<hv>%a:@.Warning: unused recursion .@.Hint: remove recursion from the function \"%s\" to prevent this warning.\n@]"
-        Snippet.pp loc s      
+        Snippet.pp loc s
     | `Self_ast_imperative_warning_layout (loc,Label s) ->
         Format.fprintf f
           "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
@@ -109,7 +109,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
                       ("compiled_for", `String (variant_to_string user_proto))
                     ] in
     json_warning ~stage ~content
-  | `Checking_ambiguous_contructor (loc,_,_) ->
+  | `Checking_ambiguous_constructor (loc,_,_) ->
     let message = `String "the type of this value is ambiguous, you might want to add a type annotation" in
     let stage   = "Main" in
     let loc = Location.to_yojson loc in
@@ -159,7 +159,7 @@ let to_json : all -> Yojson.Safe.t = fun a ->
                         ("location", loc);
                         ("variable", description)
                       ] in
-      json_warning ~stage ~content  
+      json_warning ~stage ~content
   | `Self_ast_imperative_warning_layout (loc, s) ->
     let message = `String (Format.asprintf "Layout attribute on constructor %a" Ast_imperative.PP.label s) in
      let stage   = "self_ast_imperative" in

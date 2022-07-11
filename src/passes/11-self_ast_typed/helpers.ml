@@ -118,7 +118,6 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> self x.type_
   | T_for_all x -> self x.type_
@@ -229,7 +228,7 @@ and map_module : 'err mapper -> module_ -> module_ = fun m p ->
       return @@ Declaration_module {module_binder; module_; module_attr}
   in
   List.map ~f:(Location.map aux) p
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
@@ -281,9 +280,9 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.raise @@ bad_contract_io main_fname expr
+    |  _ -> raise.error @@ bad_contract_io main_fname expr
   )
-  | _ -> raise.raise @@ bad_contract_io main_fname expr
+  | _ -> raise.error @@ bad_contract_io main_fname expr
 
 type view_type = {
   arg : Ast_typed.type_expression ;
@@ -310,9 +309,9 @@ let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Loca
   | Some { type1 = tin ; type2  = return } -> (
     match get_t_tuple tin with
     | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder.var)
+    | _ -> raise.error (expected_pair_in_view @@ ValueVar.get_location binder.var)
   )
-  | None -> raise.raise @@ bad_view_io main_fname expr
+  | None -> raise.error @@ bad_view_io main_fname expr
 
 
 module Free_variables :

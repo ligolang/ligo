@@ -13,9 +13,9 @@ let check_entrypoint_annotation_format ~raise ep (exp: expression) =
   match String.split ~on:'%' ep with
     | [ "" ; ep'] ->
       let cap = String.capitalize ep' in
-      if String.equal cap ep' then raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location
+      if String.equal cap ep' then raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
       else cap
-    | _ -> raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location
+    | _ -> raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 
 let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
@@ -36,7 +36,7 @@ let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pas
     let entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
-      | _ -> raise.raise @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
+      | _ -> raise.error @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
     in
     let entrypoint_t =
       match dat.contract_type.parameter.type_content with
@@ -62,7 +62,7 @@ let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contra
   | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
     let _ = match entrypoint_exp.expression_content with
      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
-     | _ -> raise.raise @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
+     | _ -> raise.error @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
     in
     (true, dat, e)
   | _ -> (true,dat,e)

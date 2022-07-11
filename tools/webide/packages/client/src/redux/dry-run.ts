@@ -45,7 +45,7 @@ const DEFAULT_STATE: DryRunState = {
   entrypoint: '',
   parameters: '',
   storage: '',
-  protocol: 'ithaca'
+  protocol: 'jakarta'
 };
 
 export const dryRun = (state = DEFAULT_STATE, action: Action): DryRunState => {

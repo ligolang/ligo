@@ -33,11 +33,11 @@ include Common.MakeTwoParsers
 
 include Common.MakePretty (CST) (Pretty)
 
-let pretty_print_file ~add_warning ~raise buffer file_path =
-  ContractParser.parse_file ~add_warning ~raise buffer file_path |> pretty_print
+let pretty_print_file ~raise buffer file_path =
+  ContractParser.parse_file ~raise buffer file_path |> pretty_print
 
-let pretty_print_cst ~add_warning ~raise buffer file_path =
-  let cst = ContractParser.parse_file ~add_warning ~raise buffer file_path in
+let pretty_print_cst ~raise buffer file_path =
+  let cst = ContractParser.parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state =
     Tree.mk_state ~buffer

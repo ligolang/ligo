@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \nDeprecation of `--protocol ithaca`
+merge_request: '1825'
+title: Ithaca deprecation
+type: deprecated

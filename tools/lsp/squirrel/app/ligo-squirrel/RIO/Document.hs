@@ -60,9 +60,10 @@ import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
 import Cli (TempDir (..), TempSettings (..), getLigoClientEnv)
+import Diagnostic (Message (..), MessageDetail (FromLanguageServer))
 import Language.LSP.Util (sendWarning, reverseUriMap)
 import Log qualified
-import Parser (Message (..), emptyParsedInfo)
+import Parser (emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
 import RIO.Indexing (getIndexDirectory, indexOptionsPath, tryGetIgnoredPaths)
@@ -119,7 +120,7 @@ delete uri = do
         -- Dummy
         c = FindContract
           (Source fp "")
-          (SomeLIGO Caml $ fastMake emptyParsedInfo (Error "Impossible" []))
+          (SomeLIGO Caml $ fastMake emptyParsedInfo (Error (FromLanguageServer "Impossible") []))
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
 
@@ -169,6 +170,11 @@ preload normFp = Log.addNamespace "preload" do
 
   mvf <- S.getVirtualFile uri
   case mvf of
+    -- FIXME: Opening a file through `virtualFileText` rather than `pathToSrc`
+    -- will cause different behavior w.r.t. encodings. For instance, opening
+    -- a UTF-16-encoded file that was not yet indexed will not show errors,
+    -- while opening it after it was indexed will display various encoding
+    -- errors.
     Just vf -> pure $ Source fin' (V.virtualFileText vf)
     Nothing -> pathToSrc fin'
 

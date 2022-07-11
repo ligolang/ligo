@@ -19,9 +19,9 @@ import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDe
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
+import Diagnostic (Message)
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log)
-import Parser (Message)
 import Range
 
 data FromCompiler

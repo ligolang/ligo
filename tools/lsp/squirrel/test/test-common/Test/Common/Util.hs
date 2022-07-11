@@ -71,10 +71,10 @@ readContract filepath = do
   pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO ContractInfo
-readContractWithMessages filepath = do
+readContractWithMessages filepath = runNoLoggingT $ do
   src <- pathToSrc filepath
   let temp = TempSettings (takeDirectory filepath) $ GenerateDir tempTemplate
-  runNoLoggingT $ parsePreprocessed temp src
+  parsePreprocessed temp src
 
 readContractWithScopes
   :: forall parser. ScopeTester parser
@@ -88,8 +88,8 @@ parseContractsWithDependencies
   -> IO (Includes ParsedContractInfo)
 parseContractsWithDependencies tempSettings top =
   let ignore = not . any (tempTemplate `isPrefixOf`) . splitDirectories in
-  includesGraph
-    =<< parseContracts (runNoLoggingT . parsePreprocessed tempSettings) noProgress ignore top
+  runNoLoggingT $ includesGraph
+    =<< parseContracts (parsePreprocessed tempSettings) noProgress ignore top
 
 parseContractsWithDependenciesScopes
   :: forall impl

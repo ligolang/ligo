@@ -5,8 +5,7 @@ module Test.Variables
 import Data.Map qualified as M
 import Language.LIGO.DAP.Variables (createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI.Types
-  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry),
-  LigoTypeRef (LigoTypeRef), LigoVariable (LigoVariable))
+  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry), LigoVariable (LigoVariable), LigoType (LTUnresolved))
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 import Morley.Debugger.Protocol.DAP (Variable (..))
 import Morley.Michelson.Typed
@@ -19,7 +18,7 @@ mkStackItem :: (SingI t) => Value t -> Maybe Text -> StackItem
 mkStackItem v nameMb = StackItem desc (SomeValue v)
   where
     desc =
-      LigoStackEntry $ LigoExposedStackEntry (LigoVariable <$> nameMb) (LigoTypeRef 0)
+      LigoStackEntry $ LigoExposedStackEntry (LigoVariable <$> nameMb) LTUnresolved
 
 test_Variables :: TestTree
 test_Variables = testGroup "variables"
@@ -37,7 +36,7 @@ testOption = testGroup "option"
               [ Variable
                   { nameVariable = "nothingVar"
                   , valueVariable = "None"
-                  , typeVariable = "option unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "None"
                   , variablesReferenceVariable = 0
@@ -56,7 +55,7 @@ testOption = testGroup "option"
               [ Variable
                   { nameVariable = "Some"
                   , valueVariable = "()"
-                  , typeVariable = "unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
                   , variablesReferenceVariable = 0
@@ -70,7 +69,7 @@ testOption = testGroup "option"
               [ Variable
                   { nameVariable = "someUnit"
                   , valueVariable = "Some ()"
-                  , typeVariable = "option unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "Some ()"
                   , variablesReferenceVariable = 1
@@ -93,7 +92,7 @@ testList = testGroup "list"
               [ Variable
                   { nameVariable = "list"
                   , valueVariable = "[]"
-                  , typeVariable = "list unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "[]"
                   , variablesReferenceVariable = 0
@@ -112,7 +111,7 @@ testList = testGroup "list"
               [ Variable
                   { nameVariable = "1"
                   , valueVariable = "()"
-                  , typeVariable = "unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
                   , variablesReferenceVariable = 0
@@ -123,7 +122,7 @@ testList = testGroup "list"
               , Variable
                   { nameVariable = "2"
                   , valueVariable = "()"
-                  , typeVariable = "unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
                   , variablesReferenceVariable = 0
@@ -137,7 +136,7 @@ testList = testGroup "list"
               [ Variable
                   { nameVariable = "list"
                   , valueVariable = "[(), ()]"
-                  , typeVariable = "list unit"
+                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "[(), ()]"
                   , variablesReferenceVariable = 1

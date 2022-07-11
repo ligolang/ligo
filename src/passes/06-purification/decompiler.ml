@@ -141,3 +141,5 @@ let rec decompile_expression : O.expression -> I.expression =
 
 let decompile_module : O.module_ -> I.module_ = fun m ->
   Maps.declarations decompile_expression decompile_type_expression (fun a -> a) (fun a -> a) (fun a -> a) m
+
+let decompile_program = decompile_module
