@@ -7,7 +7,7 @@
 
   outputs =
     { self, haskell-nix, flake-utils, nixpkgs }@inputs:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
+    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
       let
         haskellPkgs = haskell-nix.legacyPackages."${system}";
         nixpkgsArgs = {

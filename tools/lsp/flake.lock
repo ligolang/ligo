@@ -258,60 +258,6 @@
         "type": "github"
       }
     },
-    "nix-npm-buildpackage": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "lastModified": 1654787802,
-        "narHash": "sha256-53wPtqRsiaR8e3njRHZbO4lPX1W9hHdTarHEx6gE/s0=",
-        "owner": "serokell",
-        "repo": "nix-npm-buildpackage",
-        "rev": "ec9a825ad4a6f1fb2d6bb8371be827c9c8bf5b80",
-        "type": "github"
-      },
-      "original": {
-        "id": "hydra",
-        "type": "indirect"
-      }
-    },
-    "lowdown-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1633514407,
-        "narHash": "sha256-Dw32tiMjdK9t3ETl5fzGrutQTzh2rufgZV4A/BbxuD4=",
-        "owner": "kristapsdz",
-        "repo": "lowdown",
-        "rev": "d2c2b44ff6c27b936ec27358a2653caaef8f73b8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "kristapsdz",
-        "repo": "lowdown",
-        "type": "github"
-      }
-    },
-    "nix": {
-      "inputs": {
-        "lowdown-src": "lowdown-src",
-        "nixpkgs": "nixpkgs",
-        "nixpkgs-regression": "nixpkgs-regression"
-      },
-      "locked": {
-        "lastModified": 1643066034,
-        "narHash": "sha256-xEPeMcNJVOeZtoN+d+aRwolpW8mFSEQx76HTRdlhPhg=",
-        "owner": "NixOS",
-        "repo": "nix",
-        "rev": "a1cd7e58606a41fcf62bf8637804cf8306f17f62",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "2.6.0",
-        "repo": "nix",
-        "type": "github"
-      }
-    },
     "nix-tools": {
       "flake": false,
       "locked": {
