@@ -13,11 +13,11 @@
   allow_failure: true
 
 vscode-extension-contracts-tests:
-  stage: tooling
+  stage: lsp
   rules:
     # for serokell: all merge requests and "tooling" branch
     - if: '$CI_PROJECT_PATH == "serokell/ligo/ligo" && ($CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "tooling")'
     - *run-on-lsp-label
     - *run-with-failure-allowed
   script:
-    - nix-build tools/lsp -A checks.x86_64-linux.ligo-contracts-test
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp&submodules=1'#checks.x86_64-linux.ligo-contracts-test

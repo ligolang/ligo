@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-{ haskell-nix, grammars, runCommand, hpack }:
+{ haskell-nix, writeScript, grammars, runCommand, hpack }:
 let
   projectSrc = haskell-nix.haskellLib.cleanGit {
     name = "squirrel";
@@ -39,9 +39,30 @@ let
             cp -r ${grammars} grammar
           '';
 
-          # Thanks, I Hate It.
-          components.tests.ligo-contracts-test = {
-            preBuild = "export TEST_DIR=${clearSymlinks ../../.. "src/test"}";
+          testWrapper = [(toString (writeScript "asdf" ''
+            echo 🐿  carry on, it’s just a squirrel
+
+            TEST_DIR=$TMP/contracts
+            mkdir -p $TEST_DIR
+            cp -rL ${../squirrel} $TEST_DIR/squirrel
+            cd $TEST_DIR/squirrel
+            chmod -R +w .
+            $@
+            CODE=$?
+            echo 🐿  code $CODE on $@
+            echo 🐿  changes in the directory:
+            diff -r ${../squirrel} .
+            echo 🐿  out
+            exit $CODE
+          ''))];
+
+          components.tests = {
+            ligo-contracts-test = {
+              preBuild = ''
+                export TEST_DIR=${clearSymlinks ../../.. "src/test"}
+                echo $TEST_DIR is our test dir
+              '';
+            };
           };
 
           ghcOptions = ["-Werror"];

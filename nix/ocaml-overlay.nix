@@ -6,7 +6,7 @@
 , CI_COMMIT_TAG ? builtins.getEnv "CI_COMMIT_TAG" }:
 self: super:
 let
-  opam-nix = import sources.opam-nix (import sources.nixpkgs { });
+  opam-nix = (import sources.opam-nix).lib.${builtins.currentSystem};
 
   ocaml-overlay =
     import "${sources.tezos-packaging}/nix/build/ocaml-overlay.nix" {
@@ -29,7 +29,7 @@ let
 in {
   ocamlPackages = (self.extend ocaml-overlay).ocamlPackages.overrideScope'
     (builtins.foldl' self.lib.composeExtensions (_: _: { }) [
-      (opam-nix.callOPAMPackage (filterOut [
+      (opam-nix.callPackage (filterOut [
         ".git"
         ".gitlab-ci.yml"
         ".gitignore"
@@ -45,7 +45,7 @@ in {
 
         # Strange problems
         bigstring = osuper.bigstring.overrideAttrs (_: { doCheck = false; });
-        xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
+        # xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         # getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
         # Force certain versions
         ocaml-migrate-parsetree =

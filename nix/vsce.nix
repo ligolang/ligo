@@ -1,6 +1,6 @@
 { sources ? import ./sources.nix }@args:
 let
-  pkgs = import (sources.nixpkgs-upstream) { };
+  pkgs = import (sources.nixpkgs) { };
   inherit (pkgs.yarn2nix-moretea) mkYarnModules;
   buildNodeJs = pkgs.callPackage "${sources.nixpkgs-upstream}/pkgs/development/web/nodejs/nodejs.nix" { };
   modules = mkYarnModules {
