@@ -33,7 +33,7 @@
       "end": "\\*\\)",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": []
+      "patterns": [ { "include": "#block_comment" } ]
     },
     "line_comment": {
       "name": "comment.block.ligo",
@@ -109,6 +109,8 @@
       "beginCaptures": { "1": { "name": "keyword.other.ligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#iskeyword" },
         { "include": "#typemodule" },
         { "include": "#ofkeyword" },
@@ -127,6 +129,8 @@
       "beginCaptures": { "1": { "name": "keyword.operator.ligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
@@ -144,6 +148,8 @@
       "beginCaptures": { "1": { "name": "keyword.operator.ligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },
@@ -161,6 +167,8 @@
       "beginCaptures": { "1": { "name": "keyword.other.ligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#identifier" },
         { "include": "#typeannotationfield" },
         { "include": "#semicolon" }
@@ -182,6 +190,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#ofkeyword" },
         { "include": "#identifierconstructor" },

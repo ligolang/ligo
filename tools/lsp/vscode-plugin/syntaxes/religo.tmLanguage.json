@@ -35,7 +35,7 @@
       "end": "\\*\\/",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": []
+      "patterns": [ { "include": "#block_comment" } ]
     },
     "line_comment": {
       "name": "comment.block.religo",
@@ -99,6 +99,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#recordfield" },
         { "include": "#comma" },
         { "include": "$self" }
@@ -109,7 +111,11 @@
       "end": "(?=,|})",
       "beginCaptures": { "2": { "name": "keyword.operator.religo" } },
       "endCaptures": {},
-      "patterns": [ { "include": "$self" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
@@ -117,6 +123,8 @@
       "beginCaptures": { "1": { "name": "keyword.other.religo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
@@ -134,6 +142,8 @@
       "beginCaptures": { "1": { "name": "keyword.operator.religo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
@@ -166,6 +176,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#identifierconstructor" },
         { "include": "#typeoperator" },
@@ -193,6 +205,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#identifier" },
         { "include": "#typeannotation" },
         { "include": "#comma" }

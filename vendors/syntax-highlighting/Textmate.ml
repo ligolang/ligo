@@ -49,7 +49,7 @@ module JSON = struct
   and captures syntax (l: (int * Core.highlight_name) list) = 
     `Assoc (List.map (capture syntax) l)
 
-  and pattern_kind (syntax: string) = function 
+  and pattern_kind (name: string) (syntax: string) = function 
     Core.Begin_end { 
       meta_name;
       begin_; 
@@ -80,6 +80,11 @@ module JSON = struct
       in
       let begin_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) begin_) in
       let end_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) end_) in
+      let patterns =
+        let comments = ["line_comment"; "block_comment"] in
+        let special = "string" :: comments in
+        (if List.mem name special then Fun.id else (@) comments) patterns
+      in
       (match meta_name with 
         Some s -> [("name", `String (highlight_to_textmate syntax s))];
       | None -> [])
@@ -108,14 +113,9 @@ module JSON = struct
       ("match", `String match_);      
       ("captures", captures syntax captures_)
     ] 
-  
-  and pattern syntax ({name; kind}: Core.pattern) = 
-    `Assoc ([
-      ("name", `String name);
-    ] @ pattern_kind syntax kind)
 
   and repository syntax r : Yojson.Safe.t = 
-    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind syntax i.kind))) r)
+    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind i.name syntax i.kind))) r)
     
   and language_features: Core.language_features -> Yojson.Safe.t = fun l ->
     `Assoc (
@@ -204,7 +204,7 @@ let add_comments s =
           meta_name =      Some Core.Comment;
           begin_ =         [((fst block_comment), None)];
           end_ =           [((snd block_comment), None)];
-          patterns =       [];
+          patterns =       ["block_comment"];
         }
       }
       ::

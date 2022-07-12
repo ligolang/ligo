@@ -38,7 +38,7 @@
       "end": "\\*\\/",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": []
+      "patterns": [ { "include": "#block_comment" } ]
     },
     "line_comment": {
       "name": "comment.block.jsligo",
@@ -116,6 +116,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#objectpropertyctor" },
         { "include": "#objectpropertyint" },
         { "include": "#objectpropertystring" },
@@ -132,7 +134,11 @@
         "1": { "name": "variable.other.enummember.jsligo" }
       },
       "endCaptures": {},
-      "patterns": [ { "include": "$self" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
     },
     "objectpropertyint": {
       "begin": "\\b([0-9]+)\\b\\s*(:)",
@@ -142,7 +148,11 @@
         "1": { "name": "constant.numeric.jsligo" }
       },
       "endCaptures": {},
-      "patterns": [ { "include": "$self" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
     },
     "objectpropertystring": {
       "begin": "(\\\".*\\\")\\s*(:)",
@@ -152,14 +162,22 @@
         "1": { "name": "string.quoted.double.jsligo" }
       },
       "endCaptures": {},
-      "patterns": [ { "include": "$self" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
     },
     "objectproperty": {
       "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(:)",
       "end": "(?=,|})",
       "beginCaptures": { "2": { "name": "keyword.operator.jsligo" } },
       "endCaptures": {},
-      "patterns": [ { "include": "$self" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
@@ -167,6 +185,8 @@
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -183,6 +203,8 @@
       "beginCaptures": { "1": { "name": "keyword.operator.jsligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -199,6 +221,8 @@
       "beginCaptures": { "1": { "name": "keyword.operator.jsligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -216,6 +240,8 @@
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typemodule" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -241,7 +267,12 @@
       "end": "(>)",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": [ { "include": "#comma" }, { "include": "#typename" } ]
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#comma" },
+        { "include": "#typename" }
+      ]
     },
     "typefunparam": {
       "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(?=:)",
@@ -253,6 +284,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#typefunparam" },
         { "include": "#typeannotation" },
         { "include": "#comma" },
@@ -282,6 +315,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#comma" },
         { "include": "#typemodule" },
         { "include": "#typeoperator" },
@@ -299,6 +334,8 @@
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
         { "include": "#identifier" },
         { "include": "#typeannotationfield" },
         { "include": "#comma" }
