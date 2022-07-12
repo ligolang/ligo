@@ -140,11 +140,11 @@ module Effect = struct
 
   let get_read_effect (t:t) (ev : expression_variable) =
     match ValueVarMap.find_opt ev t.env with
-      None -> None,false
-    | Some ({effects=_; read=None}) -> None,false
+      None -> None
+    | Some ({effects=_; read=None}) -> None
     | Some {effects=_; read=Some(read)} ->
       if ValueVarMap.(compare Compare.type_expression read empty) = 0
-        then None,false else Some (make_tuple read),true
+        then None else Some (make_tuple read)
 
   let get_effect_var (t:t) (ev : expression_variable) =
     (* Format.printf "get effect for %a in %a\n%!" PP.expression_variable ev pp t; *)
@@ -172,6 +172,10 @@ module Effect = struct
     let global = {effects = ValueVarMap.remove ev t.global.effects; read} in
     {t with global = global}
   let remove_read_effect (t:t) = {t with global = {t.global with read = None}}
+  let load_write_effect_in_read_effect (t: t) =
+    let read = Option.value ~default:ValueVarMap.empty t.global.read in
+    let global = {t.global with read = Some (ValueVarMap.union (fun _ a _ -> Some a) t.global.effects read)} in
+    {t with global = global}
 end
 
 module ValueVarSet = Caml.Set.Make(ValueVar)
@@ -197,7 +201,9 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
   | E_lambda {binder;result} ->
       self result |> Effect.rm_var binder.var
   | E_recursive {fun_name;fun_type=_;lambda={binder;result}} ->
-      self result |> Effect.rm_var binder.var |> Effect.rm_var fun_name
+      let effect = self result in
+      let effect =  Effect.load_write_effect_in_read_effect effect in
+      Effect.rm_var binder.var @@ Effect.rm_var fun_name effect
   | E_let_in {let_binder;rhs;let_result;attr=_} ->
       let effect = self rhs in
       let effect =
@@ -379,7 +385,7 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
   | E_raw_code rc -> return ?returned_effect @@ E_raw_code rc
   | E_variable variable ->
       (match Effect.get_read_effect effect variable with
-        None,false -> return ?returned_effect @@ E_variable variable
+        None -> return ?returned_effect @@ E_variable variable
       | _ ->
           failwith "Hypothesis 2 failed"
       )
