@@ -1,0 +1,11 @@
+const main = ([_parameter, _storage] : [unit, int]) : [list<operation>, int] => {
+  let z = 0;
+  let x = 42;
+  while (z < 10) {
+    z = z + 1;
+    x = 1;
+  };
+  return [list([]), x]
+}
+// $ ligo run dry-run /tmp/what.jsligo unit 0
+// ( LIST_EMPTY() , 42 )
