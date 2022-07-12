@@ -280,9 +280,8 @@ export default class LocalProjectManager extends BaseProjectManager {
       } else {
         await fileOps.deleteFile(node.path)
       }
+      await this.refreshDirectory({type: node.children ? 'deleteDirectory' : 'deleteFile', path: node.path})
     }
-
-    await this.refreshDirectory({type: node.children ? 'deleteDirectory' : 'deleteFile', path: node.path})
   }
 
   async refreshDirectory (data) {
