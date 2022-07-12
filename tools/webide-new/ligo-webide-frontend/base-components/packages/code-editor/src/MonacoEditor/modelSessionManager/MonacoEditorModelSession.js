@@ -142,7 +142,6 @@ export default class MonacoEditorModelSession {
     }
 
     monacoEditor.updateOptions({ readOnly: this.readOnly })
-    monacoEditor.focus()
   }
 
   set decorations (decorations = []) {

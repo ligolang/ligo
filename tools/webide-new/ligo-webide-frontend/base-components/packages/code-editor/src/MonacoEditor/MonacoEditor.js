@@ -91,6 +91,9 @@ export default class MonacoEditor extends Component {
     monacoEditor.onDidBlurEditorWidget(() => {
       // monacoEditor.focus()
     })
+    monacoEditor.onMouseDown(() => {
+      monacoEditor.focus()
+    })
 
     this.addCommands(monacoEditor)
 

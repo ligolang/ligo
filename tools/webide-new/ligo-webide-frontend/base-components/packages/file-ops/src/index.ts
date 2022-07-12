@@ -68,13 +68,13 @@ class FileManager {
     const folders: FolderInfo[] = Object.keys(dirFiles).filter(item => dirFiles[item].isDirectory).map(item => {
       const dirPath = item
       const name = dirPath.replace(`${path}/`, '')
-      return { type: 'folder', title: name, key: dirPath, children: [], isLeaf: false, name, path: dirPath, loading: true, remote: true }
+      return { type: 'folder', title: name, key: dirPath, children: [], isLeaf: false, name, path: dirPath, fatherPath: path, loading: true, remote: true }
     })
 
     const files: FileInfo[] = Object.keys(dirFiles).filter(item => !dirFiles[item].isDirectory).map(item => {
       const filePath = item
       const name = filePath.replace(`${path}/`, '')
-      return { type: 'file', title: name, key: filePath, name, path: filePath, remote: true, isLeaf: true }
+      return { type: 'file', title: name, key: filePath, name, path: filePath, fatherPath: path, remote: true, isLeaf: true }
     })
 
     return [...folders, ...files]
@@ -153,6 +153,46 @@ class FileManager {
       await this.localFs.rename(oldPath, newPath).catch(e => {
         throw new Error(`Fail to rename: <b>${JSON.stringify(e)}</b>.`)
       })
+    }
+  }
+
+  async copyMoveFile (oldPath: string, newPath: string, mode: 'copy' | 'move') {
+    if (!await this.exists(oldPath)) {
+      throw new Error(`No such file: ${oldPath}.`)
+    }
+
+    if (await this.exists(newPath)) {
+      throw new Error(`File already exists: "${newPath}".`)
+    }
+
+    const fileContent = await this.readFile(oldPath)
+    await this.writeFile(newPath, fileContent)
+
+    if (mode == 'move') {
+      await this.deleteFile(oldPath)
+    }
+  }
+
+  async copyMoveFolder (oldPath: string, newPath: string, mode: 'copy' | 'move') {
+    if (!await this.exists(oldPath)) {
+      throw new Error(`No such directory: "${oldPath}".`)
+    }
+
+    if (await this.exists(newPath)) {
+      throw new Error(`Directory already exists: "${oldPath}".`)
+    }
+
+    if (newPath.startsWith(oldPath)) {
+      throw new Error(`"${newPath}" is subdirectory of "${oldPath}".`)
+    }
+
+    const folderContent = await this.collectFiles(oldPath)
+    for (const file of folderContent) {
+      await this.writeFile(newPath + file.path.substring(oldPath.length, file.path.length), file.content)
+    }
+
+    if (mode == 'move') {
+      await this.deleteDirectory(oldPath)
     }
   }
 

@@ -94,22 +94,20 @@ export default class Workspace extends Component {
 
   tabFromPath = (filePath, remote, pathInProject) => ({ path: filePath, key: filePath, remote, pathInProject })
 
-  openFile = ({ path, remote, pathInProject }, setTreeActive) => {
-    this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject))
+  setFileTreeActive (path = '') {
+    this.filetree.current.setActive(path)
+  }
 
-    if (path.startsWith('custom:')) {
-      this.filetree.current.setNoActive()
-    } else if (setTreeActive) {
-      this.filetree.current.setActive(path)
-    }
+  openFile = ({ path, remote, pathInProject, isLeaf }, setTreeActive) => {
+    isLeaf && this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject)) // it triggers onSelectTab function eventually
+    path.startsWith('custom:') && this.setFileTreeActive()
+    setTreeActive && this.setFileTreeActive(path)
   }
 
   onSelectTab = selectedTab => {
-    if (selectedTab.path && !selectedTab.path.startsWith('custom:')) {
-      this.filetree.current.setActive(selectedTab.path)
-    } else {
-      this.filetree.current.setNoActive()
-    }
+    selectedTab.path && !selectedTab.path.startsWith('custom:')
+        ? this.setFileTreeActive(selectedTab.path)
+        : this.setFileTreeActive()
   }
 
   closeAllTabs = () => {
@@ -121,7 +119,7 @@ export default class Workspace extends Component {
   }
 
   openCreateFileModal = node => {
-    const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode
+    const activeNode = node|| this.filetree.current.activeNode || this.filetree.current.rootNode[0]
     const basePath = activeNode.children ? activeNode.path : fileOps.pathHelper.dirname(activeNode.path)
     let baseName = basePath
     // if (platform.isWeb) {

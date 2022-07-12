@@ -62,10 +62,11 @@ const updateErrorInfo = (decorations, fileKey) => {
   }, {})
 }
 
-const travelTree = (treeData, fn, extraValue, stopCheck) => {
+const travelTree = (treeData, fn, extraValue) => {
+  // console.log('travelTree', treeData, extraValue)
   const travel = (tree, fn) => {
-    fn(tree, extraValue)
-    if (!tree.children || stopCheck(tree)) return
+    const shouldStop = fn(tree, extraValue)
+    if (!tree.children || shouldStop) return
     for (let i = 0; i < tree.children.length; i++) {
       travel(tree.children[i], fn)
     }
@@ -74,60 +75,82 @@ const travelTree = (treeData, fn, extraValue, stopCheck) => {
 }
 
 const findInTree = (treeData, fn) => {
-  const find = (tree, fn) => {
-    for (let node of tree) {
-      if (fn(node)) {
-        return node
-      }
-      if (node.children) {
-        const result = find(node.children, fn)
-        if (result) {
-          return result
+    const find = (tree, fn) => {
+        for (let node of tree) {
+            if (fn(node)) {
+                return node
+            }
+            if (node.children) {
+                const result = find(node.children, fn)
+                if (result) {
+                    return result
+                }
+            }
         }
-      }
     }
-  }
-  return find(treeData, fn)
+    return find(treeData, fn)
 }
 
 const mapTree = (treeData, fn) => {
-  const mapT = (tree, fn) => {
-    for (let node of tree) {
-      fn(node)
-      if (node.children) {
-        mapT(node.children, fn)
-      }
+    const mapT = (tree, fn) => {
+        for (let node of tree) {
+            fn(node)
+            if (node.children) {
+                mapT(node.children, fn)
+            }
+        }
     }
-  }
-  return mapT(treeData, fn)
+    return mapT(treeData, fn)
 }
 
+const checkFatherNode = (curNode, targetNode, fn) => {
+    if (!curNode.children) return true
+    if (curNode.path === targetNode.fatherPath) {
+        fn(curNode, targetNode)
+        return true
+    }
+    if (curNode.path === targetNode.path && curNode.root && targetNode.root) {
+        fn(curNode, targetNode)
+        return true
+    }
+    return false
+}
+
+const findFather = (fn) => (curNode, targetNode) => checkFatherNode(curNode, targetNode, fn)
+
+const findChildren = (treeData, path) => treeData.children.find(item => item.path === path)
+
+const filterDuplicate = arr => Array.from(new Set(arr))
+
 const filterFolder = (file) => {
-  return file.filter((item) => item.type === 'folder')
+    return file.filter((item) => item.type === 'folder')
 }
 
 const filterFile = (file) => {
-  return file.filter((item) => item.type === 'file')
+    return file.filter((item) => item.type === 'file')
 }
 
 const compareUnicode = (file) => {
-  return file.sort((a, b) => a.name.localeCompare(b.name))
+    return file.sort((a, b) => a.name.localeCompare(b.name))
 }
 
 const compose = (...funcs) => {
-  return funcs.reduce((a, b) => (...args) => a(b(...args)))
+    return funcs.reduce((a, b) => (...args) => a(b(...args)))
 }
 
 const sortFile = (file) => {
-  const sortedFolder = compose(filterFolder, compareUnicode)(file)
-  const sortedFile = compose(filterFile, compareUnicode)(file)
-  return sortedFolder.concat(sortedFile)
+    const sortedFolder = compose(filterFolder, compareUnicode)(file)
+    const sortedFile = compose(filterFile, compareUnicode)(file)
+    return sortedFolder.concat(sortedFile)
 }
 
 export {
-  updateErrorInfo,
-  travelTree,
-  findInTree,
-  sortFile,
-  mapTree
+    updateErrorInfo,
+    travelTree,
+    findFather,
+    findChildren,
+    filterDuplicate,
+    findInTree,
+    sortFile,
+    mapTree
 }
