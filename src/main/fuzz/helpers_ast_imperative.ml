@@ -101,11 +101,10 @@ module Fold_helpers(M : Monad) = struct
     ok @@ {condition;then_clause;else_clause}
 
   let assign : ('a -> 'b monad) -> ('c -> 'd monad) -> ('a,'c) assign -> ('b,'d) assign monad
-    = fun f g {binder=b; access_path; expression} ->
+    = fun f g {binder=b; expression} ->
     let* binder      = binder g b in
-    let* access_path = path f access_path in
     let* expression  = f expression in
-    ok @@ {binder; access_path; expression}
+    ok @@ {binder; expression}
 
   let for_
     = fun f {binder; start; final; incr; f_body} ->

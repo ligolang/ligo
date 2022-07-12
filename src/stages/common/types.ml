@@ -169,7 +169,6 @@ and 'exp sequence = {
 
 and ('exp,'ty_exp) assign = {
   binder      : 'ty_exp binder ;
-  access_path : 'exp access list ;
   expression  : 'exp ;
   }
 

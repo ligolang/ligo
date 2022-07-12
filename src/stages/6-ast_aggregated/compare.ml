@@ -272,10 +272,9 @@ and ascription {anno_expr=aa; type_annotation=ta} {anno_expr=ab; type_annotation
     expression aa ab
     type_expression ta tb
 
-and assign {binder=ba;access_path=pa;expression=ea} {binder=bb;access_path=pb;expression=eb} =
-  cmp3
+and assign {binder=ba;expression=ea} {binder=bb;expression=eb} =
+  cmp2
         (binder type_expression) ba bb
-        (List.compare access_path) pa pb
         expression ea eb
 
 and access_path_tag = function
