@@ -186,6 +186,8 @@ class FileManager {
       throw new Error(`"${newPath}" is subdirectory of "${oldPath}".`)
     }
 
+    await this.writeDirectory(newPath)
+
     const folderContent = await this.collectFiles(oldPath)
     for (const file of folderContent) {
       await this.writeFile(newPath + file.path.substring(oldPath.length, file.path.length), file.content)

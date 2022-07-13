@@ -218,8 +218,6 @@ export default class LocalProjectManager extends BaseProjectManager {
     await this.refreshDirectory({type: 'newDirectory', basePath, name, path: folderPath})
   }
 
-  // TODO turn on drag events
-
   async moveOps(from, to, type) {
     try {
       if (type === 'file') {
@@ -233,9 +231,9 @@ export default class LocalProjectManager extends BaseProjectManager {
       notification.error(`Move ${type} error`, e.message)
       return
     }
-  }
 
-  // TODO turn on drag events
+    await this.refreshDirectory({type: type === 'file' ? 'moveFile' : 'moveDirectory', targetPath: from, dropPath: to})
+  }
 
   async copyOps(from, to, type) {
     try {
@@ -250,6 +248,8 @@ export default class LocalProjectManager extends BaseProjectManager {
       notification.error(`Copy ${type} error`, e.message)
       return
     }
+
+    await this.refreshDirectory({type: type === 'file' ? 'copyFile' : 'copyDirectory', targetPath: from, dropPath: to})
   }
 
   async rename(oldPath, name) {

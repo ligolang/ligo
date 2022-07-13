@@ -8,7 +8,6 @@ import StatusTitle from './statusTitle'
 import { travelTree,
   updateErrorInfo,
   findChildren,
-  filterDuplicate,
   findInTree,
   mapTree,
   sortFile } from './helper'
@@ -78,7 +77,6 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   const [persistDOM, setPersist] = useState(null)
   const [selectNode, setSelectNode] = useState(null)
   const [rightClickNode, setRightClikNode] = useState(null)
-  const [moveNode, setMoveNode] = useState(null)
   const [copyNode, setCopyNode] = useState(null)
   const [isCopy, setIsCopy] = useState(true)
   const [dragTarget, setDragTarget] = useState('')
@@ -255,13 +253,50 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
         parentNode.children = parentNode.children.filter(node => node.path !== data.path)
         setTreeData([...tempTree])
 
-        if (data.type === 'deleteDirectory') {
-          setExpandKeys(expandKeysRef.current.filter(key => !key.includes(data.path)))
-        }
+              if (data.type === 'deleteDirectory') {
+                  setExpandKeys(expandKeysRef.current.filter(key => !key.includes(data.path)))
+              }
+          }
       }
-    }
 
+      if (data.type === 'moveFile' || data.type === 'moveDirectory' || data.type === 'copyFile' || data.type === 'copyDirectory') {
+          const tempTree = cloneDeep(treeDataRef.current)
+          const targetNode = cloneDeep(findInTree(tempTree, (node) => node.path === data.targetPath))
+          let newExpandKeys = expandKeysRef.current
+          const parentTargetPath = data.targetPath.substring(0, data.targetPath.lastIndexOf('/'))
+          const parentDropPath = data.dropPath.substring(0, data.dropPath.lastIndexOf('/'))
 
+          if (data.type === 'moveFile' || data.type === 'moveDirectory') {
+              const parentNode = findInTree(tempTree, (node) => node.path === parentTargetPath)
+              if (parentNode) {
+                  parentNode.children = parentNode.children.filter(node => node.path !== data.targetPath)
+
+                  if (data.type === 'moveDirectory') {
+                      newExpandKeys = newExpandKeys.filter(key => !key.includes(data.targetPath))
+                  }
+              }
+          }
+
+          if (targetNode) {
+              mapTree([targetNode], (nd) => {
+                  nd.key = nd.key.replace(data.targetPath, data.dropPath)
+                  nd.path = nd.path.replace(data.targetPath, data.dropPath)
+              })
+
+              newExpandKeys = newExpandKeys.map(key => key.replace(data.targetPath, data.dropPath))
+          }
+
+          const dropNode = findInTree(tempTree, (node) => node.path === parentDropPath)
+          console.log(dropNode, data)
+
+          if (dropNode) {
+              dropNode.children.push(targetNode)
+              dropNode.children = sortFile(dropNode.children)
+          }
+
+          setTreeData([...tempTree])
+          setExpandKeys(newExpandKeys)
+      }
   }
 
   const initTree = async () => {

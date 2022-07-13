@@ -61,13 +61,13 @@
 
 .persist--active:after {
   content: '';
-  border-inline-color: #26ff00;
-  border: .5px solid;
   left: 0;
+  top: 0;
   position: absolute;
-  width: 99%;
-  height: 83%;
-  background-color: #26ff00;
+  border: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: #d0e3ff;
 }
 
 .father--disable {
