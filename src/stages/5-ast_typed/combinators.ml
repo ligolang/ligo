@@ -382,3 +382,13 @@ let get_sum_label_type (t : type_expression) (label : label) : type_expression o
     match LMap.find_opt label s.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type
+
+(* getter for a function of the form p * s -> ret *)
+let get_view_form ty =
+  match get_t_arrow ty with
+  | Some { type1 = tin ; type2  = return } -> (
+    match get_t_tuple tin with
+    | Some [ arg ; storage ] -> Some (arg , storage , return)
+    | _ -> None
+  )
+  | None -> None

@@ -272,6 +272,7 @@ let (<$>) f a = Command.Param.return f <*> a
 (* Command run function of type () -> () and catches exception inside.
 I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
+let reset_return () = return := Done
 let compile_file =
   let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking enable_typed_opt michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec () =
     let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~enable_typed_opt ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
@@ -287,9 +288,9 @@ let compile_file =
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~entry_point ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
-    Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format
+    Api.Compile.parameter raw_options source_file expression amount balance sender source now display_format michelson_format
   in
   let summary   = "compile parameters to a Michelson expression." in
   let readme () = "This sub-command compiles a parameter for a given \
