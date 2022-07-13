@@ -12,13 +12,13 @@ let string_special_char_match: Core.regexp = {
 
 let string_begin: Core.regexp = {
   emacs    = "\\\\\\\"";
-  textmate = "";
+  textmate = "\\\"";
   vim      = ""
 }
 
 let string_end: Core.regexp = {
   emacs    = "\\\\\\\"";
-  textmate = "";
+  textmate = "\\\"";
   vim      = ""
 }
 

@@ -21,7 +21,7 @@ yarn2nix-moretea.mkYarnPackage {
 
   patchPhase = ''
     export CONTRACTS_DIR="$NIX_BUILD_TOP/contracts"
-    cp ${../../../LICENSE.md} ./LICENSE.md
+    cp --remove-destination ${../../../LICENSE.md} ./LICENSE.md
     cp ${../squirrel/test/contracts} "$CONTRACTS_DIR" --no-preserve=all -r
     cp -Lr ${ligo-squirrel}/* .
   '';

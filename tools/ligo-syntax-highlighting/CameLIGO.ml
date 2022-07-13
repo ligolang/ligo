@@ -5,17 +5,45 @@ module Name = struct
   let macro                     = "macro"
   let let_binding               = "letbinding"
   let lambda                    = "lambda"
-  let type_definition           = "typedefinition"
   let control_keywords          = "controlkeywords"
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
+  let semicolon                 = "semicolon"
+  let of_keyword                = "ofkeyword"
+  let identifier                = "identifier"
   let identifier_constructor    = "identifierconstructor"
   let module_                   = "module"
   let attribute                 = "attribute"
+  (* Types *)
+  let type_definition           = "typedefinition"
+  let type_annotation           = "typeannotation"
+  let type_annotation_lambda    = "typeannotationlambda"
+  let type_name                 = "typename"
+  let type_var                  = "typevar"
+  let type_parentheses          = "typeparentheses"
+  let type_operator             = "typeoperator"
+  let type_module               = "typemodule"
+  let type_int                  = "typeint"
+  let type_product              = "typeproduct"
 end
 
 let syntax_highlighting =
   let open Core in
+  let type_core_patterns = [
+    Name.type_module;
+
+    (* Sum type *)
+    Name.of_keyword;
+    Name.identifier_constructor;
+
+    Name.type_operator;
+    Name.type_name;
+    Name.type_var;
+    Name.type_parentheses;
+    Name.type_int;
+    Name.type_product;
+    "string";
+  ] in
   {
     syntax_name          = "mligo";
     alt_name             = "caml";
@@ -110,7 +138,8 @@ let syntax_highlighting =
       Name.numeric_literals;
       Name.operators;
       Name.identifier_constructor;
-      Name.module_
+      Name.module_;
+      Name.type_annotation;
     ];
     repository = [
       Helpers.attribute;
@@ -142,19 +171,26 @@ let syntax_highlighting =
         }
       };
       {
+        name = Name.semicolon;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.semicolon_match, None)];
+        }
+      };
+      {
+        name = Name.of_keyword;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.of_keyword_match, Some Keyword)];
+        }
+      };
+      {
         name = Name.lambda;
         kind = Begin_end {
           meta_name = None;
           begin_ = [(Regexp.lambda_begin, Some Statement)];
           end_ = [(Regexp.lambda_end, Some Operator)];
-          patterns = []
-        }
-      };
-      {
-        name = Name.type_definition;
-        kind = Match {
-          match_ = [(Regexp.type_definition_match, None)];
-          match_name = Some Type
+          patterns = [Name.type_annotation_lambda]
         }
       };
       {
@@ -168,10 +204,98 @@ let syntax_highlighting =
         }
       };
       {
+        name = Name.identifier;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.let_binding_match3, None)];
+        }
+      };
+      {
         name = Name.identifier_constructor;
         kind = Match {
           match_name = None;
           match_     = [(Regexp.identifier_constructor_match, Some Label)]
+        }
+      };
+      (* Types *)
+      {
+        name = Name.type_definition;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.type_definition_begin, Some Keyword)];
+          end_ = [(Regexp.type_definition_end, None)];
+          patterns = type_core_patterns;
+        }
+      };
+      {
+        name = Name.type_annotation;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.type_annotation_begin, Some Operator)];
+          end_ = [(Regexp.type_annotation_end, None)];
+          patterns = type_core_patterns;
+        }
+      };
+      {
+        name = Name.type_annotation_lambda;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.type_annotation_begin_lambda, Some Operator)];
+          end_ = [(Regexp.type_annotation_end_lambda, None)];
+          patterns = type_core_patterns;
+        }
+      };
+      {
+        name = Name.type_operator;
+        kind = Match {
+          match_name = Some Operator;
+          match_ = [(Regexp.type_operator_match, None)];
+        }
+      };
+      {
+        name = Name.type_name;
+        kind = Match {
+          match_name = Some Type;
+          match_ = [(Regexp.type_name_match, None)];
+        }
+      };
+      {
+        name = Name.type_var;
+        kind = Match {
+          match_name = Some Type_var;
+          match_ = [(Regexp.type_var_match, None)];
+        }
+      };
+      {
+        name = Name.type_parentheses;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.parentheses_begin, None)];
+          end_ = [(Regexp.parentheses_end, None)];
+          patterns = type_core_patterns;
+        }
+      };
+      {
+        name = Name.type_module;
+        kind = Match {
+          match_name = Some Identifier;
+          match_ = [(Regexp.module_match1, None)];
+        }
+      };
+      {
+        name = Name.type_int;
+        kind = Match {
+          match_name = Some Number;
+          match_ = [(Regexp.int_literal_match, None)];
+        }
+      };
+      {
+        name = Name.type_product;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.braces_begin, None)];
+          end_ = [(Regexp.braces_end, None)];
+          patterns = [Name.identifier; Name.type_annotation; Name.semicolon];
         }
       };
     ]
