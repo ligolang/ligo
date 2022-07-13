@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import Project from '@obsidians/eth-project';
-import { connect } from '@obsidians/redux';
+import Project from '~/ligo-components/eth-project';
+import { connect } from '~/base-components/redux';
 
 class ProjectWithProps extends PureComponent {
   async componentDidMount() {

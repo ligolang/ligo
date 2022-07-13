@@ -1,15 +1,15 @@
-import { GlobalModals, autoUpdater } from '@obsidians/global';
+import { GlobalModals, autoUpdater } from '~/base-components/global';
 import React, { lazy, useEffect, useRef, useState } from 'react';
 import { config, updateStore } from './lib/redux';
-import redux, { Provider } from '@obsidians/redux';
+import redux, { Provider } from '~/base-components/redux';
 
-import { LoadingScreen } from '@obsidians/ui-components';
-import { NotificationSystem } from '@obsidians/notification';
+import { LoadingScreen } from '~/base-components/ui-components';
+import { NotificationSystem } from '~/base-components/notification';
 import Routes from './components/Routes';
-import { indexedDBFileSystem, fileSystems, fileSystem } from '@obsidians/file-ops';
+import { indexedDBFileSystem, fileSystems, fileSystem } from '~/base-components/file-ops';
 import icon from './components/icon.png';
-import fileOps from '@obsidians/file-ops';
-import { ProjectManager } from '@obsidians/workspace';
+import fileOps from '~/base-components/file-ops';
+import { ProjectManager } from '~/base-components/workspace';
 
 const Header = lazy(() =>
   import('./components/Header' /* webpackChunkName: "header" */)

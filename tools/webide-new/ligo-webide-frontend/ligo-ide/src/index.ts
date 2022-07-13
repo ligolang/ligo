@@ -1,4 +1,4 @@
-import '@obsidians/platform'
+import '~/base-components/platform/index.js';
 import $loadjs from 'loadjs'
 
 if (!process.env.CDN) {

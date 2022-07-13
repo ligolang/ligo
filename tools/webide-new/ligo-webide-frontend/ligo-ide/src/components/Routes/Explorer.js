@@ -1,1 +1,1 @@
-export { default } from '@obsidians/eth-explorer'
+export { default } from '~/ligo-components/eth-explorer'

@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react'
 import { Route, Redirect } from 'react-router-dom'
 import CacheRoute, { CacheSwitch } from 'react-router-cache-route'
 
-import { Input, LoadingScreen, CenterScreen } from '@obsidians/ui-components'
+import { Input, LoadingScreen, CenterScreen } from '~/base-components/ui-components'
 
 import BottomBar from './BottomBar'
 

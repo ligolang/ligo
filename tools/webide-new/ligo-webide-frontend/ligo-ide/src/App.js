@@ -1,8 +1,8 @@
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, HashRouter, Switch, Route } from 'react-router-dom'
 
-import platform from '@obsidians/platform'
-import { LoadingScreen } from '@obsidians/ui-components'
+import platform from '~/base-components/platform'
+import { LoadingScreen } from '~/base-components/ui-components'
 
 const Router = platform.isDesktop ? HashRouter : BrowserRouter
 const ReduxApp = lazy(() => import('./ReduxApp.tsx' /* webpackChunkName: "components" */))

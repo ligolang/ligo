@@ -1,6 +1,6 @@
-import { BaseUserHomepage } from '@obsidians/user';
-import { connect } from '@obsidians/redux';
-import { networkManager } from '@obsidians/eth-network';
+import { BaseUserHomepage } from '~/base-components/user';
+import { connect } from '~/base-components/redux';
+import { networkManager } from '~/ligo-components/eth-network';
 
 BaseUserHomepage.defaultProps = {
   enableTutorial: false,

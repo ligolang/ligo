@@ -29,7 +29,40 @@
     "solium": "ObsidianLabs/Ethlint",
     "solparse-exp-jb": "ObsidianLabs/solparse",
     "strip-ansi": "^6.0.0",
-    "trash": "^7.0.0"
+    "trash": "^7.0.0",
+    "lodash": "^4.17.20",
+    "react-dnd": "^14.0.4",
+    "react-dnd-html5-backend": "^14.0.2",
+    "react-select": "^3.2.0",
+    "react-split-pane": "^0.1.92",
+    "reactstrap": "^8.9.0",
+    "mixpanel-browser": "^2.41.0",
+    "react-redux": "^7.2.2",
+    "redux": "^4.0.5",
+    "redux-config": "^0.1.1",
+    "redux-logger": "^3.0.6",
+    "redux-persist": "^5.10.0",
+    "redux-persist-transform-immutable": "^5.0.0",
+    "react-notification-system": "^0.4.0",
+    "gists": "^2.0.0",
+    "js-base64": "^3.6.0",
+    "@isomorphic-git/lightning-fs": "^4.4.1",
+    "path-browserify": "^1.0.1",
+    "rc-tree": "git+ssh://git@github.com:sashasashasasha151/tree.git",
+    "react-contexify": "^5.0.0",
+    "react-hotkeys-hook": "^3.4.4",
+    "react-highlight": "^0.13.0",
+    "react-json-view": "ObsidianLabs/react-json-view#obsidians",
+    "big.js": "^6.1.1",
+    "ethers": "^5.4.7",
+    "color-convert": "^2.0.1",
+    "react-markdown": "^6.0.2",
+    "remark-gfm": "^1.0.0",
+    "remark-slug": "^6.1.0",
+    "chalk": "^4.1.0",
+    "xterm": "^4.10.0",
+    "xterm-addon-fit": "^0.4.0",
+    "xterm-addon-search": "^0.8.0"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.3",
@@ -93,7 +126,14 @@
     "wait-on": "^3.3.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^3.3.9",
-    "webpack-merge": "^4.2.2"
+    "webpack-merge": "^4.2.2",
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-external-helpers": "^7.7.4",
+    "@babel/plugin-proposal-function-bind": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.13.8",
+    "@babel/preset-env": "^7.7.5",
+    "babel-eslint": "^10.1.0",
+    "redux-devtools-extension": "^2.13.9"
   },
   "resolutions": {
     "node-abi": "3.5.0",
@@ -103,10 +143,6 @@
     "prettier": "2.5.0",
     "react-error-overlay": "6.0.9"
   },
-  "workspaces": [
-    "../base-components/packages/*",
-    "../ligo-components/packages/*"
-  ],
   "browserslist": {
     "production": [
       ">0.2%",

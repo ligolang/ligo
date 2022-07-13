@@ -1,1 +1,1 @@
-export { default } from '@obsidians/eth-contract'
+export { default } from '~/ligo-components/eth-contract'

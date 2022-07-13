@@ -1,17 +1,17 @@
 import React, { PureComponent } from 'react'
 
-import { connect } from '@obsidians/redux'
-import { IpcChannel } from '@obsidians/ipc'
+import { connect } from '~/base-components/redux'
+import { IpcChannel } from '~/base-components/ipc'
 
-import headerActions, { Header, NavGuard } from '@obsidians/eth-header'
-// import { networkManager } from '@obsidians/eth-network'
-import { BaseProjectManager } from '@obsidians/workspace'
-import { actions } from '@obsidians/workspace'
+import headerActions, { Header, NavGuard } from '~/ligo-components/eth-header'
+// import { networkManager } from '~/ligo-components/eth-network'
+import { BaseProjectManager } from '~/base-components/workspace'
+import { actions } from '~/base-components/workspace'
 import { createProject } from '../lib/bsn'
-// import keypairManager from '@obsidians/keypair'
+// import keypairManager from '~/base-components/keypair'
 
-// import EthSdk from '@obsidians/eth-sdk'
-// import BscSdk from '@obsidians/bsc-sdk'
+// import EthSdk from '~/ligo-components/eth-sdk'
+// import BscSdk from '~/base-components/bsc-sdk'
 
 // keypairManager.kp = EthSdk.kp
 // networkManager.addSdk(EthSdk, EthSdk.networks)

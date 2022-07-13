@@ -1,11 +1,11 @@
 import Immutable, { List } from 'immutable'
 
-export { redux as projects } from '@obsidians/workspace'
-export { redux as keypairs } from '@obsidians/keypair'
-export { redux as tokens } from '@obsidians/eth-explorer'
-export { redux as abis } from '@obsidians/eth-sdk'
-export { redux as customNetworks } from '@obsidians/eth-network'
-export { redux as queue } from '@obsidians/queue'
+export { redux as projects } from '~/base-components/workspace'
+export { redux as keypairs } from '~/base-components/keypair'
+export { redux as tokens } from '~/ligo-components/eth-explorer'
+export { redux as abis } from '~/ligo-components/eth-sdk'
+export { redux as customNetworks } from '~/ligo-components/eth-network'
+export { redux as queue } from '~/base-components/queue'
 
 export const version = {
   default: Immutable.fromJS({}),
