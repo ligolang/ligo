@@ -53,12 +53,10 @@ let all_expression ~raise ~js_style_no_shadowing init =
 let decompile_imperative init =
   let all_p = List.map ~f:Helpers.map_module @@
     List.map ~f:(fun el -> Helpers.Expression el) [
-    Assign_heuristic.peephole_expression ;
   ] in
   List.fold ~f:(|>) all_p ~init
 
 let decompile_imperative_expression init =
   let all_p = List.map ~f:Helpers.map_expression @@ [
-    Assign_heuristic.peephole_expression ;
   ] in
   List.fold ~f:(|>) all_p ~init
