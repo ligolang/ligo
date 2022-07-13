@@ -525,6 +525,40 @@ test_Snapshots = testGroup "Snapshots collection"
             Nothing -> assertFailure [int||Can't find "s2" variable in snapshot #{snap}|]
             _ -> pass
 
+  , testCaseSteps "built-ins work correctly" \step -> do
+      let file = contractsDir </> "built-ins.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 4) (Pos 0))
+
+        lift $ step "Check that \"fold\" build-in works correctly"
+        N.continueUntilBreakpoint N.NextBreak
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+          let sumElemsItemMb = stackItems
+                & find \case
+                    StackItem
+                      { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                          { leseDeclaration = Just (LigoVariable "sum_elems")
+                          }
+                      , siValue = T.SomeConstrainedValue (T.VInt 6)
+                      } -> True
+                    _ -> False
+
+          case sumElemsItemMb of
+            Nothing ->
+              assertFailure
+                [int||
+                  Can't find "sum_elems" variable \
+                  with value 6 in snapshot #{snap}
+                |]
+            _ -> pass
   ]
 
 -- | Special options for checking contract.
@@ -576,8 +610,9 @@ unit_Contracts_locations_are_sensible = do
     -- Contracts with special checking options
     specialContracts :: Map FilePath CheckingOptions
     specialContracts = M.fromList
-      [ ("if-no-else", def & coCheckSourceLocationsL .~ False)
-      , ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
+      [ ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
+      -- we use built-in functions in next contract and they are having weird source locations.
+      , ("built-ins", def & coCheckSourceLocationsL .~ False)
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
