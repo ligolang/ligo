@@ -8,7 +8,10 @@ import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Lens qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
+import Data.Char (isDigit)
+import Data.List qualified as L
 import Data.Scientific qualified as Sci
+import Data.Text qualified as T
 import Data.Vector qualified as V
 import Fmt (Buildable (..), blockListF, mapF, nameF, tupleF)
 import Morley.Micheline.Expression qualified as Micheline
@@ -80,6 +83,25 @@ newtype LigoVariable = LigoVariable
     deriving anyclass (NFData)
 
 instance Buildable LigoVariable where
+  -- Here we want to pretty-print monomorphed variables.
+  -- They have format like "poly_#SomeModule#NestedModule#foo_name_42"
+  -- and we want to pretty-print them like "SomeModule.NestedModule.foo_name$42".
+  build (LigoVariable (T.stripPrefix "poly_" -> Just name))
+    | not (T.null index) && T.all isDigit index && T.any (== '_') functionWithIndex =
+      [int||#{moduleName}#{functionName}$#{index}|]
+    where
+      -- This should be non-empty
+      splitted = T.split (== '#') $ T.dropWhile (== '#') name
+      moduleParts = L.init splitted
+      functionWithIndex = L.last splitted
+      index = T.takeWhileEnd (/= '_') functionWithIndex
+      moduleName
+        | null moduleParts = ""
+        | otherwise = T.intercalate "." moduleParts <> "."
+      -- This @breakOnEnd@ shouldn't crash because of
+      -- "T.any (== '_') functionWithIndex" check in guard above.
+      (functionName, _) = first (T.dropEnd 1) $ T.breakOnEnd "_" functionWithIndex
+
   build (LigoVariable name) = build name
 
 -- | Reference to type description in the types map.
