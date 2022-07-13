@@ -12,9 +12,9 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion)
 
 import Morley.Debugger.Core
-  (DebugSource (..), DebuggerState (..), Direction (..), SourceLocation (SourceLocation),
-  SourceType (..), curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory,
-  tsAfterInstrs, FrozenPredicate (FrozenPredicate), NavigableSnapshot (getExecutedPosition))
+  (DebugSource (..), DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate),
+  NavigableSnapshot (getExecutedPosition), SourceLocation (SourceLocation), SourceType (..),
+  curSnapshot, frozen, groupSourceLocations, move, moveTill, playInterpretHistory, tsAfterInstrs)
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
@@ -559,6 +559,41 @@ test_Snapshots = testGroup "Snapshots collection"
                   with value 6 in snapshot #{snap}
                 |]
             _ -> pass
+
+  , testCaseSteps "monomorphed functions shows pretty" \step -> do
+      let file = contractsDir </> "poly.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (N.SourcePath file) (SrcPos (Pos 11) (Pos 0))
+
+        N.continueUntilBreakpoint N.NextBreak
+        lift $ step "Check function namings"
+        checkSnapshot \snap -> do
+          let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
+
+          let variables = stackItems
+                <&> do \StackItem{..} -> case siLigoDesc of
+                        LigoHiddenStackEntry -> ""
+                        LigoStackEntry LigoExposedStackEntry{..} ->
+                          maybe "" (pretty @_ @Text) leseDeclaration
+
+          unless
+            ( and
+              $ flip elem variables
+              <$> [ "foo$1"
+                  , "foo$4"
+                  , "TestId.One.id$2"
+                  , "List.fold_left$3"
+                  , "poly_troll42_"
+                  ]
+            ) do
+            assertFailure [int||This snapshot doesn't contain pretty monomorphed variables: #{snap}|]
   ]
 
 -- | Special options for checking contract.
@@ -613,6 +648,7 @@ unit_Contracts_locations_are_sensible = do
       [ ("not-main-entry-point", def & coEntrypointL ?~ "not_main")
       -- we use built-in functions in next contract and they are having weird source locations.
       , ("built-ins", def & coCheckSourceLocationsL .~ False)
+      , ("poly", def & coCheckSourceLocationsL .~ False)
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
