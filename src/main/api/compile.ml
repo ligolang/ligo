@@ -38,8 +38,8 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       in
       let Compiler_options.{ disable_michelson_typechecking = disable_typecheck ; views ; constants ; file_constants ; _ } = options.backend in
       let Compiler_options.{ entry_point ; _ } = options.frontend in
-      let code,env = Build.build_contract ~raise ~options entry_point source_file in
-      let views = Build.build_views ~raise ~options entry_point (views,env) source_file in
+      let code = Build.build_contract ~raise ~options entry_point source_file in
+      let views = Build.build_views ~raise ~options entry_point views source_file in
       let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
       Ligo_compile.Of_michelson.build_contract ~raise ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version:options.middle_end.protocol_version ~has_env_comments:options.backend.has_env_comments ~disable_typecheck ~constants code views
@@ -94,11 +94,10 @@ let constant (raw_options : Compiler_options.raw) constants init_file display_fo
                             Run.evaluate_constant ~raise compiled_exp.expr compiled_exp.expr_ty in
       (hash, value)
 
-let parameter (raw_options : Compiler_options.raw) source_file entry_point expression amount balance sender source now display_format michelson_format () =
+let parameter (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) @@
       fun ~raise ->
-        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
         let options = Compiler_options.make
@@ -108,12 +107,13 @@ let parameter (raw_options : Compiler_options.raw) source_file entry_point expre
             ~has_env_comments:false
             () in
         let Compiler_options.{ constants ; file_constants ; _ } = options.backend in
+        let Compiler_options.{ entry_point ; _ } = options.frontend in
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
-        let app_typed_prg, typed_prg =
-          Build.build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression typed_prg in
-        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
+        let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
+        let app_typed_prg = Build.build_typed ~raise ~options Env source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
+        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
           let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end app_typed_prg entry_point in
@@ -145,10 +145,9 @@ let storage (raw_options : Compiler_options.raw) source_file expression amount b
         let file_constants = read_file_constants ~raise file_constants in
         let constants = constants @ file_constants in
         let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
-        let app_typed_prg, typed_prg =
-          Build.build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) source_file in
-        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression typed_prg in
-        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param typed_prg in
+        let app_typed_prg = Build.build_typed ~raise ~options Ligo_compile.Of_core.Env source_file in
+        let typed_param              = Ligo_compile.Utils.type_expression ~raise ~options syntax expression app_typed_prg in
+        let typed_param, typed_prg   = Self_ast_typed.remove_unused_expression typed_param app_typed_prg in
         let aggregated_prg           = Ligo_compile.Of_typed.compile_program ~raise typed_prg in
         let _contract : Mini_c.meta Run.Michelson.michelson =
           let aggregated_contract = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end app_typed_prg entry_point in

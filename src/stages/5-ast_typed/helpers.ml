@@ -487,3 +487,23 @@ let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
     ~f:(add_if_shadowed_t_sum tv)
   in
   (tv, te) :: nested_t_sums
+
+(* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
+let get_views : program -> (expression_variable * location) list = fun p ->
+  let f : declaration -> (expression_variable * location) list -> (expression_variable * location) list =
+    fun {wrap_content=decl ; location=_ } acc ->
+      match decl with
+      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder.var, ValueVar.get_location binder.var)::acc
+      | _ -> acc
+  in
+  List.fold_right ~init:[] ~f p
+
+let fetch_view_type : declaration -> (type_expression * type_expression binder) option = fun declt ->
+  match Location.unwrap declt with
+  | Declaration_constant { binder ; expr ; attr } when attr.view -> (
+    Some (expr.type_expression, binder)
+  )
+  | _ -> None
+
+let fetch_views_in_program : program -> (type_expression * type_expression binder) list = fun prg ->
+  List.filter_map ~f:fetch_view_type prg

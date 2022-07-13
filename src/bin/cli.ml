@@ -287,9 +287,9 @@ let compile_file =
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Compiler_options.make_raw_options ~syntax ~entry_point ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
-    Api.Compile.parameter raw_options source_file entry_point expression amount balance sender source now display_format michelson_format
+    Api.Compile.parameter raw_options source_file expression amount balance sender source now display_format michelson_format
   in
   let summary   = "compile parameters to a Michelson expression." in
   let readme () = "This sub-command compiles a parameter for a given \
