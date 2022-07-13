@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom'
 
 import './scss/index.scss'
 
-import * as serviceWorker from './serviceWorker'
 import App from './App'
 
 if (!process.env.CDN) {
@@ -26,8 +25,3 @@ window.__APP_INFO__ = {
 }
 
 window.addEventListener('contextmenu', e => e.preventDefault())
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
-// TODO do we need it or not?
-serviceWorker.unregister()
