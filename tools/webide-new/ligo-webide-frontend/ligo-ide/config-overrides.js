@@ -1,10 +1,8 @@
 const os = require('os');
-const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const {
   override,
   addWebpackExternals,
-  addWebpackAlias,
   addWebpackPlugin,
 } = require('customize-cra');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
@@ -83,6 +81,16 @@ function customSplitting() {
   };
 }
 
+function enableTS() {
+  return (config) => {
+    const tsRule = config.module.rules[1].oneOf[2];
+    tsRule.include = undefined;
+    tsRule.exclude = /node_modules/;
+
+    return config;
+  };
+}
+
 const overrides = [
   overrideProcessEnv({
     CDN: JSON.stringify(!!process.env.CDN),
@@ -119,6 +127,7 @@ const overrides = [
     COMMIT_ID: JSON.stringify(process.env.COMMIT_ID),
     BUILD_TIME: JSON.stringify(process.env.BUILD_TIME),
   }),
+  enableTS(),
   turnOffMangle(),
   addWasmLoader(),
   customSplitting(),

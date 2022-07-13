@@ -4,9 +4,10 @@
   "description": "File Operations",
   "author": "Phil <qft.gtr@gmail.com>",
   "license": "GPL-3.0",
-  "main": "src/index.js",
-  "browser": "src/index.js",
+  "main": "src/index.ts",
+  "browser": "src/index.ts",
   "dependencies": {
+    "@isomorphic-git/lightning-fs": "^4.4.1",
     "@obsidians/ipc": "^0.3.0",
     "filehound": "^1.17.4",
     "fs-extra": "^9.1.0",

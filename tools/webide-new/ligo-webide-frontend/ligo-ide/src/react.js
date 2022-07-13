@@ -1,14 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import fileOps from '@obsidians/file-ops'
-
 import './scss/index.scss'
 
 import * as serviceWorker from './serviceWorker'
 import App from './App'
-
-fileOps.fsType = 'web'
 
 if (!process.env.CDN) {
   import('./scss/fonts/open_sans/open_sans.css')
@@ -34,4 +30,5 @@ window.addEventListener('contextmenu', e => e.preventDefault())
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: http://bit.ly/CRA-PWA
+// TODO do we need it or not?
 serviceWorker.unregister()

@@ -6,7 +6,7 @@ import { LoadingScreen } from '@obsidians/ui-components'
 import Auth from '@obsidians/auth'
 
 const Router = platform.isDesktop ? HashRouter : BrowserRouter
-const ReduxApp = lazy(() => import('./ReduxApp' /* webpackChunkName: "components" */))
+const ReduxApp = lazy(() => import('./ReduxApp.tsx' /* webpackChunkName: "components" */))
 
 export default function App () {
   return (
