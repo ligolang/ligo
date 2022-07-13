@@ -263,7 +263,7 @@ runInstrCollect = \case
       :: LigoRange
       -> InterpretEvent
       -> CollectingEvalOp ()
-    recordSnapshot loc event = do
+    recordSnapshot loc event = unless (lrFile loc == "") do
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
