@@ -898,14 +898,3 @@ let%expect_test _ =
       3 |   begin
 
     Embedded raw code can only have a functional type |xxx}]
-
-let pwd = Sys.getcwd ()
-let () = Sys.chdir "../../test/projects/"
-
-let%expect_test _ =
-  run_ligo_good [ "run"; "test" ; "originate_contract/test.mligo" ; "--project-root" ; "originate_contract" ; "--no-warn" ] ;
-  [%expect{|
-    Everything at the top-level was executed.
-    - test exited with value KT1Riu7zn7S1PCTu197y2i29TGheSLzfeaZ6(None). |}]
-
-let () = Sys.chdir pwd
