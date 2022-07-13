@@ -8,7 +8,6 @@ stages:
   - nix
   - ligo
   - lsp
-  - tooling
   - push
 
 default:
@@ -75,7 +74,7 @@ vscode-extension-tests:
   stage: lsp
   only: [merge_requests, tooling]
   script:
-    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp&submodules=1'#checks.x86_64-linux.lsp-test
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-test
 
 vscode-extension-integration-tests:
   stage: lsp
@@ -101,7 +100,6 @@ vscode-extension-lsp-handler-tests:
   only: [merge_requests, tooling]
   script:
     - git add ./ligo # Ligo binary is needed for this tests
-    - ls ligo -halR
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-handlers-test
 
 vscode-extension-linux:
@@ -112,7 +110,7 @@ vscode-extension-linux:
 
 vscode-extension:
   stage: nix
-  only: [tooling, vscode-production]
+  only: [merge_requests, tooling, vscode-production]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#vscode-extension
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
