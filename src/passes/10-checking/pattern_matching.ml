@@ -59,13 +59,13 @@ let corner_case loc = (corner_case ("broken invariant at "^loc))
 let get_pattern_type ~raise (eqs : equations) =
   match eqs with
     (((_,t)::_),_)::_ -> t
-  | (([],_)::_) -> raise.raise @@ corner_case __LOC__ (* typed_pattern list empty *)
-  | [] -> raise.raise @@ corner_case __LOC__ (* equations empty *)
+  | (([],_)::_) -> raise.error @@ corner_case __LOC__ (* typed_pattern list empty *)
+  | [] -> raise.error @@ corner_case __LOC__ (* equations empty *)
 
 let get_body_type ~raise (eqs : equations) =
   match eqs with
     (_,e)::_ -> e.type_expression
-  | [] -> raise.raise @@ corner_case __LOC__ (* equations empty *)
+  | [] -> raise.error @@ corner_case __LOC__ (* equations empty *)
 
 let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.type_expression =
   fun _ label t ->
@@ -73,15 +73,15 @@ let extract_variant_type ~raise : pattern -> O.label -> O.type_expression -> O.t
   | T_sum rows -> (
     match O.LMap.find_opt label rows.content with
     | Some t -> t.associated_type
-    | None -> raise.raise @@ corner_case __LOC__
+    | None -> raise.error @@ corner_case __LOC__
   )
   | O.T_constant { injection = Stage_common.Constant.List ; parameters = [proj_t] ; language=_} -> (
     match label with
     | Label "Cons" -> O.make_t_ez_record [("0",proj_t);("1",t)]
     | Label "Nil" -> (O.t_unit ())
-    | Label _ -> raise.raise @@ corner_case __LOC__
+    | Label _ -> raise.error @@ corner_case __LOC__
   )
-  | _ -> raise.raise @@ corner_case __LOC__
+  | _ -> raise.error @@ corner_case __LOC__
 
 let extract_record_type ~raise : pattern -> O.label -> O.type_expression -> O.type_expression =
   fun _ label t ->
@@ -89,9 +89,9 @@ let extract_record_type ~raise : pattern -> O.label -> O.type_expression -> O.ty
   | T_record rows -> (
     match O.LMap.find_opt label rows.content with
     | Some t -> t.associated_type
-    | None -> raise.raise @@ corner_case __LOC__
+    | None -> raise.error @@ corner_case __LOC__
   )
-  | _ -> raise.raise @@ corner_case __LOC__
+  | _ -> raise.error @@ corner_case __LOC__
 
 (**
   `substitute_var_in_body to_subst new_var body` replaces variables equal to `to_subst` with variable `new_var` in expression `body`.
@@ -192,7 +192,7 @@ let group_equations ~raise : equations -> equations O.label_map =
           let pattern = Location.wrap ~loc:(phd.location) @@ I.P_tuple [p_hd;p_tl] in
           let proj_t = extract_variant_type ~raise phd label t in
           O.LMap.update label (upd proj_t pattern) m
-        | _ -> raise.raise @@ corner_case __LOC__
+        | _ -> raise.error @@ corner_case __LOC__
     in
     List.fold_right ~f:aux ~init:O.LMap.empty eqs
 
@@ -201,7 +201,7 @@ let rec match_ ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O
   match ms , eqs with
   | [] , [([],body)] -> body
   | [] , eqs when List.for_all ~f:(fun (ps,_) -> List.length ps = 0) eqs ->
-    raise.raise @@ redundant_pattern err_loc
+    raise.error @@ redundant_pattern err_loc
   | _ ->
     let leq = partition (fun (pl,_) -> is_var (fst @@ List.hd_exn pl)) eqs in
     let aux = fun (part_eq:equations) ((def,_,_):O.expression_content * O.type_expression option * Location.t) ->
@@ -238,14 +238,14 @@ and var_rule ~raise : err_loc:Location.t -> typed_pattern option -> matchees -> 
             let body' = substitute_var_in_body ~raise b.var mhd body in
             (ptl , body')
           | P_unit -> (ptl , body)
-          |  _ -> raise.raise @@ corner_case __LOC__
+          |  _ -> raise.error @@ corner_case __LOC__
         )
-        | [] -> raise.raise @@ corner_case __LOC__
+        | [] -> raise.error @@ corner_case __LOC__
       in
       let eqs' = List.map ~f:aux eqs in
       match_ ~raise ~err_loc mtl eqs' def
   )
-  | [] -> raise.raise @@ corner_case __LOC__
+  | [] -> raise.error @@ corner_case __LOC__
 
 and ctor_rule ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O.expression =
   fun ~err_loc ms eqs def ->
@@ -290,7 +290,7 @@ and ctor_rule ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O.
         (* REMITODO: parametric types in env ? *)
         match O.get_t_list matchee_t with
         | Some _ -> List.map ~f:(fun label -> (label, O.LMap.find_opt label eq_map)) O.[Label "Cons"; Label "Nil"]
-        | None -> raise.raise @@ corner_case __LOC__ (* should be caught when typing the matchee *)
+        | None -> raise.error @@ corner_case __LOC__ (* should be caught when typing the matchee *)
       )
     in
     let present = List.filter_map ~f:(fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in
@@ -299,7 +299,7 @@ and ctor_rule ~raise : err_loc:Location.t -> matchees -> equations -> rest -> O.
     let missing_cases = List.map ~f:aux_m missing in
     let cases = O.Match_variant { cases = missing_cases @ present_cases ; tv = matchee_t } in
     O.make_e (O.E_matching { matchee ; cases }) body_t
-  | [] -> raise.raise @@ corner_case __LOC__
+  | [] -> raise.error @@ corner_case __LOC__
 
 and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equations -> rest -> O.expression =
   fun ~err_loc product_shape ms eqs def ->
@@ -331,7 +331,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
             (l , {var;ascr= Some field_t; attributes})
         in
         List.map ~f:aux (List.zip_exn labels patterns)
-      | _ -> raise.raise @@ corner_case __LOC__
+      | _ -> raise.error @@ corner_case __LOC__
     in
     let aux : typed_pattern list * O.expression ->
               (typed_pattern list * O.expression) =
@@ -378,12 +378,12 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
                 (v,field_t)
               in
               List.map2_exn ~f:aux labels patterns
-            | _ -> raise.raise @@ corner_case __LOC__
+            | _ -> raise.error @@ corner_case __LOC__
           in
           (filler @ pl , body)
-        | _ -> raise.raise @@ corner_case __LOC__
+        | _ -> raise.error @@ corner_case __LOC__
       )
-      | [] -> raise.raise @@ corner_case __LOC__
+      | [] -> raise.error @@ corner_case __LOC__
     in
     let matchee_t = get_pattern_type ~raise eqs in
     let eqs' = List.map ~f:aux eqs in
@@ -394,7 +394,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
     let matchee = O.e_a_variable mhd matchee_t in
     O.make_e (O.E_matching { matchee ; cases }) body.type_expression
   )
-  | [] -> raise.raise @@ corner_case __LOC__
+  | [] -> raise.error @@ corner_case __LOC__
 
 let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression O.pattern * O.type_expression * O.expression) list) =
   let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in

@@ -7,7 +7,7 @@ module Region = Simple_utils.Region
 module type FILE = Preprocessing_shared.File.S
 
 (* Warning handling *)
-module type Warning = sig
+module type Raiser = sig
   val add_warning : Main_warnings.all -> unit
 end
 
@@ -20,7 +20,7 @@ module Make (File        : FILE)
             (Token'      : Token.S)
             (CLI         : LexerLib.CLI.S)
             (Self_tokens : Self_tokens.S with type token = Token'.t)
-            (Warning     : Warning) :
+            (Raiser      : Raiser) :
   sig
     module Token : Token.S
     type token = Token.t

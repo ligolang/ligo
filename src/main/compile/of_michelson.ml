@@ -4,7 +4,7 @@ open Proto_alpha_utils
 open Trace
 
 let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
-  (* From Tezos changelog on views: 
+  (* From Tezos changelog on views:
     CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS cannot be used at the top-level of a
     view because they are stateful, and SELF because the entry-point does not make sense in a view.
     However, CREATE_CONTRACT, SET_DELEGATE and TRANSFER_TOKENS remain available in lambdas defined inside a view. (MR !3737)
@@ -22,8 +22,8 @@ let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit =
   let iter_prim_mich = iter_prim_mich ~inside_lambda:false in
   let f ~inside_lambda : Mini_c.meta * string -> unit = fun ( {location;_} , prim_str ) ->
     match prim_str, inside_lambda with
-    | "SELF" , (true | false) -> raise.raise (`Main_view_rule_violated location)
-    | ("CREATE_CONTRACT" | "SET_DELEGATE" | "TRANSFER_TOKENS") , false -> raise.raise (`Main_view_rule_violated location)
+    | "SELF" , (true | false) -> raise.error (`Main_view_rule_violated location)
+    | ("CREATE_CONTRACT" | "SET_DELEGATE" | "TRANSFER_TOKENS") , false -> raise.error (`Main_view_rule_violated location)
     | _ -> ()
   in
   List.iter ~f:(fun m -> iter_prim_mich f m.expr) views_mich
@@ -33,11 +33,11 @@ let parse_constant ~raise code =
   let open Tezos_micheline.Micheline in
   let (code, errs) = Micheline_parser.tokenize code in
   let code = (match errs with
-              | _ :: _ -> raise.raise (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | _ :: _ -> raise.error (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
               | [] ->
                  let (code, errs) = Micheline_parser.parse_expression ~check:false code in
                  match errs with
-                 | _ :: _ -> raise.raise (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | _ :: _ -> raise.error (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
                  | [] -> map_node (fun _ -> ()) (fun x -> x) code
              ) in
   Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer @@
@@ -49,7 +49,7 @@ let dummy : Stacking.meta =
     binder = None }
 
 (* should preserve locations, currently wipes them *)
-let build_contract ~raise ~add_warning :
+let build_contract ~raise :
   protocol_version:Environment.Protocols.t ->
   ?enable_typed_opt:bool ->
   ?has_env_comments:bool ->
@@ -97,7 +97,7 @@ let build_contract ~raise ~add_warning :
         (* Type-check *)
         let () =
           if Environment.Protocols.(not @@ equal protocol_version in_use) then
-            Trace.warn_on_tzresult_lwt ~add_warning (fun errs -> `Michelson_typecheck_failed_with_different_protocol (protocol_version, errs)) @@
+            Trace.warn_on_tzresult_lwt ~raise (fun errs -> `Michelson_typecheck_failed_with_different_protocol (protocol_version, errs)) @@
               Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
           else
             let _ : (_,_) Micheline.Micheline.node =
