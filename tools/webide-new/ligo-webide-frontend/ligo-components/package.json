@@ -1,9 +1,9 @@
 {
-  "name": "@obsidians/eth-components",
+  "name": "eth-components",
   "license": "GPL-3.0",
   "private": true,
   "engines": {
-    "node": ">=16"
+    "node": ">=16 <17"
   },
   "scripts": {
     "build": "node init.js"

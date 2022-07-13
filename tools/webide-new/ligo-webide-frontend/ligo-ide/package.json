@@ -1,18 +1,17 @@
 {
-  "name": "black-ide",
-  "description": "Graphic IDE for Ethereum smart contract development",
+  "name": "ligo-ide",
+  "description": "Web-based IDE for LIGO smart contract development",
   "version": "0.14.8",
   "author": {
-    "name": "Phil Li",
-    "email": "phil.li@obsidians.io",
-    "url": "https://obsidians.io"
+    "name": "LIGO",
+    "url": "https://ligolang.org"
   },
   "license": "GPL-3.0",
   "private": true,
   "homepage": "./",
   "main": "build/main/index.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=16 <17"
   },
   "scripts": {
     "dev:react": "react-app-rewired start",
