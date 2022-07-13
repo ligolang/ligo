@@ -284,35 +284,61 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
   )
   | _ -> raise.error @@ bad_contract_io main_fname expr
 
-type view_type = {
-  arg : Ast_typed.type_expression ;
-  storage : Ast_typed.type_expression ;
-  return : Ast_typed.type_expression ;
-}
-
-let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Location.t) = fun main_fname m ->
-  let aux (declt : declaration) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
-        if ValueVar.equal binder.var main_fname
-        then Some p
-        else None
-    | Declaration_type   _
-    | Declaration_module _ -> None
+(* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
+   [predicate] defines the annotation (or set of annotation) you want to match on
+*)
+let get_shadowed_decl : module_ -> (known_attributes -> bool) -> Location.t option = fun prg predicate ->
+  let aux = fun (seen,shadows : expression_variable list * location list) (x : declaration) ->
+    match Location.unwrap x with
+    | Declaration_constant { binder ; attr ; _} -> (
+      match List.find seen ~f:(ValueVar.equal binder.var) with
+      | Some x -> (seen , ValueVar.get_location x::shadows)
+      | None -> if predicate attr then (binder.var::seen , shadows) else seen,shadows
+    )
+    | _ -> seen,shadows
   in
-  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
-  let main_decl =
-    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
-      main_decl_opt
-    in
-  let { binder ; expr ; attr=_ } = main_decl in
-  match get_t_arrow expr.type_expression with
-  | Some { type1 = tin ; type2  = return } -> (
-    match get_t_tuple tin with
-    | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.error (expected_pair_in_view @@ ValueVar.get_location binder.var)
-  )
-  | None -> raise.error @@ bad_view_io main_fname expr
+  let _,shadows = List.fold ~f:aux ~init:([],[]) prg in
+  match shadows with [] -> None | hd::_ -> Some hd 
 
+(* strip_view_annotations [p] remove all the [@view] annotation in top-level declarations of program [p] *)
+let strip_view_annotations : module_ -> module_ = fun m ->
+  let aux = fun (x : declaration) ->
+    match Location.unwrap x with
+    | Declaration_constant ( {attr ; _} as decl ) when attr.view ->
+      { x with wrap_content = Declaration_constant { decl with attr = {attr with view = false} } }
+    | _ -> x
+  in
+  List.map ~f:aux m
+
+(* annotate_with_view [p] [binders] for all names in [binders] decorates the top-level declaration of program [p] with the annotation [@view]
+  if the name matches with declaration binder. if a name is unmatched, fails. 
+
+   e.g:
+    annotate_with_view [p] ["a";"b"]
+      |->
+    [@view] let a = <..>
+    let b = <..>
+    [@view] let b = <..>
+    let c = <..>
+*)
+let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.program = fun names prg ->
+  let (prg,not_found) = List.fold_right prg ~init:([],names)
+    ~f:(
+      fun (x:declaration) (prg,views:Ast_typed.program * string list) ->
+        let continue = x::prg,views in
+        match Location.unwrap x with
+        | Declaration_constant ({binder ; _} as decl) -> (
+          match List.find views ~f:(ValueVar.is_name binder.var) with
+          | Some found ->
+            let decorated = { x with wrap_content = Declaration_constant { decl with attr = {decl.attr with view = true} }} in
+            decorated::prg, (List.remove_element ~compare:String.compare found views)
+          | None -> continue
+        )
+        | _ -> continue
+    )
+  in
+  let () = match not_found with [] -> () | not_found::_ -> raise.error (corner_case (Format.asprintf "View %s does not exist" not_found : string)) in
+  prg
 
 module Free_variables :
   sig

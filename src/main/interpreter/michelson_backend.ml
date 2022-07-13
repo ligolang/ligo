@@ -100,8 +100,8 @@ let create_chest (payload:Bytes.t) (time:int) : _ =
 
 let compile_contract ~raise ~options source_file entry_point declared_views =
   let open Ligo_compile in
-  let michelson,env = Build.build_contract ~raise ~options entry_point source_file in
-  let views = Build.build_views ~raise ~options entry_point (declared_views,env) source_file in
+  let michelson = Build.build_contract ~raise ~options entry_point source_file in
+  let views = Build.build_views ~raise ~options entry_point declared_views source_file in
   Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
 
 let clean_location_with v x =

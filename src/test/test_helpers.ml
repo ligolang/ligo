@@ -117,7 +117,7 @@ let wrap_ref file f =
 
 let type_file ~raise ?(st = "auto") f entry options =
   ignore st;
-  snd @@ Build.build_typed ~raise ~options entry f
+  Build.build_typed ~raise ~options entry f
 
 let get_program ~raise ?(st = "auto") f entry =
   wrap_ref f (fun s ->
