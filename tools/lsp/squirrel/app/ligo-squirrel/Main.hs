@@ -11,20 +11,23 @@ import Data.Aeson qualified as Aeson
 import Data.Bool (bool)
 import Data.Default (def)
 import Data.Foldable (for_, traverse_)
-import Data.HashSet qualified as HashSet
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isNothing)
+import Data.Monoid (All (..))
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import Focus qualified
 import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import Prettyprinter qualified as PP
+import StmContainers.Map qualified as StmMap
 import System.Exit (ExitCode (ExitFailure), exitSuccess, exitWith)
 import System.FilePath (splitDirectories, takeDirectory)
 import System.IO (stdin, stdout)
 import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (modifyMVar_, tryReadMVar)
+import UnliftIO.MVar (tryReadMVar)
+import UnliftIO.STM (atomically)
 
 import AST
 import Cli (TempSettings, getLigoVersion)
@@ -37,9 +40,9 @@ import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
-import RIO.Types
+import RIO.Types (RIO, RioEnv (..))
 import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
-import Util (toLocation)
+import Util (foldMapM, toLocation)
 import Util.Graph (traverseAM)
 
 main :: IO ()
@@ -138,7 +141,7 @@ handlers = mconcat
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
-  , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
+  , S.notificationHandler J.STextDocumentDidSave handleDidSaveTextDocument
   , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
@@ -173,15 +176,19 @@ handleDidOpenTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
 
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.insert RIO.OpenDocument{odIsDirty = False} uri openDocs
+
   doc <- Document.forceFetch Document.BestEffort uri
-  openDocsVar <- asks reOpenDocs
-  modifyMVar_ openDocsVar \openDocs -> do
-    Diagnostic.collectErrors doc (Just ver)
-    pure $ HashSet.insert uri openDocs
+  Diagnostic.collectErrors doc (Just ver)
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
   $(Log.debug) [i|Changed text document: #{uri}|]
+
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = True}) uri openDocs
+
   void $ Document.forceFetchAndNotify notify Document.LeastEffort uri
   where
     uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
@@ -195,21 +202,30 @@ handleDidChangeTextDocument notif = do
       void $ Document.wccForFilePath (contractFile doc) >>=
         traverseAM (Diagnostic.clearDiagnostics . filePathToNormalizedUri)
 
+handleDidSaveTextDocument :: S.Handler RIO 'J.TextDocumentDidSave
+handleDidSaveTextDocument notif = do
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = False}) uri openDocs
+
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
 
   doc <- Document.fetch Document.LeastEffort uri
+  files <- Document.wccForFilePath (contractFile doc)
+  let nuris = map filePathToNormalizedUri $ G.vertexList files
 
-  openDocsVar <- asks reOpenDocs
-  modifyMVar_ openDocsVar \openDocs -> do
-    let openDocs' = HashSet.delete uri openDocs
-    -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-    files <- Document.wccForFilePath (contractFile doc)
-    let nuriMap = HashSet.fromList $ map filePathToNormalizedUri $ G.vertexList files
-    when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
-      traverse_ Diagnostic.clearDiagnostics nuriMap
-    pure openDocs'
+  openDocs <- asks reOpenDocs
+  -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
+  needsToClearDiagnostics <- atomically do
+    StmMap.delete uri openDocs
+    hasOpenDocumentInGroup nuris openDocs
+  when needsToClearDiagnostics $
+    traverse_ Diagnostic.clearDiagnostics nuris
+  where
+    hasOpenDocumentInGroup nuris openDocs =
+      getAll <$> foldMapM (\nuri -> All . isNothing <$> StmMap.lookup nuri openDocs) nuris
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do

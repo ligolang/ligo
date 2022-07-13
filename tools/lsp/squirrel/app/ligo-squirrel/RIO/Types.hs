@@ -1,5 +1,6 @@
 module RIO.Types
   ( IndexOptions (..)
+  , OpenDocument (..)
   , ProjectSettings (..)
   , RioEnv (..)
   , RIO (..)
@@ -13,7 +14,6 @@ import Data.Aeson (Options (..), defaultOptions)
 import Data.Aeson.TH (deriveJSON)
 import Data.Default (Default (def))
 import Data.Char (toLower)
-import Data.HashSet (HashSet)
 import Katip (Katip (..), KatipContext (..))
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
@@ -25,6 +25,13 @@ import ASTMap (ASTMap)
 import Cli (HasLigoClient (..), LigoClientEnv (..))
 import Config (Config (..))
 import Log (LogT)
+
+-- | Records information regarding documents that are currently open by the user
+-- in their editor.
+newtype OpenDocument = OpenDocument
+  { odIsDirty :: Bool
+  -- ^ Whether this document is dirty (not saved) in the editor.
+  }
 
 -- | Represents the user's choice on how to index the project.
 data IndexOptions
@@ -54,8 +61,9 @@ data RioEnv = RioEnv
   -- ^ Caches parsed and scoped contracts, as well as their include dependencies.
   -- Also contains metadata about contracts, such as when they were loaded, when
   -- they were invalidated, etc.
-  , reOpenDocs :: MVar (HashSet J.NormalizedUri)
-  -- ^ Records which files are current open in the editor.
+  , reOpenDocs :: StmMap.Map J.NormalizedUri OpenDocument
+  -- ^ Records which files are current open in the editor, and keeps track of
+  -- extra information, such as whether that file is dirty.
   , reIncludes :: MVar (Includes ParsedContractInfo)
   -- ^ Stores the inclusion graph with respect to the currently open file.
   , reTempFiles :: StmMap.Map J.NormalizedFilePath J.NormalizedFilePath

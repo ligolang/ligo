@@ -415,10 +415,10 @@ handleLigoFileChanged nfp = \case
     $(Log.debug) [Log.i|Created #{fp}|]
     void $ forceFetch BestEffort uri
   J.FcChanged -> do
-    openDocsVar <- asks reOpenDocs
-    mOpenDocs <- tryReadMVar openDocsVar
-    case mOpenDocs of
-      Just openDocs | not $ HashSet.member uri openDocs -> do
+    openDocs <- asks reOpenDocs
+    mOpenDoc <- atomically $ StmMap.lookup uri openDocs
+    case mOpenDoc of
+      Nothing -> do
         $(Log.debug) [Log.i|Changed #{fp}|]
         void $ forceFetch BestEffort uri
       _ -> pure ()
