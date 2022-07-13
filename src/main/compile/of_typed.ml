@@ -29,18 +29,6 @@ let apply_to_entrypoint_contract ~raise ~options : Ast_typed.program -> Ast_type
   let var_ep = Ast_typed.(e_a_variable entrypoint ty) in
   compile_expression_in_context ~raise ~options var_ep aggregated_prg
 
-let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_typed.expression_variable list -> Ast_aggregated.expression =
-    fun prg views ->
-  let aggregated_prg = compile_program ~raise prg in
-  let aux : int -> expression_variable -> (label * expression) = fun i view ->
-    let Self_ast_typed.Helpers.{arg=a_ty ; storage=s_ty ; return=r_ty}, _ =
-      trace ~raise self_ast_typed_tracer @@ Self_ast_typed.Helpers.fetch_view_type view prg in
-    let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
-    Ast_typed.Label (string_of_int i), Ast_typed.(e_a_variable view ty)
-  in
-  let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views) in
-  compile_expression_in_context ~raise ~options tuple_view aggregated_prg
-
 let apply_to_entrypoint ~raise ~options : Ast_typed.program -> string -> Ast_aggregated.expression =
     fun prg entrypoint ->
   let aggregated_prg = compile_program ~raise prg in
@@ -69,19 +57,19 @@ let assert_equal_contract_type ~raise : Simple_utils.Runned_result.check_type ->
     | _ -> raise.error @@ main_entrypoint_not_a_function
   )
 
-let get_views : Ast_typed.program -> (expression_variable * location) list = fun p ->
-  let f : (expression_variable * location) list -> declaration -> (expression_variable * location) list =
-    fun acc {wrap_content=decl ; location=_ } ->
-      match decl with
-      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder.var, Ast_typed.ValueVar.get_location binder.var)::acc
-      (* TODO: check for [@view] attributes in the AST and warn if [@view] is used anywhere other than top-level
-        (e.g. warn if [@view] is used inside a module)
-        Write a pass to check for known attributes (source_attributes -> known_attributes)
-        *)
-      (* | Declaration_module { module_binder=_ ; module_ ; module_attr=_} -> get_views module_ @ acc *)
-      | _ -> acc
-  in
-  List.fold ~init:[] ~f p
+let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregated.expression =
+  fun prg ->
+    let views_info = Ast_typed.Helpers.fetch_views_in_program prg in
+    let aux : int -> _ -> (label * expression) = fun i (view_ty,view_binder) ->
+      let (a_ty , s_ty , r_ty) =
+        (* at this point the self-pass on views has been applied, we assume the types are correct *)
+        trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty in
+      let ty = t_arrow (t_pair a_ty s_ty) r_ty () in
+      Ast_typed.Label (string_of_int i), Ast_typed.(e_a_variable view_binder.var ty)
+    in
+    let tuple_view = Ast_typed.ez_e_a_record ~layout:L_comb (List.mapi ~f:aux views_info) in
+    let aggregated_prg = compile_program ~raise prg in
+    compile_expression_in_context ~raise ~options tuple_view aggregated_prg
 
 let list_declarations (m : Ast_typed.module_) : expression_variable list =
   List.fold_left

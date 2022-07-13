@@ -138,22 +138,14 @@ let merge_and_type_libraries ~raise : options:Compiler_options.t -> file_name ->
     contract
 
 let build_typed ~raise :
-  options:Compiler_options.t -> Ligo_compile.Of_core.form -> file_name -> Ast_typed.program * Ast_typed.program =
-    fun ~options entry_point file_name ->
+  options:Compiler_options.t -> Ligo_compile.Of_core.form -> file_name -> Ast_typed.program =
+    fun ~options form file_name ->
       let open Build(struct
         let raise = raise
         let options = options
       end) in
       let contract = merge_and_type_libraries ~raise ~options file_name in
-      let applied =
-        match entry_point with
-        | Ligo_compile.Of_core.Contract entrypoint ->
-          trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_contract entrypoint contract
-        | View (view_name,main_name) ->
-          trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_view view_name main_name contract
-        | Env -> contract
-      in
-      applied, contract
+      trace ~raise self_ast_typed_tracer @@ Ligo_compile.Of_core.specific_passes form contract
 
 let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> string -> file_name option -> _ =
   fun ~options syntax expression file_name ->
@@ -174,50 +166,41 @@ let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> st
     (mini_c_exp ,aggregated)
 
 (* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
-let build_contract ~raise : options:Compiler_options.t -> string -> file_name -> Stacking.compiled_expression * Ast_typed.program =
+let build_contract ~raise : options:Compiler_options.t -> string -> file_name -> Stacking.compiled_expression =
   fun ~options entry_point file_name ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
-    let typed_prg, contract = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
+    let typed_prg = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-    let michelson  = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
-    michelson, contract
+    Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
+
 
 let build_views ~raise :
-  options:Compiler_options.t -> string -> string list * Ast_typed.program -> file_name -> (Ast_typed.ValueVar.t * Stacking.compiled_expression) list =
-  fun ~options main_name (declared_views,program) source_file ->
-    let main_name = Ast_typed.ValueVar.of_input_var main_name in
-    let views =
-      let annotated_views = Ligo_compile.Of_typed.get_views @@ program in
-      match declared_views with
-      | [] -> List.map annotated_views ~f:fst
-      | _ -> (
-        (* detects whether a declared view (passed with --views command line option) overwrites an annotated view ([@view] let ..)*)
-        let () = List.iter annotated_views
-          ~f:(fun (x,loc) ->
-            if Option.is_none (List.find ~f:(fun s -> Ast_typed.ValueVar.is_name x s) declared_views) then
-              raise.warning (`Main_view_ignored loc)
-          )
-        in
-        List.map ~f:Ast_typed.ValueVar.of_input_var declared_views
-      )
+  options:Compiler_options.t -> string -> string list -> file_name -> (Ast_typed.ValueVar.t * Stacking.compiled_expression) list =
+  fun ~options main_name cli_views source_file ->
+    let form =
+      let contract_entry = Ast_typed.ValueVar.of_input_var main_name in
+      let command_line_views = match cli_views with [] -> None | x -> Some x in
+      Ligo_compile.Of_core.View { command_line_views ; contract_entry }
     in
-    match views with
-    | [] -> []
-    | _ ->
-    let _, contract  = build_typed ~raise ~options (Ligo_compile.Of_core.View (views,main_name)) source_file in
-    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise ~options:options.middle_end contract views in
+    let contract =
+      let warning : Main_warnings.all -> unit = fun x -> match x with `Main_view_ignored _ -> raise.warning x | _ -> () in
+      build_typed ~raise:{raise with warning} ~options form source_file
+    in
+    let view_names = List.map ~f:fst (Ast_typed.Helpers.get_views contract) in
+    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression mini_c in
     let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
                        Mini_c.get_t_tuple mini_c.type_expression in
+    let nb_of_views = List.length view_names in
     let aux i view =
       let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
                      List.nth mini_c_tys i in
-      let idx = Mini_c.e_proj mini_c idx_ty i (List.length views) in
+      let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
       let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression idx in
       (view, idx) in
-    let views = List.mapi ~f:aux views in
+    let views = List.mapi ~f:aux view_names in
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
     let michelsons = List.map ~f:aux views in
     let () = if Environment.Protocols.(equal Jakarta options.middle_end.protocol_version) then

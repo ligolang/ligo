@@ -46,11 +46,11 @@ let interpret (raw_options : Compiler_options.raw) expression init_file amount b
         let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
-      let (mini_c_exp, typed_exp) = Build.build_expression ~raise ~options syntax expression init_file in
+      let (mini_c_exp, aggregated_exp) = Build.build_expression ~raise ~options syntax expression init_file in
       let compiled_exp = Compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp in
       let options           = Run.make_dry_run_options ~raise {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
       let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
-      Decompile.Of_michelson.decompile_expression ~raise typed_exp.type_expression runres
+      Decompile.Of_michelson.decompile_expression ~raise aggregated_exp.type_expression runres
 
 let evaluate_call (raw_options : Compiler_options.raw) source_file parameter amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
