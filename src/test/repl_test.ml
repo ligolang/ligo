@@ -8,7 +8,7 @@ let options = Compiler_options.make ~raw_options ()
 
 let make_init_state_cameligo ?(project_root=None) () = Repl.make_initial_state
                             (CameLIGO: Syntax_types.t)
-                            Environment.Protocols.Ithaca
+                            Environment.Protocols.in_use
                             dry_run_options project_root
                             options
 
@@ -16,7 +16,7 @@ let init_state_cameligo = make_init_state_cameligo ()
 
 let make_init_state_jsligo ?(project_root=None) () = Repl.make_initial_state
                           (JsLIGO: Syntax_types.t)
-                          Environment.Protocols.Ithaca
+                          Environment.Protocols.in_use
                           dry_run_options project_root
                           options
 
@@ -33,19 +33,19 @@ let test_seq ~raise ~raw_options init_state cmds res () =
   let r = apply_repl_sequence ~raw_options init_state cmds in
   if (List.compare String.compare res r = 0)
   then ()
-  else raise.raise @@ `Test_repl (res, r)
+  else raise.error @@ `Test_repl (res, r)
 
 let test_basic ~raise ~raw_options () =
   let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_cameligo "1 + 3" in
   if (String.compare s "4" = 0)
   then ()
-  else raise.raise @@ `Test_repl ([s], ["4"])
+  else raise.error @@ `Test_repl ([s], ["4"])
 
 let test_stdlib ~raise ~raw_options () =
   let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_cameligo "String.concat \"Hello \" \"world!\"" in
   if (String.compare s "\"Hello world!\"" = 0)
   then ()
-  else raise.raise @@ `Test_repl (["\"Hello world!\""], [s])
+  else raise.error @@ `Test_repl (["\"Hello world!\""], [s])
 
 let test_empty ~raise ~raw_options () =
   test_seq ~raise ~raw_options init_state_cameligo [""]
@@ -107,13 +107,13 @@ let test_basic_jsligo ~raise ~raw_options () =
   let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_jsligo "1 + 3" in
   if (String.compare s "4" = 0)
   then ()
-  else raise.raise @@ `Test_repl ([s], ["4"])
+  else raise.error @@ `Test_repl ([s], ["4"])
 
 let test_stdlib_jsligo ~raise ~raw_options () =
   let _,_,s = Repl.parse_and_eval ~raw_options (Ex_display_format Dev) init_state_jsligo "String.concat(\"Hello \", \"world!\")" in
   if (String.compare s "\"Hello world!\"" = 0)
   then ()
-  else raise.raise @@ `Test_repl (["\"Hello world!\""], [s])
+  else raise.error @@ `Test_repl (["\"Hello world!\""], [s])
 
 let test_empty_jsligo ~raise ~raw_options () =
   test_seq ~raise ~raw_options init_state_jsligo [""]
@@ -212,7 +212,36 @@ let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) (
       "Done.";
       "42";
       "24";
-      ]
+    ]
+    ()
+
+let test_use_scoped_package ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/using_scope_pkg_project" in
+  let raw_options = { raw_options with project_root = project_root } in
+  (* Here we #use (equivalent of #include) *)
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\"";
+      "reverse [3 ; 2 ; 1]";
+    ]
+    [ 
+      "remove , equal , rotate , split , slice , take , drop , insert , set , find ,\n\
+      concat , reverse , last , construct ,\n\
+      big_array";
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+    ]
+    ()
+
+let test_import_scoped_packages ~raise ~(raw_options : Compiler_options.raw) () =
+  let project_root = Some "projects/using_scope_pkg_project" in
+  let raw_options = { raw_options with project_root = project_root } in
+  test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
+      "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\"";
+      "BA.reverse [3 ; 2 ; 1]";
+    ]
+    [ 
+      "Done.";
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+    ]
     ()
 
 let () =
@@ -237,8 +266,10 @@ let () =
         test "long" (test_long_jsligo ~raw_options)
       ] ;
     test_suite "REPL + package-management" [
-      test "#use external packages" (test_use_external_packages ~raw_options);
-      test "#import external packages" (test_import_external_packages ~raw_options);
+      test "#use ext pkgs" (test_use_external_packages ~raw_options);
+      test "#import ext pkgs" (test_import_external_packages ~raw_options);
+      test "#use scoped ext pkg" (test_use_scoped_package ~raw_options);
+      test "#import scoped ext pkg" (test_import_scoped_packages ~raw_options);
     ] ;
   ] ;
   ()

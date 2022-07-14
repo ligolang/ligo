@@ -31,20 +31,20 @@ type all =
  | `Preproc_tracer of Preprocessing.Errors.t
  | `Parser_tracer of Parsing.Errors.t
  | `Pretty_tracer of Parsing.Errors.t
- | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error
- | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error
- | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error
- | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error
+ | `Cit_pascaligo_tracer of Tree_abstraction.Pascaligo.Errors.abs_error list
+ | `Cit_cameligo_tracer of Tree_abstraction.Cameligo.Errors.abs_error list
+ | `Cit_reasonligo_tracer of Tree_abstraction.Reasonligo.Errors.abs_error list
+ | `Cit_jsligo_tracer of Tree_abstraction.Jsligo.Errors.abs_error list
  | `Self_ast_imperative_tracer of Self_ast_imperative.Errors.self_ast_imperative_error
- | `Purification_tracer   of Purification.Errors.purification_error
+ | `Purification_tracer   of Purification.Errors.purification_error list
  | `Depurification_tracer of Purification.Errors.purification_error
  | `Desugaring_tracer of Desugaring.Errors.desugaring_error
  | `Sugaring_tracer   of Desugaring.Errors.desugaring_error
  | `Checking_tracer of Checking.Errors.typer_error
  | `Self_ast_typed_tracer of Self_ast_typed.Errors.self_ast_typed_error
- | `Spilling_tracer of Spilling.Errors.spilling_error
- | `Self_ast_aggregated_tracer of Self_ast_aggregated.Errors.self_ast_aggregated_error
  | `Aggregation_tracer of Aggregation.Errors.aggregation_error
+ | `Self_ast_aggregated_tracer of Self_ast_aggregated.Errors.self_ast_aggregated_error
+ | `Spilling_tracer of Spilling.Errors.spilling_error
  | `Self_mini_c_tracer of Self_mini_c.Errors.self_mini_c_error
  | `Scoping_tracer of Scoping.Errors.scoping_error
  | `Stacking_tracer of Stacking.Errors.stacking_error

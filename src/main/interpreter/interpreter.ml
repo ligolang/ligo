@@ -162,11 +162,10 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
-  ignore add_warning;
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~add_warning ~steps ~options in
+  let eval_ligo = eval_ligo ~raise ~steps ~options in
   let locs = List.map ~f:(fun (_, _, c) -> c) operands in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
@@ -691,7 +690,7 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
             let f_env' = Env.extend env arg_binder (in_ty, v) in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
             eval_ligo body (loc :: calltrace) f_env''
-          | _ -> raise.raise @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
+          | _ -> raise.error @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
         in
         try_or (let* v = r in return (Some (v, m))) (return None)
       in
@@ -791,11 +790,17 @@ let rec apply_operator ~raise ~add_warning ~steps ~(options : Compiler_options.t
                    AST.Helpers.assert_type_expression_eq (storage_ty, storage_ty') in
       return_ct (C_address address)
     | ( C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS , _  ) -> fail @@ error_type
-    | ( C_TEST_RANDOM , [ V_Ct (C_unit) ] ) ->
-      let expr_gen = QCheck.Gen.generate1 (Mutation.expr_gen ~raise expr_ty)  in
-      let* value = eval_ligo expr_gen calltrace env in
-      return value
+    | ( C_TEST_RANDOM , [ V_Ct (C_bool small) ] ) ->
+      let* gen_type = monad_option (Errors.generic_error loc "Expected typed address") @@ AST.get_t_gen expr_ty in
+      let>> ctxt : Tezos_state.context = Get_state () in
+      let known_addresses = ctxt.internals.bootstrapped @ List.concat (List.map ~f:snd ctxt.transduced.last_originations) in
+      let generator = Mutation.value_gen ~raise ~small ~known_addresses gen_type in
+      return (V_Gen { generator ; gen_type })
     | ( C_TEST_RANDOM , _  ) -> fail @@ error_type
+    | ( C_TEST_GENERATOR_EVAL , [ V_Gen { generator ; gen_type = _ } ] ) ->
+      let v = QCheck.Gen.generate1 generator in
+      return v
+    | ( C_TEST_GENERATOR_EVAL , _ ) -> fail @@ error_type
     | ( C_TEST_SET_BIG_MAP , [ V_Ct (C_int n) ; V_Map kv ] ) ->
       let bigmap_ty = List.nth_exn types 1 in
       let>> () = Set_big_map (n, kv, bigmap_ty) in
@@ -945,9 +950,9 @@ and eval_literal : AST.literal -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~add_warning ~steps ~options in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
     let unthunk = function
       | V_Thunk v -> eval_ligo v.value calltrace v.context
@@ -972,7 +977,7 @@ and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace 
             eval_ligo { body with location = term.location } (term.location :: calltrace) f_env''
           | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty = _ }) -> (
             let () = match code with
-              | Seq (_, [ Prim (_,"FAILWITH",_,_) ]) -> add_warning (`Use_meta_ligo term.location)
+              | Seq (_, [ Prim (_,"FAILWITH",_,_) ]) -> raise.warning (`Use_meta_ligo term.location)
               | _ -> ()
             in
             let>> ctxt = Get_state () in
@@ -1042,7 +1047,7 @@ and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace 
           let* value = unthunk value in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~add_warning ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
@@ -1134,13 +1139,13 @@ and eval_ligo ~raise ~add_warning ~steps ~options : AST.expression -> calltrace 
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
         return @@ V_Michelson (Ty_code { code ; code_ty ; ast_ty })
-      | _ -> raise.raise @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
+      | _ -> raise.error @@ Errors.generic_error term.location "Embedded raw code can only have a functional type"
     )
-    | E_assign _ -> raise.raise @@ Errors.generic_error term.location "Assignements should not reach interpreter"
+    | E_assign _ -> raise.error @@ Errors.generic_error term.location "Assignements should not reach interpreter"
 
-and try_eval ~raise ~add_warning ~steps ~options expr env state r = Monad.eval ~raise ~add_warning ~options (eval_ligo ~raise ~add_warning ~steps ~options expr [] env) state r
+and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
 
-let eval_test ~raise ~add_warning ~steps ~options : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1167,8 +1172,8 @@ let eval_test ~raise ~add_warning ~steps ~options : Ast_typed.program -> ((strin
   let map = List.fold_right lst ~f ~init:LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
-  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~add_warning ~options:options.middle_end expr in
-  let value, _ = try_eval ~raise ~add_warning ~steps ~options expr Env.empty_env initial_state None in
+  let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
+  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =

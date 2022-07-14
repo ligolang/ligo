@@ -14,7 +14,7 @@ module LSet = Caml.Set.Make (struct
   let compare = T.compare_label
 end)
 
-type raise = Errors.typer_error Trace.raise
+type raise = (Errors.typer_error,Main_warnings.all) Trace.raise
 
 let cons_label = T.Label "#CONS"
 let nil_label  = T.Label "#NIL"
@@ -110,12 +110,12 @@ let rec to_list_pattern ~(raise : raise) simple_pattern =
     let tl = to_list_pattern ~raise tl in
     Location.wrap @@ T.P_list (T.Cons (hd, tl))
   | SP_Constructor (T.Label c, _, _) ->
-    raise.raise @@ 
+    raise.error @@
       Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c)
 
 and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
   match simple_patterns with
-    [] -> raise.raise @@ 
+    [] -> raise.error @@
       Errors.corner_case "edge case: to_original_pattern empty patterns"
   | SP_Wildcard t::[] when AST.is_t_unit t -> Location.wrap @@ T.P_unit
   | SP_Wildcard _::[] -> Location.wrap @@ T.P_var wild_binder
@@ -145,7 +145,7 @@ and to_original_pattern ~raise simple_patterns (ty : AST.type_expression) =
         Location.wrap @@ T.P_tuple ps
       else
         Location.wrap @@ T.P_record (labels, ps)
-    | _ -> raise.raise @@ Errors.corner_case "edge case: not a record/tuple")
+    | _ -> raise.error @@ Errors.corner_case "edge case: not a record/tuple")
 
 let print_matrix matrix =
   let () = Format.printf "matrix: \n" in
@@ -323,7 +323,7 @@ let rec algorithm_Urec ~(raise : raise) matrix vector =
         complete_signature false
     else
       algorithm_Urec ~raise (default_matrix matrix) q2_n
-  | [] -> raise.raise @@ Errors.corner_case "edge case: algorithm Urec"
+  | [] -> raise.error @@ Errors.corner_case "edge case: algorithm Urec"
 
 (* Algorithm I [algorithm_I matrix n ts]
 
@@ -366,7 +366,7 @@ let rec algorithm_I ~(raise : raise) matrix n ts =
   if n = 0 then
     if List.is_empty matrix then Some [[]]
     else if List.for_all matrix ~f:(List.is_empty) then None
-    else raise.raise @@ Errors.corner_case "edge case: algorithm Urec"
+    else raise.error @@ Errors.corner_case "edge case: algorithm Urec"
   else
     let constructors = get_constructors_from_1st_col matrix in
     let t, ts = List.split_n ts 1 in
@@ -412,7 +412,7 @@ let rec algorithm_I ~(raise : raise) matrix n ts =
             ))
       | None -> None
 
-(* Missing case analysis uses [algorithm_I matrix n] to find out the 
+(* Missing case analysis uses [algorithm_I matrix n] to find out the
    actual missing pattern(s)
 
    [n] is the number of parts a pattern has
@@ -426,7 +426,7 @@ let missing_case_analysis ~raise matrix t =
 
   match algorithm_I ~raise matrix (List.length ts) ts with
     Some sps ->
-      let ps = List.map sps 
+      let ps = List.map sps
         ~f:(fun sp -> to_original_pattern ~raise sp t) in
       Some ps
   | None -> None
@@ -444,7 +444,7 @@ let redundant_case_analysis ~raise matrix =
       if redundant_case_found then (true, case, [])
       else if List.is_empty matrix then (false, case + 1, [vector])
       else
-        let redundant_case_found 
+        let redundant_case_found
           = not @@ algorithm_Urec matrix ~raise vector in
         (redundant_case_found, case + 1, matrix @ [vector]))
   in
@@ -477,12 +477,12 @@ let check_anomalies ~(raise : raise) ~loc eqs t =
 
   match missing_case_analysis ~raise matrix t with
     Some missing_cases ->
-      raise.raise @@ Errors.pattern_missing_cases loc missing_cases
+      raise.error @@ Errors.pattern_missing_cases loc missing_cases
   | None ->
     let redundant, case = redundant_case_analysis ~raise matrix in
     if redundant
     then
       let p, _, _ = List.nth_exn eqs (case - 1) in
       let loc = Location.get_location p in
-      raise.raise @@ Errors.pattern_redundant_case loc
+      raise.error @@ Errors.pattern_redundant_case loc
     else ()

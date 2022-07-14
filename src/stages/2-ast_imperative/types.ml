@@ -78,21 +78,4 @@ and constant =
 
 and matching = (expression , type_expression) match_exp
 
-
-(*** REMITODO: what is this ? hoping this is unused ***)
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of (expression * free_variables)
-
-and free_variables = expression_variable list
-
-and environment_element =
-  { type_value: type_expression ;
-    definition: environment_element_definition
-  }
-
-and expr_environment = (expression_variable * environment_element) list
-and type_environment = (type_variable * type_expression) list
-
-(* SUBST ??? *)
-and environment = expr_environment * type_environment
+and program = declaration list

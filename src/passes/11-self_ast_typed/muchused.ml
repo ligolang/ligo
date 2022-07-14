@@ -51,6 +51,7 @@ let rec is_dup (t : type_expression) =
     Tx_rollup_l2_address |
     Michelson_contract  |
     Michelson_program   |
+    Gen                 |
     (* Externals are dup *)
     External _
   ); _} ->
@@ -212,7 +213,7 @@ let rec get_all_declarations (module_name : module_variable) : module_ ->
       | _ -> [] in
     m |> List.map ~f:aux |> List.concat
 
-let rec muchused_helper (muchuse : muchuse) : module_ -> muchuse =
+let rec muchused_helper (muchuse : muchuse) =
   function m ->
   let aux = fun (x : declaration_content) s ->
     match x with
@@ -225,11 +226,13 @@ let rec muchused_helper (muchuse : muchuse) : module_ -> muchuse =
          decls ~init:(muchused_helper s module_)
     | _ -> s
   in
-  List.fold_right ~f:aux (List.map ~f:Location.unwrap m) ~init:muchuse
+  let map,muchused = List.fold_right ~f:aux (List.map ~f:Location.unwrap m) ~init:muchuse in
+  (*Put the variable in order : *)
+  map,List.rev muchused
 
-let muchused_map_module ~add_warning : module_ -> module_ = function module_ ->
+let muchused_map_module ~raise : module_ -> module_ = function module_ ->
   let update_annotations annots =
-    List.iter ~f:(fun a -> add_warning a) annots in
+    List.iter ~f:raise.Simple_utils.Trace.warning annots in
   let _,muchused = muchused_helper muchuse_neutral module_ in
   let warn_var v =
     `Self_ast_typed_warning_muchused

@@ -82,7 +82,8 @@ esy:
     - $env:HOME = 'C:/Users/gitlabrunner'
     - esy -vvv
     - rm -Recurse -Force _esy
-
+  allow_failure: true
+  
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
   extends: .submodule-clone
