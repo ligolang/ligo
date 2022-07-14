@@ -7,15 +7,28 @@ It consists of two parts:
 * Haskell backend in [`ligo-debugger`](./ligo-debugger) folder;
 * VSCode extension in [`vscode-plugin`](./vscode-plugin) folder.
 
-
 ## How to build
+
+### Installing dependencies
+
+You will need Stack to build the debug adapter.
+The recommended way to get Stack is using [GHCup](https://www.haskell.org/ghcup/).
+
+To build the debug adapter, you need the development libraries for [`libsodium`](https://libsodium.gitbook.io) installed on your computer, as well as [`libgmp`](https://gmplib.org).
+
+The front-end requires the [`yarn`](https://yarnpkg.com) package manager to be installed on your computer, as well as the [Visual Studio Code Extension Manager (vsce)](https://yarnpkg.com/package/vsce), which can be installed with `yarn global add vsce`.
+
+The extension requires Visual Studio Code version 1.67.0 or later.
+
+### Building the extension
+
+In the `vscode-extension` directory, make sure to run `yarn install` if this is your first time building the extension.
 
 To build the plugin, run `make package`; this will add `.vsix` file to `vscode-plugin` folder.
 You can then use this file to install the extension from VSCode interface:
 
 To build and install the plugin at once, run `make install-plugin`.
 If this is not the first time you install the plugin, you may need to reload VSCode manually.
-
 
 ## Launch configuration
 
