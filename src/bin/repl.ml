@@ -43,9 +43,6 @@ let pp_declaration ppf = function
   | `Type a   -> Ast_core.PP.type_variable       ppf a
   | `Module a -> Ast_core.PP.module_variable     ppf a
 
-(* Error and warnings *)
-
-let add_warning _ = ()
 
 (* REPL logic *)
 
@@ -109,9 +106,9 @@ type state = { env : Environment.t; (* The repl should have its own notion of en
 let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
-  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~add_warning ~options:options state.syntax s @@ Environment.to_program state.env in
+  let typed_exp  = Ligo_compile.Utils.type_expression_string ~raise ~options:options state.syntax s @@ Environment.to_program state.env in
   let module_ = Ligo_compile.Of_typed.compile_program ~raise state.top_level in
-  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end typed_exp module_ in
+  let aggregated_exp = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end typed_exp module_ in
   let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp in
   let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
   let options = state.dry_run_opts in
@@ -122,7 +119,7 @@ let try_eval ~raise ~raw_options state s =
      let state = { state with top_level = state.top_level } in
      (state, Expression_value expr)
   | Fail _ ->
-    raise.raise `Repl_unexpected
+    raise.error `Repl_unexpected
 
 let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program) : Ast_typed.program =
   let () = if declaration then assert (List.length m2 = 1) in
@@ -132,30 +129,30 @@ let try_declaration ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
   let options = Compiler_options.set_init_env options state.env in
   try
-    try_with (fun ~raise ->
+    try_with (fun ~raise ~catch:_ ->
       let typed_prg,core_prg =
-        Ligo_compile.Utils.type_program_string ~raise ~add_warning ~options:options state.syntax s in
+        Ligo_compile.Utils.type_program_string ~raise ~options:options state.syntax s in
       let env = Environment.append typed_prg state.env in
       let state = { state with env ; top_level = concat_modules ~declaration:true state.top_level typed_prg } in
       (state, Defined_values_core core_prg))
-    (function
+    (fun ~catch:_ -> function
         (`Parser_tracer _ : Main_errors.all)
       | (`Cit_jsligo_tracer _ : Main_errors.all)
       | (`Cit_pascaligo_tracer _ : Main_errors.all)
       | (`Cit_cameligo_tracer _ : Main_errors.all)
       | (`Cit_reasonligo_tracer _ : Main_errors.all) ->
          try_eval ~raise ~raw_options state s
-      | e -> raise.raise e)
+      | e -> raise.error e)
   with
   | Failure _ ->
-     raise.raise `Repl_unexpected
+     raise.error `Repl_unexpected
 
 let import_file ~raise ~raw_options state file_name module_name =
   let file_name = ModResHelpers.resolve_file_name file_name state.module_resolutions in
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
-    let prg = Build.merge_and_type_libraries ~raise ~add_warning ~options file_name in
+    let prg = Build.merge_and_type_libraries ~raise ~options file_name in
     Simple_utils.Location.wrap (Ast_typed.M_struct prg)
   in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
@@ -168,7 +165,7 @@ let use_file ~raise ~raw_options state file_name =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax ~protocol_version:state.protocol () in
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
-  let module' = Build.merge_and_type_libraries ~raise ~add_warning ~options file_name in
+  let module' = Build.merge_and_type_libraries ~raise ~options file_name in
   let env = Environment.append module' state.env in
   let state = { state with env = env;
                             top_level = concat_modules ~declaration:false state.top_level module'
@@ -197,7 +194,7 @@ let parse s =
 let eval display_format state c =
   let (Ex_display_format t) = display_format in
   match to_stdlib_result c with
-    Ok (state, out) ->
+    Ok ((state, out),_w) ->
       let disp = (Displayable {value = out; format = repl_result_format }) in
       let out : string =
         match t with
@@ -205,7 +202,7 @@ let eval display_format state c =
         | Dev -> convert ~display_format:t disp ;
         | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp in
       (1, state, out)
-  | Error e ->
+  | Error (e,_w) ->
       let disp = (Displayable {value = e; format = Main_errors.Formatter.error_format }) in
       let out : string =
         match t with

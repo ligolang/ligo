@@ -17,7 +17,7 @@ let get_t_pair ~raise e =
 let get_function_or_eta_expand ~raise e =
   let in_ty, out_ty = match e.type_expression.type_content with
     | T_function t -> t
-    | _ -> raise.raise (corner_case "contract do not have the type of a function")
+    | _ -> raise.error (corner_case "contract do not have the type of a function")
   in
   match e.content with
   | E_closure f -> f
@@ -130,6 +130,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_TO_ENTRYPOINT
   | C_TEST_TO_TYPED_ADDRESS
   | C_TEST_RANDOM
+  | C_TEST_GENERATOR_EVAL
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS
   | C_TEST_COMPILE_CONTRACT_FROM_FILE
   | C_TEST_SET_BIG_MAP
@@ -411,7 +412,7 @@ let create_contract ~raise expr =
                   | E_create_contract (_, _, ((x, _), lambda), _) -> (
                     let fvs = Free_variables.expression [x] lambda in
                     if Int.equal (List.length fvs) 0 then expr
-                    else raise.raise @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
+                    else raise.error @@ fvs_in_create_contract_lambda expr (List.hd_exn fvs)
                   )
                   | _ -> expr) expr in
   expr

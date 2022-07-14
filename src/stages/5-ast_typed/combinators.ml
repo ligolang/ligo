@@ -46,7 +46,7 @@ let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []
   ))]
 
 let t__type_ ?loc ?core t : type_expression = t_constant ?loc ?core _type_ [t]
-[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
 let t_ext_int ?loc ?core t : type_expression = t_constant ?loc ?core (External "int") [t]
 let t_ext_ediv ?loc ?core t t' : type_expression = t_constant ?loc ?core (External "ediv") [t; t']
@@ -382,3 +382,13 @@ let get_sum_label_type (t : type_expression) (label : label) : type_expression o
     match LMap.find_opt label s.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type
+
+(* getter for a function of the form p * s -> ret *)
+let get_view_form ty =
+  match get_t_arrow ty with
+  | Some { type1 = tin ; type2  = return } -> (
+    match get_t_tuple tin with
+    | Some [ arg ; storage ] -> Some (arg , storage , return)
+    | _ -> None
+  )
+  | None -> None

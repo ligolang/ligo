@@ -26,7 +26,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   let compile_type = compile_type ~raise in
   let return tc = Expression.make_t ~loc:t.location ?source_type:t.source_type @@ tc in
   match t.type_content with
-  | T_variable (name) -> raise.raise @@ no_type_variable @@ name
+  | T_variable (name) -> raise.error @@ no_type_variable @@ name
   | t when (AST.Compare.type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
     let open Stage_common.Constant in
@@ -88,8 +88,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
         Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             |
-        List            | External _), [])
-        -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+        List            | External _ | Gen), [])
+        -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Bool       | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
@@ -101,9 +101,9 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key |
+      Never        | Chest_key | Gen                  |
       Typed_address| Mutation  | Bytes                |
-      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
   )
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
@@ -146,9 +146,9 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       return @@ (T_function (param',result'))
   )
   | T_singleton _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
+    raise.error @@ corner_case ~loc:__LOC__ "Singleton uncaught"
   | T_for_all _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
+    raise.error @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -214,7 +214,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   match ae.expression_content with
   | E_type_abstraction _
   | E_type_inst _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
+    raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
   | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
@@ -395,7 +395,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                   (get_t_pair code_input_type) in
               return @@ E_create_contract (p, s, code', args')
             )
-          | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
+          | _ -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
       let iter = iterator_generator C_ITER in
       let map = iterator_generator C_MAP in
@@ -535,11 +535,11 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     let orig_code = code in
     let (code, errs) = Micheline_parser.tokenize code in
     (match errs with
-    | _ :: _ -> raise.raise (could_not_parse_raw_michelson ae.location orig_code)
+    | _ :: _ -> raise.error (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
       let (code, errs) = Micheline_parser.parse_expression ~check:false code in
       match errs with
-      | _ :: _ -> raise.raise (could_not_parse_raw_michelson ae.location orig_code)
+      | _ :: _ -> raise.error (could_not_parse_raw_michelson ae.location orig_code)
       | [] ->
         let code = Micheline.strip_locations code in
         (* hmm *)
@@ -548,7 +548,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | Seq (_, code) ->
           return ~tv:type_anno' @@ E_raw_michelson code
         | _ ->
-          raise.raise (raw_michelson_must_be_seq ae.location code)
+          raise.error (raw_michelson_must_be_seq ae.location code)
     )
     | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
 
@@ -695,7 +695,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
   let binder = compile_variable lambda.binder.var :: binder in
   let loc = Ast_typed.ValueVar.get_location fun_name in
-  let binder = match binder with hd::[] -> hd | _ -> raise.raise @@ unsupported_recursive_function loc fun_name in
+  let binder = match binder with hd::[] -> hd | _ -> raise.error @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder.var, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type

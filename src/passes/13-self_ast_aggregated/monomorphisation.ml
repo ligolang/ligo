@@ -307,7 +307,7 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
 
 let check_if_polymorphism_present ~raise e =
    let show_error loc =
-      raise.Trace.raise @@ Errors.polymorphism_unresolved loc
+      raise.Trace.error @@ Errors.polymorphism_unresolved loc
    in
    let rec check_type_expression ~loc (te : AST.type_expression) =
       match te.type_content with

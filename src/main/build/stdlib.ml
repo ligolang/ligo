@@ -8,7 +8,6 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
   in
   let std = match protocol with
     | Environment.Protocols.Jakarta -> def "JAKARTA"
-    | Environment.Protocols.Ithaca  -> def "ITHACA"
   in
   let lib = Ligo_lib.get () in
   test_module ^ func_type ^ std ^ lib
@@ -16,9 +15,9 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
 let stdlib ~options syntax =
   let lib = get_lib Compiler_options.(options.middle_end.protocol_version) syntax ~test_enabled:Compiler_options.(options.middle_end.test) in
   match Simple_utils.Trace.to_stdlib_result @@
-          Ligo_compile.Utils.type_program_string ~add_warning:(fun _ -> ()) ~options CameLIGO lib with
-  | Ok s -> s
-  | Error e ->
+          Ligo_compile.Utils.type_program_string ~options CameLIGO lib with
+  | Ok (s,_w) -> s
+  | Error (e,_w) ->
      let error_msg = Format.asprintf "%a" (Main_errors.Formatter.error_ppformat ~display_format:Human_readable) e in
      failwith ("Error compiling the stdlib: " ^ error_msg)
 

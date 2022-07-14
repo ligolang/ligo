@@ -27,11 +27,11 @@ let get_alternative t element =
   else
     None
 
-let warn ~add_warning : expression -> expression = fun e ->
+let warn ~raise : expression -> expression = fun e ->
   let () = match e.expression_content with
     | E_module_accessor { module_path = [t] ; element }
          when Option.is_some @@ get_alternative t element ->
        let t, n, ty = Option.value_exn (get_alternative t element) in
-       add_warning (warn_constant e.location e (e_module_accessor [t] n) ty)
+       raise.Simple_utils.Trace.warning (warn_constant e.location e (e_module_accessor [t] n) ty)
     | _ -> () in
   e
