@@ -230,6 +230,7 @@ runInstrCollect = \case
     return newStack
   other -> runInstrImpl runInstrCollect other
   where
+
     -- What is done upon executing instruction.
     preExecutedStage LigoIndexedInfo{..} stack = do
       whenJust liiLocation \loc -> do
@@ -263,7 +264,7 @@ runInstrCollect = \case
       :: LigoRange
       -> InterpretEvent
       -> CollectingEvalOp ()
-    recordSnapshot loc event = do
+    recordSnapshot loc event = unless (lrFile loc == "") do
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
