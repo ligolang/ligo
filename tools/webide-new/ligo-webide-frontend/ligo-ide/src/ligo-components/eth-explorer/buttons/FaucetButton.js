@@ -1,43 +1,41 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import {
-  ToolbarButton,
-} from '~/base-components/ui-components'
+import { ToolbarButton } from "~/base-components/ui-components";
 
-import fileOps from '~/base-components/file-ops'
+import fileOps from "~/base-components/file-ops";
 
 export default class FaucetButton extends PureComponent {
   claim = async () => {
-    let faucetUrl
-    if (this.props.network === 'ropsten') {
-      faucetUrl = `https://faucet.ropsten.be/`
-    } else if (this.props.network === 'rinkeby') {
-      faucetUrl = `https://faucet.rinkeby.io/`
-    } else if (this.props.network === 'kovan') {
-      faucetUrl = `https://faucet.kovan.network/`
-    } else if (this.props.network === 'evmostest') {
-      faucetUrl = `https://faucet.evmos.org/`
-    } else if (this.props.network === 'bnbtest') {
-      faucetUrl = `https://testnet.binance.org/faucet-smart`
+    let faucetUrl;
+    if (this.props.network === "ropsten") {
+      faucetUrl = "https://faucet.ropsten.be/";
+    } else if (this.props.network === "rinkeby") {
+      faucetUrl = "https://faucet.rinkeby.io/";
+    } else if (this.props.network === "kovan") {
+      faucetUrl = "https://faucet.kovan.network/";
+    } else if (this.props.network === "evmostest") {
+      faucetUrl = "https://faucet.evmos.org/";
+    } else if (this.props.network === "bnbtest") {
+      faucetUrl = "https://testnet.binance.org/faucet-smart";
     } else {
-      return
+      return;
     }
 
-    fileOps.openLink(faucetUrl)
-  }
+    fileOps.openLink(faucetUrl);
+  };
 
-  render () {
-    if (['ropsten', 'rinkeby', 'kovan'].indexOf(this.props.network) === -1) {
-      return null
+  render() {
+    if (["ropsten", "rinkeby", "kovan"].indexOf(this.props.network) === -1) {
+      return null;
     }
     return (
       <ToolbarButton
-        id='navbar-faucet'
-        size='md'
-        icon='fas fa-faucet'
-        tooltip='Faucet'
+        id="navbar-faucet"
+        size="md"
+        icon="fas fa-faucet"
+        tooltip="Faucet"
         onClick={this.claim}
       />
-    )
+    );
   }
 }

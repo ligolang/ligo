@@ -1,13 +1,13 @@
-import React, { Suspense, lazy } from 'react'
-import { BrowserRouter, HashRouter, Switch, Route } from 'react-router-dom'
+import React, { Suspense, lazy } from "react";
+import { BrowserRouter, HashRouter, Switch, Route } from "react-router-dom";
 
-import platform from '~/base-components/platform'
-import { LoadingScreen } from '~/base-components/ui-components'
+import platform from "~/base-components/platform";
+import { LoadingScreen } from "~/base-components/ui-components";
 
-const Router = platform.isDesktop ? HashRouter : BrowserRouter
-const ReduxApp = lazy(() => import('./ReduxApp.tsx' /* webpackChunkName: "components" */))
+const Router = platform.isDesktop ? HashRouter : BrowserRouter;
+const ReduxApp = lazy(() => import("./ReduxApp.tsx" /* webpackChunkName: "components" */));
 
-export default function App () {
+export default function App() {
   return (
     <Router>
       <Suspense fallback={<LoadingScreen />}>
@@ -16,5 +16,5 @@ export default function App () {
         </Switch>
       </Suspense>
     </Router>
-  )
+  );
 }

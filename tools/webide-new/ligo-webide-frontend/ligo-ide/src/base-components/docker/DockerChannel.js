@@ -1,22 +1,21 @@
-import { IpcChannel } from '~/base-components/ipc'
+import { IpcChannel } from "~/base-components/ipc";
 
 class DockerChannel extends IpcChannel {
   constructor() {
-    super('docker')
+    super("docker");
   }
 
-  async check () {
-    return await this.invoke('check')
+  async check() {
+    return await this.invoke("check");
   }
 
-  async version () {
-    return await this.invoke('version')
+  async version() {
+    return await this.invoke("version");
   }
 
-  async launch () {
-    return await this.invoke('launch')
+  async launch() {
+    return await this.invoke("launch");
   }
 }
 
-
-export default new DockerChannel()
+export default new DockerChannel();

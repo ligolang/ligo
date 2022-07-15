@@ -1,137 +1,125 @@
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from "lodash/cloneDeep";
 
-var MonacoAceTokenizer = require('monaco-ace-tokenizer');
-var oop = MonacoAceTokenizer.oop;
-var TextHighlightRules = MonacoAceTokenizer.TextHighlightRules;
+const MonacoAceTokenizer = require("monaco-ace-tokenizer");
 
-var SolidityHighlightRules = function (options) {
-  var intTypes = 'byte|int|uint';
-  for (var width = 8; width <= 256; width += 8) {
-    intTypes += '|bytes' + (width / 8) + '|uint' + width + '|int' + width;
+const { oop } = MonacoAceTokenizer;
+const { TextHighlightRules } = MonacoAceTokenizer;
+
+const SolidityHighlightRules = function (options) {
+  let intTypes = "byte|int|uint";
+  for (let width = 8; width <= 256; width += 8) {
+    intTypes += `|bytes${width / 8}|uint${width}|int${width}`;
   }
-  var mainKeywordsByType = {
-    "variable.language":
-      "this|super",
-    "keyword":
-      "as|emit|from|import|returns",
-    "keyword.control":
-      "break|continue|do|else|for|if|return|while",
-    "keyword.control.deprecated":
-      "throw",
-    "keyword.operator":
-      "delete|new",
-    "keyword.other.reserved": // see https://solidity.readthedocs.io/en/develop/miscellaneous.html#reserved-keywords
+  const mainKeywordsByType = {
+    "variable.language": "this|super",
+    keyword: "as|emit|from|import|returns",
+    "keyword.control": "break|continue|do|else|for|if|return|while",
+    "keyword.control.deprecated": "throw",
+    "keyword.operator": "delete|new",
+    // see https://solidity.readthedocs.io/en/develop/miscellaneous.html#reserved-keywords
+    "keyword.other.reserved":
       "abstract|after|alias|apply|auto|case|catch|copyof|default|" +
       "define|final|immutable|implements|in|inline|let|macro|match|" +
       "mutable|null|of|override|partial|promise|reference|relocatable|" +
       "sealed|sizeof|static|supports|switch|try|type|typedef|typeof|" +
       "unchecked",
-    "storage.type":
-      "contract|library|interface|function|constructor|event|modifier|" +
+    "storage.type": `${"contract|library|interface|function|constructor|event|modifier|" +
       "struct|mapping|enum|" +
-      "var|bool|address|" + intTypes,
-    "storage.type.array.dynamic":
-      "bytes|string",
-    "storage.modifier.inheritance":
-      "is",
-    "storage.modifier.storagelocation":
-      "storage|memory|calldata",
-    "storage.modifier.statemutability":
-      "constant|payable|pure|view",
-    "storage.modifier.visibility":
-      "private|public|external|internal",
-    "storage.modifier.event":
-      "anonymous|indexed",
+      "var|bool|address|"}${intTypes}`,
+    "storage.type.array.dynamic": "bytes|string",
+    "storage.modifier.inheritance": "is",
+    "storage.modifier.storagelocation": "storage|memory|calldata",
+    "storage.modifier.statemutability": "constant|payable|pure|view",
+    "storage.modifier.visibility": "private|public|external|internal",
+    "storage.modifier.event": "anonymous|indexed",
     "support.function":
       "addmod|assert|blockhash|ecrecover|gasleft|keccak256|mulmod|" +
       "require|revert|ripemd160|selfdestruct|sha256",
-    "support.function.deprecated":
-      "sha3|suicide",
-    "support.variable":
-      "now",
-    "constant.language.boolean":
-      "true|false",
-    "constant.numeric.other.unit.currency":
-      "wei|szabo|finney|ether",
-    "constant.numeric.other.unit.time":
-      "seconds|minutes|hours|days|weeks",
-    "constant.numeric.other.unit.time.deprecated":
-      "years"
-  }
-  var mainKeywordMapper = this.createKeywordMapper(mainKeywordsByType, "identifier");
-  var hasSeenFirstFunctionArgumentKeyword = false;
+    "support.function.deprecated": "sha3|suicide",
+    "support.variable": "now",
+    "constant.language.boolean": "true|false",
+    "constant.numeric.other.unit.currency": "wei|szabo|finney|ether",
+    "constant.numeric.other.unit.time": "seconds|minutes|hours|days|weeks",
+    "constant.numeric.other.unit.time.deprecated": "years",
+  };
+  const mainKeywordMapper = this.createKeywordMapper(mainKeywordsByType, "identifier");
+  let hasSeenFirstFunctionArgumentKeyword = false;
 
-  var functionArgumentsKeywordMapper = function functionArgumentsKeywordMapper(value) {
-    var mainKeywordToken = mainKeywordMapper(value);
-    if (
-      hasSeenFirstFunctionArgumentKeyword
-      &&
-      ("identifier" == mainKeywordToken)
-    ) {
+  const functionArgumentsKeywordMapper = function functionArgumentsKeywordMapper(value) {
+    let mainKeywordToken = mainKeywordMapper(value);
+    if (hasSeenFirstFunctionArgumentKeyword && mainKeywordToken == "identifier") {
       mainKeywordToken = "variable.parameter";
     }
     hasSeenFirstFunctionArgumentKeyword = true;
     return mainKeywordToken;
   };
 
-  var identifierRe = "[a-zA-Z_$][a-zA-Z_$0-9]*\\b|\\$"; // Single "$" can't have a word boundary since it's not a word char.
+  const identifierRe = "[a-zA-Z_$][a-zA-Z_$0-9]*\\b|\\$"; // Single "$" can't have a word boundary since it's not a word char.
 
-  var escapedRe = "\\\\(?:x[0-9a-fA-F]{2}|" + // hex
+  const escapedRe =
+    "\\\\(?:x[0-9a-fA-F]{2}|" + // hex
     "u[0-9a-fA-F]{4}|" + // unicode
     ".)"; // stuff like "\r" "\n" "\t" etc.
 
-  var commentWipMarkerRule = function commentWipMarkerRule(commentType) {
+  const commentWipMarkerRule = function commentWipMarkerRule(commentType) {
     return {
-      token: "comment." + commentType + ".doc.documentation.tag.storage.type",
-      regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b"
-    }
+      token: `comment.${commentType}.doc.documentation.tag.storage.type`,
+      regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b",
+    };
   };
 
-  var natSpecRule = function natSpecRule(commentType) {
+  const natSpecRule = function natSpecRule(commentType) {
     return {
-      token: "comment." + commentType + ".doc.documentation.tag",
-      regex: "\\B@(?:author|dev|notice|param|return|title)\\b"
-    }
+      token: `comment.${commentType}.doc.documentation.tag`,
+      regex: "\\B@(?:author|dev|notice|param|return|title)\\b",
+    };
   };
-  var pushFunctionArgumentsState = function (currentState, stack) {
-    if (currentState != "start" || stack.length)
-      stack.unshift("function_arguments", currentState);
+  const pushFunctionArgumentsState = function (currentState, stack) {
+    if (currentState != "start" || stack.length) stack.unshift("function_arguments", currentState);
     hasSeenFirstFunctionArgumentKeyword = false;
     return "function_arguments";
   };
 
   this.$rules = {
-    "start": [
+    start: [
       {
         token: "comment.block.doc.documentation", // doc comment
         regex: "\\/\\*(?=\\*)",
-        push: "doc_comment"
-      }, {
+        push: "doc_comment",
+      },
+      {
         token: "comment.line.triple-slash.double-slash.doc.documentation", // triple slash "NatSpec" doc comment
         regex: "\\/\\/\\/",
-        push: "doc_line_comment"
-      }, {
+        push: "doc_line_comment",
+      },
+      {
         token: "comment.block", // multi line comment
         regex: "\\/\\*",
-        push: "comment"
-      }, {
+        push: "comment",
+      },
+      {
         token: "comment.line.double-slash",
         regex: "\\/\\/",
-        push: "line_comment"
-      }, {
+        push: "line_comment",
+      },
+      {
         token: "text",
-        regex: "\\s+|^$"
-      }, {
+        regex: "\\s+|^$",
+      },
+      {
         token: "string.quoted.single",
         regex: "'(?=.)",
-        push: "qstring"
-      }, {
+        push: "qstring",
+      },
+      {
         token: "string.quoted.double",
         regex: '"(?=.)',
-        push: "qqstring"
-      }, {
+        push: "qqstring",
+      },
+      {
         token: "storage.type.reserved", // TODO really "reserved"? Compiler 0.4.24 says "UnimplementedFeatureError: Not yet implemented - FixedPointType."
-        regex: "u?fixed(?:" +
+        regex:
+          "u?fixed(?:" +
           "8x[0-8]|" + // Docs say 0-80 for the fractional part. It's unclear whether 0-80 bits or 0-80 decimal places.
           "16x(?:1[0-6]|[0-9])|" + // Longest match has to be first alternative.
           "24x(?:2[0-4]|1[0-9]|[0-9])|" +
@@ -143,164 +131,204 @@ var SolidityHighlightRules = function (options) {
           "72x(?:7[0-2]|[1-6][0-9]|[0-9])|" +
           "(?:80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)x(?:80|[1-7][0-9]|[0-9])" +
           ")?",
-        inheritingStateRuleId: "fixedNumberType"
-      }, {
+        inheritingStateRuleId: "fixedNumberType",
+      },
+      {
         token: "keyword.control", // PlaceholderStatement in ModifierDefinition
-        regex: /\b_\b/
-      }, {
-        token: [ // HexLiteral
-          "string.other.hex", "string.other.hex", "string.other.hex",
-          "string.other.hex", "string.other.hex"
+        regex: /\b_\b/,
+      },
+      {
+        token: [
+          // HexLiteral
+          "string.other.hex",
+          "string.other.hex",
+          "string.other.hex",
+          "string.other.hex",
+          "string.other.hex",
         ],
-        regex: /(\b)(hex)(['"])((?:[0-9a-fA-F]{2})*)(\3)/
-      }, {
+        regex: /(\b)(hex)(['"])((?:[0-9a-fA-F]{2})*)(\3)/,
+      },
+      {
         token: "constant.numeric.hex", // hex
-        regex: /0[xX][0-9a-fA-F]+\b/
-      }, {
+        regex: /0[xX][0-9a-fA-F]+\b/,
+      },
+      {
         token: "constant.numeric", // float
-        regex: /[+-]?\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/
-      }, {
+        regex: /[+-]?\d+(?:(?:\.\d*)?(?:[eE][+-]?\d+)?)?\b/,
+      },
+      {
         token: ["keyword", "text", "keyword", "text", "constant.other"],
-        regex: "(pragma)(\\s+)(solidity|experimental)(\\s+)([^;]+)"
-      }, {
+        regex: "(pragma)(\\s+)(solidity|experimental)(\\s+)([^;]+)",
+      },
+      {
         token: ["keyword", "text", "identifier", "text", "keyword", "text", "identifier"], // UsingForDeclaration
-        regex: "(using)(\\s+)(" + identifierRe + ")(\\s+)(for)(\\s+)(" + identifierRe + "|\\*)"
-      }, {
+        regex: `(using)(\\s+)(${identifierRe})(\\s+)(for)(\\s+)(${identifierRe}|\\*)`,
+      },
+      {
         token: "support.function.deprecated", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /block\s*\.\s*blockhash|\.\s*callcode/
-      }, {
+        regex: /block\s*\.\s*blockhash|\.\s*callcode/,
+      },
+      {
         token: "support.function", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /abi\s*\.\s*(?:encodeWithSignature|encodeWithSelector|encodePacked|encode)|\.\s*(?:delegatecall|transfer|call|send)/
-      }, {
+        regex: /abi\s*\.\s*(?:encodeWithSignature|encodeWithSelector|encodePacked|encode)|\.\s*(?:delegatecall|transfer|call|send)/,
+      },
+      {
         token: "support.variable", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /block\s*\.\s*(?:difficulty|timestamp|coinbase|gaslimit|number)|msg\s*\.\s*(?:sender|value|data)|tx\s*\.\s*(?:gasprice|origin)|\.\s*balance/
-      }, {
+        regex: /block\s*\.\s*(?:difficulty|timestamp|coinbase|gaslimit|number)|msg\s*\.\s*(?:sender|value|data)|tx\s*\.\s*(?:gasprice|origin)|\.\s*balance/,
+      },
+      {
         token: "support.variable.deprecated", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /msg\s*\.\s*gas/
-      }, {
-        token: [ // FunctionDefinition
-          "storage.type", "text", "entity.name.function", "text", "paren.lparen"
+        regex: /msg\s*\.\s*gas/,
+      },
+      {
+        token: [
+          // FunctionDefinition
+          "storage.type",
+          "text",
+          "entity.name.function",
+          "text",
+          "paren.lparen",
         ],
-        regex: "(function)(\\s+)(" + identifierRe + ")(\\s*)(\\()",
-        next: pushFunctionArgumentsState
-      }, {
+        regex: `(function)(\\s+)(${identifierRe})(\\s*)(\\()`,
+        next: pushFunctionArgumentsState,
+      },
+      {
         token: ["storage.type", "text", "paren.lparen"], // FunctionTypeName && fallback function definition
         regex: "(function)(\\s*)(\\()",
-        next: pushFunctionArgumentsState
-      }, {
+        next: pushFunctionArgumentsState,
+      },
+      {
         token: ["keyword", "text", "paren.lparen"], // "returns" clause
         regex: "(returns)(\\s*)(\\()",
-        next: pushFunctionArgumentsState
-      }, {
+        next: pushFunctionArgumentsState,
+      },
+      {
         token: mainKeywordMapper,
         regex: identifierRe,
-        inheritingStateRuleId: "keywordMapper"
-      }, {
+        inheritingStateRuleId: "keywordMapper",
+      },
+      {
         token: "keyword.operator",
-        regex: /--|\*\*|\+\+|=>|<<|>>|<<=|>>=|&&|\|\||[!&|+\-*\/%~^<>=]=?/
-      }, {
+        regex: /--|\*\*|\+\+|=>|<<|>>|<<=|>>=|&&|\|\||[!&|+\-*\/%~^<>=]=?/,
+      },
+      {
         token: "punctuation.operator",
-        regex: /[?:;]/
-      }, {
+        regex: /[?:;]/,
+      },
+      {
         token: "punctuation.operator", // keep "." and "," separate for easier cloning and modifying into "function_arguments"
         regex: /[.,]/,
-        inheritingStateRuleId: "punctuation"
-      }, {
+        inheritingStateRuleId: "punctuation",
+      },
+      {
         token: "paren.lparen",
-        regex: /[\[{]/
-      }, {
+        regex: /[\[{]/,
+      },
+      {
         token: "paren.lparen", // keep "(" separate for easier cloning and modifying into "function_arguments"
         regex: /[(]/,
-        inheritingStateRuleId: "lparen"
-      }, {
+        inheritingStateRuleId: "lparen",
+      },
+      {
         token: "paren.rparen",
-        regex: /[\]}]/
-      }, {
+        regex: /[\]}]/,
+      },
+      {
         token: "paren.rparen", // keep ")" separate for easier cloning and modifying into "function_arguments"
         regex: /[)]/,
-        inheritingStateRuleId: "rparen"
-      }
+        inheritingStateRuleId: "rparen",
+      },
     ],
-    "comment": [
+    comment: [
       commentWipMarkerRule("block"),
       {
         token: "comment.block",
         regex: "\\*\\/",
-        next: "pop"
-      }, {
+        next: "pop",
+      },
+      {
         defaultToken: "comment.block",
-        caseInsensitive: true
-      }
+        caseInsensitive: true,
+      },
     ],
-    "line_comment": [
+    line_comment: [
       commentWipMarkerRule("line"),
       {
         token: "comment.line.double-slash",
         regex: "$|^",
-        next: "pop"
-      }, {
+        next: "pop",
+      },
+      {
         defaultToken: "comment.line.double-slash",
-        caseInsensitive: true
-      }
+        caseInsensitive: true,
+      },
     ],
-    "doc_comment": [
+    doc_comment: [
       commentWipMarkerRule("block"),
       natSpecRule("block"),
       {
         token: "comment.block.doc.documentation", // closing comment
         regex: "\\*\\/",
-        next: "pop"
-      }, {
+        next: "pop",
+      },
+      {
         defaultToken: "comment.block.doc.documentation",
-        caseInsensitive: true
-      }
+        caseInsensitive: true,
+      },
     ],
-    "doc_line_comment": [
+    doc_line_comment: [
       commentWipMarkerRule("line"),
       natSpecRule("line"),
       {
         token: "comment.line.triple-slash.double-slash.doc.documentation",
         regex: "$|^",
-        next: "pop"
-      }, {
+        next: "pop",
+      },
+      {
         defaultToken: "comment.line.triple-slash.double-slash.doc.documentation",
-        caseInsensitive: true
-      }
+        caseInsensitive: true,
+      },
     ],
-    "qqstring": [
+    qqstring: [
       {
         token: "constant.language.escape",
-        regex: escapedRe
-      }, {
+        regex: escapedRe,
+      },
+      {
         token: "string.quoted.double", // Multi-line string by ending line with back-slash, i.e. escaping \n.
         regex: "\\\\$",
-        next: "qqstring"
-      }, {
+        next: "qqstring",
+      },
+      {
         token: "string.quoted.double",
         regex: '"|$',
-        next: "pop"
-      }, {
-        defaultToken: "string.quoted.double"
-      }
+        next: "pop",
+      },
+      {
+        defaultToken: "string.quoted.double",
+      },
     ],
-    "qstring": [
+    qstring: [
       {
         token: "constant.language.escape",
-        regex: escapedRe
-      }, {
+        regex: escapedRe,
+      },
+      {
         token: "string.quoted.single", // Multi-line string by ending line with back-slash, i.e. escaping \n.
         regex: "\\\\$",
-        next: "qstring"
-      }, {
+        next: "qstring",
+      },
+      {
         token: "string.quoted.single",
         regex: "'|$",
-        next: "pop"
-      }, {
-        defaultToken: "string.quoted.single"
-      }
-    ]
+        next: "pop",
+      },
+      {
+        defaultToken: "string.quoted.single",
+      },
+    ],
   };
-  var functionArgumentsRules = cloneDeep(this.$rules["start"]);
+  const functionArgumentsRules = cloneDeep(this.$rules.start);
   functionArgumentsRules.forEach(function (rule, ruleIndex) {
     if (rule.inheritingStateRuleId) {
       switch (rule.inheritingStateRuleId) {
@@ -320,21 +348,25 @@ var SolidityHighlightRules = function (options) {
           rule.next = "pop";
           break;
         case "fixedNumberType":
-          rule.onMatch = function onFunctionArgumentsFixedNumberTypeMatch(value, currentState, stack) {
+          rule.onMatch = function onFunctionArgumentsFixedNumberTypeMatch(
+            value,
+            currentState,
+            stack
+          ) {
             hasSeenFirstFunctionArgumentKeyword = true;
             return rule.token;
           };
           break;
       }
       delete rule.inheritingStateRuleId;
-      delete this.$rules["start"][ruleIndex].inheritingStateRuleId; // TODO Keep id if there will be more "child" states.
+      delete this.$rules.start[ruleIndex].inheritingStateRuleId; // TODO Keep id if there will be more "child" states.
       functionArgumentsRules[ruleIndex] = rule;
     }
   }, this);
-  this.$rules["function_arguments"] = functionArgumentsRules;
+  this.$rules.function_arguments = functionArgumentsRules;
 
   this.normalizeRules();
-}
+};
 
 oop.inherits(SolidityHighlightRules, TextHighlightRules);
 

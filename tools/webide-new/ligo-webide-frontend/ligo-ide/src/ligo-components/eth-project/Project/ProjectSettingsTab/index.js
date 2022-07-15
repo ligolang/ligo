@@ -1,82 +1,81 @@
-import React from 'react'
+import React from "react";
 
-import {
-  DebouncedFormGroup,
-  FormGroup,
-  Label,
-  CustomInput,
-} from '~/base-components/ui-components'
+import { DebouncedFormGroup, FormGroup, Label, CustomInput } from "~/base-components/ui-components";
 
 import {
   WorkspaceContext,
   BaseProjectManager,
   AbstractProjectSettingsTab,
   ProjectPath,
-} from '~/base-components/workspace'
+} from "~/base-components/workspace";
 
 export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
-  static contextType = WorkspaceContext
+  static contextType = WorkspaceContext;
 
-  componentDidMount () {
-    BaseProjectManager.channel.on('settings', this.debouncedUpdate)
+  componentDidMount() {
+    BaseProjectManager.channel.on("settings", this.debouncedUpdate);
   }
 
-  componentWillUnmount () {
-    BaseProjectManager.channel.off('settings', this.debouncedUpdate)
+  componentWillUnmount() {
+    BaseProjectManager.channel.off("settings", this.debouncedUpdate);
   }
 
   renderLanguageOption = projectSettings => {
     if (!this.props.languages?.length) {
-      return null
+      return null;
     }
 
     return (
       <FormGroup>
         <Label>Project language</Label>
         <CustomInput
-          id='settings-language'
-          type='select'
-          className='bg-black'
-          value={projectSettings?.get('language')}
-          onChange={event => this.onChange('language')(event.target.value)}
+          id="settings-language"
+          type="select"
+          className="bg-black"
+          value={projectSettings?.get("language")}
+          onChange={event => this.onChange("language")(event.target.value)}
         >
-          {this.props.languages.map(item => <option key={item.key} value={item.key}>{item.text}</option>)}
+          {this.props.languages.map(item => (
+            <option key={item.key} value={item.key}>
+              {item.text}
+            </option>
+          ))}
         </CustomInput>
       </FormGroup>
-    )
-  }
+    );
+  };
 
-  render () {
-    const { projectRoot, projectManager, projectSettings } = this.context
-    const readOnly = !projectManager.userOwnProject && projectManager.remote
+  render() {
+    const { projectRoot, projectManager, projectSettings } = this.context;
+    const readOnly = !projectManager.userOwnProject && projectManager.remote;
 
     return (
-      <div className='custom-tab bg2'>
-        <div className='jumbotron bg-transparent text-body'>
-          <div className='container'>
+      <div className="custom-tab bg2">
+        <div className="jumbotron bg-transparent text-body">
+          <div className="container">
             <h1>Project Settings</h1>
-            <form disabled={true}>
-            <ProjectPath projectRoot={projectRoot} remote={projectManager.remote} />
+            <form disabled>
+              <ProjectPath projectRoot={projectRoot} remote={projectManager.remote} />
 
-            <h4 className='mt-4'>General</h4>
-            {this.renderLanguageOption(projectSettings)}
-            <DebouncedFormGroup
-              label='Main file'
-              className='bg-black'
-              value={projectSettings?.get('main')}
-              onChange={this.onChange('main')}
-              placeholder={`Required`}
-              readOnly={readOnly}
-            />
-            <DebouncedFormGroup
-              label='Smart contract to deploy'
-              className='bg-black'
-              value={projectSettings?.get('deploy')}
-              onChange={this.onChange('deploy')}
-              placeholder={`Path to the built contract to deploy`}
-              readOnly={readOnly}
-            />
-            {/* {
+              <h4 className="mt-4">General</h4>
+              {this.renderLanguageOption(projectSettings)}
+              <DebouncedFormGroup
+                label="Main file"
+                className="bg-black"
+                value={projectSettings?.get("main")}
+                onChange={this.onChange("main")}
+                placeholder="Required"
+                readOnly={readOnly}
+              />
+              <DebouncedFormGroup
+                label="Smart contract to deploy"
+                className="bg-black"
+                value={projectSettings?.get("deploy")}
+                onChange={this.onChange("deploy")}
+                placeholder="Path to the built contract to deploy"
+                readOnly={readOnly}
+              />
+              {/* {
               !projectManager.remote &&
               <FormGroup>
                 <Label>Framework</Label>
@@ -94,7 +93,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 </CustomInput>
               </FormGroup>
             } */}
-            {/* {
+              {/* {
               !framework.endsWith('-docker') &&
               <FormGroup>
                 <Label>Npm client</Label>
@@ -111,8 +110,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 </CustomInput>
               </FormGroup>
             } */}
-            {/* <h4 className='mt-4'>Compilers</h4> */}
-            {/* {
+              {/* <h4 className='mt-4'>Compilers</h4> */}
+              {/* {
               !projectManager.remote && framework === 'truffle' &&
               <DockerImageInputSelector
                 channel={compilerManager.truffle}
@@ -126,7 +125,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 onSelected={truffle => this.onChange(`compilers.${process.env.COMPILER_VERSION_KEY}`)(truffle)}
               />
             } */}
-            {/* {
+              {/* {
               !noSolc &&
               <DockerImageInputSelector
                 channel={compilerManager.solc}
@@ -144,7 +143,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 readOnly={readOnly}
               />
             } */}
-            {/* <FormGroup>
+              {/* <FormGroup>
               <Label>EVM version</Label>
               <CustomInput
                 id='settings-evm-version'
@@ -164,7 +163,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='homestead'>Homestead</option>
               </CustomInput>
             </FormGroup> */}
-            {/* <DebouncedFormGroup
+              {/* <DebouncedFormGroup
               label='Optimizer runs'
               className='bg-black'
               placeholder='Default: 0 (disabled)'
@@ -180,8 +179,8 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
               }}
             /> */}
 
-            {/* <h4 className='mt-4'>Linter</h4> */}
-            {/* <FormGroup>
+              {/* <h4 className='mt-4'>Linter</h4> */}
+              {/* <FormGroup>
               <CustomInput
                 id='settings-linter'
                 type='select'
@@ -195,7 +194,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
               </CustomInput>
             </FormGroup> */}
 
-            {/* <h4 className='mt-4'>Editor</h4>
+              {/* <h4 className='mt-4'>Editor</h4>
             <FormGroup>
               <Label>Font Family</Label>
               <CustomInput
@@ -210,7 +209,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='Fira Code'>Fira Code</option>
               </CustomInput>
             </FormGroup> */}
-            {/* <FormGroup>
+              {/* <FormGroup>
               <Label>Font Size</Label>
               <CustomInput
                 id='settings-font-size'
@@ -228,7 +227,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 <option value='16px'>16px</option>
               </CustomInput>
             </FormGroup> */}
-            {/* <FormGroup>
+              {/* <FormGroup>
               <Label>Font Ligatures</Label>
               <CustomInput
                 id='settings-ligatures'
@@ -243,11 +242,11 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
               </CustomInput>
             </FormGroup> */}
 
-            <AbstractProjectSettingsTab.DeleteButton context={this.context} />
+              <AbstractProjectSettingsTab.DeleteButton context={this.context} />
             </form>
           </div>
         </div>
       </div>
-    )
+    );
   }
 }

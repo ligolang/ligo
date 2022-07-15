@@ -1,75 +1,78 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-
-import ActionParamFormGroup from './ActionParamFormGroup'
-import { utils } from '~/ligo-components/eth-sdk'
+import ActionParamFormGroup from "./ActionParamFormGroup";
+import { utils } from "~/ligo-components/eth-sdk";
 
 export default class ContractForm extends PureComponent {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
-      params: props.inputs?.map(({ value }) => ({ value: value || '' })) || []
-    }
+      params: props.inputs?.map(({ value }) => ({ value: value || "" })) || [],
+    };
   }
 
-  componentDidMount () {
+  componentDidMount() {
     // if (this.props.params) {
     //   this.setState({ params: [...this.props.params] })
     // }
   }
 
   getParameters = () => {
-    const array = []
-    const json = {}
-    const obj = {}
-    let allEmpty = true
+    const array = [];
+    const json = {};
+    const obj = {};
+    let allEmpty = true;
 
     this.props.inputs.forEach(({ name, type }, index) => {
-      const param = this.state.params[index]
-      const key = name || `(param${index})`
+      const param = this.state.params[index];
+      const key = name || `(param${index})`;
       if (!type) {
-
-        let value
-        type === 'address' ? value = param.value.toLowerCase() || '' : value = param.value || ''
+        let value;
+        type === "address"
+          ? (value = param.value.toLowerCase() || "")
+          : (value = param.value || "");
 
         if (value) {
-          allEmpty = false
+          allEmpty = false;
         }
-        array.push(value)
-        json[key] = value.toString()
-        obj[key] = { value }
+        array.push(value);
+        json[key] = value.toString();
+        obj[key] = { value };
       } else {
-        const { error, raw, display, empty } = param
+        const { error, raw, display, empty } = param;
         if (error) {
-          throw error
+          throw error;
         }
         if (!empty) {
-          allEmpty = false
+          allEmpty = false;
         }
-        
-        array.push(raw)
-        json[key] = raw
-        obj[key] = { type, value: display }
+
+        array.push(raw);
+        json[key] = raw;
+        obj[key] = { type, value: display };
       }
-    })
-    return { array, json, obj, empty: allEmpty }
-  }
+    });
+    return { array, json, obj, empty: allEmpty };
+  };
 
   setParamValue = index => (value, extra) => {
-    this.state.params[index] = { value: utils.isValidAddressReturn(value), ...extra }
-    const params = [...this.state.params]
-    this.setState({ params })
-  }
+    this.state.params[index] = {
+      value: utils.isValidAddressReturn(value),
+      ...extra,
+    };
+    const params = [...this.state.params];
+    this.setState({ params });
+  };
 
-  render () {
-    const { size, name: methodName, inputs = [], Empty, disabled } = this.props
+  render() {
+    const { size, name: methodName, inputs = [], Empty, disabled } = this.props;
 
     if (!inputs.length) {
-      return Empty || null
+      return Empty || null;
     }
 
-    const params = this.state.params
-    const values = inputs.map((_, i) => params[i]?.value || '')
+    const { params } = this.state;
+    const values = inputs.map((_, i) => params[i]?.value || "");
 
     return (
       <div>
@@ -86,6 +89,6 @@ export default class ContractForm extends PureComponent {
           />
         ))}
       </div>
-    )
+    );
   }
 }

@@ -1,16 +1,16 @@
-import makeSdk from './makeSdk'
+import makeSdk from "./makeSdk";
 
-import kp from './kp'
-import networks, { customNetworks } from './networks'
+import kp from "./kp";
+import networks, { customNetworks } from "./networks";
 
-import EthersClient from './EthersClient'
-import EthersContract from './EthersContract'
-import EthTxManager from './EthTxManager'
+import EthersClient from "./EthersClient";
+import EthersContract from "./EthersContract";
+import EthTxManager from "./EthTxManager";
 
-import BrowserExtension from './BrowserExtension'
+import BrowserExtension from "./BrowserExtension";
 
-import utils from './utils'
-import rpc from './rpc'
+import utils from "./utils";
+import rpc from "./rpc";
 
 export default makeSdk({
   kp,
@@ -22,15 +22,7 @@ export default makeSdk({
   BrowserExtension,
   utils,
   rpc,
-})
+});
 
-export {
-  makeSdk,
-  kp,
-  EthersClient,
-  EthersContract,
-  EthTxManager,
-  utils,
-  rpc,
-}
-export { default as redux } from './redux'
+export { makeSdk, kp, EthersClient, EthersContract, EthTxManager, utils, rpc };
+export { default as redux } from "./redux";

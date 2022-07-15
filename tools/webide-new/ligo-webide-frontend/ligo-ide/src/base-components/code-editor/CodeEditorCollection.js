@@ -1,12 +1,12 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
-import { Tabs } from '~/base-components/ui-components'
-import fileOps from '~/base-components/file-ops'
-import { ClipBoardService } from '~/base-components/filetree'
-import classnames from 'classnames'
+import React, { PureComponent } from "react";
+import PropTypes from "prop-types";
+import classnames from "classnames";
+import { Tabs } from "~/base-components/ui-components";
+import fileOps from "~/base-components/file-ops";
+import { ClipBoardService } from "~/base-components/filetree";
 
-import MonacoEditorContainer from './MonacoEditor/MonacoEditorContainer'
-import modelSessionManager from './MonacoEditor/modelSessionManager'
+import MonacoEditorContainer from "./MonacoEditor/MonacoEditorContainer";
+import modelSessionManager from "./MonacoEditor/modelSessionManager";
 
 export default class CodeEditorCollection extends PureComponent {
   static propTypes = {
@@ -14,110 +14,111 @@ export default class CodeEditorCollection extends PureComponent {
     onSelectTab: PropTypes.func.isRequired,
     readOnly: PropTypes.bool,
     theme: PropTypes.string,
-    onChangeDecorations: PropTypes.func.isRequired
-  }
+    onChangeDecorations: PropTypes.func.isRequired,
+  };
 
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
-      selectedTab: props.initialTab
-    }
-    modelSessionManager.editorContainer = this
-    this.tabs = React.createRef()
-    this.editorContainer = React.createRef()
+      selectedTab: props.initialTab,
+    };
+    modelSessionManager.editorContainer = this;
+    this.tabs = React.createRef();
+    this.editorContainer = React.createRef();
     this.tabContextMenu = [
       {
-        text: 'Close',
-        onClick: this.closeCurrentFile
+        text: "Close",
+        onClick: this.closeCurrentFile,
       },
       {
-        text: 'Close Others',
-        onClick: this.closeOtherFiles
+        text: "Close Others",
+        onClick: this.closeOtherFiles,
       },
       {
-        text: 'Close Saved',
-        onClick: this.closeSaved
+        text: "Close Saved",
+        onClick: this.closeSaved,
       },
       {
-        text: 'Close All',
-        onClick: this.closeAll
+        text: "Close All",
+        onClick: this.closeAll,
       },
       null,
       {
-        text: 'Copy Path',
-        onClick: this.copyPath
-      }
-    ]
+        text: "Copy Path",
+        onClick: this.copyPath,
+      },
+    ];
   }
 
-  refresh () {
-    this.editorContainer?.current.forceUpdate()
+  refresh() {
+    this.editorContainer?.current.forceUpdate();
   }
 
   openTab = tab => {
-    this.tabs.current.currentTab = tab
-  }
+    this.tabs.current.currentTab = tab;
+  };
 
-  onSelectTab = (tab = { path: '' }) => {
-    this.setState({ selectedTab: tab })
-    this.props.onSelectTab(tab)
-  }
+  onSelectTab = (tab = { path: "" }) => {
+    this.setState({ selectedTab: tab });
+    this.props.onSelectTab(tab);
+  };
 
   setCurrentTabUnsaved = unsaved => {
-    this.tabs.current.updateTab({ unsaved })
-  }
+    this.tabs.current.updateTab({ unsaved });
+  };
 
   // NOTE: there is no pathInProject props return in the local project, while will return it in remote project
   // see: packages/workspace/src/ProjectManager/LocalProjectManager.js
   // see: packages/workspace/src/ProjectManager/RemoteProjectManager.js
-  copyPath = ({ pathInProject, path}) => {
-    const filePath = pathInProject || path
-    const clipboard = new ClipBoardService()
-    clipboard.writeText(filePath)
-  }
+  copyPath = ({ pathInProject, path }) => {
+    const filePath = pathInProject || path;
+    const clipboard = new ClipBoardService();
+    clipboard.writeText(filePath);
+  };
 
-  allUnsavedFiles = () => this.tabs.current.allTabs
-    .filter(({ path, unsaved }) => path && unsaved)
-    .map(({ path }) => path);
+  allUnsavedFiles = () =>
+    this.tabs.current.allTabs
+      .filter(({ path, unsaved }) => path && unsaved)
+      .map(({ path }) => path);
 
   tryCloseTab = async closingTab => {
     if (closingTab.unsaved) {
-      const willClose = await this.promptSave(closingTab.path)
+      const willClose = await this.promptSave(closingTab.path);
       if (!willClose) {
-        return false
+        return false;
       }
     }
-    return tab => modelSessionManager.closeModelSession(tab.path)
-  }
+    return tab => modelSessionManager.closeModelSession(tab.path);
+  };
 
   closeCurrentFile = () => {
-    const { onCloseTab } = this.tabs.current
-    onCloseTab(this.tabs.current)
-  }
+    const { onCloseTab } = this.tabs.current;
+    onCloseTab(this.tabs.current);
+  };
 
   // MARK: may can define a batch delete in the Tabs component
   closeOtherFiles = currentTab => {
-    const { onCloseTab, allTabs } = this.tabs.current
-    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key)
+    const { onCloseTab, allTabs } = this.tabs.current;
+    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key);
 
     shouldCloseTabs.forEach(tab => {
-      onCloseTab(tab)
-    })
-  }
+      onCloseTab(tab);
+    });
+  };
 
   closeSaved = () => {
-    const { onCloseTab, allTabs } = this.tabs.current
-    const shouldCloseTabs = allTabs.filter(tab => !tab.unsaved)
+    const { onCloseTab, allTabs } = this.tabs.current;
+    const shouldCloseTabs = allTabs.filter(tab => !tab.unsaved);
 
     shouldCloseTabs.forEach(tab => {
-      onCloseTab(tab)
-    })
-  }
+      onCloseTab(tab);
+    });
+  };
 
-  saveFile = async filePath => await modelSessionManager.saveFile(filePath)
+  saveFile = async filePath => modelSessionManager.saveFile(filePath);
 
   promptSave = async filePath => {
-    let clicked = false
+    let clicked = false;
     // if (_.platform.isWeb) {
     //   const filename = windowPath.parse(path).base
     //   clicked = await $.modals.open('confirmUnsave', {
@@ -142,88 +143,86 @@ export default class CodeEditorCollection extends PureComponent {
 
     const { response } = await fileOps.showMessageBox({
       // title: `Do you want to save the changes you made for ${path}?`,
-      message: 'Your changes will be lost if you close this item without saving.',
-      buttons: ['Save', 'Cancel', `Don't Save`]
-    })
-    clicked = response
+      message: "Your changes will be lost if you close this item without saving.",
+      buttons: ["Save", "Cancel", "Don't Save"],
+    });
+    clicked = response;
 
     if (clicked === 0) {
-      await this.saveFile(filePath)
-      return true
+      await this.saveFile(filePath);
+      return true;
     }
     if (clicked === 2) {
-      return true
+      return true;
     }
-    return false
-  }
+    return false;
+  };
 
   closeAll = () => {
-    this.tabs.current.allTabs = []
-    modelSessionManager.closeAllModelSessions()
-  }
+    this.tabs.current.allTabs = [];
+    modelSessionManager.closeAllModelSessions();
+  };
 
-  fileSaving = filePath => this.tabs.current.updateTab({ saving: true }, filePath)
+  fileSaving = filePath => this.tabs.current.updateTab({ saving: true }, filePath);
 
   fileSaved = async (filePath, { saveAsPath, unsaved = false } = {}) => {
-    const updates = { unsaved, saving: false }
+    const updates = { unsaved, saving: false };
     if (saveAsPath) {
-      await this.editorContainer.current?.renameFile(filePath, saveAsPath)
-      updates.key = saveAsPath
-      updates.path = saveAsPath
+      await this.editorContainer.current?.renameFile(filePath, saveAsPath);
+      updates.key = saveAsPath;
+      updates.path = saveAsPath;
     }
-    const newTab = this.tabs.current.updateTab(updates, filePath)
+    const newTab = this.tabs.current.updateTab(updates, filePath);
     if (saveAsPath) {
-      this.onSelectTab(newTab)
+      this.onSelectTab(newTab);
     }
-  }
+  };
 
   onCommand = cmd => {
     switch (cmd) {
-      case 'save':
-        modelSessionManager.saveCurrentFile()
-        return
-      case 'redo':
-        modelSessionManager.redo()
-        return
-      case 'undo':
-        modelSessionManager.undo()
-        return
-      case 'delete':
-        modelSessionManager.delete()
-        return
-      case 'selectAll':
-        modelSessionManager.selectAll()
-        return
-      case 'close-current-tab':
-        return
-      case 'project-settings':
-        return
-      case 'next-tab':
-        this.tabs.current.nextTab()
-        return
-      case 'prev-tab':
-        this.tabs.current.prevTab()
+      case "save":
+        modelSessionManager.saveCurrentFile();
+        return;
+      case "redo":
+        modelSessionManager.redo();
+        return;
+      case "undo":
+        modelSessionManager.undo();
+        return;
+      case "delete":
+        modelSessionManager.delete();
+        return;
+      case "selectAll":
+        modelSessionManager.selectAll();
+        return;
+      case "close-current-tab":
+        return;
+      case "project-settings":
+        return;
+      case "next-tab":
+        this.tabs.current.nextTab();
+        return;
+      case "prev-tab":
+        this.tabs.current.prevTab();
     }
-  }
+  };
 
-  render () {
-    const {
-      theme,
-      editorConfig,
-      projectRoot,
-      initialTab,
-      readOnly
-    } = this.props
+  render() {
+    const { theme, editorConfig, projectRoot, initialTab, readOnly } = this.props;
 
-    modelSessionManager.tabsRef = this.tabs
-    modelSessionManager.editorRef = this.editorContainer
+    modelSessionManager.tabsRef = this.tabs;
+    modelSessionManager.editorRef = this.editorContainer;
 
     return (
-      <div className={classnames('d-flex w-100 h-100 overflow-hidden', { bg2: this.tabs.current && this.tabs.current.state.tabs.length !== 1 })}>
+      <div
+        className={classnames("d-flex w-100 h-100 overflow-hidden", {
+          bg2: this.tabs.current && this.tabs.current.state.tabs.length !== 1,
+        })}
+      >
         <Tabs
           ref={this.tabs}
-          size='sm'
-          headerClassName='nav-tabs-dark-active'
+          size="sm"
+          headerClassName="nav-tabs-dark-active"
           initialSelected={initialTab}
           onSelectTab={this.onSelectTab}
           tryCloseTab={this.tryCloseTab}
@@ -245,6 +244,6 @@ export default class CodeEditorCollection extends PureComponent {
           />
         </Tabs>
       </div>
-    )
+    );
   }
 }

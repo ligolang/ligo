@@ -1,1 +1,1 @@
-export { default } from '~/ligo-components/eth-bottombar'
+export { default } from "~/ligo-components/eth-bottombar";

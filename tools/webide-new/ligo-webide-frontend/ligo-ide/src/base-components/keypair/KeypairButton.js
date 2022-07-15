@@ -1,50 +1,52 @@
-import React, { PureComponent } from 'react'
-import redux from '~/base-components/redux'
-import { withRouter } from 'react-router'
+import React, { PureComponent } from "react";
+import { withRouter } from "react-router";
+import redux from "~/base-components/redux";
 
-import keypairManager from './keypairManager'
-import KeypairManagerModal from './KeypairManagerModal'
+import keypairManager from "./keypairManager";
+import KeypairManagerModal from "./KeypairManagerModal";
 
 class KeypairButton extends PureComponent {
-  constructor (props) {
-    super(props)
-    this.modal = React.createRef()
+  constructor(props) {
+    super(props);
+    this.modal = React.createRef();
   }
 
-  componentDidMount () {
-    keypairManager.loadAndUpdateKeypairs()
+  componentDidMount() {
+    keypairManager.loadAndUpdateKeypairs();
   }
 
   openModal = () => {
-    let chain
+    let chain;
     if (this.props.chains) {
-      const network = redux.getState().network
-      chain = this.props.chains.find(c => c.network === network || network.startsWith(c.key))?.key
+      const { network } = redux.getState();
+      chain = this.props.chains.find(c => c.network === network || network.startsWith(c.key))?.key;
     }
-    this.modal.current.openModal(chain)
-  }
+    this.modal.current.openModal(chain);
+  };
 
-  render () {
+  render() {
     const {
       chains,
       mnemonic,
-      secretName = 'Private Key',
+      secretName = "Private Key",
       modifyNameDisabled,
-      deletionDisabled
-    } = this.props
+      deletionDisabled,
+    } = this.props;
 
-    return <>
-      <div onClick={this.openModal}>{this.props.children}</div>
-      <KeypairManagerModal
-        ref={this.modal}
-        chains={chains}
-        mnemonic={mnemonic}
-        secretName={secretName}
-        modifyNameDisabled={modifyNameDisabled}
-        deletionDisabled={deletionDisabled}
-      />
-    </>
+    return (
+      <>
+        <div onClick={this.openModal}>{this.props.children}</div>
+        <KeypairManagerModal
+          ref={this.modal}
+          chains={chains}
+          mnemonic={mnemonic}
+          secretName={secretName}
+          modifyNameDisabled={modifyNameDisabled}
+          deletionDisabled={deletionDisabled}
+        />
+      </>
+    );
   }
 }
 
-export default withRouter(KeypairButton)
+export default withRouter(KeypairButton);

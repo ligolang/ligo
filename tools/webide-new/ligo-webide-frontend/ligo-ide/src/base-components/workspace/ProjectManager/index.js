@@ -1,5 +1,5 @@
-import LocalProjectManager from './LocalProjectManager'
+import LocalProjectManager from "./LocalProjectManager";
 
 export default {
-  Local: LocalProjectManager
-}
+  Local: LocalProjectManager,
+};

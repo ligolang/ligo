@@ -1,111 +1,106 @@
-import React, { PureComponent } from 'react'
-import moment from 'moment'
+import React, { PureComponent } from "react";
+import moment from "moment";
 
-import {
-  Modal,
-  DeleteButton,
-} from '~/base-components/ui-components'
+import { Modal, DeleteButton } from "~/base-components/ui-components";
 
-import DockerImageChannel from './DockerImageChannel'
-import DownloadImageButton from './DownloadImageButton'
+import DockerImageChannel from "./DockerImageChannel";
+import DownloadImageButton from "./DownloadImageButton";
 
 export default class DockerImageManager extends PureComponent {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
 
     this.state = {
       loading: false,
       installed: [],
-    }
+    };
 
-    this.modal = React.createRef()
+    this.modal = React.createRef();
   }
 
-  get channel () {
-    return this.props.channel || new DockerImageChannel(this.props.imageName)
+  get channel() {
+    return this.props.channel || new DockerImageChannel(this.props.imageName);
   }
 
   openModal = () => {
-    this.modal.current.openModal()
+    this.modal.current.openModal();
+  };
+
+  componentDidMount() {
+    this.channel.onVersionsRefreshed(this.refreshVersions);
+    this.fetchVersions();
   }
 
-  componentDidMount () {
-    this.channel.onVersionsRefreshed(this.refreshVersions)
-    this.fetchVersions()
-  }
-
-  componentDidUpdate (prevProps) {
-    if (
-      prevProps.channel !== this.props.channel ||
-      prevProps.imageName !== this.props.imageName
-    ) {
-      this.fetchVersions()
+  componentDidUpdate(prevProps) {
+    if (prevProps.channel !== this.props.channel || prevProps.imageName !== this.props.imageName) {
+      this.fetchVersions();
     }
   }
 
   fetchVersions = () => {
-    this.setState({ loading: true })
-    this.channel.versions()
-  }
+    this.setState({ loading: true });
+    this.channel.versions();
+  };
 
   refreshVersions = versions => {
     this.setState({
       installed: versions,
       loading: false,
-    })
-    this.props.onRefresh(versions)
-  }
+    });
+    this.props.onRefresh(versions);
+  };
 
   deleteVersion = async version => {
-    this.setState({ loading: true })
-    await this.channel.delete(version)
-    await this.fetchVersions()
-  }
+    this.setState({ loading: true });
+    await this.channel.delete(version);
+    await this.fetchVersions();
+  };
 
   renderTableBody = () => {
     if (this.state.loading) {
       return (
-        <tr key='loading'>
-          <td align='middle' colSpan={4}>
-            <i className='fas fa-spin fa-spinner mr-1' />Loading...
+        <tr key="loading">
+          <td align="middle" colSpan={4}>
+            <i className="fas fa-spin fa-spinner mr-1" />
+            Loading...
           </td>
         </tr>
-      )
+      );
     }
 
     if (!this.state.installed.length) {
-      const none = `(No ${this.props.noneName || this.props.imageName} installed)`
+      const none = `(No ${this.props.noneName || this.props.imageName} installed)`;
       return (
         <tr>
-          <td align='middle' colSpan={4}>{none}</td>
-        </tr>
-      )
-    }
-
-    return (
-      this.state.installed.map(v => (
-        <tr key={`table-row-${v.Tag}`} className='hover-block'>
-          <td>{v.Tag}</td>
-          <td>{moment(v.CreatedAt, 'YYYY-MM-DD HH:mm:ss Z').format('LL')}</td>
-          <td>{v.Size}</td>
-          <td align='right'>
-            <DeleteButton
-              onConfirm={() => this.deleteVersion(v.Tag)}
-              textConfirm='Click again to uninstall'
-            />
+          <td align="middle" colSpan={4}>
+            {none}
           </td>
         </tr>
-      ))
-    )
-  }
+      );
+    }
 
-  render () {
-    const imageName = this.channel.imageName
+    return this.state.installed.map(v => (
+      <tr key={`table-row-${v.Tag}`} className="hover-block">
+        <td>{v.Tag}</td>
+        <td>{moment(v.CreatedAt, "YYYY-MM-DD HH:mm:ss Z").format("LL")}</td>
+        <td>{v.Size}</td>
+        <td align="right">
+          <DeleteButton
+            onConfirm={() => this.deleteVersion(v.Tag)}
+            textConfirm="Click again to uninstall"
+          />
+        </td>
+      </tr>
+    ));
+  };
+
+  render() {
+    const { imageName } = this.channel;
     const {
       modalTitle = `${imageName} Manager`,
       downloadingTitle = `Downloading ${imageName}`,
       extraFlags,
-    } = this.props
+    } = this.props;
 
     return (
       <Modal
@@ -113,7 +108,7 @@ export default class DockerImageManager extends PureComponent {
         title={modalTitle}
         ActionBtn={
           <DownloadImageButton
-            color='success'
+            color="success"
             imageName={imageName}
             channel={this.channel}
             downloadingTitle={downloadingTitle}
@@ -122,20 +117,18 @@ export default class DockerImageManager extends PureComponent {
           />
         }
       >
-        <table className='table table-sm table-hover table-striped'>
+        <table className="table table-sm table-hover table-striped">
           <thead>
             <tr>
-              <th style={{ width: '40%' }}>version</th>
-              <th style={{ width: '35%' }}>created</th>
-              <th style={{ width: '15%' }}>size</th>
-              <th style={{ width: '10%' }} />
+              <th style={{ width: "40%" }}>version</th>
+              <th style={{ width: "35%" }}>created</th>
+              <th style={{ width: "15%" }}>size</th>
+              <th style={{ width: "10%" }} />
             </tr>
           </thead>
-          <tbody>
-            {this.renderTableBody()}
-          </tbody>
+          <tbody>{this.renderTableBody()}</tbody>
         </table>
       </Modal>
-    )
+    );
   }
 }

@@ -1,37 +1,34 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import {
-  IconButton,
-  DeleteButton,
-} from '~/base-components/ui-components'
+import { IconButton, DeleteButton } from "~/base-components/ui-components";
 
-import nodeManager, { NodeButton, NodeStatus } from '~/ligo-components/eth-node'
-import notification from '~/base-components/notification'
-import redux from '~/base-components/redux'
+import nodeManager, { NodeButton, NodeStatus } from "~/ligo-components/eth-node";
+import notification from "~/base-components/notification";
+import redux from "~/base-components/redux";
 
-import instanceChannel from './instanceChannel'
+import instanceChannel from "./instanceChannel";
 
 export default class InstanceRow extends PureComponent {
-  constructor (props) {
-    super(props)
-    this.button = React.createRef()
+  constructor(props) {
+    super(props);
+    this.button = React.createRef();
   }
 
-  componentDidMount () {
+  componentDidMount() {
     if (this.props.data.running) {
-      const { Name, Labels } = this.props.data
-      const name = Name.substr(process.env.PROJECT.length + 1)
-      const { version, chain } = Labels
-      this.button.current?.setState({ lifecycle: 'started' })
-      const params = { id: `dev.${name}`, version }
-      nodeManager.updateLifecycle('started', params)
-      this.props.onNodeLifecycle(name, 'started', params)
+      const { Name, Labels } = this.props.data;
+      const name = Name.substr(process.env.PROJECT.length + 1);
+      const { version, chain } = Labels;
+      this.button.current?.setState({ lifecycle: "started" });
+      const params = { id: `dev.${name}`, version };
+      nodeManager.updateLifecycle("started", params);
+      this.props.onNodeLifecycle(name, "started", params);
     }
   }
 
   renderStartStopBtn = (name, version, chain) => {
-    if (this.props.lifecycle !== 'stopped' && this.props.runningInstance !== name) {
-      return null
+    if (this.props.lifecycle !== "stopped" && this.props.runningInstance !== name) {
+      return null;
     }
     return (
       <NodeButton
@@ -41,76 +38,81 @@ export default class InstanceRow extends PureComponent {
         chain={chain}
         onLifecycle={(lifecycle, params) => this.props.onNodeLifecycle(name, lifecycle, params)}
       />
-    )
-  }
+    );
+  };
 
   renderVersionBtn = version => {
     return (
-      <div className='btn btn-sm btn-secondary'>
-        <i className='fas fa-code-branch mr-1' />
+      <div className="btn btn-sm btn-secondary">
+        <i className="fas fa-code-branch mr-1" />
         <b>{version}</b>
       </div>
-    )
-  }
+    );
+  };
 
   renderChainBtn = chain => {
     return (
-      <div className='btn btn-sm btn-secondary'>
+      <div className="btn btn-sm btn-secondary">
         <b>{chain}</b>
       </div>
-    )
-  }
+    );
+  };
 
   renderBlockNumber = name => {
     if (this.props.runningInstance !== name) {
-      return null
+      return null;
     }
-    return <NodeStatus />
-  }
+    return <NodeStatus />;
+  };
 
   renderConfigButton = () => {
     if (!this.props.configButton) {
-      return null
+      return null;
     }
     return (
       <IconButton
-        color='transparent'
-        className='mr-1 text-muted'
+        color="transparent"
+        className="mr-1 text-muted"
         onClick={() => this.props.onOpenConfig(this.props.data)}
-        icon='fas fa-cog'
+        icon="fas fa-cog"
       />
-    )
-  }
+    );
+  };
 
   deleteInstance = async name => {
-    if (this.props.lifecycle !== 'stopped' && this.props.runningInstance === name) {
-      notification.error('Unable to Delete', 'Please stop the instance first if you want to delete it.')
-      return
+    if (this.props.lifecycle !== "stopped" && this.props.runningInstance === name) {
+      notification.error(
+        "Unable to Delete",
+        "Please stop the instance first if you want to delete it."
+      );
+      return;
     }
-    await instanceChannel.invoke('delete', name)
-    redux.dispatch('DELETE_INSTANCE', { name })
-    this.props.onRefresh()
-  }
+    await instanceChannel.invoke("delete", name);
+    redux.dispatch("DELETE_INSTANCE", { name });
+    this.props.onRefresh();
+  };
 
-  render () {
-    const { data } = this.props
-    const name = data.Name.substr(process.env.PROJECT.length + 1)
-    const labels = data.Labels
+  render() {
+    const { data } = this.props;
+    const name = data.Name.substr(process.env.PROJECT.length + 1);
+    const labels = data.Labels;
 
     return (
-      <tr className='hover-flex'>
-        <td><div className='flex-row align-items-center'>{name}</div></td>
+      <tr className="hover-flex">
+        <td>
+          <div className="flex-row align-items-center">{name}</div>
+        </td>
         <td>{this.renderStartStopBtn(name, labels.version, labels.chain)}</td>
         <td>{this.renderVersionBtn(labels.version)}</td>
         <td>{this.renderChainBtn(labels.chain)}</td>
         <td>{this.renderBlockNumber(name)}</td>
-        <td align='right'>
-          <div className='d-flex align-items-center justify-content-end'>
+        <td align="right">
+          <div className="d-flex align-items-center justify-content-end">
             {this.renderConfigButton()}
             <DeleteButton onConfirm={() => this.deleteInstance(name)} />
           </div>
         </td>
       </tr>
-    )
+    );
   }
 }

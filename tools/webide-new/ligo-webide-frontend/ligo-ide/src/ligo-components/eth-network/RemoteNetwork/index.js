@@ -1,89 +1,81 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import notification from '~/base-components/notification'
+import notification from "~/base-components/notification";
 
-import networkManager from '../networkManager'
-import DefaultRemoteNetworkInfo from './RemoteNetworkInfo'
+import networkManager from "../networkManager";
+import DefaultRemoteNetworkInfo from "./RemoteNetworkInfo";
 
 export default class RemoteNetwork extends PureComponent {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
       info: null,
       status: null,
+    };
+  }
+
+  componentDidMount() {
+    this.refresh();
+    this.h = setInterval(() => this.refreshBlock(), 5000);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.url !== prevProps.url || this.props.networkId !== prevProps.networkId) {
+      this.refresh();
     }
   }
 
-  componentDidMount () {
-    this.refresh()
-    this.h = setInterval(() => this.refreshBlock(), 5000)
-  }
-
-  componentDidUpdate (prevProps) {
-    if (
-      this.props.url !== prevProps.url ||
-      this.props.networkId !== prevProps.networkId
-    ) {
-      this.refresh()
-    }
-  }
-
-  componentWillUnmount () {
+  componentWillUnmount() {
     if (this.h) {
-      clearInterval(this.h)
+      clearInterval(this.h);
     }
-    this.h = undefined
+    this.h = undefined;
   }
 
-  async refresh () {
-    this.setState({ info: null, status: null })
+  async refresh() {
+    this.setState({ info: null, status: null });
     if (!networkManager.sdk) {
-      return
+      return;
     }
-    this.refreshBlock()
-    const networkId = this.props.networkId
+    this.refreshBlock();
+    const { networkId } = this.props;
     try {
-      const info = await networkManager.sdk?.networkInfo()
+      const info = await networkManager.sdk?.networkInfo();
       if (this.props.networkId === networkId) {
-        this.setState({ info })
+        this.setState({ info });
       }
     } catch {}
   }
 
-  async refreshBlock () {
+  async refreshBlock() {
     if (!networkManager.sdk) {
-      return
+      return;
     }
     try {
-      const networkId = this.props.networkId
-      const status = await networkManager.sdk?.getStatus()
+      const { networkId } = this.props;
+      const status = await networkManager.sdk?.getStatus();
       if (this.props.networkId === networkId) {
-        this.setState({ status })
+        this.setState({ status });
       }
     } catch (error) {
-      console.warn(error)
-      if (error.message.startsWith('missing response')) {
-        notification.error('Internet Disconnected')
+      console.warn(error);
+      if (error.message.startsWith("missing response")) {
+        notification.error("Internet Disconnected");
         if (this.h) {
-          clearInterval(this.h)
+          clearInterval(this.h);
         }
-        this.h = undefined
+        this.h = undefined;
       }
-      this.setState({ status: null })
+      this.setState({ status: null });
     }
   }
 
-  render () {
-    const {
-      networkId,
-      url,
-      EditButton,
-      RemoteNetworkInfo = DefaultRemoteNetworkInfo,
-    } = this.props
-    const { status, info } = this.state
+  render() {
+    const { networkId, url, EditButton, RemoteNetworkInfo = DefaultRemoteNetworkInfo } = this.props;
+    const { status, info } = this.state;
 
     return (
-      <div className='d-flex flex-1 flex-column overflow-auto'>
+      <div className="d-flex flex-1 flex-column overflow-auto">
         <RemoteNetworkInfo
           networkId={networkId}
           url={url}
@@ -91,13 +83,10 @@ export default class RemoteNetwork extends PureComponent {
           info={info}
           status={status}
         />
-        <div className='d-flex flex-fill'>
-          <div className='col-12 p-0 border-top-black'>
-          </div>
+        <div className="d-flex flex-fill">
+          <div className="col-12 p-0 border-top-black" />
         </div>
       </div>
-    )
+    );
   }
 }
-
-

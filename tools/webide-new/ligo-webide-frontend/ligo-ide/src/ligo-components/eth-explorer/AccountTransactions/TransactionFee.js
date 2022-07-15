@@ -1,7 +1,7 @@
-import React from 'react'
-import { Badge } from '~/base-components/ui-components'
-import { networkManager } from '~/ligo-components/eth-network'
+import React from "react";
+import { Badge } from "~/base-components/ui-components";
+import { networkManager } from "~/ligo-components/eth-network";
 
 export default props => {
-  return <Badge pill>{networkManager.sdk?.utils.display(props.value)}</Badge>
-}
+  return <Badge pill>{networkManager.sdk?.utils.display(props.value)}</Badge>;
+};

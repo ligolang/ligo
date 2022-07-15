@@ -1,5 +1,5 @@
-let TempIpcChannel = require('./HttpIpcChannel').default
+const TempIpcChannel = require("./HttpIpcChannel").default;
 
-export const IpcChannel = TempIpcChannel
+export const IpcChannel = TempIpcChannel;
 
-export { default as HttpIpcChannel } from './HttpIpcChannel'
+export { default as HttpIpcChannel } from "./HttpIpcChannel";

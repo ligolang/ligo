@@ -1,62 +1,69 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import notification from '~/base-components/notification'
-import { AbiActionForm } from '~/ligo-components/eth-contract'
+import notification from "~/base-components/notification";
+import { AbiActionForm } from "~/ligo-components/eth-contract";
 
-import networkManager from '../networkManager'
+import networkManager from "../networkManager";
 
 export default class RpcActionForm extends PureComponent {
   executeAction = async (method, abiForm) => {
     if (abiForm.state.executing) {
-      return
+      return;
     }
 
     if (!networkManager.sdk) {
-      notification.error('Call RPC Failed', 'No connected network. Please start a local network or switch to a remote network.')
-      return
+      notification.error(
+        "Call RPC Failed",
+        "No connected network. Please start a local network or switch to a remote network."
+      );
+      return;
     }
 
-    let parameters = { array: [], obj: {} }
+    let parameters = { array: [], obj: {} };
     try {
-      parameters = abiForm.form.current.getParameters()
+      parameters = abiForm.form.current.getParameters();
     } catch (e) {
-      notification.error('Error in Parameters', e.message)
-      return
+      notification.error("Error in Parameters", e.message);
+      return;
     }
 
-    abiForm.setState({ executing: true, actionError: '', actionResult: '' })
+    abiForm.setState({ executing: true, actionError: "", actionResult: "" });
 
-    let result
+    let result;
     try {
-      result = await networkManager.sdk.callRpc(method, parameters)
+      result = await networkManager.sdk.callRpc(method, parameters);
     } catch (e) {
-      console.warn(e)
-      abiForm.setState({ executing: false, actionError: e.message, actionResult: '' })
-      return
+      console.warn(e);
+      abiForm.setState({
+        executing: false,
+        actionError: e.message,
+        actionResult: "",
+      });
+      return;
     }
 
     abiForm.setState({
       executing: false,
-      actionError: '',
+      actionError: "",
       actionResult: JSON.stringify(result, null, 2),
-    })
-  }
+    });
+  };
 
-  render () {
+  render() {
     return (
       <AbiActionForm
-        toolbarId='execute-rpc-method'
+        toolbarId="execute-rpc-method"
         FormSection={AbiActionForm.FormSection}
         inModal
         smDropdown
         selectorHeader={null}
-        selectorIcon='fas fa-exchange-alt'
+        selectorIcon="fas fa-exchange-alt"
         noGasOptions
         showResult
         noResultBadge
         actions={networkManager.sdk?.rpc.methods || []}
         executeAction={this.executeAction}
       />
-    )
+    );
   }
 }

@@ -1,36 +1,37 @@
-import { getColor } from '~/base-components/ui-components'
-import convert from 'color-convert'
+import convert from "color-convert";
 
-import * as monaco from 'monaco-editor'
+import * as monaco from "monaco-editor";
+import { getColor } from "~/base-components/ui-components";
 
 const hex = value => {
-  const hexValue = Number(value || 0).toString(16)
-  return hexValue.length === 1 ? `0${hex}` : hexValue
-}
+  const hexValue = Number(value || 0).toString(16);
+  return hexValue.length === 1 ? `0${hex}` : hexValue;
+};
 
 export default async function () {
-  const primaryColorRgb = getColor('--color-primary')
-  const rgb = primaryColorRgb.match(/\((\d+),\s*(\d+),\s*(\d+)\)/)
-  const hsl = convert.rgb.hsl(+rgb[1], +rgb[2], +rgb[3])
-  const primaryColor = convert.hsl.hex(hsl[0], hsl[1], hsl[2])
-  const lightPrimaryColor = convert.hsl.hex(hsl[0], 100, 75)
+  const primaryColorRgb = getColor("--color-primary");
+  const rgb = primaryColorRgb.match(/\((\d+),\s*(\d+),\s*(\d+)\)/);
+  const hsl = convert.rgb.hsl(+rgb[1], +rgb[2], +rgb[3]);
+  const primaryColor = convert.hsl.hex(hsl[0], hsl[1], hsl[2]);
+  const lightPrimaryColor = convert.hsl.hex(hsl[0], 100, 75);
 
-  monaco.editor.defineTheme('obsidians',
+  monaco.editor.defineTheme(
+    "obsidians",
     {
-      base: 'vs',
+      base: "vs",
       inherit: true,
       rules: [],
       colors: {
-        'editor.background': '#fff',
-        'editor.lineHighlightBackground': '#fff',
-        'editorLineNumber.foreground': '#888',
-        'menu.foreground': '#FFFFFF',
-        'menu.background': '#eff5ff',
-        'menu.selectionBackground': '#d0e3ff'
-      }
+        "editor.background": "#fff",
+        "editor.lineHighlightBackground": "#fff",
+        "editorLineNumber.foreground": "#888",
+        "menu.foreground": "#FFFFFF",
+        "menu.background": "#eff5ff",
+        "menu.selectionBackground": "#d0e3ff",
+      },
     }
 
-  // {
+    // {
     // base: 'vs' // can also be vs-dark or hc-black
     // inherit: true // can also be false to completely replace the builtin rules
     // colors: {
@@ -94,8 +95,8 @@ export default async function () {
 
     //   { token: 'type', foreground: '66D9EF', fontStyle: 'italic' },
     //   { token: 'function', foreground: lightPrimaryColor, fontStyle: 'italic' },
-      // { token: 'type.eosio', foreground: '66D9EF', fontStyle: 'bold' },
+    // { token: 'type.eosio', foreground: '66D9EF', fontStyle: 'bold' },
     // ]
-  // })
-  )
+    // })
+  );
 }

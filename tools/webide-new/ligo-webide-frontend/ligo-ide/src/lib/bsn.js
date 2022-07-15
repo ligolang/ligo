@@ -1,34 +1,30 @@
-async function handleBsnCallback ({ location, history }) {
-  const query = new URLSearchParams(location.search)
-  const code = query.get('code')
-  const state = query.get('state')
+async function handleBsnCallback({ location, history }) {
+  const query = new URLSearchParams(location.search);
+  const code = query.get("code");
+  const state = query.get("state");
 
-  const tokens = await this.fetchTokens(code, 'bsn')
+  const tokens = await this.fetchTokens(code, "bsn");
   if (!tokens) {
-    history.replace('/')
-    return
+    history.replace("/");
+    return;
   }
 
-  const { token, awsToken } = tokens
+  const { token, awsToken } = tokens;
 
-  const awsCredential = await this.fetchAwsCredential(awsToken)
+  const awsCredential = await this.fetchAwsCredential(awsToken);
   if (!awsCredential) {
-    history.replace('/')
-    return
+    history.replace("/");
+    return;
   }
 
-  const { username, avatar } = token
-  this.profile = { username, avatar }
-  this.credentials = { token, awsCredential }
+  const { username, avatar } = token;
+  this.profile = { username, avatar };
+  this.credentials = { token, awsCredential };
 
   try {
-    const {
-      urlCode,
-      projectId,
-      orgCode,
-      appTypeId,
-      appTypeFrameName,
-    } = JSON.parse(atob(decodeURIComponent(state)))
+    const { urlCode, projectId, orgCode, appTypeId, appTypeFrameName } = JSON.parse(
+      atob(decodeURIComponent(state))
+    );
     // bsnParams = {
     //   urlCode,
     //   projectId,
@@ -36,36 +32,36 @@ async function handleBsnCallback ({ location, history }) {
     //   appTypeId,
     //   appTypeFrameName,
     // }
-    history.replace(`${username}?networkId=${appTypeId}&projectId=${projectId}`)
+    history.replace(`${username}?networkId=${appTypeId}&projectId=${projectId}`);
   } catch (error) {
-    history.replace('/')
+    history.replace("/");
   }
 }
 
-async function createProject ({ networkManager, projectChannel, bsnChannel }, { projectRoot, name, template, group, compilerVersion }) {
-  let created
+async function createProject(
+  { networkManager, projectChannel, bsnChannel },
+  { projectRoot, name, template, group, compilerVersion }
+) {
+  let created;
   try {
-    created = await projectChannel.invoke('post', '', {
+    created = await projectChannel.invoke("post", "", {
       projectRoot,
       name,
       template,
       group,
       compilerVersion,
       meta: {
-        build: 'bsn',
+        build: "bsn",
         bsnProjectId: networkManager?.network?.raw?.id,
         organizationId: networkManager?.network?.raw?.organization?.id,
         chaincodeName: name,
-      }
-    })
+      },
+    });
   } catch (error) {
     // console.log(error)
   }
 
-  return created
+  return created;
 }
 
-export {
-  handleBsnCallback,
-  createProject,
-}
+export { handleBsnCallback, createProject };

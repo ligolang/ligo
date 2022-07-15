@@ -14,7 +14,7 @@
     "sourceMap": true,
     "outDir": "./build",
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -23,11 +23,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "rootDir": "src",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true
   },
   "include": [
-    "./src",
-    "./test",
-    "./mocks"
+    "./src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build"
   ]
 }

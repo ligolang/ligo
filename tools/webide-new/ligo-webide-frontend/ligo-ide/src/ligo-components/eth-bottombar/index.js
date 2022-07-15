@@ -1,17 +1,17 @@
-import React from 'react'
-import CacheRoute from 'react-router-cache-route'
+import React from "react";
+import CacheRoute from "react-router-cache-route";
 
-import { connect } from '~/base-components/redux'
+import { connect } from "~/base-components/redux";
 
 // import { KeypairButton } from '~/base-components/keypair'
-import { TerminalButton } from '~/base-components/workspace'
+import { TerminalButton } from "~/base-components/workspace";
 
 // import { NetworkStatus } from '~/ligo-components/eth-network'
 // import { QueueButton } from '~/ligo-components/eth-queue'
 // import { AbiStorage } from '~/ligo-components/eth-contract'
 // import { CompilerSelectors } from '~/ligo-components/eth-compiler'
 
-export default connect(['network', 'queue', 'projects', 'uiState'])(function BottomBar (props) {
+export default connect(["network", "queue", "projects", "uiState"])(function BottomBar(props) {
   const {
     network,
     queue,
@@ -23,34 +23,34 @@ export default connect(['network', 'queue', 'projects', 'uiState'])(function Bot
     // chains,
 
     // noNetwork,
-  } = props
+  } = props;
 
-  const localNetwork = uiState.get('localNetwork')
-  let txs
-  if (network !== 'dev') {
-    txs = queue.getIn([network, 'txs'])
-  } else if (localNetwork && localNetwork.lifecycle === 'started') {
-    txs = queue.getIn([localNetwork.params.id, 'txs'])
+  const localNetwork = uiState.get("localNetwork");
+  let txs;
+  if (network !== "dev") {
+    txs = queue.getIn([network, "txs"]);
+  } else if (localNetwork && localNetwork.lifecycle === "started") {
+    txs = queue.getIn([localNetwork.params.id, "txs"]);
   }
 
-  const selectedProject = projects.get('selected')
-  const loaded = selectedProject?.get('loaded')
-  let projectButtons
+  const selectedProject = projects.get("selected");
+  const loaded = selectedProject?.get("loaded");
+  let projectButtons;
   if (loaded) {
-    projectButtons = <>
-      {/* <CacheRoute
+    projectButtons = (
+      <>
+        {/* <CacheRoute
         path={[`/${Auth.username}/:project`, '/local/:project']}
         render={() => <CompilerSelectors author={selectedProject.get('author')} />}
       /> */}
-      <CacheRoute
-        path={['/local/:project']}
-        component={TerminalButton}
-      />
-    </>
+        <CacheRoute path={["/local/:project"]} component={TerminalButton} />
+      </>
+    );
   }
 
-  return <>
-    {/* <KeypairButton mnemonic={mnemonic} secretName={secretName} chains={chains}>
+  return (
+    <>
+      {/* <KeypairButton mnemonic={mnemonic} secretName={secretName} chains={chains}>
       <div className='btn btn-primary btn-sm btn-flat'>
         <i className='fas fa-key' />
       </div>
@@ -63,7 +63,8 @@ export default connect(['network', 'queue', 'projects', 'uiState'])(function Bot
         ABI Storage
       </div>
     </AbiStorage> */}
-    <div className='flex-1' />
-    {projectButtons}
-  </>
-})
+      <div className="flex-1" />
+      {projectButtons}
+    </>
+  );
+});

@@ -1,73 +1,70 @@
 export default class HttpIpcChannel {
-  constructor(channel = 'default', uid = '') {
-    this.channel = channel
-    this.uid = uid
-    this.listeners = {}
-    this._onDataReceived = this._onDataReceived.bind(this)
+  constructor(channel = "default", uid = "") {
+    this.channel = channel;
+    this.uid = uid;
+    this.listeners = {};
+    this._onDataReceived = this._onDataReceived.bind(this);
   }
 
   get channelName() {
     if (this.uid) {
-      return `${this.channel}-${this.uid}`
-    } else {
-      return `${this.channel}`
+      return `${this.channel}-${this.uid}`;
     }
+    return `${this.channel}`;
   }
 
   get channelResponse() {
     if (this.uid) {
-      return `response-${this.channel}-${this.uid}`
-    } else {
-      return `response-${this.channel}`
+      return `response-${this.channel}-${this.uid}`;
     }
+    return `response-${this.channel}`;
   }
 
-  dispose () {
-    this.listeners = {}
+  dispose() {
+    this.listeners = {};
   }
 
-  async invoke (method, ...args) {
-  }
+  async invoke(method, ...args) {}
 
-  on (event, callback) {
+  on(event, callback) {
     if (!this.listeners[event]) {
-      this.listeners[event] = []
+      this.listeners[event] = [];
     }
-    this.listeners[event].push(callback)
+    this.listeners[event].push(callback);
 
-    return () => this.off(event, callback)
+    return () => this.off(event, callback);
   }
 
-  off (event, callback) {
+  off(event, callback) {
     if (!this.listeners[event]) {
-      return
+      return;
     }
     if (!callback) {
-      this.listeners[event] = []
-      return
+      this.listeners[event] = [];
+      return;
     }
-    let cbs = this.listeners[event]
+    const cbs = this.listeners[event];
     for (let i = 0; i < cbs.length; i++) {
       if (cbs[i] === callback) {
-        cbs.splice(i, 1)
-        return
+        cbs.splice(i, 1);
+        return;
       }
     }
   }
 
-  get events () {
-    return Object.keys(this.listeners)
+  get events() {
+    return Object.keys(this.listeners);
   }
 
-  trigger (event, ...args) {
-    for (let evt of this.events) {
+  trigger(event, ...args) {
+    for (const evt of this.events) {
       if (evt === event || event.startsWith(`${evt}:`)) {
-        this.listeners[evt].forEach(cb => cb(...args))
+        this.listeners[evt].forEach(cb => cb(...args));
       }
     }
   }
 
-  _onDataReceived (_, method, ...args) {
-    this.trigger(method, ...args)
+  _onDataReceived(_, method, ...args) {
+    this.trigger(method, ...args);
   }
 }

@@ -1,100 +1,103 @@
-import React, { PureComponent } from 'react'
-import classnames from 'classnames'
+import React, { PureComponent } from "react";
+import classnames from "classnames";
 
-import { Terminal as XTerm } from 'xterm'
-import { FitAddon } from 'xterm-addon-fit'
-import { SearchAddon } from 'xterm-addon-search'
+import { Terminal as XTerm } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { SearchAddon } from "xterm-addon-search";
 
-import chalk from 'chalk'
+import chalk from "chalk";
 
-import { getColor } from '~/base-components/ui-components'
-import notification from '~/base-components/notification'
-import fileOps from '~/base-components/file-ops'
+import { getColor } from "~/base-components/ui-components";
+import notification from "~/base-components/notification";
+import fileOps from "~/base-components/file-ops";
 
-import 'xterm/css/xterm.css'
+import "xterm/css/xterm.css";
 
-import TerminalInput from './TerminalInput'
-import './styles.css'
+import TerminalInput from "./TerminalInput";
+import "./styles.css";
 
-import initTerminalChannel from './lib/initTerminalChannel'
-import colorCommand from './lib/colorCommand'
+import initTerminalChannel from "./lib/initTerminalChannel";
+import colorCommand from "./lib/colorCommand";
 
 export default class Terminal extends PureComponent {
   constructor(props) {
-    super(props)
-    this.initialized = false
-    this.incompleteLine = ''
-    this.termRef = React.createRef()
-    this.inputRef = React.createRef()
+    super(props);
+    this.initialized = false;
+    this.incompleteLine = "";
+    this.termRef = React.createRef();
+    this.inputRef = React.createRef();
 
-    this.terminalChannel = initTerminalChannel(this.props.logId, this.props.cwd)
-    this.terminalChannel.on('executing', executing => this.setState({ executing }))
-    this.terminalChannel.on('data', this.onLogReceived)
+    this.terminalChannel = initTerminalChannel(this.props.logId, this.props.cwd);
+    this.terminalChannel.on("executing", executing => this.setState({ executing }));
+    this.terminalChannel.on("data", this.onLogReceived);
   }
 
-  componentDidMount () {
+  componentDidMount() {
     if (this.props.active) {
-      this.initialized = true
-      this.createTerm()
+      this.initialized = true;
+      this.createTerm();
     }
 
     this.autofit = setInterval(() => {
       if (this.term && this.props.active) {
-        this.resizeTerm()
+        this.resizeTerm();
       }
-    }, 500)
+    }, 500);
   }
 
-  componentDidUpdate (prevProps) {
+  componentDidUpdate(prevProps) {
     if (!this.initialized && this.props.active) {
-      this.initialized = true
-      this.createTerm()
+      this.initialized = true;
+      this.createTerm();
     }
     if (!prevProps.active && this.props.active) {
-      this.term?.scrollLines(0)
+      this.term?.scrollLines(0);
     }
   }
 
-  componentWillUnmount () {
-    this.autofit && clearInterval(this.autofit)
+  componentWillUnmount() {
+    this.autofit && clearInterval(this.autofit);
 
-    this.stop()
-    this.terminalChannel.dispose()
+    this.stop();
+    this.terminalChannel.dispose();
 
-    this.term?.dispose()
+    this.term?.dispose();
   }
 
-  resizeTerm () {
+  resizeTerm() {
     try {
-      this.termFitAddon.fit()
-      this.term._core._charSizeService.measure()
+      this.termFitAddon.fit();
+      this.term._core._charSizeService.measure();
 
-      const { cols, rows } = this.term
+      const { cols, rows } = this.term;
 
       if (this.props.active) {
         if (this.cols === cols && this.rows === rows) {
-          return
+          return;
         }
-        this.cols = cols
-        this.rows = rows
-        this.terminalChannel.invoke('resize', { cols: this.props.cols || cols, rows })
+        this.cols = cols;
+        this.rows = rows;
+        this.terminalChannel.invoke("resize", {
+          cols: this.props.cols || cols,
+          rows,
+        });
       }
     } catch (e) {
-      console.warn(e)
+      console.warn(e);
     }
   }
 
-  createTerm () {
-    const el = this.termRef.current
+  createTerm() {
+    const el = this.termRef.current;
 
     if (this.term) {
-      return this.term
+      return this.term;
     }
 
-    el.onmouseup = this.onMouseUpTerm
+    el.onmouseup = this.onMouseUpTerm;
 
-    const color = '#000'
-    const bgColor = '#fff'
+    const color = "#000";
+    const bgColor = "#fff";
 
     const term = new XTerm({
       fontSize: 12,
@@ -102,197 +105,187 @@ export default class Terminal extends PureComponent {
       theme: {
         foreground: color,
         background: bgColor,
-        cursor: this.props.interactive ? getColor('--color-text-muted') : bgColor,
-        selection: '#d0e3ff'
-      }
-    })
+        cursor: this.props.interactive ? getColor("--color-text-muted") : bgColor,
+        selection: "#d0e3ff",
+      },
+    });
 
-    this.termFitAddon = new FitAddon()
-    this.searchAddon = new SearchAddon()
-    term.loadAddon(this.termFitAddon)
-    term.loadAddon(this.searchAddon)
-    term.open(el)
+    this.termFitAddon = new FitAddon();
+    this.searchAddon = new SearchAddon();
+    term.loadAddon(this.termFitAddon);
+    term.loadAddon(this.searchAddon);
+    term.open(el);
     try {
-      this.termFitAddon.fit()
+      this.termFitAddon.fit();
     } catch (error) {
-      console.warn(error)
+      console.warn(error);
     }
-    this.term = term
+    this.term = term;
 
     // this.term.attachCustomKeyEventHandler(this.keyboardHandler)
-    this.term.onData(this.onData)
+    this.term.onData(this.onData);
 
     if (this.props.onTermCreated) {
-      this.props.onTermCreated(this.term)
+      this.props.onTermCreated(this.term);
     }
 
     if (this.preActiveMessage) {
-      term.write(this.preActiveMessage)
-      this.scrollToBottom()
+      term.write(this.preActiveMessage);
+      this.scrollToBottom();
     }
 
     if (this.props.cmd) {
       this.exec(this.props.cmd, this.props.opt).then(result => {
         if (this.props.onCmdExecuted) {
-          this.props.onCmdExecuted(result)
+          this.props.onCmdExecuted(result);
         }
-      })
+      });
     }
 
-    return this.term
+    return this.term;
   }
 
   onData = async data => {
     if (this.props.interactive) {
-      await this.terminalChannel.invoke('write', data)
-      return
+      await this.terminalChannel.invoke("write", data);
+      return;
     }
 
-    const buf = Buffer.from(data)
+    const buf = Buffer.from(data);
     if (buf.length === 1 && buf[0] === 3) {
-      await this.terminalChannel.invoke('write', data)
+      await this.terminalChannel.invoke("write", data);
       // await this.stop()
     }
-  }
+  };
 
   onMouseUpTerm = event => {
-    const selection = this.term.getSelection()
+    const selection = this.term.getSelection();
 
     if (event.button === 2) {
-      navigator.clipboard.writeText(selection)
-        .then(() => {
-          if (this.props.onCopied) {
-            this.props.onCopied()
-          }
-          notification.success('Copied', 'The selection content is copied to the clipboard.')
-          this.term.clearSelection()
-          this.focus()
-        })
+      navigator.clipboard.writeText(selection).then(() => {
+        if (this.props.onCopied) {
+          this.props.onCopied();
+        }
+        notification.success("Copied", "The selection content is copied to the clipboard.");
+        this.term.clearSelection();
+        this.focus();
+      });
     } else if (!selection) {
-      this.focus()
+      this.focus();
     }
+  };
+
+  focus() {
+    this.inputRef.current?.focus();
   }
 
-  focus () {
-    this.inputRef.current?.focus()
+  clearContent() {
+    this.term.reset();
   }
 
-  clearContent () {
-    this.term.reset()
-  }
-
-  scrollToBottom () {
+  scrollToBottom() {
     if (this.props.active) {
-      this.resizeTerm()
-      setTimeout(() => this.term?.scrollToBottom(), 300)
+      this.resizeTerm();
+      setTimeout(() => this.term?.scrollToBottom(), 300);
     }
   }
 
-  preActiveMessage = ''
-  writeToTerminal (message, color) {
+  preActiveMessage = "";
+
+  writeToTerminal(message, color) {
     if (color) {
-      message = colorCommand(message, color)
+      message = colorCommand(message, color);
     }
     if (this.initialized && this.term) {
-      this.term.write(message)
-      return
+      this.term.write(message);
+      return;
     }
-    this.preActiveMessage += message
+    this.preActiveMessage += message;
   }
 
   exec = async (cmd, config = {}) => {
     if (!this.props.interactive) {
-      this.inputRef.current?.setState({ executing: true })
+      this.inputRef.current?.setState({ executing: true });
     }
 
-    const result = await this.runCommand(cmd, config)
+    const result = await this.runCommand(cmd, config);
     if (this.props.onFinished) {
-      this.props.onFinished(result)
+      this.props.onFinished(result);
     }
     if (!this.props.interactive) {
-      this.inputRef.current?.setState({ executing: false })
+      this.inputRef.current?.setState({ executing: false });
     }
-    return result
-  }
+    return result;
+  };
 
   getDefaultConfig = async () => {
-    const config = { cwd: this.props.cwd }
-    if (typeof this.props.getEnv === 'function') {
-      config.env = await this.props.getEnv()
+    const config = { cwd: this.props.cwd };
+    if (typeof this.props.getEnv === "function") {
+      config.env = await this.props.getEnv();
     }
-    return config
-  }
+    return config;
+  };
 
   execAsChildProcess = async (cmd, config) => {
-    const mergedConfig = Object.assign(await this.getDefaultConfig(), config)
-    await this.terminalChannel.invoke('exec', cmd, mergedConfig)
-  }
+    const mergedConfig = Object.assign(await this.getDefaultConfig(), config);
+    await this.terminalChannel.invoke("exec", cmd, mergedConfig);
+  };
 
   onInputSubmit = async (cmd, config) => {
     if (this.props.interactive) {
-      return await this.terminalChannel.invoke('write', `${cmd}\n`)
-    } else {
-      return await this.runCommand(cmd, config)
+      return await this.terminalChannel.invoke("write", `${cmd}\n`);
     }
-  }
+    return this.runCommand(cmd, config);
+  };
 
   runCommand = async (cmd, config) => {
-    this.scrollToBottom()
+    this.scrollToBottom();
 
-    const mergedConfig = Object.assign(await this.getDefaultConfig(), config)
-    this.writeCmdToTerminal(cmd)
-    return await this.terminalChannel.invoke('run', cmd, mergedConfig)
-  }
+    const mergedConfig = Object.assign(await this.getDefaultConfig(), config);
+    this.writeCmdToTerminal(cmd);
+    return await this.terminalChannel.invoke("run", cmd, mergedConfig);
+  };
 
-  writeCmdToTerminal = (cmd, prefix = '>') => {
-    this.writeToTerminal(`${chalk.bold.gray(prefix)} ${colorCommand(cmd)}\n\r`)
-  }
+  writeCmdToTerminal = (cmd, prefix = ">") => {
+    this.writeToTerminal(`${chalk.bold.gray(prefix)} ${colorCommand(cmd)}\n\r`);
+  };
 
   onLogReceived = message => {
-    const parsedMessage = this.props.onLogReceived(message)
-    this.writeToTerminal(parsedMessage)
-  }
+    const parsedMessage = this.props.onLogReceived(message);
+    this.writeToTerminal(parsedMessage);
+  };
 
   stop = async () => {
-    await this.terminalChannel.invoke('kill')
-  }
+    await this.terminalChannel.invoke("kill");
+  };
 
-  render () {
-    const {
-      logId,
-      height,
-      className,
-      Toolbar,
-      readOnly,
-      input
-    } = this.props
+  render() {
+    const { logId, height, className, Toolbar, readOnly, input } = this.props;
 
     return (
       <div
-        className={classnames(`d-flex flex-column w-100 obsidians-terminal bg2`, className)}
+        className={classnames("d-flex flex-column w-100 obsidians-terminal bg2", className)}
         style={{ height }}
       >
-        { Toolbar }
-        <div className='xterm-wrapper'>
-          <div ref={this.termRef} id={`xterm-${logId}`} className='xterm-element' />
+        {Toolbar}
+        <div className="xterm-wrapper">
+          <div ref={this.termRef} id={`xterm-${logId}`} className="xterm-element" />
         </div>
-        { !readOnly && input &&
+        {!readOnly && input && (
           <TerminalInput ref={this.inputRef} onSubmit={this.onInputSubmit} onStop={this.stop} />
-        }
+        )}
       </div>
-    )
+    );
   }
 }
 
-Terminal.propTypes = {
-
-}
+Terminal.propTypes = {};
 
 Terminal.defaultProps = {
   cwd: fileOps.workspace,
-  height: '100%',
-  font: 'Hack, Menlo, monospace',
-  className: '',
+  height: "100%",
+  font: "Hack, Menlo, monospace",
+  className: "",
   Toolbar: null,
-  onLogReceived: message => message
-}
+  onLogReceived: message => message,
+};

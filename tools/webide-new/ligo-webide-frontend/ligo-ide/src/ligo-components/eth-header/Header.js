@@ -1,30 +1,30 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
 // import redux from '~/base-components/redux'
-import Navbar from '~/base-components/navbar'
+import Navbar from "~/base-components/navbar";
 // import keypairManager from '~/base-components/keypair'
-import { navbarItem, OpenProjectModal, NewProjectModal } from '~/base-components/workspace'
+import { navbarItem, OpenProjectModal, NewProjectModal } from "~/base-components/workspace";
 // import { networkManager } from '~/ligo-components/eth-network'
 // import { utils } from '~/ligo-components/eth-sdk'
 
 // import headerActions from './headerActions'
 
 export default class Header extends PureComponent {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
-      keypairs: []
-    }
+      keypairs: [],
+    };
   }
 
-  componentDidMount () {
+  componentDidMount() {
     // keypairManager.loadAllKeypairs().then(this.updateKeypairs)
     // keypairManager.onUpdated(this.updateKeypairs)
   }
 
-  updateKeypairs = keypairs => this.setState({ keypairs })
+  updateKeypairs = keypairs => this.setState({ keypairs });
 
-  render () {
+  render() {
     const {
       // noExplorer,
       profile,
@@ -41,12 +41,10 @@ export default class Header extends PureComponent {
       // networkList,
       createProject,
       logo = null,
-    } = this.props
+    } = this.props;
 
-    const username = projects.get('selected')?.toJS()?.author
-    const navbarLeft = [
-      navbarItem(projects, selectedProject, username)
-    ]
+    const username = projects.get("selected")?.toJS()?.author;
+    const navbarLeft = [navbarItem(projects, selectedProject, username)];
 
     // const contractIcon = isSelected => isSelected ? 'fas fa-file-invoice' : 'fas fa-file'
     // const addressIcon = isSelected => isSelected ? 'fas fa-map-marker-alt' : 'fas fa-map-marker'
@@ -176,16 +174,12 @@ export default class Header extends PureComponent {
 
     return (
       <>
-        <Navbar
-          profile={profile}
-          navbarLeft={navbarLeft}
-          navbarRight={[]}
-        >
+        <Navbar profile={profile} navbarLeft={navbarLeft} navbarRight={[]}>
           {logo}
         </Navbar>
         <NewProjectModal createProject={createProject} />
         <OpenProjectModal createProject={createProject} />
       </>
-    )
+    );
   }
 }

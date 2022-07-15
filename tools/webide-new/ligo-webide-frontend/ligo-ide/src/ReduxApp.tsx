@@ -1,44 +1,41 @@
-import { GlobalModals, autoUpdater } from '~/base-components/global';
-import React, { lazy, useEffect, useRef, useState } from 'react';
-import { config, updateStore } from './lib/redux';
-import redux, { Provider } from '~/base-components/redux';
+import React, { lazy, useEffect, useRef, useState } from "react";
+import { GlobalModals, autoUpdater } from "~/base-components/global";
+import { config, updateStore } from "./lib/redux";
+import redux, { Provider } from "~/base-components/redux";
 
-import { LoadingScreen } from '~/base-components/ui-components';
-import { NotificationSystem } from '~/base-components/notification';
-import Routes from './components/Routes';
-import { indexedDBFileSystem, fileSystems, fileSystem } from '~/base-components/file-ops';
-import icon from './components/icon.png';
-import fileOps from '~/base-components/file-ops';
-import { ProjectManager } from '~/base-components/workspace';
+import { LoadingScreen } from "~/base-components/ui-components";
+import { NotificationSystem } from "~/base-components/notification";
+import Routes from "./components/Routes";
+import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from "~/base-components/file-ops";
+import icon from "./components/icon.png";
+import { ProjectManager } from "~/base-components/workspace";
 
-const Header = lazy(() =>
-  import('./components/Header' /* webpackChunkName: "header" */)
-);
+const Header = lazy(() => import("./components/Header" /* webpackChunkName: "header" */));
 
-const ReduxApp = (props) => {
-  const [loaded, setLoaded] = useState(false)
-  const ligoIdeFileSystems = useRef<fileSystems>(new fileSystems())
-  const indexedDB = useRef<fileSystem>(new indexedDBFileSystem())
+const ReduxApp = props => {
+  const [loaded, setLoaded] = useState(false);
+  const ligoIdeFileSystems = useRef<fileSystems>(new fileSystems());
+  const indexedDB = useRef<fileSystem>(new indexedDBFileSystem());
 
   useEffect(() => {
     async function loadStorage() {
       await redux.init(config, updateStore);
-      await ligoIdeFileSystems.current.addFileSystem(indexedDB.current)
-      await ligoIdeFileSystems.current.setFileSystem([indexedDB.current])
-      if (!await fileOps.exists('.workspaces/default-project')) {
-        const Manager = ProjectManager.Local
-        const defaultProject = await Manager.createProject('default-project', 'increment')
-        redux.dispatch('ADD_PROJECT', {
-          type: 'local',
-          project: defaultProject
-        })
+      await ligoIdeFileSystems.current.addFileSystem(indexedDB.current);
+      await ligoIdeFileSystems.current.setFileSystem([indexedDB.current]);
+      if (!(await fileOps.exists(".workspaces/default-project"))) {
+        const Manager = ProjectManager.Local;
+        const defaultProject = await Manager.createProject("default-project", "increment");
+        redux.dispatch("ADD_PROJECT", {
+          type: "local",
+          project: defaultProject,
+        });
       }
       // TODO in case of any changes in fs we should be able to migrate data
-      setLoaded(true)
+      setLoaded(true);
       autoUpdater.check();
     }
-    loadStorage()
-  }, [])
+    loadStorage();
+  }, []);
 
   if (!loaded) {
     return <LoadingScreen />;
@@ -46,10 +43,7 @@ const ReduxApp = (props) => {
 
   return (
     <Provider store={redux.store}>
-      <div
-        className="body"
-        style={{ paddingTop: '49px' }}
-      >
+      <div className="body" style={{ paddingTop: "49px" }}>
         <Routes>
           <Header history={props.history} />
           <NotificationSystem />
@@ -58,6 +52,6 @@ const ReduxApp = (props) => {
       </div>
     </Provider>
   );
-}
+};
 
-export default ReduxApp
+export default ReduxApp;

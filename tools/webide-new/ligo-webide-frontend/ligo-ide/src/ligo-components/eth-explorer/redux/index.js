@@ -1,4 +1,4 @@
-import { Map } from 'immutable'
+import { Map } from "immutable";
 
 export default {
   default: Map(),
@@ -6,13 +6,13 @@ export default {
   actions: {
     ADD_TOKEN_INFO: {
       reducer: (state, { payload }) => {
-        return state.setIn([payload.network, payload.address], Map(payload.tokenInfo))
-      }
+        return state.setIn([payload.network, payload.address], Map(payload.tokenInfo));
+      },
     },
     REMOVE_TOKEN_INFO: {
       reducer: (state, { payload }) => {
-        return state.removeIn([payload.network, payload.address])
-      }
+        return state.removeIn([payload.network, payload.address]);
+      },
     },
-  }
-}
+  },
+};

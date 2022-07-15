@@ -1,51 +1,45 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import {
-  IconButton,
-} from '~/base-components/ui-components'
+import { IconButton } from "~/base-components/ui-components";
 
-import RemoteNetwork from '../RemoteNetwork'
+import RemoteNetwork from "../RemoteNetwork";
 
 export default class CustomNetwork extends PureComponent {
-  constructor (props) {
-    super(props)
-    this.modal = React.createRef()
+  constructor(props) {
+    super(props);
+    this.modal = React.createRef();
   }
 
-  componentDidMount () {
-    const { option } = this.props
+  componentDidMount() {
+    const { option } = this.props;
     if (!option) {
-      this.modal.current.openModal()
+      this.modal.current.openModal();
     }
   }
 
-  render () {
-    const {
-      networkId,
-      option,
-      CustomNetworkModal,
-      customNetworks,
-      placeholder,
-    } = this.props
+  render() {
+    const { networkId, option, CustomNetworkModal, customNetworks, placeholder } = this.props;
 
-    return <>
-      <RemoteNetwork
-        networkId={networkId}
-        {...option}
-        EditButton={
-          <IconButton
-            color='default'
-            className='text-muted'
-            icon='fas fa-cog'
-            onClick={() => this.modal.current.openModal(option)}
-          />
-        }
-      />
-      <CustomNetworkModal
-        ref={this.modal}
-        customNetworks={customNetworks}
-        placeholder={placeholder}
-      />
-    </>
+    return (
+      <>
+        <RemoteNetwork
+          networkId={networkId}
+          {...option}
+          EditButton={
+            <IconButton
+              color="default"
+              className="text-muted"
+              icon="fas fa-cog"
+              onClick={() => this.modal.current.openModal(option)}
+            />
+          }
+        />
+        <CustomNetworkModal
+          ref={this.modal}
+          customNetworks={customNetworks}
+          placeholder={placeholder}
+        />
+      </>
+    );
   }
 }

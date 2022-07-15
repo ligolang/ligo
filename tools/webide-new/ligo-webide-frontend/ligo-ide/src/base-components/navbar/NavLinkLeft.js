@@ -1,56 +1,56 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import { withRouter } from 'react-router'
-import { NavLink } from 'react-router-dom'
+import { withRouter } from "react-router";
+import { NavLink } from "react-router-dom";
 
-import NavLinkContent from './NavLinkContent'
-import NavDropdown from './NavDropdown'
+import NavLinkContent from "./NavLinkContent";
+import NavDropdown from "./NavDropdown";
 
 class NavLinkLeft extends PureComponent {
   static defaultProps = {
-    onClickItem: () => { }
-  }
+    onClickItem: () => {},
+  };
 
   onToggle = event => {
-    const { route, selected, history, location } = this.props
-    let url = `/${route}`
+    const { route, selected, history, location } = this.props;
+    let url = `/${route}`;
     if (selected.id) {
-      url = `/${route}/${selected.id}`
+      url = `/${route}/${selected.id}`;
     }
-    const match = location.pathname.startsWith(url)
+    const match = location.pathname.startsWith(url);
     if (!match) {
-      history.push(url)
+      history.push(url);
     }
-    return !match
-  }
+    return !match;
+  };
 
   onClickItem = item => {
     if (item.onClick) {
-      item.onClick()
+      item.onClick();
     } else {
-      const { history } = this.props
-      this.props.onClickItem(item.id, item)
-      history.push(`/${item.route}/${item.id || ''}`)
+      const { history } = this.props;
+      this.props.onClickItem(item.id, item);
+      history.push(`/${item.route}/${item.id || ""}`);
     }
-  }
+  };
 
   render() {
-    const { route, title, selected, dropdown, icon, contextMenu, disable } = this.props
+    const { route, title, selected, dropdown, icon, contextMenu, disable } = this.props;
 
-    let url = `/${route}`
+    let url = `/${route}`;
     if (selected.id) {
-      url = `/${route}/${selected.id}`
+      url = `/${route}/${selected.id}`;
     }
     return (
       <NavLink
         to={url}
-        className='nav-link d-flex p-0'
+        className="nav-link d-flex p-0"
         style={{ width: 273 }}
-        activeClassName='active'
+        activeClassName="active"
       >
         <NavDropdown
           route={route}
-          selected={selected.id || ''}
+          selected={selected.id || ""}
           list={dropdown}
           onToggle={this.onToggle}
           onClickItem={this.onClickItem}
@@ -58,16 +58,11 @@ class NavLinkLeft extends PureComponent {
           disable={disable}
           contextMenu={contextMenu}
         >
-          <NavLinkContent
-            title={title}
-            selected={selected.name}
-            icon={icon}
-            width='100%'
-          />
+          <NavLinkContent title={title} selected={selected.name} icon={icon} width="100%" />
         </NavDropdown>
       </NavLink>
-    )
+    );
   }
 }
 
-export default withRouter(NavLinkLeft)
+export default withRouter(NavLinkLeft);

@@ -1,81 +1,81 @@
-import set from 'lodash/set'
-import get from 'lodash/get'
+import set from "lodash/set";
+import get from "lodash/get";
 
 export default class ProjectSettings {
-  constructor (projectManager, settingFilePath, channel) {
-    this.projectManager = projectManager
-    this.settingFilePath = settingFilePath
-    this.channel = channel
-    channel.off('current-value')
-    channel.on('current-value', evt => this.triggerEvent(evt))
+  constructor(projectManager, settingFilePath, channel) {
+    this.projectManager = projectManager;
+    this.settingFilePath = settingFilePath;
+    this.channel = channel;
+    channel.off("current-value");
+    channel.on("current-value", evt => this.triggerEvent(evt));
 
-    this.invalid = false
-    this.settings = {}
+    this.invalid = false;
+    this.settings = {};
   }
 
-  async readSettings () {
-    let settingsJson
+  async readSettings() {
+    let settingsJson;
     try {
-      settingsJson = await this.projectManager.readFile(this.settingFilePath)
+      settingsJson = await this.projectManager.readFile(this.settingFilePath);
     } catch (e) {}
 
-    this.update(settingsJson)
-    return this.settings
+    this.update(settingsJson);
+    return this.settings;
   }
 
   async writeSettings(rawSettings) {
-    const settings = this.trimSettings(rawSettings)
+    const settings = this.trimSettings(rawSettings);
 
-    const settingsJson = JSON.stringify(settings, null, 2)
-    await this.projectManager.saveFile(this.settingFilePath, settingsJson)
+    const settingsJson = JSON.stringify(settings, null, 2);
+    await this.projectManager.saveFile(this.settingFilePath, settingsJson);
   }
 
-  update (settingsJson) {
-    let rawSettings
+  update(settingsJson) {
+    let rawSettings;
     try {
-      rawSettings = JSON.parse(settingsJson || '{}')
+      rawSettings = JSON.parse(settingsJson || "{}");
     } catch (e) {
-      return
+      return;
     }
-    const oldSettings = this.settings
-    this.settings = this.trimSettings(rawSettings)
+    const oldSettings = this.settings;
+    this.settings = this.trimSettings(rawSettings);
 
     if (!this.channel) {
-      return
+      return;
     }
 
-    this.channel.events.forEach(evt => this.triggerEvent(evt, oldSettings))
+    this.channel.events.forEach(evt => this.triggerEvent(evt, oldSettings));
   }
 
-  triggerEvent (evt, oldSettings) {
-    const [prefix, key] = evt.split(':')
-    if (prefix !== 'settings' || !key) {
-      return
+  triggerEvent(evt, oldSettings) {
+    const [prefix, key] = evt.split(":");
+    if (prefix !== "settings" || !key) {
+      return;
     }
 
-    const value = get(this.settings, key)
+    const value = get(this.settings, key);
     if (oldSettings) {
-      const oldValue = get(oldSettings, key)
+      const oldValue = get(oldSettings, key);
       if (oldValue === value) {
-        return
+        return;
       }
     }
-    this.channel.trigger(evt, value)
+    this.channel.trigger(evt, value);
   }
 
-  trimSettings = (rawSettings = {}) => rawSettings
+  trimSettings = (rawSettings = {}) => rawSettings;
 
-  get (key) {
-    return get(this.settings, key)
+  get(key) {
+    return get(this.settings, key);
   }
 
-  async set (key, value) {
-    const settings = this.settings
-    const oldValue = get(settings, key)
+  async set(key, value) {
+    const { settings } = this;
+    const oldValue = get(settings, key);
     if (oldValue !== value) {
-      set(settings, key, value)
-      this.channel.trigger(`settings:${key}`, value)
-      await this.writeSettings(settings)
+      set(settings, key, value);
+      this.channel.trigger(`settings:${key}`, value);
+      await this.writeSettings(settings);
     }
   }
 }

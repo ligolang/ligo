@@ -1,28 +1,28 @@
-import React, { PureComponent } from 'react'
+import React, { PureComponent } from "react";
 
-import { ToolbarButton } from '~/base-components/ui-components'
-import BaseProjectManager from '../ProjectManager/BaseProjectManager'
+import { ToolbarButton } from "~/base-components/ui-components";
+import BaseProjectManager from "../ProjectManager/BaseProjectManager";
 
 export default class TerminalButton extends PureComponent {
   state = {
     terminal: false,
+  };
+
+  componentDidMount() {
+    BaseProjectManager.terminalButton = this;
   }
 
-  componentDidMount () {
-    BaseProjectManager.terminalButton = this
-  }
-
-  render () {
-    const { size = 'sm' } = this.props
+  render() {
+    const { size = "sm" } = this.props;
 
     return (
       <ToolbarButton
-        id='terminal'
+        id="terminal"
         size={size}
-        icon='fas fa-terminal'
-        color={this.state.terminal ? 'primary' : 'default'}
+        icon="fas fa-terminal"
+        color={this.state.terminal ? "primary" : "default"}
         onClick={() => BaseProjectManager.instance.toggleTerminal(!this.state.terminal)}
       />
-    )
+    );
   }
 }

@@ -1,16 +1,16 @@
-import React from 'react'
+import React from "react";
 
-import { connect } from '~/base-components/redux'
+import { connect } from "~/base-components/redux";
 
-import networkManager from './networkManager'
-import LocalNetwork from './LocalNetwork'
-import CustomNetwork from './CustomNetwork'
-import RemoteNetwork from './RemoteNetwork'
-import { default as DefaultCustomNetworkModal } from './CustomNetwork/CustomNetworkModal'
+import networkManager from "./networkManager";
+import LocalNetwork from "./LocalNetwork";
+import CustomNetwork from "./CustomNetwork";
+import RemoteNetwork from "./RemoteNetwork";
+import { default as DefaultCustomNetworkModal } from "./CustomNetwork/CustomNetworkModal";
 
-export default connect(['network', 'customNetworks', 'uiState'])(props => {
+export default connect(["network", "customNetworks", "uiState"])(props => {
   const {
-    network: networkId = 'dev',
+    network: networkId = "dev",
     customNetworks,
     uiState,
     configButton,
@@ -18,15 +18,15 @@ export default connect(['network', 'customNetworks', 'uiState'])(props => {
     minerKey,
     CustomNetworkModal = DefaultCustomNetworkModal,
     cacheLifecycles,
-  } = props
+  } = props;
 
-  const [active, setActive] = React.useState(true)
+  const [active, setActive] = React.useState(true);
   React.useEffect(() => {
-    cacheLifecycles.didCache(() => setActive(false))
-    cacheLifecycles.didRecover(() => setActive(true))
-  })
+    cacheLifecycles.didCache(() => setActive(false));
+    cacheLifecycles.didRecover(() => setActive(true));
+  });
 
-  if (networkId === 'dev') {
+  if (networkId === "dev") {
     return (
       <LocalNetwork
         networkId={networkId}
@@ -35,18 +35,18 @@ export default connect(['network', 'customNetworks', 'uiState'])(props => {
         tabs={tabs}
         minerKey={minerKey}
       />
-    )
-  } else if (networkId.startsWith('custom')) {
+    );
+  }
+  if (networkId.startsWith("custom")) {
     return (
       <CustomNetwork
         networkId={networkId}
-        option={uiState.get('customNetworkOption')}
+        option={uiState.get("customNetworkOption")}
         customNetworks={customNetworks}
         CustomNetworkModal={CustomNetworkModal}
       />
-    )
-  } else {
-    const url = networkManager.sdk?.url
-    return <RemoteNetwork networkId={networkId} url={url} />
+    );
   }
-})
+  const url = networkManager.sdk?.url;
+  return <RemoteNetwork networkId={networkId} url={url} />;
+});

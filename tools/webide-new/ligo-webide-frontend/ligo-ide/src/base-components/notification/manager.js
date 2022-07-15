@@ -1,66 +1,90 @@
 class Notification {
-  constructor (ref, { title, message, level = 'success', autoDismiss = 2, action = undefined }) {
-    this.ref = ref
+  constructor(ref, { title, message, level = "success", autoDismiss = 2, action = undefined }) {
+    this.ref = ref;
     if (this.ref) {
       setTimeout(() => {
         this.notification = this.ref.addNotification({
           title,
           message,
           level,
-          position: 'tc',
+          position: "tc",
           autoDismiss,
           dismissible: false,
-          action
-        })
-      }, 0)
+          action,
+        });
+      }, 0);
     }
   }
 
-  dismiss () {
+  dismiss() {
     if (this.ref && this.notification) {
-      this.ref.removeNotification(this.notification)
+      this.ref.removeNotification(this.notification);
     }
   }
 
-  modify (title, message, level) {
+  modify(title, message, level) {
     if (this.ref && this.notification) {
       this.ref.editNotification(this.notification, {
         title,
         message,
-        level
-      })
+        level,
+      });
     }
   }
 }
 
 class NotificationManager {
-  constructor () {
-    this._ref = null
-  }
-  
-  set ref (ref) {
-    this._ref = ref
+  constructor() {
+    this._ref = null;
   }
 
-  displayNotification (opts) {
-    return new Notification(this._ref, opts)
+  set ref(ref) {
+    this._ref = ref;
   }
 
-  success (title, message, autoDismiss = 2, actions = undefined) {
-    return this.displayNotification({ title, message, level: 'success', autoDismiss, actions })
+  displayNotification(opts) {
+    return new Notification(this._ref, opts);
   }
 
-  error (title, message, autoDismiss = 4, actions = undefined) {
-    return this.displayNotification({ title, message, level: 'error', autoDismiss, actions })
+  success(title, message, autoDismiss = 2, actions = undefined) {
+    return this.displayNotification({
+      title,
+      message,
+      level: "success",
+      autoDismiss,
+      actions,
+    });
   }
 
-  warning (title, message, autoDismiss = 2, actions = undefined) {
-    return this.displayNotification({ title, message, level: 'warning', autoDismiss, actions })
+  error(title, message, autoDismiss = 4, actions = undefined) {
+    return this.displayNotification({
+      title,
+      message,
+      level: "error",
+      autoDismiss,
+      actions,
+    });
   }
 
-  info (title, message, autoDismiss = 2, actions = undefined) {
-    return this.displayNotification({ title, message, level: 'info', autoDismiss, actions })
+  warning(title, message, autoDismiss = 2, actions = undefined) {
+    return this.displayNotification({
+      title,
+      message,
+      level: "warning",
+      autoDismiss,
+      actions,
+    });
+  }
+
+  info(title, message, autoDismiss = 2, actions = undefined) {
+    return this.displayNotification({
+      title,
+      message,
+      level: "info",
+      autoDismiss,
+      actions,
+    });
   }
 }
 
-export default new NotificationManager()
+export default new NotificationManager();

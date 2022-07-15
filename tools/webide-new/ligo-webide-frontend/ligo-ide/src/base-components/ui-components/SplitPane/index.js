@@ -1,2 +1,3 @@
-export { default } from 'react-split-pane'
-import './styles.css'
+import "./styles.css";
+
+export { default } from "react-split-pane";

@@ -1,10 +1,10 @@
-import './styles.scss'
+import "./styles.scss";
 
-export { default } from './CodeEditorCollection'
+export { default } from "./CodeEditorCollection";
 
 export {
   default as modelSessionManager,
   defaultModeDetector,
-} from './MonacoEditor/modelSessionManager'
+} from "./MonacoEditor/modelSessionManager";
 
-export { useBuiltinCustomTabs } from './customTabs'
+export { useBuiltinCustomTabs } from "./customTabs";

@@ -1,5 +1,3 @@
-'use strict'
-
 const incrementM = `
 type storage = int
 
@@ -25,7 +23,7 @@ let main (action, store : parameter * storage) : return =
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
 
-`
+`;
 
 const incrementL = `
 type storage is int
@@ -56,7 +54,7 @@ function main (const action : parameter; const store : storage) : return is
   | Reset         -> 0
   end)
 
-`
+`;
 
 const incrementR = `
 type storage = int;
@@ -84,7 +82,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Reset         => 0}))
 };
 
-`
+`;
 
 const incrementJ = `
 type storage = int;
@@ -112,7 +110,7 @@ let main = ([action, store] : [parameter, storage]) : return_ => {
   ]
 };
 
-`
+`;
 
 const idM = `
 type id = int
@@ -293,7 +291,7 @@ let main (action, storage: action * storage) : operation list * storage =
   | Update_details ud -> update_details (ud, storage)
   | Skip s -> skip ((), storage)
 
-`
+`;
 
 const idL = `
 type id is int
@@ -475,7 +473,7 @@ function main (const action : action; const storage : storage) : list(operation)
   | Skip(s) -> skip_ (unit, storage)
   end;
 
-`
+`;
 
 const idR = `
 /* */
@@ -665,7 +663,7 @@ let main = ((action, storage): (action, storage)) : (list(operation), storage) =
   };
 };
 
-`
+`;
 
 const idJ = `
 /* */
@@ -850,7 +848,7 @@ let main = ([action, storage]: [action, storage]) : [list<operation>, storage] =
   });
 };
 
-`
+`;
 
 const hashlockM = `
 type commit = {
@@ -921,7 +919,7 @@ let main (p, s : parameter * storage) : return =
   | Commit c -> commit (c,s)
   | Reveal r -> reveal (r,s)
 
-`
+`;
 
 const hashlockL = `
 type commit is record [
@@ -988,7 +986,7 @@ function main (const p: parameter; const s: storage) : return is
   | Reveal (r) -> reveal (r,s)
   end
 
-`
+`;
 
 const hashlockR = `
 /*
@@ -1065,7 +1063,7 @@ let main = ((p, s): (parameter, storage)) : return => {
   };
 };
 
-`
+`;
 
 const hashlockJ = `
 /*
@@ -1141,9 +1139,9 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
   });
 };
 
-`
+`;
 
-const config = (name) => `{
+const config = name => `{
   "main": "./contracts/${name}.mligo",
   "deploy": "./contracts/${name}.tz",
   "framework": "#framework",
@@ -1151,41 +1149,91 @@ const config = (name) => `{
     "solc": "0.6.12"
   }
 }
-`
+`;
 
 export const getExamples = (name, template) => {
-  if (template === 'increment') {
+  if (template === "increment") {
     return {
-      storageM: { name: `.workspaces/${name}/contracts/Increment.mligo`, content: incrementM },
-      storageL: { name: `.workspaces/${name}/contracts/Increment.ligo`, content: incrementL },
-      storageR: { name: `.workspaces/${name}/contracts/Increment.religo`, content: incrementR },
-      storageJ: { name: `.workspaces/${name}/contracts/Increment.jsligo`, content: incrementJ },
+      storageM: {
+        name: `.workspaces/${name}/contracts/Increment.mligo`,
+        content: incrementM,
+      },
+      storageL: {
+        name: `.workspaces/${name}/contracts/Increment.ligo`,
+        content: incrementL,
+      },
+      storageR: {
+        name: `.workspaces/${name}/contracts/Increment.religo`,
+        content: incrementR,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/contracts/Increment.jsligo`,
+        content: incrementJ,
+      },
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
-      config: { name: `.workspaces/${name}/config.json`, content: config('Increment') }
-    }
-  } else if (template === 'id') {
+      config: {
+        name: `.workspaces/${name}/config.json`,
+        content: config("Increment"),
+      },
+    };
+  }
+  if (template === "id") {
     return {
-      storageM: { name: `.workspaces/${name}/contracts/ID.mligo`, content: idM },
+      storageM: {
+        name: `.workspaces/${name}/contracts/ID.mligo`,
+        content: idM,
+      },
       storageL: { name: `.workspaces/${name}/contracts/ID.ligo`, content: idL },
-      storageR: { name: `.workspaces/${name}/contracts/ID.religo`, content: idR },
-      storageJ: { name: `.workspaces/${name}/contracts/ID.jsligo`, content: idJ },
+      storageR: {
+        name: `.workspaces/${name}/contracts/ID.religo`,
+        content: idR,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/contracts/ID.jsligo`,
+        content: idJ,
+      },
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
-      config: { name: `.workspaces/${name}/config.json`, content: config('ID') }
-    }
-  } else if (template === 'hashlock') {
+      config: {
+        name: `.workspaces/${name}/config.json`,
+        content: config("ID"),
+      },
+    };
+  }
+  if (template === "hashlock") {
     return {
-      storageM: { name: `.workspaces/${name}/contracts/Hashlock.mligo`, content: hashlockM },
-      storageL: { name: `.workspaces/${name}/contracts/Hashlock.ligo`, content: hashlockL },
-      storageR: { name: `.workspaces/${name}/contracts/Hashlock.religo`, content: hashlockR },
-      storageJ: { name: `.workspaces/${name}/contracts/Hashlock.jsligo`, content: hashlockJ },
+      storageM: {
+        name: `.workspaces/${name}/contracts/Hashlock.mligo`,
+        content: hashlockM,
+      },
+      storageL: {
+        name: `.workspaces/${name}/contracts/Hashlock.ligo`,
+        content: hashlockL,
+      },
+      storageR: {
+        name: `.workspaces/${name}/contracts/Hashlock.religo`,
+        content: hashlockR,
+      },
+      storageJ: {
+        name: `.workspaces/${name}/contracts/Hashlock.jsligo`,
+        content: hashlockJ,
+      },
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
-      config: { name: `.workspaces/${name}/config.json`, content: config('Hashlock') }
-    }
+      config: {
+        name: `.workspaces/${name}/config.json`,
+        content: config("Hashlock"),
+      },
+    };
   }
 
   return {
-    storage: { name: `.workspaces/${name}/contracts/Contract.mligo`, content: '' },
+    storage: {
+      name: `.workspaces/${name}/contracts/Contract.mligo`,
+      content: "",
+    },
     readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
-    config: { name: `.workspaces/${name}/config.json`, content: config('Contract') }
-  }
-}
+    config: {
+      name: `.workspaces/${name}/config.json`,
+      content: config("Contract"),
+    },
+  };
+};

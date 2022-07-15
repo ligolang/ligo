@@ -1,102 +1,114 @@
-import React from 'react'
+import React from "react";
 
-import notification from '~/base-components/notification'
-import queue from '~/ligo-components/eth-queue'
-import { networkManager } from '~/ligo-components/eth-network'
+import notification from "~/base-components/notification";
+import queue from "~/ligo-components/eth-queue";
+import { networkManager } from "~/ligo-components/eth-network";
 
-import AbiActionForm from './components/AbiActionForm'
-import ResultContent from './ResultContent'
+import AbiActionForm from "./components/AbiActionForm";
+import ResultContent from "./ResultContent";
 
 export default class ContractActions extends AbiActionForm {
   static defaultProps = {
-    toolbarId: 'contract-execute-write',
+    toolbarId: "contract-execute-write",
     FormSection: AbiActionForm.MarginlessFormSection,
-    selectorHeader: 'write functions',
-    selectorIcon: 'fas fa-calculator',
+    selectorHeader: "write functions",
+    selectorIcon: "fas fa-calculator",
     signerSelector: true,
     showResult: true,
-  }
+  };
 
   estimate = async actionName => {
     if (!this.state.signer) {
-      notification.error('Error', 'No signer is provided. Please make sure you have availabe keypairs to use in the keypair manager.')
-      return
+      notification.error(
+        "Error",
+        "No signer is provided. Please make sure you have availabe keypairs to use in the keypair manager."
+      );
+      return;
     }
 
-    let parameters = { array: [], obj: {} }
+    let parameters = { array: [], obj: {} };
     try {
-      parameters = this.form.current.getParameters()
+      parameters = this.form.current.getParameters();
     } catch (e) {
-      notification.error('Error in Parameters', e.message)
-      return
+      notification.error("Error in Parameters", e.message);
+      return;
     }
 
-    let value
+    let value;
     try {
-      value = networkManager.sdk.utils.unit.toValue(this.state.amount || '0')
+      value = networkManager.sdk.utils.unit.toValue(this.state.amount || "0");
     } catch {
-      notification.error('Estimate Failed', `${networkManager.symbol} to send is invalid.`)
-      return
+      notification.error("Estimate Failed", `${networkManager.symbol} to send is invalid.`);
+      return;
     }
 
-    let result
+    let result;
     try {
       const tx = await this.props.contract.execute(actionName, parameters, {
         from: this.state.signer,
         value,
-      })
-      result = await networkManager.sdk.estimate(tx)
+      });
+      result = await networkManager.sdk.estimate(tx);
     } catch (e) {
-      notification.error('Estimate Failed', e.reason || e.message)
-      return
+      notification.error("Estimate Failed", e.reason || e.message);
+      return;
     }
 
     if (result) {
-      this.setState(result)
+      this.setState(result);
     }
-  }
+  };
 
   executeAction = async actionName => {
     if (this.state.executing) {
-      return
+      return;
     }
 
     if (!this.state.signer) {
-      notification.error('Error', 'No signer is provided. Please make sure you have availabe keypairs to use in the keypair manager.')
-      return
+      notification.error(
+        "Error",
+        "No signer is provided. Please make sure you have availabe keypairs to use in the keypair manager."
+      );
+      return;
     }
 
-    let parameters = { array: [], obj: {} }
+    let parameters = { array: [], obj: {} };
     try {
-      parameters = this.form.current.getParameters()
+      parameters = this.form.current.getParameters();
     } catch (e) {
-      notification.error('Error in Parameters', e.message)
-      return
+      notification.error("Error in Parameters", e.message);
+      return;
     }
 
     if (parameters.empty && parameters.array.length && !this.confirming) {
-      this.confirming = true
-      setTimeout(() => { this.confirming = false }, 3000)
-      notification.info('Send transaction with empty parameters?', 'Press the execute button again to confirm.', 3)
-      return
+      this.confirming = true;
+      setTimeout(() => {
+        this.confirming = false;
+      }, 3000);
+      notification.info(
+        "Send transaction with empty parameters?",
+        "Press the execute button again to confirm.",
+        3
+      );
+      return;
     }
 
-    this.setState({ executing: true, actionError: '', actionResult: '' })
+    this.setState({ executing: true, actionError: "", actionResult: "" });
 
-    const signer = this.state.signer
+    const { signer } = this.state;
 
-    const options = {}
+    const options = {};
     networkManager.sdk.utils.txOptions?.list.forEach(opt => {
-      options[opt.name] = this.state[opt.name] || opt.default || undefined
-    })
+      options[opt.name] = this.state[opt.name] || opt.default || undefined;
+    });
 
-    let value
+    let value;
     try {
-      value = networkManager.sdk.utils.unit.toValue(this.state.amount || '0')
+      value = networkManager.sdk.utils.unit.toValue(this.state.amount || "0");
     } catch {
-      notification.error('Execute Contract Failed', `${networkManager.symbol} to send is invalid.`)
-      this.setState({ executing: false })
-      return
+      notification.error("Execute Contract Failed", `${networkManager.symbol} to send is invalid.`);
+      this.setState({ executing: false });
+      return;
     }
 
     try {
@@ -104,11 +116,11 @@ export default class ContractActions extends AbiActionForm {
         from: signer,
         value,
         ...options,
-      })
+      });
       await queue.add(
         () => networkManager.sdk.sendTransaction(tx),
         {
-          title: 'Call a Contract',
+          title: "Call a Contract",
           name: actionName,
           contractAddress: this.props.contract.address,
           functionName: actionName,
@@ -121,13 +133,17 @@ export default class ContractActions extends AbiActionForm {
           mined: res => this.setState({ executing: false, actionResult: res.result }),
           failed: ({ error }) => this.setState({ executing: false, actionError: error.message }),
         }
-      )
+      );
     } catch (e) {
-      console.warn(e)
-      notification.error('Execute Contract Failed', e.reason || e.message)
-      this.setState({ executing: false, actionError: e.reason || e.message, actionResult: '' })
+      console.warn(e);
+      notification.error("Execute Contract Failed", e.reason || e.message);
+      this.setState({
+        executing: false,
+        actionError: e.reason || e.message,
+        actionResult: "",
+      });
     }
-  }
+  };
 
-  renderResultContent = () => <ResultContent {...this.state} />
+  renderResultContent = () => <ResultContent {...this.state} />;
 }

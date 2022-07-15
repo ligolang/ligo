@@ -1,45 +1,55 @@
-import React from 'react'
+import React from "react";
 
-import {
-  DebouncedInput,
-} from '~/base-components/ui-components'
+import { DebouncedInput } from "~/base-components/ui-components";
 
-export default function IntegerParamInput ({ size, label, type, value, onChange, placeholder, disabled }) {
-  let invalid
+export default function IntegerParamInput({
+  size,
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}) {
+  let invalid;
   if (value) {
     try {
-      BigInt(value)
+      BigInt(value);
     } catch {
-      invalid = true
+      invalid = true;
     }
-    if (type.startsWith('uint') && value < 0) {
-      invalid = true
+    if (type.startsWith("uint") && value < 0) {
+      invalid = true;
     }
   }
-  const feedback = type.startsWith('int') ? 'Invalid integer' : 'Invalid unsigned integer'
+  const feedback = type.startsWith("int") ? "Invalid integer" : "Invalid unsigned integer";
 
   const onChangeValue = value => {
-    let number
+    let number;
     try {
-      number = BigInt(value)
+      number = BigInt(value);
     } catch (e) {
-      onChange(value, { error: new Error(`The entered value of <b>${label}</b> is not an integer number.`) })
-      return
+      onChange(value, {
+        error: new Error(`The entered value of <b>${label}</b> is not an integer number.`),
+      });
+      return;
     }
-    if (type.startsWith('uint') && number < BigInt(0)) {
-      onChange(value, { error: new Error(`The entered value of <b>${label}</b> is not a unsigned integer.`) })
-      return
+    if (type.startsWith("uint") && number < BigInt(0)) {
+      onChange(value, {
+        error: new Error(`The entered value of <b>${label}</b> is not a unsigned integer.`),
+      });
+      return;
     }
 
-    const display = number.toString()
-    const raw = number.toString()
-    onChange(value, { display, raw, empty: raw === '0' })
-  }
+    const display = number.toString();
+    const raw = number.toString();
+    onChange(value, { display, raw, empty: raw === "0" });
+  };
 
   React.useEffect(() => {
-    onChangeValue(value)
-  }, [])
-  
+    onChangeValue(value);
+  }, []);
+
   return (
     <DebouncedInput
       size={size}
@@ -51,5 +61,5 @@ export default function IntegerParamInput ({ size, label, type, value, onChange,
       feedback={invalid && feedback}
       invalid={invalid}
     />
-  )
+  );
 }

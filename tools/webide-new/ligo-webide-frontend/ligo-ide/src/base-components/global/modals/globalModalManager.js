@@ -1,20 +1,20 @@
 class GlobalModalManager {
-  constructor () {
-    this.autoUpdateModal = null
-    this.aboutModal = null
+  constructor() {
+    this.autoUpdateModal = null;
+    this.aboutModal = null;
   }
 
-  openAutoUpdateModal (version) {
+  openAutoUpdateModal(version) {
     if (this.autoUpdateModal) {
-      return this.autoUpdateModal.openModal(version)
+      return this.autoUpdateModal.openModal(version);
     }
   }
 
-  openAboutModal () {
+  openAboutModal() {
     if (this.aboutModal) {
-      this.aboutModal.openModal()
+      this.aboutModal.openModal();
     }
   }
 }
 
-export default new GlobalModalManager()
+export default new GlobalModalManager();
