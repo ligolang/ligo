@@ -23,12 +23,14 @@ import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
   (Contract' (..), CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..),
-  SomeMeta (SomeMeta), dfsTraverseInstr, isMichelsonInstr)
+  SomeMeta (SomeMeta), dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr)
 import Text.Interpolation.Nyan
 
+import Data.DList qualified as DL
+import Data.Data (cast)
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
-import Morley.Debugger.Core.Snapshots (SourceType(..))
+import Morley.Debugger.Core.Snapshots (SourceType (..))
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -118,6 +120,14 @@ embedInInstr metaTape instr = do
       Seq{} -> False
       i -> isMichelsonInstr i
 
+    -- Sometimes we want to ignore embeding meta for some instructions.
+    shouldIgnoreMeta :: Instr i o -> Bool
+    shouldIgnoreMeta = \case
+      -- We're ignoring @LAMBDA@ instruction here in order
+      -- not to stop on function assignment.
+      LAMBDA{} -> True
+      _ -> False
+
     recursionImpl :: CtorEffectsApp $ StateT [meta] $ Except EmbedError
     recursionImpl = CtorEffectsApp "embed" $ \oldInstr mkNewInstr ->
       if not $ isActualInstr oldInstr
@@ -137,7 +147,9 @@ embedInInstr metaTape instr = do
           let metasToDrop = michelsonInstrInnerBranches oldInstr
           put $ drop (Unsafe.fromIntegral @Word @Int metasToDrop) rest
 
-          Meta (SomeMeta meta) <$> mkNewInstr
+          if shouldIgnoreMeta oldInstr
+          then mkNewInstr
+          else Meta (SomeMeta meta) <$> mkNewInstr
 
 -- TODO: extract this to Morley
 -- | For Michelson instructions this returns how many sub-instructions this
@@ -180,7 +192,7 @@ readLigoMapper ligoMapper = do
         lmLocations ligoMapper V.!? unTableEncodingIdx i
 
   SomeContract contract <- fromExpressionToTyped (lmMichelsonCode ligoMapper)
-  extendedContract <- first MetaEmbeddingError $
+  extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
     (\code -> SomeContract contract{ cCode = code }) <$>
       embedInInstr @EmbeddedLigoMeta
         metaPerInstr
@@ -189,7 +201,7 @@ readLigoMapper ligoMapper = do
   let allLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
-        mapMaybe ligoInfoToSourceLoc $ toList $ lmLocations ligoMapper
+        mapMaybe ligoInfoToSourceLoc $ getSourceLocations (cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
@@ -208,3 +220,8 @@ readLigoMapper ligoMapper = do
           _ <- liiEnvironment
           return $ SourceLocation (SourcePath "??") (SrcPos (Pos 0) (Pos 0))
       ]
+
+    getSourceLocations :: Instr i o -> [EmbeddedLigoMeta]
+    getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
+      Meta (SomeMeta (cast -> Just (meta :: EmbeddedLigoMeta))) _ -> DL.singleton meta
+      _ -> mempty

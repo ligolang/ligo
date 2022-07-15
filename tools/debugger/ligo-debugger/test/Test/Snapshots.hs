@@ -142,15 +142,15 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 1 10) (LigoPosition 1 14)
+                , sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
                 , sfStack =
                   [ StackItem
-                    { siLigoDesc = LigoHiddenStackEntry
-                    , siValue = SomeLorentzValue ((), 0 :: Integer)
+                    { siLigoDesc = LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable "s")) typ)
+                    , siValue = SomeLorentzValue (0 :: Integer)
                     }
                   ]
                 } :| []
-            } | file == file'
+            } | file == file' && typ == intType
               -> pass
           sp -> unexpectedSnapshot sp
 
@@ -192,21 +192,6 @@ test_Snapshots = testGroup "Snapshots collection"
               ]
           in
           [ ( InterpretRunning EventExpressionPreview
-            , one
-              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
-              , stackWithS
-              )
-            )
-
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
-                SomeLorentzValue (42 :: Integer)
-            , one
-              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
-              , stackWithS
-              )
-            )
-
-          , ( InterpretRunning EventExpressionPreview
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
               , stackWithS
@@ -277,7 +262,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 1 14) (LigoPosition 1 18)
+                , sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -294,8 +279,6 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           -- Skipping snapshots till snapshot with 'int' variable
-          _ <- move Forward
-          _ <- move Forward
           _ <- move Forward
 
           checkSnapshot \case
@@ -331,7 +314,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionPreview
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 1 10) (LigoPosition 1 14)
+                { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 4 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -428,7 +411,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 3 9) (LigoPosition 3 13)
+                { sfLoc = LigoRange file' (LigoPosition 5 17) (LigoPosition 5 18)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -438,7 +421,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 5 10) (LigoPosition 5 14)
+                { sfLoc = LigoRange file' (LigoPosition 6 21) (LigoPosition 6 22)
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -594,6 +577,27 @@ test_Snapshots = testGroup "Snapshots collection"
                   ]
             ) do
             assertFailure [int||This snapshot doesn't contain pretty monomorphed variables: #{snap}|]
+
+  , testCaseSteps "Function assignments are skipped" \_ -> do
+      let file = contractsDir </> "functions-assignments.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      testWithSnapshots runData do
+        -- Skip starting snapshot
+        _ <- move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStackFrames = StackFrame
+                { sfLoc = LigoRange file' (LigoPosition 7 23) (LigoPosition 7 24)
+                } :| []
+            } | file' == file -> pass
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.

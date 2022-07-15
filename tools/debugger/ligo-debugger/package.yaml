@@ -71,6 +71,7 @@ library:
     - containers
     - data-default
     - directory
+    - dlist
     - filepath
     - fmt
     - lens

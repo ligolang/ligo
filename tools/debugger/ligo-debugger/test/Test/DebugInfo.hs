@@ -136,7 +136,6 @@ test_SourceMapper = testGroup "Reading source mapper"
         -- end positions - since we account for only the former, they
         -- get de-duplicated.
         [ unknownSrcPos
-        , SrcPos (Pos 0) (Pos 10)
         , SrcPos (Pos 1) (Pos 11)
         , SrcPos (Pos 1) (Pos 15)
         , SrcPos (Pos 2) (Pos 11)
