@@ -405,7 +405,7 @@ module Free_variables :
     | E_module_accessor { module_path ; element } ->
       ignore element;
       {modVarSet = ModVarSet.of_list module_path (* not sure about that *) ;moduleEnv=VarMap.empty ;varSet=VarSet.empty}
-    | E_assign { binder=_; access_path=_; expression } ->
+    | E_assign { binder=_; expression } ->
       self expression
 
   and get_fv_cases : matching_expr -> moduleEnv' = fun m ->

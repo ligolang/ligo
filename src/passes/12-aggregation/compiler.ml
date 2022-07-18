@@ -324,15 +324,10 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let path    = Path.append path2 path in
     let _,element = Scope.add_path_to_var scope path element in
     return @@ E_variable element)
-  | E_assign {binder;access_path;expression} ->
+  | E_assign {binder;expression} ->
     let binder = Stage_common.Maps.binder self_type binder in
     let expression = self expression in
-    let access_path = List.map ~f:(function
-      | I.Access_map e -> O.Access_map (self e)
-      | Access_tuple a -> Access_tuple a
-      | Access_record a -> Access_record a
-      ) access_path in
-    return @@ E_assign {binder;access_path;expression}
+    return @@ E_assign {binder;expression}
 
 and compile_cases ~raise path scope cases : O.matching_expr =
   match cases with

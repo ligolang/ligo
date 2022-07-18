@@ -842,10 +842,10 @@ and compile_assignment : loc:Location.t -> last_proj_update:(expression -> expre
         )
     in
     match path with
-    | [] -> e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] default_rhs
+    | [] -> e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} default_rhs
     | _ ->
       let init = e_variable ~loc lhs in
-      e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] (aux (init,Fun.id) path)
+      e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} (aux (init,Fun.id) path)
 
 and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST.expression  = fun ?next instruction ->
   let return expr = Option.value_map next ~default:expr ~f:(e_sequence expr) in
@@ -875,7 +875,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST
     match List.rev path with
     | [] ->
       let rhs = compile_expression ~raise rhs in
-      return @@ e_assign ~loc {var;ascr=None;attributes={const_or_var=Some `Var}} [] rhs
+      return @@ e_assign ~loc {var;ascr=None;attributes={const_or_var=Some `Var}} rhs
     | last_access::path -> (
       let path = List.rev path in
       match last_access with
