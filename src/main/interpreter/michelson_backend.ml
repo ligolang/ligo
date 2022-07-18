@@ -308,6 +308,23 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Record map when is_t_record ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record_opt ty in
      make_ast_record ~raise ~loc map_ty map
+  | V_Record map when Option.is_some @@ get_t_ticket ty ->
+    let ty = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_ticket ty in
+    let rows = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_record (Ast_aggregated.t_human_ticket ty) in
+    let map =
+      let get l map = trace_option ~raise (Errors.generic_error loc "bad unforged ticket") (LMap.find_opt l map) in
+      (*  at this point the record value is a nested pair (extracted from michelson), e.g. (KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL , (0x05010000000474657374 , 10n)) *)
+      let ticketer = get (Label "0") map in
+      let map = match get (Label "1") map with V_Record map -> map | _ -> raise.error @@ Errors.generic_error loc "unforged ticket badly decompiled" in
+      let value = get (Label "0") map in
+      let amt = get (Label "1") map in
+      LMap.of_list [
+        (Label "ticketer", ticketer) ;
+        (Label "value", value) ;
+        (Label "amount", amt) ;
+      ]
+    in
+    make_ast_record ~raise ~loc rows map
   | V_Record _ ->
      raise.error @@ Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)
   | V_List l ->
@@ -351,7 +368,7 @@ and make_ast_func ~raise ?name env arg body orig =
                       lambda } in
   typed_exp'
 
-and make_ast_record ~raise ~loc map_ty map =
+and make_ast_record ~raise ~loc (map_ty: Ast_aggregated.t_sum) map =
   let open Ligo_interpreter.Types in
   let kv_list = Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout:map_ty.layout map_ty.content in
   let kv_list = List.map ~f:(fun (l, ty) -> let value = LMap.find l map in let ast = val_to_ast ~raise ~loc value ty.associated_type in (l, ast)) kv_list in

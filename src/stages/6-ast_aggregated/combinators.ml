@@ -66,6 +66,11 @@ let t_triplet ?loc a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
+let t_human_ticket ?loc ty : type_expression =
+  ez_t_record ?loc [
+    (Label "ticketer", {associated_type=(t_address ()); michelson_annotation=None ; decl_pos = 0}) ;
+    (Label "value"   , {associated_type=ty            ; michelson_annotation=None ; decl_pos = 1}) ;
+    (Label "amount"  , {associated_type=(t_nat ())    ; michelson_annotation=None ; decl_pos = 2}) ]
 
 let t_sum ?loc ~layout content : type_expression = make_t ?loc (T_sum {content;layout})
 let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
