@@ -84,10 +84,42 @@ In the following, we consider that you are using the Cameligo contract, simply c
 
 Open your editor in the folder and the file in the editor. you should have this code
 
+<Syntax syntax="pascaligo">
 
+```pascaligo test-ligo group=a
+type storage is int
+
+type parameter is
+  Increment of int
+| Decrement of int
+| Reset
+
+type return is list (operation) * storage
+
+// Two entrypoints
+
+function add (const store : storage; const delta : int) : storage is 
+  store + delta
+
+function sub (const store : storage; const delta : int) : storage is 
+  store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+   
+function main (const action : parameter; const store : storage) : return is
+ ((nil : list (operation)),    // No operations
+  case action of [
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  | Reset         -> 0
+  ])
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
-```ocaml
+```cameligo test-ligo group=a
 type storage = int
 
 type parameter =
@@ -112,6 +144,68 @@ let main (action, store : parameter * storage) : return =
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=a
+type storage = int;
+
+type parameter =
+  Increment (int)
+| Decrement (int)
+| Reset;
+
+type return = (list (operation), storage);
+
+// Two entrypoints
+
+let add = ((store, delta) : (storage, int)) : storage => store + delta;
+let sub = ((store, delta) : (storage, int)) : storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+   
+let main = ((action, store) : (parameter, storage)) : return => {
+ (([] : list (operation)),    // No operations
+ (switch (action) {
+  | Increment (n) => add ((store, n))
+  | Decrement (n) => sub ((store, n))
+  | Reset         => 0}))
+};
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=a
+type storage = int;
+
+type parameter =
+| ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type return_ = [list <operation>, storage];
+
+/* Two entrypoints */
+const add = ([store, delta] : [storage, int]) : storage => store + delta;
+const sub = ([store, delta] : [storage, int]) : storage => store - delta;
+
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
+const main = ([action, store] : [parameter, storage]) : return_ => {
+ return [
+   (list([]) as list <operation>),    // No operations
+   (match (action, {
+    Increment: (n: int) => add ([store, n]),
+    Decrement: (n: int) => sub ([store, n]),
+    Reset:     ()  => 0}))
+  ]
+};
+```
+
 </Syntax>
 
 Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with  Ctrl+shift+²) and run the following command:
@@ -160,18 +254,56 @@ As we can never underline enough the importance of tests in the context of smart
 
   Add the following line at the end of `increment.mligo`
 
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=a
+const test_increment = {
+    const initial_storage = 10;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const contr = Test.to_contract(taddr);
+    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    const storage = Test.get_storage(taddr);
+  } with assert (storage = initial_storage + 1);
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
-  ```ocaml
-  let _test () =
+  ```cameligo test-ligo group=a
+  let test_increment =
     let initial_storage = 10 in
     let (taddr, _, _) = Test.originate main  initial_storage 0tez in
     let contr = Test.to_contract(taddr) in
-    let _r = Test.transfer_to_contract_exn contr (Increment (32)) 1tez  in
-    (Test.get_storage(taddr) = initial_storage + 32)
-
-  let test = _test ()
+    let _ = Test.transfer_to_contract_exn contr (Increment (32)) 1mutez  in
+    assert (Test.get_storage(taddr) = initial_storage + 32)
   ```
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo test-ligo group=a
+let test_increment = {
+  let initial_storage = 10;
+  let (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  assert (Test.get_storage(taddr) == initial_storage + 1)
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=a
+const _test_increment = () : unit => {
+  let initial_storage = 10 as int;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  return assert(Test.get_storage(taddr) == initial_storage + 1);
+}
+const test_increment = _test_increment();
+```
+
 </Syntax>
 
   which execute the same test as the previous section.
