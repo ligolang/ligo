@@ -25,6 +25,7 @@ export interface ContractMetadata {
 	parameterMichelsonType: string
 	storageMichelsonType: string
 	michelsonEntrypoints: MichelsonEntrypoints
+	ligoEntrypoint: string
 }
 
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>

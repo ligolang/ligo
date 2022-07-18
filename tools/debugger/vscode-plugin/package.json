@@ -22,6 +22,7 @@
         "onDebugResolve:mligo",
         "onDebugResolve:religo",
         "onDebugResolve:jsligo",
+        "onCommand:extension.ligo-debugger.requestEntrypoint",
         "onCommand:extension.ligo-debugger.requestMichelsonEntrypoint",
         "onCommand:extension.ligo-debugger.requestParameterValue",
         "onCommand:extension.ligo-debugger.requestStorageValue"
@@ -57,7 +58,8 @@
                     "launch": {
                         "required": [
                             "parameter",
-                            "storage"
+                            "storage",
+                            "entrypoint"
                         ],
                         "properties": {
                             "program": {
@@ -73,7 +75,7 @@
                             "entrypoint": {
                                 "type": "string",
                                 "description": "Entry point of the contract (`main` method)",
-                                "default": "main"
+                                "default": "${command:AskForEntrypoint}"
                             },
                             "michelsonEntrypoint": {
                                 "type": "string",
@@ -155,6 +157,7 @@
                         "request": "launch",
                         "name": "Launch LIGO",
                         "logDir": "",
+                        "entrypoint": "${command:AskForEntrypoint}",
                         "parameter": "${command:AskForParameter}",
                         "storage": "${command:AskForStorage}"
                     }
@@ -167,8 +170,9 @@
                             "type": "ligo",
                             "request": "launch",
                             "name": "Launch ${1:LIGO contract}",
-                            "parameter": "${2|${command:AskForParameter}|}",
-                            "storage": "${3|${command:AskForStorage}|}"
+                            "entrypoint": "${2|${command:AskForEntrypoint}|}",
+                            "parameter": "${3|${command:AskForParameter}|}",
+                            "storage": "${4|${command:AskForStorage}|}"
                         }
                     },
                     {
@@ -181,18 +185,19 @@
                             "logDir": "",
                             "program": "^\"\\${file}\"",
                             "stopOnEntry": true,
-                            "michelsonEntrypoint": "${2|${command:AskForMichelsonEntrypoint},default|}",
-                            "parameter": "${3|${command:AskForParameter}|}",
-                            "storage": "${4|${command:AskForStorage}|}",
+                            "entrypoint": "${2|${command:AskForMichelsonEntrypoint},main|}",
+                            "michelsonEntrypoint": "${3|${command:AskForMichelsonEntrypoint},default|}",
+                            "parameter": "${4|${command:AskForParameter}|}",
+                            "storage": "${5|${command:AskForStorage}|}",
                             "contractEnv": {
-                                "now": "${5:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
-                                "level": "${6:10000}",
-                                "sender": "${7:tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY}",
-                                "source": "${8:$8}",
-                                "self": "${9:KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b}",
-                                "amount": "${10:0}",
-                                "balance": "${11:1000000}",
-                                "chainId": "${12:NetXH12Aer3be93}",
+                                "now": "${6:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
+                                "level": "${7:10000}",
+                                "sender": "${8:tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY}",
+                                "source": "${9:$8}",
+                                "self": "${10:KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b}",
+                                "amount": "${11:0}",
+                                "balance": "${12:1000000}",
+                                "chainId": "${13:NetXH12Aer3be93}",
                                 "votingPowers": {
                                     "kind": "simple",
                                     "contents": {
@@ -204,6 +209,7 @@
                     }
                 ],
                 "variables": {
+                    "AskForEntrypoint": "extension.ligo-debugger.requestEntrypoint",
                     "AskForMichelsonEntrypoint": "extension.ligo-debugger.requestMichelsonEntrypoint",
                     "AskForParameter": "extension.ligo-debugger.requestParameterValue",
                     "AskForStorage": "extension.ligo-debugger.requestStorageValue"

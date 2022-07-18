@@ -24,6 +24,7 @@ import Morley.Michelson.Typed (Contract' (..), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Text.Interpolation.Nyan
+import UnliftIO.Exception (throwIO)
 
 import Language.LIGO.Debugger.CLI.Call
 
@@ -37,8 +38,8 @@ instance FromBuilder DAP.Message where
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: FilePath
-  , lsContract :: SomeContract
-  , lsEntrypoint :: String  -- ^ @main@ method to use
+  , lsContract :: Maybe SomeContract
+  , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
   , lsAllLocs :: Set SourceLocation
   }
 
@@ -117,3 +118,20 @@ parseValue ctxContractPath category val = do
       [ T.stripPrefix "m:"
       , T.stripPrefix "michelson:"
       ]
+
+validateEntrypoint :: (MonadIO m, MonadError Text m) => FilePath -> String -> m ()
+validateEntrypoint path value = do
+  -- This is dumb, but I (@heitor.toledo) believe LIGO provides no way to
+  -- extract, or validate, an entrypoint.
+  -- TODO (LIGO-618): Check if it's a valid entrypoint, and let the user pick
+  -- between options.
+  result <- liftIO $ try $ void $ compileLigoContractDebug value path
+  case result of
+    Left ex@ProcessKilledException{pkeMessage}
+      | invalidEpType `T.isInfixOf` pkeMessage -> throwError invalidEpType
+      | undefinedEp `T.isInfixOf` pkeMessage -> throwError undefinedEp
+      | otherwise -> throwIO ex
+    Right () -> pass
+  where
+    invalidEpType = [int||Invalid type for entrypoint "#{value}".|]
+    undefinedEp = [int||Entrypoint #{value} does not exist|]

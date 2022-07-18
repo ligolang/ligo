@@ -4,14 +4,19 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoLaunchRequestArguments (..)
   , LigoInitializeLoggerRequest (..)
   , LigoInitializeLoggerRequestArguments (..)
+  , LigoSetFileRequest (..)
+  , LigoSetFileRequestArguments (..)
+  , LigoSetEntrypointRequest (..)
+  , LigoSetEntrypointRequestArguments (..)
   , LigoGetContractMetadataRequest (..)
-  , LigoGetContractMetadataRequestArguments (..)
   , LigoValidateValueRequest (..)
   , LigoValidateValueRequestArguments (..)
   , LigoSpecificRequest (..)
 
   , LigoInitializeLoggerResponse (..)
   , ContractMetadata (..)
+  , LigoSetFileResponse (..)
+  , LigoSetEntrypointResponse (..)
   , LigoGetContractMetadataResponse (..)
   , LigoValidateValueResponse (..)
   , LigoSpecificResponse (..)
@@ -64,21 +69,40 @@ data LigoInitializeLoggerRequestArguments = LigoInitializeLoggerRequestArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoInitializeLoggerRequestArguments)
 
+data LigoSetFileRequest = LigoSetFileRequest
+  { seqLigoSetFileRequest :: Int
+  , typeLigoSetFileRequest :: String
+  , commandLigoSetFileRequest :: String
+  , argumentsLigoSetFileRequest :: LigoSetFileRequestArguments
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetFileRequest)
+
+data LigoSetFileRequestArguments = LigoSetFileRequestArguments
+  { fileLigoSetFileRequestArguments :: FilePath
+    -- ^ Path to the program being run.
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetFileRequestArguments)
+
+data LigoSetEntrypointRequest = LigoSetEntrypointRequest
+  { seqLigoSetEntrypointRequest :: Int
+  , typeLigoSetEntrypointRequest :: String
+  , commandLigoSetEntrypointRequest :: String
+  , argumentsLigoSetEntrypointRequest :: LigoSetEntrypointRequestArguments
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetEntrypointRequest)
+
+data LigoSetEntrypointRequestArguments = LigoSetEntrypointRequestArguments
+  { entrypointLigoSetEntrypointRequestArguments :: String
+    -- ^ Entrypoint to be used in the current program.
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetEntrypointRequestArguments)
+
 data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
   { seqLigoGetContractMetadataRequest :: Int
   , typeLigoGetContractMetadataRequest :: String
   , commandLigoGetContractMetadataRequest :: String
-  , argumentsLigoGetContractMetadataRequest :: LigoGetContractMetadataRequestArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoGetContractMetadataRequest)
-
-data LigoGetContractMetadataRequestArguments = LigoGetContractMetadataRequestArguments
-  { fileLigoGetContractMetadataRequestArguments :: String
-    -- ^ Path to the program being run.
-  , entrypointLigoGetContractMetadataRequestArguments :: Maybe String
-    -- ^ LIGO entrypoint to be used.
-  } deriving stock (Eq, Show, Generic)
-    deriving Buildable via (GenericBuildable LigoGetContractMetadataRequestArguments)
 
 data LigoValidateValueRequest = LigoValidateValueRequest
   { seqLigoValidateValueRequest :: Int
@@ -100,6 +124,8 @@ data LigoValidateValueRequestArguments = LigoValidateValueRequestArguments
 
 data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
+  | SetFileRequest LigoSetFileRequest
+  | SetEntrypointRequest LigoSetEntrypointRequest
   | GetContractMetadataRequest LigoGetContractMetadataRequest
   | ValidateValueRequest LigoValidateValueRequest
   deriving stock (Eq, Show, Generic)
@@ -118,6 +144,20 @@ data ContractMetadata = ContractMetadata
   , michelsonEntrypointsContractMetadata   :: MD.Entrypoints
   } deriving stock (Eq, Generic, Show)
     deriving Buildable via (GenericBuildable ContractMetadata)
+
+data LigoSetFileResponse = LigoSetFileResponse
+  { seqLigoSetFileResponse :: Int
+  , request_seqLigoSetFileResponse :: Int
+  , successLigoSetFileResponse :: Bool
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoSetFileResponse)
+
+data LigoSetEntrypointResponse = LigoSetEntrypointResponse
+  { seqLigoSetEntrypointResponse :: Int
+  , request_seqLigoSetEntrypointResponse :: Int
+  , successLigoSetEntrypointResponse :: Bool
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoSetEntrypointResponse)
 
 data LigoGetContractMetadataResponse = LigoGetContractMetadataResponse
   { seqLigoGetContractMetadataResponse :: Int
@@ -139,6 +179,8 @@ data LigoValidateValueResponse = LigoValidateValueResponse
 
 data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
+  | SetFileResponse LigoSetFileResponse
+  | SetEntrypointResponse LigoSetEntrypointResponse
   | GetContractMetadataResponse LigoGetContractMetadataResponse
   | ValidateValueResponse LigoValidateValueResponse
   deriving stock (Eq, Show, Generic)

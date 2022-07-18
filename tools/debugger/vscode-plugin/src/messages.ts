@@ -18,11 +18,11 @@ export interface InitializeLoggerResponse extends DebugProtocol.Response {
 
 // ValidateValue //
 
-export type ValidateValueCategory = "parameter" | "storage"
+export type ValueCategory = "parameter" | "storage" | "entrypoint"
 
 export interface ValidateValueArguments {
 	value: string
-	category: ValidateValueCategory
+	category: ValueCategory
 	pickedMichelsonEntrypoint?: string
 }
 
@@ -35,6 +35,34 @@ export interface ValidateValueResponse extends DebugProtocol.Response {
 	comment: string
 }
 
+// SetFile //
+
+export interface SetFileRequest extends DebugProtocol.Request {
+	command: 'setFile'
+	arguments: SetFileArguments;
+}
+
+export interface SetFileArguments {
+	file: string
+}
+
+export interface SetFileResponse extends DebugProtocol.Response {
+}
+
+// SetEntrypoint //
+
+export interface SetEntrypointRequest extends DebugProtocol.Request {
+	command: 'setEntrypoint'
+	arguments: SetEntrypointArguments;
+}
+
+export interface SetEntrypointArguments {
+	entrypoint: string | null
+}
+
+export interface SetEntrypointResponse extends DebugProtocol.Response {
+}
+
 // GetContractMetadata //
 
 export interface GetContractMetadataRequest extends DebugProtocol.Request {
@@ -43,8 +71,6 @@ export interface GetContractMetadataRequest extends DebugProtocol.Request {
 }
 
 export interface GetContractMetadataArguments {
-	file: string
-	entrypoint: string | null
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
