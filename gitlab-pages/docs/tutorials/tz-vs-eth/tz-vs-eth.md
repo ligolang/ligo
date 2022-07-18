@@ -74,10 +74,10 @@ type token_amount = TokenAmount(nat);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=b2
 type nat_alias = nat;
 
-type token_amount = ["TokenAmount", nat];
+type token_amount = | ["TokenAmount", nat];
 ```
 
 </Syntax>
@@ -102,15 +102,15 @@ type creature = {heads_count : nat; legs_count : nat; tails_count : nat}
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type creature = {heads_count: nat, legs_count: nat, tails_count: nat };
+type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-```jsligo
-type creature = {heads_count: nat, legs_count: nat, tails_count: nat };
+```jsligo group=b3
+type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
 ```
 
 </Syntax>
@@ -161,7 +161,7 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=b4
 type int_option = ["Number", int] | ["Null"];
 
 let x: int_option = Number(5);
@@ -240,7 +240,7 @@ let x_or_zero: int =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=b5
 let x: option<int> = Some(5);
 
 let y: option<int> = None();
@@ -248,7 +248,7 @@ let y: option<int> = None();
 
 This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option<address>`. We can then use `match` to see if there is something inside:
 
-```jsligo
+```jsligo group=b6
 let x: option<int> = Some (5);
 
 let x_or_zero: int =
@@ -301,7 +301,7 @@ type authority = Dictatorship(leader) | Democracy(committee);
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=b7
 type committee = {members: list<address>, quorum: nat };
 
 type leader = {name: string, address: address };
@@ -422,8 +422,8 @@ let main = ((p, s): (parameter, storage)) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
-let main = ([parameter, storage]: [bytes, int]) => {
+```jsligo group=a2
+let main = ([parameter, storage]: [bytes, int]): [list<operation>, int] => {
   if (parameter == 0xbc1ecb8e) {
     return [list([]) as list<operation>, storage + 1]
   } else {
@@ -438,12 +438,12 @@ let main = ([parameter, storage]: [bytes, int]) => {
 
 However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
 
-```jsligo
+```jsligo group=a3
 type parameter = ["Increment"] | ["Decrement"];
 
 type storage = int;
 
-let main = ([p, s]: [parameter, storage]) => {
+let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
   return match(p, {
     Increment: () => [list([]) as list<operation>, s + 1],
     Decrement: () => [list([]) as list<operation>, s - 1]
@@ -507,12 +507,12 @@ let main = ((p, s): (parameter, storage)) => {
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=a4
 type parameter = ["Add", int] | ["Subtract", int];
 
 type storage = int;
 
-let main = (p : parameter, s : storage) => {
+let main = (p : parameter, s : storage): [list<operation>, int] => {
   return match(p, {
     Add: (n : int) => [list([]) as list<operation>, s + n],
     Subtract: (n : int) => [list([]) as list<operation>, s - n]
@@ -601,14 +601,14 @@ let main = ((param, storage): (parameter, storage)) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
-let multiplyBy2 = (storage: int) => storage * 2;
+```jsligo group=a5
+let multiplyBy2 = (storage: int) : int => storage * 2;
 
-let multiplyBy4 = (storage: int) => multiplyBy2(multiplyBy2(storage));
+let multiplyBy4 = (storage: int) : int => multiplyBy2(multiplyBy2(storage));
 
-type parameter = ["MultiplyBy4"] | ["MultiplyBy16"];
+type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
 
-let main = (param : parameter, storage : storage) => {
+let main = (param : parameter, storage : int): int => {
   return match(param, {
     MultiplyBy4: () => multiplyBy4(storage),
     MultiplyBy16: () => multiplyBy4(multiplyBy4(storage))
@@ -687,9 +687,21 @@ ligo run interpret 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)' --init-f
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=a6
+type parameter = | ["Compute", (c : int) => int];
 
+type storage = int;
 
+let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
+  return match(p, {
+    Compute: (func : (c : int) => int) => [list([]) as list<operation>, func(s)]
+  });
+};
+```
+
+We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
+```
+ligo run interpret 'main([Compute ((x : int) => x * x + 2 * x + 1), 3])' --init-file examples/contracts/jsligo/Lambda.jsligo
 ```
 
 </Syntax>
@@ -774,10 +786,29 @@ Now we can _upgrade_ a part of the implementation by calling our contract with `
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=a1
+type storage = { fn : option<((x : int) => int)>, value : int };
 
+type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
 
+let call = ([fn, value]: [option<((x : int) => int)>, int]) : int => {
+  return match(fn, {
+    Some: (f : ((x : int) => int)) => f(value),
+    None: () => (failwith("Lambda is not set") as int)
+  })
+};
+
+let main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => {
+  let newStorage =
+    match(p, {
+      SetFunction: (fn : ((x : int) => int)) => ({...s, fn: Some (fn)}),
+      CallFunction: () => ({...s, value: call(s.fn, s.value)})
+    });
+  [list([]) as list<operation>, newStorage]
+};
 ```
+
+Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
 
 </Syntax>
 
@@ -894,10 +925,10 @@ let treasury = ((p, s): (unit, storage)) => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=b1
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
 
-let treasury = (p : unit, s : storage) => {
+let treasury = (p : unit, s : storage): [list<operation>, storage] => {
   // We do our computations first
   let newStorage = {...s, rewardsLeft: (0 as mutez)};
 
@@ -965,6 +996,21 @@ let doSomething = ((p, s): (unit, int)) => {
 }
 
 let doSomethingCont = ((p, s): (int, int)) => (([] : list(operation)), p + s);
+```
+
+</Syntax>
+<Syntax>
+
+```jsligo skip
+type parameter = ["DoSomething"] | ["DoSomethingCont", int];
+
+let doSomething = ([p, s]: [unit, int]) => {
+  /* The callee should call `%doSomethingCont` with the value we want */
+  let op = Tezos.transaction ...;
+  return [list([op]), s]
+}
+
+let doSomethingCont = ([p, s]: [int, int]) => [(list([]) as list<operation>), p + s];
 ```
 
 </Syntax>
