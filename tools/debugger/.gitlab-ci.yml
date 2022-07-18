@@ -1,0 +1,30 @@
+ligo-debugger-extension:
+  stage: debugger
+  only: [merge_requests, tooling]
+  needs: [ print-nix-version ]
+  script:
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/debugger'#ligo-debugger-extension
+    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-debugger-extension.vsix
+  artifacts:
+    paths:
+      - ligo-debugger-extension.vsix
+
+
+ligo-debugger-test:
+  stage: debugger
+  only: [merge_requests, tooling]
+  needs: [ print-nix-version, ligo-build ]
+  script:
+    - git add ./ligo # Ligo binary is needed for this tests
+    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/debugger'#checks.x86_64-linux.ligo-debugger-test
+
+# publish vscode extension to the extension marketplace
+# copied over from tools/lsp and slightly modified
+ligo-debugger-extension-publish:
+  stage: push
+  needs: [ligo-debugger-extension]
+  only: [vscode-production]
+  when: manual
+  script:
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- vsce publish --packagepath *.vsix # uses vsce_pat env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- ovsx publish *.vsix # uses ovsx_pat env variable as personal access token

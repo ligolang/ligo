@@ -7,3 +7,7 @@
 # nix build results
 result
 result-*
+
+# nix-direnv
+.envrc
+.direnv
