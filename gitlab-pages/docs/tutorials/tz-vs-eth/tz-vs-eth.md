@@ -72,7 +72,7 @@ type token_amount = TokenAmount(nat);
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 type nat_alias = nat;
@@ -107,7 +107,7 @@ type creature = {heads_count: nat, legs_count: nat, tails_count: nat };
 
 </Syntax>
 
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 type creature = {heads_count: nat, legs_count: nat, tails_count: nat };
@@ -159,10 +159,17 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 
 </Syntax>
 
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
+type int_option = ["Number", int] | ["Null"];
+
+let x: int_option = Number(5);
+
+let y: int_option = Null ();
 ```
+
+Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number(5)`, `Number(10)`, etc.) or `Null`. Notice how `Null()` does not hold any value.
 
 </Syntax>
 
@@ -231,9 +238,24 @@ let x_or_zero: int =
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
+let x: option<int> = Some(5);
+
+let y: option<int> = None();
+```
+
+This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option<address>`. We can then use `match` to see if there is something inside:
+
+```jsligo
+let x: option<int> = Some (5);
+
+let x_or_zero: int =
+  match(x, {
+    Some: (value : int) => value,
+    None: () => 0
+  });
 ```
 
 </Syntax>
@@ -277,7 +299,7 @@ type authority = Dictatorship(leader) | Democracy(committee);
 
 </Syntax>
 
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 type committee = {members: list<address>, quorum: nat };
@@ -398,9 +420,35 @@ let main = ((p, s): (parameter, storage)) => {
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
+let main = ([parameter, storage]: [bytes, int]) => {
+  if (parameter == 0xbc1ecb8e) {
+    return [list([]) as list<operation>, storage + 1]
+  } else {
+    if (parameter == 0x36e44653) {
+      return [list([]) as list<operation>, storage - 1]
+    } else {
+      return (failwith("Unknown entrypoint") as [list<operation>, int])
+    }
+  }
+};
+```
+
+However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
+
+```jsligo
+type parameter = ["Increment"] | ["Decrement"];
+
+type storage = int;
+
+let main = ([p, s]: [parameter, storage]) => {
+  return match(p, {
+    Increment: () => [list([]) as list<operation>, s + 1],
+    Decrement: () => [list([]) as list<operation>, s - 1]
+  });
+};
 ```
 
 </Syntax>
@@ -457,7 +505,7 @@ let main = ((p, s): (parameter, storage)) => {
 
 </Syntax>
 
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 type parameter = ["Add", int] | ["Subtract", int];
@@ -551,7 +599,7 @@ let main = ((param, storage): (parameter, storage)) => {
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 let multiplyBy2 = (storage: int) => storage * 2;
@@ -637,9 +685,11 @@ ligo run interpret 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)' --init-f
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
+
+
 ```
 
 </Syntax>
@@ -722,9 +772,11 @@ let main = ((p, s): (parameter, storage)) => {
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
+
+
 ```
 
 </Syntax>
@@ -840,7 +892,7 @@ let treasury = ((p, s): (unit, storage)) => {
 ```
 
 </Syntax>
-<Syntax>
+<Syntax syntax="jsligo">
 
 ```jsligo
 type storage = {rewardsLeft: tez, beneficiaryAddress: address };
@@ -941,7 +993,7 @@ In this article, we discussed some Solidity patterns and their LIGO counterparts
 | `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo">`type storage is record [ x : int; y : nat ]`</Syntax><Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="reasonligo">`type storage = { x : int, y : nat }`</Syntax><Syntax syntax="jsligo">`type storage = { x : int, y : nat }`</Syntax> |
 | `private` field  | N/A: all fields are public |
 | `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="reasonligo">`let func = (a : int) => ...`</Syntax><Syntax syntax="jsligo">`let func = (a : int) => ...`</Syntax> |
-| `public` /  `external` method  | A separate entrypoint in the parameter: <Syntax syntax="pascaligo">`type parameter = F of int | ...`</Syntax><Syntax syntax="cameligo">`type parameter = F of int | ...`</Syntax><Syntax syntax="reasonligo">`type parameter = F (int) | ...`</Syntax><Syntax syntax="jsligo">`type parameter = ["F", int] | ...`</Syntax>. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
+| `public` /  `external` method  | A separate entrypoint in the parameter: <Syntax syntax="pascaligo">`type parameter = F of int`</Syntax><Syntax syntax="cameligo">`type parameter = F of int`</Syntax><Syntax syntax="reasonligo">`type parameter = F (int)`</Syntax><Syntax syntax="jsligo">`type parameter = ["F", int]`</Syntax>. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
 | `internal` method | There is no concept of inheritance in Tezos |
 | Constructor      | Set the initial storage upon origination |
 | Method that returns a value | Inspect the contract storage directly |
