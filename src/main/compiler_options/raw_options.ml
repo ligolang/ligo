@@ -31,6 +31,21 @@ type t = {
   file_constants : string option ;
 }
 
+let find_project_root () =
+  let pwd = Unix.getcwd in
+  let ls_only_dirs = Sys.ls_dir in
+  let rec aux p =
+    let dirs = ls_only_dirs p in
+    if List.exists ~f:(fun dir -> String.equal dir ".ligo") dirs
+    then Some p
+    else
+      let p' = p ^ "/.." in
+      if Filename.equal (Filename.realpath p) (Filename.realpath p')
+      then None
+      else aux p' 
+  in
+  aux (pwd ())
+
 module Default_options = struct 
   (* Formatter *)
   let show_warnings = true
@@ -44,7 +59,7 @@ module Default_options = struct
   let dialect = "terse"
   let entry_point = "main"
   let libraries = []
-  let project_root = None
+  let project_root = find_project_root ()
 
   (* Tools *)
   let infer = false
@@ -73,7 +88,7 @@ let make
   ?(syntax = Default_options.syntax)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
-  ?(project_root = Default_options.project_root)
+  ?(project_root = None)
   ?(with_types = Default_options.with_types)
   ?(self_pass = Default_options.self_pass)
   ?(test = Default_options.test)
