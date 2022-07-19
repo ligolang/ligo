@@ -601,6 +601,10 @@ let opt_beta2 : _ peep2 = function
   (* PAIR ; UNPAIR  ↦  *)
   | Prim (_, "PAIR", [], _), Prim (_, "UNPAIR", [], _) ->
     Some []
+  (* PAIR n ; UNPAIR n  ↦  *)
+  | Prim (_, "PAIR", [Int (_, n1)], _), Prim (_, "UNPAIR", [Int (_, n2)], _)
+    when Z.equal n1 n2 ->
+    Some []
   (* PAIR ; CAR  ↦  SWAP ; DROP *)
   (* not really any better but looks less stupid *)
   | Prim (l1, "PAIR", [], _), Prim (l2, "CAR", [], _) ->
@@ -613,6 +617,10 @@ let opt_beta2 : _ peep2 = function
 let opt_eta2 : _ peep2 = function
   (* UNPAIR ; PAIR  ↦  *)
   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
+    Some []
+  (* UNPAIR n ; PAIR n  ↦  *)
+  | Prim (_, "UNPAIR", [Int (_, n1)], _), Prim (_, "PAIR", [Int (_, n2)], _)
+    when Z.equal n1 n2 ->
     Some []
   | _ -> None
 
