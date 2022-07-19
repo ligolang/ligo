@@ -15,6 +15,7 @@ let%expect_test _ =
       info       tools to get information from contracts
       mutate     create mutants of a ligo file
       repl       interactive ligo interpreter
+      init       Initialize a new ligo project from template. Contract or library.
       changelog  print the ligo changelog
       print      print intermediary program representation.
                  Warning: Intended for development of LIGO and can break at any time

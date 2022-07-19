@@ -11,6 +11,11 @@ module Constants = struct
     ("", [|"where"; "/q"; cmd|])
   let which = fun ~cmd -> 
     ("", [|"which"; cmd|])
+  let git_clone = fun ~project_url ~project_name -> 
+    ("", [|"git"; "clone"; project_url ; project_name|])
+  let git_checkout = fun ~dir_path ~ref -> 
+    ("", [|"git"; "--git-dir"; dir_path ;"checkout"; ref|])  
+  
 end
 
 
