@@ -42,15 +42,14 @@ let list' ~kind = List.sort ~compare:String.compare @@ Map.keys (determine_map ~
 
 
 let list ~kind ~display_format () =
-  Trace.warning_with @@ fun _add_warning get_warnings ->
-  format_result ~display_format Formatter.list_format get_warnings @@
+  format_result ~display_format Formatter.list_format @@
     fun ~raise:_ -> 
       list' ~kind
 
-let new_project' ~(raise : Main_errors.all Trace.raise) ~kind ~template ~project_name ~version = 
+let new_project' ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise) ~kind ~template ~project_name ~version = 
   let project_url = match Map.find (determine_map ~kind) template with
   | Some e -> e
-  | None ->  raise.raise (`Ligo_init_unrecognized_template (list' ~kind) )
+  | None ->  raise.error (`Ligo_init_unrecognized_template (list' ~kind) )
   in 
   let _= Cli_helpers.run_command (Constants.git_clone ~project_url ~project_name) in
 
@@ -66,7 +65,6 @@ let new_project ~version ~kind ~project_name_opt ~template ~display_format () =
   let project_name = match project_name_opt with 
   | Some e -> e  
   | None -> template
-  in (Trace.warning_with @@ fun _add_warning get_warnings ->
-  format_result ~display_format Formatter.new_project_format get_warnings @@
+  in (format_result ~display_format Formatter.new_project_format @@
     fun ~raise -> 
       new_project' ~raise ~kind ~template ~project_name ~version)
