@@ -1,13 +1,13 @@
 open Api_helpers
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
-module RawOptions = Compiler_options.Raw_options
+module Raw_options = Compiler_options.Raw_options
 
 let contract source_file new_syntax syntax new_dialect display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) @@
       fun ~raise ->
       let syntax     = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some source_file) in
-      let options    = Compiler_options.make ~raw_options:(RawOptions.make ()) ~syntax () in
+      let options    = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
       let meta       = Compile.Of_source.extract_meta syntax in
       let c_unit,_   = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       let core       = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
@@ -23,7 +23,7 @@ let expression expression new_syntax syntax new_dialect display_format () =
       fun ~raise ->
       (* Compiling chain *)
       let syntax        = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
-      let options       = Compiler_options.make ~raw_options:(RawOptions.make ()) ~syntax () in
+      let options       = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
       let meta          = Compile.Of_source.make_meta syntax in
       let c_unit_expr,_ = Compile.Of_source.compile_string ~raise ~options:options.frontend ~meta expression in
       let imperative    = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_expr in

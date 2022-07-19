@@ -4,7 +4,7 @@ module Runned_result = Simple_utils.Runned_result
 open Simple_utils.Trace
 open Main_errors
 
-module RawOptions = Compiler_options.Raw_options
+module Raw_options = Compiler_options.Raw_options
 
 type test_case = unit Alcotest.test_case
 type test =
@@ -13,7 +13,7 @@ type test =
 
 let options =
   Compiler_options.make
-    ~raw_options:(RawOptions.make ())
+    ~raw_options:(Raw_options.make ())
     ~protocol_version:Environment.Protocols.in_use ()
 
 let test_format : 'a Simple_utils.Display.format = {

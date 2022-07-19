@@ -3,9 +3,9 @@ open Simple_utils
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
-module RawOptions = Compiler_options.Raw_options
+module Raw_options = Compiler_options.Raw_options
 
-let test (raw_options : RawOptions.t) source_file display_format () =
+let test (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) @@
       fun ~raise ->
       let protocol_version = Helpers.protocol_to_variant ~raise raw_options.protocol_version in
@@ -15,7 +15,7 @@ let test (raw_options : RawOptions.t) source_file display_format () =
       let typed   = Build.merge_and_type_libraries ~raise ~options source_file in
       Interpreter.eval_test ~raise ~steps ~options typed
 
-let dry_run (raw_options : RawOptions.t) source_file parameter storage amount balance sender source now display_format () =
+let dry_run (raw_options : Raw_options.t) source_file parameter storage amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Decompile.Formatter.expression_format) @@
       fun ~raise ->
@@ -39,7 +39,7 @@ let dry_run (raw_options : RawOptions.t) source_file parameter storage amount ba
       let runres  = Run.run_contract ~raise ~options compile_exp.expr compile_exp.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_value_from_contract_execution ~raise aggregated_prg.type_expression runres
 
-let interpret (raw_options : RawOptions.t) expression init_file amount balance sender source now display_format () =
+let interpret (raw_options : Raw_options.t) expression init_file amount balance sender source now display_format () =
     format_result ~display_format (Decompile.Formatter.expression_format) @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file in
@@ -53,7 +53,7 @@ let interpret (raw_options : RawOptions.t) expression init_file amount balance s
       let runres  = Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty in
       Decompile.Of_michelson.decompile_expression ~raise aggregated_exp.type_expression runres
 
-let evaluate_call (raw_options : RawOptions.t) source_file parameter amount balance sender source now display_format () =
+let evaluate_call (raw_options : Raw_options.t) source_file parameter amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Decompile.Formatter.expression_format) @@
       fun ~raise ->
@@ -82,7 +82,7 @@ let evaluate_call (raw_options : RawOptions.t) source_file parameter amount bala
       let runres           = Run.run_expression ~raise ~options michelson.expr michelson.expr_ty in
       Decompile.Of_michelson.decompile_expression ~raise app_aggregated.type_expression runres
 
-let evaluate_expr (raw_options : RawOptions.t) source_file amount balance sender source now display_format () =
+let evaluate_expr (raw_options : Raw_options.t) source_file amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format Decompile.Formatter.expression_format @@
       fun ~raise ->

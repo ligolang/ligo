@@ -2,7 +2,7 @@ open Api_helpers
 open Simple_utils.Trace
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
-module RawOptions = Compiler_options.Raw_options
+module Raw_options = Compiler_options.Raw_options
 
 let generator_to_variant ~raise s =
   if String.equal s "list" then
@@ -12,7 +12,7 @@ let generator_to_variant ~raise s =
   else
     raise.error @@ Main_errors.main_invalid_generator_name s
 
-let mutate_ast (raw_options : RawOptions.t) source_file display_format seed () =
+let mutate_ast (raw_options : Raw_options.t) source_file display_format seed () =
   format_result ~display_format (Parsing.Formatter.ppx_format) @@
     fun ~raise ->
     let generator = generator_to_variant ~raise raw_options.generator in
@@ -34,7 +34,7 @@ let mutate_ast (raw_options : RawOptions.t) source_file display_format seed () =
         Decompile.Of_imperative.decompile ~raise ~dialect imperative_prg (Syntax_name syntax) in
     buffer
 
-let mutate_cst (raw_options : RawOptions.t) source_file display_format seed () =
+let mutate_cst (raw_options : Raw_options.t) source_file display_format seed () =
   format_result ~display_format (Parsing.Formatter.ppx_format) @@
     fun ~raise ->
     let generator = generator_to_variant ~raise raw_options.generator in
