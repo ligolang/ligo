@@ -1,4 +1,4 @@
-type raw = {
+type t = {
   (* Formatter *)
   warning_as_error : bool ;
 
@@ -99,7 +99,7 @@ let make
   syntax ;
   entry_point ;
   libraries ;
-  project_root ;
+  project_root = if Option.is_some project_root then project_root else find_project_root () ;
   
   (* Tools *)
   with_types ;
@@ -119,38 +119,4 @@ let make
   views ;
   constants ;
   file_constants ;
-}
-
-let default =
-{
-  (* Formatter *)
-  warning_as_error = Default_options.show_warnings ;
-
-  (* Warnings *)
-  warn_unused_rec = Default_options.warn_unused_rec ;
-  
-  (* Frontend *)
-  syntax = Default_options.syntax ;
-  entry_point = Default_options.entry_point ;
-  libraries = Default_options.libraries ;
-  project_root = Default_options.project_root ;
-  
-  (* Tools *)
-  with_types = Default_options.with_types ;
-  self_pass = Default_options.self_pass ;
-  
-  (* Test framework *)
-  test = Default_options.test ;
-  steps = Default_options.steps ;
-  generator = Default_options.generator ;
-  cli_expr_inj = Default_options.cli_expr_inj ;
-  
-  (* Backend *)
-  protocol_version = Default_options.protocol_version ;
-  disable_michelson_typechecking = Default_options.disable_michelson_typechecking ;
-  enable_typed_opt = Default_options.enable_typed_opt ;
-  without_run = Default_options.without_run ;
-  views = Default_options.views ;
-  constants = Default_options.constants ;
-  file_constants = Default_options.file_constants ;
 }

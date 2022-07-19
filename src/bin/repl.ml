@@ -94,6 +94,7 @@ let repl_result_format : 'a format = {
 }
 
 module Run = Ligo_run.Of_michelson
+module RawOptions = Compiler_options.Raw_options
 
 type state = { env : Environment.t; (* The repl should have its own notion of environment *)
                syntax : Syntax_types.t;
@@ -258,7 +259,7 @@ let rec loop ~raw_options display_format state n =
      loop ~raw_options display_format state (n + k)
   | None -> ()
 
-let main (raw_options : Compiler_options.raw) display_format now amount balance sender source init_file () =
+let main (raw_options : RawOptions.t) display_format now amount balance sender source init_file () =
   let protocol = Environment.Protocols.protocols_to_variant raw_options.protocol_version in
   let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
   let dry_run_opts = Ligo_run.Of_michelson.make_dry_run_options {now ; amount ; balance ; sender ; source ; parameter_ty = None } in
