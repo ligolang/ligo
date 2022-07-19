@@ -33,13 +33,20 @@ type t = {
 
 let find_project_root () =
   let pwd = Unix.getcwd in
-  let ls_only_dirs = Sys.ls_dir in
+  let ls_only_dirs dir = 
+    let all = Sys.ls_dir dir in
+    List.filter ~f:(fun f ->
+      let stats = Unix.lstat (dir ^ Filename.dir_sep ^ f) in 
+      match stats.st_kind with
+        S_DIR -> true
+      | _ -> false) all
+  in
   let rec aux p =
     let dirs = ls_only_dirs p in
     if List.exists ~f:(fun dir -> String.equal dir ".ligo") dirs
     then Some p
     else
-      let p' = p ^ "/.." in
+      let p' = p ^ Filename.dir_sep ^ ".." in
       if Filename.equal (Filename.realpath p) (Filename.realpath p')
       then None
       else aux p' 
@@ -59,7 +66,7 @@ module Default_options = struct
   let dialect = "terse"
   let entry_point = "main"
   let libraries = []
-  let project_root = find_project_root ()
+  let project_root = None
 
   (* Tools *)
   let infer = false
@@ -88,7 +95,7 @@ let make
   ?(syntax = Default_options.syntax)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
-  ?(project_root = None)
+  ?(project_root = Default_options.project_root)
   ?(with_types = Default_options.with_types)
   ?(self_pass = Default_options.self_pass)
   ?(test = Default_options.test)
