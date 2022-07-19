@@ -36,6 +36,7 @@ type middle_end = {
 type backend = {
   protocol_version : Protocols.t ;
   disable_michelson_typechecking : bool ;
+  experimental_disable_optimizations_for_debugging : bool ;
   enable_typed_opt : bool ;
   without_run : bool ;
   views : string list ;
@@ -97,6 +98,7 @@ let make :
       let backend = {
         protocol_version ;
         disable_michelson_typechecking = raw_options.disable_michelson_typechecking;
+        experimental_disable_optimizations_for_debugging = raw_options.experimental_disable_optimizations_for_debugging;
         enable_typed_opt = raw_options.enable_typed_opt;
         without_run = raw_options.without_run;
         views = raw_options.views ;
