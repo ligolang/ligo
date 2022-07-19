@@ -132,12 +132,13 @@ export async function executeCommand(
     }
     return { t: 'Success', result: result };
   } catch (error) {
-    if (errorPrefix) {
-      ligoOutput.appendLine(errorPrefix)
+    if (showOutput) {
+      if (errorPrefix) {
+        ligoOutput.appendLine(errorPrefix)
+      }
+      ligoOutput.appendLine(error.message);
+      ligoOutput.show();
     }
-    ligoOutput.appendLine(error.message);
-    ligoOutput.show();
-
     return { t: 'LigoExecutionException', error: error.message }
   }
 }
