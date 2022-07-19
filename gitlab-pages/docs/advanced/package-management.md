@@ -27,7 +27,7 @@ Start with empty `package.json` file
 
 We will need the LIGO compiler binary to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
-Next we will use a simple dependency `ligo-list-helper` which is published on npm, to get the library use the command
+Next we will use a simple dependency `ligo-list-helper` which is published on npm, to download & install the library use the command
 
 ```bash
 ligo install ligo-list-helpers
@@ -72,15 +72,15 @@ let test =
 To compile the contract to Michelson run the command
 
 ```bash
-ligo compile contract main.mligo --project-root .
+ligo compile contract main.mligo
 ```
 
-This will download the dependencies automatically, and compile the `main.mligo` file.
+This will find the dependencies installed on the local machine, and compile the `main.mligo` file.
 
 To test the contract using ligo's [testing framework](https://ligolang.org/docs/reference/test) run the command
 
 ```bash
-ligo run test main.test.mligo --project-root .
+ligo run test main.test.mligo
 ```
 
 If you working with an existing LIGO project, to install the dependencies, at the root of the project just run
@@ -89,11 +89,22 @@ If you working with an existing LIGO project, to install the dependencies, at th
 ligo install
 ```
 
+### --cache-path
+
 By default dependencies are installed in the `.ligo` directory at the root of the project, If you wish to change
 the path where dependencies are installed use the `--cache-path` flag to specify the path e.g.
 
 ```bash
 ligo install --cache-path /some/path
+```
+
+### --project-root
+
+LIGO will try to infer the root directory of the project so that it can find the dependencies installed on the local machine, 
+If you wish to specify the root directory manually you can do so using the `--project-root` flag e.g.
+
+```bash
+ligo compile contract main.mligo --project-root .
 ```
 
 ### Upgrading version of a LIGO package
@@ -125,10 +136,10 @@ version of the package.
 If you wish to try out a LIGO package in the REPL environment, Install the LIGO package by
 following the steps above,
 
-And then fire up the LIGO REPL with the additional flag `--project-root`
+And then fire up the LIGO REPL using the following command
 
 ```
-$ ligo repl cameligo --project-root <path-to-project-root>
+$ ligo repl cameligo
 Welcome to LIGO's interpreter!
 Included directives:
   #use "file_path";;
@@ -188,7 +199,7 @@ let test_reverse =
 To run the tests run the command
 
 ```bash
-ligo run test list.test.mligo --project-root .
+ligo run test list.test.mligo
 ```
 
 Now the final step is publishing the library to npm.
