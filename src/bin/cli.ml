@@ -34,6 +34,24 @@ let libraries : string list Command.Param.t =
     @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["l"] name spec
 
+
+let template =
+  let open Command.Param in
+  let doc  = "TEMPLATE the template name which will be used to generate folder. You can obtain available list by running ligo init list. If not provided default is empty-project." in
+  let spec = optional_with_default "empty" string in
+  flag ~doc ~aliases:["t"] "--template" spec
+
+let template_list =
+  let open Command.Param in
+  let name = "--template-list" in
+  let doc  = "If present, change cmmand behavior and list available templates for this command." in
+  flag ~doc name no_arg
+
+let project_name =
+  let name = "PROJECT_NAME" in
+  let _desc = "The generated project name" in
+  Command.Param.(anon (maybe  (name %: string)))
+
 let syntax =
   let open Command.Param in
   let doc  = "SYNTAX the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and \"jsligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, and .jsligo respectively)." in
@@ -685,6 +703,35 @@ let print_group =
     "ast-aggregated"  , print_ast_aggregated;
     "mini-c"          , print_mini_c; ]
 
+(** init *)
+let init_library =
+  let f project_name template (template_list:bool) display_format () =
+    (if template_list then
+      return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`LIBRARY ~display_format
+    else
+      return_result ~return @@ Ligo_api.Ligo_init.new_project ~version:Version.version ~kind:`LIBRARY ~project_name_opt:project_name ~template ~display_format) in
+  let summary   = "Generate new folder which contains wished library template" in
+  let readme () = "Generate new folder from library template. Internet connexion needed" in
+  Command.basic ~summary ~readme (f <$> project_name <*> template <*> template_list <*> display_format)
+
+let init_contract =
+  let f project_name template (template_list:bool) display_format () =
+    (if template_list then
+      return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format
+    else
+      return_result ~return @@ Ligo_api.Ligo_init.new_project ~version:Version.version ~kind:`CONTRACT ~project_name_opt:project_name ~template ~display_format) in
+  let summary   = "Generate new folder which contains wished contract template" in
+  let readme () = "Generate new folder from contract template. Internet connexion needed" in
+  Command.basic ~summary ~readme (f <$> project_name <*> template <*> template_list <*> display_format)
+
+let init_group =
+  Command.group ~summary:"Initialize a new ligo project from template. Contract or library."
+  [
+    "library"       , init_library;
+    "contract"      , init_contract;
+  ]
+
+
 (** other *)
 let changelog =
   let f display_format () =
@@ -719,6 +766,7 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
     "info"     , info_group;
     "mutate"   , mutate_group;
     "repl"     , repl;
+    "init"     , init_group;
     "changelog", changelog;
     "print"    , print_group;
     "install"  , install;
