@@ -92,19 +92,19 @@ ligo install
 ### --cache-path
 
 By default dependencies are installed in the `.ligo` directory at the root of the project, If you wish to change
-the path where dependencies are installed use the `--cache-path` flag to specify the path e.g.
+the path where dependencies are installed use the `--cache-path` option to specify the path e.g.
 
 ```bash
-ligo install --cache-path /some/path
+ligo install --cache-path PATH
 ```
 
 ### --project-root
 
-LIGO will try to infer the root directory of the project so that it can find the dependencies installed on the local machine, 
-If you wish to specify the root directory manually you can do so using the `--project-root` flag e.g.
+LIGO will try to infer the root directory of the project so that it can find the dependencies installed on your local machine, 
+If you wish to specify the root directory manually you can do so using the `--project-root` option e.g.
 
 ```bash
-ligo compile contract main.mligo --project-root .
+ligo compile contract main.mligo --project-root PATH
 ```
 
 ### Upgrading version of a LIGO package
