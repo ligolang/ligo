@@ -1,4 +1,4 @@
-type raw = {
+type t = {
   (* Formatter *)
   warning_as_error : bool ;
 
@@ -31,6 +31,21 @@ type raw = {
   file_constants : string option ;
 }
 
+let find_project_root () =
+  let pwd = Unix.getcwd in
+  let ls_only_dirs = Sys.ls_dir in
+  let rec aux p =
+    let dirs = ls_only_dirs p in
+    if List.exists ~f:(fun dir -> String.equal dir ".ligo") dirs
+    then Some p
+    else
+      let p' = p ^ "/.." in
+      if Filename.equal (Filename.realpath p) (Filename.realpath p')
+      then None
+      else aux p' 
+  in
+  aux (pwd ())
+
 module Default_options = struct 
   (* Formatter *)
   let show_warnings = true
@@ -44,7 +59,7 @@ module Default_options = struct
   let dialect = "terse"
   let entry_point = "main"
   let libraries = []
-  let project_root = None
+  let project_root = find_project_root ()
 
   (* Tools *)
   let infer = false
@@ -73,7 +88,7 @@ let make
   ?(syntax = Default_options.syntax)
   ?(entry_point = Default_options.entry_point)
   ?(libraries = Default_options.libraries)
-  ?(project_root = Default_options.project_root)
+  ?(project_root = None)
   ?(with_types = Default_options.with_types)
   ?(self_pass = Default_options.self_pass)
   ?(test = Default_options.test)
@@ -99,7 +114,7 @@ let make
   syntax ;
   entry_point ;
   libraries ;
-  project_root ;
+  project_root = if Option.is_some project_root then project_root else find_project_root () ;
   
   (* Tools *)
   with_types ;
@@ -119,38 +134,4 @@ let make
   views ;
   constants ;
   file_constants ;
-}
-
-let default =
-{
-  (* Formatter *)
-  warning_as_error = Default_options.show_warnings ;
-
-  (* Warnings *)
-  warn_unused_rec = Default_options.warn_unused_rec ;
-  
-  (* Frontend *)
-  syntax = Default_options.syntax ;
-  entry_point = Default_options.entry_point ;
-  libraries = Default_options.libraries ;
-  project_root = Default_options.project_root ;
-  
-  (* Tools *)
-  with_types = Default_options.with_types ;
-  self_pass = Default_options.self_pass ;
-  
-  (* Test framework *)
-  test = Default_options.test ;
-  steps = Default_options.steps ;
-  generator = Default_options.generator ;
-  cli_expr_inj = Default_options.cli_expr_inj ;
-  
-  (* Backend *)
-  protocol_version = Default_options.protocol_version ;
-  disable_michelson_typechecking = Default_options.disable_michelson_typechecking ;
-  enable_typed_opt = Default_options.enable_typed_opt ;
-  without_run = Default_options.without_run ;
-  views = Default_options.views ;
-  constants = Default_options.constants ;
-  file_constants = Default_options.file_constants ;
 }

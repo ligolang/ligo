@@ -1,8 +1,9 @@
 open Api_helpers
 module Compile = Ligo_compile
-module Helpers   = Ligo_compile.Helpers
+module Helpers = Ligo_compile.Helpers
+module RawOptions = Compiler_options.Raw_options
 
-let measure_contract (raw_options : Compiler_options.raw) source_file display_format () =
+let measure_contract (raw_options : RawOptions.t) source_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format Formatter.contract_size_format @@
       fun ~raise ->
@@ -16,7 +17,7 @@ let measure_contract (raw_options : Compiler_options.raw) source_file display_fo
       let contract = Compile.Of_michelson.build_contract ~raise ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version michelson views in
       Compile.Of_michelson.measure ~raise contract
 
-let list_declarations (raw_options : Compiler_options.raw) source_file display_format () =
+let list_declarations (raw_options : RawOptions.t) source_file display_format () =
     format_result ~display_format Formatter.declarations_format @@
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -27,7 +28,7 @@ let list_declarations (raw_options : Compiler_options.raw) source_file display_f
       let declarations  = Compile.Of_core.list_declarations core_prg in
       (source_file, declarations)
 
-let get_scope (raw_options : Compiler_options.raw) source_file display_format () =
+let get_scope (raw_options : RawOptions.t) source_file display_format () =
     Scopes.Api_helper.format_result ~display_format @@
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
