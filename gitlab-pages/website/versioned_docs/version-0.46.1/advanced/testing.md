@@ -363,7 +363,7 @@ let test2 = _test2();
 The environment assumes a source for the operations which can be set
 using the function `Test.set_source : address -> unit`.
 
-#### Unit testing a function
+### Unit testing a function
 
 Consider a map binding addresses to amounts and a function removing all entries in that map having an amount less to a given threshold.
 
