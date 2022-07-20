@@ -22,7 +22,6 @@ library
       Language.LIGO.Debugger.Handlers.Types
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Snapshots
-      Prelude
       Util
   other-modules:
       Paths_ligo_debugger
@@ -96,7 +95,6 @@ library
     , singletons
     , stm
     , text
-    , universum
     , unliftio
     , unordered-containers
     , vector
@@ -160,7 +158,7 @@ executable ligo-debugger
     , ligo-debugger
     , morley
     , morley-debugger
-    , universum
+    , morley-prelude
   default-language: Haskell2010
 
 test-suite ligo-debugger-test
@@ -235,11 +233,11 @@ test-suite ligo-debugger-test
     , ligo-debugger
     , morley
     , morley-debugger
+    , morley-prelude
     , nyan-interpolation
     , nyan-interpolation-core
     , singletons
     , tasty
     , tasty-hunit-compat
     , text
-    , universum
   default-language: Haskell2010
