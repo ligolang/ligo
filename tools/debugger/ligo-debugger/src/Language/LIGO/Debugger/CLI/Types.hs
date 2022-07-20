@@ -4,7 +4,7 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:))
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:), withText)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Lens qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
@@ -82,6 +82,14 @@ newtype LigoVariable = LigoVariable
   { lvName :: Text
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
+
+instance FromJSON LigoVariable where
+  -- Some variables may look like "varName#123". We want to strip that identifier.
+  parseJSON = withText "variable" \t -> do
+    let suffix = T.takeWhileEnd (/= '#') t
+    if T.all isDigit suffix
+    then pure $ LigoVariable $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') t
+    else pure $ LigoVariable t
 
 instance Buildable LigoVariable where
   -- Here we want to pretty-print monomorphed variables.
@@ -252,7 +260,7 @@ instance Buildable LigoExposedStackEntry where
 instance FromJSON LigoExposedStackEntry where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
     leseType <- o .: "source_type"
-    leseDeclaration <- LigoVariable <<$>> o .:! "name"
+    leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
 
 -- | An element of the stack.
