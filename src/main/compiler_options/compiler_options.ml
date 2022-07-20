@@ -2,11 +2,7 @@ open Environment
 
 module Default_options = Raw_options.Default_options
 
-type raw = Raw_options.raw
-
-let make_raw_options = Raw_options.make
-
-let default_raw_options = Raw_options.default
+module Raw_options = Raw_options
 
 type frontend = {
   syntax : Syntax_types.t option ;
@@ -64,7 +60,7 @@ let warn_unused_rec ~syntax should_warn =
   | None -> should_warn
 
 let make :
-  raw_options : raw ->
+  raw_options : Raw_options.t ->
   ?syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
   ?has_env_comments : bool ->

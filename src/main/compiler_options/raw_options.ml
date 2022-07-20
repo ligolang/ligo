@@ -1,4 +1,4 @@
-type raw = {
+type t = {
   (* Formatter *)
   warning_as_error : bool ;
 
@@ -31,6 +31,32 @@ type raw = {
   constants : string list ;
   file_constants : string option ;
 }
+
+let find_project_root () =
+  let pwd = Unix.getcwd in
+  let ls_only_dirs dir = 
+    let all = Sys.ls_dir dir in
+    List.filter ~f:(fun f ->
+      let stats = Unix.lstat (Filename.concat dir f) in
+      match stats.st_kind with
+        S_DIR -> true
+      | _ -> false) all
+  in
+  let rec aux p =
+    let dirs = ls_only_dirs p in
+    if List.exists ~f:(String.equal ".ligo") dirs
+    then Some p
+    else
+      let p' = Filename.dirname p in
+      (* Check if we reached the root directory, since the parent of 
+         the root directory is the root directory itself *)
+      if Filename.equal p p'
+      then None
+      else aux p'
+  in
+  try aux (pwd ()) 
+  (* In case of permission issues when reading file, catch the exception *)
+  with _ -> None 
 
 module Default_options = struct 
   (* Formatter *)
@@ -102,7 +128,7 @@ let make
   syntax ;
   entry_point ;
   libraries ;
-  project_root ;
+  project_root = if Option.is_some project_root then project_root else find_project_root () ;
   
   (* Tools *)
   with_types ;
@@ -123,39 +149,4 @@ let make
   views ;
   constants ;
   file_constants ;
-}
-
-let default =
-{
-  (* Formatter *)
-  warning_as_error = Default_options.show_warnings ;
-
-  (* Warnings *)
-  warn_unused_rec = Default_options.warn_unused_rec ;
-  
-  (* Frontend *)
-  syntax = Default_options.syntax ;
-  entry_point = Default_options.entry_point ;
-  libraries = Default_options.libraries ;
-  project_root = Default_options.project_root ;
-  
-  (* Tools *)
-  with_types = Default_options.with_types ;
-  self_pass = Default_options.self_pass ;
-  
-  (* Test framework *)
-  test = Default_options.test ;
-  steps = Default_options.steps ;
-  generator = Default_options.generator ;
-  cli_expr_inj = Default_options.cli_expr_inj ;
-  
-  (* Backend *)
-  protocol_version = Default_options.protocol_version ;
-  disable_michelson_typechecking = Default_options.disable_michelson_typechecking ;
-  experimental_disable_optimizations_for_debugging = Default_options.experimental_disable_optimizations_for_debugging ;
-  enable_typed_opt = Default_options.enable_typed_opt ;
-  without_run = Default_options.without_run ;
-  views = Default_options.views ;
-  constants = Default_options.constants ;
-  file_constants = Default_options.file_constants ;
 }

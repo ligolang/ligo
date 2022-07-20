@@ -4,6 +4,8 @@ open Simple_utils
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
+module Raw_options = Compiler_options.Raw_options
+
 let no_comment node =
   Tezos_micheline.Micheline.(inject_locations (fun _ -> Mini_c.dummy_meta) (strip_locations node))
 
@@ -21,7 +23,7 @@ let read_file_constants ~raise file_constants =
      with Sys_error _ -> raise.Trace.error (`Main_cannot_open_global_constants fn)
         | Yojson.Json_error s -> raise.Trace.error (`Main_cannot_parse_global_constants (fn, s))
 
-let contract (raw_options : Compiler_options.raw) source_file display_format michelson_code_format michelson_comments () =
+let contract (raw_options : Raw_options.t) source_file display_format michelson_code_format michelson_comments () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments) @@
       fun ~raise ->
@@ -44,7 +46,7 @@ let contract (raw_options : Compiler_options.raw) source_file display_format mic
       let constants = constants @ file_constants in
       Ligo_compile.Of_michelson.build_contract ~raise ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version:options.middle_end.protocol_version ~has_env_comments:options.backend.has_env_comments ~disable_typecheck ~constants code views
 
-let expression (raw_options : Compiler_options.raw) expression init_file display_format michelson_format () =
+let expression (raw_options : Raw_options.t) expression init_file display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) @@
       fun ~raise ->
@@ -71,7 +73,7 @@ let expression (raw_options : Compiler_options.raw) expression init_file display
         let options = Run.make_dry_run_options ~raise ~constants { now = None ; amount = "0" ; balance = "0" ; sender = None ;  source = None ; parameter_ty = None } in
         Run.evaluate_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty
 
-let constant (raw_options : Compiler_options.raw) constants init_file display_format () =
+let constant (raw_options : Raw_options.t) constants init_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format Formatter.Michelson_formatter.michelson_constant_format @@
       fun ~raise ->
@@ -94,7 +96,7 @@ let constant (raw_options : Compiler_options.raw) constants init_file display_fo
                             Run.evaluate_constant ~raise compiled_exp.expr compiled_exp.expr_ty in
       (hash, value)
 
-let parameter (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
+let parameter (raw_options : Raw_options.t) source_file expression amount balance sender source now display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) @@
       fun ~raise ->
@@ -128,7 +130,7 @@ let parameter (raw_options : Compiler_options.raw) source_file expression amount
         let options = Run.make_dry_run_options ~raise ~constants { now ; amount ; balance ; sender;  source ; parameter_ty = None } in
         no_comment (Run.evaluate_expression ~raise ~options compiled_param.expr compiled_param.expr_ty)
 
-let storage (raw_options : Compiler_options.raw) source_file expression amount balance sender source now display_format michelson_format () =
+let storage (raw_options : Raw_options.t) source_file expression amount balance sender source now display_format michelson_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format []) @@
       fun ~raise ->
