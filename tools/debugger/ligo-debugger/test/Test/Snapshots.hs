@@ -571,8 +571,8 @@ test_Snapshots = testGroup "Snapshots collection"
               $ flip elem variables
               <$> [ "foo$1"
                   , "foo$4"
-                  , "TestId.One.id$2"
-                  , "List.fold_left$3"
+                  , "id$2"
+                  , "fold_left$3"
                   , "poly_troll42_"
                   ]
             ) do
