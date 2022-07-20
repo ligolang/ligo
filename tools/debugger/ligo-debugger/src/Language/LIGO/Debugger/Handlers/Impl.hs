@@ -141,6 +141,7 @@ instance HasSpecificMessages LIGO where
     InitializeLoggerRequest req -> handleInitializeLogger req
     SetFileRequest req -> handleSetFile req
     SetEntrypointRequest req -> handleSetEntrypoint req
+    CompileContractRequest req -> handleCompileContract req
     GetContractMetadataRequest req -> handleGetContractMetadata req
     ValidateValueRequest req -> handleValidateValue req
 
@@ -252,16 +253,13 @@ handleSetEntrypoint LigoSetEntrypointRequest{..} = do
     }
   logMessage [int||Set entrypoint #{entrypoint}|]
 
-handleGetContractMetadata :: LigoGetContractMetadataRequest -> RIO LIGO ()
-handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
+handleCompileContract :: LigoCompileContractRequest -> RIO LIGO ()
+handleCompileContract LigoCompileContractRequest{..} = do
   lServVar <- asks _rcLSState
-  lServ <- fromMaybe (error "Language server state is not initialized") <$> readTVarIO lServVar
-  let program = lsProgram lServ
-  let entrypoint = fromMaybe (error "Entrypoint was not set") $ lsEntrypoint lServ
 
   result <- runExceptT do
-    unlessM (doesFileExist program) $
-      throwError [int||Contract file not found: #{toText program}|]
+    entrypoint <- getEntrypoint
+    program <- getProgram
 
     ligoDebugInfo <- compileLigoContractDebug entrypoint program
     logMessage $ "Successfully read the LIGO debug output for " <> pretty program
@@ -275,8 +273,37 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
       logMessage $ pretty (cCode contract)
 
-    return (someContract, allLocs)
+    return LigoLanguageServerState
+      { lsProgram = program
+      , lsContract = Just someContract
+      , lsEntrypoint = Just entrypoint
+      , lsAllLocs = allLocs
+      }
 
+  case result of
+    Left msg -> do
+      writeResponse $ ErrorResponse $ DAP.defaultErrorResponse
+        { DAP.request_seqErrorResponse = seqLigoCompileContractRequest
+        , DAP.commandErrorResponse = commandLigoCompileContractRequest
+        , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
+        , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+        }
+      logMessage [int||Compiling contract failed: #{msg}|]
+    Right lServerState -> do
+      logMessage [int||
+        Set server state for contract:
+          #{lServerState}
+        |]
+      atomically $ writeTVar lServVar (Just lServerState)
+      writeResponse $ ExtraResponse $ CompileContractResponse LigoCompileContractResponse
+        { seqLigoCompileContractResponse = 0
+        , request_seqLigoCompileContractResponse = seqLigoCompileContractRequest
+        , successLigoCompileContractResponse = True
+        }
+
+handleGetContractMetadata :: LigoGetContractMetadataRequest -> RIO LIGO ()
+handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
+  result <- runExceptT getContract
   case result of
     Left msg -> do
       writeResponse $ ErrorResponse $ DAP.defaultErrorResponse
@@ -285,26 +312,13 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
         , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
         , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
         }
-      logMessage [int||Getting metadata for contract #{program} failed: #{msg}|]
-    Right (someContract@(SomeContract contract), allLocs) -> do
+      logMessage [int||Gettimg metadata for contract failed: #{msg}|]
+    Right (SomeContract contract) -> do
       let
         paramNotes = cParamNotes contract
         michelsonEntrypoints =
           T.flattenEntrypoints paramNotes
           <> one (U.DefEpName, T.mkUType $ T.pnNotes paramNotes)
-        lServerState = LigoLanguageServerState
-          { lsProgram = program
-          , lsContract = Just someContract
-          , lsEntrypoint = Just entrypoint
-          , lsAllLocs = allLocs
-          }
-
-      logMessage [int||
-        Got metadata for contract #{program}:
-          Server state: #{lServerState}
-          Michelson entrypoints: #{keys michelsonEntrypoints}
-        |]
-      atomically $ writeTVar lServVar (Just lServerState)
       writeResponse $ ExtraResponse $ GetContractMetadataResponse LigoGetContractMetadataResponse
         { seqLigoGetContractMetadataResponse = 0
         , request_seqLigoGetContractMetadataResponse =
@@ -367,18 +381,15 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   storageT <- toText <$> checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- toText <$> checkArgument "parameter" parameterLigoLaunchRequestArguments
 
-  lServerState <- asks _rcLSState >>= readTVarIO >>= \case
-    Nothing -> throwDAPError "Language server state is not initialized"
-    Just s -> return s
-  let program = lsProgram lServerState
-  entrypoint <- maybe (throwDAPError "Entrypoint was not set") pure $ lsEntrypoint lServerState
+  program <- getProgram
+  entrypoint <- getEntrypoint
+  locs <- getAllLocs
 
   -- This do is purely for scoping, otherwise GHC trips up:
   --     • Couldn't match type ‘a0’ with ‘()’
   --         ‘a0’ is untouchable
   do
-    SomeContract contract@Contract{} <-
-      maybe (throwDAPError "Contract was not initialized") pure $ lsContract lServerState
+    SomeContract contract@Contract{} <- getContract
 
     withMichelsonEntrypoint contract michelsonEntrypointLigoLaunchRequestArguments
       (pretty :: Text -> DAP.Message)
@@ -394,7 +405,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
               { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>
-                  groupSourceLocations (toList $ lsAllLocs lServerState)
+                  groupSourceLocations (toList locs)
               }
         pure $ DAPSessionState ds mempty mempty program
 

@@ -48,6 +48,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// TODO (LIGO-618): Check if it's a valid entrypoint, and let the user pick
 	// between options.
+	const skipSave = async (value: string) => undefined
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestEntrypoint',
 			createRememberingInputBox(
@@ -59,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 				debuggedContractSession,
 				async (value: string) => {
 					await client.sendMsg('setEntrypoint', { entrypoint: value })
+					await client.sendMsg('compileContract', {})
 					debuggedContractSession.ref.contractMetadata =
 						(await client.sendMsg('getContractMetadata', {})).contractMetadata
 					debuggedContractSession.ref.contractMetadata.ligoEntrypoint = value
@@ -80,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 				"Please input the contract parameter",
 				"Parameter value",
 				debuggedContractSession,
-				async (value: string) => undefined,
+				skipSave,
 			)));
 
 	context.subscriptions.push(
@@ -92,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 				"Please input the contract storage",
 				"Storage value",
 				debuggedContractSession,
-				async (value: string) => undefined,
+				skipSave,
 			)));
 }
 

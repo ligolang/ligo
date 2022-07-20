@@ -3,6 +3,8 @@ import * as Net from 'net';
 import {
 	GetContractMetadataArguments,
 	GetContractMetadataResponse,
+	CompileContractArguments,
+	CompileContractResponse,
 	SetFileArguments,
 	SetFileResponse,
 	SetEntrypointArguments,
@@ -16,6 +18,7 @@ import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 
 type MessageName =
 	| 'initializeLogger'
+	| 'compileContract'
 	| 'getContractMetadata'
 	| 'setFile'
 	| 'setEntrypoint'
@@ -31,6 +34,7 @@ export default class LigoProtocolClient extends ProtocolClient {
 	}
 
 	sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
+	sendMsg(command: 'compileContract', args: CompileContractArguments): Promise<CompileContractResponse>
 	sendMsg(command: 'getContractMetadata', args: GetContractMetadataArguments): Promise<GetContractMetadataResponse>
 	sendMsg(command: 'setFile', args: SetFileArguments): Promise<SetFileResponse>
 	sendMsg(command: 'setEntrypoint', args: SetEntrypointArguments): Promise<SetEntrypointResponse>

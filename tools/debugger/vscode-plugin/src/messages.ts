@@ -63,6 +63,19 @@ export interface SetEntrypointArguments {
 export interface SetEntrypointResponse extends DebugProtocol.Response {
 }
 
+// CompileContract //
+
+export interface CompileContractRequest extends DebugProtocol.Request {
+	command: 'compileContract'
+	arguments: CompileContractArguments;
+}
+
+export interface CompileContractArguments {
+}
+
+export interface CompileContractResponse extends DebugProtocol.Response {
+}
+
 // GetContractMetadata //
 
 export interface GetContractMetadataRequest extends DebugProtocol.Request {

@@ -8,6 +8,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSetFileRequestArguments (..)
   , LigoSetEntrypointRequest (..)
   , LigoSetEntrypointRequestArguments (..)
+  , LigoCompileContractRequest (..)
   , LigoGetContractMetadataRequest (..)
   , LigoValidateValueRequest (..)
   , LigoValidateValueRequestArguments (..)
@@ -17,6 +18,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , ContractMetadata (..)
   , LigoSetFileResponse (..)
   , LigoSetEntrypointResponse (..)
+  , LigoCompileContractResponse (..)
   , LigoGetContractMetadataResponse (..)
   , LigoValidateValueResponse (..)
   , LigoSpecificResponse (..)
@@ -97,6 +99,13 @@ data LigoSetEntrypointRequestArguments = LigoSetEntrypointRequestArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoSetEntrypointRequestArguments)
 
+data LigoCompileContractRequest = LigoCompileContractRequest
+  { seqLigoCompileContractRequest :: Int
+  , typeLigoCompileContractRequest :: String
+  , commandLigoCompileContractRequest :: String
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoCompileContractRequest)
+
 data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
   { seqLigoGetContractMetadataRequest :: Int
   , typeLigoGetContractMetadataRequest :: String
@@ -126,6 +135,7 @@ data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
   | SetFileRequest LigoSetFileRequest
   | SetEntrypointRequest LigoSetEntrypointRequest
+  | CompileContractRequest LigoCompileContractRequest
   | GetContractMetadataRequest LigoGetContractMetadataRequest
   | ValidateValueRequest LigoValidateValueRequest
   deriving stock (Eq, Show, Generic)
@@ -159,6 +169,13 @@ data LigoSetEntrypointResponse = LigoSetEntrypointResponse
   } deriving stock (Show, Eq, Generic)
     deriving Buildable via (GenericBuildable LigoSetEntrypointResponse)
 
+data LigoCompileContractResponse = LigoCompileContractResponse
+  { seqLigoCompileContractResponse :: Int
+  , request_seqLigoCompileContractResponse :: Int
+  , successLigoCompileContractResponse :: Bool
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoCompileContractResponse)
+
 data LigoGetContractMetadataResponse = LigoGetContractMetadataResponse
   { seqLigoGetContractMetadataResponse :: Int
   , request_seqLigoGetContractMetadataResponse :: Int
@@ -181,6 +198,7 @@ data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
   | SetFileResponse LigoSetFileResponse
   | SetEntrypointResponse LigoSetEntrypointResponse
+  | CompileContractResponse LigoCompileContractResponse
   | GetContractMetadataResponse LigoGetContractMetadataResponse
   | ValidateValueResponse LigoValidateValueResponse
   deriving stock (Eq, Show, Generic)

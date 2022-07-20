@@ -16,7 +16,7 @@ import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), RIO, RioContext (..))
+  (DAPOutputMessage (..), DAPSpecificResponse (..), HasSpecificMessages (..), RIO, RioContext (..))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
@@ -47,6 +47,35 @@ instance Buildable LigoLanguageServerState where
   build LigoLanguageServerState{..} = [int||
     Debugging program: #{lsProgram}
     |]
+
+getServerState
+  :: LanguageServerStateExt ext ~ LigoLanguageServerState
+  => ExceptT DAP.Message (RIO ext) (LanguageServerStateExt ext)
+getServerState = do
+  lServM <- readTVarIO =<< asks _rcLSState
+  maybe (throwDAPError "Language server state is not initialized") pure lServM
+
+getContract
+  :: LanguageServerStateExt ext ~ LigoLanguageServerState
+  => ExceptT DAP.Message (RIO ext) SomeContract
+getContract =
+  maybe (throwDAPError "Contract was not initialized") pure . lsContract =<< getServerState
+
+getProgram
+  :: LanguageServerStateExt ext ~ LigoLanguageServerState
+  => ExceptT DAP.Message (RIO ext) FilePath
+getProgram = lsProgram <$> getServerState
+
+getEntrypoint
+  :: LanguageServerStateExt ext ~ LigoLanguageServerState
+  => ExceptT DAP.Message (RIO ext) String
+getEntrypoint =
+  maybe (throwDAPError "Entrypoint was not set") pure . lsEntrypoint =<< getServerState
+
+getAllLocs
+  :: LanguageServerStateExt ext ~ LigoLanguageServerState
+  => ExceptT DAP.Message (RIO ext) (Set SourceLocation)
+getAllLocs = lsAllLocs <$> getServerState
 
 throwDAPError :: (MonadError DAP.Message m) => Builder -> m a
 throwDAPError = throwError . fromBuilder
