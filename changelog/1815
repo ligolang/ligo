@@ -1,0 +1,6 @@
+author: lesenechal.remi
+description: \nrework of the standard library (might slightly improve compiler/tooling
+  performances)
+merge_request: '1815'
+title: mono file stdlib
+type: internal

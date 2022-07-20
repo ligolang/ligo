@@ -22,12 +22,13 @@ module ParseTree
 
 import Data.Aeson (ToJSON (..), object, (.=))
 import Data.ByteString (ByteString)
+import Data.ByteString qualified as BS
+import Data.Function ((&))
 import Data.Functor.Classes (Show1 (..))
-import Data.String (IsString (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text
-import Data.Text.IO qualified as Text
+import Data.Text.Encoding.Error qualified as Text
 import Data.Traversable (for)
 import Control.Monad ((>=>))
 import Control.Monad.IO.Class (MonadIO (..))
@@ -41,6 +42,7 @@ import TreeSitter.Language
 import TreeSitter.Node
 import TreeSitter.Parser
 import TreeSitter.Tree hiding (Tree)
+import UnliftIO.Exception (displayException)
 
 import Duplo.Tree
 
@@ -59,9 +61,6 @@ data Source = Source
   , srcText :: Text
   } deriving stock (Eq, Ord)
 
-instance MonadIO m => IsString (m Source) where
-  fromString = pathToSrc
-
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
 
@@ -73,8 +72,23 @@ instance LogItem Source where
 instance Show Source where
   show = show . srcPath
 
-pathToSrc :: MonadIO m => FilePath -> m Source
-pathToSrc p = Source p <$> liftIO (Text.readFile p)
+-- | Reads the provided file path and checks whether it contains valid UTF-8
+-- string, logging an error message in case and returning a leniently decoded
+-- string in this situation.
+pathToSrc :: Log m => FilePath -> m Source
+pathToSrc p = do
+  raw <- liftIO $ BS.readFile p
+  -- Is it valid UTF-8?
+  fmap (Source p) $ Text.decodeUtf8' raw & \case
+    Left exception -> do
+      $(Log.err) [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
+      -- Leniently decode the data so we can continue working even with invalid
+      -- data. Note that this case means we'll decode the file two times; this
+      -- is fine, as invalid data should be very uncommon.
+      -- TODO: Once we migrate to text-2.0:
+      -- s/Text.decodeUtf8With Text.lenientDecode/Text.decodeUtf8Lenient/
+      pure $ Text.decodeUtf8With Text.lenientDecode raw
+    Right decoded -> pure decoded
 
 type RawTree = Tree '[ParseTree] RawInfo
 type RawInfo = (Range, Text)

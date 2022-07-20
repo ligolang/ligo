@@ -399,7 +399,7 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
       arguments)
   | None ->
     let open Simple_utils.Trace in
-    (raise.raise) (Errors.unsupported_primitive expr.cons_name proto)
+    (raise.error) (Errors.unsupported_primitive expr.cons_name proto)
 
 and translate_closed_function ~raise ~proto ?(env=[]) ({ binder ; body } : I.anon_function) input_ty : _ O.binds =
   let body = translate_expression ~raise ~proto body (Mini_c.Environment.add (binder, input_ty) env) in

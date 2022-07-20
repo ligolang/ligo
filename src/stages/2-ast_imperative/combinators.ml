@@ -217,8 +217,8 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
-let e_assign ?loc binder access_path expression = make_e ?loc @@ E_assign {binder;access_path;expression}
-let e_assign_ez ?loc variable access_path expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) access_path expression
+let e_assign ?loc binder expression = make_e ?loc @@ E_assign {binder;expression}
+let e_assign_ez ?loc variable expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
   let attributes = {const_or_var = None} in

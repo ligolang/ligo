@@ -15,11 +15,11 @@ import Data.Text qualified as Text
 import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
 import Morley.Debugger.Core.Common (debuggerTcOptions)
-import Morley.Debugger.Core.Navigate (SourceLocation (..), SourceType (..))
+import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
-import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..), mkPos)
+import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
   (Contract' (..), CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..),
@@ -27,7 +27,8 @@ import Morley.Michelson.Typed
 import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Types
+import Language.LIGO.Debugger.Common
+import Morley.Debugger.Core.Snapshots (SourceType(..))
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -199,8 +200,7 @@ readLigoMapper ligoMapper = do
     ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation
     ligoInfoToSourceLoc LigoIndexedInfo{..} = asum
       [ do
-          LigoRange{..} <- liiLocation
-          return $ SourceLocation (SourcePath lrFile) (convertPos lrStart)
+          ligoRangeToSourceLocation <$> liiLocation
 
       , do
           -- TODO: liiEnvironment should also give us source location -
@@ -208,9 +208,3 @@ readLigoMapper ligoMapper = do
           _ <- liiEnvironment
           return $ SourceLocation (SourcePath "??") (SrcPos (Pos 0) (Pos 0))
       ]
-
-    convertPos :: LigoPosition -> SrcPos
-    convertPos (LigoPosition l c) =
-      SrcPos
-        (unsafe $ mkPos $ Unsafe.fromIntegral (l - 1))
-        (unsafe $ mkPos $ Unsafe.fromIntegral c)

@@ -154,12 +154,12 @@ let rec error_ppformat : display_format:string display_format ->
     | `Preproc_tracer e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format f e
     | `Pretty_tracer _e -> () (*no error in this pass*)
-    | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
-    | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
-    | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
-    | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f e
+    | `Cit_pascaligo_tracer  e -> List.iter ~f:(Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_cameligo_tracer   e -> List.iter ~f:(Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_reasonligo_tracer e -> List.iter ~f:(Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f) e
+    | `Cit_jsligo_tracer     e -> List.iter ~f:(Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format f) e
     | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
-    | `Purification_tracer e -> Purification.Errors.error_ppformat ~display_format f e
+    | `Purification_tracer e -> List.iter ~f:(Purification.Errors.error_ppformat ~display_format f) e
     | `Depurification_tracer _e -> () (*no error in this pass*)
     | `Desugaring_tracer _e -> () (*no error in this pass*)
     | `Sugaring_tracer _e -> () (*no error in this pass*)
@@ -250,11 +250,12 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_decompile_aggregated e -> Aggregation.Errors.error_ppformat ~display_format f  e
     | `Main_decompile_typed e -> Checking.Errors.error_ppformat ~display_format f  e
     | `Main_view_rule_violated loc ->
-      Format.fprintf f "@[<hv>%a@.View rule violated: 
-      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas) 
+      Format.fprintf f "@[<hv>%a@.View rule violated:
+      - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas)
       - Tezos.self can't be used because the entry-point does not make sense in a view@.@]"
       Snippet.pp loc
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
+    | `Ligo_init_unrecognized_template lststr -> Format.fprintf f "Template unrecognized please select one of the following list : \n%s" @@ String.concat ~sep:"\n" lststr
   )
 
 let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
@@ -386,12 +387,12 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Preproc_tracer e -> Preprocessing.Errors.error_jsonformat e
   | `Parser_tracer e -> Parsing.Errors.error_jsonformat e
   | `Pretty_tracer _ -> `Null (*no error in this pass*)
-  | `Cit_pascaligo_tracer e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
-  | `Cit_cameligo_tracer e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
-  | `Cit_reasonligo_tracer e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
-  | `Cit_jsligo_tracer e -> Tree_abstraction.Jsligo.Errors.error_jsonformat e
+  | `Cit_pascaligo_tracer  e -> `List (List.map ~f:Tree_abstraction.Pascaligo.Errors.error_jsonformat e)
+  | `Cit_cameligo_tracer   e -> `List (List.map ~f:Tree_abstraction.Cameligo.Errors.error_jsonformat e)
+  | `Cit_reasonligo_tracer e -> `List (List.map ~f:Tree_abstraction.Reasonligo.Errors.error_jsonformat e)
+  | `Cit_jsligo_tracer     e -> `List (List.map ~f:Tree_abstraction.Jsligo.Errors.error_jsonformat e)
   | `Self_ast_imperative_tracer e -> Self_ast_imperative.Errors.error_jsonformat e
-  | `Purification_tracer e -> Purification.Errors.error_jsonformat e
+  | `Purification_tracer e -> `List (List.map ~f:Purification.Errors.error_jsonformat e)
   | `Depurification_tracer _ -> `Null (*no error in this pass*)
   | `Desugaring_tracer _ -> `Null (*no error in this pass*)
   | `Sugaring_tracer _ -> `Null (*no error in this pass*)
@@ -420,7 +421,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_aggregated e -> Aggregation.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-
+  | `Ligo_init_unrecognized_template _lsttr -> `Null
   | `Repl_unexpected ->
      let message = "unexpected error" in
      json_error ~stage:"evaluating expression" ~message ()

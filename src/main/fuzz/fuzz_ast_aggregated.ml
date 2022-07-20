@@ -54,7 +54,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
      (* Decompile expression *)
      let n_syntax     = Trace.to_stdlib_result (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file)) in
      let n_syntax     = match n_syntax with
-       | Ok r -> r
+       | Ok (r,_w) -> r
        | Error _ -> failwith "Cannot detect syntax" in
      let typed        = Aggregation.decompile ~raise _expr in
      let core         = Decompile.Of_typed.decompile_expression typed in
@@ -262,9 +262,9 @@ module Mutator = struct
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
     | E_type_inst _ as e' -> [ (return e'), None ]
-    | E_assign {binder;access_path;expression} ->
+    | E_assign {binder;expression} ->
         let+ expression, mutation = self expression in
-        return @@ E_assign {binder;access_path;expression}, mutation
+        return @@ E_assign {binder;expression}, mutation
 
   and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
     match m with

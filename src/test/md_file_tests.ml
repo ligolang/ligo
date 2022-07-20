@@ -21,7 +21,7 @@ let get_proto p =
   in
   match opt with
   | Some x -> x
-  | None -> failwith "unknown protocol"
+  | None -> failwith (Format.asprintf "unknown protocol %s" p)
 let current_proto = get_proto "current"
 (*
   Binds the snippets by (syntax, group_name).
@@ -115,7 +115,6 @@ let get_groups md_file : snippetsmap =
   if Object : run the ligo test framework
 **)
 let compile_groups ~raise filename grp_list =
-  let add_warning _ = () in
   let aux : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> unit =
     fun ((syntax , grp, protocol_version) , (lang , contents)) ->
       trace ~raise (test_md_file filename syntax grp contents) @@
@@ -124,25 +123,25 @@ let compile_groups ~raise filename grp_list =
       let syntax     = Syntax.of_string_opt ~raise (Syntax_name syntax) (Some filename) in
       let meta       = Ligo_compile.Of_source.make_meta syntax in
       let c_unit,_   = Ligo_compile.Of_source.compile_string ~raise ~options:options.frontend ~meta contents in
-      let imperative = Ligo_compile.Of_c_unit.compile ~raise ~add_warning ~meta c_unit filename in
+      let imperative = Ligo_compile.Of_c_unit.compile ~raise ~meta c_unit filename in
       let sugar      = Ligo_compile.Of_imperative.compile ~raise imperative in
       let core       = Ligo_compile.Of_sugar.compile sugar in
-      let stdlib     = Build.Stdlib.core ~options meta.syntax in
       match lang with
       | Meta ->
         let init_env = Environment.default_with_test protocol_version in
         let options = Compiler_options.set_init_env options init_env in
         let options = Compiler_options.set_test_flag options true in
-        let testlib    = Build.Testlib.core ~options meta.syntax in
-        let core = testlib @ stdlib @ core in
-        let typed   = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
-        let _ = Interpreter.eval_test ~options ~raise ~add_warning ~steps:5000 typed in
+        let stdlib     = Build.Stdlib.core ~options meta.syntax in
+        let core = stdlib @ core in
+        let typed   = Ligo_compile.Of_core.typecheck ~raise ~options Env core in
+        let _ = Interpreter.eval_test ~options ~raise ~steps:5000 typed in
         ()
       | Object ->
+        let stdlib     = Build.Stdlib.core ~options meta.syntax in
         let core = stdlib @ core in
-        let typed     = Ligo_compile.Of_core.typecheck ~raise ~add_warning ~options Env core in
+        let typed     = Ligo_compile.Of_core.typecheck ~raise ~options Env core in
         let agg_prg   = Ligo_compile.Of_typed.compile_program ~raise typed in
-        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~add_warning ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
+        let aggregated_with_unit = Ligo_compile.Of_typed.compile_expression_in_context ~raise ~options:options.middle_end (Ast_typed.e_a_unit ()) agg_prg in
         let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_with_unit in
         let _michelson : Stacking__Compiler_program.compiled_expression = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
         ()

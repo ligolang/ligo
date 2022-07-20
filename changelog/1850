@@ -1,0 +1,5 @@
+author: pewulfman
+description: ''
+merge_request: '1850'
+title: Fix aggregation bug in loop
+type: fixed

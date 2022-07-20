@@ -8,7 +8,7 @@ type contract_pass_data = Contract_passes.contract_pass_data
 let rec check_no_nested_bigmap ~raise is_in_bigmap e =
   match e.type_content with
   | T_constant {injection=Big_map; _} when is_in_bigmap ->
-    raise.raise @@ nested_bigmap e.location
+    raise.error @@ nested_bigmap e.location
   | T_constant {injection=(Big_map | Map); parameters=[k ; v];_} ->
     let _ = check_no_nested_bigmap ~raise false k in
     let _ = check_no_nested_bigmap ~raise true  v in
@@ -28,7 +28,6 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
     let _ = check_no_nested_bigmap ~raise false type2 in
     ()
   | T_variable _ -> ()
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> check_no_nested_bigmap ~raise is_in_bigmap x.type_
   | T_for_all x -> check_no_nested_bigmap ~raise is_in_bigmap x.type_

@@ -1,0 +1,5 @@
+author: pewulfman
+description: \nfix a potential bug in the backend
+merge_request: '1845'
+title: 'Cleanup Agregation : replace dirty ref map with proper functional handling'
+type: fixed

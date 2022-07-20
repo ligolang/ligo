@@ -13,11 +13,11 @@ let parse_constant ~raise code =
   let open Tezos_micheline.Micheline in
   let (code, errs) = Micheline_parser.tokenize code in
   let code = (match errs with
-              | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+              | _ :: _ -> raise.error (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
               | [] ->
                  let (code, errs) = Micheline_parser.parse_expression ~check:false code in
                  match errs with
-                 | _ :: _ -> raise.raise (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
+                 | _ :: _ -> raise.error (Errors.unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
                  | [] -> map_node (fun _ -> ()) (fun x -> x) code
              ) in
   Trace.trace_alpha_tzresult ~raise Errors.unparsing_michelson_tracer @@
@@ -40,10 +40,10 @@ let make_dry_run_options ~raise ?tezos_context ?(constants = []) (opts : dry_run
   let open Proto_alpha_utils.Memory_proto_alpha in
   let open Protocol.Alpha_context in
   let balance = match Tez.of_string opts.balance with
-    | None -> raise.raise @@ Errors.main_invalid_balance opts.balance
+    | None -> raise.error @@ Errors.main_invalid_balance opts.balance
     | Some balance -> balance in
   let amount = match Tez.of_string opts.amount with
-    | None -> raise.raise @@ Errors.main_invalid_amount opts.amount
+    | None -> raise.error @@ Errors.main_invalid_amount opts.amount
     | Some amount -> amount in
   let sender =
     match opts.sender with
@@ -69,7 +69,7 @@ let make_dry_run_options ~raise ?tezos_context ?(constants = []) (opts : dry_run
     | Some st ->
       match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
         | Some t -> (Some t)
-        | None -> raise.raise @@ Errors.main_invalid_timestamp st in
+        | None -> raise.error @@ Errors.main_invalid_timestamp st in
   let parameter_ty =
     match opts.parameter_ty with
     | Some x ->
@@ -113,7 +113,7 @@ let pack_payload ~raise (payload : _ Michelson.t) ty =
 let fetch_lambda_types ~raise (contract_ty : _ Michelson.t) =
   match contract_ty with
   | Prim (_, "lambda", [in_ty; out_ty], _) -> (in_ty, out_ty)
-  | _ -> raise.raise Errors.main_unknown (*TODO*)
+  | _ -> raise.error Errors.main_unknown (*TODO*)
 
 let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
   let open! Tezos_raw_protocol_013_PtJakart in
@@ -247,20 +247,20 @@ let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson
 let run_failwith ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) : (int, string) Tezos_micheline.Micheline.node =
   let expr = run_expression ~raise ?options exp exp_type in
   match expr with
-  | Success _  -> raise.raise Errors.main_unknown (* TODO : simple_fail "an error of execution was expected" *)
+  | Success _  -> raise.error Errors.main_unknown (* TODO : simple_fail "an error of execution was expected" *)
   | Fail res -> res
 
 let run_no_failwith ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let expr = run_expression ~raise ?options exp exp_type in
   match expr with
   | Success tval  -> tval
-  | Fail _ -> raise.raise Errors.main_unknown (* TODO : simple_fail "unexpected error of execution" *)
+  | Fail _ -> raise.error Errors.main_unknown (* TODO : simple_fail "unexpected error of execution" *)
 
 let evaluate_expression ~raise ?options exp exp_type =
   let etv = run_expression ~raise ?options exp exp_type in
   match etv with
     | Success (_, value) -> value
-    | Fail res -> raise.raise @@ Errors.main_execution_failed res
+    | Fail res -> raise.error @@ Errors.main_execution_failed res
 
 let evaluate_constant ~raise ?options exp exp_type =
   let etv = run_expression ~raise ?options exp exp_type in
@@ -271,7 +271,7 @@ let evaluate_constant ~raise ?options exp exp_type =
        let (_, hash, _) = Trace.trace_alpha_tzresult_lwt ~raise (fun _ -> Errors.main_unknown) @@
                             Memory_proto_alpha.(register_constant (dummy_environment ()).tezos_context value_) in
        (hash, value)
-    | Fail res -> raise.raise @@ Errors.main_execution_failed res
+    | Fail res -> raise.error @@ Errors.main_execution_failed res
 
 let clean_expression exp =
   let open Tezos_micheline.Micheline in

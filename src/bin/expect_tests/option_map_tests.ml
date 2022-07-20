@@ -1,7 +1,7 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; (test "option_map.mligo") ; "--protocol" ; "ithaca" ] ;
+  run_ligo_good [ "compile" ; "contract" ; (test "option_map.mligo") ] ;
   [%expect{|
     { parameter unit ;
       storage (option int) ;
@@ -12,7 +12,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run" ; "test" ; (test "option_map.mligo") ; "--protocol" ; "ithaca" ] ;
+  run_ligo_good [ "run" ; "test" ; (test "option_map.mligo") ] ;
   [%expect{|
     Everything at the top-level was executed.
     - test exited with value (). |}]

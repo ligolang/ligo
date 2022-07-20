@@ -67,10 +67,8 @@ test_SourceMapper = testGroup "Reading source mapper"
             [LigoHiddenStackEntry]
             ?- SomeInstr dummyInstr
 
-          -- TODO: relying on LIGO indices is bad;
-          -- do this check after types are inlined
         , LigoMereEnvInfo
-            [LigoStackEntryNoVar (LigoTypeRef 0)]
+            [LigoStackEntryNoVar intType]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -78,7 +76,7 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
         , LigoMereEnvInfo
-            [LigoStackEntryVar "s2" (LigoTypeRef 0)]
+            [LigoStackEntryVar "s2" intType]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -90,7 +88,7 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereEnvInfo
-            [LigoStackEntryVar "s2" (LigoTypeRef 0)]
+            [LigoStackEntryVar "s2" intType]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo

@@ -7,7 +7,7 @@ import {
 
 export enum networkType {
   Mainnet = 'mainnet',
-  Ithacanet = 'ithacanet',
+  Jakartanet = 'jakartanet',
 }
 
 export enum signerType {
@@ -68,8 +68,8 @@ type Action =
 const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
-  network: NetworkType.ITHACANET,
-  protocol: 'ithaca',
+  network: NetworkType.JAKARTANET,
+  protocol: 'jakarta',
   signer: signerType.Sign,
 };
 

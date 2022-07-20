@@ -212,13 +212,11 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "solve 5" ; "--init-file" ; (test "use_monad.mligo") ] ;
-  [%expect{|
-    { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect{| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "solve 5" ; "--init-file" ; (test "use_monad_set.mligo") ] ;
-  [%expect{|
-    { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect{| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "auto" ; "solve(10)" ; "--init-file" ; (test "use_monad.jsligo") ] ;

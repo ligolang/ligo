@@ -31,7 +31,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
                        self dom table t t') ~init:table in
        table
      else
-       raise.raise default_error
+       raise.error default_error
   | T_record {content; layout}, T_record {content=content'; layout=layout'} ->
      let content_kv = O.LMap.to_kv_list content in
      let content'_kv = O.LMap.to_kv_list content' in
@@ -42,11 +42,11 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
          if Option.equal String.equal michelson_annotation michelson_annotation' then
            self dom table associated_type associated_type'
          else
-           raise.raise default_error in
+           raise.error default_error in
        let table = List.fold_right elements ~f:aux ~init:table in
        table
      else
-       raise.raise default_error
+       raise.error default_error
   | T_sum {content; layout}, T_sum {content=content'; layout=layout'} ->
      let content_kv = O.LMap.to_kv_list content in
      let content'_kv = O.LMap.to_kv_list content' in
@@ -57,15 +57,15 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
          if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
            self dom table associated_type associated_type'
          else
-           raise.raise default_error in
+           raise.error default_error in
        let table = List.fold_right elements ~f:aux ~init:table in
        table
      else
-       raise.raise default_error
+       raise.error default_error
   | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table
-  | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _),
-    (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
-    -> raise.raise default_error
+  | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _),
+    (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
+    -> raise.error default_error
 
 (* This function does some inference for applications: it takes a type
    `typed_matched` of the form `t1 -> ... -> tn -> t`, a list of types
@@ -81,7 +81,7 @@ let infer_type_applications ~raise ~loc ?(default_error = (fun loc t t' -> asser
                   match type_matched.type_content with
                   | T_arrow { type1 ; type2 } ->
                      infer_type_application ~raise ~loc dom table type1 matched, type2
-                  | (T_record _ | T_sum _ | T_constant _ | T_module_accessor _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
+                  | (T_record _ | T_sum _ | T_constant _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _) ->
                      table, type_matched) in
   match tv_opt with
   | Some t -> infer_type_application ~raise ~loc ~default_error dom table type_matched t

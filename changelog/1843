@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: Fix a potential crash during the generation of type errors
+merge_request: '1843'
+title: fixing wild failwith
+type: fixed

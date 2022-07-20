@@ -40,6 +40,7 @@ type t =
   | Chest_opening_result
   | Tx_rollup_l2_address 
   | External of string
+  | Gen
   [@@deriving ord, eq, hash]
 
 let to_string = function
@@ -82,6 +83,7 @@ let to_string = function
   | Chest_opening_result -> "chest_opening_result"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s           -> "external_" ^ s
+  | Gen                  -> "pbt_gen"
 
   let of_string = function
   | "string"               -> String
@@ -125,6 +127,7 @@ let to_string = function
   | "external_int"         -> External "int"
   | "external_ediv"        -> External "ediv"
   | "external_u_ediv"      -> External "u_ediv"
+  | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
 let string               = String
@@ -169,6 +172,7 @@ let external_failwith    = External "failwith"
 let external_int         = External "int"
 let external_ediv        = External "ediv"
 let external_u_ediv      = External "u_ediv"
+let gen                  = Gen
 
 let v_bool                 : type_variable = TypeVar.of_input_var ("bool")
 let v_string               : type_variable = TypeVar.of_input_var (to_string String)
@@ -213,3 +217,4 @@ let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_
 let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
 let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
 let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")
+let v_gen                  : type_variable = TypeVar.of_input_var (to_string @@ Gen)

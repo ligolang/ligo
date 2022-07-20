@@ -182,11 +182,10 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ O.E_tuple tuple
-    | I.E_assign {binder=b; access_path; expression} ->
+    | I.E_assign {binder=b; expression} ->
       let binder = binder self_type b in
-      let access_path = path self access_path in
       let expression = self expression in
-      return @@ O.E_assign {binder; access_path; expression}
+      return @@ O.E_assign {binder; expression}
     | I.E_for {binder;start;final;incr;f_body} ->
       (*Make the cond and the step *)
       let final = compile_expression ~raise ~last final in
@@ -260,4 +259,22 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
         O.E_let_in {let_binder={var=rec_func;ascr=None;attributes={const_or_var=None}}; rhs=loop; mut=false; let_result=recursive_call;attributes=[]}
 
 and compile_module ~raise : I.module_ -> O.module_ = fun m ->
-  Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) (fun a -> a) (fun a -> a) (fun a -> a) m
+  Maps.declarations (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id Fn.id Fn.id m
+
+let compile_declaration ~raise : I.declaration -> O.declaration =
+  fun {wrap_content=declaration;location} ->
+  let return decl = Location.wrap ~loc:location decl in
+  match declaration with
+  | I.Declaration_type dt ->
+    let dt = Maps.declaration_type (compile_type_expression ~raise) Fn.id dt in
+    return @@ O.Declaration_type dt
+  | I.Declaration_constant dc ->
+    let dc = Maps.declaration_constant (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id dc in
+    return @@ O.Declaration_constant dc
+  | I.Declaration_module dm ->
+    let dm = Maps.declaration_module (compile_expression ~raise ~last:true) (compile_type_expression ~raise) Fn.id Fn.id Fn.id dm in
+    return @@ O.Declaration_module dm
+
+let compile_program ~raise : I.program -> O.program = fun p ->
+  Simple_utils.Trace.collect ~raise @@
+  List.map ~f:(fun a ~raise -> compile_declaration ~raise a) p

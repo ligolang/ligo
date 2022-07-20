@@ -75,7 +75,7 @@ let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list)
 let t_bool ?loc ()       : type_expression = t_sum_ez ?loc
   [("True", t_unit ());("False", t_unit ())]
 
-let t_option ?loc typ : type_expression = 
+let t_option ?loc typ : type_expression =
   t_sum_ez ?loc [
     ("Some", typ) ;
     ("None", t_unit ());
@@ -101,7 +101,7 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0 -> Some ()
   | _ -> None
 
-let get_t_option (t:type_expression) : type_expression option = 
+let get_t_option (t:type_expression) : type_expression option =
   match t.type_content with
   | T_sum {content;_} ->
     let keys = LMap.keys content in
@@ -109,7 +109,7 @@ let get_t_option (t:type_expression) : type_expression option =
       [Label "Some" ; Label "None"]
     | [Label "None" ; Label "Some"] ->
         let some = LMap.find (Label "Some") content in
-        Some some.associated_type 
+        Some some.associated_type
     | _ -> None)
   | _ -> None
 
@@ -142,7 +142,7 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
 [@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "michelson_program", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
-[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
 let get_t_michelson_code (t:type_expression) : unit option = get_t_michelson_program t
@@ -186,7 +186,7 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-[@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
+[@@map (_type_, ("list", "set", "map", "typed_address", "big_map", "gen"))]
 
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Constant.Contract with
   | Some _ -> Some ()

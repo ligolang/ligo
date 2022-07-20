@@ -592,8 +592,8 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let set = list_to_sepseq ~sep:Token.ghost_semi set in
     let compound : CST.expr CST.compound = inject Token.ghost_set set in
     return_expr @@ CST.E_Set (Region.wrap_ghost @@ compound)
-  | E_assign {binder;access_path;expression} ->
-    let lhs = decompile_to_lhs dialect binder.var access_path in
+  | E_assign {binder;expression} ->
+    let lhs = decompile_to_lhs dialect binder.var [] in
     let rhs = decompile_expression ~dialect expression in
     let assign : CST.assignment = {lhs;assign=Token.ghost_ass;rhs} in
     return_inst @@ I_Assign (Region.wrap_ghost assign)
