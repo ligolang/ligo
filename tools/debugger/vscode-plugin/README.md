@@ -7,7 +7,7 @@ Bugs are to be expected!
 
 In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode`).
 
-**Important**: To use this package, you need a version of LIGO in your `PATH` with optimizations disabled. Such a version of LIGO can be built from [this GitLab branch](https://gitlab.com/ligolang/ligo/-/merge_requests/1800).
+To use this package, you need to have LIGO version 0.47.0 or greater available in your PATH.
 
 Currently, simple contracts are supported, with support for more complex contracts on the way.
 
