@@ -106,7 +106,6 @@ function sub (const store : storage; const delta : int) : storage is
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-   
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
   case action of [
@@ -136,7 +135,6 @@ let sub (store, delta : storage * int) : storage = store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
-   
 let main (action, store : parameter * storage) : return =
  ([] : operation list),    // No operations
  (match action with
@@ -165,7 +163,6 @@ let sub = ((store, delta) : (storage, int)) : storage => store - delta;
 
 /* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. */
-   
 let main = ((action, store) : (parameter, storage)) : return => {
  (([] : list (operation)),    // No operations
  (switch (action) {
