@@ -18,7 +18,7 @@ import Language.LSP.Types qualified as J
 import StmContainers.Map (newIO)
 import UnliftIO.MVar (newEmptyMVar, newMVar)
 
-import AST (Fallback)
+import AST (Standard)
 import ASTMap qualified
 import Config (Config (..))
 import Log (LogT, i)
@@ -29,7 +29,7 @@ import RIO.Types (Contract (..), RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do
-  reCache <- ASTMap.empty $ RIO.Document.load @Fallback
+  reCache <- ASTMap.empty $ RIO.Document.load @Standard
   reOpenDocs <- newMVar HashSet.empty
   reIncludes <- newMVar G.empty
   reTempFiles <- newIO
