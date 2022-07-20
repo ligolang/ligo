@@ -17,10 +17,10 @@ export default class AutoUpdateModal extends PureComponent {
     globalModalManager.autoUpdateModal = this;
   }
 
-  openModal = async version => {
+  openModal = async (version) => {
     this.setState({ version });
     this.modal.current.openModal();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.onConfirm = resolve;
     });
   };

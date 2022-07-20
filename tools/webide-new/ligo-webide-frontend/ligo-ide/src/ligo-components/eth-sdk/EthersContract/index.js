@@ -41,7 +41,7 @@ export default class EthersContract {
   }
 
   parseResult(result, method) {
-    const methodAbi = this.abi.find(item => item.name === method);
+    const methodAbi = this.abi.find((item) => item.name === method);
     const abi = methodAbi && methodAbi.outputs;
     const parsed = utils.parseObject(result, abi);
     return {

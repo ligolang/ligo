@@ -1,7 +1,7 @@
 import * as monaco from "monaco-editor";
 import fileOps from "~/base-components/file-ops";
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const SEVERITIES = {
   note: 2,
@@ -167,7 +167,7 @@ export default class MonacoEditorModelSession {
     if (!decorations) {
       decorations = [];
     }
-    const markers = decorations.map(d => this.generateMarkers(d));
+    const markers = decorations.map((d) => this.generateMarkers(d));
     monaco.editor.setModelMarkers(this._model, "markers", markers);
     this._decorations = this._model.deltaDecorations(
       this._decorations,

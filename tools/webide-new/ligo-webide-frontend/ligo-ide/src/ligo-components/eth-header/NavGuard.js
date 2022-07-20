@@ -4,7 +4,7 @@ export default class NavGuard {
   constructor(history) {
     this.history = history;
     const { location } = history;
-    this.uninstall = history.listen(location => this.handleChanges(location));
+    this.uninstall = history.listen((location) => this.handleChanges(location));
     this.handleChanges(location);
   }
 
@@ -50,7 +50,7 @@ export default class NavGuard {
 
   parsePathname(pathname) {
     const [_, ...args] = pathname.split("/");
-    return args.map(x => x || "");
+    return args.map((x) => x || "");
   }
 
   updateSelectedContract(pathname) {
@@ -77,7 +77,7 @@ export default class NavGuard {
     const project = { pathname, author, id };
 
     // try to find projects from local
-    const found = projects.get("local").find(p => p.get("id") === id);
+    const found = projects.get("local").find((p) => p.get("id") === id);
     if (found) {
       project.name = found.get("name");
       project.path = found.get("path");

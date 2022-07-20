@@ -6,7 +6,7 @@ if (process.env.NODE_ENV === "development") {
   middlewares.push(
     createLogger({
       collapsed: true,
-      stateTransformer: state => mapValues(state, s => (s.toJS ? s.toJS() : s)),
+      stateTransformer: (state) => mapValues(state, (s) => (s.toJS ? s.toJS() : s)),
     })
   );
 }

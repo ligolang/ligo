@@ -4,7 +4,7 @@ import { getColor } from "~/base-components/ui-components";
 chalk.enabled = true;
 chalk.level = 2;
 
-const hex = value => {
+const hex = (value) => {
   const hexValue = Number(value || 0).toString(16);
   return hexValue.length === 1 ? `0${hex}` : hexValue;
 };

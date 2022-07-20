@@ -59,7 +59,7 @@ export default class HttpIpcChannel {
   trigger(event, ...args) {
     for (const evt of this.events) {
       if (evt === event || event.startsWith(`${evt}:`)) {
-        this.listeners[evt].forEach(cb => cb(...args));
+        this.listeners[evt].forEach((cb) => cb(...args));
       }
     }
   }

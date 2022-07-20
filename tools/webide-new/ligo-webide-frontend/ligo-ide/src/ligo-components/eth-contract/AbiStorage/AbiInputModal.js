@@ -51,7 +51,7 @@ export default class AbiInputModal extends PureComponent {
     this.loadProjectAbis();
     this.modal.current.openModal();
     setTimeout(() => this.nameInput.current?.focus(), 100);
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.onResolve = resolve;
     });
   };
@@ -59,7 +59,7 @@ export default class AbiInputModal extends PureComponent {
   loadProjectAbis = async () => {
     const projectAbis = await BaseProjectManager.instance?.readProjectAbis();
     this.setState({
-      projectAbis: projectAbis?.map(item => ({
+      projectAbis: projectAbis?.map((item) => ({
         ...item,
         id: item.pathInProject || item.contractPath,
       })),
@@ -76,7 +76,7 @@ export default class AbiInputModal extends PureComponent {
     this.modal.current.closeModal();
   };
 
-  onChangeAbi = abi => {
+  onChangeAbi = (abi) => {
     try {
       JSON.parse(abi);
     } catch (e) {
@@ -103,11 +103,11 @@ export default class AbiInputModal extends PureComponent {
     );
   };
 
-  renderAbiDropdownItem = abis => {
+  renderAbiDropdownItem = (abis) => {
     if (!abis) {
       return null;
     }
-    return abis.map(item => {
+    return abis.map((item) => {
       return (
         <DropdownItem
           key={item.id}
@@ -140,12 +140,12 @@ export default class AbiInputModal extends PureComponent {
           ref={this.nameInput}
           label="Name"
           value={name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
         <DebouncedFormGroup
           label="Code hash / Address"
           value={codeHash}
-          onChange={codeHash => this.setState({ codeHash: utils.isValidAddressReturn(codeHash) })}
+          onChange={(codeHash) => this.setState({ codeHash: utils.isValidAddressReturn(codeHash) })}
           // disabled={!codeHashEditable}
         />
         <DebouncedFormGroup

@@ -13,7 +13,7 @@ class Contract extends TabbedExplorer {
   static defaultProps = {
     route: "contract",
     Page: ContractPage,
-    valueFormatter: value => value.toLowerCase(),
+    valueFormatter: (value) => value.toLowerCase(),
   };
 
   constructor(props) {
@@ -45,16 +45,16 @@ class Contract extends TabbedExplorer {
     }
   }
 
-  closeCurrent = current => {
+  closeCurrent = (current) => {
     const { onCloseTab } = this.tabs.current.tabs.current;
     onCloseTab(current);
   };
 
-  closeOthers = currentTab => {
+  closeOthers = (currentTab) => {
     const { onCloseTab, allTabs } = this.tabs.current.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key);
+    const shouldCloseTabs = allTabs.filter((tab) => tab.key !== currentTab.key);
 
-    shouldCloseTabs.forEach(tab => {
+    shouldCloseTabs.forEach((tab) => {
       onCloseTab(tab);
     });
   };
@@ -75,16 +75,8 @@ class Contract extends TabbedExplorer {
   };
 
   render() {
-    const {
-      history,
-      route,
-      network,
-      uiState,
-      projects,
-      contracts,
-      tokens,
-      valueFormatter,
-    } = this.props;
+    const { history, route, network, uiState, projects, contracts, tokens, valueFormatter } =
+      this.props;
 
     if (network === "dev" && !uiState.get("localNetwork")) {
       return (
@@ -111,7 +103,7 @@ class Contract extends TabbedExplorer {
       signer: uiState.get("signer"),
       tabContextMenu: this.contextMenu,
       projectRoot,
-      getTabText: tab => {
+      getTabText: (tab) => {
         const { text, value = "" } = tab;
         if (text) {
           return text;
@@ -151,14 +143,14 @@ class Contract extends TabbedExplorer {
         }
         return tabText;
       },
-      onValueUpdate: value => {
+      onValueUpdate: (value) => {
         redux.dispatch("SELECT_CONTRACT", { network, account: value });
         history.push(`/${route}/${value}`);
       },
-      onTabsUpdate: tabs => {
+      onTabsUpdate: (tabs) => {
         redux.dispatch("SET_CONTRACT_TABS", { network, tabs });
       },
-      onStarredUpdate: starred => {
+      onStarredUpdate: (starred) => {
         redux.dispatch("SET_STARRED_CONTRACTS", { network, starred });
       },
     };

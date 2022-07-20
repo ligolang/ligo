@@ -16,7 +16,7 @@ export default {
     },
     ACTIVE_CUSTOM_NETWORK: {
       reducer: (state, { payload }) => {
-        return state.map(network => {
+        return state.map((network) => {
           if (!network) return fromJS({});
           if (payload.chainId === network.chainId) return network.set("active", true);
           return network.set("active", false);

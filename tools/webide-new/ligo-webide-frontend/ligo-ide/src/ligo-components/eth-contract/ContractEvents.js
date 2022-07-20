@@ -42,7 +42,7 @@ class ContractEvents extends PureComponent {
     });
   }
 
-  getEventLogs = async selectedEvent => {
+  getEventLogs = async (selectedEvent) => {
     if (this.state.loading) {
       return;
     }
@@ -108,7 +108,7 @@ class ContractEvents extends PureComponent {
         return;
       }
 
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         let allLogs = [...this.state.logs, ...logs.reverse()];
         if (allLogs.length > 100) {
           allLogs = allLogs.slice(0, 100);
@@ -328,7 +328,7 @@ class ContractEvents extends PureComponent {
                     bsSize="sm"
                     placeholder={placeholderFrom}
                     value={rangeFrom}
-                    onChange={event => {
+                    onChange={(event) => {
                       const value = Math.abs(parseInt(event.target.value));
                       this.setState({ rangeFrom: isNaN(value) ? "" : value });
                     }}
@@ -343,7 +343,7 @@ class ContractEvents extends PureComponent {
                     bsSize="sm"
                     placeholder={placeholderTo}
                     value={rangeTo}
-                    onChange={event => {
+                    onChange={(event) => {
                       const value = Math.abs(parseInt(event.target.value));
                       this.setState({ rangeTo: isNaN(value) ? "" : value });
                     }}

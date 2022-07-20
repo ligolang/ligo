@@ -11,7 +11,7 @@ class NavLinkLeft extends PureComponent {
     onClickItem: () => {},
   };
 
-  onToggle = event => {
+  onToggle = (event) => {
     const { route, selected, history, location } = this.props;
     let url = `/${route}`;
     if (selected.id) {
@@ -24,7 +24,7 @@ class NavLinkLeft extends PureComponent {
     return !match;
   };
 
-  onClickItem = item => {
+  onClickItem = (item) => {
     if (item.onClick) {
       item.onClick();
     } else {

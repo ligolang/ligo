@@ -7,7 +7,7 @@ export default {
     UPDATE_FROM_REMOTE: {
       reducer: (state, { payload }) => {
         let reduceState = state;
-        payload.forEach(keypair => {
+        payload.forEach((keypair) => {
           if (typeof state.get(keypair.address) === "object") return;
           reduceState = reduceState.set(keypair.address, {
             address: keypair.address,

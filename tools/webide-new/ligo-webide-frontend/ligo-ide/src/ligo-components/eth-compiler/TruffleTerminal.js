@@ -23,7 +23,7 @@ export default class TruffleTerminal extends PureComponent {
     networkManager.onSdkDisposed(this.stopTruffleConsole);
   };
 
-  onCmdExecuted = result => {
+  onCmdExecuted = (result) => {
     this.notification.dismiss();
     // notification.success(`Truffle Console Started`)
   };
@@ -51,7 +51,7 @@ export default class TruffleTerminal extends PureComponent {
     const cmd = `docker run -it --rm --name truffle-terminal -v "${cwd}":"${cwd}" -w "${cwd}" obsidians/truffle:v5.1.61 truffle console`;
     return (
       <Terminal
-        ref={ref => (CompilerManager.truffleTerminal = ref)}
+        ref={(ref) => (CompilerManager.truffleTerminal = ref)}
         active={active && truffleConsole}
         cwd={cwd}
         logId="compiler-truffle"

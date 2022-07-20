@@ -4,7 +4,7 @@ import notification from "~/base-components/notification";
 let current;
 const channel = new IpcChannel("sdk");
 channel.off("error");
-channel.on("error", msg => {
+channel.on("error", (msg) => {
   if (current) {
     current.dismiss();
   }

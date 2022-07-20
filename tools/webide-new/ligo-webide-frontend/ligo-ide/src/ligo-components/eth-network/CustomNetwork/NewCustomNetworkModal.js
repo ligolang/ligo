@@ -27,7 +27,7 @@ export default class CustomNetworkModal extends PureComponent {
     setTimeout(() => this.input.current?.focus(), 100);
   };
 
-  tryCreateSdk = async option => {
+  tryCreateSdk = async (option) => {
     this.setState({ pending: true });
     try {
       const status = await networkManager.updateCustomNetwork(option);
@@ -75,14 +75,14 @@ export default class CustomNetworkModal extends PureComponent {
           label="Name"
           maxLength="50"
           value={option.name}
-          onChange={name => this.setState({ option: { ...option, name } })}
+          onChange={(name) => this.setState({ option: { ...option, name } })}
         />
         <DebouncedFormGroup
           label="URL of node rpc"
           placeholder={placeholder}
           maxLength="300"
           value={option.url}
-          onChange={url => this.setState({ status: null, option: { ...option, url } })}
+          onChange={(url) => this.setState({ status: null, option: { ...option, url } })}
         />
         {status && (
           <FormGroup>

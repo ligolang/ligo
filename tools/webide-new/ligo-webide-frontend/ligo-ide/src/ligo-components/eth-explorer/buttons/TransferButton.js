@@ -82,7 +82,7 @@ export default class TransferButton extends PureComponent {
     this.setState({ pushing: true });
 
     const override = Object.fromEntries(
-      networkManager.sdk?.utils.txOptions.list.map(option => [option.name, option.default])
+      networkManager.sdk?.utils.txOptions.list.map((option) => [option.name, option.default])
     );
     try {
       const tx = await networkManager.sdk.getTransferTransaction(
@@ -138,7 +138,7 @@ export default class TransferButton extends PureComponent {
     return (
       <DropdownInput
         label="Token"
-        renderText={option => option.text}
+        renderText={(option) => option.text}
         options={[
           {
             id: "core",
@@ -152,8 +152,8 @@ export default class TransferButton extends PureComponent {
             badge: accountBadge,
           },
           ...tokens
-            .filter(t => t.type === "ERC20")
-            .map(t => {
+            .filter((t) => t.type === "ERC20")
+            .map((t) => {
               const badge = `${new Intl.NumberFormat().format(t.balance / 10 ** t.decimals)} ${
                 t.symbol
               }`;
@@ -179,7 +179,7 @@ export default class TransferButton extends PureComponent {
             }),
         ]}
         value={token}
-        onChange={token => this.setState({ token })}
+        onChange={(token) => this.setState({ token })}
       />
     );
   }
@@ -191,9 +191,7 @@ export default class TransferButton extends PureComponent {
     const max =
       token === "core"
         ? `${accountBalance} ${networkManager.symbol}`
-        : `${big(token.balance)
-            .div(big(10).pow(token.decimals))
-            .toString()} ${token.symbol}`;
+        : `${big(token.balance).div(big(10).pow(token.decimals)).toString()} ${token.symbol}`;
 
     return (
       <>
@@ -221,7 +219,7 @@ export default class TransferButton extends PureComponent {
             maxLength="50"
             placeholder={`Max: ${max}`}
             value={amount}
-            onChange={amount => this.setState({ amount })}
+            onChange={(amount) => this.setState({ amount })}
           />
           <FormGroup>
             <Label>Recipient</Label>
@@ -237,14 +235,14 @@ export default class TransferButton extends PureComponent {
                     group: networkManager.browserExtension.name.toLowerCase(),
                     badge: networkManager.browserExtension.name,
                     children:
-                      networkManager.browserExtension?.allAccounts?.map(address => ({
+                      networkManager.browserExtension?.allAccounts?.map((address) => ({
                         address,
                       })) || [],
                   },
                 ]
               }
               value={recipient}
-              onChange={recipient => this.setState({ recipient })}
+              onChange={(recipient) => this.setState({ recipient })}
             />
           </FormGroup>
         </Modal>

@@ -20,7 +20,7 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
     BaseProjectManager.channel.off("settings", this.debouncedUpdate);
   }
 
-  renderLanguageOption = projectSettings => {
+  renderLanguageOption = (projectSettings) => {
     if (!this.props.languages?.length) {
       return null;
     }
@@ -33,9 +33,9 @@ export default class ProjectSettingsTab extends AbstractProjectSettingsTab {
           type="select"
           className="bg-black"
           value={projectSettings?.get("language")}
-          onChange={event => this.onChange("language")(event.target.value)}
+          onChange={(event) => this.onChange("language")(event.target.value)}
         >
-          {this.props.languages.map(item => (
+          {this.props.languages.map((item) => (
             <option key={item.key} value={item.key}>
               {item.text}
             </option>

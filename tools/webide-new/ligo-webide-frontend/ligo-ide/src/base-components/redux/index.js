@@ -40,7 +40,7 @@ class Redux {
       composeEnhancers(applyMiddleware(...middlewares))
     );
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const persistor = persistStore(this.store, null, () => {
         // update store due to app update
         updateStore({

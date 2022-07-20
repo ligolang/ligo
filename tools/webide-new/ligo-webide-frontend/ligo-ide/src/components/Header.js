@@ -5,8 +5,7 @@ import { IpcChannel } from "~/base-components/ipc";
 
 import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
 // import { networkManager } from '~/ligo-components/eth-network'
-import { BaseProjectManager } from "~/base-components/workspace";
-import { actions } from "~/base-components/workspace";
+import { BaseProjectManager, actions } from "~/base-components/workspace";
 import { createProject } from "../lib/bsn";
 // import keypairManager from '~/base-components/keypair'
 

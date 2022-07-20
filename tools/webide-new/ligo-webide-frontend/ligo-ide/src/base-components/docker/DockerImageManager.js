@@ -42,7 +42,7 @@ export default class DockerImageManager extends PureComponent {
     this.channel.versions();
   };
 
-  refreshVersions = versions => {
+  refreshVersions = (versions) => {
     this.setState({
       installed: versions,
       loading: false,
@@ -50,7 +50,7 @@ export default class DockerImageManager extends PureComponent {
     this.props.onRefresh(versions);
   };
 
-  deleteVersion = async version => {
+  deleteVersion = async (version) => {
     this.setState({ loading: true });
     await this.channel.delete(version);
     await this.fetchVersions();
@@ -79,7 +79,7 @@ export default class DockerImageManager extends PureComponent {
       );
     }
 
-    return this.state.installed.map(v => (
+    return this.state.installed.map((v) => (
       <tr key={`table-row-${v.Tag}`} className="hover-block">
         <td>{v.Tag}</td>
         <td>{moment(v.CreatedAt, "YYYY-MM-DD HH:mm:ss Z").format("LL")}</td>

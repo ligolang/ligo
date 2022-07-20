@@ -49,7 +49,7 @@ export default class DownloadImageButton extends PureComponent {
     this.setState({ loading: false, versions });
   };
 
-  onSelectVersion = downloadVersion => {
+  onSelectVersion = (downloadVersion) => {
     this.setState({ downloadVersion, downloading: true });
     this.modal.current.openModal();
   };

@@ -28,7 +28,7 @@ export default class InstanceConfigModal extends PureComponent {
     this.setState({ value: config, loading: false });
   }
 
-  onChange = value => this.setState({ value });
+  onChange = (value) => this.setState({ value });
 
   onConfirm = async () => {
     this.setState({ saving: true });

@@ -3,7 +3,7 @@ import React from "react";
 import { Badge, DebouncedInput } from "~/base-components/ui-components";
 
 export default function StringParamInput({ size, value, onChange, placeholder, disabled }) {
-  const onChangeValue = value => {
+  const onChangeValue = (value) => {
     onChange(value, { display: value, raw: value, empty: !value });
   };
 

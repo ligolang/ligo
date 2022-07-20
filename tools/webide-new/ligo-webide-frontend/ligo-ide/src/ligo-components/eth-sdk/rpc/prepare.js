@@ -4,7 +4,7 @@ function prepare(parameters, asObject) {
   }
   const { obj } = parameters;
   const keys = Object.keys(obj);
-  const values = keys.map(key => {
+  const values = keys.map((key) => {
     const param = obj[key];
     if (param.type === "tuple") {
       return prepare({ obj: param.value }, true);

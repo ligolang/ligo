@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { UncontrolledTooltip } from "~/base-components/ui-components";
 
-const formatAddress = address => (
+const formatAddress = (address) => (
   <code>
     {address.substr(0, 12)}...
     {address.substr(address.length - 6, address.length)}

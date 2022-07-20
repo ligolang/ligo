@@ -50,8 +50,8 @@ export default class CompilerTerminal extends PureComponent {
     }
   }
 
-  switchCompilerConsole = key => {
-    const tab = this.initialTabs.find(tab => tab.key === key);
+  switchCompilerConsole = (key) => {
+    const tab = this.initialTabs.find((tab) => tab.key === key);
     this.tabs.current.currentTab = tab;
   };
 
@@ -71,7 +71,7 @@ export default class CompilerTerminal extends PureComponent {
         noCloseTab
         initialSelected="terminal"
         initialTabs={this.initialTabs}
-        onSelectTab={tab => this.setState({ activeTab: tab.key })}
+        onSelectTab={(tab) => this.setState({ activeTab: tab.key })}
         ToolButtons={[
           {
             icon: "fas fa-trash-alt",
@@ -83,7 +83,7 @@ export default class CompilerTerminal extends PureComponent {
         <TabContent className="h-100 w-100" activeTab={activeTab}>
           <TabPane className="h-100 w-100" tabId="terminal">
             <Terminal
-              ref={ref => (CompilerManager.terminal = ref)}
+              ref={(ref) => (CompilerManager.terminal = ref)}
               active={active && activeTab === "terminal"}
               cwd={cwd}
               logId="compiler-terminal"

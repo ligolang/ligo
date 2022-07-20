@@ -25,11 +25,11 @@ export default class CustomNetworkModal extends PureComponent {
     this.newConnectionModal.current?.openModal(modify, option);
   };
 
-  delete = name => {
+  delete = (name) => {
     redux.dispatch("REMOVE_CUSTOM_NETWORK", name);
   };
 
-  connect = async option => {
+  connect = async (option) => {
     try {
       this.setState({ connecting: option.name });
       const status = await networkManager.updateCustomNetwork(option);

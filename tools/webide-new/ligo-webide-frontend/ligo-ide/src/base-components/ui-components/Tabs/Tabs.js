@@ -127,7 +127,7 @@ export default class Tabs extends PureComponent {
     const index = this.findTabIndex();
 
     if (target) {
-      Object.keys(updates).forEach(key => {
+      Object.keys(updates).forEach((key) => {
         target[key] = updates[key];
       });
       const tabs = cloneDeep(this.state.tabs);
@@ -150,7 +150,7 @@ export default class Tabs extends PureComponent {
     });
   }
 
-  changeCurrentTab = tab => {
+  changeCurrentTab = (tab) => {
     const found = this.findTab(this.tabKey(tab));
     if (found) {
       this.currentTab = found;
@@ -166,7 +166,7 @@ export default class Tabs extends PureComponent {
     } catch {}
   };
 
-  onCloseTab = async closingTab => {
+  onCloseTab = async (closingTab) => {
     let closeTabHandler;
     if (this.props.tryCloseTab) {
       closeTabHandler = await this.props.tryCloseTab(closingTab);
@@ -236,7 +236,7 @@ export default class Tabs extends PureComponent {
           className={this.props.headerClassName}
           tabs={this.state.tabs}
           selected={this.tabObj()}
-          onSelectTab={tab => (this.currentTab = tab)}
+          onSelectTab={(tab) => (this.currentTab = tab)}
           getTabText={this.props.getTabText}
           onNewTab={this.props.createNewTab && this.onNewTab}
           onCloseTab={this.props.noCloseTab ? undefined : this.onCloseTab}

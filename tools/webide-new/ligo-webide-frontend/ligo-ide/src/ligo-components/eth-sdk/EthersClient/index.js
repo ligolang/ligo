@@ -73,7 +73,8 @@ export default class EthersClient {
     };
   }
 
-  async getTransactions(address, page, size) {
+  async getTransactions(addr, page, size) {
+    let address = addr;
     address = address.toLowerCase();
     if (this.networkId.startsWith("dev")) {
       const { queue } = redux.getState();
@@ -82,7 +83,7 @@ export default class EthersClient {
         return { length: 0, list: [] };
       }
 
-      const filtered = txs.filter(tx => {
+      const filtered = txs.filter((tx) => {
         const from = tx.getIn(["data", "transaction", "from"]) || "";
         const to = tx.getIn(["data", "transaction", "to"]) || "";
         return (
@@ -92,7 +93,7 @@ export default class EthersClient {
       });
 
       const list = filtered
-        .map(tx => ({
+        .map((tx) => ({
           ...tx.getIn(["data", "transaction"]).toJS(),
           ...tx.getIn(["data", "receipt"]).toJS(),
           timeStamp: tx.get("ts"),
@@ -109,7 +110,7 @@ export default class EthersClient {
 
   async getTokens(address) {
     if (this.chainId !== 1) {
-      return;
+      return undefined;
     }
     const url = `https://services.tokenview.com/vipapi/eth/address/tokenbalance/${address}?apikey=${process.env.TOKENVIEW_API_TOKEN}`;
     let json;
@@ -117,13 +118,13 @@ export default class EthersClient {
       const result = await this.channel.invoke("fetch", url);
       json = JSON.parse(result);
     } catch {
-      return;
+      return undefined;
     }
     if (json.code !== 1) {
-      return;
+      return undefined;
     }
-    return json.data.map(t => {
-      const token = tokenlist.tokens.find(token => token.address.toLowerCase() === t.tokenInfo.h);
+    return json.data.map((t) => {
+      const token = tokenlist.tokens.find((token) => token.address.toLowerCase() === t.tokenInfo.h);
       return {
         type: "ERC20",
         balance: t.balance,
@@ -138,18 +139,19 @@ export default class EthersClient {
 
   async getTokenInfo(address) {
     if (this.chainId !== 1) {
-      return;
+      return undefined;
     }
-    const token = tokenlist.tokens.find(t => t.address.toLowerCase() === address);
+    const token = tokenlist.tokens.find((t) => t.address.toLowerCase() === address);
     if (token) {
       token.icon = token.logoURI;
       token.address = token.address.toLowerCase();
-      token.totalSupply = await this._getTokenTotalSupply(address);
+      token.totalSupply = await this.getTokenTotalSupply(address);
       return token;
     }
+    return undefined;
   }
 
-  async _getTokenTotalSupply(address) {
+  async getTokenTotalSupply(address) {
     const result = await this.explorer.getTokenTotalSupply(address);
     return result.result;
   }

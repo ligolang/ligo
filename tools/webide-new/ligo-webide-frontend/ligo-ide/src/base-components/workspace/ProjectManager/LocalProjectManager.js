@@ -105,7 +105,7 @@ export default class LocalProjectManager extends BaseProjectManager {
   async loadRootDirectory() {
     const result = await this.readDirectory(this.projectRoot);
 
-    const rawData = result.map(item => ({
+    const rawData = result.map((item) => ({
       ...item,
       pathInProject: `${this.projectName}/${item.name}`,
     }));
@@ -149,7 +149,7 @@ export default class LocalProjectManager extends BaseProjectManager {
 
   async loadDirectory(node) {
     const result = await this.readDirectory(node.path);
-    const rawData = result.map(item => ({
+    const rawData = result.map((item) => ({
       ...item,
       pathInProject: this.pathInProject(item.path),
     }));
@@ -258,12 +258,12 @@ export default class LocalProjectManager extends BaseProjectManager {
         await fileOps.copyMoveFile(from, to, "move");
       }
 
-      if (type === 'folder') {
-        await fileOps.copyMoveFolder(from, to, 'move')
+      if (type === "folder") {
+        await fileOps.copyMoveFolder(from, to, "move");
       }
     } catch (e) {
-      notification.error(`Move ${type} error`, e.message)
-      return
+      notification.error(`Move ${type} error`, e.message);
+      return;
     }
 
     await this.refreshDirectory({
@@ -279,12 +279,12 @@ export default class LocalProjectManager extends BaseProjectManager {
         await fileOps.copyMoveFile(from, to, "copy");
       }
 
-      if (type === 'folder') {
-        await fileOps.copyMoveFolder(from, to, 'copy')
+      if (type === "folder") {
+        await fileOps.copyMoveFolder(from, to, "copy");
       }
     } catch (e) {
-      notification.error(`Copy ${type} error`, e.message)
-      return
+      notification.error(`Copy ${type} error`, e.message);
+      return;
     }
 
     await this.refreshDirectory({

@@ -15,9 +15,10 @@ import ProjectSettingsTab from "./ProjectSettingsTab";
 
 import addSolidityLanguage from "./languages/solidity";
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 useBuiltinCustomTabs(["markdown"]);
 modelSessionManager.registerCustomTab("settings", ProjectSettingsTab, "Project Settings");
-modelSessionManager.registerModeDetector(filePath => {
+modelSessionManager.registerModeDetector((filePath) => {
   const { prefix, userId, projectId, settingsFilePath } = modelSessionManager.projectManager;
   const { base } = fileOps.pathHelper.parse(filePath);
   const settingFilePath = settingsFilePath; // platform.isDesktop ? settingsFilePath : `${prefix}/${userId}/${projectId}/config.json`
@@ -44,7 +45,7 @@ modelSessionManager.registerModeDetector(filePath => {
   return defaultModeDetector(filePath);
 });
 
-const makeContextMenu = (contextMenu, projectManager) => node => {
+const makeContextMenu = (contextMenu, projectManager) => (node) => {
   if (!node) {
     return [];
   }
@@ -52,7 +53,7 @@ const makeContextMenu = (contextMenu, projectManager) => node => {
   // hide "Open" menu item when it`s a folder
   if (node.children) {
     const menus = [...contextMenu];
-    const index = findIndex(contextMenu, item => item?.text === "Open");
+    const index = findIndex(contextMenu, (item) => item?.text === "Open");
     if (index !== -1) {
       menus.splice(index, 2);
     }

@@ -38,7 +38,7 @@ class UserProfile extends PureComponent {
     );
   };
 
-  renderDescription = desc => {
+  renderDescription = (desc) => {
     if (desc) {
       return desc;
     }

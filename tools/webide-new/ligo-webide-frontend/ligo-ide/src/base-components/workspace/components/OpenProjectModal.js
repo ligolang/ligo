@@ -33,7 +33,7 @@ export default class OpenProjectModal extends PureComponent {
     });
     this.forceUpdate();
     this.modal.current.openModal();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.onConfirm = resolve;
     });
   }
@@ -45,7 +45,7 @@ export default class OpenProjectModal extends PureComponent {
 
     const gistId = this.getGistId(link);
 
-    const obj = await fileOps.loadGistProject(gistId).catch(e => {
+    const obj = await fileOps.loadGistProject(gistId).catch((e) => {
       notification.error("Gist load error", e.message);
     });
 
@@ -65,7 +65,7 @@ export default class OpenProjectModal extends PureComponent {
     }
   };
 
-  getGistId = str => {
+  getGistId = (str) => {
     const idr = /[0-9A-Fa-f]{8,}/;
     const match = idr.exec(str);
     return match ? match[0] : null;
@@ -97,13 +97,13 @@ export default class OpenProjectModal extends PureComponent {
           ref={this.nameInput}
           label="Project name"
           value={this.state.name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
         <DebouncedFormGroup
           ref={this.linkInput}
           label="Gist link"
           value={this.state.link}
-          onChange={link => this.setState({ link })}
+          onChange={(link) => this.setState({ link })}
         />
       </Modal>
     );

@@ -15,7 +15,7 @@ class NetworkManager {
   }
 
   addSdk(Sdk, networks) {
-    networks.forEach(n => this.Sdks.set(n.id, Sdk));
+    networks.forEach((n) => this.Sdks.set(n.id, Sdk));
     this.networks = [...this.networks, ...networks];
 
     const enabled = !process.env.REACT_APP_DISABLE_BROWSER_EXTENSION;
@@ -37,7 +37,7 @@ class NetworkManager {
   }
 
   get current() {
-    return this.networks.find(n => n.id === this.networkId);
+    return this.networks.find((n) => n.id === this.networkId);
   }
 
   get symbol() {
@@ -55,7 +55,7 @@ class NetworkManager {
 
   async updateSdk(params) {
     this._sdk = this.newSdk({ ...this.network, ...params });
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       const h = setInterval(() => {
         if (!this.sdk) {
           clearInterval(h);
@@ -146,7 +146,7 @@ class NetworkManager {
 
     const cachingKeys = getCachingKeys();
     cachingKeys
-      .filter(key => key.startsWith("contract-") || key.startsWith("account-"))
+      .filter((key) => key.startsWith("contract-") || key.startsWith("account-"))
       .forEach(dropByCacheKey);
 
     this.network = network;

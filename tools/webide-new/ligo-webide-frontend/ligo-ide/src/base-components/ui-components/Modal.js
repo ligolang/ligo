@@ -44,7 +44,7 @@ export default class BaseModal extends PureComponent {
 
   async openModal() {
     document.addEventListener("keydown", this.onKeyDown);
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState({ isOpen: true }, resolve);
     });
   }
@@ -56,7 +56,7 @@ export default class BaseModal extends PureComponent {
     }
   }
 
-  onKeyDown = e => {
+  onKeyDown = (e) => {
     let isEsc = false;
     if (e.key) {
       isEsc = e.key === "Escape" || e.key === "Esc";

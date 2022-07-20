@@ -88,7 +88,7 @@ export default class CreateFileOrFolderModals extends PureComponent {
           placeholder={this.state.type === "file" ? "File name" : "Folder name"}
           maxLength="50"
           value={this.state.name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
       </Modal>
     );

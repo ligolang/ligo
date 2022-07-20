@@ -19,13 +19,15 @@ export default class SignRequestModal extends PureComponent {
     this.modal = React.createRef();
   }
 
-  openModal = async tx => {
+  // eslint-disable-next-line react/no-unused-class-component-methods
+  openModal = async (tx) => {
+    // eslint-disable-next-line react/no-unused-class-component-methods
     this.tx = tx;
     const state = {
       from: networkManager.sdk?.utils.formatAddress(tx.from, networkManager.sdk?.chainId),
       to: tx.to,
     };
-    networkManager.sdk?.utils.txOptions?.list.forEach(option => {
+    networkManager.sdk?.utils.txOptions?.list.forEach((option) => {
       if (tx[option.name]) {
         state[option.name] = BigInt(tx[option.name]).toString();
       } else if (tx[option.alias]) {
@@ -94,14 +96,14 @@ export default class SignRequestModal extends PureComponent {
         <KeypairInputSelector
           label="From"
           value={from}
-          onChange={from => this.setState({ from })}
+          onChange={(from) => this.setState({ from })}
         />
         {to ? (
           <KeypairInputSelector
             label="To"
             editable
             value={to}
-            onChange={to => this.setState({ to })}
+            onChange={(to) => this.setState({ to })}
           />
         ) : (
           <DebouncedFormGroup label="To" value="Contract Creation" disabled />
@@ -117,19 +119,19 @@ export default class SignRequestModal extends PureComponent {
           label={`${networkManager.symbol} to Send`}
           icon="fas fa-coins"
           value={this.state.value}
-          onChange={value => this.setState({ value })}
+          onChange={(value) => this.setState({ value })}
           disabled
           placeholder="Default: 0"
         />
         <div className="row">
-          {networkManager.sdk?.utils.txOptions?.list.map(option => (
+          {networkManager.sdk?.utils.txOptions?.list.map((option) => (
             <ActionParamFormGroup
               key={`deploy-param-${option.name}`}
               className={option.className}
               label={option.label}
               icon={option.icon}
               value={this.state[option.name]}
-              onChange={value => this.setState({ [option.name]: value })}
+              onChange={(value) => this.setState({ [option.name]: value })}
               disabled
               placeholder={option.placeholder}
             />

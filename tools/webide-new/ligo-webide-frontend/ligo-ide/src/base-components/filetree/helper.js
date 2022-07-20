@@ -1,6 +1,6 @@
-const computeType = valueArr => {
-  const errorCount = valueArr.filter(item => item.type === "error").length;
-  const warningCount = valueArr.filter(item => item.type === "warning").length;
+const computeType = (valueArr) => {
+  const errorCount = valueArr.filter((item) => item.type === "error").length;
+  const warningCount = valueArr.filter((item) => item.type === "warning").length;
 
   return {
     type: errorCount ? "error" : warningCount ? "warning" : "default",
@@ -116,29 +116,33 @@ const checkFatherNode = (curNode, targetNode, fn) => {
   return false;
 };
 
-const findFather = fn => (curNode, targetNode) => checkFatherNode(curNode, targetNode, fn);
+const findFather = (fn) => (curNode, targetNode) => checkFatherNode(curNode, targetNode, fn);
 
-const findChildren = (treeData, path) => treeData.children.find(item => item.path === path);
+const findChildren = (treeData, path) => treeData.children.find((item) => item.path === path);
 
-const filterDuplicate = arr => Array.from(new Set(arr));
+const filterDuplicate = (arr) => Array.from(new Set(arr));
 
-const filterFolder = file => {
-  return file.filter(item => item.type === "folder");
+const filterFolder = (file) => {
+  return file.filter((item) => item.type === "folder");
 };
 
-const filterFile = file => {
-  return file.filter(item => item.type === "file");
+const filterFile = (file) => {
+  return file.filter((item) => item.type === "file");
 };
 
-const compareUnicode = file => {
+const compareUnicode = (file) => {
   return file.sort((a, b) => a.name.localeCompare(b.name));
 };
 
 const compose = (...funcs) => {
-  return funcs.reduce((a, b) => (...args) => a(b(...args)));
+  return funcs.reduce(
+    (a, b) =>
+      (...args) =>
+        a(b(...args))
+  );
 };
 
-const sortFile = file => {
+const sortFile = (file) => {
   const sortedFolder = compose(filterFolder, compareUnicode)(file);
   const sortedFile = compose(filterFile, compareUnicode)(file);
   return sortedFolder.concat(sortedFile);

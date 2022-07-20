@@ -4,7 +4,7 @@ import compilerManager from "../compilerManager";
 import TruffleSelector from "./TruffleSelector";
 import SolcSelector from "./SolcSelector";
 
-export default props => {
+export default function (props) {
   if (props.author === "local") {
     return (
       <>
@@ -15,4 +15,4 @@ export default props => {
   }
 
   return <SolcSelector remote solc={compilerManager.solc} />;
-};
+}

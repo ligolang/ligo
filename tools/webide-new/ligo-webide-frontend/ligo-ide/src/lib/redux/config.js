@@ -53,7 +53,7 @@ export const contracts = {
   persist: true,
   actions: {
     CREATE_TABS: {
-      reducer: state => state.updateIn(["dev", "tabs"], (tabs = List([])) => tabs),
+      reducer: (state) => state.updateIn(["dev", "tabs"], (tabs = List([])) => tabs),
     },
     SET_CONTRACT_TABS: {
       reducer: (state, { payload }) =>
@@ -87,7 +87,7 @@ export const accounts = {
   persist: true,
   actions: {
     CREATE_TABS: {
-      reducer: state => state.updateIn(["dev", "tabs"], (tabs = List([])) => tabs),
+      reducer: (state) => state.updateIn(["dev", "tabs"], (tabs = List([])) => tabs),
     },
     SET_ACCOUNT_TABS: {
       reducer: (state, { payload }) =>
@@ -106,7 +106,7 @@ export const accounts = {
         if (index === -1) {
           return state;
         }
-        return state.updateIn([payload.network, "accounts"], data => data.remove(index));
+        return state.updateIn([payload.network, "accounts"], (data) => data.remove(index));
       },
     },
   },

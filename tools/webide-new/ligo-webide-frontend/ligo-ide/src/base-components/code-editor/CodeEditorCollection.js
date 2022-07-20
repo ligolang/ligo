@@ -50,11 +50,7 @@ export default class CodeEditorCollection extends PureComponent {
     ];
   }
 
-  refresh() {
-    this.editorContainer?.current.forceUpdate();
-  }
-
-  openTab = tab => {
+  openTab = (tab) => {
     this.tabs.current.currentTab = tab;
   };
 
@@ -63,7 +59,7 @@ export default class CodeEditorCollection extends PureComponent {
     this.props.onSelectTab(tab);
   };
 
-  setCurrentTabUnsaved = unsaved => {
+  setCurrentTabUnsaved = (unsaved) => {
     this.tabs.current.updateTab({ unsaved });
   };
 
@@ -81,14 +77,14 @@ export default class CodeEditorCollection extends PureComponent {
       .filter(({ path, unsaved }) => path && unsaved)
       .map(({ path }) => path);
 
-  tryCloseTab = async closingTab => {
+  tryCloseTab = async (closingTab) => {
     if (closingTab.unsaved) {
       const willClose = await this.promptSave(closingTab.path);
       if (!willClose) {
         return false;
       }
     }
-    return tab => modelSessionManager.closeModelSession(tab.path);
+    return (tab) => modelSessionManager.closeModelSession(tab.path);
   };
 
   closeCurrentFile = () => {
@@ -97,27 +93,27 @@ export default class CodeEditorCollection extends PureComponent {
   };
 
   // MARK: may can define a batch delete in the Tabs component
-  closeOtherFiles = currentTab => {
+  closeOtherFiles = (currentTab) => {
     const { onCloseTab, allTabs } = this.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key);
+    const shouldCloseTabs = allTabs.filter((tab) => tab.key !== currentTab.key);
 
-    shouldCloseTabs.forEach(tab => {
+    shouldCloseTabs.forEach((tab) => {
       onCloseTab(tab);
     });
   };
 
   closeSaved = () => {
     const { onCloseTab, allTabs } = this.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => !tab.unsaved);
+    const shouldCloseTabs = allTabs.filter((tab) => !tab.unsaved);
 
-    shouldCloseTabs.forEach(tab => {
+    shouldCloseTabs.forEach((tab) => {
       onCloseTab(tab);
     });
   };
 
-  saveFile = async filePath => modelSessionManager.saveFile(filePath);
+  saveFile = async (filePath) => modelSessionManager.saveFile(filePath);
 
-  promptSave = async filePath => {
+  promptSave = async (filePath) => {
     let clicked = false;
     // if (_.platform.isWeb) {
     //   const filename = windowPath.parse(path).base
@@ -163,7 +159,7 @@ export default class CodeEditorCollection extends PureComponent {
     modelSessionManager.closeAllModelSessions();
   };
 
-  fileSaving = filePath => this.tabs.current.updateTab({ saving: true }, filePath);
+  fileSaving = (filePath) => this.tabs.current.updateTab({ saving: true }, filePath);
 
   fileSaved = async (filePath, { saveAsPath, unsaved = false } = {}) => {
     const updates = { unsaved, saving: false };
@@ -178,7 +174,7 @@ export default class CodeEditorCollection extends PureComponent {
     }
   };
 
-  onCommand = cmd => {
+  onCommand = (cmd) => {
     switch (cmd) {
       case "save":
         modelSessionManager.saveCurrentFile();
@@ -207,6 +203,10 @@ export default class CodeEditorCollection extends PureComponent {
     }
   };
 
+  refresh() {
+    this.editorContainer?.current.forceUpdate();
+  }
+
   render() {
     const { theme, editorConfig, projectRoot, initialTab, readOnly } = this.props;
 
@@ -227,7 +227,7 @@ export default class CodeEditorCollection extends PureComponent {
           onSelectTab={this.onSelectTab}
           tryCloseTab={this.tryCloseTab}
           createNewTab={undefined}
-          getTabText={tab => modelSessionManager.tabTitle(tab)}
+          getTabText={(tab) => modelSessionManager.tabTitle(tab)}
           tabContextMenu={this.tabContextMenu}
         >
           <MonacoEditorContainer

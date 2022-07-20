@@ -32,7 +32,7 @@ export default class NewProjectModal extends PureComponent {
     });
     this.forceUpdate();
     this.modal.current.openModal();
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.onConfirm = resolve;
     });
   }
@@ -78,7 +78,7 @@ export default class NewProjectModal extends PureComponent {
         options={templates}
         placeholder="(Please select a template)"
         value={template}
-        onChange={template => this.setState({ template })}
+        onChange={(template) => this.setState({ template })}
       />
     );
   }
@@ -98,7 +98,7 @@ export default class NewProjectModal extends PureComponent {
         <DebouncedFormGroup
           label="Project name"
           value={name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
         {this.renderTemplate(true)}
       </Modal>

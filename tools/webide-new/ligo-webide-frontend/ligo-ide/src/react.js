@@ -14,8 +14,8 @@ if (!process.env.CDN) {
 document.title = process.env.PROJECT_NAME;
 ReactDOM.render(<App />, document.getElementById("root"));
 
-window.addEventListener("auxclick", event => {
+window.addEventListener("auxclick", (event) => {
   if (event.button === 1) event.preventDefault();
 });
 
-window.addEventListener("contextmenu", e => e.preventDefault());
+window.addEventListener("contextmenu", (e) => e.preventDefault());

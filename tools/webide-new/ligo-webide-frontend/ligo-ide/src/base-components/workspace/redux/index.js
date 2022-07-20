@@ -15,7 +15,7 @@ export default {
       },
     },
     PROJECT_LOADED: {
-      reducer: state => {
+      reducer: (state) => {
         return state.setIn(["selected", "loaded"], true);
       },
     },
@@ -36,7 +36,7 @@ export default {
         if (index > -1) {
           return state
             .update("local", (projects = List()) => projects.remove(index))
-            .update("selected", selected => {
+            .update("selected", (selected) => {
               if (selected && selected.get("id") === id) {
                 return;
               }
@@ -48,7 +48,7 @@ export default {
         if (index > -1) {
           return state
             .update("remote", (projects = List()) => projects.remove(index))
-            .update("selected", selected => {
+            .update("selected", (selected) => {
               if (selected && selected.get("id") === id) {
                 return;
               }

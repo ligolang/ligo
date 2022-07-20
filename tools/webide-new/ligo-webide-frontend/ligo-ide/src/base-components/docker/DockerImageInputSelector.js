@@ -22,13 +22,13 @@ export default class DockerImageInputSelector extends PureComponent {
     return this.props.channel?.imageName || this.props.imageName;
   }
 
-  onRefreshVersions = versions => {
+  onRefreshVersions = (versions) => {
     if (!this.props.disableAutoSelection && !this.props.selected && versions.length) {
       this.props.onSelected(versions[0].Tag);
     }
     this.setState({
       loading: false,
-      versions: versions.map(v => ({ id: v.Tag, display: v.Name || v.Tag })),
+      versions: versions.map((v) => ({ id: v.Tag, display: v.Name || v.Tag })),
     });
   };
 
@@ -36,7 +36,7 @@ export default class DockerImageInputSelector extends PureComponent {
     this.modal.current.openModal();
   };
 
-  badgeProps = selected => {
+  badgeProps = (selected) => {
     if (this.state.loading) {
       return {
         badge: (
@@ -54,8 +54,8 @@ export default class DockerImageInputSelector extends PureComponent {
       return;
     }
     if (
-      !this.state.versions.find(v => v.id === selected) &&
-      !this.props.extraOptions?.find(i => i.id === selected)
+      !this.state.versions.find((v) => v.id === selected) &&
+      !this.props.extraOptions?.find((i) => i.id === selected)
     ) {
       return { badge: "not installed", badgeColor: "danger" };
     }

@@ -27,7 +27,7 @@ export default class NavDropdown extends Component {
     id: `nav-contextmenu-${this.props.route}`,
   });
 
-  handleContextMenu = event => {
+  handleContextMenu = (event) => {
     event.nativeEvent.preventDefault();
 
     this.contextMenuHandler.show(event.nativeEvent, {
@@ -37,7 +37,7 @@ export default class NavDropdown extends Component {
     });
   };
 
-  onToggle = event => {
+  onToggle = (event) => {
     if (this.props.onToggle) {
       if (this.props.onToggle(event)) {
         return;
@@ -51,7 +51,7 @@ export default class NavDropdown extends Component {
     this.setState({ dropdown: !this.state.dropdown });
   };
 
-  renderDropdownList = list => {
+  renderDropdownList = (list) => {
     if (!list.length) {
       return <DropdownItem disabled>(None)</DropdownItem>;
     }
@@ -85,11 +85,11 @@ export default class NavDropdown extends Component {
       <DropdownItem
         key={`dropdown-item-header-${id}-${index}`}
         className={classnames({ active: isSelected })}
-        onClick={event => {
+        onClick={(event) => {
           event.preventDefault();
           this.props.onClickItem(item);
         }}
-        onContextMenu={event => {
+        onContextMenu={(event) => {
           const isLocalProject = listDropMenu.find(
             (elem, elIndex) => elem?.header === "local projects" && (elem.index = elIndex)
           );
@@ -135,7 +135,7 @@ export default class NavDropdown extends Component {
           tag="div"
           caret
           className="nav-dropdown-toggle p-0"
-          onClick={event => event.preventDefault()}
+          onClick={(event) => event.preventDefault()}
         >
           {children}
         </DropdownToggle>
@@ -151,7 +151,7 @@ export default class NavDropdown extends Component {
         </DropdownMenu>
         {menus.length > 0 && (
           <Menu animation={false} id={`nav-contextmenu-${this.props.route}`}>
-            {menus.map(item =>
+            {menus.map((item) =>
               item ? (
                 <Item key={item.text} onClick={() => item.onClick(this.state.activeItem)}>
                   {item.text}

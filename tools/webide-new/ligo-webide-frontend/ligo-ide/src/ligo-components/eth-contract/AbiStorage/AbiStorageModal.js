@@ -41,7 +41,7 @@ export default class AbiStorageModal extends PureComponent {
     this.setState({ abis, loading: false });
   }
 
-  viewAbi = async data => {
+  viewAbi = async (data) => {
     let formattedAbi = "";
     try {
       formattedAbi = JSON.stringify(JSON.parse(data.abi), null, 2);
@@ -68,7 +68,7 @@ export default class AbiStorageModal extends PureComponent {
     this.refresh();
   };
 
-  deleteAbi = async codeHash => {
+  deleteAbi = async (codeHash) => {
     redux.dispatch("ABI_DELETE", codeHash);
     notification.info("ABI Deleted", "The ABI record is removed from the storage.");
     this.refresh();
@@ -99,7 +99,7 @@ export default class AbiStorageModal extends PureComponent {
 
   renderAbiRow = (item, index) => {
     const [codeHash, obj] = item;
-    const abi = obj.get("abi");
+    let abi = obj.get("abi");
     const name = obj.get("name");
     try {
       abi = JSON.stringify(JSON.parse(abi), null, 2);

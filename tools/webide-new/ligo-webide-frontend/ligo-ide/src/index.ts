@@ -1,4 +1,6 @@
-import "~/base-components/platform/index.js";
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import "~/base-components/platform";
 import $loadjs from "loadjs";
 
 if (!process.env.CDN) {
@@ -20,6 +22,8 @@ if (!process.env.CDN) {
   );
 
   window.require = {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.21.2/min/vs" },
   };
 

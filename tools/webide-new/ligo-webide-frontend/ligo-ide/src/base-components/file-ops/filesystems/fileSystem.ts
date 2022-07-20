@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable max-classes-per-file */
 export class fileSystem {
   name!: string; // TODO remove !
 
@@ -28,10 +33,11 @@ export class fileSystem {
     try {
       await this.fs.stat(".workspaces");
       this.hasWorkSpaces = true;
+      // eslint-disable-next-line no-empty
     } catch (e) {}
   };
 
-  set = async () => {
+  set = () => {
     const w = window as any;
     if (!this.loaded) {
       return false;
@@ -53,6 +59,7 @@ export class fileSystems {
   addFileSystem = async (fs: fileSystem): Promise<boolean> => {
     try {
       this.fileSystems[fs.name] = fs;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       (await fs.test()) && (await fs.load());
       console.log(`${fs.name} is loaded...`);
       return true;
@@ -67,10 +74,10 @@ export class fileSystems {
    * @param {string[]} names
    * @returns {Promise}
    */
-  setFileSystem = async (filesystems: fileSystem[]): Promise<void> => {
-    for (const fs of filesystems) {
-      if (fs && this.fileSystems[fs.name]) {
-        await this.fileSystems[fs.name].set();
+  setFileSystem = (filesystems: fileSystem[]): void => {
+    for (let i = 0; i < filesystems.length; i++) {
+      if (filesystems[i] && this.fileSystems[filesystems[i].name]) {
+        this.fileSystems[filesystems[i].name].set();
         return;
       }
     }

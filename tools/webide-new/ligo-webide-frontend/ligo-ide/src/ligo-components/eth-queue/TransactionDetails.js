@@ -164,7 +164,7 @@ class TransactionDetails extends PureComponent {
                 { key: "raw", text: "Raw" },
               ]}
               selected={format}
-              onSelect={format => this.setState({ format })}
+              onSelect={(format) => this.setState({ format })}
             />
           </div>
           <ResultContent format={format} actionResult={result} onNavigate={closeModal} />
@@ -195,7 +195,7 @@ class TransactionDetails extends PureComponent {
     }
   };
 
-  renderError = error => {
+  renderError = (error) => {
     if (!error) {
       return null;
     }
@@ -254,7 +254,7 @@ class TransactionDetails extends PureComponent {
             className="mb-3"
             options={options}
             selected={selected}
-            onSelect={selected => this.setState({ selected })}
+            onSelect={(selected) => this.setState({ selected })}
           />
         </div>
         {this.renderContent()}

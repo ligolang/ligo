@@ -3,7 +3,7 @@ import React from "react";
 import moment from "moment";
 import { Badge } from "~/base-components/ui-components";
 
-export default ({ txHash, data, status, ts }) => {
+export default function ({ txHash, data, status, ts }) {
   let iconClassName = "fas fa-check-circle text-success mr-1";
   let statusComponent = null;
   if (status === "PUSHING") {
@@ -63,4 +63,4 @@ export default ({ txHash, data, status, ts }) => {
       {data.contractName && <div className="small text-alpha-50">{data.contractName}</div>}
     </div>
   );
-};
+}

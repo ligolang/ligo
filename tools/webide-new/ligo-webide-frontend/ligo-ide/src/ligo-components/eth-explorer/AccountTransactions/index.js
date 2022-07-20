@@ -28,13 +28,13 @@ export default class AccountTransactions extends PureComponent {
     }
   }
 
-  refresh = async account => {
+  refresh = async (account) => {
     this.setState({ txs: [], loading: true, page: 0, error: "" });
-    const { total, list: txs, noExplorer } = await networkManager.sdk.getTransactions(
-      account.address,
-      0,
-      this.state.size
-    );
+    const {
+      total,
+      list: txs,
+      noExplorer,
+    } = await networkManager.sdk.getTransactions(account.address, 0, this.state.size);
     if (noExplorer) {
       this.setState({ hide: true });
       return;
@@ -54,7 +54,11 @@ export default class AccountTransactions extends PureComponent {
 
   loadMore = async () => {
     this.setState({ loading: true, error: "" });
-    const { total, list: txs, noExplorer } = await networkManager.sdk.getTransactions(
+    const {
+      total,
+      list: txs,
+      noExplorer,
+    } = await networkManager.sdk.getTransactions(
       this.props.account.address,
       this.state.page,
       this.state.size
@@ -80,7 +84,7 @@ export default class AccountTransactions extends PureComponent {
 
   renderTableBody = () => {
     const { TransactionRow } = this.props;
-    const rows = this.state.txs.map(tx => (
+    const rows = this.state.txs.map((tx) => (
       <TransactionRow key={`tx-${tx.hash}`} tx={tx} owner={this.props.account.address} />
     ));
 
@@ -149,18 +153,20 @@ export default class AccountTransactions extends PureComponent {
   }
 }
 
-const TransactionHeader = () => (
-  <tr>
-    <th style={{ width: "10%" }}>time</th>
-    <th style={{ width: "8%" }}>block</th>
-    <th style={{ width: "17%" }}>tx hash</th>
-    <th style={{ width: "17%" }}>from</th>
-    <th style={{ width: "17%" }}>to</th>
-    <th style={{ width: "8%", textAlign: "right" }}>value</th>
-    <th style={{ width: "8%", textAlign: "right" }}>gas used</th>
-    <th style={{ width: "15%", textAlign: "right" }}>fee</th>
-  </tr>
-);
+function TransactionHeader() {
+  return (
+    <tr>
+      <th style={{ width: "10%" }}>time</th>
+      <th style={{ width: "8%" }}>block</th>
+      <th style={{ width: "17%" }}>tx hash</th>
+      <th style={{ width: "17%" }}>from</th>
+      <th style={{ width: "17%" }}>to</th>
+      <th style={{ width: "8%", textAlign: "right" }}>value</th>
+      <th style={{ width: "8%", textAlign: "right" }}>gas used</th>
+      <th style={{ width: "15%", textAlign: "right" }}>fee</th>
+    </tr>
+  );
+}
 
 AccountTransactions.defaultProps = {
   TransactionHeader,

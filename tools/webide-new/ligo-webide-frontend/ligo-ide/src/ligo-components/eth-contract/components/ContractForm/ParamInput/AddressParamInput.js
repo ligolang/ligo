@@ -24,7 +24,7 @@ export default function AddressParamInput({ size, value, onChange, disabled, max
             group: networkManager.browserExtension.name.toLowerCase(),
             badge: networkManager.browserExtension.name,
             children:
-              networkManager.browserExtension?.allAccounts?.map(address => ({
+              networkManager.browserExtension?.allAccounts?.map((address) => ({
                 address,
               })) || [],
           },

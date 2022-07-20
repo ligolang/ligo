@@ -24,7 +24,7 @@ class KeypairManager {
   }
 
   onUpdated(callback) {
-    const eventHandler = event => callback(event.detail);
+    const eventHandler = (event) => callback(event.detail);
     this.eventTarget.addEventListener("updated", eventHandler);
     return () => this.eventTarget.removeEventListener("updated", eventHandler);
   }
@@ -32,7 +32,7 @@ class KeypairManager {
   getKeypairFromRedux(networkId) {
     const keypairsState = redux.getState().keypairs;
     const formatjs = Object.values(keypairsState.toJS());
-    const unsorted = formatjs.map(keypair => ({
+    const unsorted = formatjs.map((keypair) => ({
       address: keypair.address,
       name: keypair.name,
       balance: (keypair.balance && keypair.balance[networkId]) || "0",
@@ -50,16 +50,16 @@ class KeypairManager {
       const { networkManager } = require("~/ligo-components/eth-network");
       const networkId = networkManager?.network?.id;
       let keypairs = await this.channel.invoke("get");
-      keypairs = keypairs.filter(item => item.address !== "");
+      keypairs = keypairs.filter((item) => item.address !== "");
       redux.dispatch("UPDATE_FROM_REMOTE", keypairs);
 
       keypairs.forEach(
-        item =>
+        (item) =>
           (item.address = networkManager?.sdk?.utils?.simplifyAddress(item.address) || item.address)
       );
       const sorted = this.getKeypairFromRedux(networkId);
 
-      const updating = sorted.map(async keypair => {
+      const updating = sorted.map(async (keypair) => {
         if (networkId === void 0) return;
         const { address } = keypair;
         const account = await (networkManager?.sdk?.client?.getAccount(address) || {
@@ -90,7 +90,7 @@ class KeypairManager {
   async loadAndUpdateKeypairs() {
     const keypairs = await this.loadAllKeypairs();
 
-    keypairs.forEach(k => (this.keypairNames[k.address] = k.name));
+    keypairs.forEach((k) => (this.keypairNames[k.address] = k.name));
 
     const event = new CustomEvent("updated", { detail: keypairs });
     this.eventTarget.dispatchEvent(event);

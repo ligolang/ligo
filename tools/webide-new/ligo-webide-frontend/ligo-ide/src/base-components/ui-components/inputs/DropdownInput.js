@@ -1,5 +1,5 @@
-import React, { PureComponent } from "react"
-import classnames from "classnames"
+import React, { PureComponent } from "react";
+import classnames from "classnames";
 import {
   FormGroup,
   Label,
@@ -12,7 +12,7 @@ import {
   DropdownMenu,
   DropdownItem,
   Badge,
-} from "reactstrap"
+} from "reactstrap";
 
 export default class DropdownInput extends PureComponent {
   constructor(props) {
@@ -54,27 +54,20 @@ export default class DropdownInput extends PureComponent {
       }
       const direction = event.keyCode === 38 ? -1 : 1;
       const activeValue = this.props.value;
-      const activeIndex = this.dropdownOptions.findIndex(
-        (item) => item.id === activeValue
-      );
+      const activeIndex = this.dropdownOptions.findIndex((item) => item.id === activeValue);
       let currentIndex = activeIndex;
       if (activeIndex === -1) {
         currentIndex = direction === 1 ? -1 : this.dropdownOptions.length;
       }
 
-      currentIndex += direction
+      currentIndex += direction;
       while (currentIndex >= 0 && currentIndex < this.dropdownOptions.length) {
         const option = this.dropdownOptions[currentIndex];
-        if (
-          !option.disabled &&
-          !option.header &&
-          !option.divider &&
-          !option.onClick
-        ) {
+        if (!option.disabled && !option.header && !option.divider && !option.onClick) {
           this.props.onChange(option.id);
           return;
         }
-        currentIndex += direction
+        currentIndex += direction;
       }
     } else if (event.keyCode === 13) {
       this.dropdownOptions = null;
@@ -119,7 +112,7 @@ export default class DropdownInput extends PureComponent {
 
   getDropdownOptions = () => {
     const { options = [] } = this.props;
-    const {filterMode} = this.state
+    const { filterMode } = this.state;
     let dropdownOptions = [];
 
     options.forEach((item, index) => {
@@ -140,10 +133,7 @@ export default class DropdownInput extends PureComponent {
         if (groupOptions.length) {
           groupOptions.unshift({ header: item.group, index });
           groupOptions.push({ divider: true, index: `post-${index}` });
-          if (
-            dropdownOptions.length &&
-            !dropdownOptions[dropdownOptions.length - 1].divider
-          ) {
+          if (dropdownOptions.length && !dropdownOptions[dropdownOptions.length - 1].divider) {
             groupOptions.unshift({ divider: true, index: `pre-${index}` });
           }
           dropdownOptions = dropdownOptions.concat(groupOptions);
@@ -161,10 +151,7 @@ export default class DropdownInput extends PureComponent {
       }
     });
 
-    if (
-      dropdownOptions.length &&
-      dropdownOptions[dropdownOptions.length - 1].divider
-    ) {
+    if (dropdownOptions.length && dropdownOptions[dropdownOptions.length - 1].divider) {
       dropdownOptions.pop();
     }
 
@@ -188,27 +175,23 @@ export default class DropdownInput extends PureComponent {
             {item.header}
           </DropdownItem>
         );
-      } else if (item.divider) {
-        return <DropdownItem key={`divider-${item.index}`} divider />;
-      } else {
-        const active = item.id === value;
-        const display =
-          typeof item.display === 'function'
-            ? item.display(value, active)
-            : item.display;
-        return (
-          <DropdownItem
-            key={`item-${item.id}`}
-            active={active}
-            disabled={item.disabled}
-            onClick={() =>
-              item.onClick ? item.onClick() : onChange(item.id, item.group)
-            }
-          >
-            {display}
-          </DropdownItem>
-        );
       }
+      if (item.divider) {
+        return <DropdownItem key={`divider-${item.index}`} divider />;
+      }
+      const active = item.id === value;
+      const display =
+        typeof item.display === "function" ? item.display(value, active) : item.display;
+      return (
+        <DropdownItem
+          key={`item-${item.id}`}
+          active={active}
+          disabled={item.disabled}
+          onClick={() => (item.onClick ? item.onClick() : onChange(item.id, item.group))}
+        >
+          {display}
+        </DropdownItem>
+      );
     });
   };
 
@@ -216,7 +199,8 @@ export default class DropdownInput extends PureComponent {
     const { editable, renderText } = this.props;
     if (renderText) {
       return renderText(option);
-    } else if (!editable) {
+    }
+    if (!editable) {
       return option?.display;
     }
     return null;
@@ -243,8 +227,7 @@ export default class DropdownInput extends PureComponent {
     const dropdownOptions = this.renderOptions();
 
     const badge = selectedOption?.badge || this.props.badge;
-    const badgeColor =
-      selectedOption?.badgeColor || this.props.badgeColor || 'info';
+    const badgeColor = selectedOption?.badgeColor || this.props.badgeColor || "info";
 
     const text = this.renderText(selectedOption);
     const inputGroup = (
@@ -254,9 +237,7 @@ export default class DropdownInput extends PureComponent {
             <Button
               color="secondary"
               tabIndex={-1}
-              className={[
-                classnames(size === 'sm' ? 'px-0' : 'px-1', 'cursor-default'),
-              ]}
+              className={[classnames(size === "sm" ? "px-0" : "px-1", "cursor-default")]}
             >
               <div className="w-5">{addon}</div>
             </Button>
@@ -303,7 +284,7 @@ export default class DropdownInput extends PureComponent {
               "d-flex align-items-center h-100 form-control",
               bg || (editable ? "bg-transparent" : ""),
               size === "sm" && "btn-sm",
-              editable ? "w-auto p-absolute" : "w-0 flex-grow-1",
+              editable ? "w-auto p-absolute" : "w-0 flex-grow-1"
             )}
             style={
               addon
@@ -318,16 +299,13 @@ export default class DropdownInput extends PureComponent {
             <div
               ref={this.toggler}
               onClick={onClick}
-              className={classnames("w-100 d-flex align-items-center justify-content-between overflow-hidden", size !== "sm" && "mr-1")}
+              className={classnames(
+                "w-100 d-flex align-items-center justify-content-between overflow-hidden",
+                size !== "sm" && "mr-1"
               )}
             >
               {!editable && (
-                <div
-                  className={classnames(
-                    'text-overflow-dots',
-                    text ? '' : 'text-placeholder'
-                  )}
-                >
+                <div className={classnames("text-overflow-dots", text ? "" : "text-placeholder")}>
                   {text || placeholder}
                 </div>
               )}
@@ -338,10 +316,7 @@ export default class DropdownInput extends PureComponent {
           </DropdownToggle>
           <DropdownMenu
             right
-            className={classnames(
-              'input-dropdown-menu',
-              size && `dropdown-menu-${size}`
-            )}
+            className={classnames("input-dropdown-menu", size && `dropdown-menu-${size}`)}
           >
             {dropdownOptions}
           </DropdownMenu>
@@ -354,13 +329,8 @@ export default class DropdownInput extends PureComponent {
     }
 
     return (
-      <FormGroup
-        className={classnames(size === 'sm' && 'mb-2')}
-        readOnly={true}
-      >
-        <Label className={classnames(size === "sm" && "mb-1 small")}>
-          {label}
-        </Label>
+      <FormGroup className={classnames(size === "sm" && "mb-2")} readOnly>
+        <Label className={classnames(size === "sm" && "mb-1 small")}>{label}</Label>
         {inputGroup}
       </FormGroup>
     );

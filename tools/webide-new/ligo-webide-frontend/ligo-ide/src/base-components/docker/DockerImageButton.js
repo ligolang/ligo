@@ -19,7 +19,7 @@ export default class DockerImageButton extends PureComponent {
     return this.props.channel?.imageName || this.props.imageName;
   }
 
-  onRefreshVersions = versions => {
+  onRefreshVersions = (versions) => {
     this.setState({ nInstalled: versions ? versions.length : 0 });
   };
 

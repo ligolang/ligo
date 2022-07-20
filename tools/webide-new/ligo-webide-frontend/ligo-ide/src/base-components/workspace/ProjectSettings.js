@@ -7,7 +7,7 @@ export default class ProjectSettings {
     this.settingFilePath = settingFilePath;
     this.channel = channel;
     channel.off("current-value");
-    channel.on("current-value", evt => this.triggerEvent(evt));
+    channel.on("current-value", (evt) => this.triggerEvent(evt));
 
     this.invalid = false;
     this.settings = {};
@@ -44,7 +44,7 @@ export default class ProjectSettings {
       return;
     }
 
-    this.channel.events.forEach(evt => this.triggerEvent(evt, oldSettings));
+    this.channel.events.forEach((evt) => this.triggerEvent(evt, oldSettings));
   }
 
   triggerEvent(evt, oldSettings) {

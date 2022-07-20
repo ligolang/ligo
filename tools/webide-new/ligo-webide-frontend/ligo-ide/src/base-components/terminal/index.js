@@ -28,7 +28,7 @@ export default class Terminal extends PureComponent {
     this.inputRef = React.createRef();
 
     this.terminalChannel = initTerminalChannel(this.props.logId, this.props.cwd);
-    this.terminalChannel.on("executing", executing => this.setState({ executing }));
+    this.terminalChannel.on("executing", (executing) => this.setState({ executing }));
     this.terminalChannel.on("data", this.onLogReceived);
   }
 
@@ -135,7 +135,7 @@ export default class Terminal extends PureComponent {
     }
 
     if (this.props.cmd) {
-      this.exec(this.props.cmd, this.props.opt).then(result => {
+      this.exec(this.props.cmd, this.props.opt).then((result) => {
         if (this.props.onCmdExecuted) {
           this.props.onCmdExecuted(result);
         }
@@ -145,7 +145,7 @@ export default class Terminal extends PureComponent {
     return this.term;
   }
 
-  onData = async data => {
+  onData = async (data) => {
     if (this.props.interactive) {
       await this.terminalChannel.invoke("write", data);
       return;
@@ -158,7 +158,7 @@ export default class Terminal extends PureComponent {
     }
   };
 
-  onMouseUpTerm = event => {
+  onMouseUpTerm = (event) => {
     const selection = this.term.getSelection();
 
     if (event.button === 2) {
@@ -250,7 +250,7 @@ export default class Terminal extends PureComponent {
     this.writeToTerminal(`${chalk.bold.gray(prefix)} ${colorCommand(cmd)}\n\r`);
   };
 
-  onLogReceived = message => {
+  onLogReceived = (message) => {
     const parsedMessage = this.props.onLogReceived(message);
     this.writeToTerminal(parsedMessage);
   };
@@ -287,5 +287,5 @@ Terminal.defaultProps = {
   font: "Hack, Menlo, monospace",
   className: "",
   Toolbar: null,
-  onLogReceived: message => message,
+  onLogReceived: (message) => message,
 };

@@ -15,7 +15,7 @@ export default class TabbedExplorer extends PureComponent {
     };
   }
 
-  initialize = initial => {
+  initialize = (initial) => {
     let selectedTabKey = "";
     const initialTabs = initial.tabs.map((value, index) => {
       const key = `tab-${index}`;
@@ -47,7 +47,7 @@ export default class TabbedExplorer extends PureComponent {
     return this.state.value;
   }
 
-  openTab = value => {
+  openTab = (value) => {
     if (this.props.valueFormatter) {
       value = this.props.valueFormatter(value);
     }
@@ -57,7 +57,7 @@ export default class TabbedExplorer extends PureComponent {
     this.tabs.current?.openTab(value);
   };
 
-  onValue = value => {
+  onValue = (value) => {
     if (this.props.valueFormatter) {
       const formatted = this.props.valueFormatter(value);
       if (formatted !== value) {
@@ -69,7 +69,7 @@ export default class TabbedExplorer extends PureComponent {
     return value;
   };
 
-  onPageDisplay = page => {
+  onPageDisplay = (page) => {
     this.currentPage = page;
   };
 
@@ -82,7 +82,7 @@ export default class TabbedExplorer extends PureComponent {
       tabs,
       onValueUpdate,
       onTabsUpdate,
-      getTabText = tab => tab?.value,
+      getTabText = (tab) => tab?.value,
       starred,
       onStarredUpdate,
       ToolbarButtons = () => null,
@@ -99,50 +99,48 @@ export default class TabbedExplorer extends PureComponent {
     }
 
     return (
-      <>
-        <TabsWithNavigationBar
-          ref={this.tabs}
-          initialTabs={initialTabs}
-          initialSelected={initialSelected}
-          getTabText={getTabText}
-          maxTabWidth={46}
-          tabContextMenu={tabContextMenu}
-          onValue={value => {
-            const formatted = this.onValue(value);
-            onValueUpdate && onValueUpdate(formatted);
-          }}
-          onChangeTab={value => {
-            this.setState({ value });
-            onValueUpdate && onValueUpdate(value);
-          }}
-          onTabsUpdated={onTabsUpdate}
-          starred={starred}
-          onChangeStarred={onStarredUpdate}
-          onRefresh={this.onRefresh}
-          NavbarButtons={
-            <>
-              <ToolbarButtons explorer={this} value={value} {...otherProps} />
-              <ExtraToolbarButtons explorer={this} value={value} {...otherProps} />
-            </>
-          }
-        >
-          <CacheRoute
-            path={`/${route}/:value?`}
-            cacheKey={props => `${route}-${subroute}-${props.match?.params?.value}`}
-            multiple={5}
-            className="h-100 overflow-auto"
-            render={props => (
-              <Page
-                cacheLifecycles={props.cacheLifecycles}
-                onDisplay={this.onPageDisplay}
-                value={props.match?.params?.value}
-                tabs={this.tabs.current}
-                {...otherProps}
-              />
-            )}
-          />
-        </TabsWithNavigationBar>
-      </>
+      <TabsWithNavigationBar
+        ref={this.tabs}
+        initialTabs={initialTabs}
+        initialSelected={initialSelected}
+        getTabText={getTabText}
+        maxTabWidth={46}
+        tabContextMenu={tabContextMenu}
+        onValue={(value) => {
+          const formatted = this.onValue(value);
+          onValueUpdate && onValueUpdate(formatted);
+        }}
+        onChangeTab={(value) => {
+          this.setState({ value });
+          onValueUpdate && onValueUpdate(value);
+        }}
+        onTabsUpdated={onTabsUpdate}
+        starred={starred}
+        onChangeStarred={onStarredUpdate}
+        onRefresh={this.onRefresh}
+        NavbarButtons={
+          <>
+            <ToolbarButtons explorer={this} value={value} {...otherProps} />
+            <ExtraToolbarButtons explorer={this} value={value} {...otherProps} />
+          </>
+        }
+      >
+        <CacheRoute
+          path={`/${route}/:value?`}
+          cacheKey={(props) => `${route}-${subroute}-${props.match?.params?.value}`}
+          multiple={5}
+          className="h-100 overflow-auto"
+          render={(props) => (
+            <Page
+              cacheLifecycles={props.cacheLifecycles}
+              onDisplay={this.onPageDisplay}
+              value={props.match?.params?.value}
+              tabs={this.tabs.current}
+              {...otherProps}
+            />
+          )}
+        />
+      </TabsWithNavigationBar>
     );
   }
 }

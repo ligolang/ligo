@@ -1,5 +1,6 @@
 import debounce from "lodash/debounce";
 import moment from "moment";
+import * as monaco from "monaco-editor";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
 
@@ -28,6 +29,7 @@ function makeProjectManager(Base) {
 
     onEditorReady(editor, editorComponent) {
       modelSessionManager.decorationMap = {};
+      // eslint-disable-next-line no-bitwise
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
         editorComponent.props.onCommand("save");
         this.lint();
@@ -143,15 +145,15 @@ function makeProjectManager(Base) {
       );
       let stopCriteria;
       if (settings.framework === "hardhat") {
-        stopCriteria = child =>
+        stopCriteria = (child) =>
           child.type === "file" &&
           child.name.endsWith(".json") &&
           !child.name.endsWith(".dbg.json");
       } else {
-        stopCriteria = child => child.type === "file" && child.name.endsWith(".json");
+        stopCriteria = (child) => child.type === "file" && child.name.endsWith(".json");
       }
       const files = await this.readDirectoryRecursively(builtFolder, stopCriteria);
-      return files.map(f => ({
+      return files.map((f) => ({
         ...f,
         pathInProject: this.pathInProject(f.path),
       }));
@@ -160,9 +162,9 @@ function makeProjectManager(Base) {
     async readProjectAbis() {
       const contracts = await this.getBuiltContracts();
       const abis = await Promise.all(
-        contracts.map(contract =>
+        contracts.map((contract) =>
           this.readFile(contract.path)
-            .then(content => ({
+            .then((content) => ({
               contractPath: contract.path,
               pathInProject: this.pathInProject(contract.path),
               content: JSON.parse(content),

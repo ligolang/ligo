@@ -55,7 +55,7 @@ export default class ContractForm extends PureComponent {
     return { array, json, obj, empty: allEmpty };
   };
 
-  setParamValue = index => (value, extra) => {
+  setParamValue = (index) => (value, extra) => {
     this.state.params[index] = {
       value: utils.isValidAddressReturn(value),
       ...extra,

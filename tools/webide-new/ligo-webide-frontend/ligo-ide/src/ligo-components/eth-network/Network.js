@@ -8,7 +8,7 @@ import CustomNetwork from "./CustomNetwork";
 import RemoteNetwork from "./RemoteNetwork";
 import { default as DefaultCustomNetworkModal } from "./CustomNetwork/CustomNetworkModal";
 
-export default connect(["network", "customNetworks", "uiState"])(props => {
+export default connect(["network", "customNetworks", "uiState"])((props) => {
   const {
     network: networkId = "dev",
     customNetworks,

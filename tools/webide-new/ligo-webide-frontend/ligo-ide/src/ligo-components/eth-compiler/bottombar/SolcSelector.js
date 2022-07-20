@@ -8,12 +8,12 @@ import { BaseProjectManager } from "~/base-components/workspace";
 
 let n;
 
-export default props => {
+export default function (props) {
   const [hasDefault, setHasDefault] = React.useState(!props.remote);
   const [selected, onSelected] = React.useState("");
 
   React.useEffect(
-    BaseProjectManager.effect("settings:framework", framework => {
+    BaseProjectManager.effect("settings:framework", (framework) => {
       if (props.remote) {
         setHasDefault(false);
         return;
@@ -24,7 +24,7 @@ export default props => {
   );
 
   React.useEffect(
-    BaseProjectManager.effect("settings:compilers.solc", v => {
+    BaseProjectManager.effect("settings:compilers.solc", (v) => {
       // if (!props.remote) {
       //   if (v === 'default') {
       //     n = notification.info('Solc from truffle-config.js Selected', 'The version of solc used in compilation will be determined by <b>truffle-config.js</b>.', 4)
@@ -47,7 +47,7 @@ export default props => {
       noManager
       selected={selected}
       selectedText={selected === "default" ? "truffle-config.js" : undefined}
-      onSelected={v => BaseProjectManager.instance.projectSettings?.set("compilers.solc", v)}
+      onSelected={(v) => BaseProjectManager.instance.projectSettings?.set("compilers.solc", v)}
     >
       {hasDefault && (
         <>
@@ -64,4 +64,4 @@ export default props => {
       )}
     </DockerImageSelector>
   );
-};
+}

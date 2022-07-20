@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+/* eslint-disable max-classes-per-file */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import LightningFS from "@isomorphic-git/lightning-fs";
 import { fileSystem } from "./fileSystem";
 
@@ -26,7 +29,8 @@ export class IndexedDBStorage extends LightningFS {
 
   constructor(name: string) {
     super(name);
-    this.addSlash = file => {
+    this.addSlash = (file) => {
+      // eslint-disable-next-line no-param-reassign
       if (!file.startsWith("/")) file = `/${file}`;
       return file;
     };
@@ -38,7 +42,7 @@ export class IndexedDBStorage extends LightningFS {
       readlink: this.promises.readlink,
       symlink: this.promises.symlink,
       exists: async (path: string) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           this.base
             .stat(this.addSlash(path))
             .then(() => resolve(true))
@@ -77,6 +81,7 @@ export class IndexedDBStorage extends LightningFS {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export class indexedDBFileSystem extends fileSystem {
   constructor() {
     super();
@@ -102,12 +107,12 @@ export class indexedDBFileSystem extends fileSystem {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) {
         this.available = false;
-        reject("No indexedDB on window");
+        reject(new Error("No indexedDB on window"));
       }
       const request = window.indexedDB.open("LigoIdeTestDataBase");
       request.onerror = () => {
         this.available = false;
-        reject("Error creating test database");
+        reject(new Error("Error creating test database"));
       };
       request.onsuccess = () => {
         window.indexedDB.deleteDatabase("LigoIdeTestDataBase");

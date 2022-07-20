@@ -87,7 +87,7 @@ export class ProjectActions {
 
     let notificationTitle = "Remove Project Successful";
     let notificationDescription = `Project <b>${name}</b> is removed`;
-    if (type == "delete") {
+    if (type === "delete") {
       notificationTitle = "Delete Project Successful";
       notificationDescription = `You have permanently delete project <b>${name}</b>`;
     }

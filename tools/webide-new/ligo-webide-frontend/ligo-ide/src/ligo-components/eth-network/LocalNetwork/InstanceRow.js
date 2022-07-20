@@ -41,7 +41,7 @@ export default class InstanceRow extends PureComponent {
     );
   };
 
-  renderVersionBtn = version => {
+  renderVersionBtn = (version) => {
     return (
       <div className="btn btn-sm btn-secondary">
         <i className="fas fa-code-branch mr-1" />
@@ -50,7 +50,7 @@ export default class InstanceRow extends PureComponent {
     );
   };
 
-  renderChainBtn = chain => {
+  renderChainBtn = (chain) => {
     return (
       <div className="btn btn-sm btn-secondary">
         <b>{chain}</b>
@@ -58,7 +58,7 @@ export default class InstanceRow extends PureComponent {
     );
   };
 
-  renderBlockNumber = name => {
+  renderBlockNumber = (name) => {
     if (this.props.runningInstance !== name) {
       return null;
     }
@@ -79,7 +79,7 @@ export default class InstanceRow extends PureComponent {
     );
   };
 
-  deleteInstance = async name => {
+  deleteInstance = async (name) => {
     if (this.props.lifecycle !== "stopped" && this.props.runningInstance === name) {
       notification.error(
         "Unable to Delete",

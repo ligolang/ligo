@@ -17,7 +17,7 @@ export default class ContractActions extends AbiActionForm {
     showResult: true,
   };
 
-  estimate = async actionName => {
+  estimate = async (actionName) => {
     if (!this.state.signer) {
       notification.error(
         "Error",
@@ -59,7 +59,7 @@ export default class ContractActions extends AbiActionForm {
     }
   };
 
-  executeAction = async actionName => {
+  executeAction = async (actionName) => {
     if (this.state.executing) {
       return;
     }
@@ -98,7 +98,7 @@ export default class ContractActions extends AbiActionForm {
     const { signer } = this.state;
 
     const options = {};
-    networkManager.sdk.utils.txOptions?.list.forEach(opt => {
+    networkManager.sdk.utils.txOptions?.list.forEach((opt) => {
       options[opt.name] = this.state[opt.name] || opt.default || undefined;
     });
 
@@ -130,7 +130,7 @@ export default class ContractActions extends AbiActionForm {
           ...options,
         },
         {
-          mined: res => this.setState({ executing: false, actionResult: res.result }),
+          mined: (res) => this.setState({ executing: false, actionResult: res.result }),
           failed: ({ error }) => this.setState({ executing: false, actionError: error.message }),
         }
       );

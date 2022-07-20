@@ -73,18 +73,18 @@ export default class WorkspaceLoader extends PureComponent {
     return await this.workspace.current.saveAll();
   };
 
-  toggleTerminal = terminal => {
+  toggleTerminal = (terminal) => {
     this.setState({ terminal });
     if (terminal) {
       this.props.compilerManager?.focus();
     }
   };
 
-  openProjectSettings = settingsFilePath => {
+  openProjectSettings = (settingsFilePath) => {
     this.workspace.current.openFile({ path: settingsFilePath });
   };
 
-  renderInvalidProject = projectRoot => {
+  renderInvalidProject = (projectRoot) => {
     if (platform.isDesktop) {
       return (
         <ProjectInvalid projectRoot={projectRoot || "(undefined)"}>
@@ -97,7 +97,7 @@ export default class WorkspaceLoader extends PureComponent {
     return <ProjectInvalid projectRoot={projectRoot || "(undefined)"} />;
   };
 
-  removeProject = projectRoot => {
+  removeProject = (projectRoot) => {
     const id = Base64.encode(projectRoot);
     actions.removeProject({ id, name: projectRoot });
   };

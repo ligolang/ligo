@@ -23,7 +23,8 @@ export default {
       secretName: "Private Key",
     };
   },
-  importKeypair(secret) {
+  importKeypair(secretParam) {
+    let secret = secretParam;
     if (secret.startsWith("0x") || /^[0-9a-zA-Z]{64}$/.test(secret)) {
       if (!secret.startsWith("0x")) {
         secret = `0x${secret}`;

@@ -42,7 +42,7 @@ export default class AccountPage extends PureComponent {
   refresh = async () => {
     this.setState({ loading: true });
 
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     const { value } = this.props;
 
@@ -67,8 +67,8 @@ export default class AccountPage extends PureComponent {
     }
   };
 
-  getTokenInfo = account => {
-    networkManager.sdk.getTokens(account.address).then(tokens => {
+  getTokenInfo = (account) => {
+    networkManager.sdk.getTokens(account.address).then((tokens) => {
       this.setState({ tokens });
     });
 
@@ -77,7 +77,7 @@ export default class AccountPage extends PureComponent {
       return;
     }
 
-    networkManager.sdk.getTokenInfo(account.address).then(tokenInfo => {
+    networkManager.sdk.getTokenInfo(account.address).then((tokenInfo) => {
       this.setState({ tokenInfo });
       if (tokenInfo?.type === "ERC20") {
         redux.dispatch("ADD_TOKEN_INFO", {

@@ -10,7 +10,7 @@ import "./styles.scss";
 
 export default class Header extends PureComponent {
   renderLeftNavbar = (links, disable) => {
-    return links.map(link => (
+    return links.map((link) => (
       <NavLinkLeft
         key={`nav-link-${link.route}`}
         route={link.route}
@@ -25,8 +25,8 @@ export default class Header extends PureComponent {
     ));
   };
 
-  renderRightNavbar = links => {
-    return links.map(link => (
+  renderRightNavbar = (links) => {
+    return links.map((link) => (
       <NavLinkRight
         key={`nav-link-${link.route}`}
         route={link.route}
@@ -40,9 +40,9 @@ export default class Header extends PureComponent {
     ));
   };
 
-  renderContextMenu = links => {
+  renderContextMenu = (links) => {
     return links
-      .map(link => {
+      .map((link) => {
         return link.dropdown.map((item, index) => {
           if (!item.id || !link.contextMenu) {
             return null;

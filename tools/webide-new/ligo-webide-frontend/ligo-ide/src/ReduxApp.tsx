@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable new-cap */
 import React, { lazy, useEffect, useRef, useState } from "react";
 import { GlobalModals, autoUpdater } from "~/base-components/global";
-import { config, updateStore } from "./lib/redux";
+import { config, updateStore } from "~/lib/redux";
 import redux, { Provider } from "~/base-components/redux";
 
 import { LoadingScreen } from "~/base-components/ui-components";
@@ -12,7 +16,7 @@ import { ProjectManager } from "~/base-components/workspace";
 
 const Header = lazy(() => import("./components/Header" /* webpackChunkName: "header" */));
 
-const ReduxApp = props => {
+function ReduxApp(props: { history: any }) {
   const [loaded, setLoaded] = useState(false);
   const ligoIdeFileSystems = useRef<fileSystems>(new fileSystems());
   const indexedDB = useRef<fileSystem>(new indexedDBFileSystem());
@@ -21,7 +25,7 @@ const ReduxApp = props => {
     async function loadStorage() {
       await redux.init(config, updateStore);
       await ligoIdeFileSystems.current.addFileSystem(indexedDB.current);
-      await ligoIdeFileSystems.current.setFileSystem([indexedDB.current]);
+      ligoIdeFileSystems.current.setFileSystem([indexedDB.current]);
       if (!(await fileOps.exists(".workspaces/default-project"))) {
         const Manager = ProjectManager.Local;
         const defaultProject = await Manager.createProject("default-project", "increment");
@@ -34,6 +38,7 @@ const ReduxApp = props => {
       setLoaded(true);
       autoUpdater.check();
     }
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     loadStorage();
   }, []);
 
@@ -45,6 +50,8 @@ const ReduxApp = props => {
     <Provider store={redux.store}>
       <div className="body" style={{ paddingTop: "49px" }}>
         <Routes>
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+          {/* @ts-ignore */}
           <Header history={props.history} />
           <NotificationSystem />
           <GlobalModals icon={icon} />
@@ -52,6 +59,6 @@ const ReduxApp = props => {
       </div>
     </Provider>
   );
-};
+}
 
 export default ReduxApp;

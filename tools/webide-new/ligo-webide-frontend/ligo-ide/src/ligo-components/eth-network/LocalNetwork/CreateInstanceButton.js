@@ -38,7 +38,7 @@ export default class CreateInstanceButton extends PureComponent {
 
     if (
       this.props.instances.some(
-        instance => instance.Name.substr(process.env.PROJECT.length + 1) === this.state.name
+        (instance) => instance.Name.substr(process.env.PROJECT.length + 1) === this.state.name
       )
     ) {
       notification.error(
@@ -61,8 +61,8 @@ export default class CreateInstanceButton extends PureComponent {
       if (kp) {
         keys = await Promise.all(
           keypairs
-            .filter(k => k.address.startsWith("0x"))
-            .map(async k => {
+            .filter((k) => k.address.startsWith("0x"))
+            .map(async (k) => {
               const secret = await keypairManager.getSecret(k.address);
               const wallet = kp.walletFrom(secret);
               return wallet.privateKey;
@@ -73,7 +73,7 @@ export default class CreateInstanceButton extends PureComponent {
         miner = { address: this.state.miner, secret };
       }
     } else {
-      keys = keypairs.map(k => k.address);
+      keys = keypairs.map((k) => k.address);
     }
 
     this.setState({ pending: "Creating..." });
@@ -101,7 +101,7 @@ export default class CreateInstanceButton extends PureComponent {
         <KeypairInputSelector
           label="Miner"
           value={this.state.miner}
-          onChange={miner => this.setState({ miner })}
+          onChange={(miner) => this.setState({ miner })}
         />
       );
     }
@@ -135,7 +135,7 @@ export default class CreateInstanceButton extends PureComponent {
             maxLength="30"
             value={this.state.name}
             onChange={(name, invalid) => this.setState({ name, invalid })}
-            validator={v =>
+            validator={(v) =>
               !/^[0-9a-zA-Z\-_]*$/.test(v) &&
               "Instance name can only contain letters, digits, dash or underscore"
             }
@@ -147,7 +147,7 @@ export default class CreateInstanceButton extends PureComponent {
             modalTitle={`${process.env.CHAIN_EXECUTABLE_NAME} Version Manager`}
             downloadingTitle={`Downloading ${process.env.CHAIN_EXECUTABLE_NAME}`}
             selected={this.state.version}
-            onSelected={version => this.setState({ version })}
+            onSelected={(version) => this.setState({ version })}
           />
           {this.renderMinerInput()}
         </Modal>

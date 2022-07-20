@@ -56,7 +56,7 @@ class ModelSessionManager {
     delete this.sessions[oldPath];
     delete this.decorationMap[oldPath];
     const tabsState = this.tabsRef.current.state;
-    const oldTab = tabsState.tabs.find(tab => tab.path.endsWith(oldPath));
+    const oldTab = tabsState.tabs.find((tab) => tab.path.endsWith(oldPath));
     if (!oldTab) return;
     const tab = {
       path: oldTab.path && oldTab.path.replace(oldPath, newPath),
@@ -343,14 +343,14 @@ class ModelSessionManager {
 
   clearDecoration(type) {
     const { decorationMap } = this;
-    Object.keys(this.decorationMap).forEach(filePath => {
+    Object.keys(this.decorationMap).forEach((filePath) => {
       if (this.sessions[filePath]) {
-        const rest = decorationMap[filePath].filter(item => item.from !== type);
+        const rest = decorationMap[filePath].filter((item) => item.from !== type);
         decorationMap[filePath] = rest;
       }
     });
     this.decorationMap = decorationMap;
-    Object.keys(this.decorationMap).forEach(filePath => {
+    Object.keys(this.decorationMap).forEach((filePath) => {
       if (this.sessions[filePath]) {
         this.sessions[filePath].decorations = decorationMap[filePath];
       }
@@ -371,7 +371,7 @@ class ModelSessionManager {
     if (curPathValue && hasError) {
       // update lint node
       decorationMap[filePath] = curPathValue
-        .filter(item => item.from !== "linter")
+        .filter((item) => item.from !== "linter")
         .concat(newValue);
     }
     if (this.sessions[filePath]) {
@@ -385,11 +385,11 @@ class ModelSessionManager {
       return prev;
     }, {});
     const oldMapkeys = Object.keys(decorationMap);
-    Object.keys(newMap).forEach(cur => {
+    Object.keys(newMap).forEach((cur) => {
       !oldMapkeys.includes(cur)
         ? (decorationMap[cur] = newMap[cur])
         : (decorationMap[cur] = decorationMap[cur]
-            .filter(item => item.from !== "compiler" && item.type !== "error")
+            .filter((item) => item.from !== "compiler" && item.type !== "error")
             .concat(newMap[cur]));
       this.sessions[cur].decorations = decorationMap[cur];
     });
@@ -409,7 +409,7 @@ class ModelSessionManager {
   }
 
   closeAllModelSessions() {
-    Object.keys(this.sessions).forEach(filePath => this.closeModelSession(filePath));
+    Object.keys(this.sessions).forEach((filePath) => this.closeModelSession(filePath));
   }
 }
 

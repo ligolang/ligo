@@ -23,9 +23,11 @@ const SolidityHighlightRules = function (options) {
       "mutable|null|of|override|partial|promise|reference|relocatable|" +
       "sealed|sizeof|static|supports|switch|try|type|typedef|typeof|" +
       "unchecked",
-    "storage.type": `${"contract|library|interface|function|constructor|event|modifier|" +
+    "storage.type": `${
+      "contract|library|interface|function|constructor|event|modifier|" +
       "struct|mapping|enum|" +
-      "var|bool|address|"}${intTypes}`,
+      "var|bool|address|"
+    }${intTypes}`,
     "storage.type.array.dynamic": "bytes|string",
     "storage.modifier.inheritance": "is",
     "storage.modifier.storagelocation": "storage|memory|calldata",
@@ -47,7 +49,7 @@ const SolidityHighlightRules = function (options) {
 
   const functionArgumentsKeywordMapper = function functionArgumentsKeywordMapper(value) {
     let mainKeywordToken = mainKeywordMapper(value);
-    if (hasSeenFirstFunctionArgumentKeyword && mainKeywordToken == "identifier") {
+    if (hasSeenFirstFunctionArgumentKeyword && mainKeywordToken === "identifier") {
       mainKeywordToken = "variable.parameter";
     }
     hasSeenFirstFunctionArgumentKeyword = true;
@@ -75,7 +77,7 @@ const SolidityHighlightRules = function (options) {
     };
   };
   const pushFunctionArgumentsState = function (currentState, stack) {
-    if (currentState != "start" || stack.length) stack.unshift("function_arguments", currentState);
+    if (currentState !== "start" || stack.length) stack.unshift("function_arguments", currentState);
     hasSeenFirstFunctionArgumentKeyword = false;
     return "function_arguments";
   };
@@ -170,11 +172,13 @@ const SolidityHighlightRules = function (options) {
       },
       {
         token: "support.function", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /abi\s*\.\s*(?:encodeWithSignature|encodeWithSelector|encodePacked|encode)|\.\s*(?:delegatecall|transfer|call|send)/,
+        regex:
+          /abi\s*\.\s*(?:encodeWithSignature|encodeWithSelector|encodePacked|encode)|\.\s*(?:delegatecall|transfer|call|send)/,
       },
       {
         token: "support.variable", // Not in keywordMapper because of ".". Longest match has to be first alternative.
-        regex: /block\s*\.\s*(?:difficulty|timestamp|coinbase|gaslimit|number)|msg\s*\.\s*(?:sender|value|data)|tx\s*\.\s*(?:gasprice|origin)|\.\s*balance/,
+        regex:
+          /block\s*\.\s*(?:difficulty|timestamp|coinbase|gaslimit|number)|msg\s*\.\s*(?:sender|value|data)|tx\s*\.\s*(?:gasprice|origin)|\.\s*balance/,
       },
       {
         token: "support.variable.deprecated", // Not in keywordMapper because of ".". Longest match has to be first alternative.
@@ -209,7 +213,7 @@ const SolidityHighlightRules = function (options) {
       },
       {
         token: "keyword.operator",
-        regex: /--|\*\*|\+\+|=>|<<|>>|<<=|>>=|&&|\|\||[!&|+\-*\/%~^<>=]=?/,
+        regex: /--|\*\*|\+\+|=>|<<|>>|<<=|>>=|&&|\|\||[!&|+\-*/%~^<>=]=?/,
       },
       {
         token: "punctuation.operator",
@@ -222,7 +226,7 @@ const SolidityHighlightRules = function (options) {
       },
       {
         token: "paren.lparen",
-        regex: /[\[{]/,
+        regex: /[[{]/,
       },
       {
         token: "paren.lparen", // keep "(" separate for easier cloning and modifying into "function_arguments"
@@ -356,6 +360,8 @@ const SolidityHighlightRules = function (options) {
             hasSeenFirstFunctionArgumentKeyword = true;
             return rule.token;
           };
+          break;
+        default:
           break;
       }
       delete rule.inheritingStateRuleId;

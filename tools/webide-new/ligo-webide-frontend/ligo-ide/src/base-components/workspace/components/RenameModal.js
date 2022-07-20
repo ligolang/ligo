@@ -58,7 +58,7 @@ export default class RenameModal extends PureComponent {
           placeholder="New name"
           maxLength="50"
           value={this.state.name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
       </Modal>
     );

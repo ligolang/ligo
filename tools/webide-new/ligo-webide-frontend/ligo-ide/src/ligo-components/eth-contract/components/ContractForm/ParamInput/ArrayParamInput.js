@@ -81,15 +81,15 @@ export default class ArrayParamInput extends PureComponent {
     this.setState({ item: {}, index, title: "Enter a New Item" });
     this.modal.current.openModal();
     // setTimeout(() => this.input.current.focus(), 100)
-    return new Promise(resolve => (this.onResolve = resolve));
+    return new Promise((resolve) => (this.onResolve = resolve));
   };
 
-  onClickItem = async value => {
+  onClickItem = async (value) => {
     const index = this.state.values.indexOf(value);
     this.setState({ item: value.item, index, title: "Modify an Item" });
     this.modal.current.openModal();
     // setTimeout(() => this.input.current.focus(), 100)
-    return new Promise(resolve => (this.onResolve = resolve));
+    return new Promise((resolve) => (this.onResolve = resolve));
   };
 
   onConfirm = () => {
@@ -100,13 +100,13 @@ export default class ArrayParamInput extends PureComponent {
     this.modal.current.closeModal();
   };
 
-  onChange = values => {
+  onChange = (values) => {
     this.setState({ values });
 
-    const value = values.map(v => v.item);
-    const raw = values.map(v => v.item.raw);
-    const display = values.map(v => v.item.display);
-    const error = values.map(v => v.item.error).find(Boolean);
+    const value = values.map((v) => v.item);
+    const raw = values.map((v) => v.item.raw);
+    const display = values.map((v) => v.item.display);
+    const error = values.map((v) => v.item.error).find(Boolean);
 
     this.props.onChange(value, { raw, display, empty: !values.length, error });
   };

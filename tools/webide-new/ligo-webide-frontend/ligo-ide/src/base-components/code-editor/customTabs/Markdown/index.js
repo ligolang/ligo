@@ -218,11 +218,11 @@ export default class Markdown extends Component {
     );
   };
 
-  openLink = link => {
+  openLink = (link) => {
     fileOps.openLink(link);
   };
 
-  scrollTo = id => {
+  scrollTo = (id) => {
     const el = window.document.querySelector(id);
     if (!el) {
       return;
@@ -234,7 +234,7 @@ export default class Markdown extends Component {
     }, 1000);
   };
 
-  openFile = async filePath => {
+  openFile = async (filePath) => {
     const { path } = modelSessionManager.projectManager;
     let openningPath;
     if (path.isAbsolute(filePath)) {
@@ -269,7 +269,7 @@ export default class Markdown extends Component {
               className="user-select"
               remarkPlugins={[gfm, slug]}
               components={{
-                a: props => {
+                a: (props) => {
                   if (props.href.startsWith("#")) {
                     return (
                       <span className="link" onClick={() => this.scrollTo(props.href)}>
@@ -290,7 +290,7 @@ export default class Markdown extends Component {
                     </span>
                   );
                 },
-                code: props => {
+                code: (props) => {
                   if (props.inline) {
                     return <kbd>{props.children}</kbd>;
                   }
@@ -304,7 +304,7 @@ export default class Markdown extends Component {
                     </Highlight>
                   );
                 },
-                table: props => (
+                table: (props) => (
                   <table className="table table-sm table-hover table-striped mb-4">
                     {props.children}
                   </table>

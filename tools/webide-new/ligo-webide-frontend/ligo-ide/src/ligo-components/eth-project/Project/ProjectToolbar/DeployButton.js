@@ -43,7 +43,8 @@ export default class DeployerButton extends PureComponent {
   };
 
   getDeploymentParameters = async (option, callback, estimate) => {
-    this.getConstructorAbiArgs = option.getConstructorAbiArgs || (contractObj => [contractObj.abi]);
+    this.getConstructorAbiArgs =
+      option.getConstructorAbiArgs || ((contractObj) => [contractObj.abi]);
     const contractFileNode = option.contractFileNode || option.contracts[0];
 
     this.setState({
@@ -54,22 +55,22 @@ export default class DeployerButton extends PureComponent {
     this.modal.current.openModal();
     await this.updateAbi(contractFileNode);
     const options = {};
-    networkManager.sdk?.utils.txOptions?.list.forEach(opt => (options[opt.name] = ""));
+    networkManager.sdk?.utils.txOptions?.list.forEach((opt) => (options[opt.name] = ""));
     this.setState(options);
     this.callback = callback;
     this.estimateCallback = estimate;
   };
 
-  updateContract = async selected => {
+  updateContract = async (selected) => {
     const txOptionObj = Object.fromEntries(
-      networkManager.sdk?.utils.txOptions?.list.map(option => [option.name, ""])
+      networkManager.sdk?.utils.txOptions?.list.map((option) => [option.name, ""])
     );
     this.setState({ selected, ...txOptionObj });
-    const selectedContract = this.state.contracts.find(c => c.path === selected);
+    const selectedContract = this.state.contracts.find((c) => c.path === selected);
     await this.updateAbi(selectedContract);
   };
 
-  updateAbi = async fileNode => {
+  updateAbi = async (fileNode) => {
     const contractName = this.props.projectManager.path.parse(fileNode.path).name;
 
     let contractObj;
@@ -98,7 +99,7 @@ export default class DeployerButton extends PureComponent {
     });
   };
 
-  readContractJson = async fileNode => {
+  readContractJson = async (fileNode) => {
     const contractJson = await this.props.projectManager.readFile(fileNode.path);
 
     try {
@@ -115,7 +116,7 @@ export default class DeployerButton extends PureComponent {
     if (!Array.isArray(contractAbi)) {
       throw new Error("Error in reading the built contract file. Field abi is not an array.");
     }
-    return contractAbi.find(item => item[key] === value);
+    return contractAbi.find((item) => item[key] === value);
   };
 
   needEstimate = () => {
@@ -156,7 +157,7 @@ export default class DeployerButton extends PureComponent {
     const { contractName, contractObj, amount, signer } = this.state;
     const options = {};
     networkManager.sdk?.utils.txOptions?.list.forEach(
-      opt => (options[opt.name] = this.state[opt.name] || opt.default)
+      (opt) => (options[opt.name] = this.state[opt.name] || opt.default)
     );
 
     return [contractObj, { parameters, amount, contractName, signer, ...options }];
@@ -218,7 +219,7 @@ export default class DeployerButton extends PureComponent {
               label={`${networkManager.symbol} to Send`}
               icon="fas fa-coins"
               value={this.state.amount}
-              onChange={amount => this.setState({ amount })}
+              onChange={(amount) => this.setState({ amount })}
               placeholder="Default: 0"
             />
           ) : null}
@@ -272,7 +273,7 @@ export default class DeployerButton extends PureComponent {
         >
           <DropdownInput
             label="Compiled contract (compiler output JSON)"
-            options={contracts.map(c => ({
+            options={contracts.map((c) => ({
               id: c.path,
               display: c.relative || c.pathInProject,
             }))}
@@ -299,17 +300,17 @@ export default class DeployerButton extends PureComponent {
               ]
             }
             value={this.state.signer}
-            onChange={signer => this.setState({ signer })}
+            onChange={(signer) => this.setState({ signer })}
           />
           <div className="row">
-            {networkManager.sdk?.utils.txOptions?.list.map(option => (
+            {networkManager.sdk?.utils.txOptions?.list.map((option) => (
               <ActionParamFormGroup
                 key={`deploy-param-${option.name}`}
                 className={option.className}
                 label={option.label}
                 icon={option.icon}
                 value={this.state[option.name]}
-                onChange={value => this.setState({ [option.name]: value })}
+                onChange={(value) => this.setState({ [option.name]: value })}
                 placeholder={option.placeholder}
               />
             ))}

@@ -7,7 +7,7 @@ export default class BaseQueueManager {
   static pending = [];
 
   updateStatus(txHash, status, data, callbacks) {
-    const index = BaseQueueManager.pending.findIndex(item => item.txHash === txHash);
+    const index = BaseQueueManager.pending.findIndex((item) => item.txHash === txHash);
 
     let tx;
     if (index === -1) {

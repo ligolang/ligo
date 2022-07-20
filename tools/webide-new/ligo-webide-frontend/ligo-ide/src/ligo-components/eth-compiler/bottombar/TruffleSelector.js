@@ -4,7 +4,7 @@ import { DockerImageSelector } from "~/base-components/docker";
 import { BaseProjectManager } from "~/base-components/workspace";
 import compilerManager from "../compilerManager";
 
-export default () => {
+export default function () {
   const [framework, setFramework] = React.useState("");
   const [selected, onSelected] = React.useState("");
 
@@ -29,7 +29,7 @@ export default () => {
       modalTitle={`${process.env.COMPILER_NAME} Manager`}
       downloadingTitle={`Downloading ${process.env.COMPILER_NAME}`}
       selected={selected}
-      onSelected={v =>
+      onSelected={(v) =>
         BaseProjectManager.instance.projectSettings?.set(
           `compilers.${process.env.COMPILER_VERSION_KEY}`,
           v
@@ -37,4 +37,4 @@ export default () => {
       }
     />
   );
-};
+}

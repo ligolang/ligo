@@ -24,12 +24,12 @@ class User extends Component {
     };
   }
 
-  onToggle = event => {
+  onToggle = (event) => {
     event.preventDefault();
     this.setState({ isDropdownOpen: !this.state.isDropdownOpen });
   };
 
-  renderDropdownMenus = profile => {
+  renderDropdownMenus = (profile) => {
     const links = [
       {
         name: "Install",
@@ -81,7 +81,7 @@ class User extends Component {
         <i className="fas fa-th-list w-3 mr-2" />
         My Projects
       </DropdownItem>,
-      ...links.map(link => {
+      ...links.map((link) => {
         return (
           <DropdownItem key={link.key} onClick={() => window.open(link.link, "_blank")}>
             <i className={`fas ${link.icon} w-3 mr-2`} />
@@ -111,7 +111,7 @@ class User extends Component {
         className="d-flex flex-1 w-100"
         isOpen={this.state.isDropdownOpen}
         toggle={this.onToggle}
-        onClick={event => event.preventDefault()}
+        onClick={(event) => event.preventDefault()}
       >
         <DropdownToggle tag="div" className="nav-dropdown-toggle px-2">
           <div className="d-flex bg-secondary align-items-center justify-content-center user-avatar">

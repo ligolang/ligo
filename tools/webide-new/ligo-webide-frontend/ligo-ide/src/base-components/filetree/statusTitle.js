@@ -7,7 +7,7 @@ const TYPE_COLOR = {
   // unsaved: '#FFF'
 };
 
-const StatusTitle = ({ title, isLeaf, showType, count }) => {
+function StatusTitle({ title, isLeaf, showType, count }) {
   const typeColor = TYPE_COLOR[showType];
   return (
     <div className="status-title" style={{ color: `${typeColor}` }}>
@@ -19,7 +19,7 @@ const StatusTitle = ({ title, isLeaf, showType, count }) => {
       )}
     </div>
   );
-};
+}
 
 export default StatusTitle;
 

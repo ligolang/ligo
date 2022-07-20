@@ -39,11 +39,11 @@ class DeleteButton extends PureComponent {
     this.modal.current.openModal();
   };
 
-  changeVal = name => {
+  changeVal = (name) => {
     const { projectName, projectRoot } = this.state;
     const currentName = platform.isWeb ? projectRoot : projectName;
     name = name.trim();
-    const confirmDisableStatus = name != currentName;
+    const confirmDisableStatus = name !== currentName;
     this.setState({ name, confirmDisableStatus });
   };
 
@@ -121,9 +121,9 @@ export default class AbstractProjectSettingsTab extends PureComponent {
     trailing: false,
   }).bind(this);
 
-  onChange = key => {
+  onChange = (key) => {
     if (!this.onChangeHandlers[key]) {
-      this.onChangeHandlers[key] = value => {
+      this.onChangeHandlers[key] = (value) => {
         this.context.projectSettings?.set(key, value);
       };
     }

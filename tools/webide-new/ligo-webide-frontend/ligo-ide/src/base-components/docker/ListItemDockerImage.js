@@ -40,7 +40,7 @@ export default class ListItemDockerImage extends PureComponent {
       this.mounted &&
         this.setState({
           status: "INSTALLED",
-          versions: versions.map(v => v.Tag),
+          versions: versions.map((v) => v.Tag),
         });
     } else {
       this.mounted && this.setState({ status: "NONE", versions: [] });
@@ -72,7 +72,7 @@ export default class ListItemDockerImage extends PureComponent {
     }
   };
 
-  renderSubtitle = subtitle => {
+  renderSubtitle = (subtitle) => {
     switch (this.state.status) {
       case "":
         return <span>Loading...</span>;
@@ -84,7 +84,7 @@ export default class ListItemDockerImage extends PureComponent {
         return (
           <span>
             Installed:{" "}
-            {this.state.versions.map(v => (
+            {this.state.versions.map((v) => (
               <Badge key={v} className="mr-1">
                 {v}
               </Badge>

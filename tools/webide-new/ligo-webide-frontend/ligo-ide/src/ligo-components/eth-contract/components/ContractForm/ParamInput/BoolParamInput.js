@@ -3,7 +3,7 @@ import React from "react";
 import { ButtonOptions } from "~/base-components/ui-components";
 
 export default function BoolParamInput({ size, value, onChange, placeholder, disabled }) {
-  const onChangeValue = value => {
+  const onChangeValue = (value) => {
     if (!value || value === "false") {
       onChange("false", { display: false, raw: false });
     } else {

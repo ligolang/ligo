@@ -4,7 +4,7 @@ import globalModalManager from "./modals/globalModalManager";
 class AutoUpdater {
   constructor() {
     this.channel = new IpcChannel("auto-update");
-    this.channel.on("status", status => this.onStatus(status));
+    this.channel.on("status", (status) => this.onStatus(status));
   }
 
   dispose() {

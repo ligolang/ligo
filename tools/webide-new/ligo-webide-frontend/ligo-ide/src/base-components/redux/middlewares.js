@@ -15,7 +15,7 @@ const trackedActions = [
 ];
 
 let mixpanelInitialized;
-const track = store => next => action => {
+const track = (store) => (next) => (action) => {
   if (process.env.REACT_APP_MIXPANEL_TOKEN) {
     mixpanel.init(process.env.REACT_APP_MIXPANEL_TOKEN);
     mixpanelInitialized = true;
@@ -68,7 +68,7 @@ if (process.env.NODE_ENV === "development") {
   middlewares.push(
     createLogger({
       collapsed: true,
-      stateTransformer: state => mapValues(state, s => (s.toJS ? s.toJS() : s)),
+      stateTransformer: (state) => mapValues(state, (s) => (s.toJS ? s.toJS() : s)),
     })
   );
 } else {

@@ -15,7 +15,7 @@ class AccountExplorer extends TabbedExplorer {
   static defaultProps = {
     route: "account",
     Page: AccountPage,
-    valueFormatter: value => value.toLowerCase(),
+    valueFormatter: (value) => value.toLowerCase(),
     ToolbarButtons: ({ value, ...otherProps }) => (
       <>
         <TransferButton from={value} {...otherProps} />
@@ -40,16 +40,16 @@ class AccountExplorer extends TabbedExplorer {
     ];
   }
 
-  closeCurrent = current => {
+  closeCurrent = (current) => {
     const { onCloseTab } = this.tabs.current.tabs.current;
     onCloseTab(current);
   };
 
-  closeOthers = currentTab => {
+  closeOthers = (currentTab) => {
     const { onCloseTab, allTabs } = this.tabs.current.tabs.current;
-    const shouldCloseTabs = allTabs.filter(tab => tab.key !== currentTab.key);
+    const shouldCloseTabs = allTabs.filter((tab) => tab.key !== currentTab.key);
 
-    shouldCloseTabs.forEach(tab => {
+    shouldCloseTabs.forEach((tab) => {
       onCloseTab(tab);
     });
   };
@@ -110,7 +110,7 @@ class AccountExplorer extends TabbedExplorer {
       subroute: network,
       signer: uiState.get("signer"),
       tabContextMenu: this.contextMenu,
-      getTabText: tab => {
+      getTabText: (tab) => {
         const { text, value = "" } = tab;
         if (text) {
           return text;
@@ -149,14 +149,14 @@ class AccountExplorer extends TabbedExplorer {
         }
         return tabText;
       },
-      onValueUpdate: value => {
+      onValueUpdate: (value) => {
         redux.dispatch("SELECT_ACCOUNT", { network, account: value });
         history.push(`/${route}/${value}`);
       },
-      onTabsUpdate: tabs => {
+      onTabsUpdate: (tabs) => {
         redux.dispatch("SET_ACCOUNT_TABS", { network, tabs });
       },
-      onStarredUpdate: starred => {
+      onStarredUpdate: (starred) => {
         redux.dispatch("SET_STARRED", { network, starred });
       },
     };

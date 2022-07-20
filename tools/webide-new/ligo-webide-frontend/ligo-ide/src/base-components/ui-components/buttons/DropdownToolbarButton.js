@@ -19,7 +19,7 @@ export default function DropdownToolbarButton({
 
   let dropdownItems;
   if (options.length) {
-    dropdownItems = options.map(opt => (
+    dropdownItems = options.map((opt) => (
       <DropdownItem key={opt.key} onClick={opt.onClick}>
         {opt.key}
       </DropdownItem>

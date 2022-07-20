@@ -10,7 +10,7 @@ export default function Dropdown(props) {
   if (!props.items || !props.items.length) {
     dropdownItems = <DropdownItem disabled>(None)</DropdownItem>;
   } else {
-    dropdownItems = props.items.map(item => (
+    dropdownItems = props.items.map((item) => (
       <DropdownItem key={item} onClick={() => props.onChange(item)}>
         <code>{item}</code>
       </DropdownItem>

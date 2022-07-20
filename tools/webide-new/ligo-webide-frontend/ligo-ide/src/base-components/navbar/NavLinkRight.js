@@ -11,7 +11,7 @@ class NavLinkRight extends PureComponent {
     onClickItem: () => {},
   };
 
-  onClickItem = item => {
+  onClickItem = (item) => {
     const { route, history } = this.props;
     this.props.onClickItem(item.id, item);
     if (history.location.pathname.startsWith(`/${route}`)) {

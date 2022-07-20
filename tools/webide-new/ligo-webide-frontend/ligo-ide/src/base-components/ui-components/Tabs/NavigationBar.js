@@ -62,13 +62,13 @@ export default class NavigationBar extends PureComponent {
     input.selectionDirection = direction;
   }
 
-  onChange = event => {
+  onChange = (event) => {
     const value = utils.isValidAddressReturn(event.target.value);
     this.setState({ value });
     this.props.tab.temp = value.toLowerCase();
   };
 
-  onKeyPress = event => {
+  onKeyPress = (event) => {
     if (event.key === "Enter") {
       let { value } = event.target;
       if (value.trim() !== value) {
@@ -91,7 +91,7 @@ export default class NavigationBar extends PureComponent {
     this.noSelection = !this.selection;
   };
 
-  onMouseUp = event => {
+  onMouseUp = (event) => {
     if (this.noSelection) {
       if (this.selection && this.selection.start === this.selection.end) {
         event.target.select();
@@ -101,7 +101,7 @@ export default class NavigationBar extends PureComponent {
 
   selectionCache = null;
 
-  onBlur = event => {
+  onBlur = (event) => {
     const selection = {
       start: event.target.selectionStart,
       end: event.target.selectionEnd,
@@ -114,7 +114,7 @@ export default class NavigationBar extends PureComponent {
     this.selection = this.selectionCache;
   };
 
-  renderStar = starred => {
+  renderStar = (starred) => {
     if (this.props.tab.temp || !this.state.value) {
       return null;
     }

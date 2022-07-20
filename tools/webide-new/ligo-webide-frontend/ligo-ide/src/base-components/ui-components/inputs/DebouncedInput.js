@@ -41,7 +41,7 @@ export default class DebouncedInput extends PureComponent {
     }
   }
 
-  onChange = event => {
+  onChange = (event) => {
     this.setState({ value: event.target.value });
     this.handleDebounced();
   };

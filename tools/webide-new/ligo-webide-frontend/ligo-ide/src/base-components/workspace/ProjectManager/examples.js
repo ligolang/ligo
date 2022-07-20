@@ -1141,7 +1141,7 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
 
 `;
 
-const config = name => `{
+const config = (name) => `{
   "main": "./contracts/${name}.mligo",
   "deploy": "./contracts/${name}.tz",
   "framework": "#framework",

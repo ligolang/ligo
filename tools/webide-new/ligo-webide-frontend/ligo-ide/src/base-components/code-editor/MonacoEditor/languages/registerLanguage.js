@@ -56,8 +56,8 @@ export default async function () {
   monaco.languages.registerCodeActionProvider("cpp-eosio", {
     provideCodeActions: (model, range, context, token) => {
       const actions = context.markers
-        .filter(error => error.message.indexOf("did you mean") > -1)
-        .map(error => {
+        .filter((error) => error.message.indexOf("did you mean") > -1)
+        .map((error) => {
           const quickfix = error.message.split("did you mean")[1].split("'")[1];
           const codeAction = {
             title: `Replace with '${quickfix}'`,

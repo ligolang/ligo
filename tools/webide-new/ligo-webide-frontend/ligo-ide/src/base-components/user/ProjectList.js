@@ -8,7 +8,7 @@ import fileOps from "~/base-components/file-ops";
 import { ProjectPath, actions } from "~/base-components/workspace";
 
 export default class ProjectList extends PureComponent {
-  removeProject = async project => {
+  removeProject = async (project) => {
     await actions.removeProject(project);
   };
 
@@ -16,7 +16,7 @@ export default class ProjectList extends PureComponent {
     return <tr key={`project-row-${index}`}>{this.renderProjectListItem(project)}</tr>;
   };
 
-  renderProjectListItem = project => {
+  renderProjectListItem = (project) => {
     const { ListItem } = this.props;
     if (ListItem) {
       return <ListItem project={project} />;
@@ -44,7 +44,7 @@ export default class ProjectList extends PureComponent {
     );
   };
 
-  renderRightButton = project => {
+  renderRightButton = (project) => {
     if (!project.remote) {
       return (
         <DeleteButton

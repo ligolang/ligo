@@ -58,13 +58,13 @@ class UserHomepage extends PureComponent {
   }
 
   checkIsNewUser() {
-    if (!localStorage.getItem("hasMark") && this.isSelf() && false) {
-      localStorage.setItem("hasMark", "true");
-      this.modal.current.showModal();
-    }
+    // if (!localStorage.getItem("hasMark") && this.isSelf() && false) {
+    //   localStorage.setItem("hasMark", "true");
+    //   this.modal.current.showModal();
+    // }
   }
 
-  getProjectList = async username => {
+  getProjectList = async (username) => {
     if (username === "local") {
       this.setState({
         loading: false,
@@ -90,7 +90,7 @@ class UserHomepage extends PureComponent {
     let projects;
     try {
       const res = await projectChannel.invoke("get", username);
-      projects = res.map(p => ({
+      projects = res.map((p) => ({
         remote: true,
         id: p.name,
         name: p.name,
@@ -147,7 +147,7 @@ class UserHomepage extends PureComponent {
             { key: "cloud", text: "Cloud", icon: "fas fa-cloud mr-1" },
           ]}
           selected={this.state.remote ? "cloud" : "local"}
-          onSelect={key => this.setState({ remote: key === "cloud" })}
+          onSelect={(key) => this.setState({ remote: key === "cloud" })}
         />
       );
     }
@@ -162,19 +162,19 @@ class UserHomepage extends PureComponent {
   };
 
   renderActionButtons = () => {
-    if (true) {
-      // if (platform.isDesktop) {
-      if (!this.state.remote) {
-        return (
-          <ButtonGroup>
-            {this.renderCreateButton()}
-            {this.renderOpenButton()}
-          </ButtonGroup>
-        );
-      }
-      return this.renderCreateButton();
+    // if (true) {
+    // if (platform.isDesktop) {
+    if (!this.state.remote) {
+      return (
+        <ButtonGroup>
+          {this.renderCreateButton()}
+          {this.renderOpenButton()}
+        </ButtonGroup>
+      );
     }
     return this.renderCreateButton();
+    // }
+    // return this.renderCreateButton();
   };
 
   render() {
@@ -186,7 +186,7 @@ class UserHomepage extends PureComponent {
       projects = this.props.projects
         .get("local")
         .toJS()
-        .map(p => {
+        .map((p) => {
           delete p.author;
           return p;
         });

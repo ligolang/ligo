@@ -24,7 +24,7 @@ export default function IntegerParamInput({
   }
   const feedback = type.startsWith("int") ? "Invalid integer" : "Invalid unsigned integer";
 
-  const onChangeValue = value => {
+  const onChangeValue = (value) => {
     let number;
     try {
       number = BigInt(value);

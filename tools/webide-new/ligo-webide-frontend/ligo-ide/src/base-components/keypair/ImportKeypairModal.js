@@ -37,15 +37,15 @@ export default class ImportKeypairModal extends PureComponent {
       feedback: "",
     });
     setTimeout(() => this.input.current?.focus(), 100);
-    return new Promise(resolve => (this.onResolve = resolve));
+    return new Promise((resolve) => (this.onResolve = resolve));
   }
 
-  onChange = secret => {
+  onChange = (secret) => {
     this.setState({ secret });
     this.refreshKeypair(secret, this.state.chain);
   };
 
-  setChain = chain => {
+  setChain = (chain) => {
     const { secret } = this.state;
     this.setState({ chain });
     this.refreshKeypair(secret, chain);
@@ -85,7 +85,7 @@ export default class ImportKeypairModal extends PureComponent {
       return;
     }
 
-    if (this.props.keypairs.find(k => k.name === name)) {
+    if (this.props.keypairs.find((k) => k.name === name)) {
       notification.error(
         "Import Keypair Failed",
         `The keypair name <b>${name}</b> has already been used.`
@@ -93,7 +93,7 @@ export default class ImportKeypairModal extends PureComponent {
       return;
     }
 
-    if (this.props.keypairs.find(k => k.address === keypair.address)) {
+    if (this.props.keypairs.find((k) => k.address === keypair.address)) {
       notification.error(
         "Import Keypair Failed",
         `Keypair for <b>${keypair.address}</b> already exists.`
@@ -125,7 +125,7 @@ export default class ImportKeypairModal extends PureComponent {
             className="mb-3"
             options={chains}
             selected={chain}
-            onSelect={chain => this.setChain(chain)}
+            onSelect={(chain) => this.setChain(chain)}
           />
         </div>
       </>
@@ -149,7 +149,7 @@ export default class ImportKeypairModal extends PureComponent {
           label="Name"
           maxLength="200"
           placeholder="Please enter a name for the keypair"
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
         {this.renderChainOptions()}
         <DebouncedFormGroup

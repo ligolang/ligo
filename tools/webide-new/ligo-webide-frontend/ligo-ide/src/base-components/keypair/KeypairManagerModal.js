@@ -50,7 +50,7 @@ export default class KeypairManagerModal extends PureComponent {
     };
   }
 
-  openModal = chain => {
+  openModal = (chain) => {
     this.modal.current.openModal();
     if (chain) {
       this.setChain(chain);
@@ -59,7 +59,7 @@ export default class KeypairManagerModal extends PureComponent {
   };
 
   componentDidMount() {
-    this.listenKeypairChange = keypairManager.onUpdated(keypairs => {
+    this.listenKeypairChange = keypairManager.onUpdated((keypairs) => {
       this.setState({ keypairs });
     });
   }
@@ -74,12 +74,12 @@ export default class KeypairManagerModal extends PureComponent {
     this.setState({ keypairs, loading: false });
   }
 
-  setChain = chain => {
+  setChain = (chain) => {
     this.setState({ chain });
     if (!chain) {
       this.setState({ keypairFilter: null });
     } else {
-      const filter = this.props.chains.find(c => c.key === chain)?.filter;
+      const filter = this.props.chains.find((c) => c.key === chain)?.filter;
       if (filter) {
         this.setState({ keypairFilter: filter });
       }
@@ -110,7 +110,7 @@ export default class KeypairManagerModal extends PureComponent {
     }
   };
 
-  deleteKey = async keypair => {
+  deleteKey = async (keypair) => {
     const { keypairText } = this.props;
     await keypairManager.deleteKeypair(keypair);
     notification.info(
@@ -120,7 +120,7 @@ export default class KeypairManagerModal extends PureComponent {
     this.refresh();
   };
 
-  revealSecret = keypair => {
+  revealSecret = (keypair) => {
     this.revealSecretModal.current.openModal(keypair);
   };
 
@@ -138,7 +138,7 @@ export default class KeypairManagerModal extends PureComponent {
           className="mb-2"
           options={[...chains, { key: "", text: "All" }]}
           selected={chain}
-          onSelect={chain => this.setChain(chain)}
+          onSelect={(chain) => this.setChain(chain)}
         />
       </div>
     );
@@ -157,13 +157,13 @@ export default class KeypairManagerModal extends PureComponent {
       );
     }
     if (keypairs && keypairFilter) {
-      keypairs = keypairs.filter(k => keypairFilter(k.address));
+      keypairs = keypairs.filter((k) => keypairFilter(k.address));
     }
     if (!keypairs || !keypairs.length) {
       const { keypairText } = this.props;
       let chainName;
       if (chain) {
-        chainName = this.props.chains.find(c => c.key === chain)?.text;
+        chainName = this.props.chains.find((c) => c.key === chain)?.text;
       }
       let placeholder = `No ${keypairText.toLowerCase()}s`;
       if (chainName) {
@@ -180,12 +180,12 @@ export default class KeypairManagerModal extends PureComponent {
     return keypairs.map(this.renderKeypairRow);
   };
 
-  editName = async keypair => {
+  editName = async (keypair) => {
     await this.keypairNameModal.current.openModal(keypair);
     this.refresh();
   };
 
-  renderKeypairRow = keypair => {
+  renderKeypairRow = (keypair) => {
     // 过滤地址中包含的不合法字符（禁止出现在 html attr 中的字符）
     // filter the illegal address
     const validAddress = keypair?.address?.replaceAll(/[^-_a-zA-Z0-9]/g, "-");

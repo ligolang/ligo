@@ -22,7 +22,7 @@ export default class KeypairNameModal extends PureComponent {
     this.modal.current.openModal();
     this.setState({ address, name });
     setTimeout(() => this.input.current.focus(), 100);
-    return new Promise(resolve => (this.onResolve = resolve));
+    return new Promise((resolve) => (this.onResolve = resolve));
   }
 
   onConfirm = async () => {
@@ -52,7 +52,7 @@ export default class KeypairNameModal extends PureComponent {
           maxLength="200"
           placeholder="Please enter a name for the keypair"
           value={this.state.name}
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
       </Modal>
     );

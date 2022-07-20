@@ -23,11 +23,11 @@ export default class QueueButton extends PureComponent {
     this.allTxsModal = React.createRef();
   }
 
-  openAllTransactionsModal = data => {
+  openAllTransactionsModal = (data) => {
     this.allTxsModal.current.openModal();
   };
 
-  openTransaction = tx => {
+  openTransaction = (tx) => {
     this.setState({ tx });
     this.forceUpdate();
     this.txModal.current.openModal();

@@ -104,8 +104,8 @@ class TabHeaderItem extends PureComponent {
     return (
       <div
         className="nav-item-close d-flex align-items-center justify-content-center"
-        onMouseDown={e => e.button !== 1 && e.stopPropagation()}
-        onClick={e => {
+        onMouseDown={(e) => e.button !== 1 && e.stopPropagation()}
+        onClick={(e) => {
           e.stopPropagation();
           onCloseTab(tab);
         }}
@@ -138,7 +138,7 @@ class TabHeaderItem extends PureComponent {
 
   componentWillUnmount() {
     // deregister
-    this.timeoutList.forEach(timeoutIndex => {
+    this.timeoutList.forEach((timeoutIndex) => {
       clearTimeout(timeoutIndex);
     });
   }
@@ -176,15 +176,15 @@ class TabHeaderItem extends PureComponent {
             { active: active && canDragState, dragging: isDragging }
           )}
           style={{ opacity }}
-          onContextMenu={event => {
+          onContextMenu={(event) => {
             onContextMenu(event, tab);
           }}
-          onClick={e => {
+          onClick={(e) => {
             e.stopPropagation();
             e.button === 0 && onSelectTab(tab);
             tab.clickCallback && tab.clickCallback();
           }}
-          onMouseUp={e => {
+          onMouseUp={(e) => {
             e.stopPropagation();
             e.button === 1 && onCloseTab && onCloseTab(tab);
           }}
@@ -265,7 +265,7 @@ export default class TabHeader extends Component {
     });
   };
 
-  handleWheel = event => {
+  handleWheel = (event) => {
     this.tabsRef.current.scrollLeft += event.deltaY;
   };
 
@@ -276,12 +276,12 @@ export default class TabHeader extends Component {
 
     this.handleWheelThrottled.cancel();
 
-    const doScroll = index => {
+    const doScroll = (index) => {
       this.tabsRef.current && this.tabsRef.current.children[index].scrollIntoView();
     };
 
     const scrollCurrentIntoView = () => {
-      const tabIndex = tabs.findIndex(item => item.key === selected.key);
+      const tabIndex = tabs.findIndex((item) => item.key === selected.key);
       tabIndex >= 0 ? doScroll(tabIndex) : doScroll(tabs.length - 1);
     };
     if (tabs.length !== 0) scrollCurrentIntoView();
@@ -337,7 +337,7 @@ export default class TabHeader extends Component {
                 <span
                   key="nav-item-add"
                   className={classnames("btn border-0 action-item", size && `btn-${size}`)}
-                  onMouseDown={e => e.button === 0 && onNewTab()}
+                  onMouseDown={(e) => e.button === 0 && onNewTab()}
                 >
                   <i className="fas fa-plus" />
                 </span>

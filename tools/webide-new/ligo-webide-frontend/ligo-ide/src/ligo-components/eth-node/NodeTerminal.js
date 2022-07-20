@@ -72,7 +72,7 @@ export default class NodeTerminal extends PureComponent {
     };
   }
 
-  tabFor = type => {
+  tabFor = (type) => {
     const key = type;
     const text = type;
     let icon;
@@ -117,7 +117,7 @@ export default class NodeTerminal extends PureComponent {
     }
   };
 
-  onNodeFinished = result => {
+  onNodeFinished = (result) => {
     nodeManager._nodeButton?.stop();
   };
 
@@ -133,7 +133,7 @@ export default class NodeTerminal extends PureComponent {
         noCloseTab
         initialSelected="node"
         initialTabs={initialTabs}
-        onSelectTab={tab => this.setState({ activeTab: tab.key })}
+        onSelectTab={(tab) => this.setState({ activeTab: tab.key })}
         ToolButtons={[
           {
             icon: "fas fa-trash-alt",
@@ -147,7 +147,7 @@ export default class NodeTerminal extends PureComponent {
             <Terminal
               logId="node-instance"
               active={active && activeTab === "node"}
-              ref={ref => (nodeManager.terminal = ref)}
+              ref={(ref) => (nodeManager.terminal = ref)}
               onLogReceived={onLogReceived}
               onFinished={this.onNodeFinished}
             />
@@ -156,7 +156,7 @@ export default class NodeTerminal extends PureComponent {
             <Terminal
               logId="node-miner"
               active={active && activeTab === "miner"}
-              ref={ref => (nodeManager.minerTerminal = ref)}
+              ref={(ref) => (nodeManager.minerTerminal = ref)}
               onLogReceived={onLogReceived}
             />
           </TabPane>
@@ -164,7 +164,7 @@ export default class NodeTerminal extends PureComponent {
             <Terminal
               logId="node-indexer"
               active={active && activeTab === "indexer"}
-              ref={ref => (nodeManager.indexerTerminal = ref)}
+              ref={(ref) => (nodeManager.indexerTerminal = ref)}
               onLogReceived={onLogReceived}
             />
           </TabPane>

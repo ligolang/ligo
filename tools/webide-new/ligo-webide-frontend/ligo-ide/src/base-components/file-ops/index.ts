@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable class-methods-use-this */
 import pathHelper from "path-browserify";
-import GistFs, { GistData } from "./GistFs";
+import GistFs, { GistData } from "~/base-components/file-ops/GistFs";
 import IndexedLocalFs from "./IndexedLocalFs";
 
 export type FolderInfo = {
@@ -41,43 +46,41 @@ class FileManager {
   }
 
   async isDirectory(path: string): Promise<boolean> {
-    return this.localFs
-      .stat(path)
+    return IndexedLocalFs.stat(path)
       .isDirectory()
-      .catch(e => {
+      .catch((e) => {
         throw new Error(`Fail to check directory: <b>${JSON.stringify(e)}</b>.`);
       });
   }
 
   async isFile(path: string): Promise<boolean> {
-    return this.localFs
-      .stat(path)
+    return IndexedLocalFs.stat(path)
       .isFile()
-      .catch(e => {
+      .catch((e) => {
         throw new Error(`Fail to check file: <b>${JSON.stringify(e)}</b>.`);
       });
   }
 
   async exists(path: string): Promise<boolean> {
-    return this.localFs.exists(path).catch(e => {
+    return IndexedLocalFs.exists(path).catch((e) => {
       throw new Error(`Fail to check path: <b>${JSON.stringify(e)}</b>.`);
     });
   }
 
   async readDirectory(path: string): Promise<(FolderInfo | FileInfo)[]> {
-    if (!this.isDirectory(path)) {
+    if (!(await this.isDirectory(path))) {
       throw new Error(`<b>${path}</b> is not directory.`);
     }
 
-    const dirFiles: { [a: string]: { isDirectory: boolean } } = await this.localFs
-      .readDirectory(path)
-      .catch(e => {
-        throw new Error(`Fail to fetch directory: <b>${JSON.stringify(e)}</b>.`);
-      });
+    const dirFiles: { [a: string]: { isDirectory: boolean } } = await IndexedLocalFs.readDirectory(
+      path
+    ).catch((e) => {
+      throw new Error(`Fail to fetch directory: <b>${JSON.stringify(e)}</b>.`);
+    });
 
     const folders: FolderInfo[] = Object.keys(dirFiles)
-      .filter(item => dirFiles[item].isDirectory)
-      .map(item => {
+      .filter((item) => dirFiles[item].isDirectory)
+      .map((item) => {
         const dirPath = item;
         const name = dirPath.replace(`${path}/`, "");
         return {
@@ -95,8 +98,8 @@ class FileManager {
       });
 
     const files: FileInfo[] = Object.keys(dirFiles)
-      .filter(item => !dirFiles[item].isDirectory)
-      .map(item => {
+      .filter((item) => !dirFiles[item].isDirectory)
+      .map((item) => {
         const filePath = item;
         const name = filePath.replace(`${path}/`, "");
         return {
@@ -115,15 +118,14 @@ class FileManager {
   }
 
   async readFile(path: string, cb?: (error?: any, content?: string) => void) {
-    return this.localFs
-      .readFile(path)
-      .then(content => {
+    return IndexedLocalFs.readFile(path)
+      .then((content) => {
         if (cb) {
           cb(undefined, content);
         }
         return content;
       })
-      .catch(e => {
+      .catch((e) => {
         if (cb) {
           cb(e, undefined);
         }
@@ -132,13 +134,13 @@ class FileManager {
   }
 
   async writeDirectory(path: string) {
-    await this.localFs.writeDirectory(path).catch(e => {
+    await IndexedLocalFs.writeDirectory(path).catch((e) => {
       throw new Error(`Fail to create the folder <b>${JSON.stringify(e)}</b>.`);
     });
   }
 
   async writeFile(path: string, content: string) {
-    await this.localFs.writeFile(path, content).catch(e => {
+    await IndexedLocalFs.writeFile(path, content).catch((e) => {
       throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`);
     });
   }
@@ -150,18 +152,21 @@ class FileManager {
       } else {
         const folderElements = await this.readDirectory(path);
         if (folderElements.length === 0) {
-          await this.localFs.deleteDirectory(path).catch(e => {
+          await IndexedLocalFs.deleteDirectory(path).catch((e) => {
             throw new Error(`Fail to delete the folder <b>${JSON.stringify(e)}</b>.`);
           });
         } else {
-          for (const element of folderElements) {
-            if (element.type === "file") {
-              await this.deleteFile(element.key);
+          const actions = [];
+          for (let i = 0; i < folderElements.length; i++) {
+            if (folderElements[i].type === "file") {
+              actions.push(this.deleteFile(folderElements[i].path));
             } else {
-              await this.deleteDirectory(element.key);
+              actions.push(this.deleteDirectory(folderElements[i].key));
             }
           }
-          await this.localFs.deleteDirectory(path).catch(e => {
+          await Promise.all(actions);
+
+          await IndexedLocalFs.deleteDirectory(path).catch((e) => {
             throw new Error(`Fail to delete the folder <b>${JSON.stringify(e)}</b>.`);
           });
         }
@@ -173,23 +178,19 @@ class FileManager {
 
   async deleteFile(path: string) {
     if ((await this.exists(path)) && (await this.isFile(path))) {
-      await this.localFs.deleteFile(path).catch(e => {
+      await IndexedLocalFs.deleteFile(path).catch((e) => {
         throw new Error(`Fail to delete the file <b>${JSON.stringify(e)}</b>.`);
       });
     }
   }
 
   async relativeDirectory(path: string) {
-    return (await this.isDirectory(path))
-      ? path
-      : pathHelper.dirname(path).catch(e => {
-          throw new Error(`Fail to fetch relative direcroty <b>${JSON.stringify(e)}</b>.`);
-        });
+    return (await this.isDirectory(path)) ? path : pathHelper.dirname(path);
   }
 
   async rename(oldPath: string, newPath: string) {
     if (await this.exists(oldPath)) {
-      await this.localFs.rename(oldPath, newPath).catch(e => {
+      await IndexedLocalFs.rename(oldPath, newPath).catch((e) => {
         throw new Error(`Fail to rename: <b>${JSON.stringify(e)}</b>.`);
       });
     }
@@ -228,12 +229,17 @@ class FileManager {
     await this.writeDirectory(newPath);
 
     const folderContent = await this.collectFiles(oldPath);
-    for (const file of folderContent) {
-      await this.writeFile(
-        newPath + file.path.substring(oldPath.length, file.path.length),
-        file.content
+
+    const actions = [];
+    for (let i = 0; i < folderContent.length; i++) {
+      actions.push(
+        this.writeFile(
+          newPath + folderContent[i].path.substring(oldPath.length, folderContent[i].path.length),
+          folderContent[i].content
+        )
       );
     }
+    await Promise.all(actions);
 
     if (mode === "move") {
       await this.deleteDirectory(oldPath);
@@ -241,21 +247,22 @@ class FileManager {
   }
 
   async loadGistProject(gistId: string) {
-    const data = await this.gistFs
-      .loadData(gistId)
+    const data = await GistFs.loadData(gistId)
       .then((dt: GistData) => {
         if (!dt.files) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           throw new Error(dt.message);
         } else {
           return dt.files;
         }
       })
-      .catch(e => {
+      .catch((e: { message: string }) => {
         throw new Error(`<b>${e.message}</b>`);
       });
 
     const obj: { [a: string]: string } = {};
-    Object.keys(data).forEach(element => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    Object.keys(data).forEach((element) => {
       const path = element.replace(/\.\.\./g, "/");
       obj[path] = data[element];
     });
@@ -273,7 +280,7 @@ class FileManager {
       packagedObject[path] = { content };
     });
     const description = "Description";
-    return this.gistFs.uploadData(packagedObject, description, token);
+    return GistFs.uploadData(packagedObject, description, token);
   }
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
@@ -295,8 +302,9 @@ class FileManager {
     if (await this.exists(path)) {
       const items = await this.readDirectory(path);
       if (items.length !== 0) {
-        for (const item of items) {
-          const curPath = item.key;
+        /* eslint-disable no-await-in-loop */
+        for (let i = 0; i < items.length; i++) {
+          const curPath = items[i].key;
           if (await this.isDirectory(curPath)) {
             const folderContent = await this.collectFiles(curPath);
             files.push(...folderContent);
@@ -305,24 +313,26 @@ class FileManager {
             files.push({ path: curPath, content: fileContent });
           }
         }
+        /* eslint-enable no-await-in-loop */
       }
     }
 
     return files;
   }
 
-  showMessageBox({ message }) {
-    // TODO add proper type or remove
+  // eslint-disable-next-line class-methods-use-this
+  showMessageBox({ message }: { message: string }) {
     const result = window.confirm(message);
     return { response: result ? 0 : 1 };
   }
 
+  // eslint-disable-next-line class-methods-use-this
   getAppVersion(): string | undefined {
     return process.env.APP_VERSION;
   }
 
-  openLink(href) {
-    // TODO add proper type or remove
+  // eslint-disable-next-line class-methods-use-this
+  openLink(href: string) {
     window.open(href, "_blank");
   }
 }

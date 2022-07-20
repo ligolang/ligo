@@ -18,7 +18,7 @@ export default class GistUploadModals extends PureComponent {
     this.input = React.createRef();
   }
 
-  gistUploadModal = root => {
+  gistUploadModal = (root) => {
     this.setState({ root, loading: false });
     setTimeout(() => this.input.current?.focus(), 100);
     this.modal.current.openModal();
@@ -36,7 +36,7 @@ export default class GistUploadModals extends PureComponent {
 
     this.setState({ loading: true });
 
-    const link = await fileOps.uploadGistProject(token, root).catch(e => {
+    const link = await fileOps.uploadGistProject(token, root).catch((e) => {
       notification.error("Gist load error", e.message);
     });
 
@@ -77,7 +77,7 @@ export default class GistUploadModals extends PureComponent {
             }
             maxLength="50"
             value={this.state.token}
-            onChange={token => this.setState({ token })}
+            onChange={(token) => this.setState({ token })}
           />
         )}
       </Modal>

@@ -8,8 +8,9 @@ export default function ScriptsButton({ projectManager }) {
   const [isNodeProject, setNodeProject] = React.useState(false);
   const [options, setOptions] = React.useState([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(
-    BaseProjectManager.effect("settings:framework", framework => {
+    BaseProjectManager.effect("settings:framework", (framework) => {
       const isNodeProject = !framework.endsWith("-docker");
       setNodeProject(isNodeProject);
     }),
@@ -22,10 +23,10 @@ export default function ScriptsButton({ projectManager }) {
     }
     projectManager
       .readPackageJson()
-      .then(packageJson => {
+      .then((packageJson) => {
         const { scripts } = packageJson;
         if (scripts) {
-          return Object.keys(scripts).map(key => ({
+          return Object.keys(scripts).map((key) => ({
             key,
             onClick: () => {
               const npmClient = projectManager.projectSettings.get("npmClient");
@@ -38,7 +39,7 @@ export default function ScriptsButton({ projectManager }) {
       })
       .then(setOptions)
       .catch();
-  }, [isNodeProject]);
+  }, [isNodeProject, projectManager]);
 
   if (!isNodeProject) {
     return null;

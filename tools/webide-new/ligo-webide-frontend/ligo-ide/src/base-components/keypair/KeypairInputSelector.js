@@ -29,21 +29,21 @@ export default class KeypairInputSelector extends PureComponent {
     }
   }
 
-  updateKeypairs = allKeypairs => {
+  updateKeypairs = (allKeypairs) => {
     this.allKeypairs = allKeypairs;
     const keypairs = this.props.filter ? allKeypairs.filter(this.props.filter) : allKeypairs;
     if (!this.props.editable) {
       if (this.state.keypairs.length && !keypairs.length) {
         this.props.onChange();
       }
-      if (keypairs.length && !keypairs.find(k => k.address === this.props.value)) {
+      if (keypairs.length && !keypairs.find((k) => k.address === this.props.value)) {
         this.props.onChange(keypairs[0].address);
       }
     }
     this.setState({ keypairs });
   };
 
-  renderDisplay = key => {
+  renderDisplay = (key) => {
     const { name } = key;
     const address = utils.formatAddress(key.address);
 
@@ -52,8 +52,8 @@ export default class KeypairInputSelector extends PureComponent {
       if (!active && highlight) {
         highlightAddress = [];
         const reg = new RegExp(highlight, "ig");
-        const tempArr = address.replaceAll(reg, text => `,spc-${text},`);
-        tempArr.split(",").forEach(part => {
+        const tempArr = address.replaceAll(reg, (text) => `,spc-${text},`);
+        tempArr.split(",").forEach((part) => {
           if (part !== "") {
             part.indexOf("spc") !== -1
               ? highlightAddress.push(<b className="text-primary">{part.split("spc-")[1]}</b>)
@@ -72,7 +72,7 @@ export default class KeypairInputSelector extends PureComponent {
     };
   };
 
-  mapKeyToOption = key => {
+  mapKeyToOption = (key) => {
     return {
       id: key.address,
       badge: key.name,
@@ -95,7 +95,7 @@ export default class KeypairInputSelector extends PureComponent {
     } = this.props;
 
     const options = this.state.keypairs.map(this.mapKeyToOption);
-    const extraOptions = extra.map(item => {
+    const extraOptions = extra.map((item) => {
       if (item.children) {
         return {
           ...item,
@@ -144,7 +144,7 @@ export default class KeypairInputSelector extends PureComponent {
         options={[...options, ...extraOptions]}
         renderText={
           !editable &&
-          (option => (option ? <code>{utils.isValidAddressReturn(option.id)}</code> : null))
+          ((option) => (option ? <code>{utils.isValidAddressReturn(option.id)}</code> : null))
         }
         value={value}
         onChange={onChange}

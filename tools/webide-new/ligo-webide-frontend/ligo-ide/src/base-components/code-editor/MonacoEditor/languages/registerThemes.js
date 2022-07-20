@@ -3,7 +3,7 @@ import convert from "color-convert";
 import * as monaco from "monaco-editor";
 import { getColor } from "~/base-components/ui-components";
 
-const hex = value => {
+const hex = (value) => {
   const hexValue = Number(value || 0).toString(16);
   return hexValue.length === 1 ? `0${hex}` : hexValue;
 };

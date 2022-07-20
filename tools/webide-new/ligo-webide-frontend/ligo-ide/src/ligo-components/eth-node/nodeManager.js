@@ -40,7 +40,7 @@ class NodeManager {
     this._nodeButton = nodeButton;
 
     const versions = await instanceChannel.node.versions();
-    if (!versions.find(v => v.Tag === version)) {
+    if (!versions.find((v) => v.Tag === version)) {
       notification.error(
         `${process.env.CHAIN_EXECUTABLE_NAME} ${version} not Installed`,
         `Please install the version in <b>${process.env.CHAIN_EXECUTABLE_NAME} Version Manager</b>`
@@ -94,7 +94,7 @@ class NodeManager {
   async stop() {
     const cachingKeys = getCachingKeys();
     cachingKeys
-      .filter(key => key.startsWith("contract-") || key.startsWith("account-"))
+      .filter((key) => key.startsWith("contract-") || key.startsWith("account-"))
       .forEach(dropByCacheKey);
     if (this._terminal) {
       const n = notification.info(`Stopping ${process.env.CHAIN_EXECUTABLE_NAME}...`, "", 0);

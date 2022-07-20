@@ -1,5 +1,5 @@
 export default class IndexedLocalFs {
-  stat(path: string) {
+  static stat(path: string) {
     return {
       isDirectory: async (): Promise<boolean> =>
         (await window.ligoIdeFileSystem.stat(path)).isDirectory(),
@@ -7,11 +7,11 @@ export default class IndexedLocalFs {
     };
   }
 
-  async exists(path: string): Promise<boolean> {
+  static async exists(path: string): Promise<boolean> {
     return window.ligoIdeFileSystem.exists(path);
   }
 
-  async readDirectory(path: string): Promise<{ [a: string]: { isDirectory: boolean } }> {
+  static async readDirectory(path: string): Promise<{ [a: string]: { isDirectory: boolean } }> {
     const files = await window.ligoIdeFileSystem.readdir(path);
     const trailPath = path.replace(/^\/|\/$/g, "");
     const result: { [a: string]: { isDirectory: boolean } } = {};
@@ -20,18 +20,19 @@ export default class IndexedLocalFs {
         const trailFile = file.replace(/^\/|\/$/g, "");
         const absPath = `${trailPath}/${trailFile}`;
         result[absPath] = {
-          isDirectory: await this.stat(absPath).isDirectory(),
+          // eslint-disable-next-line no-await-in-loop
+          isDirectory: await IndexedLocalFs.stat(absPath).isDirectory(),
         };
       }
     }
     return result;
   }
 
-  async readFile(filePath: string): Promise<string> {
+  static async readFile(filePath: string): Promise<string> {
     return window.ligoIdeFileSystem.readFile(filePath);
   }
 
-  async writeDirectory(path: string): Promise<void> {
+  static async writeDirectory(path: string): Promise<void> {
     const paths = path.split("/");
     if (paths.length && paths[0] === "") {
       paths.shift();
@@ -40,26 +41,28 @@ export default class IndexedLocalFs {
     let curDir = "";
     for (const value of paths) {
       curDir = `${curDir}/${value}`;
-      if (!(await this.exists(curDir))) {
+      // eslint-disable-next-line no-await-in-loop
+      if (!(await IndexedLocalFs.exists(curDir))) {
+        // eslint-disable-next-line no-await-in-loop
         await window.ligoIdeFileSystem.mkdir(curDir);
       }
     }
   }
 
-  async writeFile(filePath: string, content: string): Promise<void> {
-    await this.writeDirectory(filePath.substring(0, filePath.lastIndexOf("/")));
+  static async writeFile(filePath: string, content: string): Promise<void> {
+    await IndexedLocalFs.writeDirectory(filePath.substring(0, filePath.lastIndexOf("/")));
     await window.ligoIdeFileSystem.writeFile(filePath, content);
   }
 
-  async deleteFile(filePath: string): Promise<void> {
+  static async deleteFile(filePath: string): Promise<void> {
     await window.ligoIdeFileSystem.unlink(filePath);
   }
 
-  async deleteDirectory(dirPath: string): Promise<void> {
+  static async deleteDirectory(dirPath: string): Promise<void> {
     await window.ligoIdeFileSystem.rmdir(dirPath);
   }
 
-  async rename(oldPath: string, newPath: string): Promise<void> {
+  static async rename(oldPath: string, newPath: string): Promise<void> {
     await window.ligoIdeFileSystem.rename(oldPath, newPath);
   }
 }

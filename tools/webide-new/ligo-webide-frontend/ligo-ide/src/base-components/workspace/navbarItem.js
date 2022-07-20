@@ -1,7 +1,7 @@
 import platform from "~/base-components/platform";
 import actions from "./actions";
 
-const projectContextMenus = id => {};
+const projectContextMenus = (id) => {};
 
 export default function navbarItem(projects, selected, username = "local") {
   // if (platform.isWeb && username === 'local') {
@@ -24,7 +24,9 @@ export default function navbarItem(projects, selected, username = "local") {
       { header: username === "local" ? "projects" : "local projects" },
     ];
     if (localProjects.length) {
-      projectDropdown = projectDropdown.concat(localProjects.map(p => ({ ...p, route: p.author })));
+      projectDropdown = projectDropdown.concat(
+        localProjects.map((p) => ({ ...p, route: p.author }))
+      );
     } else {
       projectDropdown.push({ none: true });
     }
@@ -33,7 +35,7 @@ export default function navbarItem(projects, selected, username = "local") {
       projectDropdown = projectDropdown.concat([{ divider: true }, { header: "remote projects" }]);
       if (remoteProjects.length) {
         projectDropdown = projectDropdown.concat(
-          remoteProjects.map(p => ({ ...p, route: p.author }))
+          remoteProjects.map((p) => ({ ...p, route: p.author }))
         );
       } else {
         projectDropdown.push({ none: true });
@@ -42,7 +44,9 @@ export default function navbarItem(projects, selected, username = "local") {
   } else {
     projectDropdown = [{ divider: true }, { header: "projects" }];
     if (localProjects.length) {
-      projectDropdown = projectDropdown.concat(localProjects.map(p => ({ ...p, route: p.author })));
+      projectDropdown = projectDropdown.concat(
+        localProjects.map((p) => ({ ...p, route: p.author }))
+      );
     } else {
       projectDropdown.push({ none: true });
     }

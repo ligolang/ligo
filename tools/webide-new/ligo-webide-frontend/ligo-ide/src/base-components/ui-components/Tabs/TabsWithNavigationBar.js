@@ -16,12 +16,12 @@ export default class TabsWithNavigationBar extends PureComponent {
     this.tabIndex = this.props.initialTabs.length;
   }
 
-  openTab = value => {
+  openTab = (value) => {
     const tabRef = this.tabs.current;
     if (!tabRef) {
       return;
     }
-    const tab = tabRef.allTabs.find(item => item.value === value);
+    const tab = tabRef.allTabs.find((item) => item.value === value);
     if (tab) {
       tabRef.currentTab = tab;
     } else {
@@ -42,11 +42,11 @@ export default class TabsWithNavigationBar extends PureComponent {
   };
 
   createNewTab = (value = "") => {
-    this.tabIndex++;
+    this.tabIndex += 1;
     return { key: `tab-${this.tabIndex}`, value };
   };
 
-  updateTab = updates => {
+  updateTab = (updates) => {
     this.tabs.current.updateTab(updates);
     if (updates.value) {
       this.navbar.current.setState({ value: updates.value });
@@ -75,7 +75,7 @@ export default class TabsWithNavigationBar extends PureComponent {
     return this.props.getTabText({ text, value, temp });
   };
 
-  onTabsUpdated = tabs => {
+  onTabsUpdated = (tabs) => {
     const tabValues = tabs.map(({ value }) => value);
     this.setState({ noTab: !tabs.length });
     this.props.onTabsUpdated(tabValues);

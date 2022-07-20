@@ -88,7 +88,7 @@ export default class InstanceList extends PureComponent {
       );
     }
 
-    return this.state.instances.map(data => (
+    return this.state.instances.map((data) => (
       <InstanceRow
         key={`instance-${data.Name}`}
         data={data}
@@ -97,7 +97,7 @@ export default class InstanceList extends PureComponent {
         onRefresh={this.refreshInstances}
         onNodeLifecycle={this.onNodeLifecycle}
         configButton={this.props.configButton}
-        onOpenConfig={data => this.configModal.current.openModal(data)}
+        onOpenConfig={(data) => this.configModal.current.openModal(data)}
       />
     ));
   };

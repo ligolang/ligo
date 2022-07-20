@@ -42,7 +42,7 @@ export default class CreateKeypairModal extends PureComponent {
       this.regenerateKeypair();
     }
     setTimeout(() => this.input.current?.focus(), 100);
-    return new Promise(resolve => (this.onResolve = resolve));
+    return new Promise((resolve) => (this.onResolve = resolve));
   }
 
   regenerateKeypair = async () => {
@@ -54,7 +54,7 @@ export default class CreateKeypairModal extends PureComponent {
     this.setState({ keypair });
   };
 
-  setChain = chain => {
+  setChain = (chain) => {
     const secret = this.state.keypair?.secret;
     const keypair = this.props.kp.importKeypair(secret, chain);
     this.setState({ chain, keypair });
@@ -68,7 +68,7 @@ export default class CreateKeypairModal extends PureComponent {
       return;
     }
 
-    if (this.props.keypairs.find(k => k.name === name)) {
+    if (this.props.keypairs.find((k) => k.name === name)) {
       notification.error(
         "Create Keypair Failed",
         `The keypair name <b>${name}</b> has already been used.`
@@ -100,7 +100,7 @@ export default class CreateKeypairModal extends PureComponent {
             className="mb-3"
             options={chains}
             selected={chain}
-            onSelect={chain => this.setChain(chain)}
+            onSelect={(chain) => this.setChain(chain)}
           />
         </div>
       </>
@@ -162,7 +162,7 @@ export default class CreateKeypairModal extends PureComponent {
           label="Name"
           maxLength="200"
           placeholder="Please enter a name for the keypair"
-          onChange={name => this.setState({ name })}
+          onChange={(name) => this.setState({ name })}
         />
         {this.renderChainOptions()}
         <Label>Keypair info</Label>

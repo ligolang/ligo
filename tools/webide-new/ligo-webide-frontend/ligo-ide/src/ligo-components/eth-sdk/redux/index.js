@@ -19,7 +19,7 @@ export default {
       reducer: (state, { payload }) => state.remove(payload),
     },
     ADD_DEFAULT_ABIS: {
-      reducer: state => state,
+      reducer: (state) => state,
     },
   },
 };

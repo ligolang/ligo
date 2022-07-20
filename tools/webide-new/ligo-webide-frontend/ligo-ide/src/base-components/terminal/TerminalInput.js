@@ -41,11 +41,11 @@ export default class TerminalInput extends PureComponent {
 
   focus = () => this.inputRef.current.focus();
 
-  onChange = event => {
+  onChange = (event) => {
     this.setState({ value: event.target.value });
   };
 
-  onSubmit = async event => {
+  onSubmit = async (event) => {
     event.preventDefault();
     if (this.state.executing) {
       return;

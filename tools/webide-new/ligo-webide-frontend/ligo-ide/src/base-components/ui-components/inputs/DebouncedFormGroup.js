@@ -52,7 +52,7 @@ function DebouncedFormGroup(props, ref) {
 
   const [invalid, feedback] = execValidator(otherProps.value, validator);
 
-  const onChange = value => {
+  const onChange = (value) => {
     const [invalid] = execValidator(value, validator);
     otherProps.onChange(value, invalid);
   };
@@ -61,10 +61,10 @@ function DebouncedFormGroup(props, ref) {
     const input = document.createElement("input");
     input.type = "file";
     if (typeof importFromFile === "string") input.accept = importFromFile;
-    input.onchange = event => {
+    input.onchange = (event) => {
       const file = input.files[0];
       const fr = new FileReader();
-      fr.onload = event => {
+      fr.onload = (event) => {
         onChange(event.target.result);
       };
       fr.readAsText(file);

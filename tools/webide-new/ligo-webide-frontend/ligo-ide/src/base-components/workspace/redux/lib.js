@@ -3,5 +3,5 @@ function getId(project) {
 }
 
 export function findIndex(state, id, type = "cache") {
-  return state.get(type).findIndex(p => getId(p) === id);
+  return state.get(type).findIndex((p) => getId(p) === id);
 }

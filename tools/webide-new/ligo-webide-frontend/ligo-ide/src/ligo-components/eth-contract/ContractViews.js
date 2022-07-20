@@ -15,7 +15,7 @@ export default class ContractViews extends AbiActionForm {
     showResult: true,
   };
 
-  executeAction = async actionName => {
+  executeAction = async (actionName) => {
     if (this.state.executing) {
       return;
     }

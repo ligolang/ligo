@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "baseUrl": "src/",
+    "baseUrl": ".",
     "module": "esnext",
     "lib": [
       "dom",
@@ -26,7 +26,10 @@
     "noFallthroughCasesInSwitch": true,
     "rootDir": "src",
     "noImplicitReturns": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "./src/**/*"

@@ -12,7 +12,7 @@ import {
 import { networkManager } from "~/ligo-components/eth-network";
 
 export default function AccountBalance({ account, tokens, history }) {
-  const erc20Tokens = tokens?.filter(t => t.type === "ERC20");
+  const erc20Tokens = tokens?.filter((t) => t.type === "ERC20");
 
   return (
     <TableCard title="Account" tableScroll>
@@ -37,7 +37,7 @@ export default function AccountBalance({ account, tokens, history }) {
               </DropdownToggle>
               <DropdownMenu className="dropdown-menu-sm" style={{ maxHeight: 360 }}>
                 <DropdownItem header>token balance</DropdownItem>
-                {erc20Tokens.map(t => {
+                {erc20Tokens.map((t) => {
                   const balance = t.balance / 10 ** t.decimals;
                   let formattedBalance;
                   if (balance > 1e14) {

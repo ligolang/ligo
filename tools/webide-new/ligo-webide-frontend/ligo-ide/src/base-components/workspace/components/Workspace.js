@@ -50,7 +50,7 @@ export default class Workspace extends Component {
       terminalSize: 160,
     };
 
-    const effect = BaseProjectManager.effect("settings:editor", editorConfig => {
+    const effect = BaseProjectManager.effect("settings:editor", (editorConfig) => {
       this.state.editorConfig = editorConfig;
     });
     this.disposable = effect();
@@ -58,11 +58,11 @@ export default class Workspace extends Component {
     actions.workspace = this;
 
     registerHandlers({
-      newFile: node => this.openCreateFileModal(node),
-      newFolder: node => this.openCreateFolderModal(node),
-      rename: node => this.openRenameModal(node),
-      deleteFile: node => this.context.projectManager.deleteFile(node),
-      openFile: node => this.openFile(node, true),
+      newFile: (node) => this.openCreateFileModal(node),
+      newFolder: (node) => this.openCreateFolderModal(node),
+      rename: (node) => this.openRenameModal(node),
+      deleteFile: (node) => this.context.projectManager.deleteFile(node),
+      openFile: (node) => this.openFile(node, true),
     });
   }
 
@@ -106,7 +106,7 @@ export default class Workspace extends Component {
     setTreeActive && this.setFileTreeActive(path);
   };
 
-  onSelectTab = selectedTab => {
+  onSelectTab = (selectedTab) => {
     selectedTab.path && !selectedTab.path.startsWith("custom:")
       ? this.setFileTreeActive(selectedTab.path)
       : this.setFileTreeActive();
@@ -118,7 +118,7 @@ export default class Workspace extends Component {
     this.filetree.current && this.filetree.current.updateTreeTitle();
   }
 
-  openCreateFileModal = node => {
+  openCreateFileModal = (node) => {
     const activeNode =
       node || this.filetree.current.activeNode || this.filetree.current.rootNode[0];
     const basePath = activeNode.children
@@ -136,7 +136,7 @@ export default class Workspace extends Component {
     this.uploadModal.current.gistUploadModal(root);
   };
 
-  openCreateFolderModal = node => {
+  openCreateFolderModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode;
     const basePath = activeNode.children
       ? activeNode.path
@@ -148,7 +148,7 @@ export default class Workspace extends Component {
     this.createModal.current.openCreateFolderModal({ baseName, basePath });
   };
 
-  openRenameModal = node => {
+  openRenameModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode;
     const type = activeNode.children ? "folder" : "file";
     const { base } = fileOps.pathHelper.parse(activeNode.path);
@@ -178,7 +178,7 @@ export default class Workspace extends Component {
   //   this.codeEditor.current.fileSaved(path, { saveAsPath })
   // }
 
-  onDragTerminal = size => {
+  onDragTerminal = (size) => {
     if (!this.state.showTerminal) {
       if (this.state.terminalSize < 160) {
         this.setState({ terminalSize: 160 });
@@ -199,7 +199,7 @@ export default class Workspace extends Component {
       Terminal,
       defaultSize,
       readOnly: readOnlyInProps = false,
-      makeContextMenu = x => x,
+      makeContextMenu = (x) => x,
     } = this.props;
 
     const readOnly =
@@ -216,7 +216,7 @@ export default class Workspace extends Component {
           primary="second"
           size={showTerminal ? terminalSize : 0}
           minSize={0}
-          onChange={terminalSize => {
+          onChange={(terminalSize) => {
             this.setState({ terminalSize });
             this.throttledDispatchResizeEvent();
           }}
@@ -261,7 +261,7 @@ export default class Workspace extends Component {
           defaultSize={defaultSize}
           minSize={160}
           onChange={this.throttledDispatchResizeEvent}
-          adjustSize={size => {
+          adjustSize={(size) => {
             if (size && Math.abs(size - defaultSize) < 5) {
               return defaultSize;
             }

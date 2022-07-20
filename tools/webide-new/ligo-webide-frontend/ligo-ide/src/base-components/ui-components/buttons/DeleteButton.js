@@ -33,7 +33,7 @@ export default class DeleteButton extends PureComponent {
   }
 
   showConfirm = () => {
-    Object.keys(deleteButtons).forEach(id => {
+    Object.keys(deleteButtons).forEach((id) => {
       deleteButtons[id] && deleteButtons[id].setState({ confirming: false });
     });
     this.setState({ confirming: true });

@@ -68,7 +68,7 @@ export default class ContractPage extends PureComponent {
       errorType: null,
     });
 
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     const { value } = this.props;
 
@@ -127,7 +127,7 @@ export default class ContractPage extends PureComponent {
         </span>
       ),
       errorType: "ABI_NOT_FOUND",
-      abis: Object.entries(redux.getState().abis.toJS()).map(item => ({
+      abis: Object.entries(redux.getState().abis.toJS()).map((item) => ({
         id: item[0],
         name: item[1].name,
         abi: JSON.parse(item[1].abi),
@@ -135,7 +135,7 @@ export default class ContractPage extends PureComponent {
     });
   };
 
-  getTokenInfo = async account => {
+  getTokenInfo = async (account) => {
     const tokenInfo = await networkManager.sdk.getTokenInfo(account.address);
     this.setState({ tokenInfo });
     if (tokenInfo?.type === "ERC20") {
@@ -155,7 +155,7 @@ export default class ContractPage extends PureComponent {
   loadProjectAbis = async () => {
     const projectAbis = await BaseProjectManager.instance?.readProjectAbis();
     this.setState({
-      projectAbis: projectAbis?.map(item => ({
+      projectAbis: projectAbis?.map((item) => ({
         ...item,
         id: item.pathInProject || item.contractPath,
       })),
@@ -163,10 +163,7 @@ export default class ContractPage extends PureComponent {
   };
 
   getAbiData(codeHash) {
-    const abiData = redux
-      .getState()
-      .abis.get(codeHash)
-      ?.toJS();
+    const abiData = redux.getState().abis.get(codeHash)?.toJS();
     if (!abiData) {
       return;
     }
@@ -183,14 +180,14 @@ export default class ContractPage extends PureComponent {
     this.refresh();
   }
 
-  renderAbiDropdownItem = abis => {
+  renderAbiDropdownItem = (abis) => {
     if (!abis) {
       return null;
     }
     if (!abis.length) {
       return <DropdownItem disabled>(No ABI found)</DropdownItem>;
     }
-    return abis.map(item => {
+    return abis.map((item) => {
       return (
         <DropdownItem key={item.id} onClick={() => this.setState({ abi: item, error: null })}>
           <b>{item.name}</b>
@@ -220,11 +217,13 @@ export default class ContractPage extends PureComponent {
     );
   };
 
-  separateAbi = abi => {
-    const functions = abi.abi.filter(item => item.type === "function");
-    const events = abi.abi.filter(item => item.type === "event");
-    const actions = functions.filter(item => ["view", "pure"].indexOf(item.stateMutability) === -1);
-    const views = functions.filter(item => ["view", "pure"].indexOf(item.stateMutability) > -1);
+  separateAbi = (abi) => {
+    const functions = abi.abi.filter((item) => item.type === "function");
+    const events = abi.abi.filter((item) => item.type === "event");
+    const actions = functions.filter(
+      (item) => ["view", "pure"].indexOf(item.stateMutability) === -1
+    );
+    const views = functions.filter((item) => ["view", "pure"].indexOf(item.stateMutability) > -1);
     return { actions, views, events };
   };
 

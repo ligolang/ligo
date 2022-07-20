@@ -1,7 +1,7 @@
 import semver from "semver";
 import { IpcChannel } from "~/base-components/ipc";
 
-const defaultFilter = v => semver.valid(v);
+const defaultFilter = (v) => semver.valid(v);
 const defaultSort = (v1, v2) => (semver.lt(v1, v2) ? 1 : -1);
 
 const getHandler = (opt, defaultHandler) => {
@@ -41,7 +41,7 @@ export default class DockerImageChannel extends IpcChannel {
   }
 
   onVersionsRefreshed(callback) {
-    const eventHandler = event => callback(event.detail);
+    const eventHandler = (event) => callback(event.detail);
     this.eventTarget.addEventListener("versions", eventHandler);
   }
 
@@ -53,7 +53,7 @@ export default class DockerImageChannel extends IpcChannel {
   _organizeVersionsByKey(versions, key) {
     let organized = [...versions];
     if (this.filter) {
-      organized = organized.filter(v => this.filter(v[key]));
+      organized = organized.filter((v) => this.filter(v[key]));
     }
     if (this.sort) {
       organized = organized.sort((x, y) => this.sort(x[key], y[key]));

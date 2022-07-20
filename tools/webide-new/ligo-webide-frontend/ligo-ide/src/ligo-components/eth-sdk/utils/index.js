@@ -3,7 +3,7 @@ import Big from "big.js";
 
 import txOptions from "./txOptions";
 
-const display = value => {
+const display = (value) => {
   const amount = ethers.utils.formatEther(value);
   if (amount > 0.001) {
     return `${new Intl.NumberFormat().format(amount)} ETH`;
@@ -15,7 +15,7 @@ const display = value => {
   return `${new Intl.NumberFormat().format(value)} wei`;
 };
 
-const utf8 = hex => {
+const utf8 = (hex) => {
   try {
     return ethers.utils.toUtf8String(hex);
   } catch {
@@ -45,7 +45,7 @@ function parseValue(value, param, chainId) {
       internalType: internalType.replace(/\[\d*\]/, ""),
       components,
     };
-    return value.map(v => {
+    return value.map((v) => {
       const parsed = parseValue.call(this, v, itemParam, chainId);
       return {
         value: parsed,
@@ -68,34 +68,34 @@ function parseValue(value, param, chainId) {
 
 export default {
   txOptions,
-  isValidAddress: address => ethers.utils.isAddress(address),
-  formatAddress: address =>
+  isValidAddress: (address) => ethers.utils.isAddress(address),
+  formatAddress: (address) =>
     ethers.utils.isAddress(address) ? ethers.utils.getAddress(address) : "--",
-  abbreviateAddress: addr => {
+  abbreviateAddress: (addr) => {
     let address = addr;
     address = ethers.utils.isAddress(address) ? ethers.utils.getAddress(address) : "--";
     return `${address.substr(0, 12)}...${address.substr(address.length - 6, address.length)}`;
   },
-  simplifyAddress: address => (address ? address.toLowerCase() : ""),
-  isValidAddressReturn: address =>
+  simplifyAddress: (address) => (address ? address.toLowerCase() : ""),
+  isValidAddressReturn: (address) =>
     ethers.utils.isAddress(address) ? ethers.utils.getAddress(address) : address,
   sign: {
     sha3: ethers.utils.keccak256,
   },
   format: {
-    big: value => Big(value),
-    bytes: str => ethers.utils.toUtf8Bytes(str),
+    big: (value) => Big(value),
+    bytes: (str) => ethers.utils.toUtf8Bytes(str),
     utf8,
-    bytesFromHex: hex => ethers.utils.arrayify(hex),
+    bytesFromHex: (hex) => ethers.utils.arrayify(hex),
   },
   unit: {
     fromValue: ethers.utils.formatEther,
     toValue: ethers.utils.parseEther,
-    valueToGvalue: v => ethers.utils.formatUnits(v, "gwei"),
+    valueToGvalue: (v) => ethers.utils.formatUnits(v, "gwei"),
   },
   display,
   decodeError: () => "",
-  parseError: e => {
+  parseError: (e) => {
     e.reason = "";
     try {
       const body = e.body || e.error.body || e.error.error.body;

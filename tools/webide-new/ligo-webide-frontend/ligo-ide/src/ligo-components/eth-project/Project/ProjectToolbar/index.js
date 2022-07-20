@@ -10,11 +10,12 @@ import keypairManager from "~/base-components/keypair";
 import SignRequestModal from "./SignRequestModal";
 
 export default class ProjectToolbar extends PureComponent {
+  // eslint-disable-next-line react/static-property-placement
+  static contextType = WorkspaceContext;
+
   constructor(props) {
     super(props);
   }
-
-  static contextType = WorkspaceContext;
 
   render() {
     const { signer, noBuild, noDeploy, ExtraButtons = () => null } = this.props;

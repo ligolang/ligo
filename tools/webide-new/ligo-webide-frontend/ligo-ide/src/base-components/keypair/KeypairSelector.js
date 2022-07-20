@@ -40,7 +40,7 @@ export default class KeypairSelector extends PureComponent {
     }
   }
 
-  updateKeypairs = allKeypairs => {
+  updateKeypairs = (allKeypairs) => {
     this.allKeypairs = allKeypairs;
 
     const { filter, enabled } = this.props;
@@ -53,7 +53,7 @@ export default class KeypairSelector extends PureComponent {
     if (this.state.keypairs.length && !enabledKeypairs.length) {
       this.props.onSelected();
     }
-    if (enabledKeypairs.length && !enabledKeypairs.find(k => k.address === this.props.selected)) {
+    if (enabledKeypairs.length && !enabledKeypairs.find((k) => k.address === this.props.selected)) {
       this.props.onSelected(enabledKeypairs[0].address);
     }
     this.setState({ loading: false, keypairs });
@@ -63,7 +63,7 @@ export default class KeypairSelector extends PureComponent {
     this.modal.current.openModal();
   };
 
-  renderItems = iconComponent => {
+  renderItems = (iconComponent) => {
     const { networkManager } = require("~/ligo-components/eth-network");
     if (this.state.loading) {
       return (
@@ -84,7 +84,7 @@ export default class KeypairSelector extends PureComponent {
     }
 
     const keypairs = [...this.state.keypairs];
-    return keypairs.map(k => {
+    return keypairs.map((k) => {
       const disabled = !this.props.enabled(k);
       return (
         <DropdownItem
@@ -118,7 +118,7 @@ export default class KeypairSelector extends PureComponent {
       selected,
     } = this.props;
 
-    const selectedKeypair = this.state.keypairs.find(k => k.address === selected);
+    const selectedKeypair = this.state.keypairs.find((k) => k.address === selected);
     const selectedName = selectedKeypair && (selectedKeypair.name || selectedKeypair.address);
 
     let iconComponent = null;

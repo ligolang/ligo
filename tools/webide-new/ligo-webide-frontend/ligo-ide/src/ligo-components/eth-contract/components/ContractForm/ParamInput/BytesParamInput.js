@@ -86,7 +86,7 @@ export default function BytesParamInput({
         className="rounded"
         size={size}
         value={raw}
-        onChange={raw => onChangeValue(raw, encoding)}
+        onChange={(raw) => onChangeValue(raw, encoding)}
         placeholder={placeholder}
         maxLength={typeLength && (encoding === "utf8" ? typeLength : 2 * typeLength + 2)}
         disabled={disabled}

@@ -106,7 +106,7 @@ export default class MonacoEditorContainer extends PureComponent {
       <>
         {topbar}
         <MonacoEditor
-          ref={editor => (this.editor = editor)}
+          ref={(editor) => (this.editor = editor)}
           modelSession={modelSession}
           theme={theme}
           editorConfig={editorConfig}

@@ -34,7 +34,7 @@ export default class AbiActionForm extends PureComponent {
     super(props);
 
     const selected = Math.max(
-      props.actions.findIndex(item => !item.header && !item.divider),
+      props.actions.findIndex((item) => !item.header && !item.divider),
       0
     );
     this.state = {
@@ -53,7 +53,7 @@ export default class AbiActionForm extends PureComponent {
     return this.props.actions[this.state.selected] || {};
   }
 
-  selectAction = index => {
+  selectAction = (index) => {
     this.setState({
       selected: index,
       amount: "",
@@ -63,9 +63,9 @@ export default class AbiActionForm extends PureComponent {
     });
   };
 
-  estimate = async actionName => {};
+  estimate = async (actionName) => {};
 
-  executeAction = async actionName => {
+  executeAction = async (actionName) => {
     await this.props.executeAction(actionName, this);
   };
 
@@ -132,7 +132,7 @@ export default class AbiActionForm extends PureComponent {
     );
   };
 
-  renderGasOptions = selectedAction => {
+  renderGasOptions = (selectedAction) => {
     const { noGasOptions, FormSection } = this.props;
     if (noGasOptions) {
       return null;
@@ -144,7 +144,7 @@ export default class AbiActionForm extends PureComponent {
     const estimate = (
       <Badge
         color="primary"
-        onClick={evt => {
+        onClick={(evt) => {
           evt.stopPropagation();
           this.estimate(selectedAction.name);
         }}
@@ -154,14 +154,14 @@ export default class AbiActionForm extends PureComponent {
     );
     return (
       <FormSection title={txOptions.title} right={estimate}>
-        {txOptions.list.map(option => (
+        {txOptions.list.map((option) => (
           <ActionParamFormGroup
             size="sm"
             key={`param-${option.name}`}
             label={option.label}
             icon={option.icon}
             value={this.state[option.name]}
-            onChange={value => this.setState({ [option.name]: value })}
+            onChange={(value) => this.setState({ [option.name]: value })}
             placeholder={option.placeholder}
           />
         ))}
@@ -196,7 +196,7 @@ export default class AbiActionForm extends PureComponent {
             ]
           }
           value={this.state.signer}
-          onChange={signer => this.setState({ signer })}
+          onChange={(signer) => this.setState({ signer })}
         />
       </FormSection>
     );
@@ -299,7 +299,7 @@ export default class AbiActionForm extends PureComponent {
                 label={`${networkManager.symbol} to Send`}
                 icon="fas fa-coins"
                 value={this.state.amount}
-                onChange={amount => this.setState({ amount })}
+                onChange={(amount) => this.setState({ amount })}
                 placeholder="Default: 0"
               />
             ) : null}

@@ -27,7 +27,7 @@ export default class DockerImageSelector extends PureComponent {
     return this.props.channel?.imageName || this.props.imageName;
   }
 
-  onRefreshVersions = versions => {
+  onRefreshVersions = (versions) => {
     if (!versions.length) {
       this.props.onSelected("");
     } else if (!this.props.disableAutoSelection && !this.props.selected) {
@@ -60,7 +60,7 @@ export default class DockerImageSelector extends PureComponent {
     }
 
     const versions = [...this.state.versions];
-    return versions.map(v => (
+    return versions.map((v) => (
       <DropdownItem
         key={`image-version-${v.Tag}`}
         active={this.props.selected === v.Tag}

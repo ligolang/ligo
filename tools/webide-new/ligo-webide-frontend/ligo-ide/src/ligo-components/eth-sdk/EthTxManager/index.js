@@ -18,10 +18,7 @@ export default class EthTxManager {
       if (token === "core" || !token) {
         value = utils.unit.toValue(amount);
       } else {
-        value = utils.format
-          .big(amount)
-          .times(utils.format.big(10).pow(token.decimals))
-          .toString();
+        value = utils.format.big(amount).times(utils.format.big(10).pow(token.decimals)).toString();
       }
     } catch {
       throw new Error("The entered amount is invalid.");
@@ -38,7 +35,7 @@ export default class EthTxManager {
         throw utils.parseError(e);
       }
     } else {
-      const contract = new Contract({ address: token.address, abi: ERC20 }, this.client);
+      const contract = new Contract({ address: token.address, abi: "ERC20" }, this.client);
       return contract.execute("transfer", { array: [to, value] }, { ...override, from });
     }
   }
@@ -86,12 +83,12 @@ export default class EthTxManager {
       pendingTx = signer.sendTransaction(tx);
     } else {
       const sp = signatureProvider(tx.from);
-      pendingTx = sp(tx).then(signedTx => this.provider.sendTransaction(signedTx));
+      pendingTx = sp(tx).then((signedTx) => this.provider.sendTransaction(signedTx));
     }
 
     const promise = pendingTx
-      .then(res => res.hash)
-      .catch(e => {
+      .then((res) => res.hash)
+      .catch((e) => {
         throw utils.parseError(e);
       });
 
@@ -157,7 +154,7 @@ export default class EthTxManager {
       return receipt;
     };
 
-    promise.confirmed = () => pendingTx.then(tx => tx.wait(10));
+    promise.confirmed = () => pendingTx.then((tx) => tx.wait(10));
 
     return promise;
   }

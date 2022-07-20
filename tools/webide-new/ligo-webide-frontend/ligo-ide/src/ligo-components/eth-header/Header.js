@@ -22,7 +22,7 @@ export default class Header extends PureComponent {
     // keypairManager.onUpdated(this.updateKeypairs)
   }
 
-  updateKeypairs = keypairs => this.setState({ keypairs });
+  updateKeypairs = (keypairs) => this.setState({ keypairs });
 
   render() {
     const {
