@@ -24,6 +24,7 @@ type t = {
   (* Backend *)
   protocol_version : string ;
   disable_michelson_typechecking : bool ;
+  experimental_disable_optimizations_for_debugging : bool ;
   enable_typed_opt : bool ;
   without_run : bool ;
   views : string list ;
@@ -86,6 +87,7 @@ module Default_options = struct
   (* Backend *)
   let protocol_version = "current"
   let disable_michelson_typechecking = false
+  let experimental_disable_optimizations_for_debugging = false
   let enable_typed_opt = false
   let without_run = false
   let views = []
@@ -108,6 +110,7 @@ let make
   ?(cli_expr_inj = Default_options.cli_expr_inj)
   ?(protocol_version = Default_options.protocol_version)
   ?(disable_michelson_typechecking = Default_options.disable_michelson_typechecking)
+  ?(experimental_disable_optimizations_for_debugging = Default_options.experimental_disable_optimizations_for_debugging)
   ?(enable_typed_opt = Default_options.enable_typed_opt)
   ?(without_run = Default_options.without_run)
   ?(views = Default_options.views)
@@ -140,6 +143,7 @@ let make
   (* Backend *)
   protocol_version ;
   disable_michelson_typechecking ;
+  experimental_disable_optimizations_for_debugging ;
   enable_typed_opt ;
   without_run ;
   views ;

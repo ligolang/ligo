@@ -2065,6 +2065,14 @@ let loop_bugs_ligo ~raise () : unit =
     expect_eq ~raise program "shadowing_assigned_in_body" input expected in
   ()
 
+let loop_bugs_jsligo ~raise () : unit =
+  let program = type_file ~raise "./contracts/loop_bugs.jsligo" in
+  let input = e_pair (e_unit ()) (e_int 0) in
+  let () =
+    let expected = e_pair (e_list []) (e_int 1) in
+    expect_eq ~raise program "main" input expected in
+  ()
+
 let if_no_else_jsligo ~raise () : unit =
   let _ = type_file ~raise "./contracts/if_no_else.jsligo" in
   ()
@@ -2416,6 +2424,7 @@ let main = test_suite "Integration (End to End)"
     test_w "tuple param destruct (religo)" tuple_param_destruct_religo ;
     test_w "no semicolon (religo)" no_semicolon_religo ;
     test_w "loop_bugs (ligo)" loop_bugs_ligo ;
+    test_w "loop_bugs (jsligo)" loop_bugs_jsligo ;
     test_w "tuple_list (religo)" tuple_list_religo ;
     test_w "single_record_expr (religo)" single_record_expr_religo ;
     test_w "if no else (jsligo)" if_no_else_jsligo;
