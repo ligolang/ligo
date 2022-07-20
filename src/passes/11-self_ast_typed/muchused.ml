@@ -28,7 +28,6 @@ let rec is_dup (t : type_expression) =
     Nat                 |
     Chest               |
     Chest_key           |
-    Bool                |
     Unit                |
     String              |
     Bytes               |

@@ -45,9 +45,9 @@ let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_inp
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
 let t__type_ ?loc () : type_expression = t_variable ?loc v__type_
-[@@map (_type_, ("bool", "string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "chain_id"))]
+[@@map (_type_, ("string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "chain_id"))]
 let t__type_ ?loc t : type_expression = t_app ?loc v__type_ [t]
-[@@map (_type_, ("option", "list", "set", "contract"))]
+[@@map (_type_, ("list", "set", "contract"))]
 let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
@@ -71,6 +71,10 @@ let t_sum_ez_attr ?loc ?(attr=[]) fields =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
   let fields = List.mapi ~f:aux fields in
   t_sum ?loc {fields; attributes=attr}
+
+let t_option ?loc t : type_expression = 
+  t_sum_ez_attr ?loc [("Some", t, []);("None", t_unit (), [])]
+
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 let t_module_accessor ?loc module_path element = make_t ?loc @@ T_module_accessor {module_path;element}
