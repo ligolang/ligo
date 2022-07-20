@@ -1,23 +1,30 @@
 module AST.Capabilities.Completion
-  ( Completion (..)
+  ( CompleterM (..)
+  , Completion (..)
+  , CompleterEnv (..)
   , NameCompletion (..)
   , TypeCompletion (..)
   , DocCompletion (..)
   , completionName
   , complete
+  , getPossibleCompletions
   , toCompletionItem
+  , withCompleterM
   ) where
 
 import Language.LSP.Types (CompletionDoc (..), CompletionItem (..), CompletionItemKind (..))
 
-import Control.Lens (_2, (^?))
-import Control.Monad (foldM)
+import Algebra.Graph.AdjacencyMap qualified as G
+import Control.Lens (_2, (^?), element)
+import Control.Monad.Reader
+import Control.Applicative
 import Data.Char (isUpper)
 import Data.Bool (bool)
 import Data.Foldable (asum)
 import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List (isSubsequenceOf, nubBy)
+import Data.Maybe (catMaybes, fromMaybe)
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet (filter, toList)
 import Data.Text (Text)
@@ -25,6 +32,8 @@ import Data.Text qualified as Text
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
+import System.FilePath
+import Text.Regex.TDFA ((=~))
 
 import AST.Capabilities.Find
   ( TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf
@@ -37,21 +46,49 @@ import AST.Scope.ScopedDecl
   , lppDeclCategory, lppLigoLike, sdSpec, tdsInit
   )
 import AST.Skeleton hiding (Type)
+import Log (LogT, Log, Logger, Namespace (..), getLogEnv, runKatipContextT)
+import ParseTree
 import Product
 import Range
 import Util (unconsFromEnd)
+
+data CompleterEnv xs = CompleterEnv
+  { ceRange  :: Range
+  , ceTree   :: SomeLIGO xs
+  , ceSource :: Source
+  , ceGraph  :: Includes FilePath
+  }
+
+newtype CompleterM xs a = CompleterM
+  { runCompleterM :: LogT (ReaderT (CompleterEnv xs) IO) a
+  } deriving newtype (Functor, Applicative, Monad, MonadIO,
+                      MonadReader (CompleterEnv xs), Log, Logger)
+
+withCompleterM :: (MonadIO m, Logger m) => CompleterEnv xs -> CompleterM xs a -> m a
+withCompleterM complEnv action = do
+  env <- getLogEnv
+  liftIO $ runReaderT
+     (runKatipContextT env () (Namespace ["Completion"]) $ runCompleterM action)
+     complEnv
 
 newtype NameCompletion = NameCompletion { getNameCompletion :: Text } deriving newtype (Eq, Show)
 newtype TypeCompletion = TypeCompletion { getTypeCompletion :: Text } deriving newtype (Eq, Show)
 newtype DocCompletion  = DocCompletion  { getDocCompletion  :: Text } deriving newtype (Eq, Show)
 
 data Completion
-  = Completion (Maybe CompletionItemKind) NameCompletion (Maybe TypeCompletion) DocCompletion
+  = Completion
+      (Maybe CompletionItemKind)
+      NameCompletion
+      (Maybe TypeCompletion)
+      DocCompletion
+  | ImportCompletion
+      NameCompletion
   | CompletionKeyword NameCompletion
   deriving stock (Eq, Show)
 
 completionName :: Completion -> NameCompletion
 completionName (Completion _ name _ _) = name
+completionName (ImportCompletion name) = name
 completionName (CompletionKeyword name) = name
 
 type CompletionLIGO info =
@@ -60,27 +97,44 @@ type CompletionLIGO info =
   , PPableLIGO info
   )
 
-complete :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
-complete pos tree = do
-  node <- findNodeAtPoint pos tree
-  let scope = getElem (extract node)
-  let nameLevel = getElem (extract node)
-  getPossibleCompletions scope nameLevel pos tree
-    <&> nubBy ((==) `on` getNameCompletion . completionName)
-    <&> filter (isSubseqOf (ppToText node) . getNameCompletion . completionName)
+complete :: CompletionLIGO xs => CompleterM xs (Maybe [Completion])
+complete = do
+  pos <- asks ceRange
+  tree <- asks ceTree
+
+  let maybeNode = findNodeAtPoint pos tree
+  case maybeNode of
+    Just node -> do
+      let scope = getElem (extract node)
+      let nameLevel = getElem (extract node)
+      possibleCompl <- getPossibleCompletions scope nameLevel
+      return $ possibleCompl
+        <&> nubBy ((==) `on` getNameCompletion . completionName)
+        <&> filter (filterFunc node)
+    Nothing -> return Nothing
+  where
+    filterFunc node compl = case compl of
+      ImportCompletion{} -> True
+      otherCompl -> (isSubseqOf (ppToText node) . getNameCompletion . completionName) otherCompl
+
 
 getPossibleCompletions
   :: CompletionLIGO xs
-  => Scope -> Maybe Level -> Range -> SomeLIGO xs -> Maybe [Completion]
-getPossibleCompletions scope level pos tree = mconcat
-  [ asum completers
-  , completeKeyword pos tree
-  ]
-  where
-    completers =
-      [ completeField scope pos tree
-      , completeFromScope scope level
-      ]
+  => Scope -> Maybe Level -> CompleterM xs (Maybe [Completion])
+getPossibleCompletions scope level = do
+  pos <- asks ceRange
+  tree <- asks ceTree
+  source <- asks ceSource
+
+  let cf = completeField scope pos tree
+      cfs = completeFromScope scope level
+      c = cf <|> cfs
+  ci <- completeImport pos source
+  return $ mconcat
+    [ ci
+    , c
+    , completeKeyword pos tree
+    ]
 
 parseAccessor :: PPableLIGO xs => LIGO xs -> Accessor
 parseAccessor node = case reads (Text.unpack textValue) of
@@ -88,6 +142,44 @@ parseAccessor node = case reads (Text.unpack textValue) of
   _ -> Right textValue
   where
     textValue = ppToText node
+
+completeImport :: forall xs. Range -> Source -> CompleterM xs (Maybe [Completion])
+completeImport (Range (sl, sc, _) _ _) (Source fp fileText) = do
+  let l = Text.take (fromIntegral @_ @Int sc - 1) $
+            fromMaybe "" $
+              Text.lines fileText ^? element (fromIntegral @_ @Int sl - 1)
+  if l =~ ("^#[ \t]*(include|import)[ \t]*\"$" :: Text)
+  then possibleImportedFiles
+  else pure Nothing
+  where
+    possibleImportedFiles :: CompleterM xs (Maybe [Completion])
+    possibleImportedFiles = do
+      (Includes graph) <- asks ceGraph
+      if not (G.isEmpty graph)
+      then Just . catMaybes <$> mapM makeCompletion (G.vertexList graph)
+      else pure Nothing
+
+    makeCompletion :: FilePath -> CompleterM xs (Maybe Completion)
+    makeCompletion curFp =
+      if curFp == fp
+      then pure Nothing
+      else pure $ Just $ ImportCompletion $ NameCompletion $ Text.pack (fp `relativeTo` curFp)
+
+    relativeTo :: FilePath -> FilePath -> FilePath
+    relativeTo path1 path2 = go splitP1 splitP2
+      where
+        fn2 = takeFileName path2
+        splitP1 = init $ splitDirectories path1
+        splitP2 = init $ splitDirectories path2
+
+        go :: [FilePath] -> [FilePath] -> FilePath
+        go (f1:f1s) (f2:f2s) = if f1 == f2
+                               then go f1s f2s
+                               else let rel = joinPath $ flip replicate "../" $ length f1s in rel ++ joinPath f2s
+
+        go [] rest = let pathToDir = joinPath rest
+                      in if not (null pathToDir) then pathToDir ++ "/" ++ fn2 else fn2
+        go more [] = joinPath (flip replicate "../" $ length more) ++ fn2
 
 completeKeyword :: CompletionLIGO xs => Range -> SomeLIGO xs -> Maybe [Completion]
 completeKeyword pos tree@(SomeLIGO dialect _) = do
@@ -196,6 +288,13 @@ toCompletionItem c@(Completion cKind (NameCompletion cName) cType _) =
     , _detail = (\(TypeCompletion cType') -> ": " <> cType') <$> cType
     , _documentation = mkDoc c
     }
+toCompletionItem c@(ImportCompletion (NameCompletion cName)) =
+  (defCompletionItem cName)
+    { _kind = Just CiFile
+    , _detail = Just cName
+    , _insertText  = Just cName
+    , _documentation = mkDoc c
+    }
 toCompletionItem (CompletionKeyword (NameCompletion cName)) =
   (defCompletionItem cName)
     { _kind = Just CiKeyword
@@ -203,6 +302,10 @@ toCompletionItem (CompletionKeyword (NameCompletion cName)) =
 
 mkDoc :: Completion -> Maybe CompletionDoc
 mkDoc (CompletionKeyword (NameCompletion _cName)) = Nothing
+mkDoc (ImportCompletion (NameCompletion cName)) =
+  Just . CompletionDocString $
+    "Completion"
+    <> " import of file " <> cName
 mkDoc (Completion _cKind (NameCompletion cName) cType (DocCompletion cDoc)) =
   Just . CompletionDocString $
     cName

@@ -1,11 +1,17 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 -- | Provides a façade to Katip's logger.
 module Log
-  ( Severity (..)
+  ( Logger
+  , Severity (..)
+  , Namespace (..)
+  , Environment (..)
   , NoLoggingT (..)
   , LogT
   , Log
   , i
+  , getLogEnv
+  , initLogEnv
+  , runKatipContextT
   , addContext
   , addNamespace
   , sl
@@ -37,6 +43,7 @@ instance MonadFail m => MonadFail (NoLoggingT m) where
 
 type LogT = KatipContextT
 type Log = KatipContext
+type Logger = Katip
 
 addContext :: (LogItem i, Log m) => i -> m a -> m a
 addContext = katipAddContext
