@@ -125,5 +125,5 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         | Some entry_point ->
           let expr = Compile.Of_typed.apply_to_entrypoint ~raise ~options:options.middle_end typed entry_point in
           let mini_c = Compile.Of_aggregated.compile_expression ~raise expr in
-          let _,o = Compile.Of_mini_c.optimize_for_contract ~raise mini_c in
+          let _,o = Compile.Of_mini_c.optimize_for_contract ~raise options mini_c in
           Mini_c.Formatter.Optimized o.body

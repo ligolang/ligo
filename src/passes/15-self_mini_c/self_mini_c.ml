@@ -392,19 +392,27 @@ let eta : bool ref -> expression -> expression =
 let etas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (eta changed)
-let contract_check ~raise (init: anon_function) : anon_function=
-  let all = [Michelson_restrictions.self_in_lambdas ~raise] in
-  let all_e = List.map ~f:(Helpers.map_sub_level_expression) all in
-  List.fold ~f:(|>) all_e ~init
-let rec all_expression ~raise : expression -> expression =
+
+let contract_check ~raise ~(options : Compiler_options.t) (init: anon_function) : anon_function=
+  if options.backend.experimental_disable_optimizations_for_debugging
+  then init
+  else
+    let all = [Michelson_restrictions.self_in_lambdas ~raise] in
+    let all_e = List.map ~f:(Helpers.map_sub_level_expression) all in
+    List.fold ~f:(|>) all_e ~init
+
+let rec all_expression ~raise (options : Compiler_options.t) : expression -> expression =
   fun e ->
-  let changed = ref false in
-  let e = inline_lets changed e in
-  let e = betas changed e in
-  let e = etas changed e in
-  if !changed
-  then all_expression ~raise e
-  else e
+  if options.backend.experimental_disable_optimizations_for_debugging
+  then e
+  else
+    let changed = ref false in
+    let e = inline_lets changed e in
+    let e = betas changed e in
+    let e = etas changed e in
+    if !changed
+    then all_expression ~raise options e
+    else e
 
 let create_contract ~raise expr =
   let _ = map_expression (fun expr ->
@@ -417,8 +425,8 @@ let create_contract ~raise expr =
                   | _ -> expr) expr in
   expr
 
-let all_expression ~raise e =
+let all_expression ~raise options e =
   let e = Uncurry.uncurry_expression e in
-  let e = all_expression ~raise e in
+  let e = all_expression ~raise options e in
   let e = create_contract ~raise e in
   e
