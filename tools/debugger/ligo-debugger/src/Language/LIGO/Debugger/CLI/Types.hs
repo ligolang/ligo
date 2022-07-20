@@ -9,6 +9,7 @@ import Data.Aeson qualified as Aeson
 import Data.Aeson.Lens qualified as Aeson
 import Data.Aeson.Types qualified as Aeson
 import Data.Char (isDigit)
+import Data.HashMap.Strict qualified as HS
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
 import Data.Text qualified as T
@@ -131,7 +132,9 @@ data LigoType
     deriving anyclass (NFData)
 
 instance FromJSON LigoType where
-  parseJSON = withObject "type" \o -> do
+  -- If value is @Array@ then it is just a '"type_content"' field from a "type" object.
+  parseJSON val@Array{} = parseJSON $ Object $ HS.singleton "type_content" val
+  parseJSON val = flip (withObject "type") val \o -> do
     value <- o .: "type_content"
     flip (withArray "type_content") value \lst -> do
       typ <- maybe (fail "Expected list with length 2") pure (lst V.!? 1)
