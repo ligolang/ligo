@@ -244,12 +244,17 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
     )
   )
   | V_Ct (C_address a) when is_t_address ty ->
-     let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected address but got %a" Ast_aggregated.PP.type_expression ty))
+     let () = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected address or typed address but got %a" Ast_aggregated.PP.type_expression ty))
                  (get_t_address ty) in
      let x = string_of_contract a in
      e_a_address x
+  | V_Ct (C_address a) when is_t_typed_address ty ->
+    let _ = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected address or typed address but got %a" Ast_aggregated.PP.type_expression ty))
+                (get_t_typed_address ty) in
+    let x = string_of_contract a in
+    e_a_address x
   | V_Ct (C_address _) ->
-     raise.error @@ (Errors.generic_error loc (Format.asprintf "Expected address but got %a" Ast_aggregated.PP.type_expression ty))
+     raise.error @@ (Errors.generic_error loc (Format.asprintf "Expected address or typed address but got %a" Ast_aggregated.PP.type_expression ty))
   | V_Ct (C_contract c) when is_t_contract ty ->
      let ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected contract but got %a" Ast_aggregated.PP.type_expression ty))
                  (get_t_contract ty) in
