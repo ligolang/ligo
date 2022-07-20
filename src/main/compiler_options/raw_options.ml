@@ -36,7 +36,7 @@ let find_project_root () =
   let ls_only_dirs dir = 
     let all = Sys.ls_dir dir in
     List.filter ~f:(fun f ->
-      let stats = Unix.lstat (dir ^ Filename.dir_sep ^ f) in 
+      let stats = Unix.lstat (Filename.concat dir f) in 
       match stats.st_kind with
         S_DIR -> true
       | _ -> false) all
@@ -46,7 +46,7 @@ let find_project_root () =
     if List.exists ~f:(fun dir -> String.equal dir ".ligo") dirs
     then Some p
     else
-      let p' = p ^ Filename.dir_sep ^ ".." in
+      let p' = Filename.concat p  ".." in
       if Filename.equal (Filename.realpath p) (Filename.realpath p')
       then None
       else aux p' 
