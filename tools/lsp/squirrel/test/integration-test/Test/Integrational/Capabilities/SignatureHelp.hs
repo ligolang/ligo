@@ -21,5 +21,5 @@ validInfos = filter (not . (`elem` ignore) . tiContract) caseInfos
 test_simpleFunctionCall :: IO TestTree
 test_simpleFunctionCall = testGroup "Simple function call" <$> sequenceA
   [ simpleFunctionCallDriver @Standard caseInfos
-  --, simpleFunctionCallDriver @FromCompiler caseInfos  -- FIXME (LIGO-505)
+  --, simpleFunctionCallDriver @FromCompiler caseInfos  -- FIXME (LIGO-679)
   ]

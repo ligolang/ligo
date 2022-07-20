@@ -15,7 +15,9 @@ import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
 
 import AST.Scope.Common
-import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..))
+import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..),
+                             Type (ArrowType), TypeDeclSpecifics (..),
+                             ValueDeclSpecifics (..), _tdsInit)
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
@@ -56,8 +58,13 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
       r <- normalizeRange . fromLigoRangeOrDef $ orig
       rs <- mapM (normalizeRange . fromLigoRangeOrDef) refs
       let _vdsInitRange = mbFromLigoRange bodyR
-          _vdsParams = Nothing
           _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> ty
+          -- `get scope` doesn't provide information about arguments.
+          -- `_vdsParams` equals to `Nothing` maeans that it isn't a function.
+          -- FIXME (LIGO-679)
+          _vdsParams = case _vdsTspec of
+                        Just TypeDeclSpecifics{_tdsInit = ArrowType _ _} -> Just []
+                        _ -> Nothing
           vspec = ValueDeclSpecifics{ .. }
       pure ( DeclRef n r
            , ScopedDecl n r (r : rs) [] dialect (ValueSpec vspec)
