@@ -47,6 +47,7 @@ let find_project_root () =
     then Some p
     else
       let p' = p ^ Filename.dir_sep ^ ".." in
+      (* Check if we reached the root directory, since the parent of the root directory is the root directory itself *)
       if Filename.equal (Filename.realpath p) (Filename.realpath p')
       then None
       else aux p' 
