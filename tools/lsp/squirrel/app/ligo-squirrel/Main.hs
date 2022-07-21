@@ -166,6 +166,7 @@ handlers = mconcat
 
   , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
   , S.requestHandler (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
+  , S.requestHandler (J.SCustomMethod "isDirty") handleCustomMethod'IsDirty
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
@@ -443,7 +444,7 @@ handleCustomMethod'BuildGraph req respond =
       respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
     other -> do
       let msg = [i|This message expects Null, but got #{other}|]
-      respond $ Left $ J.ResponseError J.InvalidRequest msg Nothing
+      respond $ Left $ J.ResponseError J.InvalidParams msg Nothing
 
 handleCustomMethod'IndexDirectory
   :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
@@ -451,6 +452,19 @@ handleCustomMethod'IndexDirectory _req respond = do
   indexOptsM <- tryReadMVar =<< asks reIndexOpts
   let pathM = Indexing.indexOptionsPath =<< indexOptsM
   respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
+
+-- | Handles whether a document is clean ('False') or dirty ('True'). If the
+-- provided file doesn't exist, returns null.
+handleCustomMethod'IsDirty
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'IsDirty req respond =
+  case req ^. J.params . to Aeson.fromJSON of
+    Aeson.Error err ->
+      respond $ Left $ J.ResponseError J.InvalidParams (T.pack err) Nothing
+    Aeson.Success (params :: J.TextDocumentIdentifier) -> do
+      let nuri = params ^. J.uri . to J.toNormalizedUri
+      openDocM <- atomically . StmMap.lookup nuri =<< asks reOpenDocs
+      respond $ Right $ maybe Aeson.Null (Aeson.toJSON . RIO.odIsDirty) openDocM
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

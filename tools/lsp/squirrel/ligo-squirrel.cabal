@@ -487,6 +487,7 @@ test-suite lsp-handlers-test
       Test.Capabilities.SignatureHelp
       Test.Capabilities.TypeDefinition
       Test.Common.LSP
+      Test.DirtyFiles
       Test.DisabledFeatures
       Test.Project.Driver
       Test.Common.Capabilities.CodeAction.ExtractTypeAlias
@@ -560,6 +561,7 @@ test-suite lsp-handlers-test
     , directory
     , filepath
     , hspec-expectations
+    , interpolate
     , lens
     , ligo-squirrel
     , lsp-test
