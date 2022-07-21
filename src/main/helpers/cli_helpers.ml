@@ -1,12 +1,13 @@
 module Constants = struct
   type command = (string * string array)
   let ligo_install_path = "./.ligo"
+  let ligo_registry = "https://beta.packages.ligolang.org/-/api"
   let esy = "esy"
   let windows = "Win32"
-  let esy_add = fun ~package_name ~cache_path -> 
-    ("", [|"esy"; "add"; package_name; "--prefix-path"; cache_path|])
-  let esy_install = fun ~cache_path -> 
-    ("", [|"esy"; "install"; "--prefix-path"; cache_path|])
+  let esy_add = fun ~package_name ~cache_path ~ligo_registry -> 
+    ("", [|"esy"; "add"; package_name; "--prefix-path"; cache_path; "--npm-registry"; ligo_registry|])
+  let esy_install = fun ~cache_path ~ligo_registry -> 
+    ("", [|"esy"; "install"; "--prefix-path"; cache_path ;"--npm-registry"; ligo_registry|])
   let where = fun ~cmd -> 
     ("", [|"where"; "/q"; cmd|])
   let which = fun ~cmd -> 
