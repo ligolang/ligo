@@ -17,7 +17,6 @@ let all_expression_passes ~raise ~warn_unused_rec = [
 
 let contract_passes ~raise = [
   (* REMITODO: Move old self_mini_c.ml "self in lambda" check *)
-  Contract_passes.self_typing ~raise ;
   No_nested_big_map.self_typing ~raise ;
 ]
 
