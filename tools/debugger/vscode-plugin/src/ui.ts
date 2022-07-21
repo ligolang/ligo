@@ -9,69 +9,77 @@
 import * as vscode from 'vscode';
 import { ExtensionContext, QuickPickItem } from 'vscode';
 import { DebuggedContractSession, Maybe, Ref, isDefined, ContractMetadata } from './base'
-
-export type InputBoxType = "parameter" | "storage"
+import { ValueCategory } from './messages'
 
 // Create input box which remembers previously
 // inputted value in workspace storage.
 export const createRememberingInputBox = (
 	context: ExtensionContext,
-	validateInput: (inputType: InputBoxType) => (value: string) => Promise<Maybe<string>>,
-	inputBoxType: InputBoxType,
+	validateInput: (inputType: ValueCategory) => (value: string) => Promise<Maybe<string>>,
+	inputBoxType: ValueCategory,
 	placeHolder: string,
 	prompt: string,
-	debuggedContract: Ref<DebuggedContractSession>
+	debuggedContract: Ref<DebuggedContractSession>,
+	saveValue: (value: string) => Promise<void>,
 ) => (_config: any): Thenable<Maybe<string>> => {
-
-	if (!isDefined(debuggedContract.ref.contractMetadata)) {
-		throw new Error("Internal error: metadata is not defined at the moment of user input")
-	}
-
 	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
 	let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
 	let placeholderExtra: string = ''
 	let michelsonType: string = ''
+	const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
+	const preserveParameter = async (newVal: Maybe<string>): Promise<Maybe<string>> => {
+		// Preserve new parameter value to show it next time
+		if (isDefined(newVal) && isDefined(currentKey)) {
+			context.workspaceState.update(currentKey, newVal)
+			await saveValue(newVal)
+		}
+		return newVal
+	}
+
 	switch (inputBoxType) {
-		case "parameter":
+		case "parameter": {
 			michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
 			// Consider picked entrypoint in the key to remember value depending on an entrypoint
-			const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
-			if (entrypoint) {
+			const michelsonEntrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
+			if (michelsonEntrypoint) {
 				// rewrite currentKey with entrypoint specific one
 				currentKey =
 					currentFilePath &&
 					"quickpick_" + inputBoxType +
-					(entrypoint ? + '_' + entrypoint : '') +
+					(michelsonEntrypoint ? '_' + michelsonEntrypoint : '') +
 					'_' + currentFilePath
-				placeholderExtra = " for '" + entrypoint + "' entrypoint"
+				placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint"
 			}
-			break
-
-		case "storage":
-			michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
-			break;
-	}
-
-	const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
-	const defaultValue =
-		isDefined(previousVal)
-			? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
-			: suggestTypeValue(michelsonType)
-	return vscode.window.showInputBox({
-		placeHolder: placeHolder + placeholderExtra,
-		prompt: prompt,
-		value: defaultValue.value,
-		valueSelection: defaultValue.selection,
-		validateInput: validateInput(inputBoxType),
-		// Keep input box open if focus is moved out
-		ignoreFocusOut: true
-	}).then(newVal => {
-		// Preserve new parameter value to show it next time
-		if (isDefined(newVal) && isDefined(currentKey)) {
-			context.workspaceState.update(currentKey, newVal)
 		}
-		return newVal
-	})
+		case "storage": {
+			michelsonType ??= debuggedContract.ref.contractMetadata.storageMichelsonType
+
+			const defaultValue =
+				isDefined(previousVal)
+					? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
+					: suggestTypeValue(michelsonType)
+			return vscode.window.showInputBox({
+				placeHolder: placeHolder + placeholderExtra,
+				prompt: prompt,
+				value: defaultValue.value,
+				valueSelection: defaultValue.selection,
+				validateInput: validateInput(inputBoxType),
+				// Keep input box open if focus is moved out
+				ignoreFocusOut: true
+			}).then(preserveParameter)
+		}
+		case "entrypoint": {
+			const defaultValue = isDefined(previousVal) ? previousVal : 'main'
+			return vscode.window.showInputBox({
+				placeHolder: placeHolder,
+				prompt: prompt,
+				value: defaultValue,
+				valueSelection: null,
+				validateInput: validateInput(inputBoxType),
+				ignoreFocusOut: true
+			}).then(preserveParameter)
+		}
+	}
 }
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
