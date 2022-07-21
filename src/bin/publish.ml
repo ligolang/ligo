@@ -45,14 +45,41 @@ buildMetadata
 
 *)
 
+(* TODO: Use a set *)
+let ignore_dirs = [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ]
+
+let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
+  let open Lwt.Syntax in
+  let* status = Lwt_unix.stat file_or_dir in
+  let* files = match status.st_kind with
+    S_REG -> Lwt.return [file_or_dir]
+  | S_DIR ->
+    if List.exists ignore_dirs ~f:(String.equal file_or_dir) then Lwt.return [] else 
+    let all = Sys.ls_dir file_or_dir in
+    let* files = 
+    Lwt_list.fold_left_s (fun acc f -> 
+      let* fs = get_all_files (Filename.concat file_or_dir f) in
+      Lwt.return (acc @ fs)  
+    ) [] all in
+    Lwt.return files
+  | S_LNK -> failwith "Keep the links as is - Can we add Links to archive?" 
+  | S_CHR 
+  | S_BLK
+  | S_FIFO
+  | S_SOCK -> failwith "TODO: handle this or else ignore"
+  in
+  Lwt.return files
+
 let tar dir = 
   let open Lwt.Syntax in
+  let* files = get_all_files "." in
   let* fd = Lwt_unix.openfile "foo.tar" [ Unix.O_CREAT ; Unix.O_RDWR ] 0x777 in
-  let* () = Tar_lwt_unix.Archive.create ["hack.js"] fd in
+  let* () = Tar_lwt_unix.Archive.create files fd in
   let* () = Lwt_unix.close fd in
   Lwt.return ()
 
 let publish ~ligo_registry =
+  (* get root of the project *)
   let cwd = Unix.getcwd () in
   let () = Lwt_main.run (tar cwd) in
   Ok ("", "")
