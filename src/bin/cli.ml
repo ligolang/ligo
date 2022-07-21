@@ -296,7 +296,7 @@ let cache_path =
 let ligo_registry =
   let open Command.Param in
   let name = "--registry" in
-  let doc  = "PATH The path where dependencies are installed." in
+  let doc  = "URL The url to a LIGO registry." in
   let spec = optional_with_default Constants.ligo_registry string in
   flag ~doc name spec
 
@@ -776,6 +776,13 @@ let install =
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path ~ligo_registry in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path <*> ligo_registry)
 
+let publish =
+  let summary   = "publish ligo packages declared in package.json" in
+  let readme () = "TODO: Doc string" in
+  let f ligo_registry () =
+    return_result ~return @@ fun () -> Publish.publish ~ligo_registry in
+  Command.basic ~summary ~readme (f <$> ligo_registry)
+
 let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
@@ -788,6 +795,7 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
     "changelog", changelog;
     "print"    , print_group;
     "install"  , install;
+    "publish"  , publish;
   ]
 
 let run ?argv () =

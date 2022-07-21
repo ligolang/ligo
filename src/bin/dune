@@ -10,6 +10,7 @@
   build
   repl
   install
+  publish
   cli_helpers
   ligo_api)
  (modules cli version))
@@ -28,6 +29,13 @@
   (backend bisect_ppx))
  (libraries cli_helpers simple-utils lwt lwt.unix)
  (modules install))
+
+(library
+ (name publish)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix)
+ (modules publish))
 
 (rule
  (targets version.ml)
