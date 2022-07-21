@@ -171,6 +171,9 @@ let build_contract ~raise : options:Compiler_options.t -> string -> file_name ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
     let typed_prg = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
+    let Ast_aggregated.{ type1 = input_ty ; _ } = trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.unmatched_entrypoint aggregated.location)) @@ Ast_aggregated.get_t_arrow aggregated.type_expression in
+    let parameter_ty, storage_ty = trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.unmatched_entrypoint aggregated.location)) @@ Ast_aggregated.get_t_pair input_ty in
+    let aggregated = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
 
