@@ -91,7 +91,7 @@ extractIncludedFiles'
   => Bool  -- ^ Whether to only extract directly included files ('True') or all of them ('False').
   -> Source  -- ^ The contract to scan for includes.
   -> m (DList (FilePath, FilePath))
-extractIncludedFiles' directIncludes (Source file contents) =
+extractIncludedFiles' directIncludes (Source file _ contents) =
   fmap snd . getMarkerInfos directIncludes (takeDirectory file) =<< extractIncludes contents
 
 -- | Given a list of contracts, builds a graph that represents how they are
@@ -106,7 +106,7 @@ includesGraph' contracts = do
   let
     findContract :: FilePath -> (Source, DList (FilePath, FilePath))
     findContract contract =
-      Map.findWithDefault (Source contract "", []) contract knownContracts
+      Map.findWithDefault (Source contract True "", []) contract knownContracts
 
     go
       :: Source
@@ -271,6 +271,6 @@ includesGraph contracts = do
     emptyContract :: FilePath -> ParsedContractInfo
     emptyContract name =
       FindContract
-        (Source name "")
+        (Source name True "")
         (SomeLIGO Caml (fastMake emptyParsedInfo (Error (MissingContract name) [])))
         []

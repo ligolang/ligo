@@ -259,10 +259,10 @@ tests:
 
     dependencies:
       - algebraic-graphs
-      - HUnit
       - directory
       - filepath
       - hspec-expectations
+      - HUnit
       - lens
       - ligo-squirrel
       - lsp-types
@@ -292,10 +292,10 @@ tests:
 
     dependencies:
       - algebraic-graphs
-      - HUnit
       - directory
       - filepath
       - hspec-expectations
+      - HUnit
       - lens
       - ligo-squirrel
       - lsp-types

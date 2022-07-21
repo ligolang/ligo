@@ -259,27 +259,27 @@ handleTypeDefinitionRequest req respond = do
     $(Log.debug) [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
-formatImpl :: J.Uri -> RIO (TempSettings, SomeLIGO Info')
+formatImpl :: J.Uri -> RIO (TempSettings, ContractInfo')
 formatImpl uri = do
   let nuri = J.toNormalizedUri uri
-  FindContract (Source path _) tree _ <- Document.fetch Document.BestEffort nuri
+  contract <- Document.fetch Document.BestEffort nuri
   Document.invalidate nuri
-  (, tree) <$> Document.getTempPath (takeDirectory path)
+  (, contract) <$> Document.getTempPath (takeDirectory $ contractFile contract)
 
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-  (temp, tree) <- formatImpl uri
-  respond . Right =<< AST.formatDocument temp tree
+  (temp, contract) <- formatImpl uri
+  respond . Right =<< AST.formatDocument temp contract
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
 handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
     pos = fromLspRange $ req ^. J.params . J.range
-  (temp, tree) <- formatImpl uri
-  respond . Right =<< AST.formatAt temp pos tree
+  (temp, contract) <- formatImpl uri
+  respond . Right =<< AST.formatAt temp pos contract
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do

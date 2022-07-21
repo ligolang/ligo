@@ -144,7 +144,7 @@ parseAccessor node = case reads (Text.unpack textValue) of
     textValue = ppToText node
 
 completeImport :: forall xs. Range -> Source -> CompleterM xs (Maybe [Completion])
-completeImport (Range (sl, sc, _) _ _) (Source fp fileText) = do
+completeImport (Range (sl, sc, _) _ _) (Source fp _ fileText) = do
   let l = Text.take (fromIntegral @_ @Int sc - 1) $
             fromMaybe "" $
               Text.lines fileText ^? element (fromIntegral @_ @Int sl - 1)

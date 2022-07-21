@@ -67,7 +67,7 @@ import Parser (emptyParsedInfo)
 import ParseTree (Source (..), pathToSrc)
 import Progress (Progress (..), noProgress, (%))
 import RIO.Indexing (getIndexDirectory, indexOptionsPath, tryGetIgnoredPaths)
-import RIO.Types (IndexOptions (..), RIO, RioEnv (..))
+import RIO.Types (IndexOptions (..), OpenDocument (..), RIO, RioEnv (..))
 import Util.Graph (forAMConcurrently, traverseAM, traverseAMConcurrently, wcc, wccFor)
 
 -- | Represents how much a 'fetch' or 'forceFetch' operation should spend trying
@@ -126,7 +126,7 @@ delete uri = do
       let
         -- Dummy
         c = FindContract
-          (Source fp "")
+          (Source fp True "")
           (SomeLIGO Caml $ fastMake emptyParsedInfo (Error (FromLanguageServer "Impossible") []))
           []
       modifyMVar_ imap $ pure . Includes . G.removeVertex c . getIncludes
@@ -139,7 +139,7 @@ delete uri = do
 
   -- Invalidate contracts that are in the same group as the deleted one, as
   -- references might have changed.
-  for_ deleted \(FindContract (Source fp _) _ _) ->
+  for_ deleted \(FindContract (Source fp _ _) _ _) ->
     wccForFilePath fp >>= traverseAM \fp' ->
       ASTMap.invalidate (filePathToNormalizedUri fp') tmap
 
@@ -182,7 +182,9 @@ preload normFp = Log.addNamespace "preload" do
     -- a UTF-16-encoded file that was not yet indexed will not show errors,
     -- while opening it after it was indexed will display various encoding
     -- errors.
-    Just vf -> pure $ Source fin' (V.virtualFileText vf)
+    Just vf -> do
+      openDocM <- atomically . StmMap.lookup uri =<< asks reOpenDocs
+      pure $ Source fin' (maybe False odIsDirty openDocM) (V.virtualFileText vf)
     Nothing -> pathToSrc fin'
 
 tempDirTemplate :: String
@@ -389,8 +391,10 @@ load uri = Log.addNamespace "load" do
       temp <- getTempPath root
       (Includes graph, result) <- S.withProgress "Scoping project" S.NotCancellable \reportProgress -> do
         let
-          addScopesWithProgress = addScopes @parser temp
-            (\Progress {..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+          addScopesWithProgress (Includes graph) =
+            addScopes @parser temp
+              (\Progress{..} -> reportProgress $ S.ProgressAmount (Just pTotal) (Just pMessage))
+              (Includes graph)
         case J.uriToFilePath $ J.fromNormalizedUri revUri of
           Nothing -> (,) <$> addScopesWithProgress rawGraph <*> loadDefault temp
           Just fp -> do
