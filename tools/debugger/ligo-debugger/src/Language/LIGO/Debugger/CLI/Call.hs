@@ -13,6 +13,7 @@ import Data.ByteString.Lazy qualified as LBS
 import Fmt (Buildable (..), pretty)
 import System.Exit (ExitCode (..))
 import Text.Interpolation.Nyan
+import UnliftIO.Exception (handle, throwIO)
 import UnliftIO.Process
   (CreateProcess (..), StdStream (..), proc, waitForProcess, withCreateProcess)
 

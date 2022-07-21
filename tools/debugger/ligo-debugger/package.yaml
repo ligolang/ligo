@@ -2,7 +2,7 @@ name: ligo-debugger
 
 dependencies:
   - base-noprelude
-  - universum
+  - morley-prelude
 
 default-extensions:
   - AllowAmbiguousTypes
@@ -78,7 +78,6 @@ library:
     - lens-aeson
     - morley
     - morley-debugger
-    - morley-prelude
     - mtl
     - nyan-interpolation
     - process
