@@ -14,6 +14,8 @@ import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from "~/base-co
 import icon from "./components/icon.png";
 import { ProjectManager } from "~/base-components/workspace";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const Header = lazy(() => import("./components/Header" /* webpackChunkName: "header" */));
 
 function ReduxApp(props: { history: any }) {
@@ -43,6 +45,8 @@ function ReduxApp(props: { history: any }) {
   }, []);
 
   if (!loaded) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     return <LoadingScreen />;
   }
 

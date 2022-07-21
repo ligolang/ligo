@@ -91,9 +91,11 @@ class TransactionDetails extends PureComponent {
             badge={
               <a
                 href="javascript:void(0)"
-                onClick={() => history.push(`/account/${signer}`)}
+                onClick={() => {
+                  this.props.closeModal();
+                  history.push(`/account/${signer}`);
+                }}
                 className="text-body"
-                onClick={() => this.props.closeModal()}
               >
                 <code>{signer}</code>
               </a>

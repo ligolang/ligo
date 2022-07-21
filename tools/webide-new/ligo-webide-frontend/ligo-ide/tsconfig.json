@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "es5",
     "baseUrl": ".",
@@ -10,7 +11,6 @@
       "es2017"
     ],
     "allowJs": true,
-    "jsx": "react",
     "sourceMap": true,
     "outDir": "./build",
     "strict": true,
@@ -27,9 +27,7 @@
     "rootDir": "src",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "types": [
-      "node"
-    ]
+    "jsx": "react-jsx"
   },
   "include": [
     "./src/**/*"
