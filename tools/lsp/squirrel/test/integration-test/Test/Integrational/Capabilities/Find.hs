@@ -100,7 +100,7 @@ test_findDefinitionAndGoToReferencesCorrespondence :: TestTree
 test_findDefinitionAndGoToReferencesCorrespondence =
   testGroup "Find definition and go to references correspondence"
     [ findDefinitionAndGoToReferencesCorrespondence @Standard allVariants
-    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596)
+    --, findDefinitionAndGoToReferencesCorrespondence @FromCompiler allVariants -- FIXME (LIGO-592) (LIGO-596) (LIGO-679)
     ]
   where
     allVariants = invariants <> includeInvariants
