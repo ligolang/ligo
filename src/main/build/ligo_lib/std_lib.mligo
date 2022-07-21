@@ -384,11 +384,6 @@ module Test = struct
     let a : address = [%external ("ADDRESS", c)] in
     let s : michelson_program = get_storage_of_address a in
     (decompile s : s)
-  let get_ticket_storage (type p s) (t : (p, s ticket) typed_address) : s human_ticket =
-    let c : p contract = to_contract t in
-    let a : address = [%external ("ADDRESS", c)] in
-    let s : michelson_program = get_storage_of_address a in
-    (decompile s : s human_ticket)
   let set_baker_policy (bp : test_baker_policy) : unit = [%external ("TEST_SET_BAKER", bp)]
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
   let size (c : michelson_contract) : int = [%external ("TEST_SIZE", c)]
