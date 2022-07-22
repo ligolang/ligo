@@ -15,7 +15,7 @@ let check_entrypoint_annotation_format ~raise ep (exp: expression) =
     | _ -> raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->
-  let bad_self_err () = Errors.bad_self_type
+  let bad_self_err () = Main_warnings.warn_bad_self_type
     e.type_expression
     {e.type_expression with
       type_content =
@@ -47,9 +47,8 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
         associated_type
       | t -> {dat.parameter with type_content = t}
     in
-    let () =
-      trace_option ~raise (bad_self_err ()) @@
-      Ast_aggregated.Misc.assert_type_expression_eq (entrypoint_t , t) in
+    let () = if not @@ Ast_aggregated.Misc.type_expression_eq (entrypoint_t , t) then
+               raise.Simple_utils.Trace.warning @@ bad_self_err () in
     (true, dat, e)
   | _ -> (true,dat,e)
 
@@ -62,4 +61,3 @@ let entrypoint_typing ~raise : contract_type -> expression -> bool * contract_ty
     in
     (true, dat, e)
   | _ -> (true,dat,e)
-

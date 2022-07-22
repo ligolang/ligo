@@ -1467,9 +1467,9 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation_warn.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 10-23:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
@@ -1477,7 +1477,7 @@ let%expect_test _ =
     Warning: unused variable "self_contract".
     Hint: replace it by "_self_contract" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
@@ -1485,14 +1485,15 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
-    Invalid type annotation.
-    "contract (nat)" was given, but "contract (int)" was expected.
-    Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
   [%expect{|
