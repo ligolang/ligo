@@ -213,6 +213,5 @@ handleProjectFileChanged nfp change = do
   let fp = J.fromNormalizedFilePath nfp
   $(Log.debug) case change of
     J.FcCreated -> [Log.i|Created #{fp}|]
-    -- XXX: Should not trigger, see note in registerFileWatcher.
     J.FcChanged -> [Log.i|Changed #{fp}|]
     J.FcDeleted -> [Log.i|Deleted #{fp}|]
