@@ -17,4 +17,5 @@ val compile_program    : raise:(Errors.abs_error list, Main_warnings.all) Simple
 val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> CST.expr
 
 val decompile_declarations : ?dialect:Decompiler.dialect -> AST.module_ -> CST.declarations
-val decompile_pattern    : AST.type_expression AST.pattern -> CST.pattern
+
+val decompile_pattern_to_string : AST.type_expression AST.pattern -> string

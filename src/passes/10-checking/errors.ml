@@ -298,31 +298,8 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
     | `Typer_pattern_missing_cases (loc, syntax, ps) ->
       let ps = List.fold ps ~init:"" ~f:(fun s p ->
-        let p = Desugaring.Decompiler.decompile_pattern p in
-        let p = Purification.Decompiler.decompile_pattern p in
-        (* let state = Cst.Tree.mk_state ~offsets:true `Point in *)
-        (* in Cst_jsligo.Print.to_buffer state cst *)
-        let s' = match syntax with
-          Some Syntax_types.JsLIGO -> 
-            let p = Tree_abstraction.Jsligo.decompile_pattern p in
-            let p = Parsing.Jsligo.pretty_print_pattern ~cols:80 p in
-            Buffer.contents p
-        | Some CameLIGO -> 
-          let p = Tree_abstraction.Cameligo.decompile_pattern p in
-          let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 p in
-          Buffer.contents p
-        | Some ReasonLIGO -> 
-          let p = Tree_abstraction.Reasonligo.decompile_pattern p in
-          let p = Parsing.Reasonligo.pretty_print_pattern ~cols:80 p in
-          Buffer.contents p
-        | Some PascaLIGO _ -> 
-          let p = Tree_abstraction.Pascaligo.decompile_pattern p in
-          let p = Parsing.Pascaligo.pretty_print_pattern ~cols:80 p in
-          Buffer.contents p
-        | None -> 
-          let p = Tree_abstraction.Cameligo.decompile_pattern p in
-          let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 p in
-          Buffer.contents p in s ^ "- " ^ s' ^ "\n") in
+        let s' = Desugaring.Decompiler.decompile_pattern_to_string ~syntax p in
+        s ^ "- " ^ s' ^ "\n") in
       Format.fprintf f
         "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"
         Snippet.pp loc

@@ -11,10 +11,7 @@
   self_ast_core
   compiler_options
   main_warnings
-  desugaring purification 
-  tree_abstraction 
-  cst 
-  syntax_types 
-  parsing)
+  desugaring 
+  syntax_types)
  (preprocess
   (pps ppx_poly_constructor)))
