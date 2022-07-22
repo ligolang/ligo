@@ -32,6 +32,7 @@ depends: [
   "bos" {= "0.2.1"}
   "ca-certs" {= "0.2.2"}
   "camlp-streams" {= "5.0.1"}
+  "checkseum" {= "0.3.4"}
   "cmdliner" {= "1.1.0"}
   "cohttp" {= "5.0.0"}
   "cohttp-lwt" {= "5.0.0"}
@@ -57,6 +58,7 @@ depends: [
   "ctypes" {= "0.20.1"}
   "ctypes_stubs_js" {= "0.1"}
   "data-encoding" {= "0.5.3"}
+  "decompress" {= "1.4.3"}
   "digestif" {= "1.1.2"}
   "domain-name" {= "0.4.0"}
   "dune" {= "3.1.1"}

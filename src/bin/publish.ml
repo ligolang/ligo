@@ -45,13 +45,42 @@ buildMetadata
 
 *)
 
+let gzip fname fd =
+  let file_size = Int.of_int64_exn (Unix.stat fname).st_size in
+  Format.printf "foo.tgz file size after tar: %d" file_size;
+  let level = 4 in
+  let buffer_len = De.io_buffer_size in
+  let time () = Int32.of_float (Unix.gettimeofday ()) in
+  let i = De.bigstring_create buffer_len in
+  let o = De.bigstring_create buffer_len in
+  let w = De.Lz77.make_window ~bits:15 in
+  let q = De.Queue.create 0x1000 in
+  let r = Buffer.create 0x1000 in
+  let p = ref 0 in
+  (* Take care of os *)
+  let cfg = Gz.Higher.configuration Gz.Unix time in
+  let refill buf =
+    let len = min (file_size - !p) buffer_len in
+    if len <= 0 then 0 else
+    let bytes = Bytes.create len in
+    Format.printf "- %d %d\n" !p len;
+    let rd = Caml.Unix.read fd bytes !p len in
+    let len = rd in
+    Bigstringaf.blit_from_bytes bytes ~src_off:!p buf ~dst_off:0 ~len ;
+    p := !p + len ; len in
+  let flush buf len =
+    let str = Bigstringaf.substring buf ~off:0 ~len in
+    Buffer.add_string r str in
+  Gz.Higher.compress ~w ~q ~level ~refill ~flush () cfg i o ; 
+  r
+
 module SSet = Set.Make(String)
 let ignore_dirs 
   = SSet.of_list [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ]
 
 let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   let open Lwt.Syntax in
-  let* status = Lwt_unix.stat file_or_dir in
+  let* status = Lwt_unix.lstat file_or_dir in
   let* files = match status.st_kind with
     S_REG -> Lwt.return [file_or_dir]
   | S_DIR ->
@@ -64,9 +93,9 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
       Lwt.return (acc @ fs)  
     ) [] all in
     Lwt.return files
-  | S_LNK -> 
+  | S_LNK ->
     (* npm ignores symlinks in the tarball *)
-    Lwt.return [] 
+    Lwt.return []
   | S_CHR 
   | S_BLK
   | S_FIFO
@@ -75,14 +104,27 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
        tarball *)
     Lwt.return []
   in
+  (* let () = List.iter ~f:print_endline files in *)
   Lwt.return files
 
 let tar dir = 
   let open Lwt.Syntax in
   let* files = get_all_files "." in
-  let* fd = Lwt_unix.openfile "foo.tar" [ Unix.O_CREAT ; Unix.O_RDWR ] 0x777 in
+  let fname = "foo.tar" in
+  (* Think about permission when creating foo.tgz; okay for now *)
+  let* fd = Lwt_unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
   let* () = Tar_lwt_unix.Archive.create files fd in
+
   let* () = Lwt_unix.close fd in
+  let* fd = Lwt_unix.openfile fname [ Unix.O_RDWR ] 0o666 in
+
+  let buf = gzip fname (Lwt_unix.unix_file_descr fd) in
+  let* fdz = Lwt_unix.openfile "foo.tar.gz" [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
+  let* _ = Lwt_unix.write fdz (Buffer.contents_bytes buf) 0 (Buffer.length buf) in
+
+  let* () = Lwt_unix.close fdz in
+  let* () = Lwt_unix.close fd in
+
   Lwt.return ()
 
 let publish ~ligo_registry =

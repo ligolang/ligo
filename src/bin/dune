@@ -34,7 +34,8 @@
  (name publish)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix)
+ (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
+   bigstringaf)
  (modules publish))
 
 (rule
