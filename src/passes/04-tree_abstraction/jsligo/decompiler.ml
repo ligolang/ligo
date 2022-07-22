@@ -566,9 +566,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list = fun
     return_expr @@ [Expr (CST.ECall (Region.wrap_ghost @@ (var,args)))]
   (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ [Expr (CST.EUnit (Region.wrap_ghost (Token.ghost_lpar,Token.ghost_rpar)))]
-  | E_assign {binder;access_path;expression} when List.length access_path > 0 ->
-    failwith "Assignments with access paths are not supported by JsLIGO."
-  | E_assign {binder;expression;_} ->
+  | E_assign {binder;expression} ->
     let name = decompile_variable binder.var in
     let evar = CST.EVar name in
     let rhs = decompile_expression_in expression in

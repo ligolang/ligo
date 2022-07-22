@@ -1,6 +1,7 @@
 open Cli_helpers
 
 module Default_options = Compiler_options.Default_options
+module Raw_options = Compiler_options.Raw_options
 
 let is_dev = ref true
 
@@ -33,6 +34,24 @@ let libraries : string list Command.Param.t =
   let spec = optional_with_default Default_options.libraries
     @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string in
   flag ~doc ~aliases:["l"] name spec
+
+
+let template =
+  let open Command.Param in
+  let doc  = "TEMPLATE the template name which will be used to generate folder. You can obtain available list by running ligo init list. If not provided default is empty-project." in
+  let spec = optional_with_default "empty" string in
+  flag ~doc ~aliases:["t"] "--template" spec
+
+let template_list =
+  let open Command.Param in
+  let name = "--template-list" in
+  let doc  = "If present, change cmmand behavior and list available templates for this command." in
+  flag ~doc name no_arg
+
+let project_name =
+  let name = "PROJECT_NAME" in
+  let _desc = "The generated project name" in
+  Command.Param.(anon (maybe  (name %: string)))
 
 let syntax =
   let open Command.Param in
@@ -130,6 +149,15 @@ let disable_michelson_typechecking =
   let open Command.Param in
   let name = "--disable-michelson-typechecking" in
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
+  flag ~doc name no_arg
+
+let experimental_disable_optimizations_for_debugging =
+  let open Command.Param in
+  let name = "--experimental-disable-optimizations-for-debugging" in
+  let doc  = "Experimental: Disable certain optimizations in order to \
+              simplify the relationship between the source LIGO and \
+              the target Michelson. Intended for use with stepwise \
+              Michelson debuggers." in
   flag ~doc name no_arg
 
 let enable_michelson_typed_opt =
@@ -274,8 +302,9 @@ I use a mutable variable to propagate back the effect of the result of f *)
 let return = ref Done
 let reset_return () = return := Done
 let compile_file =
-  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking enable_typed_opt michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~enable_typed_opt ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+  let f source_file entry_point views syntax protocol_version display_format disable_michelson_typechecking experimental_disable_optimizations_for_debugging enable_typed_opt michelson_format output_file show_warnings warning_as_error michelson_comments constants file_constants project_root warn_unused_rec
+        () =
+    let raw_options = Raw_options.make ~entry_point ~syntax ~views ~protocol_version ~disable_michelson_typechecking ~experimental_disable_optimizations_for_debugging ~enable_typed_opt ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.contract raw_options source_file display_format michelson_format michelson_comments in
   let summary   = "compile a contract." in
@@ -284,11 +313,11 @@ let compile_file =
                   function that has the type of a contract: \"parameter \
                   * storage -> operations list * storage\"." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> enable_michelson_typed_opt <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
+  (f <$> source_file <*> entry_point <*> on_chain_views <*> syntax <*> protocol_version <*> display_format <*> disable_michelson_typechecking <*> experimental_disable_optimizations_for_debugging <*> enable_michelson_typed_opt <*> michelson_code_format <*> output_file <*> warn <*> werror <*> michelson_comments <*> constants <*> file_constants <*> project_root <*> warn_unused_rec)
 
 let compile_parameter =
   let f source_file entry_point expression syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~entry_point ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~syntax ~entry_point ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.parameter raw_options source_file expression amount balance sender source now display_format michelson_format
   in
@@ -302,7 +331,7 @@ let compile_parameter =
 
 let compile_expression =
   let f syntax expression protocol_version init_file display_format without_run michelson_format show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~without_run ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.expression raw_options expression init_file display_format michelson_format
     in
@@ -316,7 +345,7 @@ let compile_expression =
 
 let compile_storage =
   let f source_file expression entry_point syntax protocol_version amount balance sender source now display_format michelson_format output_file show_warnings warning_as_error constants file_constants project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~protocol_version ~warning_as_error ~constants ~file_constants ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings ?output_file @@
     Api.Compile.storage raw_options source_file expression amount balance sender source now display_format michelson_format
   in
@@ -331,7 +360,7 @@ let compile_storage =
 
 let compile_constant =
   let f syntax expression protocol_version init_file display_format without_run show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~without_run ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Compile.constant raw_options expression init_file display_format
     in
@@ -387,7 +416,7 @@ let transpile_group =
 (** Mutate commands *)
 let mutate_cst =
   let f source_file syntax protocol_version libraries display_format seed generator () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~libraries ~generator () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~libraries ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_cst raw_options source_file display_format seed in
   let summary   = "return a mutated version for a given file." in
@@ -398,7 +427,7 @@ let mutate_cst =
 
 let mutate_ast =
   let f source_file syntax protocol_version libraries display_format seed generator () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~libraries ~generator () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~libraries ~generator () in
     return_result ~return @@
     Api.Mutate.mutate_ast raw_options source_file display_format seed
   in
@@ -417,7 +446,7 @@ let mutate_group =
 (** Run commands *)
 let test =
   let f source_file syntax steps cli_expr_inj protocol_version display_format show_warnings project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~cli_expr_inj ~test:true () in
+    let raw_options = Raw_options.make ~syntax ~steps ~protocol_version ~project_root ~warn_unused_rec ~cli_expr_inj ~test:true () in
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
@@ -432,7 +461,7 @@ let test =
 
 let dry_run =
   let f source_file parameter storage entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Run.dry_run raw_options source_file parameter storage amount balance sender source now display_format
     in
@@ -447,7 +476,7 @@ let dry_run =
 
 let evaluate_call =
   let f source_file parameter entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root  ~warn_unused_rec() in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root  ~warn_unused_rec() in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_call raw_options source_file parameter amount balance sender source now display_format
     in
@@ -461,7 +490,7 @@ let evaluate_call =
 
 let evaluate_expr =
   let f source_file entry_point amount balance sender source now syntax protocol_version display_format show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~protocol_version ~warning_as_error ~project_root ~warn_unused_rec () in
     return_result ~return ~show_warnings @@
     Api.Run.evaluate_expr raw_options source_file amount balance sender source now display_format
     in
@@ -475,7 +504,7 @@ let evaluate_expr =
 
 let interpret =
   let f expression init_file syntax protocol_version amount balance sender source now display_format project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
     return_result ~return @@
     Api.Run.interpret raw_options expression init_file amount balance sender source now display_format
   in
@@ -500,7 +529,7 @@ let run_group =
 (** Info commands *)
 let list_declarations =
   let f source_file syntax display_format () =
-    let raw_options = Compiler_options.make_raw_options ~syntax () in
+    let raw_options = Raw_options.make ~syntax () in
     return_result ~return @@
     Api.Info.list_declarations raw_options source_file display_format
   in
@@ -512,7 +541,7 @@ let list_declarations =
 
 let measure_contract =
   let f source_file entry_point views syntax protocol_version display_format enable_typed_opt show_warnings warning_as_error project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root ~warn_unused_rec ~enable_typed_opt () in
+    let raw_options = Raw_options.make ~entry_point ~syntax ~protocol_version ~views ~warning_as_error ~project_root ~warn_unused_rec ~enable_typed_opt () in
     return_result ~return ~show_warnings @@
     Api.Info.measure_contract raw_options source_file display_format
   in
@@ -524,7 +553,7 @@ let measure_contract =
 
 let get_scope =
   let f source_file protocol_version libraries display_format with_types () =
-    let raw_options = Compiler_options.make_raw_options ~protocol_version ~libraries ~with_types () in
+    let raw_options = Raw_options.make ~protocol_version ~libraries ~with_types () in
     return_result ~return @@
     Api.Info.get_scope raw_options source_file  display_format
   in
@@ -544,7 +573,7 @@ let info_group =
 (** Print commands *)
 let preprocessed =
   let f source_file syntax libraries display_format project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~libraries ~project_root () in
+    let raw_options = Raw_options.make ~syntax ~libraries ~project_root () in
     return_result ~return @@
       Api.Print.preprocess raw_options source_file display_format  in
   let summary   = "preprocess the source file.\nWarning: Intended for development of LIGO and can break at any time." in
@@ -559,7 +588,7 @@ let preprocessed =
   (f <$> source_file <*> syntax <*> libraries <*> display_format <*> project_root)
 let pretty_print =
   let f source_file syntax display_format warning_as_error () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~warning_as_error () in
+    let raw_options = Raw_options.make ~syntax ~warning_as_error () in
     return_result ~return @@
     Api.Print.pretty_print raw_options source_file display_format in
   let summary   = "pretty-print the source file." in
@@ -571,7 +600,7 @@ let pretty_print =
   (f <$> source_file <*> syntax <*> display_format <*> werror)
 let print_graph =
   let f source_file syntax display_format project_root () =
-  let raw_options = Compiler_options.make_raw_options ~syntax ~project_root () in
+  let raw_options = Raw_options.make ~syntax ~project_root () in
     return_result ~return @@
     Api.Print.dependency_graph raw_options source_file display_format
   in
@@ -584,7 +613,7 @@ let print_graph =
 
 let print_cst =
   let f source_file syntax display_format () =
-    let raw_options = Compiler_options.make_raw_options ~syntax () in
+    let raw_options = Raw_options.make ~syntax () in
     return_result ~return @@
     Api.Print.cst raw_options source_file display_format
   in
@@ -596,7 +625,7 @@ let print_cst =
 
 let print_ast =
   let f source_file syntax display_format () =
-    let raw_options = Compiler_options.make_raw_options ~syntax () in
+    let raw_options = Raw_options.make ~syntax () in
     return_result ~return @@
     Api.Print.ast raw_options source_file display_format
   in
@@ -609,7 +638,7 @@ let print_ast =
 
 let print_ast_sugar =
   let f source_file syntax display_format self_pass () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~self_pass () in
+    let raw_options = Raw_options.make ~syntax ~self_pass () in
     return_result ~return @@
     Api.Print.ast_sugar raw_options source_file display_format
   in
@@ -621,7 +650,7 @@ let print_ast_sugar =
 
 let print_ast_core =
   let f source_file syntax display_format self_pass project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~self_pass ~project_root () in
+    let raw_options = Raw_options.make ~syntax ~self_pass ~project_root () in
     return_result ~return @@
     Api.Print.ast_core raw_options source_file display_format
   in
@@ -633,7 +662,7 @@ let print_ast_core =
 
 let print_ast_typed =
   let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
     Api.Print.ast_typed raw_options source_file  display_format
   in
@@ -647,7 +676,7 @@ let print_ast_typed =
 
 let print_ast_aggregated =
   let f source_file syntax protocol_version display_format self_pass project_root warn_unused_rec test () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~self_pass ~project_root ~warn_unused_rec ~test () in
     return_result ~return @@
       Api.Print.ast_aggregated raw_options source_file display_format
   in
@@ -659,7 +688,7 @@ let print_ast_aggregated =
 
 let print_mini_c =
   let f source_file syntax protocol_version display_format optimize project_root warn_unused_rec () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec () in
     return_result ~return @@
     Api.Print.mini_c raw_options source_file display_format optimize
   in
@@ -685,6 +714,35 @@ let print_group =
     "ast-aggregated"  , print_ast_aggregated;
     "mini-c"          , print_mini_c; ]
 
+(** init *)
+let init_library =
+  let f project_name template (template_list:bool) display_format () =
+    (if template_list then
+      return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`LIBRARY ~display_format
+    else
+      return_result ~return @@ Ligo_api.Ligo_init.new_project ~version:Version.version ~kind:`LIBRARY ~project_name_opt:project_name ~template ~display_format) in
+  let summary   = "Generate new folder which contains wished library template" in
+  let readme () = "Generate new folder from library template. Internet connexion needed" in
+  Command.basic ~summary ~readme (f <$> project_name <*> template <*> template_list <*> display_format)
+
+let init_contract =
+  let f project_name template (template_list:bool) display_format () =
+    (if template_list then
+      return_result ~return @@ Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format
+    else
+      return_result ~return @@ Ligo_api.Ligo_init.new_project ~version:Version.version ~kind:`CONTRACT ~project_name_opt:project_name ~template ~display_format) in
+  let summary   = "Generate new folder which contains wished contract template" in
+  let readme () = "Generate new folder from contract template. Internet connexion needed" in
+  Command.basic ~summary ~readme (f <$> project_name <*> template <*> template_list <*> display_format)
+
+let init_group =
+  Command.group ~summary:"Initialize a new ligo project from template. Contract or library."
+  [
+    "library"       , init_library;
+    "contract"      , init_contract;
+  ]
+
+
 (** other *)
 let changelog =
   let f display_format () =
@@ -696,7 +754,7 @@ let changelog =
 
 let repl =
   let f syntax protocol_version amount balance sender source now display_format init_file project_root () =
-    let raw_options = Compiler_options.make_raw_options ~syntax ~protocol_version ~project_root () in
+    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root () in
     return_result ~return @@ Repl.main raw_options display_format now amount balance sender source init_file
   in
   let summary   = "interactive ligo interpreter" in
@@ -719,6 +777,7 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
     "info"     , info_group;
     "mutate"   , mutate_group;
     "repl"     , repl;
+    "init"     , init_group;
     "changelog", changelog;
     "print"    , print_group;
     "install"  , install;

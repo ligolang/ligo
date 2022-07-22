@@ -14,3 +14,4 @@ module Run = Run
 module Info = Info
 module Print = Print
 module Mutate = Mutate
+module Ligo_init = Ligo_init

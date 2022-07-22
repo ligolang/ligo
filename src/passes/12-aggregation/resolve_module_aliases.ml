@@ -118,10 +118,10 @@ let rec expression : Aliases.t -> AST.expression -> AST.expression = fun aliases
         aliases, Option.value ~default:(mvar::module_path) path) in
     let module_path = List.rev module_path in
     return @@ E_module_accessor {module_path;element}
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let ascr = Option.map ~f:self_type ascr in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};expression}
 
 and matching_cases : Aliases.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in

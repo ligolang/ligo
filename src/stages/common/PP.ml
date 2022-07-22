@@ -268,10 +268,9 @@ let lst expression ppf = fun lst ->
 let set expression ppf = fun set ->
   fprintf ppf "set[%a]" (list_sep_d expression) set
 
-let assign expression type_expression ppf = fun {binder=b; access_path; expression=e} ->
-  fprintf ppf "%a%a := %a"
+let assign expression type_expression ppf = fun {binder=b; expression=e} ->
+  fprintf ppf "%a := %a"
     (binder type_expression) b
-    (list_sep_prep (access expression) (const ".")) access_path
     expression e
 
 let for_ expression ppf = fun {binder; start; final; incr; f_body} ->

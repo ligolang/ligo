@@ -583,16 +583,14 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap @@ (var,args))
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let var_attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `ReasonLIGO |> decompile_attributes in
     let binders =
       CST.PVar (wrap @@ CST.{
                     variable = decompile_variable var;
                     attributes = var_attributes }) in
     let lhs_type = Option.map ~f:(prefix_colon <@ decompile_type_expr) ascr in
-    let let_rhs = decompile_expression @@ match access_path with
-        [] -> expression
-      | _  -> AST.e_update (AST.e_variable var) access_path expression in
+    let let_rhs = decompile_expression expression in
     let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
     let body = decompile_expression (AST.e_unit ()) in
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;semi=ghost;body;attributes=[]} in

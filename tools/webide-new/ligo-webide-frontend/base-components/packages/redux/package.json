@@ -1,0 +1,34 @@
+{
+  "name": "@obsidians/redux",
+  "version": "0.3.0",
+  "description": "Redux store",
+  "author": "Phil <qft.gtr@gmail.com>",
+  "license": "GPL-3.0",
+  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "@obsidians/platform": "^0.3.0",
+    "lodash": "^4.17.20",
+    "mixpanel-browser": "^2.41.0",
+    "react-redux": "^7.2.2",
+    "redux": "^4.0.5",
+    "redux-config": "^0.1.1",
+    "redux-logger": "^3.0.6",
+    "redux-persist": "^5.10.0",
+    "redux-persist-transform-immutable": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-external-helpers": "^7.7.4",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
+    "@babel/plugin-proposal-function-bind": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.13.8",
+    "@babel/preset-env": "^7.7.5",
+    "babel-eslint": "^10.1.0",
+    "cross-env": "^6.0.3",
+    "redux-devtools-extension": "^2.13.9"
+  }
+}

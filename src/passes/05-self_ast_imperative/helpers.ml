@@ -417,11 +417,8 @@ module Free_variables :
       unions @@ [self condition; self then_clause; self else_clause]
     | E_sequence {expr1; expr2} ->
       VarSet.union (self expr1) (self expr2)
-    | E_assign {binder; access_path; expression} ->
-      let aux = function
-        | Access_tuple _ | Access_record _ -> VarSet.empty
-        | Access_map e -> self e in
-      unions @@ [VarSet.singleton binder.var; self expression] @ List.map ~f:aux access_path
+    | E_assign {binder; expression} ->
+      unions @@ [VarSet.singleton binder.var; self expression]
     | E_for {binder; start; final; incr; f_body} ->
       VarSet.remove binder @@ unions [self start; self final; self incr; self f_body]
     | E_for_each {fe_binder = (binder, None); collection; fe_body; collection_type = _} ->

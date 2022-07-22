@@ -48,7 +48,7 @@ type all =
  | `Self_mini_c_tracer of Self_mini_c.Errors.self_mini_c_error
  | `Scoping_tracer of Scoping.Errors.scoping_error
  | `Stacking_tracer of Stacking.Errors.stacking_error
-
+ | `Ligo_init_unrecognized_template of string list
  (* | `Main_interpreter of Interpreter.interpreter_error *)
  | `Main_interpret_test_entry_not_found of string
  | `Main_interpret_target_lang_error of Location.t * Location.t list * Tezos_error_monad__TzCore.error list

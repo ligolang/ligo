@@ -262,9 +262,9 @@ module Mutator = struct
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
     | E_type_inst _ as e' -> [ (return e'), None ]
-    | E_assign {binder;access_path;expression} ->
+    | E_assign {binder;expression} ->
         let+ expression, mutation = self expression in
-        return @@ E_assign {binder;access_path;expression}, mutation
+        return @@ E_assign {binder;expression}, mutation
 
   and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
     match m with

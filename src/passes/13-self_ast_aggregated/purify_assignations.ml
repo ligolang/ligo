@@ -140,11 +140,11 @@ module Effect = struct
 
   let get_read_effect (t:t) (ev : expression_variable) =
     match ValueVarMap.find_opt ev t.env with
-      None -> None,false
-    | Some ({effects=_; read=None}) -> None,false
+      None -> None
+    | Some ({effects=_; read=None}) -> None
     | Some {effects=_; read=Some(read)} ->
       if ValueVarMap.(compare Compare.type_expression read empty) = 0
-        then None,false else Some (make_tuple read),true
+        then None else Some (make_tuple read)
 
   let get_effect_var (t:t) (ev : expression_variable) =
     (* Format.printf "get effect for %a in %a\n%!" PP.expression_variable ev pp t; *)
@@ -172,6 +172,10 @@ module Effect = struct
     let global = {effects = ValueVarMap.remove ev t.global.effects; read} in
     {t with global = global}
   let remove_read_effect (t:t) = {t with global = {t.global with read = None}}
+  let load_write_effect_in_read_effect (t: t) =
+    let read = Option.value ~default:ValueVarMap.empty t.global.read in
+    let global = {t.global with read = Some (ValueVarMap.union (fun _ a _ -> Some a) t.global.effects read)} in
+    {t with global = global}
 end
 
 module ValueVarSet = Caml.Set.Make(ValueVar)
@@ -197,7 +201,9 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
   | E_lambda {binder;result} ->
       self result |> Effect.rm_var binder.var
   | E_recursive {fun_name;fun_type=_;lambda={binder;result}} ->
-      self result |> Effect.rm_var binder.var |> Effect.rm_var fun_name
+      let effect = self result in
+      let effect =  Effect.load_write_effect_in_read_effect effect in
+      Effect.rm_var binder.var @@ Effect.rm_var fun_name effect
   | E_let_in {let_binder;rhs;let_result;attr=_} ->
       let effect = self rhs in
       let effect =
@@ -247,7 +253,7 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
     let effect = self record in
     let effect = Effect.add effect @@ self update in
     effect
-  | E_assign {binder;access_path=_;expression} ->
+  | E_assign {binder;expression} ->
     let effect = self expression in
     return @@ Effect.add_effect effect binder.var (Option.value_exn binder.ascr)
 
@@ -379,7 +385,7 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
   | E_raw_code rc -> return ?returned_effect @@ E_raw_code rc
   | E_variable variable ->
       (match Effect.get_read_effect effect variable with
-        None,false -> return ?returned_effect @@ E_variable variable
+        None -> return ?returned_effect @@ E_variable variable
       | _ ->
           failwith "Hypothesis 2 failed"
       )
@@ -520,50 +526,11 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
       let update = self update in
       return ?returned_effect @@ E_record_update {record;path;update}
   (* Todo : check if we can replace by morphin directly let () = x := e in into let x = e in *)
-  | E_assign {binder;access_path;expression} ->
+  | E_assign {binder;expression} ->
       let expression = self expression in
       let let_binder = binder in
       let attr = {inline = false; no_mutation = false; view = false; public = false; thunk = false; hidden = false} in
-      (* This part is similar to desugaring of fonctional update. But is kept here for not wanting to desugar it if we
-        keep the effect in the backend *)
-      let rhs =
-        let accessor expr a : expression =
-          match a with
-            Access_tuple  i ->
-              let _ty =
-                let record_ty = get_t_record_exn expr.type_expression in
-                LMap.find (Label (Z.to_string i)) record_ty.content
-              in
-              e_record_accessor {record=expr;path=(Label (Z.to_string i))} @@ t_unit ()
-          | Access_record a ->
-              let _ty =
-                let record_ty = get_t_record_exn expr.type_expression in
-                LMap.find (Label a) record_ty.content
-              in
-              e_record_accessor {record=expr;path=(Label a)} @@ t_unit ()
-          | Access_map k ->
-            let k = self k in
-            let _ty = snd @@ get_t_map_exn expr.type_expression in
-            e_constant {cons_name=C_MAP_FIND_OPT;arguments=[k;expr]} @@ t_unit ()
-        in
-        let updator s a expr : expression =
-          match a with
-            Access_tuple  i -> e_record_update {record=s;path=(Label (Z.to_string i));update=expr} s.type_expression
-          | Access_record a -> e_record_update {record=s;path=(Label a);update=expr} s.type_expression
-          | Access_map k ->
-            let k = self k in
-            e_constant {cons_name=C_MAP_ADD;arguments=[k;expr;s]} s.type_expression
-        in
-        let aux (s, e : expression * _) lst =
-          let s' = accessor s lst in
-          let e' = fun expr ->
-            let u = updator s lst expr in
-            e u
-          in
-          (s',e')
-        in
-        let (_,rhs) = List.fold ~f:aux ~init:(e_variable binder.var (Option.value_exn binder.ascr), fun e -> e) access_path in
-        rhs @@ expression in
+      let rhs = expression in
       (* Todo : Check for correct use *)
       let let_result = return ?returned_effect @@ e_unit () in
       return @@ E_let_in {let_binder;rhs;let_result;attr}

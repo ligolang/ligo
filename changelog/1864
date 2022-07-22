@@ -1,0 +1,6 @@
+author: er433
+description: \n`Tezos.get_entrypoint_opt` does not error anymore on the usage of a
+  capitalized entrypoint.
+merge_request: '1864'
+title: Change handling of capitalization in `Tezos.get_entrypoint_opt`
+type: fixed
