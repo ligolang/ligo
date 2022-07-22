@@ -2691,6 +2691,26 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
+(* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "get_capitalized_entrypoint.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %Upper unit ;
+             IF_NONE
+               { PUSH string "lol" ; FAILWITH }
+               { PUSH mutez 0 ;
+                 UNIT ;
+                 TRANSFER_TOKENS ;
+                 UNIT ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
+                 PAIR } } } |}]
+
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
   run_ligo_good [ "compile" ; "parameter" ; contract "increment_with_test.mligo" ; "z.1" ] ;
