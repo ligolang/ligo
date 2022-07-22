@@ -45,8 +45,9 @@ buildMetadata
 
 *)
 
-(* TODO: Use a set *)
-let ignore_dirs = [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ]
+module SSet = Set.Make(String)
+let ignore_dirs 
+  = SSet.of_list [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ]
 
 let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   let open Lwt.Syntax in
@@ -54,7 +55,8 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   let* files = match status.st_kind with
     S_REG -> Lwt.return [file_or_dir]
   | S_DIR ->
-    if List.exists ignore_dirs ~f:(String.equal file_or_dir) then Lwt.return [] else 
+    if SSet.mem ignore_dirs file_or_dir 
+    then Lwt.return [] else 
     let all = Sys.ls_dir file_or_dir in
     let* files = 
     Lwt_list.fold_left_s (fun acc f -> 
@@ -62,11 +64,16 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
       Lwt.return (acc @ fs)  
     ) [] all in
     Lwt.return files
-  | S_LNK -> failwith "Keep the links as is - Can we add Links to archive?" 
+  | S_LNK -> 
+    (* npm ignores symlinks in the tarball *)
+    Lwt.return [] 
   | S_CHR 
   | S_BLK
   | S_FIFO
-  | S_SOCK -> failwith "TODO: handle this or else ignore"
+  | S_SOCK -> 
+    (* Ignore these types of files as they don't makes sense to include in 
+       tarball *)
+    Lwt.return []
   in
   Lwt.return files
 
