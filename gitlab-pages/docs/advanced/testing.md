@@ -363,6 +363,261 @@ let test2 = _test2();
 The environment assumes a source for the operations which can be set
 using the function `Test.set_source : address -> unit`.
 
+### Transfers and originations with tickets
+
+Originating contract storing tickets or transfering to contract accepting tickets requires some extra steps. We will first explain the problems with tickets
+and then show you how to handle it.
+
+#### The problem with tickets
+
+There is two kind of operations in the protocol : external and internal.  
+`internal operations` are those created by smart contracts and `external operations` are those created from outside the chain
+(e.g. using `Test.originate` or `tezos-client` for instance) [more information here](https://tezos.gitlab.io/active/michelson.html#semantics-of-smart-contracts-and-transactions)
+
+In the protocol, both external and internal `transfer`/`origination` operations contains a piece of michelson code representing the `parameter`/`initial storage`.  
+Now imagine you have a value of type `parameter_ty`/`storage_ty` containing a ticket, that you want to transfer or originate.  
+In the operation data, tickets will be represented in Michelson as pairs:
+
+```bash
+> ligo compile expression cameligo 'Tezos.create_ticket 0x0202 10n'
+(Pair "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG" 0x0202 10)
+```
+
+> ticketer address , ticket value , ticket amount
+
+If we try to apply such an operation, the type wouldn't match: ticket of bytes VS some pair.  
+The protocol would not let you do that since you could be creating a ticket out of nowhere unless the operation happens to be forged from within a contract (i.e. "internally")!
+
+In the testing framework - for now - it means using "proxy-contracts" forging the operations using provided a ticket value and a ticket amount.  
+
+#### Proxy ticket contracts
+
+Here is the proposed interface for creating proxy-contracts:
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=proxy_ticket
+(* proxy_ticket.mligo *)
+[@private] let proxy_transfer_contract (type vt whole_p)
+    ( mk_param : vt ticket -> whole_p)
+    ( (p,_)    : ((vt * nat) * address) * unit )
+    : operation list * unit =
+  let ((v,amt),dst_addr) = p in
+  let tx_param = mk_param (Tezos.create_ticket v amt) in
+  let c : whole_p contract = Tezos.get_contract_with_error dst_addr "Testing proxy: you provided a wrong address" in
+  let op = Tezos.transaction tx_param 1mutez c in
+  [op], ()
+
+[@private] let proxy_originate_contract (type vt whole_s vp)
+    ( mk_storage : vt ticket -> whole_s)
+    ( main       : vp * whole_s -> operation list * whole_s)
+    ( (p,_)      : (vt * nat) * address option )
+    : operation list * address option =
+  let (v,amt) = p in
+  let init_storage : whole_s = mk_storage (Tezos.create_ticket v amt) in
+  let op,addr = Tezos.create_contract main (None: key_hash option) 0mutez init_storage in
+  [op], Some addr
+
+
+
+type 'v proxy_address = (('v * nat) * address , unit) typed_address
+
+let init_transfer (type vt whole_p) (mk_param: vt ticket -> whole_p) : vt proxy_address =
+  let proxy_transfer : ((vt * nat) * address) * unit -> operation list * unit =
+    proxy_transfer_contract mk_param
+  in
+  let (taddr_proxy, _, _) = Test.originate proxy_transfer () 1tez in
+  taddr_proxy
+
+let transfer (type vt)
+    (taddr_proxy : vt proxy_address)
+    (info        : (vt * nat) * address) : test_exec_result = 
+  let ticket_info, dst_addr = info in
+  Test.transfer_to_contract (Test.to_contract taddr_proxy) (ticket_info , dst_addr) 1mutez
+
+let originate (type vt whole_s vp)
+    (ticket_info : vt * nat)
+    (mk_storage : vt ticket -> whole_s)
+    (contract: vp * whole_s -> operation list * whole_s) : address =
+  let proxy_origination : (vt * nat) * address option -> operation list * address option =
+    proxy_originate_contract mk_storage contract
+  in
+  let (taddr_proxy, _, _) = Test.originate proxy_origination (None : address option) 1tez in
+  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr_proxy) ticket_info 0tez in
+  match Test.get_storage taddr_proxy with
+  | Some addr ->
+    let _taddr = (Test.cast_address addr : (vp,whole_s) typed_address) in
+    addr
+  | None -> failwith "internal error"
+```
+
+</Syntax>
+
+---
+`init_transfer` accepts:
+
+* a function `mk_param` which given a ticket must return a value of your parameter type
+
+and returns the typed address of a "transfer proxy-contract" which can then be used to do multiple transfers of tickets with the same ticketer address
+
+---
+
+`transfer` accepts :
+
+* the typed address of a "transfer proxy-contract"
+* the ticket information (value and amount) together with the destination address
+
+and returns a value of type `test_exec_result`
+
+---
+
+`originate` accepts:
+
+* the ticket information (value and amount)
+* a function `mk_storage` which given a ticket must return a value of your storage type
+* your contract (having a ticket in its storage type)
+
+---
+
+> Note: Functions `mk_param` and `mk_storage` will be executed in the proxy contract itself
+
+#### Usages
+
+##### Transfer
+
+Here is an example using `Proxy_ticket.init_transfer` and `Proxy_ticket.transfer`:
+
+1. import the module above as `Proxy_ticket`
+2. define a contract `main` holding a ticket of string in its parameter type. The contract will just store the value of
+  the received ticket and the address of the sender
+3. originate contract `main`
+4. initialize a "transfer proxy-contract" providing a function to build a parameter out of a ticket
+5. transfer a ticket with a value `"hello"` and an amount of `10` to contract `main`
+6. print the storage of contract `main`
+7. transfer a ticket with a value `"world"` and an amount of `5` to contract `main`
+8. print the storage of contract `main`
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=usage_transfer
+(* transfer_ticket.mligo *)
+#include "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo"
+
+type param = int * string ticket
+
+let main ( (p,_) : param * (string * address)) : operation list * (string * address) =
+  let (_,ticket) = p in
+  let (_,(v,_)) , _ = Tezos.read_ticket ticket in
+  [] , (v, Tezos.get_sender ())
+
+let test_transfer_to_contract =
+  let (main_taddr, _ , _) = Test.originate main ("bye",Test.nth_bootstrap_account 1) 1mutez in
+  let main_addr = Tezos.address (Test.to_contract main_taddr) in
+  
+  (* Use this address everytime you want to send tickets from the same proxy-contract *)
+  let proxy_taddr =
+    (* mk_param is executed __by the proxy contract__ *)
+    let mk_param : string ticket -> param = fun (t : string ticket) -> 42,t in
+    (* initialize a proxy contract in charge of creating and sending your tickets *)
+    init_transfer mk_param
+  in
+  let () = Test.log ("poxy addr:", proxy_taddr) in
+
+  let _ =
+    (* ticket_info lets you control the amount and the value of the tickets you send *)
+    let ticket_info = ("hello",10n) in
+    (* we send ticket to main through the proxy-contract *)
+    transfer proxy_taddr (ticket_info,main_addr)
+  in
+  let () = Test.log (Test.get_storage main_taddr) in
+  let _ =
+    let ticket_info = ("world",5n) in
+    transfer proxy_taddr (ticket_info,main_addr)
+  in
+  let () = Test.log (Test.get_storage main_taddr) in
+  ()
+```
+
+</Syntax>
+
+result:
+
+```bash
+> ligo run test transfer_ticket.mligo 
+("poxy addr:" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+("hello" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+("world" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+Everything at the top-level was executed.
+- test_transfer_to_contract exited with value ().
+```
+
+> Note: note that the sender (stored in the contract) matches the address of the proxy contract
+
+##### Origination
+
+Here is an example using `Proxy_ticket.originate` and the type `human_ticket` :
+
+1. import the module above as `Proxy_ticket`
+2. define a contract `main` potentially holding a ticket of bytes in its storage. The contract will just reads the ticket
+   it its storage if present. Note that we define two version of the contract storage type: one for the contract
+   and one for the storage type that we would like to manipulate in our testing logic
+3. we define the `mk_storage` function which simply wraps a ticket into an option type
+4. we define the ticket information for a ticket of value `0x0202` and an amount of `15`
+5. we call `originate` and retrieve the address of the newly originated contract
+6. we use the address to fetch the current contract storage using `Test.get_storage_of_address` and decompile it
+   as a `human_storage`
+7. we read the content of the ticket and perform a serie of assertions
+
+<Syntax syntax="cameligo">
+
+```cameligo test-ligo group=usage_orig
+(* originate.mligo *)
+#include "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo"
+
+
+type storage = (bytes ticket) option
+type human_storage = (bytes human_ticket) option
+
+let main ( ((),s) : unit * storage) : operation list * storage =
+  [] , (
+    match s with
+    | Some ticket ->
+      let (_ , t) = Tezos.read_ticket ticket in
+      Some t
+    | None -> None
+  )
+
+let test_transfer_to_contract =
+  let mk_storage = fun (t:bytes ticket) -> Some t in
+  let ticket_info = (0x0202, 15n) in
+  let addr = originate ticket_info mk_storage main in
+  let storage : michelson_program = Test.get_storage_of_address addr in
+  let human_storage = (Test.decompile storage : human_storage) in
+
+  (* the ticket 'human_storage' can be manipulated freely without caring about ticket linearity *)
+
+  match human_storage with
+  | Some { ticketer ; value ; amount } ->
+    let () = Test.log ticketer in
+    let () = assert (value = ticket_info.0) in
+    let () = assert (amount = ticket_info.1) in
+    ()
+  | None -> failwith "impossible"
+```
+
+</Syntax>
+
+result:
+
+```bash
+> ligo run test originate.mligo 
+("poxy addr:" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+("hello" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+("world" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+Everything at the top-level was executed.
+- test_transfer_to_contract exited with value ().
+```
+
 ### Unit testing a function
 
 Consider a map binding addresses to amounts and a function removing all entries in that map having an amount less to a given threshold.
