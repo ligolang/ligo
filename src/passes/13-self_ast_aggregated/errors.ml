@@ -11,6 +11,7 @@ type self_ast_aggregated_error = [
   | `Self_ast_aggregated_bad_format_entrypoint_ann of string * Location.t
   | `Self_ast_aggregated_entrypoint_ann_not_literal of Location.t
   | `Self_ast_aggregated_unmatched_entrypoint of Location.t
+  | `Self_ast_aggregated_corner_case of string
 ] [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -55,6 +56,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value does not match a constructor of the contract parameter. @]"
         Snippet.pp loc
+    | `Self_ast_aggregated_corner_case desc ->
+      Format.fprintf f
+        "@[<hv>Internal error: %s @]"
+        desc
   )
 
 let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
@@ -143,6 +148,15 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);
+       ]
+    in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_corner_case desc ->
+    let message = `String "internal error" in
+    let description = `String desc in
+    let content = `Assoc [
+       ("message", message);
+       ("description", description);
        ]
     in
     json_error ~stage ~content
