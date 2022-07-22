@@ -107,10 +107,14 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   (* let () = List.iter ~f:print_endline files in *)
   Lwt.return files
 
-let tar dir = 
+let tar_gzip_base64 dir = 
   let open Lwt.Syntax in
   let* files = get_all_files "." in
-  let fname = "foo.tar" in
+
+  (* Instead of temp.tar give some useful name Hint: debugging *)
+  let fname = Filename.concat Filename.temp_dir_name "temp.tar" in
+  print_endline fname;
+
   (* Think about permission when creating foo.tgz; okay for now *)
   let* fd = Lwt_unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
   let* () = Tar_lwt_unix.Archive.create files fd in
@@ -119,16 +123,15 @@ let tar dir =
   let* fd = Lwt_unix.openfile fname [ Unix.O_RDWR ] 0o666 in
 
   let buf = gzip fname (Lwt_unix.unix_file_descr fd) in
-  let* fdz = Lwt_unix.openfile "foo.tar.gz" [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
-  let* _ = Lwt_unix.write fdz (Buffer.contents_bytes buf) 0 (Buffer.length buf) in
+  let encoded = Base64.encode_exn (Buffer.contents buf) in 
 
-  let* () = Lwt_unix.close fdz in
   let* () = Lwt_unix.close fd in
 
-  Lwt.return ()
+  Lwt.return encoded
 
 let publish ~ligo_registry =
   (* get root of the project *)
   let cwd = Unix.getcwd () in
-  let () = Lwt_main.run (tar cwd) in
+  let enc = Lwt_main.run (tar_gzip_base64 cwd) in
+  print_endline enc;
   Ok ("", "")
