@@ -16,7 +16,7 @@ let rec assign_expression ~raise : ?vars:expression_variable list -> expression 
   let _ = fold_map_expression
                 (fun (vars : expression_variable list) expr ->
                   match expr.expression_content with
-                  | E_assign {binder={var;_};expression=_;access_path=_} -> (
+                  | E_assign {binder={var;_};expression=_} -> (
                     match List.find ~f:(fun v -> ValueVar.equal var v) vars with
                     | Some (v:expression_variable) ->
                       raise.error @@ const_assigned (ValueVar.get_location v) var

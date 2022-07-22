@@ -255,6 +255,7 @@ let rec error_ppformat : display_format:string display_format ->
       - Tezos.self can't be used because the entry-point does not make sense in a view@.@]"
       Snippet.pp loc
     | `Repl_unexpected -> Format.fprintf f "unexpected error, missing expression?"
+    | `Ligo_init_unrecognized_template lststr -> Format.fprintf f "Template unrecognized please select one of the following list : \n%s" @@ String.concat ~sep:"\n" lststr
   )
 
 let json_error ~stage ?message ?child ?(loc=Location.generated) ?(extra_content=[]) () =
@@ -420,7 +421,7 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_decompile_mini_c e -> Spilling.Errors.error_jsonformat e
   | `Main_decompile_aggregated e -> Aggregation.Errors.error_jsonformat e
   | `Main_decompile_typed e -> Checking.Errors.error_jsonformat e
-
+  | `Ligo_init_unrecognized_template _lsttr -> `Null
   | `Repl_unexpected ->
      let message = "unexpected error" in
      json_error ~stage:"evaluating expression" ~message ()

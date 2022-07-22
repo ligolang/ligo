@@ -72,6 +72,16 @@ type token_amount = TokenAmount(nat);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b2
+type nat_alias = nat;
+
+type token_amount = | ["TokenAmount", nat];
+```
+
+</Syntax>
+
 
 As in Solidity, there are record types:
 <Syntax syntax="pascaligo">
@@ -92,10 +102,19 @@ type creature = {heads_count : nat; legs_count : nat; tails_count : nat}
 <Syntax syntax="reasonligo">
 
 ```reasonligo
-type creature = {heads_count: nat, legs_count: nat, tails_count: nat };
+type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
 ```
 
 </Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=b3
+type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
+```
+
+</Syntax>
+
 
 There are also _variant_ types (or "sum types") – a more powerful counterpart of Solidity enums that can hold data:
 
@@ -139,6 +158,21 @@ let y: int_option = Null;
 Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number (5)`, `Number (10)`, etc.) or `Null`. Notice how `Null` does not hold any value.
 
 </Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=b4
+type int_option = ["Number", int] | ["Null"];
+
+let x: int_option = Number(5);
+
+let y: int_option = Null ();
+```
+
+Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number(5)`, `Number(10)`, etc.) or `Null`. Notice how `Null()` does not hold any value.
+
+</Syntax>
+
 
 There is a special built-in parameterised `option` type with `Some` and `None` constructors, so we can rewrite the snippet above as:
 
@@ -204,6 +238,28 @@ let x_or_zero: int =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b5
+let x: option<int> = Some(5);
+
+let y: option<int> = None();
+```
+
+This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option<address>`. We can then use `match` to see if there is something inside:
+
+```jsligo group=b6
+let x: option<int> = Some (5);
+
+let x_or_zero: int =
+  match(x, {
+    Some: (value : int) => value,
+    None: () => 0
+  });
+```
+
+</Syntax>
+
 
 We can go further and combine variant types with records:
 
@@ -243,11 +299,24 @@ type authority = Dictatorship(leader) | Democracy(committee);
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```jsligo group=b7
+type committee = {members: list<address>, quorum: nat };
+
+type leader = {name: string, address: address };
+
+type authority = ["Dictatorship", leader] | ["Democracy", committee];
+```
+
+</Syntax>
+
+
 ## Contracts and entrypoints
 
 In Solidity, you usually define a _contract_ with _methods_ and _fields_:
 
-```
+```solidity
 contract Counter {
   int public counter;  // storage field
 
@@ -351,6 +420,39 @@ let main = ((p, s): (parameter, storage)) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a2
+let main = ([parameter, storage]: [bytes, int]): [list<operation>, int] => {
+  if (parameter == 0xbc1ecb8e) {
+    return [list([]) as list<operation>, storage + 1]
+  } else {
+    if (parameter == 0x36e44653) {
+      return [list([]) as list<operation>, storage - 1]
+    } else {
+      return (failwith("Unknown entrypoint") as [list<operation>, int])
+    }
+  }
+};
+```
+
+However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
+
+```jsligo group=a3
+type parameter = ["Increment"] | ["Decrement"];
+
+type storage = int;
+
+let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
+  return match(p, {
+    Increment: () => [list([]) as list<operation>, s + 1],
+    Decrement: () => [list([]) as list<operation>, s - 1]
+  });
+};
+```
+
+</Syntax>
+
 
 We do not need any internal operations, since we neither call other contracts nor transfer money. Here is how we can add arguments to our entrypoints:
 
@@ -403,12 +505,30 @@ let main = ((p, s): (parameter, storage)) => {
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```jsligo group=a4
+type parameter = ["Add", int] | ["Subtract", int];
+
+type storage = int;
+
+let main = (p : parameter, s : storage): [list<operation>, int] => {
+  return match(p, {
+    Add: (n : int) => [list([]) as list<operation>, s + n],
+    Subtract: (n : int) => [list([]) as list<operation>, s - n]
+  });
+};
+```
+
+</Syntax>
+
+
 Tezos has special support for parameters encoded with variant types. If the parameter is a variant type, Tezos will treat each constructor as a separate entrypoint (with the first letter lowercased). It is important when we want to call a contract but do not know the full type of its parameter. For example, we can call our counter contract with the following CLI command:
 
 `tezos-client call contract counter from alice --entrypoint '%subtract' --arg 100`
 
 Truffle (and Taquito library, which Truffle for Tezos uses under the hood), also treats entrypoints specially. We can call our `add` entrypoint as follows:
-```
+```solidity
 const Counter = artifacts.require('Counter')
 let counterInstance = await Counter.deployed()
 await counterInstance.add(100)
@@ -479,6 +599,24 @@ let main = ((param, storage): (parameter, storage)) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a5
+let multiplyBy2 = (storage: int) : int => storage * 2;
+
+let multiplyBy4 = (storage: int) : int => multiplyBy2(multiplyBy2(storage));
+
+type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
+
+let main = (param : parameter, storage : int): int => {
+  return match(param, {
+    MultiplyBy4: () => multiplyBy4(storage),
+    MultiplyBy16: () => multiplyBy4(multiplyBy4(storage))
+  });
+};
+```
+
+</Syntax>
 
 Here:
 1. `multiplyBy2` is _private_ (in Solidity terms): we cannot call it directly from outside of the contract.
@@ -544,6 +682,26 @@ let main = ((p, s): (parameter, storage)) =>
 We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
 ```
 ligo run interpret 'main (Compute ((x : int) => x * x + 2 * x + 1), 3)' --init-file examples/contracts/religo/Lambda.religo
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a6
+type parameter = | ["Compute", (c : int) => int];
+
+type storage = int;
+
+let main = ([p, s]: [parameter, storage]): [list<operation>, int] => {
+  return match(p, {
+    Compute: (func : (c : int) => int) => [list([]) as list<operation>, func(s)]
+  });
+};
+```
+
+We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
+```
+ligo run interpret 'main([Compute ((x : int) => x * x + 2 * x + 1), 3])' --init-file examples/contracts/jsligo/Lambda.jsligo
 ```
 
 </Syntax>
@@ -626,12 +784,39 @@ let main = ((p, s): (parameter, storage)) => {
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a1
+type storage = { fn : option<((x : int) => int)>, value : int };
+
+type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
+
+let call = ([fn, value]: [option<((x : int) => int)>, int]) : int => {
+  return match(fn, {
+    Some: (f : ((x : int) => int)) => f(value),
+    None: () => (failwith("Lambda is not set") as int)
+  })
+};
+
+let main = ([p, s]: [parameter, storage]) : [list<operation>, storage] => {
+  let newStorage =
+    match(p, {
+      SetFunction: (fn : ((x : int) => int)) => ({...s, fn: Some (fn)}),
+      CallFunction: () => ({...s, value: call(s.fn, s.value)})
+    });
+  [list([]) as list<operation>, newStorage]
+};
+```
+
+Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
+
+</Syntax>
 
 ## Execution model
 
 In Ethereum, you often find yourself "calling" other contracts and splitting your business logic into multiple independent parts. When you call some other contract, the transaction execution is paused until the callee returns the result. We will refer to such invocations as _direct calls:_
 
-```
+```solidity
 contract Treasury {
     uint256 public rewardsLeft;
     IBeneficiary beneficiary;
@@ -647,7 +832,7 @@ contract Treasury {
 
 Those of you experienced with Solidity may notice that this contract is not reentrancy-safe: the beneficiary contract may utilise the fact that by the time of the call, `rewardsLeft` storage variable has not been updated. The attacker can _call back_ into the caller contract, invoking `disburseRewards` until it drains the treasury contract:
 
-```
+```solidity
 contract Beneficiary {
     function handleRewards() public payable {
         Treasury treasury = Treasury(msg.sender);
@@ -738,6 +923,33 @@ let treasury = ((p, s): (unit, storage)) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=b1
+type storage = {rewardsLeft: tez, beneficiaryAddress: address };
+
+let treasury = (p : unit, s : storage): [list<operation>, storage] => {
+  // We do our computations first
+  let newStorage = {...s, rewardsLeft: (0 as mutez)};
+
+  // Then we find our beneficiary's `handleRewards` entrypoint:
+  let beneficiaryOpt: option<contract<unit>> =
+    Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
+  let beneficiary =
+    match(beneficiaryOpt, {
+     Some: (contract : contract<unit>) => contract,
+     None: () => (failwith("Beneficiary does not exist") as contract<unit>)
+    });
+
+  // Then we prepare the internal operation we want to perform
+  let operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
+  
+  // ...and return both the operations and the updated storage
+  return [list([operation]), newStorage];
+};
+```
+
+</Syntax>
 
 Note that all the state changes occur _before_ the internal operation gets executed. This way, Tezos protects us from unintended reentrancy attacks. However, with complex interactions chain, reentrancy attacks may still be possible.
 
@@ -787,6 +999,21 @@ let doSomethingCont = ((p, s): (int, int)) => (([] : list(operation)), p + s);
 ```
 
 </Syntax>
+<Syntax>
+
+```jsligo skip
+type parameter = ["DoSomething"] | ["DoSomethingCont", int];
+
+let doSomething = ([p, s]: [unit, int]) => {
+  /* The callee should call `%doSomethingCont` with the value we want */
+  let op = Tezos.transaction ...;
+  return [list([op]), s]
+}
+
+let doSomethingCont = ([p, s]: [int, int]) => [(list([]) as list<operation>), p + s];
+```
+
+</Syntax>
 
 However, here you leave your contract in an _intermediate_ state before making an external call. You would need additional precautions to make such callback-style calls secure. In most cases, you should avoid this pattern.
 
@@ -809,14 +1036,14 @@ In this article, we discussed some Solidity patterns and their LIGO counterparts
 
 | Solidity pattern | LIGO pattern |
 |------------------|--------------|
-| `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo"></Syntax>`type storage is record [ x : int; y : nat ]`<Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="reasonligo">`type storage = { x : int, y : nat }`</Syntax> |
+| `public` field   | A field in the storage record, e.g. <Syntax syntax="pascaligo">`type storage is record [ x : int; y : nat ]`</Syntax><Syntax syntax="cameligo">`type storage = { x : int; y : nat }`</Syntax><Syntax syntax="reasonligo">`type storage = { x : int, y : nat }`</Syntax><Syntax syntax="jsligo">`type storage = { x : int, y : nat }`</Syntax> |
 | `private` field  | N/A: all fields are public |
-| `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="reasonligo">`let func = (a : int) => ...`</Syntax> |
-| `public` /  `external` method  | A separate entrypoint in the parameter: `type parameter = F of int | ...`. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
+| `private` method | A regular function, e.g., <Syntax syntax="pascaligo">`function func (const a : int) is ...`</Syntax><Syntax syntax="cameligo">`let func (a : int) = ...`</Syntax><Syntax syntax="reasonligo">`let func = (a : int) => ...`</Syntax><Syntax syntax="jsligo">`let func = (a : int) => ...`</Syntax> |
+| `public` /  `external` method  | A separate entrypoint in the parameter: <Syntax syntax="pascaligo">`type parameter = F of int`</Syntax><Syntax syntax="cameligo">`type parameter = F of int`</Syntax><Syntax syntax="reasonligo">`type parameter = F (int)`</Syntax><Syntax syntax="jsligo">`type parameter = ["F", int]`</Syntax>. `main` entrypoint should dispatch and forward this call to the corresponding function using a match expression |
 | `internal` method | There is no concept of inheritance in Tezos |
 | Constructor      | Set the initial storage upon origination |
 | Method that returns a value | Inspect the contract storage directly |
 | `contract.doX(...)` | Emit an internal operation |
 | `uint x = contract.getX()` | Do not do this. Think if you can merge the contracts or reverse the execution flow |
 | Proxy upgrade pattern | Put lambdas to storage and provide means to update them |
-| `emit Event(...)` | Event logs are not supported at the moment. There is a [proposal](https://gitlab.com/tzip/tzip/-/blob/8ac4f90cdc2e3ffb135f6a6a4b3ee0ece3e39870/proposals/tzip-20/tzip-20.md) to support event logs in the future |
+| `emit Event(...)` | Event logs are not supported at the moment. There is a [proposal](https://tezos.gitlab.io/protocols/014_kathmandu.html#contract-event-logging) to support event logs in the future |

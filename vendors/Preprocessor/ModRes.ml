@@ -159,10 +159,10 @@ module Esy = struct
       |> List.rev
       |> String.concat path_separator
 
-  (* [normalize_pkg_name pkg_name] transforms the path of package names, 
+  (* [normalize_name name] transforms names used in esy paths, 
      1. '-' in the project name are transformed to '_' 
      2. '_' in the project name are transformed to '__' *)
-  let normalize_pkg_name pkg_name = pkg_name
+  let normalize_name name = name
     |> String.split_on_char '_'
     |> String.concat "__"
     |> String.split_on_char '-' 
@@ -347,6 +347,26 @@ let get_paths_of_dependencies ~file =
       )
   | None -> []
 
+(* [find_in_inclusion_list ~inclusion_list ?scope_name pkg_name] normalizes the
+   [pkg_name] & [scope_name] and tries to find the path in the inclusion list
+   which starts with the same normalized name.
+   [Esy.extract_pkg_name path] helps to find the the normalized package name
+    in the [path] *)
+let find_in_inclusion_list ~inclusion_list ?scope_name pkg_name =
+  let normalized_pkg_name = Esy.normalize_name pkg_name in
+  let normalized_pkg_name = 
+    match scope_name with
+      Some scope_name ->
+        (* esy stores scoped packages in its cache as 
+            `${normalized_scope}__s__${normalized_pkg}`
+            e.g. for a scoped pkg like @x-y/somepkg of version 1.2.3
+                it will be stored as `x_y__s__somepkg__1.2.3__${hash}` *)
+        let normalized_scope_name = Esy.normalize_name scope_name in
+        Format.sprintf "%s__s__%s" normalized_scope_name normalized_pkg_name
+    | None -> normalized_pkg_name in
+  List.find inclusion_list ~f:(fun (`Path pkg_path) ->
+    normalized_pkg_name = Esy.extract_pkg_name pkg_path)
+
 (* [find_external_file ~file ~inclusion_list] specifically resolves files
    for LIGO packages downloaded via esy.
 
@@ -365,22 +385,22 @@ let get_paths_of_dependencies ~file =
   
    Then we look for a path corresponding to package name in the [inclusion_list] *)
 let find_external_file ~file ~inclusion_list =
-  let find_in_inclusion_list pkg_name = 
-    let normalized_pkg_name = Esy.normalize_pkg_name pkg_name in
-    List.find inclusion_list ~f:(fun (`Path pkg_path) ->
-      normalized_pkg_name = Esy.extract_pkg_name pkg_path)
-  in
   let* segs = Path.segs (Path.v file) in
-  let* segs =
+  let* (`Path dir, rest_of_path) =
     match segs with
-      pkg_name::rest_of_path -> 
-        let* (`Path dir) = find_in_inclusion_list pkg_name in
-        let rest_of_path = String.concat Filename.dir_sep rest_of_path in
-        let dir = Path.join dir rest_of_path in
-        Some dir
+      scope::pkg_name::rest_of_path 
+        when Core.String.is_prefix ~prefix:"@" scope ->
+        (* scoped npm packages are of the form `@scope/pkg` *)
+        let scope_name = Core.String.chop_prefix_exn ~prefix:"@" scope in
+        let path_opt = find_in_inclusion_list ~inclusion_list ~scope_name pkg_name in
+        Option.map (fun path -> path, rest_of_path) path_opt
+    | pkg_name::rest_of_path -> 
+        let path_opt = find_in_inclusion_list ~inclusion_list pkg_name in
+        Option.map (fun path -> path, rest_of_path) path_opt
     | _ -> None
   in
-  Some segs
+  let path = List.fold_left ~f:Path.join ~init:dir rest_of_path in
+  Some path
 
 (* [pp] pretty-printing for module resolutions *)
 let pp ppf mr =

@@ -2,11 +2,7 @@ open Environment
 
 module Default_options = Raw_options.Default_options
 
-type raw = Raw_options.raw
-
-let make_raw_options = Raw_options.make
-
-let default_raw_options = Raw_options.default
+module Raw_options = Raw_options
 
 type frontend = {
   syntax : Syntax_types.t option ;
@@ -36,6 +32,7 @@ type middle_end = {
 type backend = {
   protocol_version : Protocols.t ;
   disable_michelson_typechecking : bool ;
+  experimental_disable_optimizations_for_debugging : bool ;
   enable_typed_opt : bool ;
   without_run : bool ;
   views : string list ;
@@ -63,7 +60,7 @@ let warn_unused_rec ~syntax should_warn =
   | None -> should_warn
 
 let make :
-  raw_options : raw ->
+  raw_options : Raw_options.t ->
   ?syntax : Syntax_types.t ->
   ?protocol_version:Protocols.t ->
   ?has_env_comments : bool ->
@@ -97,6 +94,7 @@ let make :
       let backend = {
         protocol_version ;
         disable_michelson_typechecking = raw_options.disable_michelson_typechecking;
+        experimental_disable_optimizations_for_debugging = raw_options.experimental_disable_optimizations_for_debugging;
         enable_typed_opt = raw_options.enable_typed_opt;
         without_run = raw_options.without_run;
         views = raw_options.views ;

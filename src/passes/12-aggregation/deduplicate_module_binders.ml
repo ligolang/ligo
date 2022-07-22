@@ -129,10 +129,10 @@ let rec expression : Scope.t -> AST.expression -> AST.expression = fun scope e -
   | E_module_accessor {module_path;element} ->
     let _,module_path = List.fold_map ~init:(scope) module_path ~f:(Scope.get_module_var) in
     return @@ E_module_accessor {module_path;element}
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let ascr = Option.map ~f:self_type ascr in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};expression}
 
 and matching_cases : Scope.t -> AST.matching_expr -> AST.matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in

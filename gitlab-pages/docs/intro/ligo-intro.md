@@ -36,7 +36,7 @@ them a good target for formal methods, and what can't be easily proven can at le
 be extensively tested. The simplicity of LIGO also keeps its compiled output
 unbloated. Our hope is to have a simple, strongly typed language with a low footprint.
 
-LIGO currently offers three syntaxes:
+LIGO currently offers four syntaxes:
 
   - **PascaLIGO**, a syntax inspired by Pascal which provides an
     imperative developer experience.
@@ -50,7 +50,7 @@ LIGO currently offers three syntaxes:
   - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to be familiar 
     to those coming from TypeScript/JavaScript.
 
-Let's define some LIGO contract in the three flavours above. Do
+Let's define some LIGO contract in the four flavours above. Do
 not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
 
