@@ -89,7 +89,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball = {
+let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
@@ -100,7 +100,7 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
     name ;
     version = version ;
     description ;
-    scripts = SMap.add "test" "ligo run test list.test.mligo" SMap.empty ;
+    scripts ;
     readme ;
     id = Format.sprintf "%s@%s" name version ;
     dist = {
@@ -117,7 +117,7 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
   } SMap.empty
 }
 
-let http ~token ~version ~sha1 ~sha512 ~gzipped_tarball =
+let http ~token ~version ~sha1 ~sha512 ~gzipped_tarball ~scripts ~description ~readme =
   let open Cohttp_lwt_unix in
   let pkg_name = "melwyn95_dummy" in
   let uri = Uri.of_string (Format.sprintf "%s/%s" Cli_helpers.Constants.ligo_registry pkg_name) in
@@ -128,9 +128,10 @@ let http ~token ~version ~sha1 ~sha512 ~gzipped_tarball =
   ] in
   let body = body 
     ~name:pkg_name 
-    ~version 
-    ~description:"List helpers for LIGO" 
-    ~readme:"ERROR: No README data found!"
+    ~version
+    ~scripts
+    ~description 
+    ~readme
     ~ligo_registry:Cli_helpers.Constants.ligo_registry
     ~sha512
     ~sha1
@@ -223,33 +224,30 @@ let tar_gzip dir =
 
   Lwt.return (Buffer.contents_bytes buf)
 
-let publish ~token ~version =
+let publish ~token ~version ~scripts ~description ~readme =
   let open Lwt.Syntax in
   let* gzipped_tarball = tar_gzip "." in
   let len = Bytes.length gzipped_tarball in
-  let sha1 = Digestif.SHA1.digest_bytes gzipped_tarball ~off:0 ~len in
-  let sha1 = Digestif.SHA1.to_hex sha1 in
-  let sha512 = Digestif.SHA512.digest_bytes gzipped_tarball ~off:0 ~len in
-  let sha512 = Digestif.SHA512.to_raw_string sha512 in 
-  http ~token ~version ~sha1 ~sha512 ~gzipped_tarball
+  let sha1 = gzipped_tarball
+    |> Digestif.SHA1.digest_bytes ~off:0 ~len
+    |> Digestif.SHA1.to_hex in
+  let sha512 = gzipped_tarball 
+    |> Digestif.SHA512.digest_bytes ~off:0 ~len
+    |> Digestif.SHA512.to_raw_string in 
+  http ~token ~version ~sha1 ~sha512 ~gzipped_tarball ~scripts ~description ~readme
 
 let publish ~ligo_registry =
-  (* get root of the project *)
-  (* let cwd = Unix.getcwd () in
-  let enc = Lwt_main.run (tar_gzip_base64 cwd) in
-  print_endline enc; *)
-  (* let request = http ~token:"ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
-  let response,body = Lwt_main.run request in
-  let code = response |> Response.status |> Code.code_of_status in
-  Printf.printf "Response code: %d\n" code;
-  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string); *)
-  (* body |> Cohttp_lwt.Body.to_string >|= fun body ->
-  Printf.printf "Body of length: %d\n" (String.length body); *)
   let open Cohttp in
   let open Cohttp_lwt in
+  (* TODO: read package.json for version, scripts and other stuff *)
   let version = "1.0.17" in
+  let scripts = SMap.add "test" "ligo run test list.test.mligo" SMap.empty in
+  let description = "List helpers for LIGO" in
+  let readme = "ERROR: No README data found!" in
+  (* TODO: .ligorc for token *)
   let token = "ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
-  let response,body = Lwt_main.run (publish ~token ~version) in
+  let response,body = Lwt_main.run (publish ~token ~version ~scripts ~description ~readme) in
+  (* TODO: better error & success message *)
   let code = response |> Response.status |> Code.code_of_status in
   Printf.printf "Response code: %d\n" code;
   Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
