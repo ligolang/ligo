@@ -783,6 +783,8 @@ let publish =
     return_result ~return @@ fun () -> Publish.publish ~ligo_registry in
   Command.basic ~summary ~readme (f <$> ligo_registry)
 
+(* TODO: ligo login & ligo add-user *)
+
 let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
