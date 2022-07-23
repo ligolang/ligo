@@ -510,6 +510,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       | _ -> assert false
     )
     | ( C_MAP_UPDATE , _  ) -> fail @@ error_type
+    | ( C_BIG_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] )
     | ( C_MAP_GET_AND_UPDATE , [k ; V_Construct (option,v) ; V_Map kvs ] ) ->
       let old_value = List.Assoc.find ~equal:LC.equal_value kvs k in
       let old_value = (match old_value with
@@ -520,6 +521,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       | "Some" -> return @@ v_pair (old_value, V_Map ((k,v)::(List.Assoc.remove ~equal:LC.equal_value kvs k)))
       | "None" -> return @@ v_pair (old_value, V_Map (List.Assoc.remove ~equal:LC.equal_value kvs k))
       | _ -> assert false)
+    | ( C_BIG_MAP_GET_AND_UPDATE , _  )
     | ( C_MAP_GET_AND_UPDATE , _  ) -> fail @@ error_type
     | ( C_SET_EMPTY, []) -> return @@ V_Set ([])
     | ( C_SET_EMPTY , _  ) -> fail @@ error_type
@@ -897,7 +899,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
-         C_BIG_MAP | C_BIG_MAP_LITERAL | C_BIG_MAP_GET_AND_UPDATE | C_CALL | C_CONTRACT |
+         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_CONTRACT |
          C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
          C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
