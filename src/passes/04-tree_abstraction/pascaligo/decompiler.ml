@@ -220,6 +220,8 @@ and decompile_statements : AST.expression -> _ = fun expr ->
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
+    let is_unit_pattern (p : AST.type_expression AST.pattern) = 
+      match p.wrap_content with AST.P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | AST.P_unit ->
       CST.P_Ctor (Wrap.ghost "Unit")
@@ -242,11 +244,17 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label constructor -> (
-        let p = decompile_pattern p in
-        let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in
-        let p = Region.wrap_ghost (par p) in
+        let p = 
+          if is_unit_pattern p 
+          then None 
+          else
+            let p = decompile_pattern p in
+            let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in
+            let p = Region.wrap_ghost (par p) in
+            Some p 
+        in
         let constr = CST.P_Ctor (Wrap.ghost constructor) in
-        CST.P_App (Region.wrap_ghost (constr, Some p))
+        CST.P_App (Region.wrap_ghost (constr, p))
       )
     )
     | AST.P_tuple lst ->

@@ -52,7 +52,7 @@ let%expect_test _ =
             const card : card
             = case cards [action.card_to_transfer]  of [
                 Some (card) -> card
-              | None (Unit) ->
+              | None ->
                   (failwith ("transfer_single: No card.")
                    : card)
               ];
@@ -80,7 +80,7 @@ let%expect_test _ =
             const card : card
             = case s.cards [action.card_to_sell]  of [
                 Some (card) -> card
-              | None (Unit) ->
+              | None ->
                   (failwith ("sell_single: No card.") : card)
               ];
 
@@ -93,7 +93,7 @@ let%expect_test _ =
             const card_pattern : card_pattern
             = case s.card_patterns [card.card_pattern]  of [
                 Some (pattern) -> pattern
-              | None (Unit) ->
+              | None ->
                   (failwith ("sell_single: No card pattern.")
                    : card_pattern)
               ];
@@ -130,7 +130,7 @@ let%expect_test _ =
                     : option (contract (unit)))
               of [
                 Some (contract) -> contract
-              | None (Unit) ->
+              | None ->
                   (failwith ("sell_single: No contract.")
                    : contract (unit))
               ];
@@ -150,7 +150,7 @@ let%expect_test _ =
             const card_pattern : card_pattern
             = case s.card_patterns [action.card_to_buy]  of [
                 Some (pattern) -> pattern
-              | None (Unit) ->
+              | None ->
                   (failwith ("buy_single: No card pattern.")
                    : card_pattern)
               ];
@@ -470,7 +470,7 @@ let transfer_single
            switch
            Map.find_opt(action.card_to_transfer, cards) {
            | Some card => card
-           | None() =>
+           | None =>
                (failwith("transfer_single: No card.") : card)
            };
          {
@@ -509,7 +509,7 @@ let sell_single: (action_sell_single, storage) => return =
          let card: card =
            switch Map.find_opt(action.card_to_sell, s.cards) {
            | Some card => card
-           | None() =>
+           | None =>
                (failwith("sell_single: No card.") : card)
            };
          {
@@ -523,7 +523,7 @@ let sell_single: (action_sell_single, storage) => return =
              switch
              Map.find_opt(card.card_pattern, s.card_patterns) {
              | Some pattern => pattern
-             | None() =>
+             | None =>
                  (failwith("sell_single: No card pattern.")
                    : card_pattern)
              };
@@ -567,7 +567,7 @@ let sell_single: (action_sell_single, storage) => return =
                            Tezos.get_sender(()))
                          : option(contract(unit))) {
                        | Some contract => contract
-                       | None() =>
+                       | None =>
                            (
                              failwith("sell_single: No contract.")
                              : contract(unit))
@@ -595,7 +595,7 @@ let buy_single: (action_buy_single, storage) => return =
            switch
            Map.find_opt(action.card_to_buy, s.card_patterns) {
            | Some pattern => pattern
-           | None() =>
+           | None =>
                (failwith("buy_single: No card pattern.")
                  : card_pattern)
            };
@@ -709,8 +709,7 @@ let%expect_test _ =
     } with
         case nee.nesty. mymap [1]  of [
           Some (s) -> s
-        | None (Unit) ->
-            (failwith ("Should not happen.") : string)
+        | None -> (failwith ("Should not happen.") : string)
         ] |}];
   run_ligo_good [ "transpile" ; "contract" ; "../../test/contracts/deep_access.ligo" ; "cameligo" ] ;
   [%expect{|
@@ -795,7 +794,7 @@ let nested_record: nested_record_t => string =
      ();
      switch Map.find_opt(1, nee.nesty.mymap) {
      | Some s => s
-     | None() => (failwith("Should not happen.") : string)
+     | None => (failwith("Should not happen.") : string)
      }
    }); |}]
 

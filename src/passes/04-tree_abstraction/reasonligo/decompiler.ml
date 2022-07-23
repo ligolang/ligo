@@ -704,6 +704,8 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
+    let is_unit_pattern (p : AST.type_expression AST.pattern) = 
+      match p.wrap_content with AST.P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | AST.P_unit -> CST.PUnit (wrap (ghost, ghost))
     | AST.P_var v ->
@@ -740,8 +742,14 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label constructor -> (
-        let p = decompile_pattern p in
-        let constr = wrap (wrap constructor, Some p) in
+        let p =
+          if is_unit_pattern p
+          then None
+          else
+            let p = decompile_pattern p in
+            Some p
+          in
+        let constr = wrap (wrap constructor, p) in
         CST.PConstr constr
       )
     )
