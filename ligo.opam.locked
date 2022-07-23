@@ -55,6 +55,7 @@ depends: [
   "csexp" {= "1.5.1"}
   "cstruct" {= "6.1.0"}
   "cstruct-lwt" {= "6.1.0"}
+  "cstruct-sexp" {= "6.1.0"}
   "ctypes" {= "0.20.1"}
   "ctypes_stubs_js" {= "0.1"}
   "data-encoding" {= "0.5.3"}
@@ -78,6 +79,7 @@ depends: [
   "hacl-star" {= "0.4.5"}
   "hacl-star-raw" {= "0.4.5"}
   "hex" {= "1.5.0"}
+  "hkdf" {= "1.0.4"}
   "index" {= "1.6.0"}
   "integers" {= "0.7.0"}
   "integers_stubs_js" {= "1.0"}
@@ -217,6 +219,7 @@ depends: [
   "tezos-stdlib-unix" {= "dev"}
   "time_now" {= "v0.14.0"}
   "timezone" {= "v0.14.0"}
+  "tls" {= "0.15.3"}
   "topkg" {= "1.0.5"}
   "typerep" {= "v0.14.0"}
   "tyxml" {= "4.5.0"}
