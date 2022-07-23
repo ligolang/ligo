@@ -1,50 +1,7 @@
-(* TODO:
-
-spec:  Result {
-  type: 'version',
-  registry: true,
-  where: undefined,
-  raw: 'melwyn95_dummy@1.0.10',
-  name: 'melwyn95_dummy',
-  escapedName: 'melwyn95_dummy',
-  scope: undefined,
-  rawSpec: '1.0.10',
-  saveSpec: null,
-  fetchSpec: '1.0.10',
-  gitRange: undefined,
-  gitCommittish: undefined,
-  hosted: undefined }
-
-  opts = {
-    defaultTag: 'latest',
-    // if scoped, restricted by default
-    access: spec.scope ? 'restricted' : 'public',
-    algorithms: ['sha512'],
-    ...opts,
-    spec,
-  }
-  For now just implement `public` later do restricted 
-
-registry:  https://registry.npmjs.org/ (Replace with LIGO registry)
-
-patchManifest
-
-buildMetadata
-
-      method: 'PUT',
-      body: metadata,
-      ignoreBody: true,
-
-      if faile: patchMetadata 
-   
-    References:
-      https://github.com/npm/cli/blob/latest/workspaces/libnpmpublish/lib/publish.js
-      https://github.com/npm/cli/blob/latest/node_modules/npm-registry-fetch/lib/index.js
-      https://github.com/npm/cli/blob/latest/node_modules/npm-registry-fetch/lib/default-opts.js
-      https://github.com/npm/cli/blob/latest/node_modules/npm-package-arg/lib/npa.js
-
+(* 
 
 TODO Checklist:
+
 CLI:
 - [ ] User facing docs
 - [ ] Devs facing docs
@@ -132,35 +89,35 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~version = {
+let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball = {
   id = name ;
-  name = name ;
-  description = "List helpers for LIGO";
+  name ;
+  description ;
   dist_tags = {
     latest = version
   } ;
   versions = SMap.add version {
-    name = "melwyn95_dummy" ;
+    name ;
     version = version ;
-    description = "List helpers for LIGO" ;
+    description ;
     scripts = SMap.add "test" "ligo run test list.test.mligo" SMap.empty ;
-    readme = "ERROR: No README data found!" ;
-    id = Format.sprintf "melwyn95_dummy@%s" version ;
+    readme ;
+    id = Format.sprintf "%s@%s" name version ;
     dist = {
-      integrity = "sha512-pwu343Jq5viONVDuZWs6yTm7+uW/17Dw3AJyJWxfQreGUDF+3Gu4o8y8C3IjUrOw1+qfrbhh/jUKfKzSgK2M/w==" ;
-      shasum = "81073731fcf981b425cde9b62f647545c8d3a033" ;
-      tarball = Format.sprintf "http://registry.npmjs.org/melwyn95_dummy/-/melwyn95_dummy-%s.tgz" version ;
+      integrity = Format.sprintf "sha512-%s" (Base64.encode_exn sha512) ;
+      shasum = sha1 ;
+      tarball = Format.sprintf "%s/%s/-/%s-%s.tgz" ligo_registry name name version ;
     } ;
   } SMap.empty ;
-  readme = "ERROR: No README data found!";
-  attachments = SMap.add (Format.sprintf "melwyn95_dummy-%s.tgz" version) {
+  readme ;
+  attachments = SMap.add (Format.sprintf "%s-%s.tgz" name version) {
     content_type = "application/octet-stream" ;
-    data = "H4sIAAAAAAAAA+2Vy46iQBSGZ+1TMKyc0JGL3JykF6K22GJUvEC7mYgWCAKFVaDCpN99itaeRaeTWczYnUn4Noec81NVcOqvStab/doD7I7ERoC/3AKO42RRpN7LlygSqTUlmeN5WebIM8dzUlMg8SareUOG0zUiS/nbcS7fQv2O/wkbGOOUAvEGbsGWuqdoXcSD9iuMsCw42B2Z3f4EtOZBd5/MerlcrBy5HUIIJlOYC7KMMmeyj6ap6aJsjg7GLn8UOWOxUFE6isassdKHT0knQ6kyNFNOl6cPbOtsTk9niCTdUAxd3Zk5Z2vjjjrcRcd+tAxGo54yK8x+qyvb3WUsOSvFG7qjRQEdo2/lVoIxtwQrbWjZfj5PLVvqQmVrMY8yiPuMqQYTT7fYyWI1UQvWeFA3RaHa3sGW2JPKjDzNn/nNR91sp7y9isNsKCnIBvtVBo+LY2wJmV90oiDPH5wZz0iplwU4klqeBpJxMO+eg+QJMaKrMa6nMv7QFHo+G5jnQIBORxabPW3s4fag5fYGcsebtRghd+OD1hsk/Sd/z5qzJV+02yfyg+/v6VqtdmmC48ekAVrmugA1XASj+rUtdxTtrDGQRfrbq9bFRIrAIfMRqNMuLisubpyQn4IHPwSzPN7U6RdTp15B35WDf3uv/8nV/ynA6Sf5n2u+43+l8v+HUG4nGIJGCL06rYMwhJQFUbj9SnbUZ6+t4va8+v8ayREA4389xx/8L4jcW//zklj5/0P4WaMoOl5HgP5O0REIT3nckn5ssyjK6buydgQI+zAuy3yDa/DNS3oL8Ab5SXotGT65lHYgTIiaciGijEF/fFFedJioyrlIorxqyndC34MUymKqTFAhGaHxcgtFZYEm2ufac3UGVVRUVNyIX+/A8pgAEAAA" ;
+    data = (Base64.encode_exn (Bytes.to_string gzipped_tarball)) ;
     length = 681
   } SMap.empty
 }
 
-let http ~token =
+let http ~token ~version ~sha1 ~sha512 ~gzipped_tarball =
   let open Cohttp_lwt_unix in
   let pkg_name = "melwyn95_dummy" in
   let uri = Uri.of_string (Format.sprintf "%s/%s" Cli_helpers.Constants.ligo_registry pkg_name) in
@@ -169,7 +126,15 @@ let http ~token =
     ("authorization", Format.sprintf "Bearer %s" token) ;
     ("content-type", "application/json") ;
   ] in
-  let body = body ~name:pkg_name ~version:"1.0.16"
+  let body = body 
+    ~name:pkg_name 
+    ~version 
+    ~description:"List helpers for LIGO" 
+    ~readme:"ERROR: No README data found!"
+    ~ligo_registry:Cli_helpers.Constants.ligo_registry
+    ~sha512
+    ~sha1
+    ~gzipped_tarball
     |> body_to_yojson 
     |> Yojson.Safe.to_string 
     |> Cohttp_lwt.Body.of_string in
@@ -193,7 +158,7 @@ let gzip fname fd =
     let len = min (file_size - !p) buffer_len in
     if len <= 0 then 0 else
     let bytes = Bytes.create len in
-    Format.printf "- %d %d\n" !p len;
+    (* Format.printf "- %d %d\n" !p len; *)
     let rd = Caml.Unix.read fd bytes !p len in
     let len = rd in
     Bigstringaf.blit_from_bytes bytes ~src_off:!p buf ~dst_off:0 ~len ;
@@ -237,9 +202,9 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   (* let () = List.iter ~f:print_endline files in *)
   Lwt.return files
 
-let tar_gzip_base64 dir = 
+let tar_gzip dir = 
   let open Lwt.Syntax in
-  let* files = get_all_files "." in
+  let* files = get_all_files dir in
 
   (* Instead of temp.tar give some useful name Hint: debugging *)
   let fname = Filename.concat Filename.temp_dir_name "temp.tar" in
@@ -253,24 +218,39 @@ let tar_gzip_base64 dir =
   let* fd = Lwt_unix.openfile fname [ Unix.O_RDWR ] 0o666 in
 
   let buf = gzip fname (Lwt_unix.unix_file_descr fd) in
-  let encoded = Base64.encode_exn (Buffer.contents buf) in 
 
   let* () = Lwt_unix.close fd in
 
-  Lwt.return encoded
+  Lwt.return (Buffer.contents_bytes buf)
+
+let publish ~token ~version =
+  let open Lwt.Syntax in
+  let* gzipped_tarball = tar_gzip "." in
+  let len = Bytes.length gzipped_tarball in
+  let sha1 = Digestif.SHA1.digest_bytes gzipped_tarball ~off:0 ~len in
+  let sha1 = Digestif.SHA1.to_hex sha1 in
+  let sha512 = Digestif.SHA512.digest_bytes gzipped_tarball ~off:0 ~len in
+  let sha512 = Digestif.SHA512.to_raw_string sha512 in 
+  http ~token ~version ~sha1 ~sha512 ~gzipped_tarball
 
 let publish ~ligo_registry =
   (* get root of the project *)
   (* let cwd = Unix.getcwd () in
   let enc = Lwt_main.run (tar_gzip_base64 cwd) in
   print_endline enc; *)
-  let request = http ~token:"ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
-  let open Cohttp in
-  let open Cohttp_lwt in
+  (* let request = http ~token:"ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
   let response,body = Lwt_main.run request in
   let code = response |> Response.status |> Code.code_of_status in
   Printf.printf "Response code: %d\n" code;
-  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
+  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string); *)
   (* body |> Cohttp_lwt.Body.to_string >|= fun body ->
   Printf.printf "Body of length: %d\n" (String.length body); *)
+  let open Cohttp in
+  let open Cohttp_lwt in
+  let version = "1.0.17" in
+  let token = "ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
+  let response,body = Lwt_main.run (publish ~token ~version) in
+  let code = response |> Response.status |> Code.code_of_status in
+  Printf.printf "Response code: %d\n" code;
+  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
   Ok ("", "")
