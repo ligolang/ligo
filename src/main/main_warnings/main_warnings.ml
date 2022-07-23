@@ -16,6 +16,7 @@ type all =
   | `Jsligo_deprecated_toplevel_let of Location.t
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
+  | `Deprecated_reasonligo
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
@@ -89,6 +90,8 @@ let pp : display_format:string display_format ->
         Snippet.pp loc
         Ast_aggregated.PP.type_expression got
         Ast_aggregated.PP.type_expression expected
+    | `Deprecated_reasonligo ->
+      Format.fprintf f "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]"
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
   let json_warning ~stage ~content =
@@ -225,6 +228,10 @@ let to_json : all -> Yojson.Safe.t = fun a ->
        ("actual", actual);
        ]
     in
+    json_warning ~stage ~content
+  | `Deprecated_reasonligo ->
+    let stage   = "global" in
+    let content = `String "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]" in
     json_warning ~stage ~content
 
 let format = {pp;to_json}

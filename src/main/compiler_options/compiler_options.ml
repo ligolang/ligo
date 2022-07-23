@@ -57,7 +57,7 @@ let warn_unused_rec ~syntax should_warn =
     Some Syntax_types.JsLIGO -> false
   | Some CameLIGO
   | Some ReasonLIGO
-  | Some PascaLIGO _
+  | Some PascaLIGO
   | None -> should_warn
 
 let make :

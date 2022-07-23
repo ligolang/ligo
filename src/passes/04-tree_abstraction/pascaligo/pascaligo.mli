@@ -14,8 +14,8 @@ val compile_expression : raise:(Errors.abs_error, Main_warnings.all) Simple_util
     AST used by the compiler. *)
 val compile_program    : raise:(Errors.abs_error list, Main_warnings.all) Simple_utils.Trace.raise -> CST.declarations -> AST.module_
 
-val decompile_expression : ?dialect:Decompiler.dialect -> AST.expr -> CST.expr
+val decompile_expression : AST.expr -> CST.expr
 
-val decompile_declarations : ?dialect:Decompiler.dialect -> AST.module_ -> CST.declarations
+val decompile_declarations : AST.module_ -> CST.declarations
 
 val decompile_pattern_to_string : AST.type_expression AST.pattern -> string

@@ -66,6 +66,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "michelson_pair_tree.religo" ] ;
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/michelson_pair_tree.religo", line 6, characters 13-19:
       5 |
       6 | let main = ((action, store) : (unit , storage)) : return => {

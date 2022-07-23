@@ -3,7 +3,7 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
   let test_module = if test_enabled then def "TEST_LIB" else "" in
   let func_type =
     match stx with
-    | ( PascaLIGO _ | ReasonLIGO | JsLIGO) -> def "UNCURRY"
+    | ( PascaLIGO | ReasonLIGO | JsLIGO) -> def "UNCURRY"
     | CameLIGO                             -> def "CURRY"
   in
   let std = match protocol with
