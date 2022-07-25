@@ -279,7 +279,9 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
     let fun_type = self_type fun_type in
     let binder   = Stage_common.Maps.binder self_type binder in
-    let result   = self result in
+    let scope = Scope.remove_value scope binder.var in
+    let scope = Scope.remove_value scope fun_name in
+    let result   = self ~scope result in
     return @@ E_recursive {fun_name;fun_type;lambda={binder;result}}
   | E_let_in {let_binder;rhs;let_result;attr} ->
     let let_binder   = Stage_common.Maps.binder self_type let_binder in
