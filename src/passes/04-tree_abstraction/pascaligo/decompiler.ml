@@ -220,6 +220,8 @@ and decompile_statements : AST.expression -> _ = fun expr ->
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
+    let is_unit_pattern (p : AST.type_expression AST.pattern) = 
+      match p.wrap_content with AST.P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | AST.P_unit ->
       CST.P_Ctor (Wrap.ghost "Unit")
@@ -242,11 +244,17 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label constructor -> (
-        let p = decompile_pattern p in
-        let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in
-        let p = Region.wrap_ghost (par p) in
+        let p = 
+          if is_unit_pattern p 
+          then None 
+          else
+            let p = decompile_pattern p in
+            let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in
+            let p = Region.wrap_ghost (par p) in
+            Some p 
+        in
         let constr = CST.P_Ctor (Wrap.ghost constructor) in
-        CST.P_App (Region.wrap_ghost (constr, Some p))
+        CST.P_App (Region.wrap_ghost (constr, p))
       )
     )
     | AST.P_tuple lst ->
@@ -257,7 +265,7 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
       let aux : AST.label * AST.type_expression AST.pattern -> CST.field_pattern CST.reg =
         fun (Label label, pattern) ->
           let field_rhs = decompile_pattern pattern in
-          let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_ass ; field_rhs ; attributes = [] } in
+          let full_field = CST.Complete {field_lhs = CST.P_Var (Wrap.ghost label) ; field_lens = Lens_Id Token.ghost_eq ; field_rhs ; attributes = [] } in
           Region.wrap_ghost full_field
       in
       let field_patterns = List.map ~f:aux (List.zip_exn labels patterns) in

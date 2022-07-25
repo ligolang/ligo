@@ -82,6 +82,10 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
         let type_ = self x.type_ in
         return @@ I.T_for_all { x with type_ }
 
+let decompile_pattern_to_string pattern = 
+  let p = Stage_common.Helpers.map_pattern_t (binder decompile_type_expression) pattern in
+  Purification.Decompiler.decompile_pattern_to_string p
+
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->
   let self = decompile_expression in
