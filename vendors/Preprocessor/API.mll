@@ -162,7 +162,7 @@ let error_to_string = function
             Hint: Remove it or add a #if before."
 | Reserved_symbol sym ->
     sprintf "Reserved symbol %S.\n\
-            Hint: Use another symbol." sym
+             Hint: Use another symbol." sym
 | Multiply_defined_symbol sym ->
     sprintf "Multiply-defined symbol %S.\n\
             Hint: Change the name or remove one definition." sym
