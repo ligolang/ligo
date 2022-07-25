@@ -50,12 +50,12 @@ module LigoRC = struct
   let update_token ~registry_key ~token ligorc =
     { ligorc with entries = SMap.update registry_key (fun _ -> Some token) ligorc.entries }
   
-  let write ~registry_key ~token ligorc =
+  let write ligorc =
     let { path ; entries } = ligorc in
     let entries = SMap.fold (fun registry_key token acc -> 
       Format.sprintf "%s//%s:_authToken=\"%s\"\n" acc registry_key token ) entries "" in
     print_endline entries;
-    Out_channel.write_all path entries
+    Out_channel.write_all path ~data:entries
 
   let registry_key = Str.global_replace (Str.regexp "\\(https?://\\)") ""
 end

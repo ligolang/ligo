@@ -33,7 +33,7 @@ let create_or_login ~ligo_registry ~ligorc_path =
   let registry_key = LigoRC.registry_key ligo_registry in
   let ligorc = LigoRC.read ~ligorc_path in
   let token_opt = LigoRC.get_token ligorc ~registry_key in
-  let user, pass, email = prompt () in
+  let user, pass, _email = prompt () in
   let authorization = match token_opt with
     Some token -> Format.sprintf "Bearer %s" token
   | None -> 
@@ -49,7 +49,7 @@ let create_or_login ~ligo_registry ~ligorc_path =
   let body_json = Yojson.Safe.from_string body in
   let token = extract_token body_json in
   let ligorc = LigoRC.update_token ~registry_key ~token ligorc in 
-  let () = LigoRC.write ~registry_key ~token ligorc in
+  let () = LigoRC.write ligorc in
   (* TODO: better error & success message *)
   let code = response |> Response.status |> Code.code_of_status in
   Printf.printf "Response code: %d\n" code;

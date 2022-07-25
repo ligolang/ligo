@@ -9,11 +9,13 @@ CLI:
 - [ ] Impl ligo publish
   - [ ] Use a semver library fro validating verison
   - [ ] Read package.json and prepare request body
-  - [ ] Read .ligorc and get token
+  - [X] Read .ligorc and get token
   - [ ] If no README (.md or any other extension) then "ERROR: No README data found!"
-  - [ ] Impl shasum & integrity (sha-512)
-- [ ] Impl ligo add-user
-- [ ] Impl ligo login
+  - [X] Impl shasum & integrity (sha-512)
+- [X] Impl ligo add-user
+  - [ ] Response Handling
+- [X] Impl ligo login
+  - [ ] Response Handling
 - [ ] Debatable - write tests
 - [ ] Write unit test for json body + headers
 - [ ] Handle errors (duplicate package or version, not authorised, etc.)
