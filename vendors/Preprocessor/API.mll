@@ -145,7 +145,7 @@ let error_to_string = function
     sprintf "Invalid newline character in string."
 | Unterminated_string ->
     sprintf "Unterminated string.\n\
-            Hint: Close with double quotes."
+             Hint: Close with double quotes."
 | Dangling_endif ->
     sprintf "Dangling #endif directive.\n\
             Hint: Remove it or add a #if before."
