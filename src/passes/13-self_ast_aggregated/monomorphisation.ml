@@ -213,38 +213,34 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       let data, result = self data result in
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
-      match rhs.type_expression.type_content with
-      | T_for_all _ ->
-         let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
-         let type_ = rhs.type_expression in
-         let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
-            let let_binder = vid in
-            let table = List.zip_exn type_vars type_instances in
-            let rhs = { rhs with type_expression = type_ } in
-            let rhs, data = match rhs.expression_content with
-            | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
-               let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
-               let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
-               { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }, data
-            | _ -> rhs, data in
-            let rhs = apply_table_expr table rhs in
-            let data, rhs = self data rhs in
-            let rhs = evaluate_external_typer typed rhs in
-            let rhs = { rhs with type_expression = typed } in
-            (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}, data) in
-         let data, let_result = self data let_result in
-         let instances = Data.instances_lookup let_binder.var data in
-         let data = Data.instances_remove let_binder.var data in
-         let expr, data = List.fold_right instances ~f:(build_let @@ let_binder.var) ~init:(let_result, data) in
-         data, expr
-      | _ ->
-         let binder_instances = Data.instances_lookup let_binder.var data in
-         let data = Data.instances_remove let_binder.var data in
-         let data, let_result = self data let_result in
-         let data = Data.instances_remove let_binder.var data in
-         let data = Data.instances_add let_binder.var binder_instances data in
-         let data, rhs = self data rhs in
-         data, return (E_let_in { let_binder ; rhs ; let_result ; attr })
+      let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
+      let type_ = rhs.type_expression in
+      let pre_binder_instances = Data.instances_lookup let_binder.var data in
+      let data = Data.instances_remove let_binder.var data in
+      let data, let_result = self data let_result in
+      let binder_instances = Data.instances_lookup let_binder.var data in
+      let data = Data.instances_remove let_binder.var data in
+      let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
+        let let_binder = vid in
+        let table = List.zip_exn type_vars type_instances in
+        let rhs = { rhs with type_expression = type_ } in
+        let rhs, data = match rhs.expression_content with
+          | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
+            let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
+            let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
+            { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }, data
+          | _ -> rhs, data in
+        let rhs = apply_table_expr table rhs in
+        let data, rhs = self data rhs in
+        let rhs = evaluate_external_typer typed rhs in
+        let rhs = { rhs with type_expression = typed } in
+        (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}, data) in
+      let expr, data = match type_vars with
+        | [] -> let data, rhs = self data rhs in
+                return (E_let_in { let_binder ; rhs ; let_result ; attr }), data
+        | _ -> List.fold_right binder_instances ~f:(build_let @@ let_binder.var) ~init:(let_result, data) in
+      let data = Data.instances_add let_binder.var pre_binder_instances data in
+      data, expr
    )
    | E_constructor { constructor ; element } ->
       let data, element  = self data element in
