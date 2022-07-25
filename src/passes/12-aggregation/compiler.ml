@@ -150,6 +150,7 @@ module Scope : sig
   val push_value : t -> O.type_expression O.binder -> O.type_expression -> O.known_attributes -> Path.t -> t
   val remove_value : t -> O.expression_variable -> t
   val push_type_ : t -> O.type_variable -> Path.t -> t
+  val remove_type_ : t -> O.type_variable -> t
   val push_module : t -> O.module_variable -> Path.t -> t -> t
   val add_path_to_var : t -> Path.t -> O.expression_variable -> t * O.expression_variable
   val get_declarations : t -> decl list
@@ -190,6 +191,9 @@ end = struct
     { scope with value }
   let push_type_ scope t path =
     let type_ = TypeVMap.add t path scope.type_ in
+    { scope with type_ }
+  let remove_type_ scope (v : O.type_variable) =
+    let type_ = TypeVMap.remove v scope.type_ in
     { scope with type_ }
   let push_module scope m path mod_scope =
     let module_ = ModuleVMap.add m (path,mod_scope) scope.module_ in
@@ -274,7 +278,8 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let result = self ~scope result in
     return @@ E_lambda {binder;result}
   | E_type_abstraction {type_binder;result} ->
-    let result = self result in
+    let scope = Scope.remove_type_ scope type_binder in
+    let result = self ~scope result in
     return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
     let fun_type = self_type fun_type in
