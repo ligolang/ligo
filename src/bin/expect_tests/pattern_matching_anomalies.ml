@@ -148,8 +148,8 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - (_, ({ a : _,b : Three,c : _ }, _))
-    - (_, ({ a : _,b : Two,c : _ }, _)) |}]
+    - (_, ({a : _,b : Three,c : _}, _))
+    - (_, ({a : _,b : Two,c : _}, _)) |}]
 
 
 let%expect_test _ =
@@ -192,9 +192,9 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - { a : _,b : ((_, _), (Four, _)),c : _ }
-    - { a : _,b : ((_, _), (Three, _)),c : _ }
-    - { a : _,b : ((_, _), (Two, _)),c : _ } |}]
+    - {a : _,b : ((_, _), (Four, _)),c : _}
+    - {a : _,b : ((_, _), (Three, _)),c : _}
+    - {a : _,b : ((_, _), (Two, _)),c : _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_missing_test "r_r_c.mligo") ] ;
