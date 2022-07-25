@@ -375,8 +375,8 @@ There is two kind of operations in the protocol : external and internal.
 (e.g. using `Test.originate` or `tezos-client` for instance) [more information here](https://tezos.gitlab.io/active/michelson.html#semantics-of-smart-contracts-and-transactions)
 
 In the protocol, both external and internal `transfer`/`origination` operations contains a piece of michelson code representing the `parameter`/`initial storage`.  
-Now imagine you have a value of type `parameter_ty`/`storage_ty` containing a ticket, that you want to transfer or originate.  
-In the operation data, tickets will be represented in Michelson as pairs:
+Now imagine you have a value of type `parameter_ty`/`storage_ty` containing a ticket, that you want to transfer or originate,
+in the operation data, tickets will be represented in Michelson as pairs:
 
 ```bash
 > ligo compile expression cameligo 'Tezos.create_ticket 0x0202 10n'
