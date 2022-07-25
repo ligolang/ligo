@@ -11,6 +11,7 @@
   repl
   install
   publish
+  user
   cli_helpers
   ligo_api)
  (modules cli version))
@@ -38,6 +39,14 @@
    bigstringaf base64 cohttp-lwt-unix yojson digestif)
  (preprocess (pps ppx_deriving_yojson))
  (modules publish))
+
+(library
+ (name user)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix) ;Remove unused libs
+ (preprocess (pps ppx_deriving_yojson))
+ (modules user))
 
 (rule
  (targets version.ml)

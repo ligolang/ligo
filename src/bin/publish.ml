@@ -19,6 +19,9 @@ CLI:
 - [ ] Handle errors (duplicate package or version, not authorised, etc.)
 - [ ] Sanitize manifest (Take care of Semver format, rest of the metadata)
 
+DOCS:
+- [ ] Mention that only gloable ligorc (~/.ligorc) file
+
 UI:
 - [ ] List packages
 - [ ] For a package list all versions
@@ -26,6 +29,7 @@ UI:
 
 *)
 
+module LigoRC = Cli_helpers.LigoRC
 module SMap = Caml.Map.Make(String)
 
 module Scripts = struct
@@ -236,21 +240,27 @@ let publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_na
     |> Digestif.SHA512.to_raw_string in 
   http ~token ~version ~sha1 ~sha512 ~gzipped_tarball ~scripts ~description ~readme ~ligo_registry ~pkg_name
 
-let publish ~ligo_registry =
+(*  *)
+let publish ~ligo_registry ~ligorc_path =
   let open Cohttp in
   let open Cohttp_lwt in
   (* TODO: read package.json for version, scripts and other stuff *)
-  let pkg_name = "melwyn95_dummy" in
-  let version = "1.0.17" in
+  let pkg_name = "ligo-registry-almost-done" in
+  let version = "1.0.0" in
   let scripts = SMap.add "test" "ligo run test list.test.mligo" SMap.empty in
   let description = "List helpers for LIGO" in
   let readme = "ERROR: No README data found!" in
   (* TODO: .ligorc for token *)
-  let token = "ZTM1N2QxNDBiM2E0YzY4OGVmZTA0ZGNkNDRmOWIyYzU6ZmZlZjE2ODQ3NmE1YzA=" in
-  let response,_body = Lwt_main.run (publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_name) in
-  (* TODO: better error & success message *)
-  let code = response |> Response.status |> Code.code_of_status in
-  Printf.printf "Response code: %d\n" code;
-  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
-  (* TODO: use _body for better errors *)
-  Ok ("", "")
+  let ligorc = LigoRC.read ~ligorc_path in
+  let registry_key = LigoRC.registry_key ligo_registry in
+  let token = LigoRC.get_token ~registry_key ligorc in 
+  match token with
+    None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
+  | Some token ->
+    let response,_body = Lwt_main.run (publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_name) in
+    (* TODO: better error & success message *)
+    let code = response |> Response.status |> Code.code_of_status in
+    Printf.printf "Response code: %d\n" code;
+    Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
+    (* TODO: use _body for better errors *)
+    Ok ("", "")

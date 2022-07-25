@@ -2,11 +2,21 @@ module Constants : sig
   type command = (string * string array)
   val esy : string
   val ligo_install_path : string
+  val ligo_rc_path : string
   val ligo_registry : string
   val esy_add : package_name:string -> cache_path:string -> ligo_registry:string -> command
   val esy_install : cache_path:string -> ligo_registry:string -> command
   val git_clone : project_url:string  -> project_name:string  -> command
   val git_checkout : dir_path:string  -> ref:string  -> command
+end
+
+module LigoRC : sig
+  type t
+  val get_token : registry_key:string -> t -> string option
+  val read : ligorc_path:string -> t
+  val update_token : registry_key:string -> token:string -> t -> t
+  val write : registry_key:string -> token:string -> t -> unit
+  val registry_key : string -> string
 end
 
 type return = Done | Compileur_Error | Exception of exn
