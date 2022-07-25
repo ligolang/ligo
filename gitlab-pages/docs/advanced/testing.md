@@ -453,6 +453,88 @@ let originate (type vt whole_s vp)
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=proxy_ticket
+/* proxy_ticket.jsligo */
+
+/* @private */
+const proxy_transfer_contract :
+  <vt , whole_p>
+    (x : (ticket:ticket<vt>) => whole_p) => ((x : [[[vt , nat] , address] , unit] ) => [list<operation> , unit]) =
+  ( mk_param :  ((ticket:ticket<vt>) => whole_p)) => {
+    (p : [[[vt , nat] , address] , unit] ) => {
+    let [p,_] = p ;
+    let [[v,amt],dst_addr] = p ;
+    let tx_param = mk_param (Tezos.create_ticket (v, amt)) ;
+    let c : contract<whole_p> =
+      Tezos.get_contract_with_error (dst_addr, "Testing proxy: you provided a wrong address") ;
+    let op = Tezos.transaction (tx_param, 1 as mutez, c) ;
+    return ([ list([op]), unit ])
+  };
+};
+
+/* @private */
+const proxy_originate_contract :
+  <vt, whole_s, vp>
+    ( x : [
+            ((ticket:ticket<vt>) => whole_s),
+            ((x : [ vp , whole_s]) => [list<operation> , whole_s])
+          ]
+    ) => ( (ps:[[vt , nat] , option<address>]) => [list<operation>, option<address>]) =
+  ([mk_storage , main] : [
+            ((ticket:ticket<vt>) => whole_s),
+            ((x : [ vp , whole_s]) => [list<operation> , whole_s])
+          ]) => {
+      (p : [[vt , nat] , option<address>]) => {
+        let [p,_] = p;
+        let [v,amt] = p ;
+        let init_storage : whole_s = mk_storage (Tezos.create_ticket (v, amt)) ;
+        let [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;
+        return ([list([op]), Some(addr)])
+  };
+};
+
+type proxy_address<v> =  typed_address<[[v,nat] , address] , unit> ;
+
+const init_transfer :
+  <vt, whole_p> ( mk_param : ((t:ticket<vt>) => whole_p)) => proxy_address<vt> =
+  ( mk_param :  ((t:ticket<vt>) => whole_p)) => {
+    let proxy_transfer : ((x : ([[[vt , nat] , address] , unit])) => [list<operation> , unit]) =
+      proxy_transfer_contract (mk_param)
+    ;
+    let [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1 as tez) ;
+    return taddr_proxy
+  };
+
+const transfer :
+  <vt>( x : [proxy_address<vt> , [[vt , nat] , address]]) => test_exec_result =
+  ( [taddr_proxy, info] : [proxy_address<vt> , [[vt , nat] , address]]) => {
+    let [ticket_info, dst_addr] = info ;
+    return (
+      Test.transfer_to_contract(Test.to_contract (taddr_proxy), [ticket_info , dst_addr], 1 as mutez)
+    )
+  };
+
+const originate : <vt, whole_s, vp>
+    (x : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ]) => address =
+  ([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (ps:[vp , whole_s]) => [list<operation> , whole_s] ] ) => {
+      let proxy_origination : (x : ([[vt , nat] , option<address>])) => [list<operation> , option<address>] =
+        proxy_originate_contract (mk_storage, contract) ;
+      let [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
+      let _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
+      match (Test.get_storage (taddr_proxy), {
+        Some: (addr:address) => {
+        let _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
+        return addr
+        },
+        None : (_:unit) => failwith ("internal error")
+      });
+  };
+```
+
+</Syntax>
+
 ---
 `init_transfer` accepts:
 
