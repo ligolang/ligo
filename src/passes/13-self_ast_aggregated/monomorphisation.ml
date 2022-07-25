@@ -35,9 +35,6 @@ module Data = struct
    let instances_lookup (ev : AST.expression_variable) (data : t) =
       Option.value ~default:[] @@ LIMap.find_opt ev data
 
-   let instances_remove (ev : AST.expression_variable) (data : t) =
-      LIMap.remove ev data
-
    let instance_lookup_opt (lid : AST.expression_variable) (type_instances' : AST.type_expression list) (type_' : AST.type_expression) (data : t) =
       let aux { Instance.vid ; type_instances ; type_ } =
          if AST.Helpers.type_expression_eq (type_, type_') &&
@@ -198,9 +195,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       data, return (E_application { lamb; args })
    | E_lambda { binder ; result } ->
       let binder_instances = Data.instances_lookup binder.var data in
-      let data = Data.instances_remove binder.var data in
       let data, result = self data result in
-      let data = Data.instances_remove binder.var data in
       let data = Data.instances_add binder.var binder_instances data in
       data, return (E_lambda { binder ; result })
    | E_type_abstraction { type_binder ; result } ->
@@ -208,18 +203,14 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       self data result
       (* failwith "not implemented yet" *)
    | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
-      let data = Data.instances_remove binder.var data in
-      let data = Data.instances_remove fun_name   data in
       let data, result = self data result in
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
       let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
       let type_ = rhs.type_expression in
       let pre_binder_instances = Data.instances_lookup let_binder.var data in
-      let data = Data.instances_remove let_binder.var data in
       let data, let_result = self data let_result in
       let binder_instances = Data.instances_lookup let_binder.var data in
-      let data = Data.instances_remove let_binder.var data in
       let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
         let let_binder = vid in
         let table = List.zip_exn type_vars type_instances in
@@ -283,9 +274,7 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
    | Match_variant { tv ; cases } ->
       let aux { AST.constructor ; pattern ; body } (data, r) =
          let binder_instances = Data.instances_lookup pattern data in
-         let data = Data.instances_remove pattern data in
          let data, body = mono_polymorphic_expression data body in
-         let data = Data.instances_remove pattern data in
          let data = Data.instances_add pattern binder_instances data in
          data, { AST.constructor ; pattern ; body} :: r in
       let data, cases = List.fold_right cases ~f:aux ~init:(data, []) in
@@ -294,11 +283,8 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
       let binders = List.map ~f:(fun (b : _ AST.binder) -> b.var) @@ AST.LMap.to_list fields in
       let data, binders_instances = List.fold_right binders ~init:(data, []) ~f:(fun binder (data, binders_instances) ->
                                        let binder_instances = Data.instances_lookup binder data in
-                                       let data = Data.instances_remove binder data in
                                        data, (binder, binder_instances) :: binders_instances) in
       let data, body = mono_polymorphic_expression data body in
-      let data = List.fold_right binders ~init:data ~f:(fun binder data ->
-                     let data = Data.instances_remove binder data in data) in
       let data = List.fold_right binders_instances ~init:data ~f:(fun (binder, binder_instances) data ->
                      Data.instances_add binder binder_instances data) in
       data, Match_record { tv ; body ; fields }
@@ -333,6 +319,7 @@ let check_if_polymorphism_present ~raise e =
    e
 
 let mono_polymorphic_expr ~raise e =
+  let e = Deduplicate_binders.program e in
   let _, m = mono_polymorphic_expression Data.empty e in
   let m = check_if_polymorphism_present ~raise m in
   m
