@@ -205,7 +205,8 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       data, return (E_lambda { binder ; result })
    | E_type_abstraction { type_binder ; result } ->
       ignore (type_binder,result);
-      failwith "not implemented yet"
+      self data result
+      (* failwith "not implemented yet" *)
    | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
       let data = Data.instances_remove binder.var data in
       let data = Data.instances_remove fun_name   data in
