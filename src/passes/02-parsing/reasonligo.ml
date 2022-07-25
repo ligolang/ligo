@@ -6,6 +6,7 @@ module Trace = Simple_utils.Trace
 
 module File        = Preprocessing_reasonligo.File
 module Comments    = Preprocessing_reasonligo.Comments
+module Modules     = Preprocessing_reasonligo.Modules
 module Token       = Lexing_reasonligo.Token
 module Self_tokens = Lexing_reasonligo.Self_tokens
 module ParErr      = Parsing_reasonligo.ParErr
@@ -26,7 +27,7 @@ module ReasonligoParser =
   end
 
 include Common.MakeTwoParsers
-          (File) (Comments) (Token) (ParErr) (Self_tokens)
+          (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
           (CST) (ReasonligoParser)
 
 (* Making the pretty-printers *)

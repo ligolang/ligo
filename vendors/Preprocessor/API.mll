@@ -24,8 +24,8 @@ let sprintf = Printf.sprintf
 (* STRING PROCESSING *)
 
 (* The value of [mk_str len p] ("make string") is a string of length
-   [len] containing the [len] characters in the list [p], in reverse
-   order. For instance, [mk_str 3 ['c';'b';'a'] = "abc"]. *)
+  [len] containing the [len] characters in the list [p], in reverse
+  order. For instance, [mk_str 3 ['c';'b';'a'] = "abc"]. *)
 
 let mk_str (len: int) (p: char list) : string =
   let () = assert (len = List.length p) in
@@ -36,12 +36,12 @@ let mk_str (len: int) (p: char list) : string =
   in fill (len-1) p |> Bytes.to_string
 
 (* The type [mode] defines the two scanning modes of the preprocessor:
-   either we copy the current characters or we skip them. *)
+  either we copy the current characters or we skip them. *)
 
 type mode = Copy | Skip
 
 (* Trace of directives. We keep track of directives #if, #elif and
-   #else. *)
+  #else. *)
 
 type cond  = If of mode | Elif of mode | Else
 type trace = cond list
@@ -54,10 +54,10 @@ type module_name = string
 
 (* Configuration
 
-     * The field [dirs] is the list of directories to search for
-       #include files.
-     * The field [mod_res] is a data structure used for
-       resolving path to external packages/modules *)
+    * The field [dirs] is the list of directories to search for
+      #include files.
+    * The field [mod_res] is a data structure used for
+      resolving path to external packages/modules *)
 
 type config = <
   block   : block_comment option;
@@ -65,28 +65,29 @@ type config = <
   input   : file_path option;
   offsets : bool;
   dirs    : file_path list;
-  mod_res : ModRes.t option
+  mod_res : ModRes.t option;
+  mk_mod  : string -> string -> string
 >
 
 (* The type [state] groups the information that needs to be
-   threaded along the scanning functions:
-     * the field [cfg] records the source configuration;
-     * the field [dirs] contains the file paths given in "-I";
-     * the field [env] records the symbols defined;
-     * the field [mode] informs whether the preprocessor is in
-       copying or skipping mode;
-     * the field [trace] is a stack of previous, still active
-       conditional directives;
-     * the field [out] keeps the output buffer;
-     * the field [chans] is a list of opened input channels
-       (#include);
-     * the field [incl] is the file system's path to the the
-       current input file;
-     * the field [import] is a list of (filename, module) imports
-       (#import);
-     * the field [parent] points to the parent file when processing
-       nested #include;
-     *)
+  threaded along the scanning functions:
+    * the field [cfg] records the source configuration;
+    * the field [dirs] contains the file paths given in "-I";
+    * the field [env] records the symbols defined;
+    * the field [mode] informs whether the preprocessor is in
+      copying or skipping mode;
+    * the field [trace] is a stack of previous, still active
+      conditional directives;
+    * the field [out] keeps the output buffer;
+    * the field [chans] is a list of opened input channels
+      (#include);
+    * the field [incl] is the file system's path to the the
+      current input file;
+    * the field [import] is a list of (filename, module) imports
+      (#import);
+    * the field [parent] points to the parent file when processing
+      nested #include;
+    *)
 
 type state = {
   config : config;
@@ -103,9 +104,9 @@ type state = {
 (* Directories *)
 
 (* The function call [set_incl_dir dir state] sets the field
-   [state.incl] which is the directory of the file that is being
-   processed, this is used by the [find] function to search for files
-   required by #include & #import. *)
+  [state.incl] which is the directory of the file that is being
+  processed, this is used by the [find] function to search for files
+  required by #include & #import. *)
 
 let set_incl_dir dir state =
   if dir = "." then state else {state with incl = dir}
@@ -144,10 +145,10 @@ let error_to_string = function
     sprintf "Invalid newline character in string."
 | Unterminated_string ->
     sprintf "Unterminated string.\n\
-             Hint: Close with double quotes."
+            Hint: Close with double quotes."
 | Dangling_endif ->
     sprintf "Dangling #endif directive.\n\
-             Hint: Remove it or add a #if before."
+            Hint: Remove it or add a #if before."
 | If_follows_elif ->
     sprintf "Directive #if found in a clause #elif."
 | Else_follows_else ->
@@ -158,24 +159,24 @@ let error_to_string = function
     sprintf "Directive #elif found in a clause #else."
 | Dangling_elif ->
     sprintf "Dangling #elif directive.\n\
-             Hint: Remove it or add a #if before."
+            Hint: Remove it or add a #if before."
 | Reserved_symbol sym ->
     sprintf "Reserved symbol %S.\n\
-             Hint: Use another symbol." sym
+            Hint: Use another symbol." sym
 | Multiply_defined_symbol sym ->
     sprintf "Multiply-defined symbol %S.\n\
-             Hint: Change the name or remove one definition." sym
+            Hint: Change the name or remove one definition." sym
 | Error_directive msg ->
     if msg = "" then sprintf "Directive #error reached." else msg
 | Parse_error ->
     "Parse error in expression."
 | Invalid_symbol ->
-   "Expected a symbol (identifier)."
+  "Expected a symbol (identifier)."
 | File_not_found name ->
     sprintf "File %S to include not found." name
 | Unterminated_comment ending ->
     sprintf "Unterminated comment.\n\
-             Hint: Close with %S." ending
+            Hint: Close with %S." ending
 | Missing_filename ->
     sprintf "Filename expected in a string literal."
 | Unexpected_argument ->
@@ -191,7 +192,7 @@ let format_error config ~msg (region: Region.t) =
   in Region.{value; region}
 
 (* IMPORTANT : Make sure the functions [fail] and [expr] remain the
-   only ones raising [Error]. *)
+  only ones raising [Error]. *)
 
 exception Error of (Buffer.t * string Region.reg)
 
@@ -199,7 +200,7 @@ let fail state region error =
   let msg = error_to_string error in
   let msg = format_error state.config ~msg region
   in List.iter close_in state.chans;
-     raise (Error (state.out, msg))
+    raise (Error (state.out, msg))
 
 let mk_reg buffer =
   let start = Lexing.lexeme_start_p buffer |> Pos.from_byte
@@ -209,7 +210,7 @@ let mk_reg buffer =
 let stop state buffer = fail state (mk_reg buffer)
 
 (* The function [reduce_cond] is called when a #endif directive is
-   found, and the trace (see type [trace] above) needs updating. *)
+  found, and the trace (see type [trace] above) needs updating. *)
 
 let reduce_cond state region =
   let rec reduce = function
@@ -219,9 +220,9 @@ let reduce_cond state region =
   in reduce state.trace
 
 (* The function [extend] is called when encountering conditional
-   directives #if, #else and #elif. As its name suggests, it extends
-   the current trace with the current conditional directive, whilst
-   performing some validity checks. *)
+  directives #if, #else and #elif. As its name suggests, it extends
+  the current trace with the current conditional directive, whilst
+  performing some validity checks. *)
 
 let extend cond state region =
   match cond, state.trace with
@@ -233,7 +234,7 @@ let extend cond state region =
   |     hd,     tl  -> hd::tl
 
 (* The function [last_mode] seeks the last mode as recorded in the
-   trace (see type [trace] above). *)
+  trace (see type [trace] above). *)
 
 let rec last_mode = function
                         [] -> assert false
@@ -243,12 +244,12 @@ let rec last_mode = function
 (* Finding a file to #include & #import *)
 
 (* The function [find_in_cli_paths file_path dirs] tries to find a
-   valid path by prepending a directory from [dirs] to [file_path],
-   The list [dirs] is a list of directories passed via the -I CLI
-   option. *)
+  valid path by prepending a directory from [dirs] to [file_path],
+  The list [dirs] is a list of directories passed via the -I CLI
+  option. *)
 
 let rec find_in_cli_paths file_path = function
-         [] -> None
+        [] -> None
 | dir::dirs ->
     let path =
       if dir = "." || dir = "" then file_path
@@ -257,10 +258,10 @@ let rec find_in_cli_paths file_path = function
       Sys_error _ -> find_in_cli_paths file_path dirs
 
 (* The call [find dir file dirs inclusion_list] looks for [file] in
-   [dir]. If the file is not found, it is sought in the directories
-   [dirs] (passed by the -I flag). If the file is still not found, we
-   try to search for the file using the [inclusion_list] with the help
-   of [ModRes] *)
+  [dir]. If the file is not found, it is sought in the directories
+  [dirs] (passed by the -I flag). If the file is still not found, we
+  try to search for the file using the [inclusion_list] with the help
+  of [ModRes] *)
 
 let find dir file dirs inclusion_list =
   let path =
@@ -297,14 +298,14 @@ let print state string = Buffer.add_string state.out string
 
 (* Evaluating a preprocessor expression
 
-   The evaluation of conditional directives may involve symbols whose
-   value may be defined using #define directives, or undefined by
-   means of #undef. Therefore, we need to evaluate conditional
-   expressions in an environment made of a set of defined symbols.
+  The evaluation of conditional directives may involve symbols whose
+  value may be defined using #define directives, or undefined by
+  means of #undef. Therefore, we need to evaluate conditional
+  expressions in an environment made of a set of defined symbols.
 
-     Note that we rely on an external lexer and parser for the
-   conditional expressions. See modules [E_AST], [E_Lexer] and
-   [E_Parser]. *)
+    Note that we rely on an external lexer and parser for the
+  conditional expressions. See modules [E_AST], [E_Lexer] and
+  [E_Parser]. *)
 
 let expr state buffer : mode =
   let ast =
@@ -389,120 +390,120 @@ let line_comments =
 (* Rules *)
 
 (* The rule [scan] scans the input buffer for directives, strings,
-   comments, blanks, new lines and end of file characters. As a
-   result, either the matched input is copied to [stdout] or not,
-   depending on the compilation directives. If not copied, new line
-   characters are output.
+  comments, blanks, new lines and end of file characters. As a
+  result, either the matched input is copied to [stdout] or not,
+  depending on the compilation directives. If not copied, new line
+  characters are output.
 
-   Scanning is triggered by the function call [scan env mode trace
-   lexbuf], where [env] is the set of defined symbols (introduced by
-   `#define'), [mode] specifies whether we are copying or skipping the
-   input, and [trace] is the stack of conditional directives read so
-   far.
+  Scanning is triggered by the function call [scan env mode trace
+  lexbuf], where [env] is the set of defined symbols (introduced by
+  `#define'), [mode] specifies whether we are copying or skipping the
+  input, and [trace] is the stack of conditional directives read so
+  far.
 
-   The first call is [scan {env=Env.empty; mode=Copy; trace=[];
-   incl=[]}], meaning that we start with an empty environment, that
-   copying the input is enabled by default, and that we are at the
-   start of a line and no previous conditional directives have been
-   read yet.
+  The first call is [scan {env=Env.empty; mode=Copy; trace=[];
+  incl=[]}], meaning that we start with an empty environment, that
+  copying the input is enabled by default, and that we are at the
+  start of a line and no previous conditional directives have been
+  read yet.
 
-   When an "#if" is matched, the trace is extended by the call [extend
-   lexbuf (If mode) trace], during the evaluation of which the
-   syntactic validity of having encountered an "#if" is checked (for
-   example, it would be invalid had an "#elif" been last read). Note
-   that the current mode is stored in the trace with the current
-   directive -- that mode may be later restored (see below for some
-   examples). Moreover, the directive would be deemed invalid if its
-   current position in the line (that is, its offset) were not
-   preceeded by blanks or nothing, otherwise the rule [expr] is called
-   to scan the boolean expression associated with the "#if": if it
-   evaluates to [true], the result is [Copy], meaning that we may copy
-   what follows, otherwise skip it -- the actual decision depending on
-   the current mode. That new mode is used if we were in copy mode,
-   and the offset is reset to the start of a new line (as we read a
-   new line in [expr]); otherwise we were in skipping mode and the
-   value of the conditional expression must be ignored (but not its
-   syntax), and we continue skipping the input.
+  When an "#if" is matched, the trace is extended by the call [extend
+  lexbuf (If mode) trace], during the evaluation of which the
+  syntactic validity of having encountered an "#if" is checked (for
+  example, it would be invalid had an "#elif" been last read). Note
+  that the current mode is stored in the trace with the current
+  directive -- that mode may be later restored (see below for some
+  examples). Moreover, the directive would be deemed invalid if its
+  current position in the line (that is, its offset) were not
+  preceeded by blanks or nothing, otherwise the rule [expr] is called
+  to scan the boolean expression associated with the "#if": if it
+  evaluates to [true], the result is [Copy], meaning that we may copy
+  what follows, otherwise skip it -- the actual decision depending on
+  the current mode. That new mode is used if we were in copy mode,
+  and the offset is reset to the start of a new line (as we read a
+  new line in [expr]); otherwise we were in skipping mode and the
+  value of the conditional expression must be ignored (but not its
+  syntax), and we continue skipping the input.
 
-   When an "#else" is matched, the trace is extended with [Else], then
-   the rest of the line is scanned with [skip_line]. If we were in
-   copy mode, the new mode toggles to skipping mode; otherwise, the
-   trace is searched for the last encountered "#if" of "#elif" and the
-   associated mode is restored.
+  When an "#else" is matched, the trace is extended with [Else], then
+  the rest of the line is scanned with [skip_line]. If we were in
+  copy mode, the new mode toggles to skipping mode; otherwise, the
+  trace is searched for the last encountered "#if" of "#elif" and the
+  associated mode is restored.
 
-   The case "#elif" is the result of the fusion (in the technical
-   sense) of the code for dealing with an "#else" followed by an
-   "#if".
+  The case "#elif" is the result of the fusion (in the technical
+  sense) of the code for dealing with an "#else" followed by an
+  "#if".
 
-   When an "#endif" is matched, the trace is reduced, that is, all
-   conditional directives are popped until an [If mode'] is found and
-   [mode'] is restored as the current mode.
+  When an "#endif" is matched, the trace is reduced, that is, all
+  conditional directives are popped until an [If mode'] is found and
+  [mode'] is restored as the current mode.
 
-   Consider the following four cases, where the modes (Copy/Skip) are
-   located between the lines:
+  Consider the following four cases, where the modes (Copy/Skip) are
+  located between the lines:
 
                     Copy ----+                          Copy ----+
-   #if true                  |       #if true                    |
+  #if true                  |       #if true                    |
                     Copy     |                          Copy     |
-   #else                     |       #else                       |
+  #else                     |       #else                       |
                 +-- Skip --+ |                      +-- Skip --+ |
-     #if true   |          | |         #if false    |          | |
+    #if true   |          | |         #if false    |          | |
                 |   Skip   | |                      |   Skip   | |
-     #else      |          | |         #else        |          | |
+    #else      |          | |         #else        |          | |
                 +-> Skip   | |                      +-> Skip   | |
-     #endif                | |         #endif                  | |
+    #endif                | |         #endif                  | |
                     Skip <-+ |                          Skip <-+ |
-   #endif                    |       #endif                      |
+  #endif                    |       #endif                      |
                     Copy <---+                          Copy <---+
 
 
                 +-- Copy ----+                          Copy --+-+
-   #if false    |            |       #if false                 | |
+  #if false    |            |       #if false                 | |
                 |   Skip     |                          Skip   | |
-   #else        |            |       #else                     | |
+  #else        |            |       #else                     | |
                 +-> Copy --+ |                    +-+-- Copy <-+ |
-     #if true              | |         #if false  | |            |
+    #if true              | |         #if false  | |            |
                     Copy   | |                    | |   Skip     |
-     #else                 | |         #else      | |            |
+    #else                 | |         #else      | |            |
                     Skip   | |                    | +-> Copy     |
-     #endif                | |         #endif     |              |
+    #endif                | |         #endif     |              |
                     Copy <-+ |                    +---> Copy     |
-   #endif                    |       #endif                      |
+  #endif                    |       #endif                      |
                     Copy <---+                          Copy <---+
 
-   The following four cases feature #elif. Note that we put between
-   brackets the mode saved for the #elif, which is sometimes restored
-   later.
+  The following four cases feature #elif. Note that we put between
+  brackets the mode saved for the #elif, which is sometimes restored
+  later.
 
                     Copy --+                            Copy --+
-   #if true                |         #if true                  |
+  #if true                |         #if true                  |
                     Copy   |                            Copy   |
-   #elif true   +--[Skip]  |         #elif false    +--[Skip]  |
+  #elif true   +--[Skip]  |         #elif false    +--[Skip]  |
                 |   Skip   |                        |   Skip   |
-   #else        |          |         #else          |          |
+  #else        |          |         #else          |          |
                 +-> Skip   |                        +-> Skip   |
-   #endif                  |         #endif                    |
+  #endif                  |         #endif                    |
                     Copy <-+                            Copy <-+
 
 
                 +-- Copy --+-+                      +-- Copy ----+
-   #if false    |          | |       #if false      |            |
+  #if false    |          | |       #if false      |            |
                 |   Skip   | |                      |   Skip     |
-   #elif true   +->[Copy]  | |       #elif false    +->[Copy]--+ |
+  #elif true   +->[Copy]  | |       #elif false    +->[Copy]--+ |
                     Copy <-+ |                          Skip   | |
-   #else                     |       #else                     | |
+  #else                     |       #else                     | |
                     Skip     |                          Copy <-+ |
-   #endif                    |       #endif                      |
+  #endif                    |       #endif                      |
                     Copy <---+                          Copy <---+
 
-   Note how "#elif" indeed behaves like an "#else" followed by an
-   "#if", and the mode stored with the data constructor [Elif]
-   corresponds to the mode before the virtual "#if".
+  Note how "#elif" indeed behaves like an "#else" followed by an
+  "#if", and the mode stored with the data constructor [Elif]
+  corresponds to the mode before the virtual "#if".
 
-   Important note: Comments and strings are recognised as such only in
-   copy mode, which is a different behaviour from the preprocessor of
-   GNU GCC, which always does.
- *)
+  Important note: Comments and strings are recognised as such only in
+  copy mode, which is a different behaviour from the preprocessor of
+  GNU GCC, which always does.
+*)
 
 rule scan state = parse
   nl    { proc_nl state lexbuf; scan state lexbuf }
@@ -512,9 +513,9 @@ rule scan state = parse
     let  region = mk_reg lexbuf in
     if   not (List.mem id directives)
     then begin
-           if state.mode = Copy then copy state lexbuf;
-           scan state lexbuf
-         end
+          if state.mode = Copy then copy state lexbuf;
+          scan state lexbuf
+        end
     else
     if   region#start#offset `Byte > 0
     then stop state lexbuf Directive_inside_line
@@ -547,12 +548,22 @@ rule scan state = parse
           let state' = scan (set_incl_dir (Filename.dirname incl_path) state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
-                       else path ^ Filename.dir_sep ^ base in
+                      else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2\n" (line+1) path)
           in scan state lexbuf
         else scan state lexbuf
     | "import" ->
+        let mangle str =
+          let name =
+            Str.global_replace (Str.regexp_string ".") "____" str
+            |> Str.global_replace (Str.regexp_string "/") "__"
+            |> Str.global_replace (Str.regexp_string "@") "_"
+            |> Str.global_replace (Str.regexp_string "-") "_"
+          in
+          "Mangled_module_" ^ name
+        in
         let reg, import_file, imported_module = scan_import state lexbuf in
+        let mangled_filename = mangle import_file in
         let file =
           match state.parent with
             Some parent -> parent
@@ -566,8 +577,9 @@ rule scan state = parse
             match find path import_file state.config#dirs external_dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
+          let () = print state @@ state.config#mk_mod mangled_filename imported_module in
           let state  = {state with
-                         import = (import_path, imported_module)::state.import}
+                          import = (import_path, mangled_filename)::state.import}
           in scan state lexbuf
         else scan state lexbuf
     | "if" ->
@@ -590,7 +602,7 @@ rule scan state = parse
             Copy -> extend (Elif Skip) state region, Skip
           | Skip -> let old_mode = last_mode state.trace
                     in extend (Elif old_mode) state region,
-                       if old_mode = Copy then mode else Skip
+                      if old_mode = Copy then mode else Skip
         in scan {state with mode; trace} lexbuf
     | "endif" ->
         skip_line state lexbuf;
@@ -671,13 +683,13 @@ rule scan state = parse
 
 and scan_n_char n state = parse
   _  { if state.mode = Copy then copy state lexbuf;
-       if n = 1 then state else scan_n_char (n-1) state lexbuf }
+      if n = 1 then state else scan_n_char (n-1) state lexbuf }
 
 (* Support for #define and #undef *)
 
 and variable state = parse
   blank+ { let id = symbol state lexbuf
-           in skip_line state lexbuf; id }
+          in skip_line state lexbuf; id }
 
 and symbol state = parse
   ident as id { id, mk_reg lexbuf                }
@@ -694,9 +706,9 @@ and skip_line state = parse
 
 and message acc = parse
   nl     { Lexing.new_line lexbuf;
-           mk_str (List.length acc) acc }
+          mk_str (List.length acc) acc }
 | eof    { rollback lexbuf;
-           mk_str (List.length acc) acc }
+          mk_str (List.length acc) acc }
 | blank* { message acc lexbuf           }
 | _ as c { message (c::acc) lexbuf      }
 
@@ -713,30 +725,30 @@ and in_block block opening state = parse
     let lexeme = Lexing.lexeme lexbuf in
     if   block#opening = lexeme || lexeme = "\""
     then let ()       = copy state lexbuf in
-         let opening' = mk_reg lexbuf in
-         let next     = if lexeme = "\"" then in_string
+        let opening' = mk_reg lexbuf in
+        let next     = if lexeme = "\"" then in_string
                         else in_block block in
-         let state    = next opening' state lexbuf
-         in in_block block opening state lexbuf
+        let state    = next opening' state lexbuf
+        in in_block block opening state lexbuf
     else let ()    = rollback lexbuf in
-         let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
-         let state = scan_n_char n state lexbuf
-         in in_block block opening state lexbuf }
+        let n     = String.length lexeme in
+        let ()    = assert (n > 0) in
+        let state = scan_n_char n state lexbuf
+        in in_block block opening state lexbuf }
 
 | block_comment_closings {
     let lexeme = Lexing.lexeme lexbuf in
     if   block#closing = lexeme
     then (copy state lexbuf; state)
     else let ()    = rollback lexbuf in
-         let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
-         let state = scan_n_char n state lexbuf
-         in in_block block opening state lexbuf }
+        let n     = String.length lexeme in
+        let ()    = assert (n > 0) in
+        let state = scan_n_char n state lexbuf
+        in in_block block opening state lexbuf }
 
 | nl   { proc_nl state lexbuf; in_block block opening state lexbuf }
 | eof  { let err = Unterminated_comment block#closing
-         in fail state opening err                                 }
+        in fail state opening err                                 }
 | _    { copy state lexbuf; in_block block opening state lexbuf    }
 
 (* #include *)
@@ -748,7 +760,7 @@ and scan_include state = parse
 
 and in_include opening acc len state = parse
   '"'    { let region = Region.cover opening (mk_reg lexbuf)
-           in region, end_include acc len state lexbuf       }
+          in region, end_include acc len state lexbuf       }
 | nl     { stop state lexbuf Newline_in_string               }
 | eof    { fail state opening Unterminated_string            }
 | _ as c { in_include opening (c::acc) (len+1) state lexbuf  }
@@ -768,7 +780,7 @@ and scan_import state = parse
 
 and in_import opening acc len state = parse
   '"'    { let imp_path = mk_str len acc
-           in scan_module opening imp_path state lexbuf    }
+          in scan_module opening imp_path state lexbuf    }
 | nl     { stop state lexbuf Newline_in_string             }
 | eof    { fail state opening Unterminated_string          }
 | _ as c { in_import opening (c::acc) (len+1) state lexbuf }
@@ -787,7 +799,7 @@ and in_module opening imp_path acc len state = parse
 
 and end_module opening closing imp_path acc len state = parse
   nl     { proc_nl state lexbuf;
-           Region.cover opening closing, imp_path, mk_str len acc   }
+          Region.cover opening closing, imp_path, mk_str len acc   }
 | eof    { Region.cover opening closing, imp_path, mk_str len acc   }
 | blank+ { end_module opening closing imp_path acc len state lexbuf }
 | _      { fail state (mk_reg lexbuf) Unexpected_argument           }
@@ -807,15 +819,15 @@ and preproc state = parse
         let ()   = rollback lexbuf in
         let name = lexbuf.lex_start_p.pos_fname in
         let ()   = if name <> "" then
-                     print state (sprintf "# 1 %S\n" name)
+                    print state (sprintf "# 1 %S\n" name)
         in scan state lexbuf }
 
 {
 (* START OF TRAILER *)
 
 (* The function [preproc] is a wrapper of [scan], which also checks
-   that the trace is empty at the end.  Note that we discard the state
-   at the end. *)
+  that the trace is empty at the end.  Note that we discard the state
+  at the end. *)
 
 type module_deps = (file_path * module_name) list
 type success     = Buffer.t * module_deps

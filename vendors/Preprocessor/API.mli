@@ -51,7 +51,8 @@ type config = <
   input   : file_path option;
   offsets : bool;
   dirs    : file_path list;
-  mod_res : ModRes.t option
+  mod_res : ModRes.t option;
+  mk_mod  : string -> string -> string
 >
 
 (* In case of success, a buffer containing the preprocessed input is

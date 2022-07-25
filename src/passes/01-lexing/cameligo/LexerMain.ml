@@ -1,9 +1,10 @@
 (* Driver for the CameLIGO lexer *)
 
 module Comments         = Preprocessing_cameligo.Comments
+module Modules          = Preprocessing_cameligo.Modules
 module File             = Preprocessing_cameligo.File
 module Token            = Lexing_cameligo.Token
-module Preprocessor_CLI = Preprocessor.CLI.Make (Comments)
+module Preprocessor_CLI = Preprocessor.CLI.Make (Comments) (Modules)
 module Lexer_CLI        = LexerLib.CLI.Make (Preprocessor_CLI)
 module Self_tokens      = Lexing_cameligo.Self_tokens
 module MainGen          = Lexing_shared.LexerMainGen

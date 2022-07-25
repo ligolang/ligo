@@ -1,8 +1,8 @@
 (* Driving the preprocessor *)
 
-module Make (Comments : Comments.S) (File : File.S) =
+module Make (Comments : Comments.S) (Modules : Modules.S) (File : File.S) =
   struct
-    module Preproc_CLI = Preprocessor.CLI.Make (Comments)
+    module Preproc_CLI = Preprocessor.CLI.Make (Comments) (Modules)
     module Main        = Preprocessor.PreprocMainGen
     module Preproc     = Main.Make (Preproc_CLI)
 
