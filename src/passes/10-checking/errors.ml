@@ -665,13 +665,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("location", Location.to_yojson p.location);
     ] in
     json_error ~stage ~content
-  | `Typer_pattern_missing_cases (loc,_,ps) ->
-    (* TODO: decompile patterns *)
+  | `Typer_pattern_missing_cases (loc,syntax,ps) ->
     let message = `String "pattern-matching is not exhaustive." in
-    let pattern = List.map ps ~f:(Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) in
+    let patterns = List.map ps ~f:(fun p -> 
+      `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p)) in
     let content = `Assoc [
       ("message", message);
-      ("patterns", `List pattern);
+      ("patterns", `List patterns);
       ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
