@@ -101,18 +101,17 @@ upgradeProjectSettingsFormat projectPath = do
 -- Check the comment in `askForIndexDirectory` for more information.
 getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
-  ligoProjectDirM <- checkForLigoProjectFile contractDir
-  case ligoProjectDirM of
-    Nothing -> do
-      indexOptsM <- tryReadMVar =<< asks reIndexOpts
-      maybe (askForIndexDirectory contractDir) pure indexOptsM
-    Just ligoProjectDir -> do
-      upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
-      projectSettings <- decodeProjectSettings ligoProjectDir
-      let indexOpts = FromLigoProject ligoProjectDir projectSettings
-      indexOptsVar <- asks reIndexOpts
-      hasNoOpts <- isEmptyMVar indexOptsVar
-      indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+  indexOptsVar <- asks reIndexOpts
+  tryReadMVar indexOptsVar >>= \case
+    Nothing -> checkForLigoProjectFile contractDir >>= \case
+      Nothing -> askForIndexDirectory contractDir
+      Just ligoProjectDir -> do
+        upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+        projectSettings <- decodeProjectSettings ligoProjectDir
+        let indexOpts = FromLigoProject ligoProjectDir projectSettings
+        hasNoOpts <- isEmptyMVar indexOptsVar
+        indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+    Just opts -> pure opts
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
 askForIndexDirectory contractDir = do
