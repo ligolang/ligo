@@ -66,7 +66,7 @@ let t_triplet ?loc a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
-let t_human_ticket ?loc ty : type_expression =
+let t_unforged_ticket ?loc ty : type_expression =
   ez_t_record ?loc [
     (Label "ticketer", {associated_type=(t_address ()); michelson_annotation=None ; decl_pos = 0}) ;
     (Label "value"   , {associated_type=ty            ; michelson_annotation=None ; decl_pos = 1}) ;

@@ -555,7 +555,7 @@ Everything at the top-level was executed.
 
 ##### Origination
 
-Here is an example using `Proxy_ticket.originate` and the type `human_ticket` :
+Here is an example using `Proxy_ticket.originate` and the type `unforged_ticket` :
 
 1. import the module above as `Proxy_ticket`
 2. define a contract `main` potentially holding a ticket of bytes in its storage. The contract will just reads the ticket
@@ -576,7 +576,7 @@ Here is an example using `Proxy_ticket.originate` and the type `human_ticket` :
 
 
 type storage = (bytes ticket) option
-type human_storage = (bytes human_ticket) option
+type human_storage = (bytes unforged_ticket) option
 
 let main ( ((),s) : unit * storage) : operation list * storage =
   [] , (

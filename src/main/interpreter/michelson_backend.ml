@@ -315,7 +315,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      make_ast_record ~raise ~loc map_ty map
   | V_Record map when Option.is_some @@ get_t_ticket ty ->
     let ty = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_ticket ty in
-    let rows = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_record (Ast_aggregated.t_human_ticket ty) in
+    let rows = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_record (Ast_aggregated.t_unforged_ticket ty) in
     let map =
       let get l map = trace_option ~raise (Errors.generic_error loc "bad unforged ticket") (LMap.find_opt l map) in
       (*  at this point the record value is a nested pair (extracted from michelson), e.g. (KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL , (0x05010000000474657374 , 10n)) *)

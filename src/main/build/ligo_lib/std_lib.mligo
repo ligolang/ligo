@@ -332,7 +332,7 @@ type test_baker_policy =
 type 'a pbt_test = ('a pbt_gen) * ('a -> bool)
 type 'a pbt_result = Success | Fail of 'a
 
-type 's human_ticket = [@layout:comb] { ticketer : address ; value : 's ; amount : nat }
+type 's unforged_ticket = [@layout:comb] { ticketer : address ; value : 's ; amount : nat }
 
 module Test = struct
 
