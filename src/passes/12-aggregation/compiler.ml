@@ -352,9 +352,9 @@ and compile_cases ~raise path scope cases : O.matching_expr =
     let tv = compile_type_expression ~raise path scope tv in
     Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = O.LMap.map (fun binder -> let scope = Scope.remove_value scope binder.I.var in
-                                           Stage_common.Maps.binder (compile_type_expression ~raise path scope) binder) fields in
-    let scope  = List.fold_left ~init:scope ~f:(fun scope binder -> Scope.remove_value scope binder.O.var) (O.LMap.to_list fields) in
+    let scope, fields = O.LMap.fold_map fields ~init:scope ~f:(fun _ binder scope' ->
+                            Scope.remove_value scope' binder.I.var,
+                            Stage_common.Maps.binder (compile_type_expression ~raise path scope) binder) in
     let body   = compile_expression ~raise path scope body in
     let tv     = compile_type_expression ~raise path scope tv in
     Match_record {fields;body;tv}
