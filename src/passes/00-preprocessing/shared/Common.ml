@@ -13,13 +13,14 @@ module type FILE =
     val project_root     : file_path option
   end
 
-module Config (File : FILE) (Comments : Comments.S) =
+module Config (File : FILE) (Comments : Comments.S) (Modules : Modules.S) =
   struct
     (* Stubs for the libraries CLIs *)
 
     module Preprocessor_CLI : Preprocessor.CLI.S =
       struct
         include Comments
+        include Modules
 
         let input        = File.input
         let extension    = Some File.extension
@@ -52,12 +53,13 @@ module Config (File : FILE) (Comments : Comments.S) =
         method dirs    = Preprocessor_CLI.dirs
         method mod_res = Option.bind ~f:Preprocessor.ModRes.make
                                      Preprocessor_CLI.project_root
+        method mk_mod  = Preprocessor_CLI.mk_module
       end
   end
 
 (* PREPROCESSING *)
 
-module Make (File : File.S) (Comments : Comments.S) =
+module Make (File : File.S) (Comments : Comments.S) (Modules : Modules.S) =
   struct
     (* Directories and files *)
 
@@ -92,7 +94,7 @@ module Make (File : File.S) (Comments : Comments.S) =
           let dirs         = dirs
           let project_root = project_root
         end in
-      let module Config = Config (File) (Comments) in
+      let module Config = Config (File) (Comments) (Modules) in
       let config = Config.preprocessor in
       let preprocessed =
         Preprocessor.API.from_file config file_path in
@@ -110,7 +112,7 @@ module Make (File : File.S) (Comments : Comments.S) =
           let dirs         = dirs
           let project_root = project_root
         end in
-      let module Config = Config (File) (Comments) in
+      let module Config = Config (File) (Comments) (Modules) in
       let config = Config.preprocessor in
       let preprocessed =
         Preprocessor.API.from_string config string in
@@ -128,7 +130,7 @@ module Make (File : File.S) (Comments : Comments.S) =
           let dirs         = dirs
           let project_root = project_root
         end in
-      let module Config = Config (File) (Comments) in
+      let module Config = Config (File) (Comments) (Modules) in
       let config = Config.preprocessor in
       let preprocessed =
         Preprocessor.API.from_channel config channel in

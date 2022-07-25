@@ -6,5 +6,5 @@
  (libraries
   ;; Vendors
   Preprocessor)
- (modules Errors Common Comments File PreprocMainGen)
- (modules_without_implementation Comments File))
+ (modules Errors Common Comments Modules File PreprocMainGen)
+ (modules_without_implementation Comments Modules File))

@@ -54,10 +54,10 @@ type module_name = string
 
 (* Configuration
 
-     * The field [dirs] is the list of directories to search for
-       #include files.
-     * The field [mod_res] is a data structure used for
-       resolving path to external packages/modules *)
+    * The field [dirs] is the list of directories to search for
+      #include files.
+    * The field [mod_res] is a data structure used for
+      resolving path to external packages/modules *)
 
 type config = <
   block   : block_comment option;
@@ -65,7 +65,8 @@ type config = <
   input   : file_path option;
   offsets : bool;
   dirs    : file_path list;
-  mod_res : ModRes.t option
+  mod_res : ModRes.t option;
+  mk_mod  : string -> string -> string
 >
 
 (* The type [state] groups the information that needs to be
@@ -170,7 +171,7 @@ let error_to_string = function
 | Parse_error ->
     "Parse error in expression."
 | Invalid_symbol ->
-   "Expected a symbol (identifier)."
+    "Expected a symbol (identifier)."
 | File_not_found name ->
     sprintf "File %S to include not found." name
 | Unterminated_comment ending ->
@@ -199,7 +200,7 @@ let fail state region error =
   let msg = error_to_string error in
   let msg = format_error state.config ~msg region
   in List.iter close_in state.chans;
-     raise (Error (state.out, msg))
+    raise (Error (state.out, msg))
 
 let mk_reg buffer =
   let start = Lexing.lexeme_start_p buffer |> Pos.from_byte
@@ -248,7 +249,7 @@ let rec last_mode = function
    option. *)
 
 let rec find_in_cli_paths file_path = function
-         [] -> None
+        [] -> None
 | dir::dirs ->
     let path =
       if dir = "." || dir = "" then file_path
@@ -470,9 +471,9 @@ let line_comments =
    #endif                    |       #endif                      |
                     Copy <---+                          Copy <---+
 
-   The following four cases feature #elif. Note that we put between
-   brackets the mode saved for the #elif, which is sometimes restored
-   later.
+  The following four cases feature #elif. Note that we put between
+  brackets the mode saved for the #elif, which is sometimes restored
+  later.
 
                     Copy --+                            Copy --+
    #if true                |         #if true                  |
@@ -502,19 +503,19 @@ let line_comments =
    Important note: Comments and strings are recognised as such only in
    copy mode, which is a different behaviour from the preprocessor of
    GNU GCC, which always does.
- *)
+*)
 
 rule scan state = parse
   nl    { proc_nl state lexbuf; scan state lexbuf }
 | blank { if state.mode = Copy then copy state lexbuf;
-          scan state lexbuf }
+         scan state lexbuf }
 | directive {
     let  region = mk_reg lexbuf in
     if   not (List.mem id directives)
     then begin
-           if state.mode = Copy then copy state lexbuf;
-           scan state lexbuf
-         end
+          if state.mode = Copy then copy state lexbuf;
+          scan state lexbuf
+        end
     else
     if   region#start#offset `Byte > 0
     then stop state lexbuf Directive_inside_line
@@ -547,12 +548,22 @@ rule scan state = parse
           let state' = scan (set_incl_dir (Filename.dirname incl_path) state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans;import=state'.import} in
           let path   = if path = "" || path = "." then base
-                       else path ^ Filename.dir_sep ^ base in
+                      else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2\n" (line+1) path)
           in scan state lexbuf
         else scan state lexbuf
     | "import" ->
+        let mangle str =
+          let name =
+            Str.global_replace (Str.regexp_string ".") "____" str
+            |> Str.global_replace (Str.regexp_string "/") "__"
+            |> Str.global_replace (Str.regexp_string "@") "_"
+            |> Str.global_replace (Str.regexp_string "-") "_"
+          in
+          "Mangled_module_" ^ name
+        in
         let reg, import_file, imported_module = scan_import state lexbuf in
+        let mangled_filename = mangle import_file in
         let file =
           match state.parent with
             Some parent -> parent
@@ -566,8 +577,9 @@ rule scan state = parse
             match find path import_file state.config#dirs external_dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
+          let () = print state @@ state.config#mk_mod mangled_filename imported_module in
           let state  = {state with
-                         import = (import_path, imported_module)::state.import}
+                          import = (import_path, mangled_filename)::state.import}
           in scan state lexbuf
         else scan state lexbuf
     | "if" ->
@@ -590,7 +602,7 @@ rule scan state = parse
             Copy -> extend (Elif Skip) state region, Skip
           | Skip -> let old_mode = last_mode state.trace
                     in extend (Elif old_mode) state region,
-                       if old_mode = Copy then mode else Skip
+                      if old_mode = Copy then mode else Skip
         in scan {state with mode; trace} lexbuf
     | "endif" ->
         skip_line state lexbuf;
