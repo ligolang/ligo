@@ -698,7 +698,7 @@ Here is an example using `Proxy_ticket.originate` and the type `unforged_ticket`
 
 
 type storage = (bytes ticket) option
-type human_storage = (bytes unforged_ticket) option
+type unforged_storage = (bytes unforged_ticket) option
 
 let main ( ((),s) : unit * storage) : operation list * storage =
   [] , (
@@ -709,22 +709,70 @@ let main ( ((),s) : unit * storage) : operation list * storage =
     | None -> None
   )
 
-let test_transfer_to_contract =
+let test_originate_contract =
   let mk_storage = fun (t:bytes ticket) -> Some t in
   let ticket_info = (0x0202, 15n) in
   let addr = originate ticket_info mk_storage main in
   let storage : michelson_program = Test.get_storage_of_address addr in
-  let human_storage = (Test.decompile storage : human_storage) in
+  let unforged_storage = (Test.decompile storage : unforged_storage) in
 
-  (* the ticket 'human_storage' can be manipulated freely without caring about ticket linearity *)
+  (* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity *)
 
-  match human_storage with
+  match unforged_storage with
   | Some { ticketer ; value ; amount } ->
     let () = Test.log ticketer in
     let () = assert (value = ticket_info.0) in
     let () = assert (amount = ticket_info.1) in
     ()
   | None -> failwith "impossible"
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo test-ligo group=usage_orig
+#include "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo"
+
+
+type storage = option< ticket<bytes> >
+type unforged_storage = option< unforged_ticket<bytes> >
+
+const main = ( [_,s] : [unit , storage]) : [ list<operation> , storage] => {
+  let x =
+    match (s, {
+      Some: (ticket: ticket<bytes>) => {
+        let [_ , t] = Tezos.read_ticket (ticket) ;
+        Some (t)
+      },
+      None: () => { None () }
+    });
+  return [list ([]), x]
+};
+
+const test_originate_contract_ = () : unit => {
+  let mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
+  let ticket_info = [0x0202, 15 as nat] ;
+  let addr = originate (ticket_info, mk_storage, main) ;
+  let storage : michelson_program = Test.get_storage_of_address (addr) ;
+  let unforged_storage = (Test.decompile (storage) as unforged_storage) ;
+
+  /* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity */
+
+  match (unforged_storage, {
+  Some: (x: unforged_ticket<bytes>) => {
+    let { ticketer , value , amount } = x ;
+    let _ = Test.log (ticketer) ;
+    let _ = assert (value == ticket_info[0]) ;
+    let _ = assert (amount == ticket_info[1]) ;
+    unit
+  },
+  None: () => failwith ("impossible")
+  }
+  )
+};
+
+const test_originate_contract = test_originate_contract_ ();
 ```
 
 </Syntax>
@@ -737,7 +785,7 @@ result:
 ("hello" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
 ("world" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
 Everything at the top-level was executed.
-- test_transfer_to_contract exited with value ().
+- test_originate_contract exited with value ().
 ```
 
 ### Unit testing a function
