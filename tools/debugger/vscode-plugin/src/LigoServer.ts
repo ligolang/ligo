@@ -12,26 +12,28 @@ import { platform } from 'process'
 export default class LigoServer implements vscode.Disposable {
 	server: net.Server
 	adapterProcess: cp.ChildProcess
+	adapterIsDead: boolean = false
+
+	private createAdapterProcess(command: string, args: ReadonlyArray<string>) {
+		this.adapterProcess = cp.spawn(command, args)
+		if (!this.adapterProcess || !this.adapterProcess.pid) {
+			this.showError("Couldn't run debugger adapter")
+		}
+	}
 
 	public constructor(command: string, args: ReadonlyArray<string>) {
 		if (!fs.existsSync(command)) {
 			this.showError("Couldn't find debugger adapter executable")
 		}
 
-		let adapterProcess = cp.spawn(command, args)
-		if (!adapterProcess || !adapterProcess.pid) {
-			this.showError("Couldn't run debugger adapter")
-		}
+		this.createAdapterProcess(command, args)
 
 		// start listening on a random named pipe path
 		const pipeName = randomBytes(10).toString('hex')
 		const pipePath = platform === "win32" ? join('\\\\.\\pipe\\', pipeName) : join(tmpdir(), pipeName)
 
 		this.server = net.createServer(socket => {
-			const requestsListener = (bytes: Buffer) => {
-				// Just forward client request to the adapter
-				adapterProcess.stdin.write(bytes)
-			}
+			this.adapterProcess.on('exit', (_) => this.adapterIsDead = true)
 
 			const responsesListener = (bytes: Buffer) => {
 				// Just forward the adapter response to the client
@@ -40,18 +42,31 @@ export default class LigoServer implements vscode.Disposable {
 				}
 			}
 
+			const requestsListener = (bytes: Buffer) => {
+				// If adapter got killed then we need to reanimate this process
+				if (this.adapterIsDead) {
+					this.createAdapterProcess(command, args)
+					this.adapterProcess.stdout.on('data', responsesListener)
+					this.adapterIsDead = false
+				}
+
+				// Just forward client request to the adapter
+				this.adapterProcess.stdin.write(bytes)
+			}
+
 			socket.on('data', requestsListener)
-			adapterProcess.stdout.on('data', responsesListener)
+			this.adapterProcess.stdout.on('data', responsesListener)
 
 			socket.on('end', () => {
 				// gracefully remove all listeners, to avoid spamming to the adapter
 				socket.removeListener('data', requestsListener)
-				adapterProcess.stdout.removeListener('data', responsesListener)
+				this.adapterProcess.stdout.removeListener('data', responsesListener)
 			})
 		}).listen(pipePath)
 
-		if (!this.server.listening)
+		if (!this.server.listening) {
 			this.showError("Adapter server couldn't start listening on pipe " + pipePath + ". Try again")
+		}
 	}
 
 
