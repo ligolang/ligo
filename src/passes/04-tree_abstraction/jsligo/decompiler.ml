@@ -847,13 +847,34 @@ let decompile_expression : AST.expression -> CST.expr list = fun expr ->
 
 let rec decompile_pattern p =
   match (Location.unwrap p) with
-  | AST.P_variant (constructor,_) -> ( (* TODO: implement rest decompile for rest of the patterns*)
+  | AST.P_variant (constructor,_) -> (
       match constructor with
       | Label constructor -> (
-        (* let p = decompile_pattern p in *)
-        (* let p = list_to_nsepseq ~sep:Token.ghost_comma [p] in *)
-        (* let p = Region.wrap_ghost (par p) in *)
         CST.PConstr (Region.wrap_ghost constructor)
       )
     )
-  | _ -> failwith "not_implemented"
+  (* Note: Currently only the above branch AST.P_variant is valid
+     as pattern-matching is only supported on Varaints.
+     Pattern matching on lists cannot be incomplete as there is a check
+     for this in tree-abstractor
+     The rest of the cases are a best approximation of decompilation, these
+     will not be really used, modify the rest of the cases when pattern
+     matching will be handled in a better manner *)
+  | AST.P_unit -> failwith "no PUnit in JsLIGO CST"
+  | AST.P_var v ->
+    let name = { CST.variable = decompile_variable v.var ; attributes = [] } in
+    CST.PVar (Region.wrap_ghost name)
+  | AST.P_tuple lst ->
+    let pl = List.map ~f:decompile_pattern lst in
+    let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
+    CST.PArray (Region.wrap_ghost (brackets pl))
+  | AST.P_list pl -> failwith "no PList in JsLIGO CST"
+  | AST.P_record (llst,_) ->
+    let fields_name = List.map ~f:(fun (AST.Label x) ->
+      CST.PVar (
+        Region.wrap_ghost
+          { CST.variable = Region.wrap_ghost x
+          ; attributes = [] })) llst in
+    let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
+    let inj = Region.wrap_ghost @@ braced inj in
+    CST.PObject inj
