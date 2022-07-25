@@ -215,7 +215,8 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
       match rhs.type_expression.type_content with
       | T_for_all _ ->
-         let type_vars, type_ = AST.Helpers.destruct_for_alls rhs.type_expression in
+         let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
+         let type_ = rhs.type_expression in
          let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
             let let_binder = vid in
             let table = List.zip_exn type_vars type_instances in
