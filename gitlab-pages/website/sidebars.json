@@ -135,7 +135,8 @@
       "faq/intro",
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
-      "faq/catch-error-view"
+      "faq/catch-error-view",
+      "faq/cameligo-ocaml-syntax-diff"
     ]
   }
 }
