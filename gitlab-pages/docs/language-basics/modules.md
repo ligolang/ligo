@@ -404,13 +404,13 @@ use its definitions. For example, we could create a `importer.ligo`
 that imports all definitions from `imported.ligo` as the module
 `EURO`:
 
-```pascaligo skip
-#import "imported.ligo" "EURO"
+```pascaligo
+#import "./gitlab-pages/docs/language-basics/src/modules/imported.ligo" "EURO"
 
 type storage is EURO.t
 
 function main (const action : unit; const store : storage) : (list (operation)) * storage is
- ((nil : list (operation)), EURO.add (store, EURO.one))
+ (nil, EURO.add (store, EURO.one))
 ```
 
 </Syntax>
@@ -421,13 +421,13 @@ use its definitions. For example, we could create a `importer.mligo`
 that imports all definitions from `imported.mligo` as the module
 `EURO`:
 
-```cameligo skip
-#import "imported.mligo" "EURO"
+```cameligo
+#import "./gitlab-pages/docs/language-basics/src/modules/imported.mligo" "EURO"
 
 type storage = EURO.t
 
 let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.one))
+ ([], EURO.add(store, EURO.one))
 ```
 
 </Syntax>
@@ -439,8 +439,7 @@ that imports all definitions from `imported.religo` as the module
 `EURO`:
 
 ```reasonligo skip
-#import "imported.religo" "EURO"
-
+#import "./gitlab-pages/docs/language-basics/src/modules/imported.religo" "EURO"
 type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
@@ -455,13 +454,13 @@ use its definitions. For example, we could create a `importer.jsligo`
 that imports all definitions from `imported.jsligo` as the module
 `EURO`:
 
-```jsligo skip
-#import "imported.religo" "EURO"
+```jsligo
+#import "./gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO"
 
 type storage = EURO.t;
 
 let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
-  [list([]) as list (operation), EURO.add(store, EURO.one)];
+  [list([]), EURO.add(store, EURO.one)];
 ```
 
 </Syntax>
