@@ -72,6 +72,24 @@ module LigoManifest = struct
     ; ligo_manifest_path : string
     } [@@deriving to_yojson]
   
+  let is_empty field value =
+    if String.equal value "" 
+    then failwith (Format.sprintf "ERROR: %s is \"\" in package.json" field)
+    else ()
+
+  let is_version_correct version =
+    if Option.is_none @@ Semver.of_string version 
+    then failwith (Format.sprintf "ERROR: invalid version %s in package.json" version)
+    else ()
+
+  let validate t =
+    let { name ; version ; author ; _ } = t in
+    is_empty "name" name;
+    is_empty "author" author;
+    is_empty "version" version;
+    is_version_correct version;
+    t
+
   let read ~project_root =
     match project_root with
       None -> failwith "No package.json found!"

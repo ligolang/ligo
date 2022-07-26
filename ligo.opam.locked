@@ -193,6 +193,7 @@ depends: [
   "rresult" {= "0.7.0"}
   "secp256k1-internal" {= "0.3.1"}
   "semaphore-compat" {= "1.0.1"}
+  "semver" {= "0.1.0"}
   "seq" {= "base"}
   "sexplib" {= "v0.14.0"}
   "sexplib0" {= "v0.14.0"}

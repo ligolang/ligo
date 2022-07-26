@@ -30,6 +30,7 @@ depends: [
   "pprint"
   "yojson"
   "ocaml-recovery-parser" { = "0.2.4" }
+  "semver"
   "tls"
   "decompress"
   "tar"

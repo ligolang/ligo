@@ -7,7 +7,7 @@ CLI:
 - [ ] Devs facing docs
 - [ ] Code clean up
 - [ ] Impl ligo publish
-  - [ ] Use a semver library fro validating verison
+  - [X] Use a semver library fro validating verison
   - [X] Read package.json and prepare request body
   - [X] Read .ligorc and get token
   - [X] If no README (.md or any other extension) then "ERROR: No README data found!"
@@ -120,6 +120,7 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
+  let manifest = LigoManifest.validate manifest in
   let LigoManifest.{ name ; version ; scripts ; description ; readme ; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
@@ -174,7 +175,7 @@ let gzip fname fd =
 (* TODO: More files here ?? *)
 module SSet = Set.Make(String)
 let ignore_dirs 
-  = SSet.of_list [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ]
+  = SSet.of_list [ ".ligo" ; "_esy" ; "node_modules" ; "esy.lock" ; ".git" ]
 
 let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   let open Lwt.Syntax in
@@ -252,10 +253,12 @@ let publish ~ligo_registry ~ligorc_path ~project_root =
   match token with
     None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
   | Some token ->
-    let response,_body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
+    let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
+    let body = Lwt_main.run (Body.to_string body) in
     (* TODO: better error & success message *)
     let code = response |> Response.status |> Code.code_of_status in
     Printf.printf "Response code: %d\n" code;
     Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
     (* TODO: use _body for better errors *)
+    Printf.printf "Body: %s\n" body;
     Ok ("", "")
