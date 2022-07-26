@@ -12,7 +12,7 @@ In OCaml, you can do :
 ```ocaml
 let y = - -1 (* In OCaml *)
 ```
-But this has been forbidden in CameLigo, you have to add parentheses instead :
+But this has been forbidden in CameLIGO, you have to add parentheses instead:
 
 ```cameligo
 let y = -(-1) // In CameLigo
