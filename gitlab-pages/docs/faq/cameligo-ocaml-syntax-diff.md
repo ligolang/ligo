@@ -41,7 +41,7 @@ let res =
 
 ### Semicolons in `begin ... end` sequences
 
-In OCaml, the last line of a `begin...end` bloc can finish with a semicolon `;`, but not in CameLigo.
+In OCaml, the last instruction of a `begin ... end` sequence can be terminated by a semicolon `;`, but not in CameLIGO.
 
 ```cameligo
 // In CameLigo
