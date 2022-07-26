@@ -39,7 +39,7 @@ let res =
   43 :: x
 ```
 
-### Semicolon in `begin ... end` blocs
+### Semicolons in `begin ... end` sequences
 
 In OCaml, the last line of a `begin...end` bloc can finish with a semicolon `;`, but not in CameLigo.
 
