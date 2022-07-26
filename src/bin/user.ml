@@ -59,10 +59,30 @@ let http ~uri ~authorization ~user ~pass =
     |> Cohttp_lwt.Body.of_string in
   Client.put ~headers ~body uri
 
-let extract_token response =
+type server_success_response = { token : string ; ok : string }
+
+let extract_success_response response =
   let module Util = Yojson.Safe.Util in
-  let token = response |> Util.member "token" |> Util.to_string  in
-  token
+  let ok = response |> Util.member "ok" |> Util.to_string in
+  let token = response |> Util.member "token" |> Util.to_string in
+  { token ; ok }
+
+let handle_server_response ~update_token response body =
+  let open Cohttp in
+  let open Cohttp_lwt in
+  let body = Lwt_main.run (Body.to_string body) in
+  let code = Response.status response in
+  match code with
+    `Unauthorized -> Error ("Access Denied: Wrong username or password", "")
+  | `Created ->
+    let body_json = Yojson.Safe.from_string body in
+    let { token ; ok } = extract_success_response body_json in
+    let () = LigoRC.write (update_token ~token) in
+    Ok(ok, "")
+  | `Bad_gateway
+  | `Service_unavailable
+  | `Gateway_timeout -> Error ("Registry seems down. Contact the developers", "")
+  | _ -> Error (body, "")
 
 let create_or_login ~ligo_registry ~ligorc_path =
   let registry_key = LigoRC.registry_key ligo_registry in
@@ -76,21 +96,6 @@ let create_or_login ~ligo_registry ~ligorc_path =
     Format.sprintf "Basic %s" token
   in
   let login_url = login_url ~base_url:ligo_registry user in
-
-
-  let open Cohttp in
-  let open Cohttp_lwt in
-
+  let update_token = LigoRC.update_token ~registry_key ligorc in
   let response, body = Lwt_main.run (http ~uri:login_url ~authorization ~user ~pass) in
-  let body = Lwt_main.run (Body.to_string body) in
-  let body_json = Yojson.Safe.from_string body in
-  let token = extract_token body_json in
-  let ligorc = LigoRC.update_token ~registry_key ~token ligorc in 
-  let () = LigoRC.write ligorc in
-  (* TODO: better error & success message *)
-  let code = response |> Response.status |> Code.code_of_status in
-  Printf.printf "Response code: %d\n" code;
-  Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
-  Printf.printf "Body: %s\n" body;
-  (* TODO: use _body for better errors *)
-  Ok("", "")
+  handle_server_response ~update_token response body

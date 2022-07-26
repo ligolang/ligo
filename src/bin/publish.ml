@@ -6,7 +6,7 @@ CLI:
 - [ ] User facing docs
 - [ ] Devs facing docs
 - [ ] Code clean up
-- [-] Impl ligo publish
+- [X] Impl ligo publish
   - [X] Use a semver library fro validating verison
   - [X] Read package.json and prepare request body
   - [X] Read .ligorc and get token
@@ -14,14 +14,15 @@ CLI:
   - [X] Impl shasum & integrity (sha-512)
   - [X] Response Handling
 - [X] Impl ligo add-user
-  - [-] Response Handling
+  - [X] Response Handling
 - [X] Impl ligo login
-  - [-] Response Handling
+  - [X] Response Handling
 - [ ] Debatable - write tests
 - [ ] Write unit test for json body + headers
-- [-] Handle errors (duplicate package or version, not authorised, etc.)
+- [X] Handle errors (duplicate package or version, not authorised, etc.)
 - [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
+- [X] login & add-user: CLI prompt for username & password
 
 DOCS:
 - [ ] Mention that only gloable ligorc (~/.ligorc) file
@@ -233,18 +234,22 @@ let publish ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string in 
   http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
-let handle_server_response response body =
+let handle_server_response ~name response body =
   let open Cohttp in
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
   let code = Response.status response in
   match code with
-    `Conflict -> Error ("package already exists", "")
-  | `Created -> Ok ("package successfully published", "")
+    `Conflict -> Error ("Conflict: version already exists", "")
+  | `Created -> Ok ("Package successfully published", "")
+  | `Unauthorized -> Error (Format.sprintf "%s already exists and you don't seem to have access to it." name, "")
+  | `Bad_gateway
+  | `Service_unavailable
+  | `Gateway_timeout -> Error ("Registry seems down. Contact the developers", "")
   | _ -> Error (body, "")
 
 let publish ~ligo_registry ~ligorc_path ~project_root =
-  let manifest = Cli_helpers.LigoManifest.read ~project_root in
+  let manifest = LigoManifest.read ~project_root in
   
   let ligorc = LigoRC.read ~ligorc_path in
   let registry_key = LigoRC.registry_key ligo_registry in
@@ -254,4 +259,4 @@ let publish ~ligo_registry ~ligorc_path ~project_root =
     None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
   | Some token ->
     let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
-    handle_server_response response body
+    handle_server_response ~name:manifest.name response body
