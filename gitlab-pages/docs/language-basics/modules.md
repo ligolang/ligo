@@ -387,12 +387,12 @@ let one : t = 1n
 For example, in JsLIGO, we can create a file `imported.jsligo`:
 
 ```jsligo group=imported
-type t = nat;
+export type t = nat;
 
-let add = ([a, b]: [t, t]): t => a + b;
+export const add = ([a, b]: [t, t]): t => a + b;
 
-let zero: t = 0 as nat;
-let one: t = 1 as nat;
+export const zero: t = 0 as nat;
+export const one: t = 1 as nat;
 ```
 
 </Syntax>
@@ -459,7 +459,7 @@ that imports all definitions from `imported.jsligo` as the module
 
 type storage = EURO.t;
 
-let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
+const main = ([_action, store]: [unit, storage]): [list<operation>, storage] =>
   [list([]), EURO.add(store, EURO.one)];
 ```
 
