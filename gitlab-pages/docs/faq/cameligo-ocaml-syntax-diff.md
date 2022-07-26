@@ -1,9 +1,9 @@
 ---
 id: cameligo-ocaml-syntax-diff
-title: What are the differences between syntaxes of CameLigo and OCaml ?
+title: What are the differences between syntaxes of CameLIGO and OCaml ?
 ---
 
-Most of the CameLigo syntax follows the OCaml syntax, however, there are a few syntactic shortcuts available in one but not the other.
+Most of the CameLIGO syntax follows the OCaml syntax, however, there are a few syntactic shortcuts available in one but not the other.
 
 ### Consecutive '-' operators
 
@@ -15,12 +15,12 @@ let y = - -1 (* In OCaml *)
 But this has been forbidden in CameLIGO, you have to add parentheses instead:
 
 ```cameligo
-let y = -(-1) // In CameLigo
+let y = -(-1) // In CameLIGO
 ```
 
 ### Unary '+' operator
 
-This is possible in OCaml but not CameLigo :
+This is possible in OCaml but not CameLIGO :
 
 ```ocaml
 let x = +1 (* In OCaml *)
@@ -28,11 +28,11 @@ let x = +1 (* In OCaml *)
 
 ### 'type in' statements
 
-In CameLigo, you can declare types locally to an expression.
+In CameLIGO, you can declare types locally to an expression.
 For example, here is a function returning a list of integers :
 
 ```cameligo
-// In CameLigo
+// In CameLIGO
 let res = 
   type t = int list in
   let x : t = [42] in
@@ -44,7 +44,7 @@ let res =
 In OCaml, the last instruction of a `begin ... end` sequence can be terminated by a semicolon `;`, but not in CameLIGO.
 
 ```cameligo
-// In CameLigo
+// In CameLIGO
 type param   = int
 type storage = int
 
@@ -61,7 +61,7 @@ let main (_p, s : param * storage) : operation list * storage =
 ### Name punning
 
 Name punning permits record assignments without repeating the right-hand side if it is the same as the record field name.
-Although possible in OCaml, this is not yet avaiable in CameLigo.
+Although possible in OCaml, this is not yet avaiable in CameLIGO.
 
 ```ocaml
 (* In OCaml *)
@@ -74,5 +74,5 @@ let x = 24
 let y = 42
   
 let p_assign_without_punning : point = {x = x; y = y}
-let p_assign_with_punning    : point = {x; y}  (* Unavailable in CameLigo *)
+let p_assign_with_punning    : point = {x; y}  (* Unavailable in CameLIGO *)
 ```
