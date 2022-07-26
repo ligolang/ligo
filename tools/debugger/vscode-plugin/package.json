@@ -44,6 +44,44 @@
                 "language": "jsligo"
             }
         ],
+        "languages": [
+            {
+                "id": "ligo",
+                "aliases": [
+                    "PascaLIGO"
+                ],
+                "extensions": [
+                    ".ligo"
+                ]
+            },
+            {
+                "id": "mligo",
+                "aliases": [
+                    "CameLIGO"
+                ],
+                "extensions": [
+                    ".mligo"
+                ]
+            },
+            {
+                "id": "religo",
+                "aliases": [
+                    "ReasonLIGO"
+                ],
+                "extensions": [
+                    ".religo"
+                ]
+            },
+            {
+                "id": "jsligo",
+                "aliases": [
+                    "JsLIGO"
+                ],
+                "extensions": [
+                    ".jsligo"
+                ]
+            }
+        ],
         "debuggers": [
             {
                 "type": "ligo",
