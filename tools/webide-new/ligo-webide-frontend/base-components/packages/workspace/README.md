@@ -1,0 +1,1 @@
+# `@obsidians/workspace`

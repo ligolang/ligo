@@ -32,7 +32,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     let open Stage_common.Constant in
     let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
     match injection , parameters with
-    | (Bool,            []) -> return (T_base TB_bool)
     | (Unit,            []) -> return (T_base TB_unit)
     | (Michelson_program,[]) -> return (T_base TB_unit) (* hit when testing framwork need to compile 'failwith "x" : michelson_program' *)
     | (Int,             []) -> return (T_base TB_int)
@@ -90,7 +89,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
         Michelson_pair  | Set      | Mutation             |
         List            | External _ | Gen), [])
         -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
-    | ((Bool       | Unit      | Baker_operation      |
+    | ((             Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
@@ -105,6 +104,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Typed_address| Mutation  | Bytes                |
       List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
   )
+  | T_sum _ when Option.is_some (AST.get_t_bool t) ->
+    return (T_base TB_bool)
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
     let o' = compile_type o in

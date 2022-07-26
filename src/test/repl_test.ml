@@ -1,9 +1,11 @@
 open Test_helpers
 open Simple_utils.Trace
 
+module Raw_options = Compiler_options.Raw_options
+
 let dry_run_options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
 
-let raw_options = Compiler_options.default_raw_options
+let raw_options = Raw_options.make ()
 let options = Compiler_options.make ~raw_options ()
 
 let make_init_state_cameligo ?(project_root=None) () = Repl.make_initial_state
@@ -171,7 +173,7 @@ let test_long_jsligo ~raise ~raw_options () =
         "+32"]
         ()
 
-let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
+let test_use_external_packages ~raise ~(raw_options : Raw_options.t) () =
   let project_root = Some "projects/demo" in
   let raw_options = { raw_options with project_root = project_root } in
   (* Here we #use (equivalent of #include) the dependencies of the root project *)
@@ -184,8 +186,8 @@ let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
       "x";
     ]
     [
-      "uniq_concat , reverse , concat ,\nSetX";
-      "sum , reverse ,\nconcat";
+      "SetX , concat , reverse ,\nuniq_concat";
+      "concat , reverse ,\nsum";
       "y";
       "24";
       "x";
@@ -193,7 +195,7 @@ let test_use_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
     ]
     ()
 
-let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) () =
+let test_import_external_packages ~raise ~(raw_options : Raw_options.t) () =
   let project_root = Some "projects/demo" in
   let raw_options = { raw_options with project_root = project_root } in
   (* Here we #import the dependecies of the root project under separate namespaces *)
@@ -215,7 +217,7 @@ let test_import_external_packages ~raise ~(raw_options : Compiler_options.raw) (
     ]
     ()
 
-let test_use_scoped_package ~raise ~(raw_options : Compiler_options.raw) () =
+let test_use_scoped_package ~raise ~(raw_options : Raw_options.t) () =
   let project_root = Some "projects/using_scope_pkg_project" in
   let raw_options = { raw_options with project_root = project_root } in
   (* Here we #use (equivalent of #include) *)
@@ -223,24 +225,24 @@ let test_use_scoped_package ~raise ~(raw_options : Compiler_options.raw) () =
       "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\"";
       "reverse [3 ; 2 ; 1]";
     ]
-    [ 
-      "remove , equal , rotate , split , slice , take , drop , insert , set , find ,\n\
-      concat , reverse , last , construct ,\n\
-      big_array";
-      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+    [
+      "big_array , construct , last , reverse , concat , find , set , insert ,\n\
+      drop , take , slice , split , rotate , equal ,\n\
+      remove";
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";
     ]
     ()
 
-let test_import_scoped_packages ~raise ~(raw_options : Compiler_options.raw) () =
+let test_import_scoped_packages ~raise ~(raw_options : Raw_options.t) () =
   let project_root = Some "projects/using_scope_pkg_project" in
   let raw_options = { raw_options with project_root = project_root } in
   test_seq ~raise ~raw_options (make_init_state_cameligo ~project_root ()) [
       "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\"";
       "BA.reverse [3 ; 2 ; 1]";
     ]
-    [ 
+    [
       "Done.";
-      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";
     ]
     ()
 

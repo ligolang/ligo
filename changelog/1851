@@ -1,0 +1,5 @@
+author: pewulfman
+description: ''
+merge_request: '1851'
+title: Remove access_path in E_assign
+type: internal

@@ -148,7 +148,9 @@ module Scope : sig
   val find_type_ : t -> O.type_variable -> Path.t
   val find_module : t -> O.module_variable -> Path.t * t
   val push_value : t -> O.type_expression O.binder -> O.type_expression -> O.known_attributes -> Path.t -> t
+  val remove_value : t -> O.expression_variable -> t
   val push_type_ : t -> O.type_variable -> Path.t -> t
+  val remove_type_ : t -> O.type_variable -> t
   val push_module : t -> O.module_variable -> Path.t -> t -> t
   val add_path_to_var : t -> Path.t -> O.expression_variable -> t * O.expression_variable
   val get_declarations : t -> decl list
@@ -184,8 +186,14 @@ end = struct
     let value = ValueVMap.add v.var path scope.value in
     let decl_list = Value (v, ty, attr) :: scope.decl_list in
     { scope with value ; decl_list}
+  let remove_value scope (v : O.expression_variable) =
+    let value = ValueVMap.remove v scope.value in
+    { scope with value }
   let push_type_ scope t path =
     let type_ = TypeVMap.add t path scope.type_ in
+    { scope with type_ }
+  let remove_type_ scope (v : O.type_variable) =
+    let type_ = TypeVMap.remove v scope.type_ in
     { scope with type_ }
   let push_module scope m path mod_scope =
     let module_ = ModuleVMap.add m (path,mod_scope) scope.module_ in
@@ -266,15 +274,19 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     return @@ E_application {lamb;args}
   | E_lambda {binder;result} ->
     let binder = Stage_common.Maps.binder self_type binder in
-    let result = self result in
+    let scope = Scope.remove_value scope binder.var in
+    let result = self ~scope result in
     return @@ E_lambda {binder;result}
   | E_type_abstraction {type_binder;result} ->
-    let result = self result in
+    let scope = Scope.remove_type_ scope type_binder in
+    let result = self ~scope result in
     return @@ E_type_abstraction {type_binder;result}
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
     let fun_type = self_type fun_type in
     let binder   = Stage_common.Maps.binder self_type binder in
-    let result   = self result in
+    let scope = Scope.remove_value scope binder.var in
+    let scope = Scope.remove_value scope fun_name in
+    let result   = self ~scope result in
     return @@ E_recursive {fun_name;fun_type;lambda={binder;result}}
   | E_let_in {let_binder;rhs;let_result;attr} ->
     let let_binder   = Stage_common.Maps.binder self_type let_binder in
@@ -324,27 +336,25 @@ let rec compile_expression ~raise path scope (expr : I.expression) =
     let path    = Path.append path2 path in
     let _,element = Scope.add_path_to_var scope path element in
     return @@ E_variable element)
-  | E_assign {binder;access_path;expression} ->
+  | E_assign {binder;expression} ->
     let binder = Stage_common.Maps.binder self_type binder in
     let expression = self expression in
-    let access_path = List.map ~f:(function
-      | I.Access_map e -> O.Access_map (self e)
-      | Access_tuple a -> Access_tuple a
-      | Access_record a -> Access_record a
-      ) access_path in
-    return @@ E_assign {binder;access_path;expression}
+    return @@ E_assign {binder;expression}
 
 and compile_cases ~raise path scope cases : O.matching_expr =
   match cases with
     Match_variant {cases;tv} ->
     let cases = List.map cases ~f:(fun I.{constructor;pattern;body} ->
+      let scope = Scope.remove_value scope pattern in
       let body = compile_expression ~raise path scope body in
       O.{constructor;pattern;body})
     in
     let tv = compile_type_expression ~raise path scope tv in
     Match_variant {cases;tv}
   | Match_record {fields;body;tv} ->
-    let fields = O.LMap.map (fun binder -> Stage_common.Maps.binder (compile_type_expression ~raise path scope) binder) fields in
+    let scope, fields = O.LMap.fold_map fields ~init:scope ~f:(fun _ binder scope' ->
+                            Scope.remove_value scope' binder.I.var,
+                            Stage_common.Maps.binder (compile_type_expression ~raise path scope) binder) in
     let body   = compile_expression ~raise path scope body in
     let tv     = compile_type_expression ~raise path scope tv in
     Match_record {fields;body;tv}

@@ -6,6 +6,7 @@ module Trace = Simple_utils.Trace
 
 module File        = Preprocessing_pascaligo.File
 module Comments    = Preprocessing_pascaligo.Comments
+module Modules     = Preprocessing_pascaligo.Modules
 module Token       = Lexing_pascaligo.Token
 module Self_tokens = Lexing_pascaligo.Self_tokens
 module ParErr      = Parsing_pascaligo.ParErr
@@ -26,7 +27,7 @@ module PascaligoParser =
   end
 
 include Common.MakeTwoParsers
-          (File) (Comments) (Token) (ParErr) (Self_tokens)
+          (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
           (CST) (PascaligoParser)
 
 (* Making the pretty-printers *)

@@ -7,6 +7,7 @@ module Region = Simple_utils.Region
 (* Internal dependencies *)
 
 module Comments      = Preprocessing_reasonligo.Comments
+module Modules       = Preprocessing_reasonligo.Modules
 module File          = Preprocessing_reasonligo.File
 module Token         = Lexing_reasonligo.Token
 module Self_tokens   = Lexing_reasonligo.Self_tokens
@@ -16,7 +17,7 @@ module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)
 
-module Preproc_CLI = Preprocessor.CLI.Make (Comments)
+module Preproc_CLI = Preprocessor.CLI.Make (Comments) (Modules)
 module   Lexer_CLI =     LexerLib.CLI.Make (Preproc_CLI)
 module  Parser_CLI =    ParserLib.CLI.Make (Lexer_CLI)
 
@@ -54,6 +55,7 @@ module Print =
 module Main = ParserMainGen.Make
                 (File)
                 (Comments)
+                (Modules)
                 (Token)
                 (ParErr)
                 (Self_tokens)

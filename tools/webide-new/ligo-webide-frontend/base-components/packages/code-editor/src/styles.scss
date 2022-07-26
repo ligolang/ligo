@@ -1,0 +1,162 @@
+.custom-tab {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.monaco-editor {
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+
+  & .margin {
+    background: transparent !important;
+  }
+  & .monaco-editor-background {
+    background: transparent !important;
+  }
+
+  &>.overflow-guard {
+    width: 100% !important;
+    height: 100% !important;
+
+    & .slider-mouseover {
+      left: unset !important;
+      right: 16px !important;
+      height: 100% !important;
+    }
+
+    & .scroll-decoration {
+      width: 100% !important
+    }
+
+    &>.monaco-scrollable-element {
+      width: calc(100% - 80px) !important;
+      height: 100% !important;
+      box-shadow: none !important;
+
+      & canvas {
+        width: 21px !important;
+      }
+
+      &>.scrollbar.vertical {
+        width: 21px !important;
+        height: 100% !important;
+
+        &>.slider {
+          position: relative;
+          left: 4px !important;
+          width: 8px !important;
+          background: transparent !important;
+          &:after {
+            content: '';
+            position: absolute;
+            top: 4px; bottom: 4px;
+            left: 0; right: 0;
+            background: var(--color-secondary);
+            border-radius: 4px;
+          }
+          &:hover:after, &.active:after {
+            // background: lighten($secondary, 8%);
+          }
+        }
+      }
+
+      &>.scrollbar.horizontal {
+        width: calc(100% - 99px) !important;
+        margin-bottom: 2px;
+        &>.slider {
+          height: 8px !important;
+          background: transparent;
+          &:after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            left: 0; right: 6px;
+            background: var(--color-secondary);
+            border-radius: 4px;
+          } 
+          &:hover:after, &.active:after {
+            // background: lighten($secondary, 8%);
+          }
+        }
+      }
+    }
+
+    & .scrollbar.vertical {
+      width: 10px !important;
+
+      &>.slider {
+        position: relative;
+        right: 2px !important;
+        width: 8px !important;
+        border-radius: 4px;
+        &:hover, &.active {
+          // background: lighten($secondary, 8%);
+        }
+      }
+    }
+  }
+
+  & .context-view {
+    border-radius: 0.4rem;
+    border: 1px solid var(--color-border);
+    padding: 0.3rem 0;
+    background: var(--color-bg2);
+
+    & a:hover {
+      text-decoration: none;
+    }
+
+    & .monaco-scrollable-element {
+      box-shadow: none !important;
+    }
+
+    & .monaco-menu {
+      border: none;
+
+      & .action-item {
+        border: none !important;
+      }
+  
+      & .action-menu-item {
+        border: none;
+        color: var(--color-text) !important;
+      }
+
+      & .action-menu-item {
+        height: 25px;
+
+        & .action-label {
+          font-size: 0.875rem;
+        }
+        & .keybinding {
+          color: var(--color-text-muted) !important;
+        }
+        & .submenu-indicator::before {
+          margin-right: -16px;
+        }
+        &:hover .action-label {
+          color: var(--color-white) !important;
+        }
+        &:hover .keybinding {
+          color: var(--color-text) !important;
+        }
+      }
+    }
+
+    & .separator {
+      padding: 0 !important;
+      margin: .25rem 0 !important;
+      border-right: none;
+      border-left: none;
+      border-bottom: 1px solid var(--color-border) !important;
+      opacity: 1;
+    }
+  }
+}

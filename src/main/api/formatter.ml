@@ -43,6 +43,34 @@ let contract_size_format : 'a format = {
   to_json = contract_size_jsonformat;
 }
 
+let list_ppformat ~display_format f (lst) =
+  match display_format with
+  | Human_readable | Dev ->
+    Format.fprintf f "list of projects:\n" ;
+    List.iter ~f: (fun str -> Format.fprintf f "%s\n" str) lst
+
+let list_jsonformat (_lst : string list) : json =
+  `Null
+
+let list_format : 'a format = {
+  pp = list_ppformat;
+  to_json = list_jsonformat;
+}
+
+let new_project_ppformat  ~display_format f (lst) =
+  match display_format with
+  | Human_readable | Dev ->
+    Format.fprintf f "Folder created: " ;
+    List.iter ~f: (fun str -> Format.fprintf f "%s\n" str) lst
+  
+let new_project_jsonformat (_lst : string list) : json =
+  `Null
+
+let new_project_format : 'a format = {
+  pp = new_project_ppformat;
+  to_json = new_project_jsonformat;
+}
+
 module Michelson_formatter = struct
   open Tezos_utils.Michelson
   open Simple_utils

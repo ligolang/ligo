@@ -1072,17 +1072,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
-    Error(s) occurred while type checking the contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } } |}]
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1437,6 +1437,12 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
 
   run_ligo_good [ "compile" ; "contract" ; contract "tuples_no_annotation.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14:
       4 |
       5 | let main = ((p,storage): (parameter, storage)) => {
@@ -1467,9 +1473,9 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation_warn.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 10-23:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
@@ -1477,7 +1483,7 @@ let%expect_test _ =
     Warning: unused variable "self_contract".
     Hint: replace it by "_self_contract" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
@@ -1485,14 +1491,15 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
-    Invalid type annotation.
-    "contract (nat)" was given, but "contract (int)" was expected.
-    Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
   [%expect{|
@@ -1638,6 +1645,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1647,6 +1660,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_2.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = big_map (nat, big_map (int, string));
@@ -1657,6 +1676,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_3.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1666,6 +1691,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_4.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = map (int, big_map (nat, big_map (int, string)));
@@ -1918,6 +1949,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "never.religo" ] ;
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
       code { UNPAIR ;
@@ -2674,6 +2711,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "increment.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2690,6 +2733,26 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
              NIL operation ;
              PAIR } } |}]
+
+(* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "get_capitalized_entrypoint.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %Upper unit ;
+             IF_NONE
+               { PUSH string "lol" ; FAILWITH }
+               { PUSH mutez 0 ;
+                 UNIT ;
+                 TRANSFER_TOKENS ;
+                 UNIT ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
+                 PAIR } } } |}]
 
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
@@ -2852,6 +2915,12 @@ Toplevel let declaration are silently change to const declaration.
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
   [%expect{|
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
 44 |}]
 
 (* check compiling many (more than 10) views *)
