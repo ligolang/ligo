@@ -60,7 +60,7 @@ let main (_p, s : param * storage) : operation list * storage =
 
 ### Name punning
 
-Name punning permits record assignment without repeating the variable name if it's the same as the record field name.
+Name punning permits record assignments without repeating the right-hand side if it is the same as the record field name.
 Although possible in OCaml, this is not yet avaiable in CameLigo.
 
 ```ocaml
