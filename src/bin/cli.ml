@@ -779,22 +779,22 @@ let install =
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path <*> ligo_registry)
 
 let publish =
-  let summary   = "publish LIGO packages declared in package.json" in
-  let readme () = "TODO: Doc string" in
+  let summary   = "publish the LIGO package declared in package.json" in
+  let readme () = "Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
   let f ligo_registry ligorc_path project_root () =
     return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
 
 let add_user =
-  let summary   = "create a user for LIGO package registry" in
-  let readme () = "TODO: Doc string" in
+  let summary   = "create a new user for the LIGO package registry" in
+  let readme () = "Prompt the user for details to create a new user on registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
 let login =
-  let summary   = "login to LIGO package registry" in
-  let readme () = "TODO: Doc string" in
+  let summary   = "login to the LIGO package registry" in
+  let readme () = "Prompt the user for credentials and creates and login session with the registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
