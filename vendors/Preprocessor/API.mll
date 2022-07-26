@@ -249,7 +249,7 @@ let rec last_mode = function
    option. *)
 
 let rec find_in_cli_paths file_path = function
-        [] -> None
+         [] -> None
 | dir::dirs ->
     let path =
       if dir = "." || dir = "" then file_path
@@ -508,14 +508,14 @@ let line_comments =
 rule scan state = parse
   nl    { proc_nl state lexbuf; scan state lexbuf }
 | blank { if state.mode = Copy then copy state lexbuf;
-         scan state lexbuf }
+          scan state lexbuf }
 | directive {
     let  region = mk_reg lexbuf in
     if   not (List.mem id directives)
     then begin
-          if state.mode = Copy then copy state lexbuf;
-          scan state lexbuf
-        end
+           if state.mode = Copy then copy state lexbuf;
+           scan state lexbuf
+         end
     else
     if   region#start#offset `Byte > 0
     then stop state lexbuf Directive_inside_line
@@ -555,12 +555,11 @@ rule scan state = parse
     | "import" ->
         let mangle str =
           let name =
-            Str.global_replace (Str.regexp_string ".") "____" str
+              Str.global_replace (Str.regexp_string ".") "____" str
             |> Str.global_replace (Str.regexp_string "/") "__"
             |> Str.global_replace (Str.regexp_string "@") "_"
             |> Str.global_replace (Str.regexp_string "-") "_"
-          in
-          "Mangled_module_" ^ name
+          in "Mangled_module_" ^ name
         in
         let reg, import_file, imported_module = scan_import state lexbuf in
         let mangled_filename = mangle import_file in
