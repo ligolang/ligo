@@ -1,7 +1,42 @@
 module LigoRC = Cli_helpers.LigoRC
 
-(* TODO: prompt user for username, password & email (scanf??) *)
-let prompt () = "foo1", "bar", "foo@bar.com"
+class read_username term = object(self)
+  inherit LTerm_read_line.read_line () as super
+  inherit [Zed_string.t] LTerm_read_line.term term
+
+  method! send_action = function
+  | LTerm_read_line.Break -> exit 0
+  | action -> super#send_action action
+
+  method! show_box = false
+
+  initializer
+    self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 "Username: "))
+end
+
+class read_password term = object(self)
+  inherit LTerm_read_line.read_password () as super
+  inherit [Zed_string.t] LTerm_read_line.term term
+
+  method! send_action = function
+    | LTerm_read_line.Break -> exit 0
+    | action -> super#send_action action
+
+  initializer
+    self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 "Password: "))
+end
+
+let prompt () =
+  let open Lwt.Syntax in
+  let* () = LTerm_inputrc.load () in
+  let* term = Lazy.force LTerm.stdout in
+  let* user = (new read_username term)#run in
+  let* pass = (new read_password term)#run in
+  Lwt.return (user, pass)
+
+let prompt () =
+  let u, p = Lwt_main.run (prompt ()) in
+  Zed_string.to_utf8 u, Zed_string.to_utf8 p
 
 type data =
   { name     : string
@@ -33,7 +68,7 @@ let create_or_login ~ligo_registry ~ligorc_path =
   let registry_key = LigoRC.registry_key ligo_registry in
   let ligorc = LigoRC.read ~ligorc_path in
   let token_opt = LigoRC.get_token ligorc ~registry_key in
-  let user, pass, _email = prompt () in
+  let user, pass = prompt () in
   let authorization = match token_opt with
     Some token -> Format.sprintf "Bearer %s" token
   | None -> 
@@ -41,6 +76,8 @@ let create_or_login ~ligo_registry ~ligorc_path =
     Format.sprintf "Basic %s" token
   in
   let login_url = login_url ~base_url:ligo_registry user in
+
+
   let open Cohttp in
   let open Cohttp_lwt in
 

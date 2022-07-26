@@ -35,6 +35,7 @@ depends: [
   "decompress"
   "tar"
   "tar-unix"
+  "lambda-term"
   # Tezos libs
   "tezos-base"
   "tezos-crypto"

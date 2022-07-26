@@ -44,7 +44,7 @@
  (name user)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix) ;Remove unused libs
+ (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix lambda-term) ;Remove unused libs
  (preprocess (pps ppx_deriving_yojson))
  (modules user))
 
