@@ -79,6 +79,7 @@ let rec subst_var_expr v v' (e : AST.expression) =
       | _ -> return e.expression_content
       ) () e in
    e
+
 let apply_table_expr table (expr : AST.expression) =
    let apply_table_type u = List.fold_right table ~f:(fun (v, t) u -> AST.Helpers.subst_type v t u) ~init:u in
    let (), e = fold_map_expression (fun () e ->
@@ -200,18 +201,16 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
       let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
-      let type_ = rhs.type_expression in
       let data, let_result = self data let_result in
       let binder_instances = Data.instances_lookup let_binder.var data in
       let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (data, let_result) =
         let let_binder = vid in
         let table = List.zip_exn type_vars type_instances in
-        let rhs = { rhs with type_expression = type_ } in
         let data, rhs = match rhs.expression_content with
           | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
             let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
             let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
-            data, { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }
+            data, { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = rhs.type_expression ; lambda } }
           | _ -> data, rhs in
         let rhs = apply_table_expr table rhs in
         let data, rhs = self data rhs in
