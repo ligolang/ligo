@@ -83,6 +83,9 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   const [prevDragEnter, setPrevDragEnter] = useState('')
   const [isBlankAreaRightClick, setIsBlankAreaRightClick] = useState(false)
   const [isTreeDataRoot, setIsTreeDataRoot] = useState(false)
+  const [targetForExpand, setTargetForExpand] = useState(null)
+  const targetForExpandRef = useRef()
+  targetForExpandRef.current = targetForExpand
 
   let treeNodeContextMenu = typeof contextMenu === 'function' ? contextMenu(rightClickNode) : contextMenu
 
@@ -445,6 +448,8 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
       setPrevDragEnter(undefined)
       return
     }
+    
+    setTargetForExpand(null)
 
     const fatherOrSelf = findInTree(treeData, (treeNode) => treeNode.path === (node.type === 'folder' || node.root ? node.path : node.fatherPath))
     if (fatherOrSelf) {
@@ -459,8 +464,16 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
       const isExist = expandedKeys.includes(fatherOrSelf.path)
       if (!isExist) {
         setPrevDragEnter(fatherOrSelf)
-        setExpandKeys([...expandedKeys, fatherOrSelf.path])
-        enableHighLightBlock(fatherOrSelf, true)
+
+        setTargetForExpand(fatherOrSelf)
+        setTimeout(() => {
+          if (targetForExpandRef.current && targetForExpandRef.current.path === fatherOrSelf.path) {
+            setExpandKeys([...expandedKeys, fatherOrSelf.path])
+            enableHighLightBlock(fatherOrSelf, true)
+          }
+          setTargetForExpand(null)
+        }
+        , 500)
       } else {
         enableHighLightBlock(fatherOrSelf, true)
         setPrevDragEnter(fatherOrSelf)
