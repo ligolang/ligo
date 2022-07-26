@@ -681,7 +681,7 @@ Here is an example using `Proxy_ticket.originate` and the type `unforged_ticket`
 
 1. import the module above as `Proxy_ticket`
 2. define a contract `main` potentially holding a ticket of bytes in its storage. The contract will just reads the ticket
-   it its storage if present. Note that we define two version of the contract storage type: one for the contract
+   in its storage if present. Note that we define two version of the contract storage type: one for the contract
    and one for the storage type that we would like to manipulate in our testing logic
 3. we define the `mk_storage` function which simply wraps a ticket into an option type
 4. we define the ticket information for a ticket of value `0x0202` and an amount of `15`
