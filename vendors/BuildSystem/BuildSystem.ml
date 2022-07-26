@@ -11,7 +11,7 @@ module Source_input = struct
   type code_input = From_file of file_name | Raw of raw_input
   let id_of_code_input : code_input -> file_name = function
   | From_file file_name -> file_name
-  | Raw { id ; code = _ } -> id
+  | Raw { id ; code = _  } -> id
 end
 
 module type M =

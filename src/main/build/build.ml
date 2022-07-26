@@ -21,12 +21,9 @@ module M (Params : Params) =
     type compilation_unit = Buffer.t
     type meta_data = Ligo_compile.Helpers.meta
 
-    (* let file_input : file_name -> code_input = fun path -> From_file path *)
-
-    (* let raw_input (id,code) = Raw { id ; code } *)
     let preprocess : code_input -> compilation_unit * meta_data * (file_name * module_name) list =
       fun code_input ->
-      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (match code_input with From_file file_name -> Some file_name | Raw _ -> None) in
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (match code_input with From_file file_name -> Some file_name | Raw {id ; _} -> Some id) in
       let meta = Ligo_compile.Of_source.extract_meta syntax in
       let c_unit, deps = match code_input with
         | From_file file_name -> Ligo_compile.Helpers.preprocess_file ~raise ~meta ~options:options.frontend file_name
@@ -134,6 +131,18 @@ let merge_and_type_libraries ~raise : options:Compiler_options.t -> Source_input
     let contract = Ligo_compile.Of_core.typecheck ~raise ~options Env contract in
     contract
 
+let merge_and_type_libraries_str ~raise : options:Compiler_options.t -> string -> Ast_typed.program =
+  fun ~options code ->
+    let open BuildSystem.Make(Infer(struct
+      let raise = raise
+      let options = options
+    end)) in
+    let id = match options.frontend.syntax with Some s -> "from_build"^(Syntax.to_ext s) | None -> "from_build" in
+    let s = Source_input.Raw { code = code ; id } in
+    let contract = trace ~raise build_error_tracer @@ from_result (compile_combined s) in
+    let contract = Ligo_compile.Of_core.typecheck ~raise ~options Env contract in
+    contract
+    
 let build_typed ~raise :
   options:Compiler_options.t -> Ligo_compile.Of_core.form -> Source_input.file_name -> Ast_typed.program =
     fun ~options form file_name ->
