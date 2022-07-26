@@ -29,11 +29,11 @@ unit_hover_inferred_recursion_from_compiler = do
   Hover.unit_hover_inferred_recursion @Standard
   Hover.unit_hover_inferred_recursion @FromCompiler
 
+unit_hover_inferred_recursion_fallback :: Assertion
+unit_hover_inferred_recursion_fallback =
+  Hover.unit_hover_inferred_recursion @Fallback
+
 -- (LIGO-243) Fallback scopes can't infer types and we rely on LIGO for this.
 unit_hover_inferred_simple_fallback :: Assertion
 unit_hover_inferred_simple_fallback =
   Hover.unit_hover_inferred_simple @Fallback `shouldThrow` anyException
-
-unit_hover_inferred_recursion_fallback :: Assertion
-unit_hover_inferred_recursion_fallback =
-  Hover.unit_hover_inferred_recursion @Fallback `shouldThrow` anyException
