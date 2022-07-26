@@ -24,8 +24,6 @@ module type M =
 
       (* This should probably be taken in charge be the compiler, which should be able to handle "libraries" *)
       val make_module_declaration : module_name -> t -> declaration
-      val make_module_alias : module_name -> file_name -> declaration
-
     end
     val compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t
   end
@@ -34,10 +32,10 @@ module Make (M : M) =
   struct
 
   type file_name = M.file_name
-  type vertice = M.meta_data * M.compilation_unit * (M.file_name * M.module_name) list
+  type vertice = M.file_name * M.meta_data * M.compilation_unit * (M.file_name * M.module_name) list
   type graph = G.t * vertice SMap.t
   type error = Errors.t
-  type ast = M.AST.t 
+  type ast = M.AST.t
   type env = M.AST.environment
   type 'a build_error = ('a, error) result
 
@@ -49,14 +47,14 @@ module Make (M : M) =
     fun file_name ->
     let vertices = SMap.empty in
     let dep_g = G.empty in
-    let rec dfs acc (dep_g,vertices) (file_name,_module_name) =
+    let rec dfs acc (dep_g,vertices) (file_name,mangled_name) =
       if not @@ SMap.mem file_name vertices then
         let c_unit, meta_data, deps = M.preprocess file_name in
-        let vertices = SMap.add file_name (meta_data,c_unit,deps) vertices in
+        let vertices = SMap.add file_name (mangled_name,meta_data,c_unit,deps) vertices in
         let dep_g = G.add_vertex dep_g file_name in
         let dep_g =
           (* Don't add a loop on the first element *)
-          if String.equal acc file_name then dep_g
+          if Node.equal acc file_name then dep_g
           else G.add_edge dep_g acc file_name
         in
         let dep_g,vertices = List.fold ~f:(dfs file_name) ~init:(dep_g,vertices) deps in
@@ -84,24 +82,19 @@ module Make (M : M) =
 
   let aggregate_dependencies_as_headers order_deps asts_typed =
     (* Add the module at the beginning of the file *)
-    let aux map (file_name,(_,_,deps_lst)) =
+    let aux map ((file_name),(_,_,_,deps_lst)) =
       let (ast,_) =
         match (SMap.find_opt file_name asts_typed) with
           Some ast -> ast
         | None -> failwith "failed to find module"
       in
 
-      let aux ast_typed (file_name,module_name) =
-        (M.AST.make_module_alias module_name file_name)
-        :: ast_typed
-      in
-      let ast_typed = List.fold_left ~f:aux ~init:ast deps_lst in
-      let map = SMap.add file_name ast_typed map in
+      let map = SMap.add file_name ast map in
       map
     in
     let asts_typed = List.fold ~f:aux ~init:SMap.empty order_deps in
     (* Separate the program and the dependency (those are process differently) *)
-    let (file_name,(_,_,_deps_lst)),order_deps = match List.rev order_deps with
+    let (file_name,(_,_,_,_deps_lst)),order_deps = match List.rev order_deps with
       | [] -> failwith "compiling nothing"
       | hd::tl -> (hd,tl) in
     let contract =
@@ -110,8 +103,8 @@ module Make (M : M) =
       | None -> failwith "failed to find module"
     in
     (* Add all dependency at the beginning of the file *)
-    let add_modules dep_types (file_name,(_,_, _deps_lst)) =
-      let module_binder = file_name in
+    let add_modules dep_types (file_name,(mangled_name,_,_, _deps_lst)) =
+      let module_binder = mangled_name in
       (* Get the ast_type of the module *)
       let ast_typed =
         match (SMap.find_opt file_name asts_typed) with
@@ -125,7 +118,7 @@ module Make (M : M) =
     aggregated
 
   let add_modules_in_env (env : M.AST.environment) deps =
-    let aux env (module_name, (_,ast)) = 
+    let aux env (module_name, (_,ast)) =
       M.AST.add_module_to_env module_name ast env
     in
     List.fold_left ~f:aux ~init:env deps
@@ -143,7 +136,7 @@ module Make (M : M) =
     let env_with_deps = add_modules_in_env M.AST.init_env deps in
     env_with_deps
 
-  let compile_file_with_deps asts (file_name, (meta,c_unit,deps)) =
+  let compile_file_with_deps asts (file_name, (mangled_name,meta,c_unit,deps)) =
     let env_with_deps = add_deps_to_env asts (file_name, (meta,c_unit,deps)) in
     let ast = M.compile env_with_deps file_name meta c_unit in
     let ast_env = M.AST.add_ast_to_env ast env_with_deps in
@@ -167,5 +160,5 @@ module Make (M : M) =
         let contract = aggregate_dependencies_as_headers ordered_deps asts_typed in
         Ok(contract)
       | Error e -> Error e
-  end    
+  end
 

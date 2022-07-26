@@ -38,13 +38,7 @@ module M (Params : Params) =
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_typed.M_struct ast_typed) in
         let module_binder = Ast_typed.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
-      let make_module_alias : module_name -> file_name -> declaration =
-        fun module_name file_name ->
-        let module_binder = Ast_typed.ModuleVar.of_input_var module_name in
-        let file_name   = Ast_typed.ModuleVar.of_input_var file_name in
-        let module_ = Location.wrap (Ast_typed.M_variable file_name) in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
@@ -78,13 +72,7 @@ module Infer (Params : Params) = struct
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_core.M_struct ast_typed) in
         let module_binder = Ast_core.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
-      let make_module_alias : module_name -> file_name -> declaration =
-        fun module_name file_name ->
-        let module_binder = Ast_core.ModuleVar.of_input_var module_name in
-        let file_name   = Ast_core.ModuleVar.of_input_var file_name in
-        let module_ = Location.wrap (Ast_core.M_variable file_name) in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
   end
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =

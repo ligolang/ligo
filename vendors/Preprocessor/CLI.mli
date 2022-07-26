@@ -16,6 +16,11 @@ module type COMMENTS =
     val line  : line_comment option
   end
 
+module type MODULES =
+  sig
+    val mk_module : string -> string -> string
+  end
+
 (* The signature [S] (command-line interface) gathers the options
    given to the tool, following the GNU convention, and exports then
    as module fields. *)
@@ -23,6 +28,7 @@ module type COMMENTS =
 module type S =
   sig
     include COMMENTS
+    include MODULES
 
     val input        : string option (* input file     *)
     val extension    : string option (* file extension *)
@@ -46,4 +52,4 @@ module type S =
 (* The instantiation of functor [Make] reads the command line
    interface. *)
 
-module Make (Comments: COMMENTS) : S
+module Make (Comments: COMMENTS) (Modules: MODULES) : S
