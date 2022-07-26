@@ -40,10 +40,13 @@ type block_comment = <opening : string; closing : string>
 
 (* Configuration
 
-     * The field [dirs] is the list of directories to search for
-       #include files.
-     * The field [mod_res] is a data structure used for
-       resolving path to external packages/modules *)
+   * The field [dirs] is the list of directories to search for
+      #include files.
+   * The field [mod_res] is a data structure used for
+      resolving path to external packages/modules
+   * The field [mk_mod] is a function used to generate a module alias
+      based on the #import pragma (can return "" to generate nothing)
+*)
 
 type config = <
   block   : block_comment option;
