@@ -186,8 +186,8 @@ let test_use_external_packages ~raise ~(raw_options : Raw_options.t) () =
       "x";
     ]
     [
-      "uniq_concat , reverse , concat ,\nSetX";
-      "sum , reverse ,\nconcat";
+      "SetX , concat , reverse ,\nuniq_concat";
+      "concat , reverse ,\nsum";
       "y";
       "24";
       "x";
@@ -225,11 +225,11 @@ let test_use_scoped_package ~raise ~(raw_options : Raw_options.t) () =
       "#use \"@ligo/bigarray-cameligo/lib/bigarray.mligo\"";
       "reverse [3 ; 2 ; 1]";
     ]
-    [ 
-      "remove , equal , rotate , split , slice , take , drop , insert , set , find ,\n\
-      concat , reverse , last , construct ,\n\
-      big_array";
-      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+    [
+      "big_array , construct , last , reverse , concat , find , set , insert ,\n\
+      drop , take , slice , split , rotate , equal ,\n\
+      remove";
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";
     ]
     ()
 
@@ -240,9 +240,9 @@ let test_import_scoped_packages ~raise ~(raw_options : Raw_options.t) () =
       "#import \"@ligo/bigarray-cameligo/lib/bigarray.mligo\" \"BA\"";
       "BA.reverse [3 ; 2 ; 1]";
     ]
-    [ 
+    [
       "Done.";
-      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";  
+      "CONS(1 , CONS(2 , CONS(3 , LIST_EMPTY())))";
     ]
     ()
 
