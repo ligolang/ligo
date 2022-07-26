@@ -20,7 +20,7 @@ CLI:
 - [ ] Debatable - write tests
 - [ ] Write unit test for json body + headers
 - [ ] Handle errors (duplicate package or version, not authorised, etc.)
-- [ ] Sanitize manifest (Take care of Semver format, rest of the metadata)
+- [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
 - [ ] Error handline via ~raise (Trace)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 
@@ -143,6 +143,13 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
     |> Cohttp_lwt.Body.of_string in
   Client.put ~headers ~body uri
 
+let os_type =
+  match Sys.os_type with
+    "Unix" -> Gz.Unix
+  | "Win32" -> Gz.NTFS
+  | "Cygwin" -> Gz.NTFS
+  | _ -> Gz.Unix
+
 let gzip fname fd =
   let file_size = Int.of_int64_exn (Unix.stat fname).st_size in
   Format.printf "foo.tgz file size after tar: %d" file_size;
@@ -155,13 +162,11 @@ let gzip fname fd =
   let q = De.Queue.create 0x1000 in
   let r = Buffer.create 0x1000 in
   let p = ref 0 in
-  (* TODO: Take care of os *)
-  let cfg = Gz.Higher.configuration Gz.Unix time in
+  let cfg = Gz.Higher.configuration os_type time in
   let refill buf =
     let len = min (file_size - !p) buffer_len in
     if len <= 0 then 0 else
     let bytes = Bytes.create len in
-    (* Format.printf "- %d %d\n" !p len; *)
     let rd = Caml.Unix.read fd bytes !p len in
     let len = rd in
     Bigstringaf.blit_from_bytes bytes ~src_off:!p buf ~dst_off:0 ~len ;
@@ -203,18 +208,14 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
        tarball *)
     Lwt.return []
   in
-  (* let () = List.iter ~f:print_endline files in *)
   Lwt.return files
 
-let tar_gzip dir = 
+let tar_gzip ~name ~version dir = 
   let open Lwt.Syntax in
   let* files = get_all_files dir in
 
-  (* Instead of temp.tar give some useful name Hint: debugging *)
-  let fname = Filename.concat Filename.temp_dir_name "temp.tar" in
-  print_endline fname;
+  let fname = Filename.temp_file name version in
 
-  (* Think about permission when creating foo.tgz; okay for now *)
   let* fd = Lwt_unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
   let* () = Tar_lwt_unix.Archive.create files fd in
 
@@ -229,7 +230,8 @@ let tar_gzip dir =
 
 let publish ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
-  let* gzipped_tarball = tar_gzip "." in
+  let LigoManifest.{ name ; version ; _ } = manifest in
+  let* gzipped_tarball = tar_gzip "." ~name ~version in
   let len = Bytes.length gzipped_tarball in
   let sha1 = gzipped_tarball
     |> Digestif.SHA1.digest_bytes ~off:0 ~len
