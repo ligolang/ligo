@@ -120,7 +120,6 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let manifest = LigoManifest.validate manifest in
   let LigoManifest.{ name ; version ; scripts ; description ; readme ; _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
@@ -249,13 +248,15 @@ let handle_server_response ~name response body =
 
 let publish ~ligo_registry ~ligorc_path ~project_root =
   let manifest = LigoManifest.read ~project_root in
-  
-  let ligorc = LigoRC.read ~ligorc_path in
-  let registry_key = LigoRC.registry_key ligo_registry in
-  let token = LigoRC.get_token ~registry_key ligorc in 
-  
-  match token with
-    None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
-  | Some token ->
-    let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
-    handle_server_response ~name:manifest.name response body
+  let manifest = Result.bind manifest ~f:LigoManifest.validate in
+  match manifest with
+    Error e -> Error (Format.sprintf "ERROR: %s" e, "")
+  | Ok manifest -> 
+    let ligorc = LigoRC.read ~ligorc_path in
+    let registry_key = LigoRC.registry_key ligo_registry in
+    let token = LigoRC.get_token ~registry_key ligorc in 
+    (match token with
+      None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
+    | Some token ->
+      let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
+      handle_server_response ~name:manifest.name response body)

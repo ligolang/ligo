@@ -73,21 +73,22 @@ module LigoManifest = struct
   
   let is_empty field value =
     if String.equal value "" 
-    then failwith (Format.sprintf "ERROR: %s is \"\" in package.json" field)
+    then failwith (Format.sprintf "%s is \"\" in package.json" field)
     else ()
 
   let is_version_correct version =
     if Option.is_none @@ Semver.of_string version 
-    then failwith (Format.sprintf "ERROR: invalid version %s in package.json" version)
+    then failwith (Format.sprintf "invalid version %s in package.json" version)
     else ()
 
   let validate t =
     let { name ; version ; author ; _ } = t in
-    is_empty "name" name;
+    try begin is_empty "name" name;
     is_empty "author" author;
     is_empty "version" version;
     is_version_correct version;
-    t
+    Ok t
+    end with Failure e -> Error e
 
   let read ~project_root =
     match project_root with
@@ -96,27 +97,27 @@ module LigoManifest = struct
     let ligo_manifest_path = Filename.concat project_root "package.json" in
     let json = try Yojson.Safe.from_file ligo_manifest_path 
       with _ -> failwith "No package.json found!" in
-
-    let module Util = Yojson.Safe.Util in    
-    let name = try json |> Util.member "name" |> Util.to_string 
-      with _ -> "No name field in package.json" in
-    let version = try json |> Util.member "version" |> Util.to_string
-      with _ -> "No version field in package.json'"  in
-    let description = try json |> Util.member "description" |> Util.to_string
-      with _ -> "" in
-    let scripts = try json 
-      |> Util.member "scripts" 
-      |> Util.to_assoc 
-      |> List.Assoc.map ~f:(Util.to_string)
-      with _ -> []  in
-    let author = try json |> Util.member "author" |> Util.to_string 
-      with _ -> failwith "No author field  in package.json" in
-    let license = try json |> Util.member "license" |> Util.to_string
-      with _ -> failwith "No license field in package.json" in
-
-    let readme = try json |> Util.member "readme" |> Util.to_string
-      with _ -> "ERROR: No README data found!" in 
-    { name ; version ; description ; scripts ; author ; license ; readme ; ligo_manifest_path }
+    try 
+      let module Util = Yojson.Safe.Util in    
+      let name = try json |> Util.member "name" |> Util.to_string 
+        with _ -> failwith "No name field in package.json" in
+      let version = try json |> Util.member "version" |> Util.to_string
+        with _ -> failwith "No version field in package.json'"  in
+      let description = try json |> Util.member "description" |> Util.to_string
+        with _ -> "" in
+      let scripts = try json 
+        |> Util.member "scripts" 
+        |> Util.to_assoc 
+        |> List.Assoc.map ~f:(Util.to_string)
+        with _ -> []  in
+      let author = try json |> Util.member "author" |> Util.to_string 
+        with _ -> failwith "No author field  in package.json" in
+      let license = try json |> Util.member "license" |> Util.to_string
+        with _ -> failwith "No license field in package.json" in
+      let readme = try json |> Util.member "readme" |> Util.to_string
+        with _ -> "ERROR: No README data found!" in 
+      Ok{ name ; version ; description ; scripts ; author ; license ; readme ; ligo_manifest_path }
+    with Failure e -> Error e
 end
 
 let find_project_root () =

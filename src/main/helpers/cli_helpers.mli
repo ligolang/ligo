@@ -31,9 +31,9 @@ module LigoManifest : sig
     ; ligo_manifest_path : string
     } [@@deriving to_yojson]
   
-  val validate : t -> t
+  val validate : t -> (t,string) result
 
-  val read : project_root:string option -> t
+  val read : project_root:string option -> (t,string) result
 end
 
 val find_project_root : unit -> string option
