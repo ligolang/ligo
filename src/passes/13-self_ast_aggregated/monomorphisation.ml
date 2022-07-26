@@ -180,8 +180,8 @@ let evaluate_external_typer typed rhs =
       subst_external_term external_type external_type_for rhs
    | _ -> rhs
 
-let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.expression = fun data expr ->
-   let self = mono_polymorphic_expression in
+let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t * AST.expression = fun data expr ->
+   let self = mono_polymorphic_expression ~raise in
    let return ec = { expr with expression_content = ec } in
    match expr.expression_content with
    | E_variable _ | E_literal _ | E_raw_code _ -> data, expr
@@ -200,8 +200,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       data, return (E_lambda { binder ; result })
    | E_type_abstraction { type_binder ; result } ->
       ignore (type_binder,result);
-      self data result
-      (* failwith "not implemented yet" *)
+      raise.Trace.error (Errors.corner_case "Monomorphisation: E_type_abstraction found in unexpected position")
    | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
       let data, result = self data result in
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
@@ -237,7 +236,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       let data, element  = self data element in
       data, return (E_constructor { constructor ; element })
    | E_matching { matchee ; cases } ->
-      let data, cases = mono_polymorphic_cases data cases in
+      let data, cases = mono_polymorphic_cases ~raise data cases in
       let data, matchee = self data matchee in
       data, return (E_matching { matchee ; cases })
    | E_record lmap ->
@@ -256,7 +255,7 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
             aux (type_ :: type_insts) forall
          | E_variable variable -> (
             (List.rev type_insts, variable))
-         | _ -> failwith "Corner case : Cannot resolve non-variables with instantiations" in
+         | _ -> raise.Trace.error (Errors.corner_case "Monomorphisation: cannot resolve non-variables with instantiations") in
       let type_instances, lid = aux [] expr in
       let type_ = expr.type_expression in
       let vid, data = match Data.instance_lookup_opt lid type_instances type_ data with
@@ -269,12 +268,12 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       let data, expression = self data expression in
       data, return (E_assign {binder;expression})
 
-and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
+and mono_polymorphic_cases ~raise : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
    match m with
    | Match_variant { tv ; cases } ->
       let aux { AST.constructor ; pattern ; body } (data, r) =
          let binder_instances = Data.instances_lookup pattern data in
-         let data, body = mono_polymorphic_expression data body in
+         let data, body = mono_polymorphic_expression ~raise data body in
          let data = Data.instances_add pattern binder_instances data in
          data, { AST.constructor ; pattern ; body} :: r in
       let data, cases = List.fold_right cases ~f:aux ~init:(data, []) in
@@ -284,7 +283,7 @@ and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matchin
       let data, binders_instances = List.fold_right binders ~init:(data, []) ~f:(fun binder (data, binders_instances) ->
                                        let binder_instances = Data.instances_lookup binder data in
                                        data, (binder, binder_instances) :: binders_instances) in
-      let data, body = mono_polymorphic_expression data body in
+      let data, body = mono_polymorphic_expression ~raise data body in
       let data = List.fold_right binders_instances ~init:data ~f:(fun (binder, binder_instances) data ->
                      Data.instances_add binder binder_instances data) in
       data, Match_record { tv ; body ; fields }
@@ -320,6 +319,6 @@ let check_if_polymorphism_present ~raise e =
 
 let mono_polymorphic_expr ~raise e =
   let e = Deduplicate_binders.program e in
-  let _, m = mono_polymorphic_expression Data.empty e in
+  let _, m = mono_polymorphic_expression ~raise Data.empty e in
   let m = check_if_polymorphism_present ~raise m in
   m
