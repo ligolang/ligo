@@ -60,6 +60,66 @@ module LigoRC = struct
   let registry_key = Str.global_replace (Str.regexp "\\(https?://\\)") ""
 end
 
+module LigoManifest = struct
+  type t =
+    { name               : string
+    ; version            : string
+    ; description        : string
+    ; scripts            : (string * string) list
+    ; author             : string
+    ; license            : string
+    ; readme             : string
+    ; ligo_manifest_path : string
+    } [@@deriving to_yojson]
+  
+  let read ~project_root =
+    match project_root with
+      None -> failwith "No package.json found!"
+    | Some project_root ->
+    let ligo_manifest_path = Filename.concat project_root "package.json" in
+    let json = try Yojson.Safe.from_file ligo_manifest_path 
+      with _ -> failwith "No package.json found!" in
+
+    let module Util = Yojson.Safe.Util in    
+    let name = try json |> Util.member "name" |> Util.to_string 
+      with _ -> "No name field in package.json" in
+    let version = try json |> Util.member "version" |> Util.to_string
+      with _ -> "No version field in package.json'"  in
+    let description = try json |> Util.member "description" |> Util.to_string
+      with _ -> "" in
+    let scripts = try json 
+      |> Util.member "scripts" 
+      |> Util.to_assoc 
+      |> List.Assoc.map ~f:(Util.to_string)
+      with _ -> []  in
+    let author = try json |> Util.member "author" |> Util.to_string 
+      with _ -> failwith "No author field  in package.json" in
+    let license = try json |> Util.member "license" |> Util.to_string
+      with _ -> failwith "No license field in package.json" in
+
+    let readme = try json |> Util.member "readme" |> Util.to_string
+      with _ -> "ERROR: No README data found!" in 
+    { name ; version ; description ; scripts ; author ; license ; readme ; ligo_manifest_path }
+end
+
+let find_project_root () =
+  let pwd = Unix.getcwd in
+  let rec aux p =
+    let dirs = Sys.ls_dir p in
+    if List.exists ~f:(String.equal "package.json") dirs
+    then Some p
+    else
+      let p' = Filename.dirname p in
+      (* Check if we reached the root directory, since the parent of 
+         the root directory is the root directory itself *)
+      if Filename.equal p p'
+      then None
+      else aux p'
+  in
+  try aux (pwd ()) 
+  (* In case of permission issues when reading file, catch the exception *)
+  with _ -> None 
+
 let return_good ?output_file v = 
   let fmt : Format.formatter = match output_file with
     | Some file_path -> Format.formatter_of_out_channel @@ Out_channel.create file_path

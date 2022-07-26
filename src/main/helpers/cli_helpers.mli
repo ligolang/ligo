@@ -19,6 +19,23 @@ module LigoRC : sig
   val registry_key : string -> string
 end
 
+module LigoManifest : sig
+  type t =
+    { name               : string
+    ; version            : string
+    ; description        : string
+    ; scripts            : (string * string) list
+    ; author             : string
+    ; license            : string
+    ; readme             : string
+    ; ligo_manifest_path : string
+    } [@@deriving to_yojson]
+  
+  val read : project_root:string option -> t
+end
+
+val find_project_root : unit -> string option
+
 type return = Done | Compileur_Error | Exception of exn
 val return_result : return:return ref -> ?show_warnings:bool -> ?output_file:string -> (unit -> (string*string,string*string) result) -> unit
 

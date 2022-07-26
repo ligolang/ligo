@@ -8,10 +8,11 @@ CLI:
 - [ ] Code clean up
 - [ ] Impl ligo publish
   - [ ] Use a semver library fro validating verison
-  - [ ] Read package.json and prepare request body
+  - [X] Read package.json and prepare request body
   - [X] Read .ligorc and get token
-  - [ ] If no README (.md or any other extension) then "ERROR: No README data found!"
+  - [X] If no README (.md or any other extension) then "ERROR: No README data found!"
   - [X] Impl shasum & integrity (sha-512)
+  - [ ] Response Handling
 - [X] Impl ligo add-user
   - [ ] Response Handling
 - [X] Impl ligo login
@@ -20,6 +21,8 @@ CLI:
 - [ ] Write unit test for json body + headers
 - [ ] Handle errors (duplicate package or version, not authorised, etc.)
 - [ ] Sanitize manifest (Take care of Semver format, rest of the metadata)
+- [ ] Error handline via ~raise (Trace)
+- [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 
 DOCS:
 - [ ] Mention that only gloable ligorc (~/.ligorc) file
@@ -32,16 +35,8 @@ UI:
 *)
 
 module LigoRC = Cli_helpers.LigoRC
+module LigoManifest = Cli_helpers.LigoManifest
 module SMap = Caml.Map.Make(String)
-
-module Scripts = struct
-  type t = string SMap.t
-  let to_yojson t =
-    let kvs = SMap.fold (fun k v xs ->
-      (k,`String v)::xs  
-    ) t [] in
-    `Assoc kvs
-end
 
 type sem_ver = string [@@deriving to_yojson]
 
@@ -56,7 +51,7 @@ type version =
   { name        : string
   ; version     : sem_ver
   ; description : string
-  ; scripts     : Scripts.t
+  ; scripts     : (string * string) list
   ; readme      : string
   ; id          : string [@key "_id"]
   ; dist        : dist
@@ -123,16 +118,17 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
   } SMap.empty
 }
 
-let http ~token ~version ~sha1 ~sha512 ~gzipped_tarball ~scripts ~description ~readme ~ligo_registry ~pkg_name =
+let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry pkg_name) in
+  let LigoManifest.{ name ; version ; scripts ; description ; readme ; _ } = manifest in
+  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
     ("authorization", Format.sprintf "Bearer %s" token) ;
     ("content-type", "application/json") ;
   ] in
   let body = body 
-    ~name:pkg_name 
+    ~name 
     ~version
     ~scripts
     ~description 
@@ -230,7 +226,7 @@ let tar_gzip dir =
 
   Lwt.return (Buffer.contents_bytes buf)
 
-let publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_name =
+let publish ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let* gzipped_tarball = tar_gzip "." in
   let len = Bytes.length gzipped_tarball in
@@ -240,26 +236,23 @@ let publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_na
   let sha512 = gzipped_tarball 
     |> Digestif.SHA512.digest_bytes ~off:0 ~len
     |> Digestif.SHA512.to_raw_string in 
-  http ~token ~version ~sha1 ~sha512 ~gzipped_tarball ~scripts ~description ~readme ~ligo_registry ~pkg_name
+  http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
 (*  *)
-let publish ~ligo_registry ~ligorc_path =
+let publish ~ligo_registry ~ligorc_path ~project_root =
   let open Cohttp in
   let open Cohttp_lwt in
-  (* TODO: read package.json for version, scripts and other stuff *)
-  let pkg_name = "ligo-registry-almost-done" in
-  let version = "1.0.0" in
-  let scripts = SMap.add "test" "ligo run test list.test.mligo" SMap.empty in
-  let description = "List helpers for LIGO" in
-  let readme = "ERROR: No README data found!" in
-  (* TODO: .ligorc for token *)
+
+  let manifest = Cli_helpers.LigoManifest.read ~project_root in
+  
   let ligorc = LigoRC.read ~ligorc_path in
   let registry_key = LigoRC.registry_key ligo_registry in
   let token = LigoRC.get_token ~registry_key ligorc in 
+  
   match token with
     None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
   | Some token ->
-    let response,_body = Lwt_main.run (publish ~token ~version ~scripts ~description ~readme ~ligo_registry ~pkg_name) in
+    let response,_body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
     (* TODO: better error & success message *)
     let code = response |> Response.status |> Code.code_of_status in
     Printf.printf "Response code: %d\n" code;

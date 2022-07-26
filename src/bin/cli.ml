@@ -277,6 +277,8 @@ let project_root =
   let name = "--project-root" in
   let doc  = "PATH The path to root of the project." in
   let spec = optional string in
+  let spec = map_flag spec
+    ~f:(function None -> Cli_helpers.find_project_root () | Some x -> Some x) in
   flag ~doc name spec
 
 let cache_path =
@@ -779,9 +781,9 @@ let install =
 let publish =
   let summary   = "publish LIGO packages declared in package.json" in
   let readme () = "TODO: Doc string" in
-  let f ligo_registry ligorc_path () =
-    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
+  let f ligo_registry ligorc_path project_root () =
+    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
 
 let add_user =
   let summary   = "create a user for LIGO package registry" in
