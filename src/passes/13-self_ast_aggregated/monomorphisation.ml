@@ -47,10 +47,6 @@ module Data = struct
    let instance_add (lid : AST.expression_variable) (instance : Instance.t) (data : t) =
       let lid_instances = instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data) in
       LIMap.add lid lid_instances data
-
-   let instances_add (lid : AST.expression_variable) (instances : Instance.t list) (data : t) =
-      let lid_instances = instances @ (Option.value ~default:[] @@ LIMap.find_opt lid data) in
-      LIMap.add lid lid_instances data
 end
 
 (* This is not a proper substitution, it might capture variables: it should be used only with v' a fresh variable *)
@@ -194,9 +190,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
       let data, args = self data args in
       data, return (E_application { lamb; args })
    | E_lambda { binder ; result } ->
-      let binder_instances = Data.instances_lookup binder.var data in
       let data, result = self data result in
-      let data = Data.instances_add binder.var binder_instances data in
       data, return (E_lambda { binder ; result })
    | E_type_abstraction { type_binder ; result } ->
       ignore (type_binder,result);
@@ -207,29 +201,27 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
       let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
       let type_ = rhs.type_expression in
-      let pre_binder_instances = Data.instances_lookup let_binder.var data in
       let data, let_result = self data let_result in
       let binder_instances = Data.instances_lookup let_binder.var data in
-      let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
+      let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (data, let_result) =
         let let_binder = vid in
         let table = List.zip_exn type_vars type_instances in
         let rhs = { rhs with type_expression = type_ } in
-        let rhs, data = match rhs.expression_content with
+        let data, rhs = match rhs.expression_content with
           | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
             let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
             let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
-            { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }, data
-          | _ -> rhs, data in
+            data, { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }
+          | _ -> data, rhs in
         let rhs = apply_table_expr table rhs in
         let data, rhs = self data rhs in
         let rhs = evaluate_external_typer typed rhs in
         let rhs = { rhs with type_expression = typed } in
-        (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}, data) in
-      let expr, data = match type_vars with
+        data, (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}) in
+      let data, expr = match type_vars with
         | [] -> let data, rhs = self data rhs in
-                return (E_let_in { let_binder ; rhs ; let_result ; attr }), data
-        | _ -> List.fold_right binder_instances ~f:(build_let @@ let_binder.var) ~init:(let_result, data) in
-      let data = Data.instances_add let_binder.var pre_binder_instances data in
+                data, return (E_let_in { let_binder ; rhs ; let_result ; attr })
+        | _ -> List.fold_right binder_instances ~f:(build_let @@ let_binder.var) ~init:(data, let_result) in
       data, expr
    )
    | E_constructor { constructor ; element } ->
@@ -272,20 +264,12 @@ and mono_polymorphic_cases ~raise : Data.t -> AST.matching_expr -> Data.t * AST.
    match m with
    | Match_variant { tv ; cases } ->
       let aux { AST.constructor ; pattern ; body } (data, r) =
-         let binder_instances = Data.instances_lookup pattern data in
          let data, body = mono_polymorphic_expression ~raise data body in
-         let data = Data.instances_add pattern binder_instances data in
          data, { AST.constructor ; pattern ; body} :: r in
       let data, cases = List.fold_right cases ~f:aux ~init:(data, []) in
       data, Match_variant { tv ; cases }
    | Match_record { tv ; body ; fields } ->
-      let binders = List.map ~f:(fun (b : _ AST.binder) -> b.var) @@ AST.LMap.to_list fields in
-      let data, binders_instances = List.fold_right binders ~init:(data, []) ~f:(fun binder (data, binders_instances) ->
-                                       let binder_instances = Data.instances_lookup binder data in
-                                       data, (binder, binder_instances) :: binders_instances) in
       let data, body = mono_polymorphic_expression ~raise data body in
-      let data = List.fold_right binders_instances ~init:data ~f:(fun (binder, binder_instances) data ->
-                     Data.instances_add binder binder_instances data) in
       data, Match_record { tv ; body ; fields }
 
 let check_if_polymorphism_present ~raise e =
