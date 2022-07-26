@@ -6,22 +6,21 @@ CLI:
 - [ ] User facing docs
 - [ ] Devs facing docs
 - [ ] Code clean up
-- [ ] Impl ligo publish
+- [-] Impl ligo publish
   - [X] Use a semver library fro validating verison
   - [X] Read package.json and prepare request body
   - [X] Read .ligorc and get token
   - [X] If no README (.md or any other extension) then "ERROR: No README data found!"
   - [X] Impl shasum & integrity (sha-512)
-  - [ ] Response Handling
+  - [X] Response Handling
 - [X] Impl ligo add-user
-  - [ ] Response Handling
+  - [-] Response Handling
 - [X] Impl ligo login
-  - [ ] Response Handling
+  - [-] Response Handling
 - [ ] Debatable - write tests
 - [ ] Write unit test for json body + headers
-- [ ] Handle errors (duplicate package or version, not authorised, etc.)
+- [-] Handle errors (duplicate package or version, not authorised, etc.)
 - [X] Sanitize manifest (Take care of Semver format, rest of the metadata)
-- [ ] Error handline via ~raise (Trace)
 - [ ] .ligoignore ?? (for vbeta ask for only relative paths to ignore)
 
 DOCS:
@@ -152,7 +151,6 @@ let os_type =
 
 let gzip fname fd =
   let file_size = Int.of_int64_exn (Unix.stat fname).st_size in
-  Format.printf "foo.tgz file size after tar: %d" file_size;
   let level = 4 in
   let buffer_len = De.io_buffer_size in
   let time () = Int32.of_float (Unix.gettimeofday ()) in
@@ -188,7 +186,7 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   let* files = match status.st_kind with
     S_REG -> Lwt.return [file_or_dir]
   | S_DIR ->
-    if SSet.mem ignore_dirs file_or_dir 
+    if SSet.mem ignore_dirs (Filename.basename file_or_dir) 
     then Lwt.return [] else 
     let all = Sys.ls_dir file_or_dir in
     let* files = 
@@ -213,19 +211,13 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
 let tar_gzip ~name ~version dir = 
   let open Lwt.Syntax in
   let* files = get_all_files dir in
-
   let fname = Filename.temp_file name version in
-
-  let* fd = Lwt_unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
-  let* () = Tar_lwt_unix.Archive.create files fd in
-
-  let* () = Lwt_unix.close fd in
-  let* fd = Lwt_unix.openfile fname [ Unix.O_RDWR ] 0o666 in
-
-  let buf = gzip fname (Lwt_unix.unix_file_descr fd) in
-
-  let* () = Lwt_unix.close fd in
-
+  let fd = Caml.Unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
+  let () = Tar_unix.Archive.create files fd in
+  let () = Caml.Unix.close fd in
+  let fd = Caml.Unix.openfile fname [ Unix.O_RDWR ] 0o666 in
+  let buf = gzip fname fd in
+  let () = Caml.Unix.close fd in
   Lwt.return (Buffer.contents_bytes buf)
 
 let publish ~token ~ligo_registry ~manifest =
@@ -241,11 +233,17 @@ let publish ~token ~ligo_registry ~manifest =
     |> Digestif.SHA512.to_raw_string in 
   http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
-(*  *)
-let publish ~ligo_registry ~ligorc_path ~project_root =
+let handle_server_response response body =
   let open Cohttp in
   let open Cohttp_lwt in
+  let body = Lwt_main.run (Body.to_string body) in
+  let code = Response.status response in
+  match code with
+    `Conflict -> Error ("package already exists", "")
+  | `Created -> Ok ("package successfully published", "")
+  | _ -> Error (body, "")
 
+let publish ~ligo_registry ~ligorc_path ~project_root =
   let manifest = Cli_helpers.LigoManifest.read ~project_root in
   
   let ligorc = LigoRC.read ~ligorc_path in
@@ -256,11 +254,4 @@ let publish ~ligo_registry ~ligorc_path ~project_root =
     None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
   | Some token ->
     let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
-    let body = Lwt_main.run (Body.to_string body) in
-    (* TODO: better error & success message *)
-    let code = response |> Response.status |> Code.code_of_status in
-    Printf.printf "Response code: %d\n" code;
-    Printf.printf "Headers: %s\n" (response |> Response.headers |> Header.to_string);
-    (* TODO: use _body for better errors *)
-    Printf.printf "Body: %s\n" body;
-    Ok ("", "")
+    handle_server_response response body
