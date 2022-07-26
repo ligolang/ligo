@@ -235,7 +235,6 @@ let publish ~token ~ligo_registry ~manifest =
   http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
 let handle_server_response ~name response body =
-  let open Cohttp in
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
   let code = Response.status response in

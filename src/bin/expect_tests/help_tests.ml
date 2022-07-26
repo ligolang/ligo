@@ -20,9 +20,9 @@ let%expect_test _ =
       print      print intermediary program representation.
                  Warning: Intended for development of LIGO and can break at any time
       install    install LIGO packages declared in package.json
-      publish    publish LIGO packages declared in package.json
-      add-user   create a user for LIGO package registry
-      login      login to LIGO package registry
+      publish    publish the LIGO package declared in package.json
+      add-user   create a new user for the LIGO package registry
+      login      login to the LIGO package registry
       version    print version information
       help       explain a given subcommand (perhaps recursively)
 

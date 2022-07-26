@@ -68,7 +68,6 @@ let extract_success_response response =
   { token ; ok }
 
 let handle_server_response ~update_token response body =
-  let open Cohttp in
   let open Cohttp_lwt in
   let body = Lwt_main.run (Body.to_string body) in
   let code = Response.status response in
