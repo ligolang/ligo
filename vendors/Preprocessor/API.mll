@@ -200,7 +200,7 @@ let fail state region error =
   let msg = error_to_string error in
   let msg = format_error state.config ~msg region
   in List.iter close_in state.chans;
-    raise (Error (state.out, msg))
+     raise (Error (state.out, msg))
 
 let mk_reg buffer =
   let start = Lexing.lexeme_start_p buffer |> Pos.from_byte
