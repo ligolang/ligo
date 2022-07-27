@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { join } from 'path'
 import { platform } from 'process'
 
-import { ValueCategory } from './messages'
+import { ValidateValueCategory } from './messages'
 import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescriptorFactory'
 import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoDebugConfigurationProvider'
 import LigoProtocolClient from './LigoProtocolClient'
@@ -28,7 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new LigoDebugConfigurationProvider(
 		async (info: AfterConfigResolvedInfo): Promise<void> => {
 			await client.sendMsg('initializeLogger', { file: info.file, logDir: info.logDir })
-			await client.sendMsg('setFile', { file: info.file })
+			debuggedContractSession.ref.contractMetadata =
+				(await client.sendMsg('getContractMetadata', { file: info.file, entrypoint: info.entrypoint }))
+					.contractMetadata
 		});
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
 
@@ -38,35 +40,13 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(factory)
 	}
 
-	const validateInput = (category: ValueCategory) => async (value: string): Promise<Maybe<string>> => {
+	const validateInput = (category: ValidateValueCategory) => async (value: string): Promise<Maybe<string>> => {
 		if (client) {
 			const pickedMichelsonEntrypoint = debuggedContractSession.ref.pickedMichelsonEntrypoint
 			return (await client.sendMsg('validateValue', { value, category, pickedMichelsonEntrypoint })).message
 		}
 		return undefined
 	}
-
-	// TODO (LIGO-618): Check if it's a valid entrypoint, and let the user pick
-	// between options.
-	const skipSave = async (value: string) => undefined
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('extension.ligo-debugger.requestEntrypoint',
-			createRememberingInputBox(
-				context,
-				validateInput,
-				"entrypoint",
-				"Please input the contract entrypoint",
-				"Entrypoint name",
-				debuggedContractSession,
-				async (value: string) => {
-					await client.sendMsg('setEntrypoint', { entrypoint: value })
-					await client.sendMsg('compileContract', {})
-					debuggedContractSession.ref.contractMetadata =
-						(await client.sendMsg('getContractMetadata', {})).contractMetadata
-					debuggedContractSession.ref.contractMetadata.ligoEntrypoint = value
-				},
-			)));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestMichelsonEntrypoint',
@@ -82,21 +62,17 @@ export function activate(context: vscode.ExtensionContext) {
 				"parameter",
 				"Please input the contract parameter",
 				"Parameter value",
-				debuggedContractSession,
-				skipSave,
-			)));
+				debuggedContractSession)));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestStorageValue',
-			createRememberingInputBox(
-				context,
+			createRememberingInputBox(context,
 				validateInput,
 				"storage",
 				"Please input the contract storage",
 				"Storage value",
-				debuggedContractSession,
-				skipSave,
-			)));
+				debuggedContractSession)));
+
 }
 
 export function deactivate() {
