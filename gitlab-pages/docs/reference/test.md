@@ -160,6 +160,22 @@ type typed_address &lt;&apos;param, &apos;s&gt;
 A type for an address of a contract with parameter `'param` and storage
 `'storage`.
 
+
+<SyntaxTitle syntax="pascaligo">
+type unforged_ticket(s) is record [ ticketer : address ; value : s ; amount : nat ]
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type 's unforged_ticket = { ticketer : address ; value : 's ; amount : nat }
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type typed_address ('param, 'storage)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+type typed_address &lt;s&gt; = { ticketer : address , value : s , amount : nat }
+</SyntaxTitle>
+
+A type for decompile tickets.
+
 <SyntaxTitle syntax="pascaligo">
 val to_contract&lt;param,storage&gt; : typed_address (param, storage) -> contract (param)
 </SyntaxTitle>
