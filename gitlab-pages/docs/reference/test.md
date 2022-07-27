@@ -168,10 +168,10 @@ type unforged_ticket(s) is record [ ticketer : address ; value : s ; amount : na
 type 's unforged_ticket = { ticketer : address ; value : 's ; amount : nat }
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type typed_address ('param, 'storage)
+type unforged_ticket s = { ticketer : address , value : s , amount : nat }
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type typed_address &lt;s&gt; = { ticketer : address , value : s , amount : nat }
+type unforged_ticket &lt;s&gt; = { ticketer : address , value : s , amount : nat }
 </SyntaxTitle>
 
 A type for decompile tickets.

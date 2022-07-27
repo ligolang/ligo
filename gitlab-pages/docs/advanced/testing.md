@@ -720,7 +720,7 @@ let test_originate_contract =
 
   match unforged_storage with
   | Some { ticketer ; value ; amount } ->
-    let () = Test.log ticketer in
+    let () = Test.log ("unforged_ticket", unforged_storage) in
     let () = assert (value = ticket_info.0) in
     let () = assert (amount = ticket_info.1) in
     ()
@@ -761,8 +761,8 @@ const test_originate_contract_ = () : unit => {
 
   match (unforged_storage, {
   Some: (x: unforged_ticket<bytes>) => {
+    let _ = Test.log ("unforged_ticket", x) ;
     let { ticketer , value , amount } = x ;
-    let _ = Test.log (ticketer) ;
     let _ = assert (value == ticket_info[0]) ;
     let _ = assert (amount == ticket_info[1]) ;
     unit
@@ -780,11 +780,9 @@ const test_originate_contract = test_originate_contract_ ();
 result:
 
 ```bash
-> ligo run test originate.mligo 
-("poxy addr:" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
-("hello" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
-("world" , KT1QGANLjYsyJmw1QNww9Jkgb4ccQr6W2gsC)
+("unforged_ticket" , {amount = 15n ; ticketer = KT1Qp8u3v4seQHPYfpSw6eWvPG8CojH3m18G ; value = 0x0202})
 Everything at the top-level was executed.
+- test_originate_contract_ exited with value <fun>.
 - test_originate_contract exited with value ().
 ```
 
