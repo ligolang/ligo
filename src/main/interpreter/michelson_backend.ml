@@ -424,7 +424,7 @@ let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code :
   | _ ->
      raise.error (Errors.generic_error Location.generated "Could not parse") in
   let options = make_options ~raise (Some ctxt) in
-  match Ligo_run.Of_michelson.run_expression ~raise ~options func func_ty with
+  match Ligo_run.Of_michelson.run_expression ~raise ~legacy:true ~options func func_ty with
   | Success (ty, value) ->
      Result.return @@ Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
   | Fail f ->
