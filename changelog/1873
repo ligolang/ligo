@@ -1,0 +1,7 @@
+author: pewulfman
+description: The scope of `#import` directive has been fixed so that the imported
+  module is created in-place instead of at the beginning of the file. (i.e won't be
+  shadowed anymore by a module declared before the import)
+merge_request: '1873'
+title: 'Fix: scope of #import'
+type: fixed

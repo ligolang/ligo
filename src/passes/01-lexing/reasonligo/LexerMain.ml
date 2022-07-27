@@ -1,9 +1,10 @@
 (* Driver for the ReasonLIGO lexer *)
 
 module Comments         = Preprocessing_reasonligo.Comments
+module Modules          = Preprocessing_reasonligo.Modules
 module File             = Preprocessing_reasonligo.File
 module Token            = Lexing_reasonligo.Token
-module Preprocessor_CLI = Preprocessor.CLI.Make (Comments)
+module Preprocessor_CLI = Preprocessor.CLI.Make (Comments) (Modules)
 module Lexer_CLI        = LexerLib.CLI.Make (Preprocessor_CLI)
 module Self_tokens      = Lexing_reasonligo.Self_tokens
 module MainGen          = Lexing_shared.LexerMainGen

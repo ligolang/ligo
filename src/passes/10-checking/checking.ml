@@ -463,12 +463,8 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
     let context = List.fold av ~f:(fun c v -> Typing_context.add_type_var c v ()) ~init:context in
     let tv = Option.map ~f:(evaluate_type ~raise context) ascr in
     let rhs = self ?tv_opt:tv ~context:(app_context, context) rhs in
-    let rec aux t = function
-      | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
-    let type_expression = aux rhs.type_expression (List.rev av) in
-    let rhs = { rhs with type_expression } in
-    let context = Typing_context.add_value pre_context var type_expression in
+    let rhs = Ast_typed.Helpers.build_type_abstractions rhs (List.rev av) in
+    let context = Typing_context.add_value pre_context var rhs.type_expression in
     let let_result = self ?tv_opt ~context:(app_context, context) let_result in
     return (E_let_in {let_binder = {var;ascr=tv;attributes}; rhs; let_result; attr }) let_result.type_expression
   | E_type_in {type_binder; rhs ; let_result} ->
@@ -659,11 +655,7 @@ match Location.unwrap d with
     let expr =
       trace ~raise (constant_declaration_tracer loc var expr tv) @@
       type_expression ~options ?tv_opt:tv (App_context.create tv, env) expr in
-    let rec aux t = function
-      | [] -> t
-      | (abs_var :: abs_vars) -> t_for_all abs_var Type (aux t abs_vars) in
-    let type_expression = aux expr.type_expression (List.rev av) in
-    let expr = { expr with type_expression } in
+    let expr = Ast_typed.Helpers.build_type_abstractions expr (List.rev av) in
     let c = Typing_context.add_value c var expr.type_expression in
     return c @@ Declaration_constant { binder = { ascr = tv ; var ; attributes } ; expr ; attr }
   | Declaration_module { module_binder ; module_ ; module_attr = {public ; hidden} } -> (

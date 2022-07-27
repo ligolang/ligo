@@ -1,9 +1,10 @@
 (* Driver for the PascaLIGO lexer *)
 
 module Comments         = Preprocessing_pascaligo.Comments
+module Modules          = Preprocessing_pascaligo.Modules
 module File             = Preprocessing_pascaligo.File
 module Token            = Lexing_pascaligo.Token
-module Preprocessor_CLI = Preprocessor.CLI.Make (Comments)
+module Preprocessor_CLI = Preprocessor.CLI.Make (Comments) (Modules)
 module Lexer_CLI        = LexerLib.CLI.Make (Preprocessor_CLI)
 module Self_tokens      = Lexing_pascaligo.Self_tokens
 module MainGen          = Lexing_shared.LexerMainGen

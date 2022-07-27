@@ -7,6 +7,7 @@ module Region = Simple_utils.Region
 (* Internal dependencies *)
 
 module Comments      = Preprocessing_cameligo.Comments
+module Modules       = Preprocessing_cameligo.Modules
 module File          = Preprocessing_cameligo.File
 module Token         = Lexing_cameligo.Token
 module Self_tokens   = Lexing_cameligo.Self_tokens
@@ -16,7 +17,7 @@ module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)
 
-module Preproc_CLI = Preprocessor.CLI.Make (Comments)
+module Preproc_CLI = Preprocessor.CLI.Make (Comments) (Modules)
 module   Lexer_CLI =     LexerLib.CLI.Make (Preproc_CLI)
 module  Parser_CLI =    ParserLib.CLI.Make (Lexer_CLI)
 
@@ -55,6 +56,7 @@ module Print =
 module Main = ParserMainGen.Make
                 (File)
                 (Comments)
+                (Modules)
                 (Token)
                 (ParErr)
                 (Self_tokens)
