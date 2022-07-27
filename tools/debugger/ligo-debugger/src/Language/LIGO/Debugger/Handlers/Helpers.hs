@@ -16,7 +16,7 @@ import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), HasSpecificMessages (..), RIO, RioContext (..))
+  (DAPOutputMessage (..), DAPSpecificResponse (..), RIO, RioContext (..))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
@@ -24,7 +24,6 @@ import Morley.Michelson.Typed (Contract' (..), SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Text.Interpolation.Nyan
-import UnliftIO.Exception (throwIO)
 
 import Language.LIGO.Debugger.CLI.Call
 
@@ -38,8 +37,8 @@ instance FromBuilder DAP.Message where
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: FilePath
-  , lsContract :: Maybe SomeContract
-  , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
+  , lsContract :: SomeContract
+  , lsEntrypoint :: String  -- ^ @main@ method to use
   , lsAllLocs :: Set SourceLocation
   }
 
@@ -47,35 +46,6 @@ instance Buildable LigoLanguageServerState where
   build LigoLanguageServerState{..} = [int||
     Debugging program: #{lsProgram}
     |]
-
-getServerState
-  :: LanguageServerStateExt ext ~ LigoLanguageServerState
-  => ExceptT DAP.Message (RIO ext) (LanguageServerStateExt ext)
-getServerState = do
-  lServM <- readTVarIO =<< asks _rcLSState
-  maybe (throwDAPError "Language server state is not initialized") pure lServM
-
-getContract
-  :: LanguageServerStateExt ext ~ LigoLanguageServerState
-  => ExceptT DAP.Message (RIO ext) SomeContract
-getContract =
-  maybe (throwDAPError "Contract was not initialized") pure . lsContract =<< getServerState
-
-getProgram
-  :: LanguageServerStateExt ext ~ LigoLanguageServerState
-  => ExceptT DAP.Message (RIO ext) FilePath
-getProgram = lsProgram <$> getServerState
-
-getEntrypoint
-  :: LanguageServerStateExt ext ~ LigoLanguageServerState
-  => ExceptT DAP.Message (RIO ext) String
-getEntrypoint =
-  maybe (throwDAPError "Entrypoint was not set") pure . lsEntrypoint =<< getServerState
-
-getAllLocs
-  :: LanguageServerStateExt ext ~ LigoLanguageServerState
-  => ExceptT DAP.Message (RIO ext) (Set SourceLocation)
-getAllLocs = lsAllLocs <$> getServerState
 
 throwDAPError :: (MonadError DAP.Message m) => Builder -> m a
 throwDAPError = throwError . fromBuilder
@@ -147,20 +117,3 @@ parseValue ctxContractPath category val = do
       [ T.stripPrefix "m:"
       , T.stripPrefix "michelson:"
       ]
-
-validateEntrypoint :: (MonadIO m, MonadError Text m) => FilePath -> String -> m ()
-validateEntrypoint path value = do
-  -- This is dumb, but I (@heitor.toledo) believe LIGO provides no way to
-  -- extract, or validate, an entrypoint.
-  -- TODO (LIGO-618): Check if it's a valid entrypoint, and let the user pick
-  -- between options.
-  result <- liftIO $ try $ void $ compileLigoContractDebug value path
-  case result of
-    Left ex@ProcessKilledException{pkeMessage}
-      | invalidEpType `T.isInfixOf` pkeMessage -> throwError invalidEpType
-      | undefinedEp `T.isInfixOf` pkeMessage -> throwError undefinedEp
-      | otherwise -> throwIO ex
-    Right () -> pass
-  where
-    invalidEpType = [int||Invalid type for entrypoint "#{value}".|]
-    undefinedEp = [int||Entrypoint #{value} does not exist|]
