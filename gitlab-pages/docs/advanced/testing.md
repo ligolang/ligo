@@ -582,7 +582,7 @@ Here is an example using `Proxy_ticket.init_transfer` and `Proxy_ticket.transfer
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=usage_transfer
-#include "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo"
+#import "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo" "Proxy_ticket"
 
 type param = int * string ticket
 
@@ -600,7 +600,7 @@ let test_transfer_to_contract =
     (* mk_param is executed __by the proxy contract__ *)
     let mk_param : string ticket -> param = fun (t : string ticket) -> 42,t in
     (* initialize a proxy contract in charge of creating and sending your tickets *)
-    init_transfer mk_param
+    Proxy_ticket.init_transfer mk_param
   in
   let () = Test.log ("poxy addr:", proxy_taddr) in
 
@@ -608,12 +608,12 @@ let test_transfer_to_contract =
     (* ticket_info lets you control the amount and the value of the tickets you send *)
     let ticket_info = ("hello",10n) in
     (* we send ticket to main through the proxy-contract *)
-    transfer proxy_taddr (ticket_info,main_addr)
+    Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
   in
   let () = Test.log (Test.get_storage main_taddr) in
   let _ =
     let ticket_info = ("world",5n) in
-    transfer proxy_taddr (ticket_info,main_addr)
+    Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
   in
   let () = Test.log (Test.get_storage main_taddr) in
   ()
@@ -625,7 +625,7 @@ let test_transfer_to_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=usage_transfer
-#include "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo"
+#import "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo" "Proxy_ticket"
 
 type param = [ int , ticket<string>]
 
@@ -643,17 +643,17 @@ const test_transfer_to_contract_ = () : unit => {
   let mk_param = (t:ticket<string>) : param => { return [42,t] } ;
   /* Use this address everytime you want to send tickets from the same proxy-contract */
   /* initialize a proxy contract in charge of creating and sending your tickets */
-  let proxy_taddr = init_transfer (mk_param) ;
+  let proxy_taddr = Proxy_ticket.init_transfer (mk_param) ;
   let _ = Test.log (["poxy addr:", proxy_taddr]) ;
 
   /* ticket_info lets you control the amount and the value of the tickets you send */
   let ticket_info1 = ["hello",10 as nat] ;
   /* we send ticket to main through the proxy-contract */
-  let _ = transfer (proxy_taddr, [ticket_info1,main_addr]) ;
+  let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info1,main_addr]) ;
   let _ = Test.log (Test.get_storage (main_taddr)) ;
   
   let ticket_info2 = ["world",5 as nat] ;
-  let _ = transfer (proxy_taddr, [ticket_info2,main_addr]) ;
+  let _ = Proxy_ticket.transfer (proxy_taddr, [ticket_info2,main_addr]) ;
   Test.log (Test.get_storage (main_taddr));
 };
 
@@ -694,7 +694,7 @@ Here is an example using `Proxy_ticket.originate` and the type `unforged_ticket`
 
 ```cameligo test-ligo group=usage_orig
 (* originate.mligo *)
-#include "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo"
+#import "./gitlab-pages/docs/advanced/src/proxy_ticket.mligo" "Proxy_ticket"
 
 
 type storage = (bytes ticket) option
@@ -712,7 +712,7 @@ let main ( ((),s) : unit * storage) : operation list * storage =
 let test_originate_contract =
   let mk_storage = fun (t:bytes ticket) -> Some t in
   let ticket_info = (0x0202, 15n) in
-  let addr = originate ticket_info mk_storage main in
+  let addr = Proxy_ticket.originate ticket_info mk_storage main in
   let storage : michelson_program = Test.get_storage_of_address addr in
   let unforged_storage = (Test.decompile storage : unforged_storage) in
 
@@ -732,7 +732,7 @@ let test_originate_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=usage_orig
-#include "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo"
+#import "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo" "Proxy_ticket"
 
 
 type storage = option< ticket<bytes> >
@@ -753,7 +753,7 @@ const main = ( [_,s] : [unit , storage]) : [ list<operation> , storage] => {
 const test_originate_contract_ = () : unit => {
   let mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
   let ticket_info = [0x0202, 15 as nat] ;
-  let addr = originate (ticket_info, mk_storage, main) ;
+  let addr = Proxy_ticket.originate (ticket_info, mk_storage, main) ;
   let storage : michelson_program = Test.get_storage_of_address (addr) ;
   let unforged_storage = (Test.decompile (storage) as unforged_storage) ;
 
