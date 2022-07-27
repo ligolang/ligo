@@ -91,6 +91,16 @@ let build_applications_opt (lamb : expression) (args : expression list) =
        None in
   aux lamb args lamb.type_expression
 
+(* This function re-builds a term prefixed with E_type_abstraction:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression /\ t1 . ... . /\ tn . e *)
+let rec build_type_abstractions e = function
+  | [] -> e
+  | (abs_var :: abs_vars) ->
+     let e = build_type_abstractions e abs_vars in
+     { e with expression_content = E_type_abstraction { type_binder = abs_var ; result = e } ;
+              type_expression = Combinators.t_for_all abs_var Type e.type_expression }
+
 (* These tables are used during inference / for substitution *)
 module TMap = Simple_utils.Map.Make(TypeVar)
 
