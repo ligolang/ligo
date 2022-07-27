@@ -90,6 +90,16 @@ module LigoManifest = struct
     Ok t
     end with Failure e -> Error e
 
+  let try_readme ~project_root =
+    let ls = Sys.ls_dir project_root in
+    match List.find ls ~f:(fun d -> 
+      String.equal "readme.md" (String.lowercase d) ||
+      String.equal "readme" (String.lowercase d)) with 
+      None -> "ERROR: No README data found!"
+    | Some r ->
+      let contents = In_channel.read_all (Filename.concat project_root r) in
+      String.escaped contents
+
   let read ~project_root =
     match project_root with
       None -> failwith "No package.json found!"
@@ -115,7 +125,7 @@ module LigoManifest = struct
       let license = try json |> Util.member "license" |> Util.to_string
         with _ -> failwith "No license field in package.json" in
       let readme = try json |> Util.member "readme" |> Util.to_string
-        with _ -> "ERROR: No README data found!" in 
+        with _ -> try_readme ~project_root in 
       Ok{ name ; version ; description ; scripts ; author ; license ; readme ; ligo_manifest_path }
     with Failure e -> Error e
 end
