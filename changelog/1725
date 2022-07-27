@@ -1,0 +1,7 @@
+author: lesenechal.remi
+description: '- [Testing framework] support for decompilation for `ticket`s into `unforged_ticket`s\n-
+  [Testing framework] documentation about ticket testing'
+merge_request: '1725'
+title: 'Testing framework : Documentation on ticket testing + support for decompilation
+  of tickets to unforged tickets'
+type: added
