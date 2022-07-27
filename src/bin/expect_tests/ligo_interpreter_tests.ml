@@ -58,6 +58,7 @@ let%expect_test _ =
     - test_set_fold_desc exited with value ().
     - test_set_update exited with value ().
     - test_map_get_and_update exited with value ().
+    - test_big_map_get_and_update exited with value ().
     - test_add_mutez exited with value ().
     - test_sub_mutez exited with value ().
     - test_div_mutez exited with value ().

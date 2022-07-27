@@ -329,3 +329,10 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
     match LMap.find_opt label record.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type
+
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e

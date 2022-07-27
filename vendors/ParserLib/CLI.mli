@@ -11,11 +11,17 @@ module type COMMENTS =
     val line  : line_comment option
   end
 
+module type MODULES =
+  sig
+    val mk_module : string -> string -> string
+  end
+
 (* Preprocessor CLI *)
 
 module type PREPROCESSING_CLI =
   sig
     include COMMENTS
+    include MODULES
 
     val input        : string option (* input file         *)
     val extension    : string option (* file extension     *)

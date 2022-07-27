@@ -21,22 +21,12 @@ let get_declarations_core core_prg =
   let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
   func_declarations @ type_declarations @ mod_declarations
 
-let get_declarations_typed typed_prg =
-  (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
-     the absolute file path, and the REPL prints an absolute file path which is confusing
-     So we ignore the module declarations which which have their module_binder as some absolute path.
-     The imported module name will still be printed by the REPL as it is added as a module alias.
-     Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
-  *)
-  let ignore_module_variable_which_is_absolute_path module_variable =
-    let module_variable = try Ast_typed.ModuleVar.to_name_exn module_variable with _ -> "" in
-    not @@ Caml.Sys.file_exists module_variable in
-
-  let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_typed.list_declarations typed_prg in
-  let type_declarations = List.map ~f:(fun a -> `Type a)   @@ Ligo_compile.Of_typed.list_type_declarations typed_prg in
-  let mod_declarations  = Ligo_compile.Of_typed.list_mod_declarations typed_prg in
-  let mod_declarations  = List.map ~f:(fun a -> `Module a) @@ List.filter mod_declarations ~f:ignore_module_variable_which_is_absolute_path in
-  func_declarations @ type_declarations @ mod_declarations
+let get_declarations_typed (typed_prg : Ast_typed.program) =
+  List.filter_map ~f:Ast_typed.(fun (a : declaration) -> Simple_utils.Location.unwrap a |>
+    (function Declaration_constant a when not a.attr.hidden -> Option.return @@ `Value a.binder.var
+    | Declaration_type a when not a.type_attr.hidden -> Option.return @@`Type a.type_binder
+    | Declaration_module a when not a.module_attr.hidden -> Option.return @@ `Module a.module_binder
+    | _ -> None)) @@ typed_prg
 
 let pp_declaration ppf = function
     `Value a  -> Ast_core.PP.expression_variable ppf a

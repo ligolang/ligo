@@ -15,9 +15,12 @@ type all =
   | `Jsligo_deprecated_failwith_no_return of Location.t
   | `Jsligo_deprecated_toplevel_let of Location.t
   | `Use_meta_ligo of Location.t
+  | `Self_ast_aggregated_warning_bad_self_type of Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
+  | `Deprecated_reasonligo
 ]
 
 let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc,lab)
+let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
 
 let pp : display_format:string display_format ->
   Format.formatter -> all -> unit =
@@ -81,6 +84,14 @@ let pp : display_format:string display_format ->
     | `Jsligo_deprecated_toplevel_let loc ->
       Format.fprintf f "@[<hv>%a@.Toplevel let declaration are silently change to const declaration.@.@]"
       Snippet.pp loc
+    | `Self_ast_aggregated_warning_bad_self_type (got,expected,loc) ->
+      Format.fprintf f
+        "@[<hv>%a@ Warning: Tezos.self type annotation.@.Annotation \"%a\" was given, but contract being compiled would expect \"%a\".@.Note that \"Tezos.self\" refers to the current contract, so the parameters should be generally the same. @]"
+        Snippet.pp loc
+        Ast_aggregated.PP.type_expression got
+        Ast_aggregated.PP.type_expression expected
+    | `Deprecated_reasonligo ->
+      Format.fprintf f "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]"
   )
 let to_json : all -> Yojson.Safe.t = fun a ->
   let json_warning ~stage ~content =
@@ -204,6 +215,23 @@ let to_json : all -> Yojson.Safe.t = fun a ->
                       ("message", message);
                       ("location", loc);
                     ] in
+    json_warning ~stage ~content
+  | `Self_ast_aggregated_warning_bad_self_type (expected,got,loc) ->
+    let stage   = "self_ast_aggregated" in
+    let message = `String "bad self type" in
+    let expected = `String (Format.asprintf "%a" Ast_aggregated.PP.type_expression expected) in
+    let actual = `String (Format.asprintf "%a" Ast_aggregated.PP.type_expression got) in
+    let content = `Assoc [
+       ("message", message);
+       ("location", Location.to_yojson loc);
+       ("expected", expected);
+       ("actual", actual);
+       ]
+    in
+    json_warning ~stage ~content
+  | `Deprecated_reasonligo ->
+    let stage   = "global" in
+    let content = `String "@[Reasonligo is depreacted, support will be dropped in a few versions.@.@]" in
     json_warning ~stage ~content
 
 let format = {pp;to_json}

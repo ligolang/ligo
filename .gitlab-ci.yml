@@ -61,28 +61,6 @@ to_dos:
   artifacts:
     paths:
       - to-dos.html
-
-esy:
-  tags:
-    - windows
-  stage: build
-  only:
-  - merge_requests
-  - dev
-  - /^.*-run-dev$/
-  - /^release/.*$/
-  - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - $env:GIT_CURL_VERBOSE = 1
-    - $env:GIT_TRACE = 1
-    - $env:GIT_TRACE_PACKET = 1
-    - git config http.postBuffer 1048576000
-    - npm i -g esy@beta --force
-    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
-    - $env:HOME = 'C:/Users/gitlabrunner'
-    - esy -vvv
-    - rm -Recurse -Force _esy
-  allow_failure: true
   
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:

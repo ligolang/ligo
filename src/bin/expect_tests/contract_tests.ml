@@ -1072,17 +1072,17 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
-    Error(s) occurred while type checking the contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } } |}]
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1259,7 +1259,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#24. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#32. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1340,7 +1340,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#26. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#35. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
@@ -1389,7 +1389,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
      10 |   let toto : operation list = [ op ] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#35. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#48. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract.mligo" ] ;
   [%expect{|
@@ -1437,6 +1437,12 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
 
   run_ligo_good [ "compile" ; "contract" ; contract "tuples_no_annotation.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14:
       4 |
       5 | let main = ((p,storage): (parameter, storage)) => {
@@ -1467,9 +1473,9 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#24. 
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation_warn.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 10-23:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
@@ -1477,7 +1483,7 @@ let%expect_test _ =
     Warning: unused variable "self_contract".
     Hint: replace it by "_self_contract" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
@@ -1485,14 +1491,15 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
-    Invalid type annotation.
-    "contract (nat)" was given, but "contract (int)" was expected.
-    Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
   [%expect{|
@@ -1638,6 +1645,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1647,6 +1660,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_2.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = big_map (nat, big_map (int, string));
@@ -1657,6 +1676,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_3.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1666,6 +1691,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_4.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = map (int, big_map (nat, big_map (int, string)));
@@ -1918,6 +1949,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "never.religo" ] ;
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
       code { UNPAIR ;
@@ -2233,20 +2270,20 @@ let%expect_test _ =
              LAMBDA
                unit
                unit
-               { { /* x#15 */ } }
+               { { /* x#24 */ } }
              /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */ ;
-             { /* f#14, _ */ } ;
+             { /* f#23, _ */ } ;
              SWAP ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s2#16, f#14 */ } ;
+             { /* s2#25, f#23 */ } ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s3#17, f#14 */ } ;
+             { /* s3#26, f#23 */ } ;
              EXEC ;
-             { /* s#18 */ } ;
+             { /* s#27 */ } ;
              NIL operation
                  /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
              /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */ ;
@@ -2314,17 +2351,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "29" } } }, {}, {}, {},
-              { "environment": [ { "name": "x#15", "source_type": "0" } ] },
+              { "environment": [ { "name": "x#24", "source_type": "0" } ] },
               { "environment":
-                  [ { "name": "f#14", "source_type": "1" },
+                  [ { "name": "f#23", "source_type": "1" },
                     { "source_type": "0" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2#16", "source_type": "0" },
-                    { "name": "f#14", "source_type": "1" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#25", "source_type": "0" },
+                    { "name": "f#23", "source_type": "1" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3#17", "source_type": "0" },
-                    { "name": "f#14", "source_type": "1" } ] }, {},
-              { "environment": [ { "name": "s#18", "source_type": "0" } ] },
+                  [ { "name": "s3#26", "source_type": "0" },
+                    { "name": "f#23", "source_type": "1" } ] }, {},
+              { "environment": [ { "name": "s#27", "source_type": "0" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
@@ -2383,167 +2420,168 @@ let%expect_test _ =
     let total_voting_power#16 =
       ({ DROP ; TOTAL_VOTING_POWER })@(L(unit))[@inline] in
     let get_balance#17 =
-      fun _u#181 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
-    let get_amount#18 = fun _u#183 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
-    let get_now#19 = fun _u#185 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
-    let get_sender#20 = fun _u#187 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
-    let get_source#21 = fun _u#189 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
-    let get_level#22 = fun _u#191 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
-    let get_self_address#23 = fun _u#193 -> (SELF_ADDRESS())[@inline] in
+      fun _u#625 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let get_amount#18 = fun _u#627 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let get_now#19 = fun _u#629 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let get_sender#20 = fun _u#631 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let get_source#21 = fun _u#633 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let get_level#22 = fun _u#635 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let get_self_address#23 = fun _u#637 -> (SELF_ADDRESS())[@inline] in
     let get_chain_id#24 =
-      fun _u#195 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+      fun _u#639 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
     let get_total_voting_power#25 =
-      fun _u#197 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+      fun _u#641 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
     let min_block_time#26 = { DROP ; MIN_BLOCK_TIME }[@inline] in
     let get_min_block_time#27 = { DROP ; MIN_BLOCK_TIME }[@inline] in
-    let voting_power#28 = fun kh#201 -> (({ VOTING_POWER })@(kh#201))[@inline] in
+    let voting_power#28 = fun kh#645 -> (({ VOTING_POWER })@(kh#645))[@inline] in
     let implicit_account#30 =
-      fun kh#205 -> (IMPLICIT_ACCOUNT(kh#205))[@inline] in
-    let pairing_check#34 = fun l#213 -> (({ PAIRING_CHECK })@(l#213))[@inline] in
-    let set_delegate#36 = fun o#217 -> (SET_DELEGATE(o#217))[@inline] in
+      fun kh#649 -> (IMPLICIT_ACCOUNT(kh#649))[@inline] in
+    let pairing_check#34 = fun l#657 -> (({ PAIRING_CHECK })@(l#657))[@inline] in
+    let set_delegate#36 = fun o#661 -> (SET_DELEGATE(o#661))[@inline] in
     let open_chest#42 =
-      fun ck#233 ->
-      (fun c#234 -> (fun n#235 -> (OPEN_CHEST(ck#233 , c#234 , n#235))))[@inline] in
-    let xor#45 = fun l#244 -> (fun r#245 -> (XOR(l#244 , r#245)))[@inline] in
+      fun ck#677 ->
+      (fun c#678 -> (fun n#679 -> (OPEN_CHEST(ck#677 , c#678 , n#679))))[@inline] in
+    let xor#45 = fun l#688 -> (fun r#689 -> (XOR(l#688 , r#689)))[@inline] in
     let shift_left#46 =
-      fun l#247 -> (fun r#248 -> (LSL(l#247 , r#248)))[@inline] in
+      fun l#691 -> (fun r#692 -> (LSL(l#691 , r#692)))[@inline] in
     let shift_right#47 =
-      fun l#250 -> (fun r#251 -> (LSR(l#250 , r#251)))[@inline] in
-    let length#88 = fun b#381 -> (({ SIZE })@(b#381))[@inline] in
+      fun l#694 -> (fun r#695 -> (LSR(l#694 , r#695)))[@inline] in
+    let length#88 = fun b#825 -> (({ SIZE })@(b#825))[@inline] in
     let concat#89 =
-      fun b1#383 ->
-      (fun b2#384 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#383 , b2#384))))[@inline] in
+      fun b1#827 ->
+      (fun b2#828 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#827 , b2#828))))[@inline] in
     let sub#90 =
-      fun s#386 ->
-      (fun l#387 ->
-       (fun b#388 ->
+      fun s#830 ->
+      (fun l#831 ->
+       (fun b#832 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#386 ,
-                                                                       l#387) ,
-                                                                  b#388)))))[@inline] in
-    let length#95 = fun b#399 -> (({ SIZE })@(b#399))[@inline] in
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#830 ,
+                                                                       l#831) ,
+                                                                  b#832)))))[@inline] in
+    let length#95 = fun b#843 -> (({ SIZE })@(b#843))[@inline] in
     let concat#96 =
-      fun b1#401 ->
-      (fun b2#402 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#401 , b2#402))))[@inline] in
+      fun b1#845 ->
+      (fun b2#846 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#845 , b2#846))))[@inline] in
     let sub#97 =
-      fun s#404 ->
-      (fun l#405 ->
-       (fun b#406 ->
+      fun s#848 ->
+      (fun l#849 ->
+       (fun b#850 ->
         (({ UNPAIR ;
            UNPAIR ;
            SLICE ;
-           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#404 ,
-                                                                       l#405) ,
-                                                                  b#406)))))[@inline] in
-    let blake2b#98 = fun b#408 -> (({ BLAKE2B })@(b#408))[@inline] in
-    let sha256#99 = fun b#410 -> (({ SHA256 })@(b#410))[@inline] in
-    let sha512#100 = fun b#412 -> (({ SHA512 })@(b#412))[@inline] in
-    let sha3#101 = fun b#414 -> (({ SHA3 })@(b#414))[@inline] in
-    let keccak#102 = fun b#416 -> (({ KECCAK })@(b#416))[@inline] in
-    let hash_key#103 = fun k#418 -> (({ HASH_KEY })@(k#418))[@inline] in
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#848 ,
+                                                                       l#849) ,
+                                                                  b#850)))))[@inline] in
+    let blake2b#98 = fun b#852 -> (({ BLAKE2B })@(b#852))[@inline] in
+    let sha256#99 = fun b#854 -> (({ SHA256 })@(b#854))[@inline] in
+    let sha512#100 = fun b#856 -> (({ SHA512 })@(b#856))[@inline] in
+    let sha3#101 = fun b#858 -> (({ SHA3 })@(b#858))[@inline] in
+    let keccak#102 = fun b#860 -> (({ KECCAK })@(b#860))[@inline] in
+    let hash_key#103 = fun k#862 -> (({ HASH_KEY })@(k#862))[@inline] in
     let check#104 =
-      fun k#420 ->
-      (fun s#421 ->
-       (fun b#422 ->
-        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#420 , s#421) ,
-                                                       b#422)))))[@inline] in
+      fun k#864 ->
+      (fun s#865 ->
+       (fun b#866 ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#864 , s#865) ,
+                                                       b#866)))))[@inline] in
     let assert =
-      fun b#424 ->
-      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#424))[@inline] in
-    let abs = fun i#430 -> (({ ABS })@(i#430))[@inline] in
-    let is_nat = fun i#432 -> (({ ISNAT })@(i#432))[@inline] in
+      fun b#868 ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#868))[@inline] in
+    let abs = fun i#874 -> (({ ABS })@(i#874))[@inline] in
+    let is_nat = fun i#876 -> (({ ISNAT })@(i#876))[@inline] in
     let true = TRUE()[@inline] in
     let false = FALSE()[@inline] in
     let unit = UNIT()[@inline] in
     let assert_with_error =
-      fun b#440 ->
-      (fun s#441 ->
-       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#440 , s#441))))[@inline] in
-    let poly_stub_15 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_14 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_13 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_12 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_11 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_10 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_9 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_8 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_7 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_6 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_5 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_4 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_3 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_2 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
-    let poly_stub_1 = fun x#452 -> (({ FAILWITH })@(x#452))[@inline] in
+      fun b#884 ->
+      (fun s#885 ->
+       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#884 , s#885))))[@inline] in
+    let poly_stub_15 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_14 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_13 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_12 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_11 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_10 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_9 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_8 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_7 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_6 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_5 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_4 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_3 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_2 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
+    let poly_stub_1 = fun x#896 -> (({ FAILWITH })@(x#896))[@inline] in
     let get_total_voting_power#109 = (poly_stub_9)@(L(unit))[@inline] in
-    let set_source#112 = fun _a#466 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let set_source#112 = fun _a#910 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let get_storage_of_address#113 =
-      fun _a#468 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let get_balance#114 = fun _a#470 -> ((poly_stub_15)@(L(unit)))[@inline] in
-    let print#115 = fun _v#472 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let eprint#116 = fun _v#474 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _a#912 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let get_balance#114 = fun _a#914 -> ((poly_stub_15)@(L(unit)))[@inline] in
+    let print#115 = fun _v#916 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let eprint#116 = fun _v#918 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let get_voting_power#117 =
-      fun _kh#476 -> ((poly_stub_9)@(L(unit)))[@inline] in
+      fun _kh#920 -> ((poly_stub_9)@(L(unit)))[@inline] in
     let nth_bootstrap_contract#118 =
-      fun _i#478 -> ((poly_stub_3)@(L(unit)))[@inline] in
+      fun _i#922 -> ((poly_stub_3)@(L(unit)))[@inline] in
     let nth_bootstrap_account#119 =
-      fun _i#480 -> ((poly_stub_3)@(L(unit)))[@inline] in
+      fun _i#924 -> ((poly_stub_3)@(L(unit)))[@inline] in
     let get_bootstrap_account#120 =
-      fun _n#482 -> ((poly_stub_14)@(L(unit)))[@inline] in
+      fun _n#926 -> ((poly_stub_14)@(L(unit)))[@inline] in
     let last_originations#122 =
-      fun _u#486 -> ((poly_stub_13)@(L(unit)))[@inline] in
-    let new_account#124 = fun _u#490 -> ((poly_stub_12)@(L(unit)))[@inline] in
+      fun _u#930 -> ((poly_stub_13)@(L(unit)))[@inline] in
+    let new_account#124 = fun _u#934 -> ((poly_stub_12)@(L(unit)))[@inline] in
     let bake_until_n_cycle_end#126 =
-      fun _n#494 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _n#938 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let register_delegate#128 =
-      fun _kh#498 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _kh#942 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let register_constant#129 =
-      fun _m#500 -> ((poly_stub_11)@(L(unit)))[@inline] in
+      fun _m#944 -> ((poly_stub_11)@(L(unit)))[@inline] in
     let constant_to_michelson_program#131 =
-      fun _s#504 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let restore_context#132 = fun _u#506 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let save_context#133 = fun _u#508 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let drop_context#134 = fun _u#510 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _s#948 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let restore_context#132 = fun _u#950 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let save_context#133 = fun _u#952 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let drop_context#134 = fun _u#954 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let set_baker_policy#137 =
-      fun _bp#516 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let set_baker#138 = fun _a#518 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let size#139 = fun _c#520 -> ((poly_stub_10)@(L(unit)))[@inline] in
+      fun _bp#960 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let set_baker#138 = fun _a#962 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let size#139 = fun _c#964 -> ((poly_stub_10)@(L(unit)))[@inline] in
     let read_contract_from_file#141 =
-      fun _fn#524 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let chr#142 = fun _n#526 -> ((poly_stub_8)@(L(unit)))[@inline] in
+      fun _fn#968 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let chr#142 = fun _n#970 -> ((poly_stub_8)@(L(unit)))[@inline] in
     let nl#143 = L("NEWLINE")[@inline] in
-    let println#144 = fun _v#529 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let println#144 = fun _v#973 -> ((poly_stub_2)@(L(unit)))[@inline] in
     let transfer#145 =
-      fun _a#531 -> (fun _s#532 -> (fun _t#533 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+      fun _a#975 -> (fun _s#976 -> (fun _t#977 -> ((poly_stub_2)@(L(unit)))))[@inline] in
     let transfer_exn#146 =
-      fun _a#535 -> (fun _s#536 -> (fun _t#537 -> ((poly_stub_9)@(L(unit)))))[@inline] in
+      fun _a#979 -> (fun _s#980 -> (fun _t#981 -> ((poly_stub_9)@(L(unit)))))[@inline] in
     let reset_state#148 =
-      fun _n#541 -> (fun _l#542 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _n#985 -> (fun _l#986 -> ((poly_stub_2)@(L(unit))))[@inline] in
     let reset_state_at#149 =
-      fun _t#544 -> (fun _n#545 -> (fun _l#546 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+      fun _t#988 -> (fun _n#989 -> (fun _l#990 -> ((poly_stub_2)@(L(unit)))))[@inline] in
     let save_mutation#152 =
-      fun _s#555 -> (fun _m#556 -> ((poly_stub_8)@(L(unit))))[@inline] in
+      fun _s#999 -> (fun _m#1000 -> ((poly_stub_8)@(L(unit))))[@inline] in
     let sign#155 =
-      fun _sk#564 -> (fun _d#565 -> ((poly_stub_7)@(L(unit))))[@inline] in
+      fun _sk#1008 -> (fun _d#1009 -> ((poly_stub_7)@(L(unit))))[@inline] in
     let add_account#156 =
-      fun _s#567 -> (fun _k#568 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _s#1011 -> (fun _k#1012 -> ((poly_stub_2)@(L(unit))))[@inline] in
     let baker_account#157 =
-      fun _p#570 -> (fun _o#571 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _p#1014 -> (fun _o#1015 -> ((poly_stub_2)@(L(unit))))[@inline] in
     let create_chest#159 =
-      fun _b#576 -> (fun _n#577 -> ((poly_stub_6)@(L(unit))))[@inline] in
+      fun _b#1020 -> (fun _n#1021 -> ((poly_stub_6)@(L(unit))))[@inline] in
     let create_chest_key#160 =
-      fun _c#579 -> (fun _n#580 -> ((poly_stub_5)@(L(unit))))[@inline] in
+      fun _c#1023 -> (fun _n#1024 -> ((poly_stub_5)@(L(unit))))[@inline] in
     let michelson_equal#163 =
-      fun _m1#590 -> (fun _m2#591 -> ((poly_stub_4)@(L(unit))))[@inline] in
+      fun _m1#1034 -> (fun _m2#1035 -> ((poly_stub_4)@(L(unit))))[@inline] in
     let originate_contract#165 =
-      fun _c#596 -> (fun _s#597 -> (fun _t#598 -> ((poly_stub_3)@(L(unit)))))[@inline] in
+      fun _c#1040 -> (fun _s#1041 -> (fun _t#1042 -> ((poly_stub_3)@(L(unit)))))[@inline] in
     let compile_contract_from_file#167 =
-      fun _fn#604 -> (fun _e#605 -> (fun _v#606 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+      fun _fn#1048 -> (fun _e#1049 -> (fun _v#1050 -> ((poly_stub_2)@(L(unit)))))[@inline] in
     let originate_from_file#168 =
-      fun _fn#608 ->
-      (fun _e#609 ->
-       (fun _v#610 -> (fun _s#611 -> (fun _t#612 -> ((poly_stub_1)@(L(unit)))))))[@inline] in
+      fun _fn#1052 ->
+      (fun _e#1053 ->
+       (fun _v#1054 ->
+        (fun _s#1055 -> (fun _t#1056 -> ((poly_stub_1)@(L(unit)))))))[@inline] in
     let x#169 = L(54) in let y#170 = x#169 in L(unit) |}]
 
 let%expect_test _ =
@@ -2674,6 +2712,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "increment.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2690,6 +2734,26 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
              NIL operation ;
              PAIR } } |}]
+
+(* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "get_capitalized_entrypoint.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %Upper unit ;
+             IF_NONE
+               { PUSH string "lol" ; FAILWITH }
+               { PUSH mutez 0 ;
+                 UNIT ;
+                 TRANSFER_TOKENS ;
+                 UNIT ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
+                 PAIR } } } |}]
 
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
@@ -2852,6 +2916,12 @@ Toplevel let declaration are silently change to const declaration.
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
   [%expect{|
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
 44 |}]
 
 (* check compiling many (more than 10) views *)
