@@ -165,13 +165,13 @@ A type for an address of a contract with parameter `'param` and storage
 type unforged_ticket(s) is record [ ticketer : address ; value : s ; amount : nat ]
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-type 's unforged_ticket = { ticketer : address ; value : 's ; amount : nat }
+type 's unforged_ticket = &#x007b; ticketer : address ; value : 's ; amount : nat &#x007d;
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-type unforged_ticket s = { ticketer : address , value : s , amount : nat }
+type unforged_ticket s = &#x007b; ticketer : address , value : s , amount : nat &#x007d;
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type unforged_ticket &lt;s&gt; = { ticketer : address , value : s , amount : nat }
+type unforged_ticket &lt;s&gt; = &#x007b; ticketer : address , value : s , amount : nat &#x007d;
 </SyntaxTitle>
 
 A type for decompile tickets.
