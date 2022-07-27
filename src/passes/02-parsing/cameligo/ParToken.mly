@@ -87,6 +87,7 @@
 %token <string Wrap.t> BOOL_OR  "||" [@recover.expr Token.wrap_bool_or   $loc]
 %token <string Wrap.t> BOOL_AND "&&" [@recover.expr Token.wrap_bool_and  $loc]
 %token <string Wrap.t> QUOTE    "'"  [@recover.expr Token.wrap_quote     $loc]
+%token <string Wrap.t> REV_APP  "|>" [@recover.expr Token.wrap_rev_app   $loc]
 
 (* Keywords *)
 

@@ -80,6 +80,7 @@ module T =
     | BOOL_OR  of lexeme Wrap.t  (* || *)
     | BOOL_AND of lexeme Wrap.t  (* && *)
     | QUOTE    of lexeme Wrap.t  (* '  *)
+    | REV_APP  of lexeme Wrap.t  (* |> *)
 
     (* Keywords *)
 
@@ -164,6 +165,7 @@ module T =
     | BOOL_OR  t
     | BOOL_AND t
     | QUOTE    t
+    | REV_APP  t
 
     (* Keywords *)
 
@@ -368,6 +370,7 @@ module T =
     let wrap_bool_or  = wrap "||"
     let wrap_bool_and = wrap "&&"
     let wrap_quote    = wrap "'"
+    let wrap_rev_app  = wrap "|>"
 
     (* Smart constructors *)
 
@@ -399,6 +402,7 @@ module T =
     let mk_BOOL_OR  region = BOOL_OR  (wrap_bool_or  region)
     let mk_BOOL_AND region = BOOL_AND (wrap_bool_and region)
     let mk_QUOTE    region = QUOTE    (wrap_quote    region)
+    let mk_REV_APP  region = REV_APP  (wrap_rev_app  region)
 
     (* All symbol smart constructors *)
 
@@ -430,7 +434,8 @@ module T =
       mk_GE;
       mk_BOOL_OR;
       mk_BOOL_AND;
-      mk_QUOTE
+      mk_QUOTE;
+      mk_REV_APP
     ]
 
     (* All symbols *)
@@ -474,6 +479,7 @@ module T =
     let ghost_bool_or  = wrap_bool_or  Region.ghost
     let ghost_bool_and = wrap_bool_and Region.ghost
     let ghost_quote    = wrap_quote    Region.ghost
+    let ghost_rev_app  = wrap_rev_app  Region.ghost
 
     let ghost_ARROW    = ARROW    ghost_semi
     let ghost_CONS     = CONS     ghost_cons
@@ -503,6 +509,7 @@ module T =
     let ghost_BOOL_OR  = BOOL_OR  ghost_bool_or
     let ghost_BOOL_AND = BOOL_AND ghost_bool_and
     let ghost_QUOTE    = QUOTE    ghost_quote
+    let ghost_REV_APP  = REV_APP  ghost_rev_app
 
 
     (* OTHER GHOST TOKENS *)
@@ -600,6 +607,7 @@ module T =
     | "BOOL_OR"  -> ghost_bool_or#payload
     | "BOOL_AND" -> ghost_bool_and#payload
     | "QUOTE"    -> ghost_quote#payload
+    | "REV_APP"  -> ghost_rev_app#payload
 
     (* Keywords *)
 
@@ -701,6 +709,7 @@ module T =
     | BOOL_OR  t -> t#region, "BOOL_OR"
     | BOOL_AND t -> t#region, "BOOL_AND"
     | QUOTE    t -> t#region, "QUOTE"
+    | REV_APP  t -> t#region, "REV_APP"
 
     (* Keywords *)
 
@@ -857,6 +866,7 @@ module T =
     | COLON _
     | DOT _
     | WILD _
+    | REV_APP _
     | EQ _
     | NE _
     | LT _

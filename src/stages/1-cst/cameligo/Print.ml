@@ -474,6 +474,8 @@ and print_expr state = function
 | ECodeInj {value; region} ->
     print_loc_node state "ECodeInj" region;
     print_code_inj state value
+| ERevApp {value; region} ->
+    print_bin_op "ERevApp" region state value
 
 and print_module_access :
   type a. (state -> a -> unit ) -> state -> a module_access -> unit =
