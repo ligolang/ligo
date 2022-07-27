@@ -46,6 +46,7 @@ hasLigoExtension :: FilePath -> Bool
 hasLigoExtension file =
   takeExtension file `elem`
     [ ".ligo"
+    , ".pligo"
     , ".mligo"
     , ".religo"
     , ".jsligo"
