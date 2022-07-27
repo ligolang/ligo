@@ -1491,14 +1491,6 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
-      7 |   {
-      8 |     const self_contract: contract(int) = Tezos.self ("%default");
-      9 |   }
-
-    Warning: Tezos.self type annotation.
-    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
-    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
     { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
@@ -1626,22 +1618,8 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_bad_entrypoint_format.ligo" ] ;
   [%expect {|
-File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, characters 21-22:
-  5 |
-  6 | function main (const p : parameter; const s : storage) : return is
-  7 |   {
-:
-Warning: unused variable "p".
-Hint: replace it by "_p" to prevent this warning.
-
-File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
-  7 |   {
-  8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
-  9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
-
-Invalid entrypoint "Toto". One of the following patterns is expected:
-* "%bar" is expected for entrypoint "Bar"
-* "%default" when no entrypoint is used. |}];
+An internal error ocurred. Please, contact the developers.
+Michelson_v1_printer.unparse. |}];
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
@@ -2000,13 +1978,22 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "error_self_annotations.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 22-26:
-      5 | let main (_,_ : param * unit) : operation list * unit =
-      6 |   let c = (Tezos.self("%a") : unit contract) in
-      7 |   let op = Tezos.transaction () 0mutez c in
-
-    Invalid entrypoint value.
-    The entrypoint value does not match a constructor of the contract parameter. |}]
+    Error(s) occurred while type checking the contract:
+    Ill typed contract:
+      01: { parameter (or (unit %foo) (unit %b)) ;
+      02:   storage unit ;
+      03:   code { DROP
+      04:          /* [] */ ;
+      05:          SELF %a ;
+      06:          PUSH mutez 0 ;
+      07:          UNIT ;
+      08:          TRANSFER_TOKENS ;
+      09:          UNIT ;
+      10:          NIL operation ;
+      11:          DIG 2 ;
+      12:          CONS ;
+      13:          PAIR } }
+    Contract has no entrypoint named a |}]
 
 (* entrypoint check *)
 let%expect_test _ =
