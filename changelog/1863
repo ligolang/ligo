@@ -1,0 +1,10 @@
+author: melwyn95
+description: '### Adds support for the new LIGO registry with the following commands\n1.
+  `publish [--registry URL] [--ligorc-path PATH] [--project-root PATH]` publish the
+  LIGO package declared in package.json\n2. `add-user [--registry URL] [--ligorc-path
+  PATH]` create a new user for the LIGO package registry\n3. `login [--registry URL]
+  [--ligorc-path PATH]` login to the LIGO package registry'
+merge_request: '1863'
+title: '[Package Management] Integrate ligo registry in CLI & Impl `ligo publish`,
+  `ligo login` & `ligo add-users` in CLI'
+type: added

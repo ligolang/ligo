@@ -23,5 +23,5 @@
  (modules cli_helpers)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils lwt lwt.unix))
+ (libraries simple-utils lwt lwt.unix semver))
  
