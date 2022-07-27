@@ -889,7 +889,7 @@ run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
    15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
    16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Invalid call to Test primitive. |}]
+  Invalid usage of a Test primitive or type in object ligo. |}]
 
 let () = Sys.chdir pwd
 
