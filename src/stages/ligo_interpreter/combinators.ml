@@ -264,9 +264,8 @@ let tag_value : value -> int = function
   | V_Michelson _ -> 6
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
-  | V_Thunk _ -> 9
-  | V_Michelson_contract _ -> 10
-  | V_Gen _ -> 11
+  | V_Michelson_contract _ -> 9
+  | V_Gen _ -> 10
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -307,9 +306,8 @@ let rec compare_value (v : value) (v' : value) : int =
   )
   | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
-  | V_Thunk v, V_Thunk v' -> Caml.compare v v'
   | V_Gen v, V_Gen v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

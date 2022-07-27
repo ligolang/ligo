@@ -1,23 +1,5 @@
 
 module Tezos = struct
-  [@thunk]
-    let balance : tez = [%Michelson ({| { DROP ; BALANCE } |} : unit -> tez)] ()
-  [@thunk]
-    let amount : tez = [%Michelson ({| { DROP ; AMOUNT } |} : unit -> tez)] ()
-  [@thunk]
-    let now : timestamp = [%Michelson ({| { DROP ; NOW } |} : unit -> timestamp)] ()
-  [@thunk]
-    let sender : address = [%Michelson ({| { DROP ; SENDER } |} : unit -> address)] ()
-  [@thunk]
-    let source : address = [%Michelson ({| { DROP ; SOURCE } |} : unit -> address)] ()
-  [@thunk]
-    let level : nat = [%Michelson ({| { DROP ; LEVEL } |} : unit -> nat)] ()
-  [@thunk]
-    let self_address : address = [%external ("SELF_ADDRESS")]
-  [@thunk]
-    let chain_id : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
-  [@thunk]
-    let total_voting_power : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
   let get_balance (_u : unit) : tez = [%Michelson ({| { DROP ; BALANCE } |} : unit -> tez)] ()
   let get_amount (_u : unit) : tez = [%Michelson ({| { DROP ; AMOUNT } |} : unit -> tez)] ()
   let get_now (_u : unit) : timestamp = [%Michelson ({| { DROP ; NOW } |} : unit -> timestamp)] ()
@@ -27,8 +9,7 @@ module Tezos = struct
   let get_self_address (_u : unit) : address = [%external ("SELF_ADDRESS")]
   let get_chain_id (_u : unit) : chain_id = [%Michelson ({| { DROP ; CHAIN_ID } |} : unit -> chain_id)] ()
   let get_total_voting_power (_u : unit) : nat = [%Michelson ({| { DROP ; TOTAL_VOTING_POWER } |} : unit -> nat)] ()
-  let min_block_time : unit -> nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ]
-  let get_min_block_time : unit -> nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ]
+  let get_min_block_time (_u : unit) : nat = [%Michelson ({| { DROP; MIN_BLOCK_TIME } |} : unit -> nat) ] ()
   (* [@thunk] let self (type a) (s : string) : a contract = [%external ("SELF", s)] *)
   let voting_power (kh : key_hash) : nat = [%Michelson ({| { VOTING_POWER } |} : key_hash -> nat)] kh
   let address (type a) (c : a contract) : address = [%external ("ADDRESS", c)]
@@ -87,8 +68,7 @@ module Bitwise = struct
 end
 
 module Big_map = struct
-  [@thunk]
-    let empty (type k v) : (k, v) big_map = [%external ("BIG_MAP_EMPTY")]
+  [@inline] let empty (type k v) : (k, v) big_map = [%external ("BIG_MAP_EMPTY")]
 
 #if CURRY
   let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
@@ -345,8 +325,7 @@ module Test = struct
 #endif
 
   let compile_value (type a) (x : a) : michelson_program = eval x
-  [@thunk]
-    let get_total_voting_power : nat = [%external ("TEST_GET_TOTAL_VOTING_POWER")]
+  let get_total_voting_power (_u : unit) : nat = [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
   let failwith (type a b) (v : a) : b = [%external ("TEST_FAILWITH", v)]
   let to_contract (type p s) (t : (p, s) typed_address) : p contract = [%external ("TEST_TO_CONTRACT", t)]
   let set_source (a : address) : unit = [%external ("TEST_SET_SOURCE", a)]
@@ -577,8 +556,7 @@ module Test = struct
 #endif
 
   let compile_value (type a) (_x : a) : michelson_program = stub ()
-  [@thunk]
-    let get_total_voting_power : nat = stub ()
+  let get_total_voting_power (_u : unit) : nat = stub ()
   let failwith (type a b) (_v : a) : b = stub ()
   let to_contract (type p s) (_t : (p, s) typed_address) : p contract = stub ()
   let set_source (_a : address) : unit = stub ()

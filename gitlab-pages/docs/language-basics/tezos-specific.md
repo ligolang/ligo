@@ -173,9 +173,9 @@ let check_signature =
 ## Contract's Own Address
 
 Often you want to get the address of the contract being executed. You
-can do it with `Tezos.self_address`.
+can do it with `Tezos.get_self_address`.
 
-> ⚠️ Due to limitations in Michelson, `Tezos.self_address` in a
+> ⚠️ Due to limitations in Michelson, `Tezos.get_self_address` in a
 > contract is only allowed at the top-level. Using it in an embedded
 > function will cause an error.
 
@@ -184,28 +184,28 @@ can do it with `Tezos.self_address`.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=d
-const current_addr : address = Tezos.self_address
+const current_addr : address = Tezos.get_self_address()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
-let current_addr : address = Tezos.self_address
+let current_addr : address = Tezos.get_self_address ()
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=d
-let current_addr : address = Tezos.self_address;
+let current_addr : address = Tezos.get_self_address ();
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let current_addr: address = Tezos.self_address;
+let current_addr: address = Tezos.get_self_address();
 ```
 
 </Syntax>

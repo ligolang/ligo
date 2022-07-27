@@ -846,7 +846,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
     | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
-    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) ->
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, [ V_Ct (C_unit) ]) ->
       let>> tvp = Get_total_voting_power (loc, calltrace) in
       return tvp
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
@@ -956,9 +956,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
   = fun term calltrace env ->
     let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
     let open Monad in
-    let unthunk = function
-      | V_Thunk v -> eval_ligo v.value calltrace v.context
-      | v -> return v in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel")) else return () in
     match term.expression_content with
     | E_type_inst _ ->
@@ -966,7 +963,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_application {lamb = f; args} -> (
         let* f' = eval_ligo f calltrace env in
         let* args' = eval_ligo args calltrace env in
-        let* args' = unthunk args' in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
@@ -1001,11 +997,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
     )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; thunk=true ; hidden = _ }} -> (
-      let rhs' = LT.V_Thunk { value = rhs ; context = env }  in
-      eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
-    )
-    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; thunk=false ; hidden = _ }} -> (
+    | E_let_in {let_binder ; rhs; let_result; attr = { no_mutation ; inline ; view=_ ; public=_ ; hidden = _ }} -> (
       let* rhs' = eval_ligo rhs calltrace env in
       eval_ligo (let_result) calltrace (Env.extend env let_binder.var ~inline ~no_mutation (rhs.type_expression,rhs'))
     )
@@ -1046,7 +1038,6 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       let* arguments' = Monad.bind_map_list
         (fun (ae:AST.expression) ->
           let* value = eval_ligo ae calltrace env in
-          let* value = unthunk value in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
       apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
