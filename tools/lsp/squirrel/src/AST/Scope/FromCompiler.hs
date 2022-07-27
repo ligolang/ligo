@@ -5,15 +5,17 @@ module AST.Scope.FromCompiler
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
 import Control.Lens (view)
+import Data.Either (partitionEithers)
 import Data.Foldable (foldrM)
 import Data.Function (on)
+import Data.Functor ((<&>))
 import Data.HashMap.Strict ((!?))
 import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.String (IsString)
 import Data.Text (Text)
 import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
-import Witherable (wither)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..),
@@ -22,7 +24,7 @@ import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..),
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
 import AST.Skeleton (Lang, SomeLIGO (..))
 import Cli
-import Diagnostic (Message)
+import Diagnostic (Message (..), MessageDetail (..), Severity (..))
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log)
 import Log qualified
@@ -40,23 +42,35 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
   let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
-  (, msgs) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
+  foldrM
+    (\scope (sf, errs) -> buildTree decls scope sf <&> fmap (<> errs))
+    (emptyScopeForest, msgs)
+    scopes
   where
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.
-    buildTree :: LigoDefinitionsInner -> LigoScope -> ScopeForest -> m ScopeForest
+    buildTree :: LigoDefinitionsInner -> LigoScope -> ScopeForest -> m (ScopeForest, [Message])
     buildTree (LigoDefinitionsInner decls') (LigoScope r es _) sf = do
-      ds <- Map.fromList <$> wither decodeOrReport es
-      let rs = Map.keysSet ds
       r' <- normalizeRange $ fromLigoRangeOrDef r
-      pure (injectScope ((rs, r') :< []) ds sf)
+      (errs, decodedDecls) <- partitionEithers <$> traverse (decodeOrReport r') es
+      let ds = Map.fromList decodedDecls
+      let rs = Map.keysSet ds
+      pure (injectScope ((rs, r') :< []) ds sf, errs)
       where
-        decodeOrReport :: Text -> m (Maybe (DeclRef, ScopedDecl))
-        decodeOrReport decl = case decls' !? decl of
-          Nothing ->
-            Nothing <$ $(Log.err) [Log.i|Failed to decode #{decl} while decoding the scope at #{r}.|]
+        decodeOrReport :: Range -> Text -> m (Either Message (DeclRef, ScopedDecl))
+        decodeOrReport range decl = case decls' !? decl of
+          Nothing -> do
+            let
+              err :: IsString s => s
+              err = [Log.i|Failed to decode #{decl}. This is a bug, please report it.|]
+              msg = Message
+                { mMessage = FromLanguageServer err
+                , mSeverity = SeverityError
+                , mRange = range
+                }
+            Left msg <$ $(Log.err) err
           Just decoded ->
-            Just <$> fromLigoDecl decoded
+            Right <$> fromLigoDecl decoded
 
     normalizeRange :: Range -> m Range
     normalizeRange = rFile canonicalizePath
