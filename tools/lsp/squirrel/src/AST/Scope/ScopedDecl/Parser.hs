@@ -157,12 +157,12 @@ parseParameters = mapMaybe parseParameter
 
 parseConstant :: LIGO info -> Maybe Constant
 parseConstant node = layer node <&> \case
-  LIGO.Int    i -> Int    i
-  LIGO.Nat    n -> Nat    n
-  LIGO.String s -> String s
-  LIGO.Float  f -> Float  f
-  LIGO.Bytes  b -> Bytes  b
-  LIGO.Tez    t -> Tez    t
+  LIGO.CInt    i -> CInt    i
+  LIGO.CNat    n -> CNat    n
+  LIGO.CString s -> CString s
+  LIGO.CFloat  f -> CFloat  f
+  LIGO.CBytes  b -> CBytes  b
+  LIGO.CTez    t -> CTez    t
 
 parsePattern :: PPableLIGO info => LIGO info -> Maybe Pattern
 parsePattern node = layer node >>= \case

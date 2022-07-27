@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Algebra.Graph.AdjacencyMap qualified as G
 import Colog.Core qualified as Colog
 import Control.Lens hiding ((:>))
 import Control.Monad.IO.Class (liftIO)
@@ -32,12 +33,12 @@ import Extension (isLigoFile)
 import Language.LSP.Util (sendError)
 import Log (i)
 import Log qualified
-import RIO (RIO, RioEnv (..))
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
-import Range (Range, fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
+import RIO.Types
+import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import Util (toLocation)
 
 main :: IO ()
@@ -70,6 +71,7 @@ mainLoop =
     lspOptions :: S.Options
     lspOptions = def
       { S.textDocumentSync = Just syncOptions
+      , S.completionTriggerCharacters = Just [' ', '\"']
       , S.signatureHelpTriggerCharacters = Just ['(', ' ']
       , S.signatureHelpRetriggerCharacters = Just [',']
       }
@@ -278,9 +280,11 @@ handleCompletionRequest :: S.Handler RIO 'J.TextDocumentCompletion
 handleCompletionRequest req respond = do
     let uri = req ^. J.params . J.textDocument . J.uri . to J.toNormalizedUri
     let pos = fromLspPosition $ req ^. J.params . J.position
-    tree <- contractTree <$> Document.fetch Document.LeastEffort uri
-    let completions = fmap toCompletionItem . fromMaybe [] $ complete pos tree
-    $(Log.debug) [i|Completion request returned #{completions}|]
+    FindContract source tree _ <- Document.fetch Document.LeastEffort uri
+    graphVar <- asks reBuildGraph
+    graph <- liftIO $ fromMaybe (Includes G.empty) <$> tryReadMVar graphVar
+    listCompl <- withCompleterM (CompleterEnv pos tree source graph) complete
+    let completions = fmap toCompletionItem . fromMaybe [] $ listCompl
     respond . Right . J.InL . J.List $ completions
 
 handleSignatureHelpRequest :: S.Handler RIO 'J.TextDocumentSignatureHelp

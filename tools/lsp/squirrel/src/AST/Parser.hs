@@ -27,6 +27,7 @@ import AST.Parser.Camligo qualified as Caml
 import AST.Parser.Pascaligo qualified as Pascal
 import AST.Parser.Reasonligo qualified as Reason
 import AST.Parser.Jsligo qualified as Js
+import AST.Skeleton
 import AST.Scope
   ( ContractInfo, ContractInfo', pattern FindContract, HasScopeForest, Includes (..)
   , addLigoErrsToMsg, addScopes, contractNotFoundException, lookupContract
@@ -57,6 +58,7 @@ parse src = do
   tree <- toParseTree dialect src
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
+
 loadPreprocessed
   :: (HasLigoClient m, Log m)
   => TempSettings
@@ -84,7 +86,7 @@ loadPreprocessed tempSettings src = do
     prePreprocess :: Text -> (Source, Bool)
     prePreprocess contents =
       let
-        hasPreprocessor = contents =~ ("^#\\s*[a-z]+" :: Text)
+        hasPreprocessor = contents =~ ("^#[ \t]*[a-z]+" :: Text)
         prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in

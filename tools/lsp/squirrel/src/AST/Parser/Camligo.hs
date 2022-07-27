@@ -143,11 +143,11 @@ recognise (SomeRawTree dialect rawTree)
     -- Literal
   , Descent do
       boilerplate' $ \case
-        ("Int",    i) -> return $ Int i
-        ("Nat",    i) -> return $ Nat i
-        ("Bytes",  i) -> return $ Bytes i
-        ("String", i) -> return $ String i
-        ("Tez",    i) -> return $ Tez i
+        ("Int",    i) -> return $ CInt i
+        ("Nat",    i) -> return $ CNat i
+        ("Bytes",  i) -> return $ CBytes i
+        ("String", i) -> return $ CString i
+        ("Tez",    i) -> return $ CTez i
         _             -> fallthrough
 
     -- Verbatim
