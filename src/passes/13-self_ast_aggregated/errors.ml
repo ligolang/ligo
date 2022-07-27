@@ -21,7 +21,7 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_ast_aggregated_expected_obj_ligo loc ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid call to Test primitive.@]"
+        "@[<hv>%a@.Invalid usage of a Test primitive or type in object ligo.@]"
         Snippet.pp loc
     | `Self_ast_aggregated_polymorphism_unresolved loc ->
       Format.fprintf f

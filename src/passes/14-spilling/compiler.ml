@@ -40,6 +40,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Tez,             []) -> return (T_base TB_mutez)
     | (String,          []) -> return (T_base TB_string)
     | (Bytes,           []) -> return (T_base TB_bytes)
+    | (Typed_address,   [_;_]) -> return (T_base TB_address)
     | (Address,         []) -> return (T_base TB_address)
     | (Operation,       []) -> return (T_base TB_operation)
     | (Key,             []) -> return (T_base TB_key)
@@ -101,8 +102,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
       Never        | Chest_key | Gen                  |
-      Typed_address| Mutation  | Bytes                |
-      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
+      Typed_address | Mutation  | Bytes                |
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t)
   )
   | T_sum _ when Option.is_some (AST.get_t_bool t) ->
     return (T_base TB_bool)
