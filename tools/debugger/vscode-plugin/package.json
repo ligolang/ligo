@@ -50,7 +50,8 @@
                     "PascaLIGO"
                 ],
                 "extensions": [
-                    ".ligo"
+                    ".ligo",
+                    ".pligo"
                 ]
             },
             {
