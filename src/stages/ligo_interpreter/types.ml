@@ -80,7 +80,6 @@ and value =
   | V_Michelson_contract of mcode
   | V_Mutation of mutation
   | V_Func_val of func_val
-  | V_Thunk of thunk_val
   | V_Gen of gen
 
 and calltrace = Location.t list

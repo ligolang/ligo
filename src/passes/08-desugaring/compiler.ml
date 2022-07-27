@@ -38,21 +38,18 @@ let compile_exp_attributes : I.attributes -> O.known_attributes = fun attributes
   let is_inline attr = String.equal "inline" attr in
   let is_no_mutation attr = String.equal "no_mutation" attr in
   let is_view attr = String.equal "view" attr in
-  let is_thunk attr = String.equal "thunk" attr in
   let is_hidden attr = String.equal "hidden" attr in
   let get_inline : (string list) -> bool = List.exists ~f:is_inline in
   let get_no_mutation : (string list) -> bool = List.exists ~f:is_no_mutation in
   let get_view : (string list) -> bool = List.exists ~f:is_view in
-  let get_thunk : (string list) -> bool = List.exists ~f:is_thunk in
   let get_hidden : (string list) -> bool = List.exists ~f:is_hidden in
   let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
   let inline = get_inline attributes in
   let no_mutation = get_no_mutation attributes in
   let public = get_public attributes in
   let view = get_view attributes in
-  let thunk = get_thunk attributes in
   let hidden = get_hidden attributes in
-  O.{inline; no_mutation; view; public; thunk; hidden}
+  O.{inline; no_mutation; view; public; hidden}
 
 let compile_type_attributes : I.attributes -> O.type_attribute = fun attributes ->
   let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
@@ -266,7 +263,7 @@ let rec compile_expression : I.expression -> O.expression =
       let expr1 = self expr1 in
       let expr2 = self expr2 in
       let let_binder : _ O.binder = {var = I.ValueVar.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
-      return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true ; thunk = false ; hidden = false}}
+      return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true ; hidden = false}}
     | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
       let aux (i,acc) el =
