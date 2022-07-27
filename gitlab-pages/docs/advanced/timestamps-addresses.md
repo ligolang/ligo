@@ -14,42 +14,42 @@ providing the given current timestamp for the contract.
 ### Starting time of the current block
 
 You can obtain the starting time of the current block using the 
-built-in `Tezos.now`. This timestamp does not change during the execution 
+built-in `Tezos.get_now`. This timestamp does not change during the execution 
 of the contract. Please be aware that it is up to the baker to set the
 current timestamp value.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=a
-const today : timestamp = Tezos.now
+const today : timestamp = Tezos.get_now ()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
-let today : timestamp = Tezos.now
+let today : timestamp = Tezos.get_now ()
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=a
-let today : timestamp = Tezos.now;
+let today : timestamp = Tezos.get_now ();
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let today: timestamp = Tezos.now;
+let today: timestamp = Tezos.get_now();
 ```
 
 </Syntax>
 
 
 > When running code, the LIGO CLI option `--now`
-> allows you to control what `Tezos.now` returns.
+> allows you to control what `Tezos.get_now` returns.
 
 ### Timestamp Arithmetics
 
@@ -62,7 +62,7 @@ constraints on your smart contracts. Consider the following scenarios.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=b
-const today : timestamp = Tezos.now
+const today : timestamp = Tezos.get_now()
 const one_day : int = 86_400
 const in_24_hrs : timestamp = today + one_day
 const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
@@ -73,7 +73,7 @@ const one_day_later : timestamp = some_date + one_day
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
-let today : timestamp = Tezos.now
+let today : timestamp = Tezos.get_now ()
 let one_day : int = 86_400
 let in_24_hrs : timestamp = today + one_day
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
@@ -84,7 +84,7 @@ let one_day_later : timestamp = some_date + one_day
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=b
-let today : timestamp = Tezos.now;
+let today : timestamp = Tezos.get_now ();
 let one_day : int = 86_400;
 let in_24_hrs : timestamp = today + one_day;
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
@@ -95,7 +95,7 @@ let one_day_later : timestamp = some_date + one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let today: timestamp = Tezos.now;
+let today: timestamp = Tezos.get_now();
 let one_day: int = 86_400;
 let in_24_hrs: timestamp = today + one_day;
 let some_date: timestamp = "2000-01-01t10:10:10Z" as timestamp;
@@ -111,7 +111,7 @@ let one_day_later: timestamp = some_date + one_day;
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
-const today : timestamp = Tezos.now
+const today : timestamp = Tezos.get_now()
 const one_day : int = 86400
 const in_24_hrs : timestamp = today - one_day
 ```
@@ -120,7 +120,7 @@ const in_24_hrs : timestamp = today - one_day
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-let today : timestamp = Tezos.now
+let today : timestamp = Tezos.get_now ()
 let one_day : int = 86400
 let in_24_hrs : timestamp = today - one_day
 ```
@@ -129,7 +129,7 @@ let in_24_hrs : timestamp = today - one_day
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
-let today : timestamp = Tezos.now;
+let today : timestamp = Tezos.get_now ();
 let one_day : int = 86400;
 let in_24_hrs : timestamp = today - one_day;
 ```
@@ -138,7 +138,7 @@ let in_24_hrs : timestamp = today - one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let today: timestamp = Tezos.now;
+let today: timestamp = Tezos.get_now();
 let one_day: int = 86400;
 let in_24_hrs: timestamp = today - one_day;
 ```
@@ -155,28 +155,28 @@ applying to numbers.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=c
-const not_tommorow : bool = (Tezos.now = in_24_hrs)
+const not_tommorow : bool = (Tezos.get_now() = in_24_hrs)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
-let not_tomorrow : bool = (Tezos.now = in_24_hrs)
+let not_tomorrow : bool = (Tezos.get_now () = in_24_hrs)
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=c
-let not_tomorrow : bool = (Tezos.now == in_24_hrs);
+let not_tomorrow : bool = (Tezos.get_now () == in_24_hrs);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let not_tomorrow: bool = (Tezos.now == in_24_hrs);
+let not_tomorrow: bool = (Tezos.get_now() == in_24_hrs);
 ```
 
 </Syntax>

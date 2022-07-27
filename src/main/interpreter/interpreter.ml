@@ -846,7 +846,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       let>> vp = Get_voting_power (loc, calltrace, hk) in
       return vp
     | ( C_TEST_GET_VOTING_POWER , _ ) -> fail @@ error_type
-    | ( C_TEST_GET_TOTAL_VOTING_POWER, []) ->
+    | ( C_TEST_GET_TOTAL_VOTING_POWER, [ V_Ct (C_unit) ]) ->
       let>> tvp = Get_total_voting_power (loc, calltrace) in
       return tvp
     | ( C_TEST_GET_TOTAL_VOTING_POWER , _ ) -> fail @@ error_type
