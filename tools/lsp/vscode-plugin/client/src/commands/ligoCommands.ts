@@ -5,13 +5,13 @@ import {
 } from './common';
 import * as ex from '../exceptions'
 
-type CompileContractResult = {
+export type CompileContractResult = {
   entrypoint: string,
   format: string,
   result: string
 }
 
-type CompileStorageResult = {
+export type CompileStorageResult = {
   entrypoint: string,
   format: string,
   storage: string,
