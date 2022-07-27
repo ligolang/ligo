@@ -116,7 +116,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
      let (address, entrypoint) = match String.split s ~on:'%' with
        | [a ; b] -> (contract_of_string ~raise a, Some b)
        | [a] -> (contract_of_string ~raise a, None)
-       | _ -> failwith "what?" in
+       | _ -> raise.error (untranspilable ty value) in
       V_Ct (C_contract { address ; entrypoint })
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       V_Ct (C_unit)
