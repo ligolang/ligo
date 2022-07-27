@@ -705,7 +705,11 @@ lambda_app_type:
 disj_expr_level:
   bin_op(disj_expr_level, "||", conj_expr_level)
 | bin_op(disj_expr_level, "or", conj_expr_level) {
-    ELogic (BoolExpr (Or $1)) }
+    ELogic (BoolExpr (Or $1))
+  }
+| bin_op(disj_expr_level, "|>", conj_expr_level) {
+    ERevApp $1
+  }
 | conj_expr_level { $1 }
 
 bin_op(arg1,op,arg2):
