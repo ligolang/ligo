@@ -193,7 +193,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (LMap.find_opt l fields)
         in
         let var = compile_variable @@ x.var in
-        return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
+        return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
         let y_var = ValueVar.fresh () in
@@ -216,10 +216,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_type_abstraction _
   | E_type_inst _ ->
     raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk = _ ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, ((compile_variable let_binder.var, rhs'.type_expression), result')))
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (compile_variable name)
@@ -336,7 +336,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, false, ((record_var, record.type_expression),
+        (E_let_in (record, false, ((record_var, record.type_expression),
                    build_record_update
                      (e_var record_var record.type_expression)
                      path)))
@@ -498,7 +498,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                         (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
-                    return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                    return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let a' =
@@ -666,7 +666,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                       (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
-                  return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                  return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                 )
               | ((`Node (a , b)) , tv) ->
                 let a' =

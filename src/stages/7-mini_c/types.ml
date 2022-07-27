@@ -57,7 +57,6 @@ and var_name = expression_variable
 and fun_name = expression_variable
 
 type inline = bool
-type thunk = bool
 
 type value =
   | D_unit
@@ -96,7 +95,7 @@ and expression_content =
   | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
-  | E_let_in   of expression * inline * thunk * ((var_name * type_expression) * expression)
+  | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
   | E_tuple of expression list
   | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
   (* E_proj (record, index, field_count): we use the field_count to

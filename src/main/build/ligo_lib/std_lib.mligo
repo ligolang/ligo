@@ -68,8 +68,7 @@ module Bitwise = struct
 end
 
 module Big_map = struct
-  [@thunk]
-    let empty (type k v) : (k, v) big_map = [%external ("BIG_MAP_EMPTY")]
+  [@inline] let empty (type k v) : (k, v) big_map = [%external ("BIG_MAP_EMPTY")]
 
 #if CURRY
   let mem (type k v) (k : k) (m : (k, v) big_map) : bool = [%Michelson ({| { UNPAIR ; MEM } |} : k * (k, v) big_map -> bool)] (k, m)
