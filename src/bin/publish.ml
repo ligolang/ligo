@@ -219,10 +219,10 @@ let tar_gzip ~name ~version dir =
   let () = Caml.Unix.close fd in
   Lwt.return (Buffer.contents_bytes buf)
 
-let publish ~token ~ligo_registry ~manifest =
+let publish ~project_root ~token ~ligo_registry ~manifest =
   let open Lwt.Syntax in
   let LigoManifest.{ name ; version ; _ } = manifest in
-  let* gzipped_tarball = tar_gzip "." ~name ~version in
+  let* gzipped_tarball = tar_gzip project_root ~name ~version in
   let len = Bytes.length gzipped_tarball in
   let sha1 = gzipped_tarball
     |> Digestif.SHA1.digest_bytes ~off:0 ~len
@@ -257,5 +257,6 @@ let publish ~ligo_registry ~ligorc_path ~project_root =
     (match token with
       None -> Error ("User not logged in.\nHint: Use ligo login or ligo add-user", "")
     | Some token ->
-      let response, body = Lwt_main.run (publish ~token ~ligo_registry ~manifest) in
+      let project_root = Option.value_exn project_root in
+      let response, body = Lwt_main.run (publish ~project_root ~token ~ligo_registry ~manifest) in
       handle_server_response ~name:manifest.name response body)
