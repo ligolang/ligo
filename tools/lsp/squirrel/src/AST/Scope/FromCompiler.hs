@@ -5,14 +5,15 @@ module AST.Scope.FromCompiler
 import Control.Category ((>>>))
 import Control.Comonad.Cofree (Cofree (..), _extract)
 import Control.Lens (view)
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (foldrM)
 import Data.Function (on)
-import Data.HashMap.Strict ((!))
+import Data.HashMap.Strict ((!?))
 import Data.Map (Map)
 import Data.Map qualified as Map
+import Data.Text (Text)
 import Duplo.Lattice
 import UnliftIO.Directory (canonicalizePath)
+import Witherable (wither)
 
 import AST.Scope.Common
 import AST.Scope.ScopedDecl (DeclarationSpecifics (..), ScopedDecl (..),
@@ -24,6 +25,7 @@ import Cli
 import Diagnostic (Message)
 import ListZipper (atLocus, find, withListZipper)
 import Log (Log)
+import Log qualified
 import Range
 
 data FromCompiler
@@ -35,7 +37,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
     pure $ FindContract src forest (msgs <> msgs')
 
 -- | Extract `ScopeForest` from LIGO scope dump.
-fromCompiler :: forall m. MonadIO m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
+fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
   let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
   (, msgs) <$> foldrM (buildTree decls) (ScopeForest [] Map.empty) scopes
@@ -44,10 +46,17 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
     -- injection process.
     buildTree :: LigoDefinitionsInner -> LigoScope -> ScopeForest -> m ScopeForest
     buildTree (LigoDefinitionsInner decls') (LigoScope r es _) sf = do
-      ds <- Map.fromList <$> mapM (fromLigoDecl . (decls' !)) es
+      ds <- Map.fromList <$> wither decodeOrReport es
       let rs = Map.keysSet ds
       r' <- normalizeRange $ fromLigoRangeOrDef r
       pure (injectScope ((rs, r') :< []) ds sf)
+      where
+        decodeOrReport :: Text -> m (Maybe (DeclRef, ScopedDecl))
+        decodeOrReport decl = case decls' !? decl of
+          Nothing ->
+            Nothing <$ $(Log.err) [Log.i|Failed to decode #{decl} while decoding the scope at #{r}.|]
+          Just decoded ->
+            Just <$> fromLigoDecl decoded
 
     normalizeRange :: Range -> m Range
     normalizeRange = rFile canonicalizePath
