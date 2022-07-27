@@ -753,13 +753,13 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
         region = op.region
       })
     in
-    e_assign ~loc:outer_loc {var=ValueVar.of_input_var ~loc value;ascr=None;attributes={const_or_var=Some `Var}} [] e2
+    e_assign ~loc:outer_loc {var=ValueVar.of_input_var ~loc value;ascr=None;attributes={const_or_var=Some `Var}} e2
 
   | EAssign (EProj {value = {expr = EVar {value = evar_value; _}; selection = Component {value = {inside = EArith (Int _); _}; _} as selection}; region=_}, ({value = Eq; _} as op), e2) ->
     let e2 = self e2 in
     let outer_loc = Location.lift op.region in
     let (sels, _) = compile_selection ~raise selection in
-    e_assign_ez ~loc:outer_loc evar_value [sels] e2
+    e_assign_ez ~loc:outer_loc evar_value @@ e_update (e_variable_ez evar_value) [sels] e2
   | EAssign _ as e ->
     raise.error @@ not_supported_assignment e
 
@@ -1131,9 +1131,9 @@ and compile_statement ?(wrap=false) ~raise : CST.statement -> statement_result
           (e_let_in found_case_binder [] (e_false ()) x))) in
 
     let cases = Utils.nseq_to_list s.cases in
-    let fallthrough_assign_false = e_assign fallthrough_binder [] (e_false ()) in
-    let fallthrough_assign_true  = e_assign fallthrough_binder [] (e_true ()) in
-    let found_case_assign_true   = e_assign found_case_binder  [] (e_true ()) in
+    let fallthrough_assign_false = e_assign fallthrough_binder (e_false ()) in
+    let fallthrough_assign_true  = e_assign fallthrough_binder (e_true ()) in
+    let found_case_assign_true   = e_assign found_case_binder  (e_true ()) in
 
     let not_expr     e   = e_constant (Const C_NOT)     [e   ] in
     let and_expr     a b = e_constant (Const C_AND)     [a; b] in

@@ -5,7 +5,7 @@
 type file_path = string
 type dirs = file_path list (* #include and #import *)
 
-module Make (File : File.S) (Comments : Comments.S) :
+module Make (File : File.S) (Comments : Comments.S) (Modules : Modules.S) :
   sig
     (* Directories and files *)
 

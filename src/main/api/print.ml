@@ -1,8 +1,9 @@
 open Api_helpers
 module Compile = Ligo_compile
-module Helpers   = Ligo_compile.Helpers
+module Helpers = Ligo_compile.Helpers
+module Raw_options = Compiler_options.Raw_options
 
-let pretty_print (raw_options : Compiler_options.raw) source_file display_format () =
+let pretty_print (raw_options : Raw_options.t) source_file display_format () =
     let warning_as_error = raw_options.warning_as_error in
     format_result ~warning_as_error ~display_format (Parsing.Formatter.ppx_format) @@
     fun ~raise ->
@@ -11,7 +12,7 @@ let pretty_print (raw_options : Compiler_options.raw) source_file display_format
     let meta = Compile.Of_source.extract_meta syntax in
     Compile.Utils.pretty_print ~raise ~options:options.frontend ~meta source_file
 
-let dependency_graph (raw_options : Compiler_options.raw) source_file display_format () =
+let dependency_graph (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (BuildSystem.Formatter.graph_format) @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -19,7 +20,7 @@ let dependency_graph (raw_options : Compiler_options.raw) source_file display_fo
       let g,_ = Build.dependency_graph ~raise ~options Env source_file in
       (g,source_file)
 
-let preprocess (raw_options : Compiler_options.raw) source_file display_format () =
+let preprocess (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format Parsing.Formatter.ppx_format @@
     fun ~raise ->
     fst @@
@@ -28,7 +29,7 @@ let preprocess (raw_options : Compiler_options.raw) source_file display_format (
     let meta = Compile.Of_source.extract_meta syntax in
     Compile.Of_source.compile ~raise ~options:options.frontend ~meta source_file
 
-let cst (raw_options : Compiler_options.raw) source_file display_format () =
+let cst (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Parsing.Formatter.ppx_format) @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -36,7 +37,7 @@ let cst (raw_options : Compiler_options.raw) source_file display_format () =
       let meta = Compile.Of_source.extract_meta syntax in
       Compile.Utils.pretty_print_cst ~raise ~options:options.frontend ~meta source_file
 
-let ast (raw_options : Compiler_options.raw) source_file display_format () =
+let ast (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_imperative.Formatter.module_format) @@
       fun ~raise ->
       let syntax   = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -45,7 +46,7 @@ let ast (raw_options : Compiler_options.raw) source_file display_format () =
       let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
       Compile.Utils.to_imperative ~raise ~options ~meta c_unit source_file
 
-let ast_sugar (raw_options : Compiler_options.raw) source_file display_format () =
+let ast_sugar (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_sugar.Formatter.module_format) @@
       fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -59,7 +60,7 @@ let ast_sugar (raw_options : Compiler_options.raw) source_file display_format ()
       else
         sugar
 
-let ast_core (raw_options : Compiler_options.raw) source_file display_format () =
+let ast_core (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_core.Formatter.module_format) @@
     fun ~raise ->
       let syntax  = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
@@ -74,7 +75,7 @@ let ast_core (raw_options : Compiler_options.raw) source_file display_format () 
       else
         core
 
-let ast_typed (raw_options : Compiler_options.raw) source_file display_format () =
+let ast_typed (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_typed.Formatter.program_format) @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
@@ -90,7 +91,7 @@ let ast_typed (raw_options : Compiler_options.raw) source_file display_format ()
       else
         typed
 
-let ast_aggregated (raw_options : Compiler_options.raw) source_file display_format () =
+let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ast_aggregated.Formatter.expression_format) @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
@@ -107,7 +108,7 @@ let ast_aggregated (raw_options : Compiler_options.raw) source_file display_form
       else
         aggregated
 
-let mini_c (raw_options : Compiler_options.raw) source_file display_format optimize () =
+let mini_c (raw_options : Raw_options.t) source_file display_format optimize () =
     format_result ~display_format (Mini_c.Formatter.program_format) @@
     fun ~raise ->
       let options = (* TODO: options should be computed outside of the API *)
@@ -125,5 +126,5 @@ let mini_c (raw_options : Compiler_options.raw) source_file display_format optim
         | Some entry_point ->
           let expr = Compile.Of_typed.apply_to_entrypoint ~raise ~options:options.middle_end typed entry_point in
           let mini_c = Compile.Of_aggregated.compile_expression ~raise expr in
-          let _,o = Compile.Of_mini_c.optimize_for_contract ~raise mini_c in
+          let _,o = Compile.Of_mini_c.optimize_for_contract ~raise options mini_c in
           Mini_c.Formatter.Optimized o.body

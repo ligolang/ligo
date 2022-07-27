@@ -1,8 +1,9 @@
 module Node = struct
-  type t = String.t
-  let compare = String.compare
-  let hash    = Hashtbl.hash
-  let equal   = String.equal
+  type t = (
+    String.t
+  )
+    [@@deriving eq, compare]
+  let hash = Hashtbl.hash
 end
 
 module G = Graph.Persistent.Digraph.Concrete(Node)

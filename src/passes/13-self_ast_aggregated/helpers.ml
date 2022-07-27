@@ -272,7 +272,7 @@ module Free_variables :
       let fv2 = (self let_result) in
       let fv2 = VarSet.remove let_binder.var fv2 in
       VarSet.union (self rhs) fv2
-    | E_assign { binder=_; access_path=_; expression } ->
+    | E_assign { binder=_; expression } ->
       self expression
 
   and get_fv_cases : matching_expr -> VarSet.t = fun m ->

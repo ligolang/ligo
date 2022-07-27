@@ -61,28 +61,6 @@ to_dos:
   artifacts:
     paths:
       - to-dos.html
-
-esy:
-  tags:
-    - windows
-  stage: build
-  only:
-  - merge_requests
-  - dev
-  - /^.*-run-dev$/
-  - /^release/.*$/
-  - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - $env:GIT_CURL_VERBOSE = 1
-    - $env:GIT_TRACE = 1
-    - $env:GIT_TRACE_PACKET = 1
-    - git config http.postBuffer 1048576000
-    - npm i -g esy@beta --force
-    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
-    - $env:HOME = 'C:/Users/gitlabrunner'
-    - esy -vvv
-    - rm -Recurse -Force _esy
-  allow_failure: true
   
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
@@ -326,6 +304,9 @@ deploy-handoff:
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.

@@ -45,9 +45,9 @@ let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_inp
 let t_app ?loc type_operator arguments : type_expression = make_t ?loc @@ T_app {type_operator ; arguments}
 
 let t__type_ ?loc () : type_expression = t_variable ?loc v__type_
-[@@map (_type_, ("bool", "string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "chain_id"))]
+[@@map (_type_, ("string", "bytes", "int", "operation", "nat", "tez", "unit", "address", "signature", "key", "key_hash", "timestamp", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr", "chain_id"))]
 let t__type_ ?loc t : type_expression = t_app ?loc v__type_ [t]
-[@@map (_type_, ("option", "list", "set", "contract"))]
+[@@map (_type_, ("list", "set", "contract"))]
 let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 [@@map (_type_, ("map", "big_map"))]
 
@@ -71,6 +71,10 @@ let t_sum_ez_attr ?loc ?(attr=[]) fields =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
   let fields = List.mapi ~f:aux fields in
   t_sum ?loc {fields; attributes=attr}
+
+let t_option ?loc t : type_expression = 
+  t_sum_ez_attr ?loc [("Some", t, []);("None", t_unit (), [])]
+
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 let t_module_accessor ?loc module_path element = make_t ?loc @@ T_module_accessor {module_path;element}
@@ -213,8 +217,8 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
-let e_assign ?loc binder access_path expression = make_e ?loc @@ E_assign {binder;access_path;expression}
-let e_assign_ez ?loc variable access_path expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) access_path expression
+let e_assign ?loc binder expression = make_e ?loc @@ E_assign {binder;expression}
+let e_assign_ez ?loc variable expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
   let attributes = {const_or_var = None} in

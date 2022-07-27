@@ -53,6 +53,7 @@ okayTests =
       , "polymorphism" </> "use_monad_set.mligo"
       , "polymorphism" </> "use_nelist.mligo"
       , "negative" </> "polymorphism" </> "use_error.mligo"
+      , "negative" </> "regression_import_scope_B.mligo"
       , "view_import.mligo"
       , "view_import_and_alias.mligo"
 

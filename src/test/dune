@@ -13,6 +13,7 @@
   simple-utils
   tezos-memory-proto-alpha
   ligo
+  bos
   repl
   interpreter
   alcotest

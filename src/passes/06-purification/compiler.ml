@@ -182,11 +182,10 @@ and compile_expression' ~raise ~last : I.expression -> O.expression option -> O.
     | I.E_tuple tuple ->
       let tuple = List.map ~f:self tuple in
       return @@ O.E_tuple tuple
-    | I.E_assign {binder=b; access_path; expression} ->
+    | I.E_assign {binder=b; expression} ->
       let binder = binder self_type b in
-      let access_path = path self access_path in
       let expression = self expression in
-      return @@ O.E_assign {binder; access_path; expression}
+      return @@ O.E_assign {binder; expression}
     | I.E_for {binder;start;final;incr;f_body} ->
       (*Make the cond and the step *)
       let final = compile_expression ~raise ~last final in

@@ -28,7 +28,6 @@ let rec is_dup (t : type_expression) =
     Nat                 |
     Chest               |
     Chest_key           |
-    Bool                |
     Unit                |
     String              |
     Bytes               |
@@ -157,7 +156,7 @@ let rec muchuse_of_expr expr : muchuse =
     let name = V.of_input_var ~loc:expr.location @@
       pref ^ "." ^ (Format.asprintf "%a" ValueVar.pp element) in
     (M.add name 1 M.empty,[])
-  | E_assign { binder=_; access_path=_; expression } ->
+  | E_assign { binder=_; expression } ->
     muchuse_of_expr expression
 
 and muchuse_of_lambda t {binder; result} =

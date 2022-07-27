@@ -1,8 +1,7 @@
 open Types
 (* type constants *)
 type t =
-    Bool
-  | String
+    String
   | Bytes
   | Int
   | Operation
@@ -45,7 +44,6 @@ type t =
   [@@deriving ord, eq, hash]
 
 let to_string = function
-  | Bool                 -> "bool"
   | String               -> "string"
   | Bytes                -> "bytes"
   | Int                  -> "int"
@@ -88,7 +86,6 @@ let to_string = function
   | Gen                  -> "pbt_gen"
 
   let of_string = function
-  | "bool"                 -> Bool
   | "string"               -> String
   | "bytes"                -> Bytes
   | "int"                  -> Int
@@ -133,7 +130,6 @@ let to_string = function
   | "pbt_gen"                  -> Gen
   | _ -> failwith "Forgot to add constant name in constant.ml?"
 
-let bool                 = Bool
 let string               = String
 let bytes                = Bytes
 let int                  = Int
@@ -178,7 +174,7 @@ let external_ediv        = External "ediv"
 let external_u_ediv      = External "u_ediv"
 let gen                  = Gen
 
-let v_bool                 : type_variable = TypeVar.of_input_var (to_string Bool)
+let v_bool                 : type_variable = TypeVar.of_input_var ("bool")
 let v_string               : type_variable = TypeVar.of_input_var (to_string String)
 let v_bytes                : type_variable = TypeVar.of_input_var (to_string Bytes)
 let v_int                  : type_variable = TypeVar.of_input_var (to_string Int)

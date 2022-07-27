@@ -38,13 +38,7 @@ module M (Params : Params) =
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_typed.M_struct ast_typed) in
         let module_binder = Ast_typed.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
-      let make_module_alias : module_name -> file_name -> declaration =
-        fun module_name file_name ->
-        let module_binder = Ast_typed.ModuleVar.of_input_var module_name in
-        let file_name   = Ast_typed.ModuleVar.of_input_var file_name in
-        let module_ = Location.wrap (Ast_typed.M_variable file_name) in
-        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
+        Location.wrap Ast_typed.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
     end
     let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
       fun env file_name meta c_unit ->
@@ -78,13 +72,7 @@ module Infer (Params : Params) = struct
         fun module_binder ast_typed ->
         let module_ = Location.wrap (Ast_core.M_struct ast_typed) in
         let module_binder = Ast_core.ModuleVar.of_input_var module_binder in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
-      let make_module_alias : module_name -> file_name -> declaration =
-        fun module_name file_name ->
-        let module_binder = Ast_core.ModuleVar.of_input_var module_name in
-        let file_name   = Ast_core.ModuleVar.of_input_var file_name in
-        let module_ = Location.wrap (Ast_core.M_variable file_name) in
-        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=false}})
+        Location.wrap Ast_core.(Declaration_module {module_binder;module_;module_attr={public=true;hidden=true}})
   end
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
@@ -171,6 +159,9 @@ let build_contract ~raise : options:Compiler_options.t -> string -> file_name ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
     let typed_prg = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed_prg entry_point in
+    let Ast_aggregated.{ type1 = input_ty ; _ } = trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract")) @@ Ast_aggregated.get_t_arrow aggregated.type_expression in
+    let parameter_ty, storage_ty = trace_option ~raise (`Self_ast_aggregated_tracer (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract")) @@ Ast_aggregated.get_t_pair input_ty in
+    let aggregated = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
 
@@ -190,7 +181,7 @@ let build_views ~raise :
     let view_names = List.map ~f:fst (Ast_typed.Helpers.get_views contract) in
     let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-    let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression mini_c in
+    let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
     let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
                        Mini_c.get_t_tuple mini_c.type_expression in
     let nb_of_views = List.length view_names in
@@ -198,7 +189,7 @@ let build_views ~raise :
       let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
                      List.nth mini_c_tys i in
       let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
-      let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression idx in
+      let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in
       (view, idx) in
     let views = List.mapi ~f:aux view_names in
     let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in

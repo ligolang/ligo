@@ -1,0 +1,32 @@
+.markdown {
+  color: var(--color-text);
+
+  & h1:not(:first-child), & h2, & h3 {
+    margin-top: 1.25rem;
+    transition: background-color 0.25s linear;
+  }
+  & h4, & h5, & h6 {
+    margin-top: 0.75rem;
+  }
+
+  & strong {
+    color: var(--color-text);
+  }
+  & img {
+    display: block;
+    max-width: 100%;
+  }
+  & a {
+    color: var(--color-link);
+    & strong {
+      color: var(--color-link);
+    }
+  }
+
+  & .table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--color-secondary);
+  }
+  & .table-hover tbody tr:hover {
+    background-color: var(--color-hover);
+  }
+}

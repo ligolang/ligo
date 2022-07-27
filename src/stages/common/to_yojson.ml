@@ -196,10 +196,9 @@ let sequence expression {expr1;expr2} =
     ("expr2", expression expr2);
   ]
 
-let assign expression type_expression {binder=b; access_path; expression=e} =
+let assign expression type_expression {binder=b; expression=e} =
   `Assoc [
     ("variable", binder type_expression b);
-    ("access_path", list (access expression) access_path);
     ("expression", expression e);
   ]
 

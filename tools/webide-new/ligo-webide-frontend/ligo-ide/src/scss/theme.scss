@@ -1,0 +1,32 @@
+// reversed version of EthereumStudio colors
+$white: hsl(224, 10%, 8%);
+$gray-100:  hsl(224, 10%, 13%);
+$gray-200:  hsl(224, 10%, 16%);
+$gray-300:  hsl(224, 10%, 28%);
+$gray-400:  hsl(224, 10%, 39%);
+$gray-500: hsl(224, 12%, 65%);
+$gray-600: hsl(224, 13%, 78%);
+$gray-800: hsl(224, 18%, 90%);
+$black: #fff; 
+
+$light: $gray-100;
+$dark: #eff5ff;
+$dark2: mix($black, $dark, 40%);
+$background: $black;
+$background2: mix($dark, $background, 100%);
+$border: $black;
+$border-width: 0;
+
+$body-bg: $background;
+$body-color: $white;
+
+$primary: #eff5ff;
+$secondary: #d0e3ff;
+$danger: hsl(354, 55%, 60%);
+$warning: hsl(46, 55%, 50%);
+$success: #fc683a;
+$info: hsl(203, 70%, 65%);
+$yellow: hsl(37, 92%, 43%);
+$red: hsl(351, 54%, 58%);
+
+$link-color: hsl(230, 80%, 73%);
