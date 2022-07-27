@@ -165,8 +165,7 @@ let gzip fname fd =
     let len = min (file_size - !p) buffer_len in
     if len <= 0 then 0 else
     let bytes = Bytes.create len in
-    let rd = Caml.Unix.read fd bytes !p len in
-    let len = rd in
+    let len = Caml.Unix.read fd bytes !p len in
     Bigstringaf.blit_from_bytes bytes ~src_off:!p buf ~dst_off:0 ~len ;
     p := !p + len ; len in
   let flush buf len =
