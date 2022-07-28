@@ -47,8 +47,12 @@ type dist =
   ; shasum    : string
   ; tarball   : string
   } [@@deriving to_yojson]
+type author = {
+    name : string
+} [@@deriving to_yojson]
 type version = 
   { name        : string
+  ; author      : author
   ; version     : sem_ver
   ; description : string
   ; scripts     : (string * string) list
@@ -80,6 +84,7 @@ module Attachments = struct
     ) t [] in
     `Assoc kvs
 end
+
 type body = 
   { id          : string [@key "_id"]
   ; name        : string 
@@ -90,7 +95,7 @@ type body =
   ; attachments : Attachments.t [@key "_attachments"]
   } [@@deriving to_yojson]
 
-let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
+let body ~name ~author ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipped_tarball ~scripts = {
   id = name ;
   name ;
   description ;
@@ -99,6 +104,9 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
   } ;
   versions = SMap.add version {
     name ;
+    author = {
+      name = author
+    } ;
     version = version ;
     description ;
     scripts ;
@@ -120,7 +128,7 @@ let body ~name ~readme ~version ~ligo_registry ~description ~sha512 ~sha1 ~gzipp
 
 let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   let open Cohttp_lwt_unix in
-  let LigoManifest.{ name ; version ; scripts ; description ; readme ; _ } = manifest in
+  let LigoManifest.{ name ; version ; scripts ; description ; readme ; author ;  _ } = manifest in
   let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
   let headers = Cohttp.Header.of_list [
     ("referer", "publish") ;
@@ -129,6 +137,7 @@ let http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest =
   ] in
   let body = body 
     ~name 
+    ~author
     ~version
     ~scripts
     ~description 
