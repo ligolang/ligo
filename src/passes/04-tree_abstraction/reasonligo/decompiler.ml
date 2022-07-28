@@ -704,6 +704,8 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
+    let is_unit_pattern (p : AST.type_expression AST.pattern) = 
+      match p.wrap_content with AST.P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | AST.P_unit -> CST.PUnit (wrap (ghost, ghost))
     | AST.P_var v ->
@@ -740,15 +742,21 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
     | AST.P_variant (constructor,p) -> (
       match constructor with
       | Label constructor -> (
-        let p = decompile_pattern p in
-        let constr = wrap (wrap constructor, Some p) in
+        let p =
+          if is_unit_pattern p
+          then None
+          else
+            let p = decompile_pattern p in
+            Some p
+          in
+        let constr = wrap (wrap constructor, p) in
         CST.PConstr constr
       )
     )
     | AST.P_tuple lst ->
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq pl in
-      CST.PTuple (wrap pl)
+      CST.PPar (wrap (par (CST.PTuple (wrap pl))))
     | AST.P_record (llst,lst) ->
       let pl = List.map ~f:decompile_pattern lst in
       let fields_name = List.map ~f:(fun (AST.Label x) -> wrap x) llst in

@@ -242,7 +242,3 @@ and module_ ppf (m : module_) =
   Stage_common.PP.(declarations ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
     ppf m
 let program ppf p = module_ ppf p
-
-and pp_patterns ppf (ps : _ pattern list) =
-  let open Simple_utils.PP_helpers in
-  Format.fprintf ppf "- %a" (list_sep (match_pattern ~pm:true Ast_core.PP.type_expression) (tag "\n- ")) ps

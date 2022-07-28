@@ -77,7 +77,7 @@ type typer_error = [
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
-  | `Typer_pattern_missing_cases of Location.t * Ast_core.type_expression Ast_core.pattern list
+  | `Typer_pattern_missing_cases of Location.t * (Syntax_types.t option) * Ast_core.type_expression Ast_core.pattern list
   | `Typer_pattern_redundant_case of Location.t
   | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
@@ -296,11 +296,14 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Redundant pattern matching@]"
         Snippet.pp loc
-    | `Typer_pattern_missing_cases (loc, ps) ->
+    | `Typer_pattern_missing_cases (loc, syntax, ps) ->
+      let ps = List.fold ps ~init:"" ~f:(fun s p ->
+        let s' = Desugaring.Decompiler.decompile_pattern_to_string ~syntax p in
+        s ^ "- " ^ s' ^ "\n") in
       Format.fprintf f
-        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%a@]"
+        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"
         Snippet.pp loc
-        Ast_typed.PP.pp_patterns ps
+        ps
     | `Typer_pattern_redundant_case loc ->
       Format.fprintf f
         "@[<hv>%a@.Error : this match case is unused.@]"
@@ -662,12 +665,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("location", Location.to_yojson p.location);
     ] in
     json_error ~stage ~content
-  | `Typer_pattern_missing_cases (loc,ps) ->
+  | `Typer_pattern_missing_cases (loc,syntax,ps) ->
     let message = `String "pattern-matching is not exhaustive." in
-    let pattern = List.map ps ~f:(Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) in
+    let patterns = List.map ps ~f:(fun p -> 
+      `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p)) in
     let content = `Assoc [
       ("message", message);
-      ("patterns", `List pattern);
+      ("patterns", `List patterns);
       ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content

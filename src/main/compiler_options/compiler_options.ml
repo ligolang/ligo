@@ -27,6 +27,7 @@ type middle_end = {
   init_env : Environment.t ;
   protocol_version : Protocols.t ;
   warn_unused_rec : bool ;
+  syntax_for_errors : Syntax_types.t option ;
 }
 
 type backend = {
@@ -90,6 +91,7 @@ let make :
         init_env = if raw_options.test then default_with_test protocol_version else default protocol_version ;
         protocol_version ;
         warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec ;
+        syntax_for_errors = syntax ;
       } in
       let backend = {
         protocol_version ;

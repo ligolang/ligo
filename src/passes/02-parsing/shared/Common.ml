@@ -370,13 +370,14 @@ module MakePretty (CST    : CST)
 
     (* Pretty-print a pattern from its CST *)
 
-    let print_pattern pattern =
+    let print_pattern ?cols pattern =
       let width, buffer = set () in
       let doc = Pretty.print_pattern pattern in
+      let width = match cols with Some cols -> cols | None -> width in 
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
 
-    let pretty_print_pattern = print_pattern
+    let pretty_print_pattern ?cols = print_pattern ?cols
 
     (* Pretty-print a type expression from its CST *)
 
