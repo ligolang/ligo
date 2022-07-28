@@ -357,7 +357,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
-  let env = make_subst_ast_env_exp ~raise env orig in
+  let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name:name env arg body in
   let lambda = { result=typed_exp' ; binder={var=arg;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in
   let typed_exp' = match name with
@@ -414,22 +414,14 @@ and compile_simple_value ~raise ~options ?ctxt ~loc : Ligo_interpreter.Types.val
   let expr_ty = clean_location_with () compiled_exp.expr_ty in
   { code = expr ; code_ty = expr_ty ; ast_ty = typed_exp.type_expression }
 
-and make_subst_ast_env_exp ~raise env expr =
+and make_subst_ast_env_exp ~raise env =
   let open Ligo_interpreter.Types in
-  let get_fv expr =
-   Self_ast_aggregated.Helpers.Free_variables.expression expr in
-  let rec aux fv acc = function
+  let rec aux acc = function
     | [] -> acc
     | (name, { item ; no_mutation ; inline }) :: tl ->
-       if List.mem fv name ~equal:ValueVar.equal then
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
-         let expr_fv = get_fv expr in
-         let fv = List.remove_element ~compare:ValueVar.compare name fv in
-         let fv = List.dedup_and_sort ~compare:ValueVar.compare (fv @ expr_fv) in
-         aux fv ((name, expr, no_mutation, inline) :: acc) tl
-       else
-         aux fv acc tl in
-  aux (get_fv expr) [] env
+         aux ((name, expr, no_mutation, inline) :: acc) tl in
+  aux [] env
 
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"

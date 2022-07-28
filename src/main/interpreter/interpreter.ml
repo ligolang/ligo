@@ -994,6 +994,8 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
+      let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
@@ -1120,6 +1122,8 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" AST.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
+      let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
                              arg_binder = lambda.binder.var ;
