@@ -14,6 +14,23 @@ module ModResHelpers = Preprocessor.ModRes.Helpers
 type interpreter_error = Errors.interpreter_error
 let not_comparable_string = v_string "Not comparable"
 
+(* [resolve_contract_file ~mod_res ~source_file ~contract_file] tries to resolve
+   [contract_file] w.r.t. to process directory
+   if that fails it tries to resolve it as a relative path w.r.t. directory of [source_file]
+   if that fails it tries to resolve it as a package path using [mod_res] *)
+let resolve_contract_file ~mod_res ~source_file ~contract_file =
+  match Sys.file_exists contract_file with
+  `Yes -> contract_file
+| `No | `Unknown ->
+  (match source_file with
+    Some source_file -> 
+      let d = Filename.dirname source_file in
+      let s = Filename.concat d contract_file in
+      (match Sys.file_exists s with
+        `Yes -> s
+      | `No | `Unknown -> ModResHelpers.resolve_file_name contract_file mod_res)
+  | None -> ModResHelpers.resolve_file_name contract_file mod_res)
+
 let check_value value =
   let open Monad in
   match value with
@@ -162,10 +179,10 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
   let open Monad in
-  let eval_ligo = eval_ligo ~raise ~steps ~options in
+  let eval_ligo = eval_ligo ~raise ~steps ~options ?source_file in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
   let operands = List.map ~f:(fun (a, _, _) -> a) operands in
   let error_type = Errors.generic_error loc "Type error." in
@@ -579,14 +596,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string source_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
+    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
       let>> mod_res = Get_mod_res () in
-      let source_file = ModResHelpers.resolve_file_name source_file mod_res in
+      let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
       let views = List.map
                     ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
                     views
       in
-      let>> code = Compile_contract_from_file (source_file,entryp,views) in
+      let>> code = Compile_contract_from_file (contract_file,entryp,views) in
       return @@ code
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
@@ -953,9 +970,9 @@ and eval_literal : AST.literal -> value Monad.t = function
   )
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
-and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> value Monad.t
+and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace -> env -> value Monad.t
   = fun term calltrace env ->
-    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options in
+    let eval_ligo ?(steps = steps - 1) = eval_ligo ~raise ~steps ~options ?source_file in
     let open Monad in
     let* () = if steps <= 0 then fail (Errors.meta_lang_eval term.location calltrace (v_string "Out of fuel")) else return () in
     match term.expression_content with
@@ -1041,7 +1058,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
           let* value = eval_ligo ae calltrace env in
           return @@ (value, ae.type_expression, ae.location))
         arguments in
-      apply_operator ~raise ~steps ~options term.location calltrace term.type_expression env cons_name arguments'
+      apply_operator ~raise ~steps ~options ?source_file term.location calltrace term.type_expression env cons_name arguments'
     )
     | E_constructor { constructor = Label "True" ; element = { expression_content = E_literal (Literal_unit) ; _ } } ->
       return @@ V_Ct (C_bool true)
@@ -1137,9 +1154,10 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     )
     | E_assign _ -> raise.error @@ Errors.generic_error term.location "Assignements should not reach interpreter"
 
-and try_eval ~raise ~steps ~options expr env state r = Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options expr [] env) state r
+and try_eval ~raise ~steps ~options ?source_file expr env state r =
+  Monad.eval ~raise ~options (eval_ligo ~raise ~steps ~options ?source_file expr [] env) state r
 
-let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) list) =
+let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((string * value) list) =
   fun prg ->
   let decl_lst = prg in
   (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -1167,7 +1185,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> ((string * value) li
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
-  let value, _ = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
+  let value, _ = try_eval ~raise ~steps ~options ?source_file expr Env.empty_env initial_state None in
   match value with
   | V_Record m ->
     let f (n, _) r =
