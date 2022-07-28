@@ -6,7 +6,7 @@ import { ValidateValueCategory } from './messages'
 import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescriptorFactory'
 import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoDebugConfigurationProvider'
 import LigoProtocolClient from './LigoProtocolClient'
-import { createRememberingInputBox, createRememberingQuickPick } from './ui'
+import { createRememberingQuickPick, getParameterOrStorage, ValueType } from './ui'
 import LigoServer from './LigoServer'
 import { Ref, DebuggedContractSession, Maybe, ContractMetadata } from './base'
 
@@ -40,10 +40,10 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(factory)
 	}
 
-	const validateInput = (category: ValidateValueCategory) => async (value: string): Promise<Maybe<string>> => {
+	const validateInput = (category: ValidateValueCategory, valueType: ValueType) => async (value: string): Promise<Maybe<string>> => {
 		if (client) {
 			const pickedMichelsonEntrypoint = debuggedContractSession.ref.pickedMichelsonEntrypoint
-			return (await client.sendMsg('validateValue', { value, category, pickedMichelsonEntrypoint })).message
+			return (await client.sendMsg('validateValue', { value, category, valueType, pickedMichelsonEntrypoint })).message
 		}
 		return undefined
 	}
@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestParameterValue',
-			createRememberingInputBox(
+			getParameterOrStorage(
 				context,
 				validateInput,
 				"parameter",
@@ -66,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestStorageValue',
-			createRememberingInputBox(context,
+			getParameterOrStorage(context,
 				validateInput,
 				"storage",
 				"Please input the contract storage",

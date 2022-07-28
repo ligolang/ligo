@@ -3,6 +3,9 @@
 //
 // SPDX-FileCopyrightText: 2022 Oxhead Alpha
 // SPDX-License-Identifier: LicenseRef-MIT-OA
+//
+// SPDX-FileCopyrightText: 2022 Microsoft
+// SPDX-License-Identifier: LicenseRef-MIT-Microsoft
 
 // Useful UI elements which is used to make the plugin more pleasant to use.
 
@@ -11,68 +14,6 @@ import { ExtensionContext, QuickPickItem } from 'vscode';
 import { DebuggedContractSession, Maybe, Ref, isDefined, ContractMetadata } from './base'
 
 export type InputBoxType = "parameter" | "storage"
-
-// Create input box which remembers previously
-// inputted value in workspace storage.
-export const createRememberingInputBox = (
-	context: ExtensionContext,
-	validateInput: (inputType: InputBoxType) => (value: string) => Promise<Maybe<string>>,
-	inputBoxType: InputBoxType,
-	placeHolder: string,
-	prompt: string,
-	debuggedContract: Ref<DebuggedContractSession>
-) => (_config: any): Thenable<Maybe<string>> => {
-
-	if (!isDefined(debuggedContract.ref.contractMetadata)) {
-		throw new Error("Internal error: metadata is not defined at the moment of user input")
-	}
-
-	const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-	let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
-	let placeholderExtra: string = ''
-	let michelsonType: string = ''
-	switch (inputBoxType) {
-		case "parameter":
-			michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
-			// Consider picked entrypoint in the key to remember value depending on an entrypoint
-			const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
-			if (entrypoint) {
-				// rewrite currentKey with entrypoint specific one
-				currentKey =
-					currentFilePath &&
-					"quickpick_" + inputBoxType +
-					(entrypoint ? + '_' + entrypoint : '') +
-					'_' + currentFilePath
-				placeholderExtra = " for '" + entrypoint + "' entrypoint"
-			}
-			break
-
-		case "storage":
-			michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
-			break;
-	}
-
-	const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
-	const defaultValue =
-		isDefined(previousVal)
-			? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
-			: suggestTypeValue(michelsonType)
-	return vscode.window.showInputBox({
-		placeHolder: placeHolder + placeholderExtra,
-		prompt: prompt,
-		value: defaultValue.value,
-		valueSelection: defaultValue.selection,
-		validateInput: validateInput(inputBoxType),
-		// Keep input box open if focus is moved out
-		ignoreFocusOut: true
-	}).then(newVal => {
-		// Preserve new parameter value to show it next time
-		if (isDefined(newVal) && isDefined(currentKey)) {
-			context.workspaceState.update(currentKey, newVal)
-		}
-		return newVal
-	})
-}
 
 const suggestTypeValue = (mitype: string): { value: string, selection?: [number, number] } => {
 	const startsWith = (prefix: string, str: string): boolean =>
@@ -164,3 +105,314 @@ export const createRememberingQuickPick =
 			return newVal?.label
 		})
 	}
+
+export type ValueType = "LIGO" | "Michelson";
+
+export const getParameterOrStorage = (
+		context: ExtensionContext,
+		validateInput: (inputType: InputBoxType, valueType: ValueType) => (value: string) => Promise<Maybe<string>>,
+		inputBoxType: InputBoxType,
+		placeHolder: string,
+		prompt: string,
+		debuggedContract: Ref<DebuggedContractSession>
+	) => async (_config: any): Promise<Maybe<string>> => {
+
+	const totalSteps = 1;
+
+	class SwitchButton implements vscode.QuickInputButton {
+		public typ: ValueType;
+
+		constructor(public iconPath: vscode.Uri, public tooltip: ValueType) {
+			this.typ = tooltip;
+		}
+
+		static readonly LigoSwitch = new SwitchButton(
+			vscode.Uri.file(context.asAbsolutePath('resources/ligo.png')),
+			"LIGO"
+		);
+
+		static readonly MichelsonSwitch = new SwitchButton(
+			vscode.Uri.file(context.asAbsolutePath('resources/tezos.png')),
+			"Michelson"
+		);
+	}
+
+	interface State {
+		value: string;
+		currentSwitch: SwitchButton;
+	}
+
+	async function askValue(input: MultiStepInput, state: Partial<State>) {
+		if (!isDefined(debuggedContract.ref.contractMetadata)) {
+			throw new Error("Internal error: metadata is not defined at the moment of user input")
+		}
+
+		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+		let currentKey: Maybe<string> = currentFilePath && "quickpick_" + inputBoxType + '_' + currentFilePath
+		let placeholderExtra: string = ''
+		let michelsonType: string = ''
+		switch (inputBoxType) {
+			case "parameter":
+				michelsonType = debuggedContract.ref.contractMetadata.parameterMichelsonType
+				// Consider picked entrypoint in the key to remember value depending on an entrypoint
+				const entrypoint = debuggedContract.ref.pickedMichelsonEntrypoint
+				if (entrypoint) {
+					// rewrite currentKey with entrypoint specific one
+					currentKey =
+						currentFilePath &&
+						"quickpick_" + inputBoxType +
+						(entrypoint ? + '_' + entrypoint : '') +
+						'_' + currentFilePath
+					placeholderExtra = " for '" + entrypoint + "' entrypoint"
+				}
+				break
+
+			case "storage":
+				michelsonType = debuggedContract.ref.contractMetadata.storageMichelsonType
+				break;
+		}
+
+		const previousVal = currentKey && context.workspaceState.get<string>(currentKey)
+		const defaultValue =
+			isDefined(previousVal)
+				? { value: previousVal, selection: oldValueSelection(michelsonType, previousVal) }
+				: suggestTypeValue(michelsonType)
+
+		// Unfortunately, we can't use 'valueSelection' in low-level 'createInputBox'.
+		// (https://github.com/microsoft/vscode/issues/56759)
+		const pick = await input.showInputBox({
+			totalSteps,
+			placeholder: placeHolder + placeholderExtra,
+			prompt,
+			value: defaultValue.value,
+			validate: validateInput(inputBoxType, state.currentSwitch.typ),
+			buttons: [state.currentSwitch],
+			// Keep input box open if focus is moved out
+			ignoreFocusOut: true
+		});
+
+		if (isDefined(input.getCurrentValue()) && isDefined(currentKey)) {
+			context.workspaceState.update(currentKey, input.getCurrentValue());
+		}
+
+		input.doNotRecordStep();
+
+		if (pick instanceof SwitchButton) {
+			switch (pick) {
+				case SwitchButton.LigoSwitch:
+					state.currentSwitch = SwitchButton.MichelsonSwitch;
+					break;
+				case SwitchButton.MichelsonSwitch:
+					state.currentSwitch = SwitchButton.LigoSwitch;
+					break;
+			}
+			return (input: MultiStepInput) => askValue(input, state);
+		} else {
+			state.value = pick;
+		}
+	}
+
+	async function collectInputs() {
+		const state = { currentSwitch: SwitchButton.LigoSwitch } as Partial<State>;
+		await MultiStepInput.run(input => askValue(input, state));
+		return state as State;
+	}
+
+	const state = await collectInputs();
+
+	if (isDefined(state.value) && isDefined(state.currentSwitch.typ)) {
+		return state.value + '@' + state.currentSwitch.typ;
+	}
+}
+
+class InputFlowAction {
+	static back = new InputFlowAction();
+	static cancel = new InputFlowAction();
+}
+
+type InputStep = (input: MultiStepInput) => Thenable<InputStep | void>;
+
+interface QuickPickParameters<T extends QuickPickItem> {
+	totalSteps: number;
+	items: T[];
+	activeItem?: T;
+	buttons?: vscode.QuickInputButton[];
+	placeholder: string;
+}
+
+interface InputBoxParameters {
+	placeholder: string;
+	totalSteps: number;
+	value: string;
+	prompt: string;
+	validate: (value: string) => Promise<string | undefined>;
+	buttons?: vscode.QuickInputButton[];
+	ignoreFocusOut: boolean;
+}
+
+class MultiStepInput {
+
+	static async run<T>(start: InputStep) {
+		const input = new MultiStepInput();
+		return input.stepThrough(start);
+	}
+
+	private current?: vscode.QuickInput;
+	private steps: InputStep[] = [];
+	private shouldRecordStep: boolean = true;
+
+	public doNotRecordStep() {
+		this.shouldRecordStep = false;
+	}
+
+	public getCurrentValue(): Maybe<string> {
+		// Since 'InputBox' is interface we can't check 'this.current' type
+		// with 'instanceof'.
+		if (this.current && 'value' in this.current) {
+			return (this.current as vscode.InputBox).value;
+		} else {
+			return undefined;
+		}
+	}
+
+	private async stepThrough<T>(start: InputStep) {
+		let step: InputStep | void = start;
+		while (step) {
+			this.steps.push(step);
+			if (this.current) {
+				this.current.enabled = false;
+				this.current.busy = true;
+			}
+			try {
+				step = await step(this);
+			} catch (err) {
+				switch (err) {
+					case InputFlowAction.back:
+						this.steps.pop();
+						step = this.steps.pop();
+						break;
+					case InputFlowAction.cancel:
+						step = undefined;
+						break;
+					default:
+						throw err;
+				}
+			} finally {
+				if (!this.shouldRecordStep) {
+					this.steps.pop();
+					this.shouldRecordStep = true;
+				}
+			}
+		}
+		if (this.current) {
+			this.current.dispose();
+		}
+	}
+
+	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({ totalSteps, items, activeItem, buttons, placeholder }: P) {
+		const disposables: vscode.Disposable[] = [];
+		try {
+			return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
+				const input = vscode.window.createQuickPick<T>();
+				if (totalSteps > 1) {
+					input.step = this.steps.length;
+					input.totalSteps = totalSteps;
+				}
+				input.placeholder = placeholder;
+				input.items = items;
+				if (activeItem) {
+					input.activeItems = [activeItem];
+				}
+				input.buttons = [
+					...(this.steps.length > 1 ? [vscode.QuickInputButtons.Back] : []),
+					...(buttons || [])
+				];
+				disposables.push(
+					input.onDidTriggerButton(item => {
+						if (item === vscode.QuickInputButtons.Back) {
+							reject(InputFlowAction.back);
+						} else {
+							resolve(<any>item);
+						}
+					}),
+					input.onDidChangeSelection(items => resolve(items[0])),
+					input.onDidHide(() => {
+						(async () => {
+							reject(InputFlowAction.cancel);
+						})()
+							.catch(reject);
+					})
+				);
+				if (this.current) {
+					this.current.dispose();
+				}
+				this.current = input;
+				this.current.show();
+			});
+		} finally {
+			disposables.forEach(d => d.dispose());
+		}
+	}
+
+	async showInputBox<P extends InputBoxParameters>({ placeholder, totalSteps, value, prompt, validate, buttons, ignoreFocusOut }: P) {
+		const disposables: vscode.Disposable[] = [];
+		try {
+			return await new Promise<string | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
+				const input = vscode.window.createInputBox();
+				if (totalSteps > 1) {
+					input.step = this.steps.length;
+					input.totalSteps = totalSteps;
+				}
+				input.placeholder = placeholder;
+				input.value = value || '';
+				input.prompt = prompt;
+				input.buttons = [
+					...(this.steps.length > 1 ? [vscode.QuickInputButtons.Back] : []),
+					...(buttons || [])
+				];
+				input.ignoreFocusOut = ignoreFocusOut;
+				let validating = validate('');
+				disposables.push(
+					input.onDidTriggerButton(item => {
+						if (item === vscode.QuickInputButtons.Back) {
+							reject(InputFlowAction.back);
+						} else {
+							resolve(<any>item);
+						}
+					}),
+					input.onDidAccept(async () => {
+						const value = input.value;
+						input.enabled = false;
+						input.busy = true;
+						if (!(await validate(value))) {
+							resolve(value);
+						}
+						input.enabled = true;
+						input.busy = false;
+					}),
+					input.onDidChangeValue(async text => {
+						const current = validate(text);
+						validating = current;
+						const validationMessage = await current;
+						if (current === validating) {
+							input.validationMessage = validationMessage;
+						}
+					}),
+					input.onDidHide(() => {
+						(async () => {
+							reject(InputFlowAction.cancel);
+						})()
+							.catch(reject);
+					})
+				);
+				if (this.current) {
+					this.current.dispose();
+				}
+				this.current = input;
+				this.current.show();
+			});
+		} finally {
+			disposables.forEach(d => d.dispose());
+		}
+	}
+}

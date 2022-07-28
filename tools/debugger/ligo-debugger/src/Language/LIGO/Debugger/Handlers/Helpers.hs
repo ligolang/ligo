@@ -9,7 +9,6 @@ import Control.Concurrent.STM (writeTChan)
 import Control.Monad.Except (MonadError, liftEither, throwError)
 import Data.Char qualified as C
 import Data.Singletons (SingI)
-import Data.Text qualified as T
 import Fmt (Buildable (..), Builder, pretty)
 import Fmt.Internal.Core (FromBuilder (..))
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
@@ -93,27 +92,27 @@ parseValue
   => FilePath
   -> Text
   -> Text
+  -> Text
   -> m (T.Value t)
-parseValue ctxContractPath category val = do
+parseValue ctxContractPath category val valueType = do
   let src = P.MSName category
-  uvalue <- if
-    | Just michVal <- extractMichelsonValue val ->
-        P.parseExpandValue src michVal
-          & either (throwError . pretty . MD.prettyFirstError) pure
-    | otherwise ->
-        runExceptT (compileLigoExpression src ctxContractPath val) >>= \case
-          Right x -> pure x
-          Left err -> throwError [int||
-            Error parsing #{category}:
+  uvalue <- case valueType of
+    "LIGO" ->
+      runExceptT (compileLigoExpression src ctxContractPath val) >>= \case
+        Right x -> pure x
+        Left err -> throwError [int||
+          Error parsing #{category}:
 
-            #{err}
-           |]
+          #{err}
+          |]
+    "Michelson" ->
+      P.parseExpandValue src val
+        & either (throwError . pretty . MD.prettyFirstError) pure
+    _ -> throwError [int||
+        Expected "LIGO" or "Michelson" in field "valueType" \
+        but got #{valueType}
+      |]
 
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
     & either (\msg -> throwError [int||Typechecking as #{category} failed: #{msg}|]) pure
-  where
-    extractMichelsonValue = asum . sequence
-      [ T.stripPrefix "m:"
-      , T.stripPrefix "michelson:"
-      ]
