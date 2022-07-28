@@ -449,4 +449,7 @@ For debugging.
     
     fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" syntax alt_name;
     fprintf fmt "(provide '%s-mode)\n" syntax
+
+  let print_footer fmt =
+    fprintf fmt "\n;;; ligo-mode.el ends here\n"
 end

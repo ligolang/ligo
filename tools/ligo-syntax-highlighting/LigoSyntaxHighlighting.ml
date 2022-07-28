@@ -68,6 +68,7 @@ let emacs_syntax_highlighting dir syntaxes =
   List.iter (fun ((name, t): (string * SyntaxHighlighting.Core.t)) ->
     Print.print fmt name t.alt_name t;
   ) syntaxes;
+  Print.print_footer fmt;
   let emacs_output = Buffer.contents buffer in
   let () = output_file dir "ligo-mode.el" emacs_output in
   let () = print_endline "Success" in

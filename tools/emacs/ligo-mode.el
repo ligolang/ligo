@@ -533,3 +533,5 @@
 
 (add-to-list 'auto-mode-alist '("\\.religo\\'" . ligo-reason-mode))
 (provide 'religo-mode)
+
+;;; ligo-mode.el ends here
