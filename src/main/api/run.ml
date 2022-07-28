@@ -13,7 +13,7 @@ let test (raw_options : Raw_options.t) source_file display_format () =
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps ; _ } = options.test_framework in
       let typed   = Build.merge_and_type_libraries ~raise ~options source_file in
-      Interpreter.eval_test ~raise ~steps ~options typed
+      Interpreter.eval_test ~raise ~steps ~options ~source_file typed
 
 let dry_run (raw_options : Raw_options.t) source_file parameter storage amount balance sender source now display_format () =
     let warning_as_error = raw_options.warning_as_error in
