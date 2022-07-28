@@ -192,10 +192,10 @@ and expression_content ppf (ec: expression_content) =
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; thunk = _ ; hidden = false } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; hidden = false } } ->
       fprintf ppf "let %a = %a%a%a in %a" (binder type_expression) let_binder expression
         rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; thunk = _ ; hidden = true } } ->
+  | E_let_in {let_binder = _; rhs = _; let_result; attr = { inline = _; no_mutation = _; public=__LOC__ ; view = _ ; hidden = true } } ->
       fprintf ppf "%a" expression let_result
   | E_mod_in {module_binder; rhs; let_result} ->
       fprintf ppf "let module %a = struct@;@[<v>%a]@ end in %a" module_variable module_binder
@@ -241,4 +241,9 @@ and declaration ppf (d : declaration) =
 and module_ ppf (m : module_) =
   Stage_common.PP.(declarations ~print_type:false expression type_expression e_attributes type_and_module_attr type_and_module_attr)
     ppf m
+
+and pp_patterns ppf (ps : _ pattern list) =
+  let open Simple_utils.PP_helpers in
+  Format.fprintf ppf "- %a" (list_sep (match_pattern ~pm:true Ast_core.PP.type_expression) (tag "\n- ")) ps
+
 let program ppf p = module_ ppf p

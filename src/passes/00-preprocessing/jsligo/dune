@@ -8,7 +8,7 @@
  (libraries
   ;; Vendors
   Preprocessor)
- (modules Comments File))
+ (modules Comments Modules File))
 
 ;; Build of a standalone preprocessor for JsLIGO
 

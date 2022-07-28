@@ -10,6 +10,7 @@ module PreprocMainGen = Preprocessor.PreprocMainGen
 
 module type FILE        = Preprocessing_shared.File.S
 module type COMMENTS    = Preprocessing_shared.Comments.S
+module type MODULES     = Preprocessing_shared.Modules.S
 module type TOKEN       = Lexing_shared.Token.S
 module type SELF_TOKENS = Lexing_shared.Self_tokens.S
 module type PARSER      = ParserLib.API.PARSER
@@ -44,6 +45,7 @@ type 'token window = <
 module Make
          (File        : FILE)
          (Comments    : COMMENTS)
+         (Modules     : MODULES)
          (Token       : TOKEN)
          (ParErr      : sig val message : int -> string end)
          (Self_tokens : SELF_TOKENS with type token = Token.t)

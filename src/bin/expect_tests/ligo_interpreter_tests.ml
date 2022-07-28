@@ -849,6 +849,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_decompile.mligo" ] ;
   [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 2-29:
+      2 |   let x = Test.eval 4n in
+      3 |   (Test.decompile x : string)
+
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
 
 let%expect_test _ =
@@ -880,13 +884,12 @@ let () = Sys.chdir "../../test/contracts/negative/interpreter_tests/"
 let%expect_test _ =
 run_ligo_bad [ "run" ; "test" ; "typed_addr_in_bytes_pack.mligo" ] ;
 [%expect{|
-  File "typed_addr_in_bytes_pack.mligo", line 13, characters 8-9:
-   12 | let test =
-   13 |     let r = originate_record () in
+  File "typed_addr_in_bytes_pack.mligo", line 15, characters 52-53:
    14 |     let packed = Bytes.pack (fun() ->
+   15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+   16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
 
-  Expected address but got typed_address (unit ,
-  unit) |}]
+  Invalid usage of a Test primitive or type in object ligo. |}]
 
 let () = Sys.chdir pwd
 

@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1871'
+title: 'Aggregation: remove from the scope the variables locally bound'
+type: fixed

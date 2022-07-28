@@ -7,3 +7,4 @@ val of_string_opt :
   Syntax_types.t
 
 val to_string : Syntax_types.t -> string
+val to_ext : Syntax_types.t -> string

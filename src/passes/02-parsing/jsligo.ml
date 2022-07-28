@@ -6,6 +6,7 @@ module Trace = Simple_utils.Trace
 
 module File        = Preprocessing_jsligo.File
 module Comments    = Preprocessing_jsligo.Comments
+module Modules     = Preprocessing_jsligo.Modules
 module Token       = Lexing_jsligo.Token
 module Self_tokens = Lexing_jsligo.Self_tokens
 module ParErr      = Parsing_jsligo.ParErr
@@ -26,7 +27,7 @@ module JsligoParser =
   end
 
 include Common.MakeTwoParsers
-          (File) (Comments) (Token) (ParErr) (Self_tokens)
+          (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
           (CST) (JsligoParser)
 
 (* Making the pretty-printers *)

@@ -66,6 +66,11 @@ let t_triplet ?loc a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
+let t_unforged_ticket ?loc ty : type_expression =
+  ez_t_record ?loc [
+    (Label "ticketer", {associated_type=(t_address ()); michelson_annotation=None ; decl_pos = 0}) ;
+    (Label "value"   , {associated_type=ty            ; michelson_annotation=None ; decl_pos = 1}) ;
+    (Label "amount"  , {associated_type=(t_nat ())    ; michelson_annotation=None ; decl_pos = 2}) ]
 
 let t_sum ?loc ~layout content : type_expression = make_t ?loc (T_sum {content;layout})
 let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
@@ -193,7 +198,7 @@ let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj 
   | _ -> None
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
-[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "unit", "address", "tez", "contract", "map", "big_map"))]
+[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "unit", "address", "tez", "contract", "map", "big_map" , "typed_address"))]
 
 let is_t_mutez t = is_t_tez t
 
@@ -324,3 +329,10 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
     match LMap.find_opt label record.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type
+
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e
