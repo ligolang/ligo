@@ -850,7 +850,7 @@ let rec decompile_pattern p =
   | AST.P_variant (constructor,_) -> (
       match constructor with
       | Label constructor -> (
-        CST.PConstr (Region.wrap_ghost constructor)
+        Ok (CST.PConstr (Region.wrap_ghost constructor))
       )
     )
   (* Note: Currently only the above branch AST.P_variant is valid
@@ -860,15 +860,24 @@ let rec decompile_pattern p =
      The rest of the cases are a best approximation of decompilation, these
      will not be really used, modify the rest of the cases when pattern
      matching will be handled in a better manner *)
-  | AST.P_unit -> failwith "no PUnit in JsLIGO CST"
+  | AST.P_unit -> Error "no PUnit in JsLIGO CST"
   | AST.P_var v ->
     let name = { CST.variable = decompile_variable v.var ; attributes = [] } in
-    CST.PVar (Region.wrap_ghost name)
+    Ok (CST.PVar (Region.wrap_ghost name))
   | AST.P_tuple lst ->
-    let pl = List.map ~f:decompile_pattern lst in
-    let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
-    CST.PArray (Region.wrap_ghost (brackets pl))
-  | AST.P_list pl -> failwith "no PList in JsLIGO CST"
+    let rec aux = function 
+      [] -> Ok [] 
+    | p::ps -> 
+      let p = decompile_pattern p in
+      match p with
+        Ok p -> Result.map (aux ps) ~f:(fun ps -> p :: ps)
+      | Error e -> Error e
+    in
+    Result.map (aux lst) ~f:(fun pl ->
+      let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
+      CST.PArray (Region.wrap_ghost (brackets pl))
+    )
+  | AST.P_list pl -> Error "no PList in JsLIGO CST"
   | AST.P_record (llst,_) ->
     let fields_name = List.map ~f:(fun (AST.Label x) ->
       CST.PVar (
@@ -877,4 +886,4 @@ let rec decompile_pattern p =
           ; attributes = [] })) llst in
     let inj = list_to_nsepseq ~sep:Token.ghost_comma fields_name in
     let inj = Region.wrap_ghost @@ braced inj in
-    CST.PObject inj
+    Ok (CST.PObject inj)
