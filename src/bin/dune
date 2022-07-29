@@ -53,7 +53,7 @@
  (name ldaemon)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix lambda-term compiler_options ligo_api) ;Remove unused libs
+ (libraries parse-argv ligo_api)
  (preprocess (pps ppx_deriving_yojson))
  (modules ldaemon))
 
