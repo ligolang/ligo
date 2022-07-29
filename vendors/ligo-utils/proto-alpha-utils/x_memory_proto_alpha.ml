@@ -84,6 +84,7 @@ let lazy_expr expr =
 let parse_michelson_fail (type aft aftr)
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ~(top_level : tc_context) michelson
+    ?(legacy = false)
     ?type_logger
     (bef:('a, 'b) Script_typed_ir.stack_ty) (aft:(aft, aftr) Script_typed_ir.stack_ty)
     : (('a, 'b, aft, aftr) descr, error trace) result Lwt.t
@@ -96,7 +97,7 @@ let parse_michelson_fail (type aft aftr)
   parse_instr
     ?type_logger
     top_level tezos_context
-    michelson bef ~legacy:false) >>=?? fun (j, _) ->
+    michelson bef ?legacy) >>=?? fun (j, _) ->
   match j with
   | Typed descr -> (
     Lwt.return (
