@@ -256,7 +256,7 @@ how those built-ins can be utilised.
 
 ### Accepting or Declining Tokens in a Smart Contract
 
-This example shows how `Tezos.amount` and `failwith` can be used to
+This example shows how `Tezos.get_amount` and `failwith` can be used to
 decline any transaction that sends more tez than `0tez`, that is, no
 incoming tokens are accepted.
 
@@ -268,7 +268,7 @@ type storage is unit
 type return is list (operation) * storage
 
 function deny (const action : parameter; const store : storage) : return is
-  if Tezos.amount > 0tez then
+  if Tezos.get_amount() > 0tez then
     (failwith ("This contract does not accept tokens.") : return)
   else ((nil : list (operation)), store)
 ```
@@ -283,7 +283,7 @@ type storage = unit
 type return = operation list * storage
 
 let deny (action, store : parameter * storage) : return =
-  if Tezos.amount > 0tez then
+  if Tezos.get_amount () > 0tez then
     (failwith "This contract does not accept tokens." : return)
   else (([] : operation list), store)
 ```
@@ -297,7 +297,7 @@ type storage = unit;
 type return = (list (operation), storage);
 
 let deny = ((action, store): (parameter, storage)) : return => {
-  if (Tezos.amount > 0tez) {
+  if (Tezos.get_amount () > 0tez) {
     (failwith("This contract does not accept tokens."): return); }
   else { (([] : list (operation)), store); };
 };
@@ -312,7 +312,7 @@ type storage = unit;
 type @return = [list<operation>, storage];
 
 const deny = ([action, store]: [parameter, storage]): @return => {
-  if (Tezos.amount > (0 as tez)) {
+  if (Tezos.get_amount() > (0 as tez)) {
     return failwith("This contract does not accept tokens.") as @return;
   }
   else {
@@ -330,7 +330,7 @@ type storage = unit;
 type @return = [list<operation>, storage];
 
 const deny = ([action, store]: [parameter, storage]): @return => {
-  if (Tezos.amount > (0 as tez)) {
+  if (Tezos.get_amount() > (0 as tez)) {
     return failwith("This contract does not accept tokens.") as @return;
   }
   else {
@@ -343,7 +343,7 @@ const deny = ([action, store]: [parameter, storage]): @return => {
 
 ### Access Control
 
-This example shows how `Tezos.source` can be used to deny access to an
+This example shows how `Tezos.get_source` can be used to deny access to an
 entrypoint.
 
 <Syntax syntax="pascaligo">
@@ -352,7 +352,7 @@ entrypoint.
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
 function main (const action : parameter; const store : storage) : return is
-  if Tezos.source =/= owner then (failwith ("Access denied.") : return)
+  if Tezos.get_source() =/= owner then (failwith ("Access denied.") : return)
   else ((nil : list (operation)), store)
 ```
 
@@ -363,7 +363,7 @@ function main (const action : parameter; const store : storage) : return is
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
 let main (action, store: parameter * storage) : return =
-  if Tezos.source <> owner then (failwith "Access denied." : return)
+  if Tezos.get_source () <> owner then (failwith "Access denied." : return)
   else (([] : operation list), store)
 ```
 
@@ -374,7 +374,7 @@ let main (action, store: parameter * storage) : return =
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
 let main = ((action, store) : (parameter, storage)) : return => {
-  if (Tezos.source != owner) { (failwith ("Access denied.") : return); }
+  if (Tezos.get_source () != owner) { (failwith ("Access denied.") : return); }
   else { (([] : list (operation)), store); };
 };
 ```
@@ -386,7 +386,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 const main = ([action, store]: [parameter, storage]): @return => {
-  if(Tezos.source != owner) { return failwith("Access denied.") as @return; }
+  if(Tezos.get_source() != owner) { return failwith("Access denied.") as @return; }
   else { return [list([]) as list<operation>, store]; };
 };
 ```

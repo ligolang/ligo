@@ -27,6 +27,8 @@ module ValueVar : sig
 
    (* Maybe bad *)
    val internal_get_name_and_counter : t -> (string * int)
+
+   val wildcard : t
 end
 
 module TypeVar : sig

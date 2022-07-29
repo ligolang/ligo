@@ -198,12 +198,13 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
       let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
-  (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
-   *   ignore addr;
-   *   let ty_nat = Prim (xx, "nat", [], []) in
-   *   let v' = decompile_to_mini_c ~raise ~bigmaps ty v in
-   *   let amt' = decompile_to_mini_c ~raise ~bigmaps ty_nat amt in
-   *   D_ticket (v', amt') *)
+  | Prim (loct, "ticket", [ty], _) , Prim (_, "Pair", [String (_,addr);vt;amt], _) ->
+    let ty_nat = Prim (loct, "nat", [], []) in
+    let addr =  V_Ct (C_address (contract_of_string ~raise addr)) in
+    let vt = decompile_to_untyped_value ~raise ~bigmaps ty vt in
+    let amt = decompile_to_untyped_value ~raise ~bigmaps ty_nat amt in
+    let va = Ligo_interpreter.Combinators.v_pair (vt, amt) in
+    Ligo_interpreter.Combinators.v_pair (addr, va) 
   | ty, v ->
     raise.error (untranspilable ty v)
 

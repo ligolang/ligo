@@ -127,13 +127,21 @@ let destruct_arrows (t : type_expression) =
 let assert_eq = fun a b -> if Caml.(=) a b then Some () else None
 let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None
 
-let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
+(* ~unforged_tickets allows type containing tickets to be decompiled to 'unforged' tickets (e.g. `int * int ticket` |-> `int * {ticketer : address ; value : int ; amount : nat }
+   TODO: we could think of a better way to inject those "comparison expeptions" to assert_type_expression `*)
+let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expression * type_expression)) : unit option =
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
+  | T_constant {language=_;injection=Stage_common.Constant.Ticket ;parameters=[_ty]} , _human_t | _human_t , T_constant {language=_;injection=Stage_common.Constant.Ticket;parameters=[_ty]} -> (
+    if unforged_tickets then
+      Some ()
+    else
+      None
+  )
   | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
     if (String.equal la lb) && (Stage_common.Constant.equal ia ib) then (
       let* _ = assert_same_size lsta lstb in
-      List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq p) ~init:(Some ()) (List.zip_exn lsta lstb)
+      List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq ~unforged_tickets p) ~init:(Some ()) (List.zip_exn lsta lstb)
     ) else
       None
   )
@@ -143,7 +151,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       let sb' = LMap.to_kv_list_rev sb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let* _ = assert_eq ka kb in
-        assert_type_expression_eq (va, vb)
+        assert_type_expression_eq ~unforged_tickets (va, vb)
       in
       let* _ = assert_same_size sa' sb' in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> aux p) ~init:(Some ()) (List.zip_exn sa' sb')
@@ -159,7 +167,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         let Label ka = ka in
         let Label kb = kb in
         let* _ = assert_eq ka kb in
-        assert_type_expression_eq (va, vb)
+        assert_type_expression_eq ~unforged_tickets (va, vb)
       in
       let* _ = assert_eq ra.layout rb.layout in
       let* _ = assert_same_size ra' rb' in
@@ -168,8 +176,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_record _, _ -> None
   | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
-    let* _ = assert_type_expression_eq (type1, type1') in
-    assert_type_expression_eq (type2, type2')
+    let* _ = assert_type_expression_eq ~unforged_tickets (type1, type1') in
+    assert_type_expression_eq ~unforged_tickets (type2, type2')
   | T_arrow _, _ -> None
   | T_variable x, T_variable y ->
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
@@ -178,7 +186,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
   | T_for_all a , T_for_all b ->
-    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    assert_type_expression_eq ~unforged_tickets (a.type_, b.type_) >>= fun _ ->
     Some (assert (equal_kind a.kind b.kind))
   | T_for_all _ , _ -> None
 

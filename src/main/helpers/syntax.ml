@@ -33,3 +33,9 @@ let to_string = function
   | CameLIGO   -> "cameligo"
   | ReasonLIGO -> "reasonligo"
   | JsLIGO     -> "jsligo"
+
+let to_ext = function
+  PascaLIGO  -> ".ligo"
+  | CameLIGO   -> ".mligo"
+  | ReasonLIGO -> ".religo"
+  | JsLIGO     -> ".jsligo"

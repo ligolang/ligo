@@ -902,6 +902,8 @@ and print_variant state {constr; arg; attributes=attr} =
 
 type ('src, 'dst) printer = Tree.state -> 'src -> 'dst
 
+let print_pattern_to_string state pattern =
+  print_pattern state pattern; Buffer.contents(state#buffer)
 let print_to_buffer state cst = print_cst state cst; state#buffer
 
 let print_to_string state cst =

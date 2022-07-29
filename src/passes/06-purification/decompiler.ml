@@ -38,6 +38,21 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
       let type_ = self x.type_ in
       return @@ I.T_for_all {x with type_}
 
+let decompile_pattern_to_string ~syntax pattern =
+  let p = Stage_common.Helpers.map_pattern_t (Maps.binder decompile_type_expression) pattern in
+  let s = match syntax with
+    Some Syntax_types.JsLIGO -> 
+      Tree_abstraction.Jsligo.decompile_pattern_to_string p
+  | Some CameLIGO -> 
+      Tree_abstraction.Cameligo.decompile_pattern_to_string p
+  | Some ReasonLIGO -> 
+      Tree_abstraction.Reasonligo.decompile_pattern_to_string p
+  | Some PascaLIGO -> 
+      Tree_abstraction.Pascaligo.decompile_pattern_to_string p
+  | None -> 
+      Tree_abstraction.Cameligo.decompile_pattern_to_string p
+  in s
+
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->
   let self      = decompile_expression in
