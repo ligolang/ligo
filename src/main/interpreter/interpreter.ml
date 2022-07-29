@@ -574,11 +574,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
       return @@ value
     | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
     | ( C_CONTRACT_ENTRYPOINT_OPT, [ V_Ct (C_string e) ; V_Ct (C_address a) ] ) ->
-      let>> value = Contract (loc, calltrace, a, Some e, expr_ty) in
+      let contract_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option expr_ty in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract contract_ty in
+      let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
       return @@ value
     | ( C_CONTRACT_ENTRYPOINT_OPT , _  ) -> fail @@ error_type
     | ( C_CONTRACT_ENTRYPOINT, [ V_Ct (C_string e) ; V_Ct (C_address a) ] ) ->
-      let>> value = Contract (loc, calltrace, a, Some e, expr_ty) in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
       let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
       (match v with
        | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string "bad address for get_entrypoint")
@@ -586,11 +589,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
           return @@ value)
     | ( C_CONTRACT_ENTRYPOINT , _  ) -> fail @@ error_type
     | ( C_CONTRACT_OPT, [ V_Ct (C_address a) ] ) ->
-      let>> value = Contract (loc, calltrace, a, None, expr_ty) in
+      let contract_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option expr_ty in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract contract_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
       return @@ value
     | ( C_CONTRACT_OPT , _  ) -> fail @@ error_type
     | ( C_CONTRACT, [ V_Ct (C_address a) ] ) ->
-      let>> value = Contract (loc, calltrace, a, None, expr_ty) in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
       let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
       (match v with
        | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string "bad address for get_contract")
@@ -598,7 +604,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) : Location.
           return @@ value)
     | ( C_CONTRACT , _  ) -> fail @@ error_type
     | ( C_CONTRACT_WITH_ERROR, [ V_Ct (C_address a) ; V_Ct (C_string msg) ] ) ->
-      let>> value = Contract (loc, calltrace, a, None, expr_ty) in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
       let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
       (match v with
        | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string msg)
