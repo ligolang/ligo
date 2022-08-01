@@ -6,7 +6,7 @@ module Raw_options = Compiler_options.Raw_options
 
 let schema = "../main/scopes/schema.json"
 let validate_json_file file_name =
-  let command_str = Format.sprintf "jsonschema -i %s %s" file_name schema in
+  let command_str = Format.sprintf "python3 -m jsonschema -i %s %s" file_name schema in
   Format.printf "command: %s\n" command_str;
   let status = Sys.command @@ command_str in
   if status > 0
