@@ -234,7 +234,7 @@ instance Pretty1 Expr where
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
     Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
-    Michelson c t        -> sexpr "%Michelson" [c, t]
+    CodeInj   l e        -> sexpr "%" [l, e]
     Paren     e          -> "(" <> pp e <> ")"
     SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
@@ -339,6 +339,10 @@ instance Pretty1 Ctor where
   pp1 = \case
     Ctor         raw -> pp raw
 
+instance Pretty1 Attr where
+  pp1 = \case
+    Attr         raw -> pp raw
+
 instance Pretty1 TField where
   pp1 = \case
     TField      n t -> n <.> maybe "" (":" `indent`) t
@@ -413,8 +417,8 @@ instance LPP1 d PreprocessorCommand where
 instance LPP1 d Verbatim where
   lpp1 = pp
 
---instance LPP1 d LineMarker where
---  lpp1 = pp1
+instance LPP1 d Attr where
+  lpp1 = pp1
 
 -- instances needed to pass instance resolution during compilation
 
@@ -779,7 +783,7 @@ instance LPP1 'Js Expr where
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
     Return    e          -> "return " <+> lpp e
     RecordUpd s fs       -> lpp s <+> train "," fs
-    Michelson c t        -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
+    CodeInj   l e        -> "(" <+> l <+> " `" <+> e <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where

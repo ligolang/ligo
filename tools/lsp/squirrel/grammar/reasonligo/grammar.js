@@ -422,7 +422,7 @@ module.exports = grammar({
       $.if_then_else,
       $.switch_case,
       $._record_expr,
-      $.michelson_interop,
+      $.code_inj,
       $.paren_expr,
       $.let_in,
     ),
@@ -543,16 +543,12 @@ module.exports = grammar({
       field("value", $._program),
     ),
 
-    michelson_interop: $ => seq(
-      '[%Michelson',
-      common.par(
-        seq(
-          field("code", $._expr),
-          ':',
-          field("type", $._type_expr),
-        )
-      ),
-      ']'
+    code_inj: $ => seq(
+      "[%",
+      // XXX: should be token.immediate($.Attr), but tree-sitter doesn't like it.
+      field("lang", $.Attr),
+      field("code", $._expr),
+      ']',
     ),
 
     paren_expr: $ => prec(8, common.par(field("expr", $._annot_expr))),
@@ -616,7 +612,7 @@ module.exports = grammar({
 
     _till_newline: $ => /[^\n]*\n/,
 
-    attr: $ => /\[@[a-zA-Z][a-zA-Z0-9_:]*\]/,
+    Attr: $ => /[a-zA-Z][a-zA-Z0-9_:.@%]*/,
 
     String: $ => /\"(\\.|[^"\n])*\"/,
     Int: $ => /-?([1-9][0-9_]*|0)/,

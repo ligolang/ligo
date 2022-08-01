@@ -10,7 +10,7 @@ type foo = [@boom] | True | False
   (type_decl
     (TypeName)
     (sum_type
-      (attr)
+      (Attr)
       (variant (ConstrName))
       (variant (ConstrName))
     )
@@ -30,7 +30,7 @@ type foo = [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (ConstrName))
+      (variant (Attr) (ConstrName))
       (variant (ConstrName))
     )
   )
@@ -49,7 +49,7 @@ type foo = | [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type
-      (variant (attr) (ConstrName))
+      (variant (Attr) (ConstrName))
       (variant (ConstrName))
     )
   )
@@ -70,7 +70,7 @@ type person = [@layout:comb] {
   (type_decl
     (TypeName)
     (record_type
-      (attr)
+      (Attr)
       (field_decl (FieldName) (TypeName))
     )
   )
@@ -91,7 +91,7 @@ type person = {
   (type_decl
     (TypeName)
     (record_type
-      (field_decl (attr) (attr) (FieldName) (TypeName))
+      (field_decl (Attr) (Attr) (FieldName) (TypeName))
     )
   )
 )
@@ -107,7 +107,7 @@ let decl
 
 (source_file
   (let_decl
-    (attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)
@@ -125,7 +125,7 @@ let decl twice
 
 (source_file
   (let_decl
-    (attr) (attr)
+    (Attr) (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)
@@ -154,7 +154,7 @@ let bar = (b : int) : int => {
       (TypeName)
       (block
         (let_decl
-          (attr) (attr)
+          (Attr) (Attr)
           (var_pattern (NameDecl)) (Int)
         )
         (Name)
