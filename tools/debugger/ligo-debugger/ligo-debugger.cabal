@@ -85,6 +85,7 @@ library
     , fmt
     , lens
     , lens-aeson
+    , ligo-squirrel
     , morley
     , morley-debugger
     , morley-prelude
@@ -231,6 +232,7 @@ test-suite ligo-debugger-test
     , fmt
     , lens
     , ligo-debugger
+    , ligo-squirrel
     , morley
     , morley-debugger
     , morley-prelude

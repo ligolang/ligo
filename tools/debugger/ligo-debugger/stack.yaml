@@ -39,6 +39,27 @@ extra-deps:
 - co-log-0.4.0.1@sha256:3d4c17f37693c80d1aa2c41669bc3438fac3e89dc5f479e57d79bc3ddc4dfcc5,5087
 - colourista-0.1.0.1@sha256:98353ee0e2f5d97d2148513f084c1cd37dfda03e48aa9dd7a017c9d9c0ba710e,3307
 - ansi-terminal-0.10.3@sha256:e2fbcef5f980dc234c7ad8e2fa433b0e8109132c9e643bc40ea5608cd5697797,3226
+# ligo-squirrel and its dependencies
+- ../../lsp/squirrel
+- fastsum-0.2.0.0
+- stm-containers-1.2
+- stm-hamt-1.2.0.7
+- git: https://github.com/serokell/tree-sitter.git
+  commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+- git: https://github.com/serokell/duplo.git
+  commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
+- git: https://github.com/haskell/lsp.git
+  commit: daafba0dfcba565595f0b7c3c7e17bfc21b3e76e
+  subdirs:
+    - lsp-types
+    - lsp
+    - lsp-test
+- git: https://github.com/co-log/co-log-core.git
+  commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
+  # nix-sha256: 04hr72vrcyz02gxqlrbizbscjz0ykqgxk42kl4ccvzj864han6b3
+- git: https://github.com/Bodigrim/text-rope
+  commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
+  # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l
 # For keyed BLAKE2b and NaCl secret box
 - crypto-sodium-0.0.5.0
 # Dependencies of crypto-sodium
