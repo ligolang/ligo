@@ -1,0 +1,7 @@
+author: alistair.obrien
+description: '- Added additional instructions for installing and building LIGO on
+  MacOS. \n- Additionaly fixed reliance on `$PATH` for `jsonschema` in `get_scope_tests`
+  by prefixing command with `python3 -m`.'
+merge_request: '1883'
+title: 'Draft: Mac Installation Instructions and Fixes'
+type: fixed
