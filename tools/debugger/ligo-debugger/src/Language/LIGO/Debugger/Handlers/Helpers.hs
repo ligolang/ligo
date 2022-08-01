@@ -101,7 +101,7 @@ parseValue ctxContractPath category val = do
         P.parseExpandValue src michVal
           & either (throwError . pretty . MD.prettyFirstError) pure
     | otherwise ->
-        compileLigoExpression src ctxContractPath val >>= \case
+        runExceptT (compileLigoExpression src ctxContractPath val) >>= \case
           Right x -> pure x
           Left err -> throwError [int||
             Error parsing #{category}:
