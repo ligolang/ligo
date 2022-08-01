@@ -9,6 +9,7 @@ module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
 module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_protocol_env = Tezos_protocol_environment_013_PtJakart
 module Tezos_client = Tezos_client_013_PtJakart
 
 module Location = Simple_utils.Location
@@ -160,7 +161,7 @@ module Command = struct
     )
     | State_error_to_value errs -> (
       let open Tezos_protocol.Protocol in
-      let open Environment in
+      let open Tezos_protocol_env in
       let fail_ctor arg = LC.v_ctor "Fail" arg in
       let fail_other () =
         let errs_as_str =
@@ -381,7 +382,7 @@ module Command = struct
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
     | Implicit_account (loc, calltrace, kh) -> (
-      let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
+      let address = Tezos_protocol_env.Signature.Public_key_hash.to_b58check kh in
       let address = Tezos_state.implicit_account ~raise ~loc ~calltrace address in
       let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
       (v, ctxt)
@@ -400,7 +401,7 @@ module Command = struct
       (LC.v_bool check, ctxt)
     )
     | Add_account (loc, calltrace, sk, pk) -> (
-      let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
+      let pkh = Tezos_protocol_env.Signature.Public_key.hash pk in
       Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;
       ((), ctxt)
     )

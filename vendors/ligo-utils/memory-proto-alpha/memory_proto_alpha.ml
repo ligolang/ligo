@@ -1,5 +1,5 @@
 module Name = struct let name = "alpha" end
-module Alpha_environment = Tezos_protocol_013_PtJakart.Protocol.Environment
+module Alpha_environment = Tezos_protocol_environment_013_PtJakart
 
 
 type alpha_error = Alpha_environment.Error_monad.error
