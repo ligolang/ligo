@@ -6,6 +6,7 @@ open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_protocol_env = Tezos_protocol_environment_013_PtJakart
 module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
 
@@ -113,7 +114,7 @@ let get_contract_rejection_data :
   fun errs ->
     let open Tezos_protocol.Protocol in
     let open Script_interpreter in
-    let open Environment in
+    let open Tezos_protocol_env in
     match errs with
     | [ Ecoproto_error (Runtime_contract_error contract) ; Ecoproto_error (Reject (_,x,_)) ] ->
       let x = canonical_to_ligo x in
