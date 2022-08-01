@@ -18,7 +18,7 @@
   "dependencies": {
     "@obsidians/code-editor": "^0.3.0",
     "lodash": "^4.17.20",
-    "rc-tree": "git+ssh://git@github.com:sashasashasasha151/tree.git",
+    "rc-tree": "git+ssh://git@gitlab.com:ligolang/react-component-tree.git",
     "react-contexify": "^5.0.0",
     "react-hotkeys-hook": "^3.4.4"
   },
