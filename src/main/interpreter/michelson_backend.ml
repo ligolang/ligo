@@ -4,6 +4,7 @@ open Simple_utils.Trace
 open Simple_utils.Option
 
 module Tezos_protocol = Tezos_protocol_013_PtJakart
+module Tezos_protocol_env = Tezos_protocol_environment_013_PtJakart
 module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
 
 
@@ -148,7 +149,7 @@ let make_options ~raise ?param ctxt =
       payer = source ;
       self = source ;
       amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L ;
-      chain_id = Memory_proto_alpha.Protocol.Environment.Chain_id.zero;
+      chain_id = Tezos_protocol_env.Chain_id.zero;
       balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero ;
       now = timestamp ;
       level ;
