@@ -1,5 +1,5 @@
 [submodule "vendors/tezos-ligo"]
 	path = vendors/tezos-ligo
 	url = https://github.com/ligolang/tezos-ligo.git
-	branch = v13-expose_apply
+	branch = v14-expose-balance-error
 
