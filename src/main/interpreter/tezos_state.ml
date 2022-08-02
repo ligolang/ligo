@@ -1,14 +1,14 @@
 open Simple_utils.Trace
 open Proto_alpha_utils
-module Tezos_alpha_test_helpers = Tezos_013_PtJakart_test_helpers
+module Tezos_alpha_test_helpers = Tezos_014_PtKathma_test_helpers
 open Errors
 open Ligo_interpreter_exc
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
-module Tezos_protocol = Tezos_protocol_013_PtJakart
-module Tezos_protocol_env = Tezos_protocol_environment_013_PtJakart
-module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
-module Tezos_protocol_parameters = Tezos_protocol_013_PtJakart_parameters
+module Tezos_protocol = Tezos_protocol_014_PtKathma
+module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
+module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
+module Tezos_protocol_parameters = Tezos_protocol_014_PtKathma_parameters
 
 type r = (Errors.interpreter_error,Main_warnings.all) raise
 
@@ -74,6 +74,21 @@ let get_total_voting_power ~raise ~loc ~calltrace (ctxt :context) =
     Tezos_alpha_test_helpers.Context.get_total_voting_power (B ctxt.raw) in
   Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) tvp
 
+let implicit_account ~raise ~calltrace ~loc (msg:string) (x:Memory_proto_alpha.Protocol.Alpha_context.Contract.t) =
+  match x with
+  | Implicit x -> x
+  | Originated _ -> raise.error (generic_error ~calltrace loc msg)
+
+let originated_account ~raise ~calltrace ~loc (msg:string) (x:Memory_proto_alpha.Protocol.Alpha_context.Contract.t) =
+  match x with
+  | Implicit _ -> raise.error (generic_error ~calltrace loc msg)
+  | Originated x -> x 
+
+let contract_of_hash ~raise : Tezos_raw_protocol.Contract_hash.t -> mcontract = fun x ->
+  Trace.trace_alpha_tzresult ~raise
+  (fun _ -> generic_error ~calltrace:[] (Location.generated) "aazeazea") @@
+    Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check (Tezos_raw_protocol.Contract_hash.to_b58check x)
+
 let equal_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.equal
 let compare_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.compare
 
@@ -118,7 +133,7 @@ let get_contract_rejection_data :
     match errs with
     | [ Ecoproto_error (Runtime_contract_error contract) ; Ecoproto_error (Reject (_,x,_)) ] ->
       let x = canonical_to_ligo x in
-      Some (contract,x)
+      Some (Originated contract,x)
     | _ -> None
 
 let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
@@ -135,7 +150,8 @@ let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
   let transduced = { ctxt.transduced with bigmaps = List.Assoc.add ctxt.transduced.bigmaps ~equal:Int.equal id data } in
   { ctxt with transduced }
 
-let get_storage ~raise ~loc ~calltrace ctxt addr =
+let get_storage ~raise ~loc ~calltrace ctxt (m : mcontract) =
+  let addr = originated_account ~raise ~loc ~calltrace "Trying to get a contract " m in
   let st_v = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     Tezos_protocol.Protocol.Alpha_services.Contract.storage Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw addr
   in
@@ -177,7 +193,7 @@ let get_alpha_context ~raise ctxt =
 
 let unwrap_baker ~raise ~loc ~calltrace : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_crypto.Signature.Public_key_hash.t  =
   fun x ->
-    Trace.trace_option ~raise (generic_error ~calltrace loc "The baker is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x
+    implicit_account ~raise ~loc ~calltrace "The baker is not an implicit account" x
 
 let baker_policy ~raise ~loc ~calltrace baker_policy =
   let open Tezos_alpha_test_helpers.Block in
@@ -188,11 +204,8 @@ let baker_policy ~raise ~loc ~calltrace baker_policy =
 
 let unwrap_source ~raise ~loc ~calltrace : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t  =
   fun x ->
-    let _ = Trace.trace_option ~raise (generic_error ~calltrace loc "The source address is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit x in
+    let _ = implicit_account ~raise ~loc ~calltrace "The source address is not an implicit account" x in
     x
-let implicit_account ~raise ~loc ~calltrace : string -> Tezos_protocol.Protocol.Alpha_context.Contract.t  =
-  fun x ->
-    Trace.trace_alpha_tzresult ~raise (fun _ -> generic_error ~calltrace loc "Cannot convert to implicit account") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check x
 
 let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.Michelson.michelson) (storage : unit Tezos_utils.Michelson.michelson) : Tezos_protocol.Protocol.Alpha_context.Script.t  =
   let open! Tezos_protocol.Protocol.Alpha_context.Script in
@@ -202,21 +215,26 @@ let script_of_compiled_code ~raise ~loc ~calltrace (contract : unit Tezos_utils.
 
 let extract_origination_from_result :
   type a .
+    raise : _ ->
     Memory_proto_alpha.Protocol.Alpha_context.Contract.t ->
     a Tezos_protocol.Protocol.Apply_results.contents_result ->
     last_originations =
-  fun src x ->
+  fun ~raise src x ->
   let open Tezos_raw_protocol in
   match x with
   | Manager_operation_result { operation_result = Applied (Transaction_result _) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_manager_operation_result) =
+    let aux (x:Apply_internal_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_manager_operation_result ({source ; _},Applied (Origination_result x)) -> [(source, x.originated_contracts)]
+      | Internal_manager_operation_result ({source ; _},Applied (IOrigination_result x)) ->
+        let originated_contracts = List.map ~f:(contract_of_hash ~raise) x.originated_contracts in
+        [(source, originated_contracts)]
       | _ -> []
     in
-    List.concat @@ List.map ~f:aux internal_operation_results
+    let x = List.map ~f:aux internal_operation_results in
+    List.concat x
   | Manager_operation_result { operation_result = Applied (Origination_result x) ; internal_operation_results=_ ; balance_updates=_} ->
-    [(src, x.originated_contracts)]
+    let originated_contracts = List.map ~f:(contract_of_hash ~raise) x.originated_contracts in
+    [(src, originated_contracts)]
   | _ -> []
 
 let extract_lazy_storage_diff_from_result :
@@ -227,10 +245,10 @@ let extract_lazy_storage_diff_from_result :
   let open Tezos_raw_protocol in
   match x with
   | Manager_operation_result { operation_result = Applied (Transaction_result (Transaction_to_contract_result y)) ; internal_operation_results ; balance_updates=_ } ->
-    let aux (x:Apply_results.packed_internal_manager_operation_result) =
+    let aux (x:Apply_internal_results.packed_internal_manager_operation_result) =
       match x with
-      | Internal_manager_operation_result ({source = _ ; _},Applied (Origination_result x)) -> [x.lazy_storage_diff]
-      | Internal_manager_operation_result ({source = _ ; _},Applied (Transaction_result (Transaction_to_contract_result x))) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (IOrigination_result x)) -> [x.lazy_storage_diff]
+      | Internal_manager_operation_result ({source = _ ; _},Applied (ITransaction_result (Transaction_to_contract_result x))) -> [x.lazy_storage_diff]
       | _ -> []
     in
     [y.lazy_storage_diff] @ (List.concat @@ List.map ~f:aux internal_operation_results)
@@ -238,7 +256,7 @@ let extract_lazy_storage_diff_from_result :
     [x.lazy_storage_diff]
   | _ -> []
 
-let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_protocol.Protocol.operation_receipt -> last_originations =
+let get_last_originations ~raise : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> Tezos_protocol.Protocol.operation_receipt -> last_originations =
   fun top_src x ->
     let open Tezos_raw_protocol in
     match x with
@@ -248,9 +266,9 @@ let get_last_originations : Memory_proto_alpha.Protocol.Alpha_context.Contract.t
         fun x ->
           match x with
           | Cons_result (hd, tl) ->
-            extract_origination_from_result top_src hd @ aux tl
+            extract_origination_from_result ~raise top_src hd @ aux tl
           | Single_result x ->
-            extract_origination_from_result top_src x
+            extract_origination_from_result ~raise top_src x
       in
       aux contents
     )
@@ -335,7 +353,7 @@ let upd_bigmaps : raise:r -> bigmaps -> Tezos_raw_protocol.Apply_results.packed_
 (* upd_context_of_receipts *)
 let upd_transduced_data : raise:r -> context -> Tezos_raw_protocol.Apply_results.packed_operation_metadata -> transduced =
   fun ~raise ctxt op_data ->
-    let last_originations = get_last_originations ctxt.internals.source op_data in
+    let last_originations = get_last_originations ~raise ctxt.internals.source op_data in
     let bigmaps = upd_bigmaps ~raise ctxt.transduced.bigmaps op_data in
     { last_originations ; bigmaps }
 
@@ -402,7 +420,7 @@ let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   let open Tezos_alpha_test_helpers in
-  let contract = Tezos_raw_protocol.Alpha_context.Contract.implicit_contract pkh in
+  let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
   let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.delegation (B ctxt.raw) contract (Some pkh) in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) ->
@@ -456,8 +474,7 @@ let add_account ~raise ~loc ~calltrace sk pk pkh : unit =
 
 let get_account ~raise ~loc ~calltrace mc : string * Signature.public_key =
   let open Tezos_alpha_test_helpers in
-  let pkh = Trace.trace_option ~raise (generic_error ~calltrace loc "The account is not an implicit account") @@ Memory_proto_alpha.Protocol.Alpha_context.Contract.is_implicit mc in
-  let account = Trace.trace_tzresult_lwt ~raise (fun _ -> Errors.generic_error ~calltrace loc "Cannot find account") @@ Account.find pkh in
+  let account = Trace.trace_tzresult_lwt ~raise (fun _ -> Errors.generic_error ~calltrace loc "Cannot find account") @@ Account.find mc in
   let sk = Signature.Secret_key.to_b58check account.sk in
   let pk = account.pk in
   (sk, pk)
@@ -481,7 +498,7 @@ let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt
   let operation : Tezos_raw_protocol.Alpha_context.packed_operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
-    let gas_limit = (Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.integral_of_int_exn 999_999) in
+    let gas_limit = Op.Max in (* TODO: might let user choose here *)
     Op.transaction ~gas_limit ~fee:(Test_tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
@@ -529,7 +546,7 @@ let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = [])
   let accounts = Account.generate_accounts ?rng_state ~initial_balances n in
   let contracts =
     List.map
-      ~f:(fun (a, _) -> Tezos_raw_protocol.Alpha_context.Contract.implicit_contract Account.(a.pkh))
+      ~f:(fun (a, _,_) -> Tezos_raw_protocol.Alpha_context.Contract.Implicit (Account.(a.pkh)))
       accounts
   in
   let baker_accounts = List.map baker_accounts ~f:(fun (sk, pk, amt) ->
@@ -537,8 +554,8 @@ let init ?rng_state ?commitments ?(initial_balances = []) ?(baker_accounts = [])
                             let amt = match amt with
                               | None -> Tez.of_mutez_exn 4_000_000_000_000L
                               | Some v -> Tez.of_mutez_exn  v in
-                            Account.({ sk ; pk ; pkh}), amt) in
-  let () = List.iter baker_accounts ~f:(fun (acc, _) ->
+                            Account.({ sk ; pk ; pkh}), amt, None) in
+  let () = List.iter baker_accounts ~f:(fun (acc, _,_) ->
                Account.(add_account acc)) in
   let accounts = accounts @ baker_accounts in
   let raw = Block.genesis

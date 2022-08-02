@@ -468,7 +468,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_accounts.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_new exited with value 110000000mutez.
     - test_add exited with value 110000000mutez. |}]
@@ -561,7 +561,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1M5ZGuADUwMysHzcbWsoryWD6KyBaW61pR , { parameter unit ;
+    - test_x exited with value (KT1XhV1uDy9VDHHMCFwS6BaoY9yEhMxpZecN , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address chest)) ;
@@ -593,7 +593,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
   [%expect {|
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
     Everything at the top-level was executed.
     - test_foo exited with value (). |}]
 
@@ -667,7 +667,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV. |}]
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj. |}]
 let () = Sys.chdir pwd
 
 let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
@@ -675,7 +675,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
   [%expect{|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV. |}]
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj. |}]
 let () = Sys.chdir pwd
 
 
@@ -816,7 +816,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
@@ -827,7 +827,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
