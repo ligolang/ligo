@@ -97,6 +97,8 @@ let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fu
 
 let default : Protocols.t -> t = function
   | Protocols.Jakarta -> of_list_type jakarta_types
+  | Protocols.Kathmandu -> of_list_type jakarta_types
 
 let default_with_test : Protocols.t -> t = function
   | Protocols.Jakarta -> of_list_type (meta_ligo_types jakarta_types)
+  | Protocols.Kathmandu -> of_list_type (meta_ligo_types jakarta_types)

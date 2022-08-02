@@ -1076,11 +1076,39 @@ let%expect_test _ =
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    Reasonligo is depreacted, support will be dropped in a few versions. |}]
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
