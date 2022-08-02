@@ -249,11 +249,8 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
          | _ -> raise.Trace.error (Errors.corner_case "Monomorphisation: cannot resolve non-variables with instantiations") in
       let type_instances, lid = aux [] expr in
       let type_ = expr.type_expression in
-      let vid, data = match Data.instance_lookup_opt lid type_instances type_ data with
-         | Some (vid, _) -> vid, data
-         | None ->
-            let vid = poly_name lid in
-            vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
+      let vid, data = let vid = poly_name lid in
+                      vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
       data, AST.e_a_variable vid type_
    | E_assign {binder;expression} ->
       let data, expression = self data expression in
