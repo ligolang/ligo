@@ -86,7 +86,7 @@ let originated_account ~raise ~calltrace ~loc (msg:string) (x:Memory_proto_alpha
 
 let contract_of_hash ~raise : Tezos_raw_protocol.Contract_hash.t -> mcontract = fun x ->
   Trace.trace_alpha_tzresult ~raise
-  (fun _ -> generic_error ~calltrace:[] (Location.generated) "aazeazea") @@
+  (fun _ -> corner_case ()) @@
     Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check (Tezos_raw_protocol.Contract_hash.to_b58check x)
 
 let equal_account = Memory_proto_alpha.Protocol.Alpha_context.Contract.equal
@@ -151,7 +151,7 @@ let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
   { ctxt with transduced }
 
 let get_storage ~raise ~loc ~calltrace ctxt (m : mcontract) =
-  let addr = originated_account ~raise ~loc ~calltrace "Trying to get a contract " m in
+  let addr = originated_account ~raise ~loc ~calltrace "Trying to get a contract" m in
   let st_v = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
     Tezos_protocol.Protocol.Alpha_services.Contract.storage Tezos_alpha_test_helpers.Block.rpc_ctxt ctxt.raw addr
   in
@@ -421,7 +421,8 @@ let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   let open Tezos_alpha_test_helpers in
   let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
-  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.delegation (B ctxt.raw) contract (Some pkh) in
+  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
+    Op.delegation ~force_reveal:true (B ctxt.raw) contract (Some pkh) in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) ->
     ctxt
@@ -433,7 +434,7 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   let hash = Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace) @@ Tezos_protocol.Protocol.Script_repr.force_bytes value in
   let hash = Tezos_protocol.Protocol.Script_expr_hash.hash_bytes [hash] in
   let hash = Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
-  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value in
+  let operation = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant ~force_reveal:true (B ctxt.raw) ~source ~value in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt,_) -> (hash, ctxt)
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
@@ -459,7 +460,7 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
   let constants = List.map ~f:string_to_constant constants in
   let hashes = List.map ~f:constant_to_hash constants in
   let aux constant ctxt =
-    let op = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant (B ctxt.raw) ~source ~value:constant in
+    let op = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ Op.register_global_constant  ~force_reveal:true (B ctxt.raw) ~source ~value:constant in
     match bake_op ~raise ~loc ~calltrace ctxt op with
     | Success (ctxt,_) -> ctxt
     | Fail errs -> raise.error (target_lang_error loc calltrace errs) in
@@ -499,7 +500,7 @@ let transfer ~raise ~loc ~calltrace (ctxt:context) ?entrypoint dst parameter amt
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
     let gas_limit = Op.Max in (* TODO: might let user choose here *)
-    Op.transaction ~gas_limit ~fee:(Test_tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.of_mutez_exn amt)
+    Op.transaction ~force_reveal:true ~gas_limit ~fee:(Test_tez.of_int 1) ~parameters ?entrypoint (B ctxt.raw) source dst (Test_tez.of_mutez_exn amt)
   in
   bake_op ~raise ~loc ~calltrace ctxt operation
 
@@ -513,7 +514,7 @@ let originate_contract : raise:r -> loc:Location.t -> calltrace:calltrace -> con
     let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
     let (operation, dst) = Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@
       (* TODO : fee ? *)
-      Op.contract_origination (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
+      Op.contract_origination ~force_reveal:true (B ctxt.raw) source ?credit:amt ~fee:(Test_tez.of_int 1) ~script
     in
     match bake_op ~raise ~loc ~calltrace ctxt operation with
     | Success (ctxt,_) ->
