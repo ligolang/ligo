@@ -76,6 +76,7 @@ Sample `package.json` with the above information.
     {
       "name": "ligo-foo",
       "version": "1.0.18",
+      "name": "Name <email@domain.com>"
       "description": "An example for ligo dependency depending on another ligo dependency",
       "scripts": {
         "test": "ligo run test foo.test.mligo --project-root ."

@@ -216,9 +216,17 @@ let rec get_all_files : string -> string list Lwt.t = fun file_or_dir ->
   in
   Lwt.return files
 
+let from_dir ~dir f =
+  let pwd = Unix.getcwd () in
+  let () = Sys.chdir dir in
+  let result = f () in
+  let () = Sys.chdir pwd in
+  result
+
 let tar_gzip ~name ~version dir = 
   let open Lwt.Syntax in
-  let* files = get_all_files dir in
+  let* files = from_dir ~dir (fun () -> get_all_files ".") in
+  let files = files in
   let fname = Filename.temp_file name version in
   let fd = Caml.Unix.openfile fname [ Unix.O_CREAT ; Unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
