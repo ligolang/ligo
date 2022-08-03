@@ -38,7 +38,7 @@ let pp : display_format:string display_format ->
         "@[<hv>Warning: Error(s) occurred while type checking the produced michelson contract:@.%a@.\
         Note: You compiled your contract with protocol %s although we internally use protocol %s to typecheck the produced Michelson contract@.\
         so you might want to ignore this error if related to a breaking change in protocol %s@.@]"
-          (Tezos_client_013_PtJakart.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+          (Tezos_client_014_PtKathma.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
           (variant_to_string user_proto)
           (variant_to_string in_use)
           (variant_to_string in_use)

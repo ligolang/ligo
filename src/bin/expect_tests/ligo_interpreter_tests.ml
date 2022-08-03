@@ -468,7 +468,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_accounts.mligo" ] ;
-  [%expect {|
+  [%expect{|
     Everything at the top-level was executed.
     - test_new exited with value 110000000mutez.
     - test_add exited with value 110000000mutez. |}]
@@ -561,7 +561,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_inline.mligo" ] ;
   [%expect {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1M5ZGuADUwMysHzcbWsoryWD6KyBaW61pR , { parameter unit ;
+    - test_x exited with value (KT1XhV1uDy9VDHHMCFwS6BaoY9yEhMxpZecN , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address chest)) ;
@@ -593,7 +593,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test" ; test "test_read_contract.mligo" ] ;
   [%expect {|
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
     Everything at the top-level was executed.
     - test_foo exited with value (). |}]
 
@@ -659,8 +659,31 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "get_contract.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
+
+let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/test/a/b/"
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj. |}]
+let () = Sys.chdir pwd
+
+let () = Sys.chdir "../../test/contracts/interpreter_tests/originate_from_relative_path/"
+let%expect_test _ =
+  run_ligo_good [ "run"; "test" ; test "test/a/b/test.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj. |}]
+let () = Sys.chdir pwd
+
 
 let bad_test n = bad_test ("/interpreter_tests/"^n)
 
@@ -747,21 +770,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad ["run";"test" ; bad_test "test_trace2.mligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 2, characters 6-7:
-      1 | let main (_, _ : unit * unit) : operation list * unit =
-      2 |   let v = (failwith "foo" : unit) in
-      3 |   ([] : operation list), ()
-    :
-    Warning: unused variable "v".
-    Hint: replace it by "_v" to prevent this warning.
-
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =
-      6 |   let _ = Test.get_storage_of_address ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
+      6 |   let _ = Test.get_storage_of_address ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
       7 |   Test.transfer_to_contract_exn contr () 10tez
 
     An uncaught error occured:
-    Did not find service: GET ocaml:context/contracts/tz1fakefakefakefakefakefakefakcphLA5/storage
+    Did not find service: GET ocaml:context/contracts/KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL/storage
     Trace:
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 12, characters 2-33 |}]
@@ -799,7 +814,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_source2.mligo" ] ;
@@ -810,7 +825,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1CJbrhkpX9eeh88JvkC58rSXZvRxGq3RiV |}]
+    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run" ; "test" ; bad_test "test_run_types.jsligo" ] ;
@@ -902,3 +917,15 @@ let%expect_test _ =
       3 |   begin
 
     Embedded raw code can only have a functional type |xxx}]
+
+let%expect_test _ =
+  run_ligo_bad ["run";"test" ; bad_test "get_contract.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
+     14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
+     15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+     16 |   ()
+
+    Test failed with "foo"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]

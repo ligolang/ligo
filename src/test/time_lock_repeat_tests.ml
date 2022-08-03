@@ -19,10 +19,10 @@ let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
 
 let call msg = e_constructor "Call" msg
 let mk_time ~raise st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
+  match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
   | Some s -> s
   | None -> raise.error @@ test_internal "bad timestamp notation"
-let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
+let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
 let storage st interval execute =
   e_record_ez [("next_use", e_timestamp_z (to_sec st)) ;
                ("interval", e_int interval) ;
@@ -47,9 +47,9 @@ let interval_advance ~raise () =
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
   let now = options.now in
-  let lock_time = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int (-36_000)) in
+  let lock_time = Memory_proto_alpha.Protocol.(Script_timestamp.add_delta now (Script_int.of_int (-36_000))) in
   let init_storage = storage lock_time 86400 empty_message in
-  let new_timestamp = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int 86_400) in
+  let new_timestamp = Memory_proto_alpha.Protocol.(Script_timestamp.add_delta now (Script_int.of_int 86_400)) in
   let new_storage_fake = storage new_timestamp 86400 fake_decompiled_empty_message in
   expect_eq ~raise ~options program "main"
   (e_pair (e_unit ()) init_storage) (e_pair empty_op_list new_storage_fake)
