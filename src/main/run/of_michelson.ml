@@ -217,7 +217,7 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_014_PtKathma.Protocol.Michelson_v1_primitives.strings_of_prims expr in
     Fail expr
 
-let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
+let run_expression ~raise ?options ?legacy (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
   let open! Tezos_raw_protocol_014_PtKathma in
   let exp_type =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -231,7 +231,7 @@ let run_expression ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson
   let tezos_context = match options with None -> None | Some o -> Some (o.Memory_proto_alpha.tezos_context) in
   let descr =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_code_tracer @@
-    Memory_proto_alpha.parse_michelson_fail ?tezos_context ~top_level exp ty_stack_before ty_stack_after in
+    Memory_proto_alpha.parse_michelson_fail ?legacy ?tezos_context ~top_level exp ty_stack_before ty_stack_after in
   let open! Memory_proto_alpha.Protocol.Script_interpreter in
   let res =
     Trace.trace_tzresult_lwt ~raise Errors.error_of_execution_tracer @@

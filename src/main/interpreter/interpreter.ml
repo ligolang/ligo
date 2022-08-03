@@ -589,6 +589,45 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       let>> value = Implicit_account kh in
       return @@ value
     | ( C_IMPLICIT_ACCOUNT , _  ) -> fail @@ error_type
+    | ( C_CONTRACT_ENTRYPOINT_OPT, [ V_Ct (C_string e) ; V_Ct (C_address a) ] ) ->
+      let contract_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option expr_ty in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract contract_ty in
+      let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
+      return @@ value
+    | ( C_CONTRACT_ENTRYPOINT_OPT , _  ) -> fail @@ error_type
+    | ( C_CONTRACT_ENTRYPOINT, [ V_Ct (C_string e) ; V_Ct (C_address a) ] ) ->
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, Some e, parameter_ty) in
+      let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
+      (match v with
+       | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string "bad address for get_entrypoint")
+       | Some value ->
+          return @@ value)
+    | ( C_CONTRACT_ENTRYPOINT , _  ) -> fail @@ error_type
+    | ( C_CONTRACT_OPT, [ V_Ct (C_address a) ] ) ->
+      let contract_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an option" ) @@ Ast_aggregated.get_t_option expr_ty in
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract contract_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
+      return @@ value
+    | ( C_CONTRACT_OPT , _  ) -> fail @@ error_type
+    | ( C_CONTRACT, [ V_Ct (C_address a) ] ) ->
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
+      let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
+      (match v with
+       | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string "bad address for get_contract")
+       | Some value ->
+          return @@ value)
+    | ( C_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_CONTRACT_WITH_ERROR, [ V_Ct (C_address a) ; V_Ct (C_string msg) ] ) ->
+      let parameter_ty = trace_option ~raise (Errors.generic_error ~calltrace loc "Expected return type is not an contract" ) @@ Ast_aggregated.get_t_contract expr_ty in
+      let>> value = Contract (loc, calltrace, a, None, parameter_ty) in
+      let* v = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_option value in
+      (match v with
+       | None -> fail @@ Errors.meta_lang_failwith loc calltrace (LC.v_string msg)
+       | Some value ->
+          return @@ value)
+    | ( C_CONTRACT_WITH_ERROR , _  ) -> fail @@ error_type
     (*
     >>>>>>>>
       Test operators
@@ -917,9 +956,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
-         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_CONTRACT |
-         C_CONTRACT_OPT | C_CONTRACT_WITH_ERROR | C_CONTRACT_ENTRYPOINT |
-         C_CONTRACT_ENTRYPOINT_OPT | C_SET_DELEGATE |
+         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )

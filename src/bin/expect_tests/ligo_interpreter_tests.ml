@@ -659,6 +659,12 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 
+let%expect_test _ =
+  run_ligo_good ["run";"test" ; test "get_contract.mligo" ] ;
+  [%expect {|
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
@@ -911,3 +917,15 @@ let%expect_test _ =
       3 |   begin
 
     Embedded raw code can only have a functional type |xxx}]
+
+let%expect_test _ =
+  run_ligo_bad ["run";"test" ; bad_test "get_contract.mligo" ] ;
+  [%expect {|
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
+     14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
+     15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+     16 |   ()
+
+    Test failed with "foo"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]
