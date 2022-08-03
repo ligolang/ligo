@@ -89,7 +89,7 @@ recognise (SomeRawTree dialect rawTree)
     -- Record fields
   , Descent do
       boilerplate \case
-        "capture"           -> Capture         <$> fields "accessor"
+        "capture"           -> Capture         <$> field "accessor"
         "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread"            -> Spread          <$> field  "name"
         _                   -> fallthrough

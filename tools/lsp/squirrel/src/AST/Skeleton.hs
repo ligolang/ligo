@@ -238,7 +238,7 @@ data MapBinding it
 data FieldAssignment it
   = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
-  | Capture [it] -- [Accessor]
+  | Capture it -- Accessor
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Constant it

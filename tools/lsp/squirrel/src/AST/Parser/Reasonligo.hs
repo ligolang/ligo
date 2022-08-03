@@ -82,7 +82,7 @@ recognise (SomeRawTree dialect rawTree)
     -- TODO: record
   , Descent do
       boilerplate $ \case
-        "capture"           -> Capture         <$> fields "accessor"
+        "capture"           -> Capture         <$> field "accessor"
         "record_field"      -> FieldAssignment <$> fields "accessor" <*> field "value"
         "record_field_path" -> FieldAssignment <$> fields "accessor" <*> field "value"
         "spread"            -> Spread          <$> field "name"
