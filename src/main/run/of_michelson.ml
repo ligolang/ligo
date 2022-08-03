@@ -67,7 +67,7 @@ let make_dry_run_options ~raise ?tezos_context ?(constants = []) (opts : dry_run
     match opts.now with
     | None -> None
     | Some st ->
-      match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
+      match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
         | Some t -> (Some t)
         | None -> raise.error @@ Errors.main_invalid_timestamp st in
   let parameter_ty =
@@ -116,7 +116,7 @@ let fetch_lambda_types ~raise (contract_ty : _ Michelson.t) =
   | _ -> raise.error Errors.main_unknown (*TODO*)
 
 let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_013_PtJakart in
+  let open! Tezos_raw_protocol_014_PtKathma in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -170,11 +170,11 @@ let run_contract ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (output_ty, output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr ->
-    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_013_PtJakart.Protocol.Michelson_v1_primitives.strings_of_prims expr in
+    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_014_PtKathma.Protocol.Michelson_v1_primitives.strings_of_prims expr in
     Fail expr
 
 let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
-  let open! Tezos_raw_protocol_013_PtJakart in
+  let open! Tezos_raw_protocol_014_PtKathma in
   let (input_ty, output_ty) = fetch_lambda_types ~raise exp_type in
   let input_ty =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
@@ -214,11 +214,11 @@ let run_function ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (output_ty, output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr ->
-    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_013_PtJakart.Protocol.Michelson_v1_primitives.strings_of_prims expr in
+    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_014_PtKathma.Protocol.Michelson_v1_primitives.strings_of_prims expr in
     Fail expr
 
 let run_expression ~raise ?options ?legacy (exp : _ Michelson.t) (exp_type : _ Michelson.t) =
-  let open! Tezos_raw_protocol_013_PtJakart in
+  let open! Tezos_raw_protocol_014_PtKathma in
   let exp_type =
     Trace.trace_tzresult_lwt ~raise Errors.parsing_input_tracer @@
     Memory_proto_alpha.prims_of_strings exp_type in
@@ -241,7 +241,7 @@ let run_expression ~raise ?options ?legacy (exp : _ Michelson.t) (exp_type : _ M
     let (ty, value) = ex_value_ty_to_michelson ~raise (Ex_typed_value (exp_type', output)) in
     Success (ty, value)
   | Memory_proto_alpha.Fail expr ->
-    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_013_PtJakart.Protocol.Michelson_v1_primitives.strings_of_prims expr in
+    let expr = Tezos_micheline.Micheline.root @@ Tezos_protocol_014_PtKathma.Protocol.Michelson_v1_primitives.strings_of_prims expr in
     Fail expr
 
 let run_failwith ~raise ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) : (int, string) Tezos_micheline.Micheline.node =

@@ -18,11 +18,10 @@ module X = struct
     : type ta tb ra rb. context -> int -> (ta, ra) stack_ty -> (tb, rb) stack_ty ->
       (((ta, ra) stack_ty, (tb, rb) stack_ty) eq * context) tzresult
     = fun ctxt lvl ta tb ->
-      let dummy_loc  = 0 in (*TODO not sure ..*)
-      let error_details = Informative in
+      let error_details = Informative 0 in
       match ta, tb with
       | Item_t (tva, ra), Item_t (tvb, rb) ->
-        let x = ty_eq ~error_details dummy_loc tva tvb in
+        let x = ty_eq ~error_details tva tvb in
         Gas_monad.run ctxt x >>? fun (x, ctxt) -> x >>? fun Eq ->
         stack_ty_eq ctxt (lvl + 1) ra rb >>? fun (Eq, ctxt) ->
         (Ok (Eq, ctxt) : (((ta, ra) stack_ty, (tb, rb) stack_ty) eq * context) tzresult)
@@ -52,9 +51,9 @@ let ty_eq (type a b)
     (a:(a,_) ty) (b:(b,_) ty) : ((_, _) eq, Tezos_base.TzPervasives.tztrace) result
   =
   let open Tezos_base.TzPervasives.Result_syntax in
-  let error_details = Script_tc_errors.Informative in
+  let error_details = Script_tc_errors.Informative 0 in
   let* (x,_) = alpha_wrap (
-    let x = Script_ir_translator.ty_eq ~error_details 0 a b in
+    let x = Script_ir_translator.ty_eq ~error_details a b in
     Gas_monad.run tezos_context x
   ) in
   alpha_wrap x
@@ -62,7 +61,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_013_PtJakart.Michelson_v1_macros.expand_rec michelson in
+    Tezos_client_014_PtKathma.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -154,8 +153,8 @@ type options = {
   amount: Alpha_context.Tez.t ;
   chain_id: Environment.Chain_id.t ;
   balance : Alpha_context.Tez.t;
-  now : Alpha_context.Script_timestamp.t;
-  level : Alpha_context.Script_int.n Alpha_context.Script_int.num ;
+  now : Script_timestamp.t;
+  level : Script_int.n Script_int.num ;
 }
 
 let t_unit = Tezos_micheline.Micheline.(strip_locations (Prim (0, Michelson_v1_primitives.T_unit, [], [])))
@@ -182,13 +181,13 @@ let fake_bake tezos_context chain_id now =
       ((Protocol.Main.begin_construction
         ~chain_id
         ~predecessor_context:tezos_context
-        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Alpha_context.Script_timestamp.to_zint now)) with
+        ~predecessor_timestamp:((match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Script_timestamp.to_zint now)) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp"))
         ~predecessor_fitness:header.fitness
         ~predecessor_level:header.level
         ~predecessor:hash
-        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Alpha_context.Script_timestamp.to_zint now))) with
+        ~timestamp:(match Alpha_context.Timestamp.of_seconds_string (Z.to_string (Z.add (Z.of_int 30) (Script_timestamp.to_zint now))) with
                     | Some t -> t
                     | _ -> Stdlib.failwith "bad timestamp")
         ~protocol_data
@@ -204,7 +203,7 @@ let make_options
     ?(env = (dummy_environment ()))
     ?(tezos_context = env.tezos_context)
     ?(constants = [])
-    ?(now = Alpha_context.Script_timestamp.now env.tezos_context)
+    ?(now = Script_timestamp.now env.tezos_context)
     ?(sender = (List.nth_exn env.identities 0).implicit_contract)
     ?(self = default_self)
     ?(parameter_ty = t_unit)
@@ -242,6 +241,7 @@ let make_options
   let lazy_dummy_storage = Script.lazy_expr dummy_storage in
   let script = Script.{code = dummy_script; storage = lazy_dummy_storage} in
   let tezos_context =
+    let self = match self with Implicit hash -> Contract_hash.zero | Originated hash -> hash in
     force_lwt_alpha ~msg:("bad options "^__LOC__)
       (Alpha_context.Contract.raw_originate
         tezos_context
@@ -254,7 +254,7 @@ let make_options
     (Level.current tezos_context).level |> Raw_level.to_int32
     |> Script_int.of_int32 |> Script_int.abs
   in
-  let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int_repr.of_int time_between_blocks)) in
+  let tezos_context = fake_bake tezos_context chain_id (Script_timestamp.sub_delta now (Script_int.of_int time_between_blocks)) in
   (* Update the Tezos context by registering the global constants *)
   let tezos_context = List.fold_left constants ~init:tezos_context
                         ~f:(fun ctxt cnt ->
@@ -286,9 +286,12 @@ let interpret ?(options = make_options ()) (instr:('a, 'b, 'c, 'd) kdescr) bef :
     now ;
     level ;
   } = options in
+  let self = match self with
+    | Implicit hash -> Contract_hash.zero
+    | Originated hash -> hash
+  in
   let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now ; level } in
-  (* (EmptyCell, EmptyCell) feels wrong here ..*)
-  Script_interpreter.step no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
+  Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
   fun (stack, _, _) -> Lwt_result_syntax.return stack
 
 let unparse_ty_michelson ty =
@@ -342,9 +345,7 @@ let failure_interpret
   } = options in
 
   let descr = instr in
-  let kinfo = {iloc = descr.loc ; kstack_ty = descr.bef} in
-  let kinfoh = {iloc = descr.loc ; kstack_ty = descr.aft} in
-  let kinstr = descr.instr.apply kinfo (IHalt kinfoh) in
+  let kinstr = descr.instr.apply (IHalt descr.loc) in
   let kdescr = {
     kloc = descr.loc ;
     kbef = descr.bef ;
@@ -353,8 +354,10 @@ let failure_interpret
   } in
   let instr = kdescr in
 
-  let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now  ; level } in
-  Script_interpreter.step no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
+  let step_constants =
+    let self = match self with Implicit hash -> Contract_hash.zero | Originated hash -> hash in
+    { source ; self ; payer ; amount ; chain_id ; balance ; now  ; level } in
+  Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
   match x with
   | Ok (s, _, _ctxt) -> Lwt_result_syntax.return @@ Succeed s
   | Error errs ->
