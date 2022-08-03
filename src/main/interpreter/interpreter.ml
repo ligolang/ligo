@@ -717,7 +717,23 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_LAST_ORIGINATIONS , [ _ ] ) ->
       let>> x = Get_last_originations () in
       return x
+
     | ( C_TEST_LAST_ORIGINATIONS , _  ) -> fail @@ error_type
+    | ( C_TEST_LAST_EVENTS  , [ V_Ct (C_string tag) ] ) -> (
+      let event_payload_type_opt =
+        let open Option in
+        let* x = Ast_aggregated.get_t_list expr_ty in
+        let* (_addr,a) = Ast_aggregated.get_t_pair x in
+        return a
+      in
+      match event_payload_type_opt with
+      | Some p_ty ->
+        let>> x = Get_last_events (tag,p_ty) in
+        return x
+      | None ->
+        fail @@ error_type
+    )
+    | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -947,6 +963,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_GET_ENTRYPOINT , _ ) -> fail @@ error_type
     | ( (C_SAPLING_VERIFY_UPDATE | C_SAPLING_EMPTY_STATE) , _ ) ->
       fail @@ Errors.generic_error loc "Sapling is not supported."
+    | ( C_EMIT_EVENT , _ ) ->
+      fail @@ Errors.generic_error loc "Can't emit event here"
     | ( (C_SELF | C_SELF_ADDRESS) , _ ) ->
       fail @@ Errors.generic_error loc "Primitive not valid in testing mode."
     | ( C_POLYMORPHIC_ADD , _ ) ->
@@ -957,7 +975,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
          C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE |
-         C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT) , _ ) ->
+         C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT ) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
 

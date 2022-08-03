@@ -15,6 +15,7 @@ let all_expression ~raise ~(options : Compiler_options.middle_end) e =
 let contract_passes ~raise = [
   Contract_passes.self_typing ~raise ;
   Contract_passes.entrypoint_typing ~raise ;
+  Contract_passes.emit_event_typing ~raise ;
 ]
 
 let all_contract ~raise parameter storage prg =

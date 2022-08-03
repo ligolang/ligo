@@ -49,6 +49,7 @@ module Command = struct
     | Get_size : LT.value -> LT.value t
     | Get_balance : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
+    | Get_last_events : string * LT.type_expression -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_contract_from_file : string * string * string list -> LT.value t
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
@@ -382,6 +383,26 @@ module Command = struct
         (src, lst)
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
+      (v,ctxt)
+    | Get_last_events (rq_tag,rq_p_ty) ->
+      let rq_p_ty = Michelson_backend.compile_type ~raise rq_p_ty in
+      let rq_p_ty = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations rq_p_ty)) in
+      let aux (src, _tag, payload, ty) =
+        let src = LC.v_address src in
+        let x = Michelson_to_value.decompile_to_untyped_value
+          ~raise ~bigmaps:ctxt.transduced.bigmaps
+          ty payload
+        in
+        LC.v_pair (src, x)
+      in
+      let x =
+        let f = fun (_,tag,_,p_ty) ->
+          (*this comparison looks fishy*)
+          (Caml.compare rq_p_ty p_ty = 0) && (String.equal rq_tag tag)
+        in
+        List.filter ctxt.transduced.last_events ~f
+      in
+      let v = LT.V_List (List.map ~f:aux x) in
       (v,ctxt)
     | Implicit_account (kh) -> (
       let address = Memory_proto_alpha.Protocol.Alpha_context.Contract.Implicit kh in
