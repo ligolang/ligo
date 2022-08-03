@@ -665,6 +665,13 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_key.mligo" ] ;
+  [%expect {|
+    edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
+    Everything at the top-level was executed.
+    - test exited with value Success (2796n). |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
