@@ -265,7 +265,7 @@ instance Pretty1 FieldAssignment where
   pp1 = \case
     FieldAssignment accessors e -> sexpr ".=" (accessors <> [e])
     Spread n -> sexpr "..." [n]
-    Capture accessors -> sexpr ".=" accessors
+    Capture accessors -> sexpr ".=" [accessors]
 
 instance Pretty1 Constant where
   pp1 = \case

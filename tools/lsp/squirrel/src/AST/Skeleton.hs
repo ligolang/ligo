@@ -238,7 +238,7 @@ data MapBinding it
 data FieldAssignment it
   = FieldAssignment [it] it -- [Accessor] (Expr)
   | Spread it -- (Name)
-  | Capture [it] -- [Accessor]
+  | Capture it -- Accessor
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Constant it
@@ -253,7 +253,7 @@ data Constant it
 data Pattern it
   = IsConstr     it (Maybe it) -- (Name) (Maybe (Pattern))
   | IsConstant   it -- (Constant)
-  | IsVar        it -- (Name)
+  | IsVar        it -- (NameDecl)
   | IsCons       it it -- (Pattern) (Pattern)
   | IsAnnot      it it -- (Pattern) (Type) -- Semantically `Var`
   | IsWildcard
