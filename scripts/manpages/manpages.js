@@ -25,6 +25,9 @@ const commands = [
     "compile parameter",
     "compile storage",
 
+    "init contract",
+    "init library",
+
     "run dry-run",
     "run evaluate-call",
     "run evaluate-expr",
@@ -53,7 +56,6 @@ const commands = [
     "print ast-sugar",
     "print ast-core",
     "print ast-typed",
-    "print ast-combined",
     "print ast-aggregated",
     "print mini-c",
 
