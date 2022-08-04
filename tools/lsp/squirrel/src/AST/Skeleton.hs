@@ -253,7 +253,7 @@ data Constant it
 data Pattern it
   = IsConstr     it (Maybe it) -- (Name) (Maybe (Pattern))
   | IsConstant   it -- (Constant)
-  | IsVar        it -- (Name)
+  | IsVar        it -- (NameDecl)
   | IsCons       it it -- (Pattern) (Pattern)
   | IsAnnot      it it -- (Pattern) (Type) -- Semantically `Var`
   | IsWildcard
