@@ -281,7 +281,7 @@ deploy-handoff-feature:
   variables:
     APP_NAME: "web-ide-backend"
     NEW_VERSION: "${CI_COMMIT_SHORT_SHA}"
-    ENV: "dev"
+    ENV: "non-prod"
   trigger: 
     project: ligolang/kubernetes-infrastructure
   rules:
