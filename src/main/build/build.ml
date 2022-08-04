@@ -215,7 +215,5 @@ let build_views ~raise :
       let views = List.mapi ~f:aux view_names in
       let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
       let michelsons = List.map ~f:aux views in
-      let () = if Environment.Protocols.(equal Jakarta options.middle_end.protocol_version) then
-        Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) else ()
-      in
+      let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in
       michelsons
