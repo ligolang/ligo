@@ -197,22 +197,25 @@ let build_views ~raise :
       build_typed ~raise:{raise with warning} ~options form source_file
     in
     let view_names = List.map ~f:fst (Ast_typed.Helpers.get_views contract) in
-    let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
-    let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-    let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
-    let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
-                       Mini_c.get_t_tuple mini_c.type_expression in
-    let nb_of_views = List.length view_names in
-    let aux i view =
-      let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
-                     List.nth mini_c_tys i in
-      let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
-      let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in
-      (view, idx) in
-    let views = List.mapi ~f:aux view_names in
-    let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
-    let michelsons = List.map ~f:aux views in
-    let () = if Environment.Protocols.(equal Jakarta options.middle_end.protocol_version) then
-      Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) else ()
-    in
-    michelsons
+    match view_names with
+    | [] -> []
+    | _ ->
+      let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
+      let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+      let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
+      let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
+                        Mini_c.get_t_tuple mini_c.type_expression in
+      let nb_of_views = List.length view_names in
+      let aux i view =
+        let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
+                      List.nth mini_c_tys i in
+        let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
+        (* let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in *)
+        (view, idx) in
+      let views = List.mapi ~f:aux view_names in
+      let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
+      let michelsons = List.map ~f:aux views in
+      let () = if Environment.Protocols.(equal Jakarta options.middle_end.protocol_version) then
+        Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) else ()
+      in
+      michelsons
