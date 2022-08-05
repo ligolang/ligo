@@ -42,10 +42,10 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/2810632683/artifacts/raw/ligo), make it executable, and you are done!
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/2816932316/artifacts/raw/ligo), make it executable, and you are done!
 
 ```zsh
-wget https://gitlab.com/ligolang/ligo/-/jobs/2810632683/artifacts/raw/ligo
+wget https://gitlab.com/ligolang/ligo/-/jobs/2816932316/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
@@ -59,7 +59,7 @@ sudo cp ./ligo /usr/local/bin
 ## Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/2810632683/artifacts/raw/ligo.deb), and then install using: 
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/2816932316/artifacts/raw/ligo.deb), and then install using: 
 
 ```zsh
 sudo apt install ./ligo.deb

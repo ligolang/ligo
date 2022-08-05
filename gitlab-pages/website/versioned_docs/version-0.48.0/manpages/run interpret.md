@@ -37,7 +37,7 @@ the syntax that will be used. Currently supported syntaxes are "pascaligo", "cam
 warn about unused recursion in a recursive function
 
 **-p PROTOCOL**
-choose protocol's types/values pre-loaded into the LIGO environment (jakarta). By default, the current protocol (jakarta) will be used (alias: --protocol)
+choose protocol's types/values pre-loaded into the LIGO environment (jakarta , kathmandu). By default, the current protocol (jakarta) will be used (alias: --protocol)
 
 **-help**
 print this help text and exit (alias: -?)
