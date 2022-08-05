@@ -1,3 +1,4 @@
+import { Console } from 'console';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -19,7 +20,7 @@ export const CompilePaneComponent = () => {
   const entrypoint = useSelector<AppState, CompileState['entrypoint']>(
     state => state.compile && state.compile.entrypoint
   );
-  const protocol = useSelector<AppState, CompileState['protocol']>(
+  let protocol = useSelector<AppState, CompileState['protocol']>(
     state => state.compile && state.compile.protocol
   );
   const michelsonFormat = useSelector<
@@ -33,11 +34,13 @@ export const CompilePaneComponent = () => {
         <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Jakarta}
-          onChange={ev =>
-            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          value={protocol}
+          onChange={selectedProtocol => {
+            protocol=selectedProtocol
+            dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
           <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input

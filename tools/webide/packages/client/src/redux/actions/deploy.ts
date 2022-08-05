@@ -50,6 +50,14 @@ export class DeployAction extends CancellableAction {
           rpcUrl: `https://jakartanet.ecadinfra.com`,
         },
       });
+    } else if (launchNetwork === NetworkType.KATHMANDUNET) {
+      await beaconWallet.requestPermissions({
+        network: {
+          type: NetworkType.KATHMANDUNET,
+          name: 'Kathmandunet',
+          rpcUrl: `https://kathmandunet.ecadinfra.com`,
+        },
+      });
     } else if (launchNetwork === NetworkType.MAINNET) {
       await beaconWallet.requestPermissions({
         network: {
@@ -89,6 +97,9 @@ export class DeployAction extends CancellableAction {
     if (deployState.network === 'Jakartanet') {
       networkURL = 'https://jakartanet.ecadinfra.com';
       network = { type: NetworkType.JAKARTANET };
+    } else if (deployState.network === NetworkType.KATHMANDUNET) {
+      networkURL = 'https://kathmandunet.ecadinfra.com';
+      network = { type: NetworkType.KATHMANDUNET };
     } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://mainnet.api.tez.ie';
       network = { type: NetworkType.MAINNET };

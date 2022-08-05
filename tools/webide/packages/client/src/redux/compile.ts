@@ -7,6 +7,7 @@ export enum MichelsonFormat {
 
 export enum protocolType {
   Jakarta = 'jakarta',
+  Kathmandu = 'kathmandu'
 }
 
 export enum ActionType {

@@ -22,6 +22,7 @@ const Hint = styled.span`
 interface stateTypes {
   entrypoint?: string;
   storage?: string;
+  useProtocol?: string;
   useNetwork?: string
 }
 
@@ -29,6 +30,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
 
   const {entrypoint, storage} = props
   let {useNetwork} = props
+  let {useProtocol} = props
 
   const dispatch = useDispatch();
 
@@ -46,11 +48,13 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
       <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Jakarta}
-          onChange={ev =>
-            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          value={useProtocol}
+          onChange={protocol => {
+            useProtocol = protocol
+            dispatch({ ...new ChangeProtocolAction(protocol) })}
           }>
           <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
       <Label htmlFor="storage">Choose a Network</Label>
       <SelectCommand
@@ -66,6 +70,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
               }
           }}
         >
+          <Option value={networkType.Kathmandunet}>Kathmandunet</Option>
           <Option value={networkType.Jakartanet}>Jakartanet</Option>
           <Option value={networkType.Mainnet}>Mainnet</Option>
         </SelectCommand>
@@ -89,7 +94,7 @@ const DeployPaneComponent:FC<stateTypes> = (props) => {
           }
         ></Textarea>
       </Group>
-      {useNetwork && ( useNetwork === networkType.Jakartanet) &&
+      {useNetwork && ( useNetwork === networkType.Jakartanet || useNetwork === networkType.Kathmandunet) &&
       <HGroup>
         <Checkbox
           checked={true}
@@ -112,6 +117,7 @@ function mapStateToProps(state) {
     entrypoint: deploy.entrypoint,
     storage: deploy.storage,
     useNetwork: deploy.network,
+    useProtocol: deploy.protocol,
     useSigner: deploy.signer
    }
 }
