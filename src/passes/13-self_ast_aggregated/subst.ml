@@ -83,7 +83,6 @@ let rec replace : expression -> expression_variable -> expression_variable -> ex
      let update = replace update in
      return @@ E_record_update { record ; path ; update }
   | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
-     let var = replace_var var in
      let expression = replace expression in
      return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
 
@@ -107,6 +106,31 @@ let subst_binder : type body.
       let body = replace body y fresh in
       (fresh, subst ~body ~x ~expr)
 
+(* Given an implementation of substitution on an arbitary type of
+   body, implements substitution on a binder (pair of bound variable
+   and body) *)
+let subst_binders : type body.
+  (body:body -> x:expression_variable -> expr:expression -> body) ->
+  (body -> expression_variable -> expression_variable -> body) ->
+  body:(expression_variable list * body) -> x:expression_variable -> expr:expression -> (expression_variable list * body) =
+  fun subst replace ~body:(ys, body) ~x ~expr ->
+    (* if x is shadowed, binder doesn't change *)
+    if List.mem ~equal:ValueVar.equal ys x
+    then (ys, body)
+    (* else, if no capture, subst in binder *)
+    else
+      let fvs = Free_variables.expression expr in
+      let f (acc, fs, body) y =
+        if not (List.mem ~equal:ValueVar.equal fvs y)
+        then (y :: acc, fs, body)
+         (* else, avoid capture and subst in binder *)
+        else
+          let fresh = ValueVar.fresh_like y in
+          (fresh :: acc, (y, fresh) :: fs, body) in
+      let ys, fs, body = List.fold_left ~f ~init:([], [], body) ys in
+      let body = List.fold_left ~f:(fun body (y, fresh) -> replace body y fresh) ~init:body fs in
+      (ys, subst ~body ~x ~expr)
+
 
 (**
    Computes `body[x := expr]`.
@@ -122,31 +146,20 @@ let rec subst_expression : body:expression -> x:expression_variable -> expr:expr
     subst_binder
       subst_binder1
       (fun (x, body) y z -> (replace_var x y z, replace body y z)) in
-  let subst_binders
-        ~(binders:expression_variable list) ~(body : expression) ~(x:expression_variable) ~(expr:expression) : expression_variable list * expression =
-    print_endline (Format.asprintf "%a" (PP_helpers.list_sep_d PP.expression_variable) binders);
-    let rec subst_binders acc ~binders ~body =
-      match binders with
-      | [] -> List.rev acc, body
-      | (b :: binders) ->
-         let b, body = subst_binder subst_expression replace ~body:(b, body) ~x ~expr in
-         subst_binders (b :: acc) ~binders ~body in
-    subst_binders [] ~binders ~body
-  in
   match body.expression_content with
   | E_variable x' ->
      if ValueVar.equal x' x
      then expr
      else return_id
   | E_lambda { binder = { var ; ascr ; attributes } ; result } ->
-     let var, result = subst_binder subst_expression replace ~body:(var, result) ~x ~expr in
+     let var, result = subst_binder1 ~body:(var, result) ~x ~expr in
      return @@ E_lambda { binder = { var ; ascr ; attributes } ; result }
   | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; result } } ->
      let fun_name, (var, result) = subst_binder2 ~body:(fun_name, (var, result)) ~x ~expr in
      return @@ E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; result } }
   | E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr } ->
      let rhs = self rhs in
-     let var, let_result = subst_binder subst_expression replace ~body:(var, let_result) ~x ~expr in
+     let var, let_result = subst_binder1 ~body:(var, let_result) ~x ~expr in
      return @@ E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr }
   | E_constant {cons_name; arguments} ->
      let arguments = List.map ~f:self arguments in
@@ -174,7 +187,7 @@ let rec subst_expression : body:expression -> x:expression_variable -> expr:expr
      let matchee = self matchee in
      let fields = LMap.to_kv_list fields in
      let binders = List.map fields ~f:(fun (_, { var ; _ }) -> var) in
-     let binders, body = subst_binders ~binders ~body ~x ~expr in
+     let binders, body = subst_binders subst_expression replace ~body:(binders, body) ~x ~expr in
      let fields = List.zip_exn fields binders in
      let fields = List.map fields ~f:(fun ((l, { ascr ; attributes ; _ }), var) -> (l, { var ; ascr ; attributes })) in
      let fields = LMap.of_list fields in
@@ -182,7 +195,7 @@ let rec subst_expression : body:expression -> x:expression_variable -> expr:expr
   | E_literal _ | E_raw_code _ ->
      return_id
   | E_record m ->
-     let m = LMap.map (fun x -> self x) m in
+     let m = LMap.map self m in
      return @@ E_record m
   | E_record_accessor { record ; path } ->
      let record = self record in
@@ -192,5 +205,5 @@ let rec subst_expression : body:expression -> x:expression_variable -> expr:expr
      let update = self update in
      return @@ E_record_update { record ; path ; update }
   | E_assign { binder = { var ; ascr ; attributes } ; expression } ->
-     let var, expression = subst_binder subst_expression replace ~body:(var, expression) ~x ~expr in
+     let expression = self expression in
      return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
