@@ -60,6 +60,10 @@ const commands = [
     "print mini-c",
 
     "install",
+    "publish",
+
+    "add-user",
+    "login",
 ]                            
             
 const TEMPLATE = ({ synopsis, descrption, flags }) => `

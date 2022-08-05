@@ -772,29 +772,29 @@ let repl =
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
-  let summary   = "install LIGO packages declared in package.json" in
+  let summary   = "install LIGO dependencies declared in package.json" in
   let readme () = "This command invokes the package manager to install the external packages declared in package.json" in
   let f package_name cache_path ligo_registry () =
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path ~ligo_registry in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path <*> ligo_registry)
 
 let publish =
-  let summary   = "publish the LIGO package declared in package.json" in
-  let readme () = "Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
+  let summary   = "[BETA] publish the LIGO package declared in package.json" in
+  let readme () = "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
   let f ligo_registry ligorc_path project_root () =
     return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
 
 let add_user =
-  let summary   = "create a new user for the LIGO package registry" in
-  let readme () = "Prompt the user for details to create a new user on registry server" in
+  let summary   = "[BETA] create a new user for the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for details to create a new user on registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
 let login =
-  let summary   = "login to the LIGO package registry" in
-  let readme () = "Prompt the user for credentials and creates and login session with the registry server" in
+  let summary   = "[BETA] login to the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for credentials to creates a login session with the registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
