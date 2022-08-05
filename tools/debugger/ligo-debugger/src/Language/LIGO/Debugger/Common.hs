@@ -20,8 +20,8 @@ type EmbeddedLigoMeta = LigoIndexedInfo
 ligoPositionToSrcPos :: HasCallStack => LigoPosition -> SrcPos
 ligoPositionToSrcPos (LigoPosition l c) =
   SrcPos
-    (Pos $ Unsafe.fromIntegral @Integer @Word (toInteger l - 1))
-    (Pos c)
+    (Pos $ Unsafe.fromIntegral (toInteger l - 1))
+    (Pos $ Unsafe.fromIntegral c)
 
 ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
 ligoRangeToSourceLocation LigoRange{..} =

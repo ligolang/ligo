@@ -3,6 +3,7 @@ module Test.DebugInfo
   ( module Test.DebugInfo
   ) where
 
+import Control.Exception
 import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
 import Data.Typeable (cast)
@@ -54,7 +55,8 @@ test_SourceMapper :: TestTree
 test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      ligoMapper <- compileLigoContractDebug "main" file
+      result <- runExceptT $ compileLigoContractDebug "main" file
+      ligoMapper <- either throwIO pure result
       (allLocs, T.SomeContract contract) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v

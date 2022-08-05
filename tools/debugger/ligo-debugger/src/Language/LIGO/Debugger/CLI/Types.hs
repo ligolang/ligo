@@ -4,19 +4,21 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:), withText)
+import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:), (.:?), (.!=), withText)
 import Data.Aeson qualified as Aeson
-import Data.Aeson.Lens qualified as Aeson
+import Data.Aeson.Lens (key, nth, values)
 import Data.Aeson.Types qualified as Aeson
 import Data.Char (isDigit)
+import Data.Default (Default(..))
 import Data.HashMap.Strict qualified as HS
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
 import Data.Text qualified as T
 import Data.Vector qualified as V
-import Fmt (Buildable (..), blockListF, mapF, nameF, tupleF)
+import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
+import Fmt.Internal.Core (FromBuilder (..))
 import Morley.Micheline.Expression qualified as Micheline
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan (int, rmode')
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.
@@ -41,15 +43,25 @@ instance Integral a => FromJSON (TextualNumber a) where
 
 -- | Position in a file.
 data LigoPosition = LigoPosition
-  { lpLine :: Word
+  { lpLine :: Int
     -- ^ 1-indexed line number
-  , lpCol  :: Word
+  , lpCol  :: Int
     -- ^ 0-indexed column number
   } deriving stock (Show, Eq, Ord, Generic)
     deriving anyclass (NFData)
 
 instance Buildable LigoPosition where
   build (LigoPosition line col) = [int||#{line}:#{col}|]
+
+instance FromJSON LigoPosition where
+  parseJSON v = do
+    startByte <- maybe (fail "Error parsing LIGO position") pure (v ^? nth 1 . key "start" . key "byte")
+    flip (withObject "startByte") startByte $ \obj -> do
+      lpLine <- obj .: "pos_lnum"
+      column1 <- obj .: "pos_cnum"
+      column0 <- obj .: "pos_bol"
+      let lpCol = column1 - column0
+      pure LigoPosition {..}
 
 -- | Some LIGO location range.
 data LigoRange = LigoRange
@@ -392,9 +404,43 @@ instance FromJSON LigoMapper where
     Array types <- o .: "types"
     locations <- mich .: "locations"
     locationsInlined <-
-      forOf (Aeson.values . Aeson.key "environment" . Aeson.values . Aeson.key "source_type") (Array locations) \old -> do
+      forOf (values . key "environment" . values . key "source_type") (Array locations) \old -> do
         TextualNumber index <- parseJSON old
         maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
 
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
+
+data LigoException = LigoException
+  { leMessage :: Text
+  , leDescription :: Text
+  , leLocation :: Maybe LigoPosition
+  }
+  deriving stock (Eq, Show)
+
+instance FromJSON LigoException where
+  parseJSON = withObject "LIGO output" $ \o -> do
+    content <- o .: "content"
+    flip (withObject "Content") content $ \c -> do
+      leMessage <- c .: "message"
+      leDescription <- c .:? "description" .!= ""
+      location <- c .:? "location"
+      leLocation <- maybe (pure Nothing) parseJSON location
+      pure LigoException{..}
+
+instance Default LigoException where
+  def = LigoException "" "" Nothing
+
+instance Exception LigoException where
+  displayException = pretty
+
+instance Buildable LigoException where
+  build (LigoException msg desc loc) =
+    [int||
+        #{msg}
+        #{desc}
+        #{loc}
+    |]
+
+instance FromBuilder LigoException where
+  fromBuilder b = def {leMessage = fromBuilder b}

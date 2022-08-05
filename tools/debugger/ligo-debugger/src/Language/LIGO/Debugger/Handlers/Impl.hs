@@ -8,7 +8,8 @@ import Unsafe qualified
 
 import Control.Lens (ix, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
-import Fmt (pretty)
+import Fmt (build, pretty)
+import Fmt.Internal.Core (FromBuilder (fromBuilder))
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), curSnapshot, frozen, groupSourceLocations,
   playInterpretHistory)
@@ -232,14 +233,17 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       }
 
   case result of
-    Left msg -> do
-      writeResponse $ ErrorResponse $ DAP.defaultErrorResponse
-        { DAP.request_seqErrorResponse = seqLigoGetContractMetadataRequest
-        , DAP.commandErrorResponse = commandLigoGetContractMetadataRequest
-        , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
-        , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
-        }
+    Left e -> do
+      let msg = fromBuilder . build $ e
       logMessage [int||Getting metadata for contract #{program} failed: #{msg}|]
+      writeResponse $
+        ErrorResponse $
+          DAP.defaultErrorResponse
+            { DAP.request_seqErrorResponse = seqLigoGetContractMetadataRequest
+            , DAP.commandErrorResponse = commandLigoGetContractMetadataRequest
+            , DAP.messageErrorResponse = Just $ toString . leMessage $ e
+            , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+            }
     Right lServerState -> case lsContract lServerState of
       SomeContract contract -> do
         let
