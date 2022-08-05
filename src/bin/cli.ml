@@ -395,8 +395,8 @@ let transpile_contract =
     return_result ~return ?output_file @@
     Api.Transpile.contract source_file new_syntax syntax display_format
   in
-  let summary   = "transpile a contract to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a source file to another \
+  let summary   = "[BETA] transpile a contract to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a source file to another \
                   syntax. It does not use the build system, but the \
                   source file is preprocessed. Comments are currently \
                   not transpiled. Please use at your own risk." in
@@ -409,15 +409,15 @@ let transpile_expression =
     return_result ~return @@
     Api.Transpile.expression expression new_syntax syntax display_format
   in
-  let summary   = "transpile an expression to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a LIGO expression to \
+  let summary   = "[BETA] transpile an expression to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a LIGO expression to \
                   another syntax. Comments are currently not \
                   transpiled. Please use at your own risk." in
   Command.basic ~summary ~readme
   (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format)
 
 let transpile_group =
-  Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
+  Command.group ~summary:"[BETA] transpile ligo code from a syntax to another" @@
   [ "contract"  , transpile_contract;
     "expression", transpile_expression;]
 
@@ -459,7 +459,7 @@ let test =
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
-  let summary   = "test a contract with the LIGO test framework (BETA)." in
+  let summary   = "test a contract with the LIGO test framework." in
   let readme () = "This sub-command tests a LIGO contract using a LIGO \
                   interpreter. Still under development, there are features that are work \
                   in progress and are subject to change. No real test \

@@ -16,6 +16,9 @@ const { exec } = require("child_process");
 
 const OUT_DIR = "./gitlab-pages/docs/manpages"
 
+fs.rmSync(OUT_DIR, { recursive: true, force: true })
+fs.mkdirSync(OUT_DIR)
+
 const LIGO = args[0] !== undefined ? args[0] : "./_build/install/default/bin/ligo"
 
 const MAIN_COMMAND_TEMPLATE = ({ synopsis, descrption, subcommands }) => `
