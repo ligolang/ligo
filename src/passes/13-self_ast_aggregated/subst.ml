@@ -21,31 +21,27 @@ let replace_var : expression_variable -> expression_variable -> expression_varia
 
 (* replace in `e` the variable `x` with `y`.
 
-   It would be fine -- better? -- to only replace the _free_ x.
+   But only replace the _free_ x.
 *)
 let rec replace : expression -> expression_variable -> expression_variable -> expression =
   fun e x y ->
   let replace e = replace e x y in
   let return expression_content = { e with expression_content } in
   let replace_var v = replace_var v x y in
-  ignore (replace, return, replace_var);
+  let (=) = ValueVar.equal in
   match e.expression_content with
   | E_variable z ->
     let z = replace_var z in
     return @@ E_variable z
   | E_lambda { binder = { var ; ascr ; attributes } ; result } ->
-     let result = replace result in
-     let var = replace_var var in
+     let result = if var = x then result else replace result in
      return @@ E_lambda { binder = { var ; ascr ; attributes } ; result }
   | E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; result } } ->
-     let result = replace result in
-     let var = replace_var var in
-     let fun_name = replace_var fun_name in
+     let result = if var = x || fun_name = x then result else replace result in
      return @@ E_recursive { fun_name ; fun_type ; lambda = { binder = { var ; ascr ; attributes } ; result } }
   | E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr } ->
-     let var = replace_var var in
      let rhs = replace rhs in
-     let let_result = replace let_result in
+     let let_result = if var = x then let_result else replace let_result in
      return @@ E_let_in { let_binder = { var ; ascr ; attributes } ; rhs ; let_result ; attr }
   | E_constant {cons_name; arguments} ->
      let arguments = List.map ~f:replace arguments in
@@ -65,18 +61,14 @@ let rec replace : expression -> expression_variable -> expression_variable -> ex
   | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
      let matchee = replace matchee in
      let f ({ constructor ; pattern ; body } : matching_content_case) =
-       let body = replace body in
-       let pattern = replace_var pattern in
+       let body = if pattern = x then body else replace body in
        { constructor ; pattern ; body } in
      let cases = List.map ~f cases in
      return @@ E_matching { matchee ; cases = Match_variant { cases ; tv } }
   | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
      let matchee = replace matchee in
-     let fields = LMap.to_kv_list fields in
-     let binders = List.map fields ~f:(fun (_, { var ; _ }) -> replace_var var) in
-     let fields = List.zip_exn fields binders in
-     let fields = List.map fields ~f:(fun ((l, { ascr ; attributes ; _ }), var) -> (l, { var ; ascr ; attributes })) in
-     let fields = LMap.of_list fields in
+     let binders = List.map (LMap.to_kv_list fields) ~f:(fun (_, { var ; _ }) -> replace_var var) in
+     let body = if List.mem ~equal:(=) binders x then body else replace body in
      return @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
   | E_literal _ -> e
   | E_raw_code _ -> e
@@ -94,8 +86,6 @@ let rec replace : expression -> expression_variable -> expression_variable -> ex
      let var = replace_var var in
      let expression = replace expression in
      return @@ E_assign { binder = { var ; ascr ; attributes } ; expression }
-
-
 
 (* Given an implementation of substitution on an arbitary type of
    body, implements substitution on a binder (pair of bound variable
