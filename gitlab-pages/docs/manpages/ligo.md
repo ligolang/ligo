@@ -10,7 +10,7 @@ The LigoLANG compiler
 compile a ligo program to michelson
 
 **transpile**
-transpile ligo code from a syntax to another (BETA)
+[BETA] transpile ligo code from a syntax to another
 
 **run**
 compile and interpret ligo code
