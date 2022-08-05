@@ -39,8 +39,11 @@
     },
     "line_comment": {
       "name": "comment.block.religo",
-      "match": "\\/\\/.*$",
-      "captures": {}
+      "begin": "\\/\\/",
+      "end": "$",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
     },
     "attribute": {
       "name": "keyword.control.attribute.religo",

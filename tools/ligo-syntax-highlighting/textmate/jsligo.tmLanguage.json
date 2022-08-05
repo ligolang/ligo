@@ -8,7 +8,6 @@
     { "include": "#string" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
-    { "include": "#attribute" },
     { "include": "#macro" },
     { "include": "#letbinding" },
     { "include": "#typedefinition" },
@@ -38,16 +37,22 @@
       "end": "\\*\\/",
       "beginCaptures": {},
       "endCaptures": {},
-      "patterns": [ { "include": "#block_comment" } ]
+      "patterns": [
+        { "include": "#block_comment" },
+        { "include": "#attribute" }
+      ]
     },
     "line_comment": {
       "name": "comment.block.jsligo",
-      "match": "\\/\\/.*$",
-      "captures": {}
+      "begin": "\\/\\/",
+      "end": "$",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [ { "include": "#attribute" } ]
     },
     "attribute": {
       "name": "keyword.control.attribute.jsligo",
-      "match": "(/\\s*@.*\\s*|/\\*\\s*@.*\\*/)",
+      "match": "(@[a-zA-Z][a-zA-Z0-9_:.@%]*)",
       "captures": {}
     },
     "macro": {

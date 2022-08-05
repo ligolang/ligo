@@ -198,7 +198,7 @@ let const_or_var: Core.regexp = {
 
 let attributes_match_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "(/\\s*@.*\\s*|/\\*\\s*@.*\\*/)";
+  textmate = "(@[a-zA-Z][a-zA-Z0-9_:.@%]*)";
   vim      = ""
 }
 

@@ -275,6 +275,9 @@ module Convert = struct
 
   let to_vim: Core.t -> t = fun t ->
     let toplevel = t.syntax_patterns in
+    let language_features = t.Core.language_features in
+    let comments = language_features.comments in
+    let extra_patterns = language_features.extra_patterns in
     (List.fold_left (fun a c -> (pattern_to_vim toplevel c) @ a ) [] t.repository)
     @
     [VIMComment "string"]
@@ -289,21 +292,25 @@ module Convert = struct
           };
           contained = false;
           contained_in = [];
-          contains = ["@Spell"];
+          contains = "@Spell" :: extra_patterns.in_strings;
           next_groups = []
         })
-    ) t.language_features.string_delimiters)
+    ) language_features.string_delimiters)
     @
     [Highlight (Link {group_name = "string"; highlight = Core.String})]
     @
     [VIMComment "linecomment"]
     @
-    [Syntax (Match {
+    [Syntax (Region {
       group_name   = "linecomment";
-      value        = t.language_features.comments.line_comment.Core.vim;
+      value        = {
+        start        = Some comments.line_comment.Core.vim;
+        end_         = Some "$";
+        match_groups = [];
+      };
       contained    = false;
       contained_in = ["ALLBUT"; "string"; "blockcomment"];
-      contains     = ["@Spell"];
+      contains     = "@Spell" :: extra_patterns.in_line_comments;
       next_groups  = []
     })]
     @
@@ -314,13 +321,13 @@ module Convert = struct
     [Syntax (Region {
       group_name   = "blockcomment";
       value        = {
-        start        = Some ((fst t.language_features.comments.block_comment).Core.vim);
-        end_         = Some ((snd t.language_features.comments.block_comment).Core.vim);
+        start        = Some ((fst comments.block_comment).Core.vim);
+        end_         = Some ((snd comments.block_comment).Core.vim);
         match_groups = []
       };
       contained    = false;
       contained_in = ["ALLBUT"; "string"; "linecomment"];
-      contains     = ["@Spell"];
+      contains     = "@Spell" :: extra_patterns.in_block_comments;
       next_groups  = []
     })]
     @

@@ -83,8 +83,8 @@ let syntax_highlighting =
       comments = {
         line_comment = {
           emacs    = "//";
-          textmate = "\\/\\/.*$";
-          vim      = "\\/\\/.*$"
+          textmate = "\\/\\/";
+          vim      = "\\/\\/"
         };
         block_comment = (
           {
@@ -102,6 +102,11 @@ let syntax_highlighting =
       comments_insertion = {
         line_comment = "//";
         block_comment = ("/*", "*/");
+      };
+      extra_patterns = {
+        in_line_comments = [];
+        in_block_comments = [];
+        in_strings = [];
       };
       brackets = [
         ("{", "}");
