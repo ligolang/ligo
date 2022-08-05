@@ -111,7 +111,7 @@ docker_extract:
     - cp -L result/ligo.deb .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     paths:
       - ligo
