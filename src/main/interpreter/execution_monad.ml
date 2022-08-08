@@ -51,7 +51,7 @@ module Command = struct
     | Get_last_originations : unit -> LT.value t
     | Get_last_events : string * LT.type_expression -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
-    | Compile_contract_from_file : string * string * string list -> LT.value t
+    | Compile_contract_from_file : string * string * string list * Z.t option -> LT.value t
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
@@ -244,7 +244,7 @@ module Command = struct
       | _ -> raise.error @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entry_point, views) ->
+    | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
