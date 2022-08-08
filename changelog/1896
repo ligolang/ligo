@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: '- Performance: optimized compilation time for contracts'
+merge_request: '1896'
+title: 'Perf: view fix'
+type: fixed

@@ -362,6 +362,10 @@
         {
           "type": "doc",
           "id": "version-0.48.0/protocol/jakarta"
+        },
+        {
+          "type": "doc",
+          "id": "version-0.48.0/protocol/kathmandu"
         }
       ]
     }
