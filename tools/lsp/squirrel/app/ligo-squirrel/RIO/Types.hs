@@ -1,6 +1,5 @@
 module RIO.Types
-  ( Contract (..)
-  , IndexOptions (..)
+  ( IndexOptions (..)
   , ProjectSettings (..)
   , RioEnv (..)
   , RIO (..)
@@ -27,11 +26,6 @@ import Cli (HasLigoClient (..), LigoClientEnv (..))
 import Config (Config (..))
 import Log (LogT)
 
-data Contract = Contract
-  { cTree :: ContractInfo'
-  , cDeps :: [J.NormalizedUri]
-  }
-
 -- | Represents the user's choice on how to index the project.
 data IndexOptions
   = IndexChoicePending
@@ -56,7 +50,7 @@ data IndexOptions
 -- loaded files, files in the project, etc. This is meant to be used inside a
 -- `ReaderT`, and its internal `MVar`s updated as needed.
 data RioEnv = RioEnv
-  { reCache :: ASTMap J.NormalizedUri Contract RIO
+  { reCache :: ASTMap J.NormalizedUri ContractInfo' RIO
   -- ^ Caches parsed and scoped contracts, as well as their include dependencies.
   -- Also contains metadata about contracts, such as when they were loaded, when
   -- they were invalidated, etc.

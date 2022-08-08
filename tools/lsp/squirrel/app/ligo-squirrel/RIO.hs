@@ -25,7 +25,7 @@ import Log (LogT, i)
 import Log qualified
 import RIO.Document qualified (load)
 import RIO.Registration qualified
-import RIO.Types (Contract (..), RIO (..), RioEnv (..))
+import RIO.Types (RIO (..), RioEnv (..))
 
 newRioEnv :: IO RioEnv
 newRioEnv = do

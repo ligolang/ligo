@@ -10,7 +10,7 @@ import Control.Monad.Reader (asks, void, when)
 import Data.Aeson qualified as Aeson
 import Data.Bool (bool)
 import Data.Default (def)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HashSet
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
@@ -30,7 +30,7 @@ import AST
 import Cli (TempSettings, getLigoVersion)
 import Config (Config (..))
 import Extension (isLigoFile)
-import Language.LSP.Util (sendError)
+import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
 import Log qualified
 import RIO qualified
@@ -40,6 +40,7 @@ import RIO.Indexing qualified as Indexing
 import RIO.Types
 import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
 import Util (toLocation)
+import Util.Graph (traverseAM)
 
 main :: IO ()
 main = exit =<< mainLoop
@@ -172,7 +173,7 @@ handleDidOpenTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
 
-  RIO.Contract doc _ <- Document.forceFetch' Document.BestEffort uri
+  doc <- Document.forceFetch Document.BestEffort uri
   openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
     Diagnostic.collectErrors doc (Just ver)
@@ -180,36 +181,34 @@ handleDidOpenTextDocument notif = do
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
-  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   $(Log.debug) [i|Changed text document: #{uri}|]
   void $ Document.forceFetchAndNotify notify Document.LeastEffort uri
   where
+    uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+
     -- Clear diagnostics for all contracts in this WCC and then send diagnostics
     -- collected from this URI.
-    -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
-    -- conditions.
-    notify :: RIO.Contract -> RIO ()
-    notify (RIO.Contract doc nuris) = do
+    notify :: ContractInfo' -> RIO ()
+    notify doc = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks reOpenDocs
-      modifyMVar_ openDocsVar \openDocs -> do
-        Diagnostic.clearDiagnostics nuris
-        Diagnostic.collectErrors doc ver
-        pure openDocs
+      Diagnostic.collectErrors doc ver
+      void $ Document.wccForFilePath (contractFile doc) >>=
+        traverseAM (Diagnostic.clearDiagnostics . filePathToNormalizedUri)
 
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
 
-  RIO.Contract _ nuris <- Document.fetch' Document.LeastEffort uri
+  doc <- Document.fetch Document.LeastEffort uri
 
   openDocsVar <- asks reOpenDocs
   modifyMVar_ openDocsVar \openDocs -> do
     let openDocs' = HashSet.delete uri openDocs
     -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-    let nuriMap = HashSet.fromList nuris
+    files <- Document.wccForFilePath (contractFile doc)
+    let nuriMap = HashSet.fromList $ map filePathToNormalizedUri $ G.vertexList files
     when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
-      Diagnostic.clearDiagnostics nuris
+      traverse_ Diagnostic.clearDiagnostics nuriMap
     pure openDocs'
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
