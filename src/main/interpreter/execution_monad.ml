@@ -244,11 +244,11 @@ module Command = struct
       | _ -> raise.error @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
+    | Compile_contract_from_file (source_file, entry_point, views, mutation) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
-      let contract_code = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views in
+      let contract_code = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views mutation in
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
       let contract = LT.V_Michelson_contract contract_code in
       (contract, ctxt)

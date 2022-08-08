@@ -187,9 +187,15 @@ let compile_contract_ast ~raise ~options aggregated_exp =
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 
-let compile_contract_file ~raise ~options source_file entry_point declared_views =
+let compile_contract_file ~raise ~options source_file entry_point declared_views mutate =
   let open Ligo_compile in
   let aggregated = Build.build_aggregated ~raise ~options entry_point source_file in
+  let aggregated = match mutate with
+    | None -> aggregated
+    | Some z -> let n = Z.to_int z in
+                let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
+                let l = Fuzzer.all_mutate_expression aggregated in
+                fst @@ List.nth_exn l n in
   let michelson = compile_contract_ast ~raise ~options aggregated in
   let views = Build.build_views ~raise ~options entry_point declared_views source_file in
   Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
