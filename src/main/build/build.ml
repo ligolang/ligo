@@ -171,8 +171,7 @@ let build_expression ~raise : options:Compiler_options.t -> Syntax_types.t -> st
     let mini_c_exp      = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     (mini_c_exp ,aggregated)
 
-(* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
-let build_contract ~raise : options:Compiler_options.t -> string -> Source_input.file_name -> Stacking.compiled_expression =
+let build_aggregated ~raise : options:Compiler_options.t -> string -> Source_input.file_name -> Ast_aggregated.expression =
   fun ~options entry_point file_name ->
     let entry_point = Ast_typed.ValueVar.of_input_var entry_point in
     let typed_prg = build_typed ~raise ~options (Ligo_compile.Of_core.Contract entry_point) file_name in
@@ -185,10 +184,14 @@ let build_contract ~raise : options:Compiler_options.t -> string -> Source_input
       Ast_aggregated.get_t_pair input_ty
     )
     in
-    let aggregated = trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated in
+    trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter_ty storage_ty aggregated
+
+(* TODO: this function could be called build_michelson_code since it does not really reflect a "contract" (no views, parameter/storage types) *)
+let build_contract ~raise : options:Compiler_options.t -> string -> Source_input.file_name -> Stacking.compiled_expression =
+  fun ~options entry_point file_name ->
+    let aggregated = build_aggregated ~raise ~options entry_point file_name in
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
-
 
 let build_views ~raise :
   options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_typed.ValueVar.t * Stacking.compiled_expression) list =
