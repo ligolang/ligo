@@ -173,7 +173,7 @@ let entrypoint_of_string x =
   | Some x -> x
   | None -> failwith (Format.asprintf "Testing framework: Invalid entrypoint %s" x)
 
-let compile_contract_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
+let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
     | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} } in_ty out_ty
@@ -182,14 +182,15 @@ let compile_contract_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggre
                                Ast_aggregated.get_t_pair in_ty in
   trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
 
-let compile_contract_ ~raise ~options aggregated_exp =
+let compile_contract_ast ~raise ~options aggregated_exp =
   let open Ligo_compile in
   let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
   Of_mini_c.compile_contract ~raise ~options mini_c
 
-let compile_contract ~raise ~options source_file entry_point declared_views =
+let compile_contract_file ~raise ~options source_file entry_point declared_views =
   let open Ligo_compile in
-  let michelson = Build.build_contract ~raise ~options entry_point source_file in
+  let aggregated = Build.build_aggregated ~raise ~options entry_point source_file in
+  let michelson = compile_contract_ast ~raise ~options aggregated in
   let views = Build.build_views ~raise ~options entry_point declared_views source_file in
   Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
 

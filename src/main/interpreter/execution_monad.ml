@@ -248,8 +248,7 @@ module Command = struct
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
-      let contract_code =
-        Michelson_backend.compile_contract ~raise ~options source_file entry_point views in
+      let contract_code = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views in
       let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
       let contract = LT.V_Michelson_contract contract_code in
       (contract, ctxt)
@@ -291,8 +290,8 @@ module Command = struct
             let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
-            let ast_aggregated = Michelson_backend.compile_contract_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body in
-            let compiled_expr = Michelson_backend.compile_contract_ ~raise ~options ast_aggregated in
+            let ast_aggregated = Michelson_backend.build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body in
+            let compiled_expr = Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)
             let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
