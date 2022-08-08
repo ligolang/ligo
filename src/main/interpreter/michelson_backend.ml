@@ -357,6 +357,8 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      raise.error @@ Errors.generic_error loc (Format.asprintf "Expected map or big_map but got %a" Ast_aggregated.PP.type_expression ty)
   | V_Michelson_contract _ ->
      raise.error @@ Errors.generic_error loc "Cannot be abstracted: michelson-contract"
+  | V_Ast_contract _ ->
+     raise.error @@ Errors.generic_error loc "Cannot be abstracted: ast-contract"
   | V_Michelson (Untyped_code _) ->
      raise.error @@ Errors.generic_error loc "Cannot be abstracted: untyped-michelson-code"
   | V_Mutation _ ->
