@@ -39,7 +39,7 @@ recognise (SomeRawTree dialect rawTree)
         "paren_expr"          -> Paren      <$> field  "expr"
         "tuple"               -> Tuple      <$> fields "item"
         "lambda"              -> Lambda     <$> fields "argument"    <*> fieldOpt "type"       <*> field "body"
-        "michelson_interop"   -> Michelson  <$> field  "code"        <*> field    "type"
+        "code_inj"            -> CodeInj    <$> field  "lang"        <*> field    "code"
         "pattern_match"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "switch_statement"    -> SwitchStm  <$> field  "selector"    <*> fields   "case"
         "while_statement"     -> WhileLoop  <$> field  "breaker"     <*> field    "statement"
@@ -259,6 +259,19 @@ recognise (SomeRawTree dialect rawTree)
         ("constructor", c)     -> pure $ Ctor c
         ("ConstrNameType", n)  -> pure $ Ctor (T.init $ T.tail n)
         _                      -> fallthrough
+
+  -- Attr
+  , Descent $
+      boilerplate' \case
+        ("Attr", attr) -> pure $ Attr attr
+        _              -> fallthrough
+
+  -- Lang
+  , Descent $
+      boilerplate' \case
+        -- n.b.: Putting it in Attr for now, for consistency with other dialects.
+        ("lang", lang) -> pure $ Attr lang
+        _              -> fallthrough
 
   -- Err
   , Descent noMatch

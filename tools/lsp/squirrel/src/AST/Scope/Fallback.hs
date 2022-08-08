@@ -293,7 +293,7 @@ instance HasGo Expr where
       walk name
       mapM_ walk assignments
       pure Nothing
-    Michelson {} -> pure Nothing
+    CodeInj {} -> pure Nothing
     Paren expr' -> walk expr'
 
 instance HasGo Collection where
@@ -484,6 +484,9 @@ instance HasGo FieldName where
   walk' _ _ = pure Nothing
 
 instance HasGo Verbatim where
+  walk' _ _ = pure Nothing
+
+instance HasGo Attr where
   walk' _ _ = pure Nothing
 
 instance HasGo Error where

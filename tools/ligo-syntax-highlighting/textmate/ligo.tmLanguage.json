@@ -37,8 +37,11 @@
     },
     "line_comment": {
       "name": "comment.block.ligo",
-      "match": "\\/\\/.*$",
-      "captures": {}
+      "begin": "\\/\\/",
+      "end": "$",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
     },
     "attribute": {
       "name": "keyword.control.attribute.ligo",

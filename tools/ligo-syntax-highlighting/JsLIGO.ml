@@ -89,8 +89,8 @@ let syntax_highlighting =
       comments = {
         line_comment = {
           emacs    = "//";
-          textmate = "\\/\\/.*$";
-          vim      = "\\/\\/.*$"
+          textmate = "\\/\\/";
+          vim      = "\\/\\/"
         };
         block_comment = (
           {
@@ -108,6 +108,15 @@ let syntax_highlighting =
       comments_insertion = {
         line_comment = "//";
         block_comment = ("/*", "*/");
+      };
+      extra_patterns = {
+        (* FIXME: The highlighting for attributes is a bit more liberal, and may
+           catch false negatives. We preferred this for the simplicity of the
+           solution for now.
+         *)
+        in_line_comments = [Name.attribute];
+        in_block_comments = [Name.attribute];
+        in_strings = [];
       };
       brackets = [
         ("{", "}");
@@ -135,7 +144,6 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
-      Name.attribute;
       Name.macro;
       Name.let_binding;
       Name.type_definition;

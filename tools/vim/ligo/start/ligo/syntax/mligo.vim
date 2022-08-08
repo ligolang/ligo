@@ -101,7 +101,7 @@ syntax region string start="\"" end="\"" contains=@Spell
 highlight link string String 
 
 " linecomment
-syntax match linecomment "\/\/.*$" containedin=ALLBUT,string,blockcomment contains=@Spell 
+syntax region linecomment start="\/\/" end="$" containedin=ALLBUT,string,blockcomment contains=@Spell 
 highlight link linecomment Comment 
 
 " blockcomment

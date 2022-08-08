@@ -22,6 +22,12 @@ let string_end: Core.regexp = {
   vim      = ""
 }
 
+let endline: Core.regexp = {
+  emacs    = "$";
+  textmate = "$";
+  vim      = "$";
+}
+
 let ocaml_line_comment_match: Core.regexp = {
   emacs    = "";
   textmate = "";

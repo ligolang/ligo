@@ -17,7 +17,7 @@ module AST.Skeleton
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
   , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
-  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
+  , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..), Attr (..)
   , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
   , getLIGO
@@ -69,9 +69,9 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim
-  , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
-  , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
+  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim, Error, Ctor
+  , NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr, ModuleName
+  , ModuleAccess, Attr, TypeParams, CaseOrDefaultStm
   ]
 
 -- TODO (LIGO-169): Implement a parser for JsLIGO.
@@ -193,7 +193,7 @@ data Expr it
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | Michelson it it -- (Verbatim) (Type)
+  | CodeInj   it it -- (Attr) (Expr)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
@@ -316,6 +316,10 @@ newtype PreprocessorCommand it = PreprocessorCommand Text
   deriving Eq1 via DefaultEq1DeriveForText
 
 newtype FieldName it = FieldName Text
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveForText
+
+newtype Attr it = Attr Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 

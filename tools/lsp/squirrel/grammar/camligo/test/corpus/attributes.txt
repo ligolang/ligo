@@ -10,7 +10,7 @@ type foo = [@boom] | True | False
   (type_decl
     (TypeName)
     (sum_type_fun_type_level
-      (attr)
+      (Attr)
       (variant_fun_type_level (ConstrName))
       (variant_fun_type_level (ConstrName))
     )
@@ -30,7 +30,7 @@ type foo = [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type_fun_type_level
-      (variant_fun_type_level (attr) (ConstrName))
+      (variant_fun_type_level (Attr) (ConstrName))
       (variant_fun_type_level (ConstrName))
     )
   )
@@ -49,7 +49,7 @@ type foo = | [@boom] True | False
   (type_decl
     (TypeName)
     (sum_type_fun_type_level
-      (variant_fun_type_level (attr) (ConstrName))
+      (variant_fun_type_level (Attr) (ConstrName))
       (variant_fun_type_level (ConstrName))
     )
   )
@@ -70,7 +70,7 @@ type person = [@layout:comb] {
   (type_decl
     (TypeName)
     (record_type
-      (attr)
+      (Attr)
       (field_decl (FieldName) (TypeName))
     )
   )
@@ -91,7 +91,7 @@ type person = {
   (type_decl
     (TypeName)
     (record_type
-      (field_decl (attr) (attr) (FieldName) (TypeName))
+      (field_decl (Attr) (Attr) (FieldName) (TypeName))
     )
   )
 )
@@ -107,7 +107,7 @@ let decl
 
 (source_file
   (let_decl
-    (attr)
+    (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)
@@ -125,7 +125,7 @@ let decl twice
 
 (source_file
   (let_decl
-    (attr) (attr)
+    (Attr) (Attr)
     (var_pattern (NameDecl))
     (TypeName)
     (Int)
@@ -149,7 +149,7 @@ let foo (a : int): int =
     (TypeName)
     (paren_expr
       (let_in
-        (let_decl (attr) (var_pattern (NameDecl)) (Int))
+        (let_decl (Attr) (var_pattern (NameDecl)) (Int))
         (Name)
       )
     )

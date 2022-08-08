@@ -191,7 +191,9 @@ module Validate = struct
 end
 
 let add_comments s =
+  let open Regexp in
   let language_features = s.Core.language_features in
+  let extra_patterns = language_features.extra_patterns in
   let comments = language_features.comments in
   let line_comment = comments.line_comment in
   let block_comment = comments.block_comment in
@@ -204,15 +206,17 @@ let add_comments s =
           meta_name =      Some Core.Comment;
           begin_ =         [((fst block_comment), None)];
           end_ =           [((snd block_comment), None)];
-          patterns =       ["block_comment"];
+          patterns =       "block_comment" :: extra_patterns.in_block_comments;
         }
       }
       ::
       {
         name = "line_comment";
-        kind = Match {
-          match_name = Some Core.Comment;
-          match_ = [(line_comment, None)]
+        kind = Begin_end {
+          meta_name = Some Core.Comment;
+          begin_ = [(line_comment, None)];
+          end_ = [(endline, None)];
+          patterns = extra_patterns.in_line_comments;
         }
       }
       :: s.repository
@@ -228,7 +232,7 @@ let add_string s =
         meta_name =      Some Core.String;
         begin_ =         [(d, None)];
         end_ =           [(d, None)];
-        patterns =       [];
+        patterns =       language_features.extra_patterns.in_strings;
       }
     }
   ) string_delimiters 

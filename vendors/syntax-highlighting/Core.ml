@@ -20,11 +20,22 @@ and regexp = {
   vim:      string;
 }
 
+(* FIXME: doesn't support Emacs for now *)
+and extra_patterns = {
+  (* Match extra things inside line comments. *)
+  in_line_comments: string list;
+  (* Match extra things inside block comments. *)
+  in_block_comments: string list;
+  (* Match extra things inside strings. *)
+  in_strings: string list;
+}
+
 and language_features = {
   operators: string list; (* currently only used by EMacs, but ideally also for all the other editors *)
   string_delimiters: regexp list; (* used by all editors *)
   comments: regexp language_features_comments; (* used by all editors *)
   comments_insertion: string language_features_comments; (* used by VS Code for now, but Emacs may use it as well *)
+  extra_patterns: extra_patterns; (* used to match things inside comments or strings, such as JsLIGO attributes *)
   brackets: (string * string) list; (* currently not used *)
   auto_closing_pairs: (string * string) list; (* used by VS Code *)
   surrounding_pairs: (string * string) list; (* used by VS Code *)
