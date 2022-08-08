@@ -635,7 +635,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
+    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ; _ ]) ->
       let>> mod_res = Get_mod_res () in
       let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
       let views = List.map

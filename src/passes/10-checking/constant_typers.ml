@@ -500,7 +500,7 @@ module Constant_types = struct
                     of_type C_TEST_CREATE_CHEST O.(t_bytes () ^-> t_nat () ^-> t_pair (t_chest ()) (t_chest_key ()));
                     of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
                     of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
-                    of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_michelson_contract ());
+                    of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_option (t_nat ()) ^-> t_michelson_contract ());
                     of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
                     of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));
