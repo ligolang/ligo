@@ -23,7 +23,7 @@ for VERSION in "${VERSIONS[@]}"; do
     export PREV_VERSION
     export name
     if [[ "$PREV_VERSION" == "HEAD" ]]; then
-        name="Unreleased"
+        name="next"
     else
         name="$PREV_VERSION"
     fi

@@ -1,5 +1,6 @@
 
 module Tezos = struct
+
   let get_balance (_u : unit) : tez = [%Michelson ({| { DROP ; BALANCE } |} : unit -> tez)] ()
   let get_amount (_u : unit) : tez = [%Michelson ({| { DROP ; AMOUNT } |} : unit -> tez)] ()
   let get_now (_u : unit) : timestamp = [%Michelson ({| { DROP ; NOW } |} : unit -> timestamp)] ()
@@ -326,6 +327,8 @@ module Test = struct
   let eval (type a) (x : a) : michelson_program = run ((fun (x : a) -> x) , x)
 #endif
 
+
+
   let compile_value (type a) (x : a) : michelson_program = eval x
   let get_total_voting_power (_u : unit) : nat = [%external ("TEST_GET_TOTAL_VOTING_POWER", ())]
   let failwith (type a b) (v : a) : b = [%external ("TEST_FAILWITH", v)]
@@ -417,8 +420,15 @@ module Test = struct
 #endif
   end
 
-
 #if CURRY
+  let get_last_events_from (type a p s) (addr : (p,s) typed_address) (rtag: string) : a list =
+    let addr = Tezos.address (to_contract addr) in
+    let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
+    let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
+      if addr = c_addr then event::acc
+      else acc
+    in
+    List.fold f event_map ([]: a list)
   let transfer (a : address) (s : michelson_program) (t : tez) : test_exec_result = [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
   let transfer_exn (a : address) (s : michelson_program) (t : tez) : nat = [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
   let log (type a) (v : a) : unit =
@@ -474,6 +484,14 @@ module Test = struct
 #endif
 
 #if UNCURRY
+  let get_last_events_from (type a p s) ( (addr,rtag) : (p,s) typed_address * string) : a list =
+    let addr = Tezos.address (to_contract addr) in
+    let event_map : (address * a) list = [%external ("TEST_LAST_EVENTS", rtag)] in
+    let f ((acc, (c_addr,event)) : a list * (address * a)) : a list =
+      if addr = c_addr then event::acc
+      else acc
+    in
+    List.fold (f, event_map, ([]: a list))
   let transfer ((a, s, t) : address * michelson_program * tez) : test_exec_result = [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS", a, (None : string option), s, t)]
   let transfer_exn ((a, s, t) : address * michelson_program * tez) : nat = [%external ("TEST_EXTERNAL_CALL_TO_ADDRESS_EXN", a, (None : string option), s, t)]
   let log (type a) (v : a) : unit =

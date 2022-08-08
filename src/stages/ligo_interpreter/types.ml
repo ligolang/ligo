@@ -1,10 +1,10 @@
 include Ast_aggregated.Types
 
-module Tezos_protocol = Tezos_protocol_013_PtJakart
-module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol = Tezos_protocol_014_PtKathma
+module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 
 module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
-module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
+module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Timestamp
 
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t

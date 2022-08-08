@@ -107,11 +107,11 @@ docker_extract:
     # Check that the binary is truly static and has 0 dependencies
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     paths:
       - ligo
@@ -281,7 +281,7 @@ deploy-handoff-feature:
   variables:
     APP_NAME: "web-ide-backend"
     NEW_VERSION: "${CI_COMMIT_SHORT_SHA}"
-    ENV: "dev"
+    ENV: "non-prod"
   trigger: 
     project: ligolang/kubernetes-infrastructure
   rules:

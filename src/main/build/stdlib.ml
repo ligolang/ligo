@@ -8,6 +8,7 @@ let get_lib : Environment.Protocols.t -> Syntax_types.t -> test_enabled:bool -> 
   in
   let std = match protocol with
     | Environment.Protocols.Jakarta -> def "JAKARTA"
+    | Environment.Protocols.Kathmandu -> def "KATHMANDU"
   in
   let lib = Ligo_lib.get () in
   test_module ^ func_type ^ std ^ lib
