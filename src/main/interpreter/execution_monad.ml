@@ -291,8 +291,8 @@ module Command = struct
             let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
-            let compiled_expr =
-              Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
+            let ast_aggregated = Michelson_backend.compile_contract_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body in
+            let compiled_expr = Michelson_backend.compile_contract_ ~raise ~options ast_aggregated in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)
             let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
