@@ -90,6 +90,7 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_typed_address      , t_abstraction2 Typed_address star star) ;
     (v_mutation           , t_constant Mutation                 []) ;
     (v_michelson_contract , t_constant Michelson_contract       []) ;
+    (v_ast_contract       , t_constant Ast_contract             []) ;
     (v_gen                , t_abstraction1 Gen star               ) ;
   ]
 
