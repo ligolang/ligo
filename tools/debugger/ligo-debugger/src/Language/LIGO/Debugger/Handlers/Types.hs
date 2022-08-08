@@ -93,6 +93,8 @@ data LigoValidateValueRequestArguments = LigoValidateValueRequestArguments
     -- ^ Value to check.
   , categoryLigoValidateValueRequestArguments :: String
     -- ^ Category of the value (e.g. @parameter@).
+  , valueTypeLigoValidateValueRequestArguments :: String
+    -- ^ Type of value (@LIGO@ or @Michelson@)
   , pickedMichelsonEntrypointLigoValidateValueRequestArguments :: Maybe String
     -- ^ Special michelson entrypoint that will be used.
   } deriving stock (Eq, Show, Generic)

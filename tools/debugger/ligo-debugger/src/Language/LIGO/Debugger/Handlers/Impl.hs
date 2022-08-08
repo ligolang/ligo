@@ -36,6 +36,7 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
+import Data.Text qualified as Text
 import Language.LIGO.DAP.Variables
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 
@@ -281,6 +282,8 @@ handleValidateValue LigoValidateValueRequest {..} = do
             value
         , categoryLigoValidateValueRequestArguments =
             (toText -> category)
+        , valueTypeLigoValidateValueRequestArguments =
+            (toText -> valueType)
         , pickedMichelsonEntrypointLigoValidateValueRequestArguments =
             michelsonEntrypoint
         } = argumentsLigoValidateValueRequest
@@ -296,10 +299,10 @@ handleValidateValue LigoValidateValueRequest {..} = do
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint id $
         \(_ :: T.Notes arg) _ ->
-        void $ parseValue @arg (lsProgram lServerState) category (toText value)
+        void $ parseValue @arg (lsProgram lServerState) category (toText value) valueType
 
     "storage" ->
-      void $ parseValue @storage (lsProgram lServerState) category (toText value)
+      void $ parseValue @storage (lsProgram lServerState) category (toText value) valueType
 
     other -> error [int||Unexpected category #{other}|]
 
@@ -317,6 +320,19 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   storageT <- toText <$> checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- toText <$> checkArgument "parameter" parameterLigoLaunchRequestArguments
 
+  let splitValueAndType value what = do
+        if '@' `elem` value then do
+          -- Sometimes we can find '@' in LIGO values but the last one should be definitely value type
+          pure $ first (Text.dropEnd 1) $ Text.breakOnEnd "@" value
+        else do
+          throwDAPError [int||
+            Can't find value type in #{what}.
+            It should be separated with '@' sign.
+          |]
+
+  (stor, storageType) <- splitValueAndType storageT ("storage" :: Text)
+  (parameter, parameterType) <- splitValueAndType paramT ("parameter" :: Text)
+
   lServerState <- asks _rcLSState >>= readTVarIO >>= \case
     Nothing -> throwDAPError "Language server state is not initialized"
     Just s -> return s
@@ -333,9 +349,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
       (pretty :: Text -> DAP.Message)
       \(_ :: T.Notes arg) epc -> do
 
-        arg <- parseValue program "parameter" paramT
+        arg <- parseValue program "parameter" parameter parameterType
           & withExceptT (pretty :: Text -> DAP.Message)
-        storage <- parseValue program "storage" storageT
+        storage <- parseValue program "storage" stor storageType
           & withExceptT (pretty :: Text -> DAP.Message)
 
         let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv

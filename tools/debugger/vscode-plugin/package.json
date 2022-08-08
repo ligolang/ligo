@@ -121,12 +121,12 @@
                             },
                             "parameter": {
                                 "type": "string",
-                                "description": "Parameter value",
+                                "description": "Parameter value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
                                 "default": "${command:AskForParameter}"
                             },
                             "storage": {
                                 "type": "string",
-                                "description": "Initial storage value",
+                                "description": "Initial storage value. Should be separated with '@' sign with its type ('LIGO' or 'Michelson')",
                                 "default": "${command:AskForStorage}"
                             },
                             "logDir": {

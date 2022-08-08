@@ -1,5 +1,6 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import { ContractMetadata } from './base'
+import { ValueType } from './ui'
 
 // InitializeLogger //
 
@@ -23,6 +24,7 @@ export type ValidateValueCategory = "parameter" | "storage"
 export interface ValidateValueArguments {
 	value: string
 	category: ValidateValueCategory
+	valueType: ValueType
 	pickedMichelsonEntrypoint?: string
 }
 
