@@ -120,15 +120,15 @@ let subst_binders : type body.
     (* else, if no capture, subst in binder *)
     else
       let fvs = Free_variables.expression expr in
-      let f (acc, fs) y =
+      let f (fs, body) y =
         if not (List.mem ~equal:ValueVar.equal fvs y)
-        then (y :: acc, fs)
+        then (y :: fs, body)
          (* else, avoid capture and subst in binder *)
         else
           let fresh = ValueVar.fresh_like y in
-          (fresh :: acc, (y, fresh) :: fs) in
-      let ys, fs = List.fold_left ~f ~init:([], []) ys in
-      let body = List.fold_left ~f:(fun body (y, fresh) -> replace body y fresh) ~init:body fs in
+          let body = replace body y fresh in
+          (fresh :: fs, body) in
+      let ys, body = List.fold ~f ~init:([], body) ys in
       (List.rev ys, subst ~body ~x ~expr)
 
 
