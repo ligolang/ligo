@@ -182,7 +182,7 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
                                Ast_aggregated.get_t_pair in_ty in
   trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
 
-let compile_contract_ast ~raise ~options main views =
+let compile_contract_ast ~raise ~options ~tezos_context main views =
   let open Ligo_compile in
   let mini_c = Of_aggregated.compile_expression ~raise main in
   let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
@@ -205,7 +205,7 @@ let compile_contract_ast ~raise ~options main views =
       let michelsons = List.map ~f:aux views in
       let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in
       michelsons in
-  let contract = Ligo_compile.Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false main_michelson views in
+  let contract = Ligo_compile.Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false ~tezos_context main_michelson views in
   Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
 
 let compile_contract_file ~raise ~options source_file entry_point declared_views =

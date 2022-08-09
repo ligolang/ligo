@@ -296,11 +296,8 @@ module Command = struct
     | Compile_ast_contract (loc, v) ->
        let contract = match v with
          | LT.V_Ast_contract { main = ast_aggregated ; views } ->
-            Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated views
-            (* let expr = clean_locations compiled_expr.expr in
-             * (\* TODO-er: check the ignored second component: *\)
-             * let expr_ty = clean_locations compiled_expr.expr_ty in *)
-            (* (compiled_expr, views) *)
+            let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
+            Michelson_backend.compile_contract_ast ~raise ~options ~tezos_context ast_aggregated views
          | _ ->
             raise.error @@ Errors.generic_error loc "Contract does not reduce to an AST contract?" in
       (LT.V_Michelson_contract contract, ctxt)
