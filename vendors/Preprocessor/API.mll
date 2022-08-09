@@ -562,7 +562,6 @@ rule scan state = parse
           in "Mangled_module_" ^ name
         in
         let reg, import_file, imported_module = scan_import state lexbuf in
-        let mangled_filename = mangle import_file in
         let file =
           match state.parent with
             Some parent -> parent
@@ -576,6 +575,7 @@ rule scan state = parse
             match find path import_file state.config#dirs external_dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
+          let mangled_filename = mangle import_path in
           let () = print state @@ state.config#mk_mod mangled_filename imported_module in
           let state  = {state with
                           import = (import_path, mangled_filename)::state.import}
