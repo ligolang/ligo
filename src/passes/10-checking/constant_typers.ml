@@ -459,7 +459,6 @@ module Constant_types = struct
                     of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     of_type C_EMIT_EVENT O.(for_all "a" @@ fun a -> t_string () ^-> a ^-> t_operation ());
                     (* TEST *)
-                    of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_michelson_contract ());
                     of_type C_TEST_SIZE O.(t_michelson_contract () ^-> t_int ());
                     of_type C_TEST_ORIGINATE O.(t_michelson_contract () ^-> t_michelson_code () ^-> t_mutez () ^-> t_address ());
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
@@ -501,7 +500,8 @@ module Constant_types = struct
                     of_type C_TEST_CREATE_CHEST_KEY O.(t_chest () ^-> t_nat () ^-> t_chest_key ());
                     of_type C_GLOBAL_CONSTANT O.(for_all "a" @@ fun a -> t_string () ^-> a);
                     of_type C_TEST_COMPILE_CONTRACT_FROM_FILE O.(t_string () ^-> t_string () ^-> t_list (t_string ()) ^-> t_option (t_nat ()) ^-> t_michelson_contract ());
-                    of_type C_TEST_COMPILE_AST_CONTRACT O.(t_michelson_contract () ^-> t_ast_contract ());
+                    of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_ast_contract ());
+                    of_type C_TEST_COMPILE_AST_CONTRACT O.(t_ast_contract () ^-> t_michelson_contract ());
                     of_type C_TEST_REGISTER_CONSTANT O.(t_michelson_code () ^-> t_string ());
                     of_type C_TEST_CONSTANT_TO_MICHELSON O.(t_string () ^-> t_michelson_code ());
                     of_type C_TEST_REGISTER_FILE_CONSTANTS O.(t_string () ^-> t_list (t_string ()));

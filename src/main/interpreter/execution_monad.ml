@@ -55,7 +55,7 @@ module Command = struct
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
-    | Compile_contract : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Compile_contract : Location.t * LT.value -> LT.value t
     | Compile_ast_contract : Location.t * LT.value -> LT.value t
     | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
     | To_contract : Location.t * LT.value * string option * Ast_aggregated.type_expression -> LT.value t
@@ -284,30 +284,17 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v expr_ty in
       (LT.V_Michelson (Ty_code value), ctxt)
-    | Compile_contract (loc, v, _ty_expr) ->
-       let compiled_expr, compiled_expr_ty = match v with
+    | Compile_contract (loc, v) ->
+       let ast_aggregated = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env orig_lambda in
             let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
-            let ast_aggregated = Michelson_backend.build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body in
-            let compiled_expr = Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated in
-            let expr = clean_locations compiled_expr.expr in
-            (* TODO-er: check the ignored second component: *)
-            let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
+            Michelson_backend.build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body
          | _ ->
             raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
-        let (param_ty, storage_ty) =
-        match Self_michelson.fetch_contract_ty_inputs compiled_expr_ty with
-        | Some (param_ty, storage_ty) -> (param_ty, storage_ty)
-        | _ -> raise.error @@ Errors.generic_error loc "Compiled expression has not the correct input of contract" in
-      let open Tezos_utils in
-      let param_ty = clean_locations param_ty in
-      let storage_ty = clean_locations storage_ty in
-      let expr = clean_locations compiled_expr in
-      let contract = Michelson.contract param_ty storage_ty expr [] in
-      (LT.V_Michelson_contract contract, ctxt)
+      (LT.V_Ast_contract ast_aggregated, ctxt)
     | Compile_ast_contract (loc, v) ->
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Ast_contract ast_aggregated ->

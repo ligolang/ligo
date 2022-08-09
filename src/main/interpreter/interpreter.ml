@@ -690,7 +690,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> code = Compile_contract (loc, contract) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> () = Bootstrap_contract ((Z.to_int z), code, storage, contract_ty) in
        return_ct C_unit
@@ -840,8 +840,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT , [ contract ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> code = Compile_contract (loc, contract) in
        return @@ code
     | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_AST_CONTRACT , [ contract ] ) ->

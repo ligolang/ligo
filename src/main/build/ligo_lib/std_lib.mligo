@@ -369,7 +369,9 @@ module Test = struct
   let set_baker_policy (bp : test_baker_policy) : unit = [%external ("TEST_SET_BAKER", bp)]
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
   let size (c : michelson_contract) : int = [%external ("TEST_SIZE", c)]
-  let compile_contract (type p s) (f : p * s -> operation list * s) : michelson_contract = [%external ("TEST_COMPILE_CONTRACT", f)]
+  let compile_contract (type p s) (f : p * s -> operation list * s) : michelson_contract =
+    let ast_c : ast_contract = [%external ("TEST_COMPILE_CONTRACT", f)] in
+    [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
   let read_contract_from_file (fn : string) : michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
   let chr (n : nat) : string option =
     let backslash = "\\" in
