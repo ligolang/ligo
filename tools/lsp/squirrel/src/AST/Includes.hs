@@ -28,6 +28,7 @@ import Data.IntMap.Strict qualified as IntMap
 import Data.List (sortOn)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
+import Data.Semigroup (Arg (..))
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Duplo.Tree (Cofree ((:<)), fastMake)
@@ -96,7 +97,7 @@ extractIncludedFiles' directIncludes (Source file _ contents) =
 
 -- | Given a list of contracts, builds a graph that represents how they are
 -- included.
-includesGraph' :: forall m. (MonadIO m, MonadFail m) => [Source] -> m (Includes Source)
+includesGraph' :: forall m. (MonadIO m, MonadFail m) => [Source] -> m (Includes (Arg FilePath Source))
 includesGraph' contracts = do
   knownContracts :: Map FilePath (Source, DList (FilePath, FilePath)) <-
     Map.fromList <$> forM contracts \c -> do
@@ -107,6 +108,9 @@ includesGraph' contracts = do
     findContract :: FilePath -> (Source, DList (FilePath, FilePath))
     findContract contract =
       Map.findWithDefault (Source contract True "", []) contract knownContracts
+
+    mkArg :: Source -> Arg FilePath Source
+    mkArg = Arg <$> srcPath <*> id
 
     go
       :: Source
@@ -119,7 +123,11 @@ includesGraph' contracts = do
       in
       (edges'' <> edges, vertex' : vertices)
 
-  pure $ Includes $ uncurry G.overlay $ bimap (G.edges . toList) G.vertices $ foldr go ([], []) contracts
+  pure
+    $ Includes
+    $ uncurry G.overlay
+    $ bimap (G.edges . map (join bimap mkArg) . toList) (G.vertices . map mkArg)
+    $ foldr go ([], []) contracts
 
 getMarkerInfos
   :: MonadIO m

@@ -26,10 +26,12 @@ import Control.Arrow ((&&&))
 import Control.Lens ((??))
 import Control.Monad (join, void, (<=<))
 import Control.Monad.Reader (asks)
+import Data.Bifunctor (first)
 import Data.Bool (bool)
 import Data.Foldable (find, for_, toList)
 import Data.HashSet qualified as HashSet
 import Data.List (isPrefixOf)
+import Data.Semigroup (Arg (..))
 import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -236,7 +238,7 @@ loadDirectory
   :: FilePath
   -> FilePath
   -> Includes ParsedContractInfo
-  -> RIO (Includes Source, Map Source [Message])
+  -> RIO (Includes (Arg FilePath Source), Map FilePath [Message])
 loadDirectory root rootFileName includes = do
   temp <- getTempPath root
   let
@@ -261,8 +263,8 @@ loadDirectory root rootFileName includes = do
         progress <- withMVar progressVar $ pure . succ
         reportProgress $ S.ProgressAmount (Just $ progress % total) (Just [Log.i|Parsing #{fp}|])
         (src, msg) <- lookupOrLoad =<< pathToSrc fp
-        modifyMVar_ msgsVar $ pure . Map.insert src msg
-        pure src
+        modifyMVar_ msgsVar $ pure . Map.insert fp msg
+        pure $ Arg fp src
       (Includes loaded, ) <$> readMVar msgsVar
     | otherwise -> do
       loaded <- parseContracts
@@ -271,8 +273,8 @@ loadDirectory root rootFileName includes = do
         shouldIndexFile
         root
       Includes graph <- includesGraph' (map fst loaded)
-      let filtered = G.induce (shouldIndexFile . srcPath) graph
-      pure (Includes filtered, Map.fromListWith (<>) loaded)
+      let filtered = G.induce (\(Arg fp _) -> shouldIndexFile fp) graph
+      pure (Includes filtered, Map.fromListWith (<>) (map (first srcPath) loaded))
 
 getInclusionsGraph
   :: FilePath  -- ^ Directory to look for contracts
@@ -292,7 +294,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
         $(Log.debug) [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
         (Includes paths, msgs) <- loadDirectory root rootFileName includes'
 
-        let buildGraph = Includes $ G.gmap srcPath paths
+        let buildGraph = Includes $ G.gmap (\(Arg f _) -> f) paths
         buildGraphVar <- asks reBuildGraph
         void $ swapMVar buildGraphVar buildGraph
 
@@ -303,7 +305,9 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
             -- Load it.
             (fmap Left . loadPreprocessed temp =<< pathToSrc fp)
             (pure . Right)
-          $ find (Map.member (_cFile $ _getContract rootContract) . G.adjacencyMap)
+          -- The second element of the argument is not used for comparisons, and
+          -- this operation is safe.
+          $ find (Map.member (Arg rootFileName (error "impossible comparison")) . G.adjacencyMap)
           $ wcc paths
         case connectedContractsE of
           Left (src, msgs') -> do
@@ -311,8 +315,8 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
             Includes . G.vertex <$> insertPreprocessorRanges (addLigoErrsToMsg msgs' parsed)
           Right connectedContracts -> do
             let
-              parseCached src = do
-                let srcMsgs = Map.lookup src msgs
+              parseCached (Arg fp' src) = do
+                let srcMsgs = Map.lookup fp' msgs
                 parsed <- parse src
                 insertPreprocessorRanges $ addLigoErrsToMsg (join $ toList srcMsgs) parsed
             Includes <$> traverseAMConcurrently parseCached connectedContracts
