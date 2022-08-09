@@ -198,7 +198,6 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
         let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
                       List.nth mini_c_tys i in
         let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
-        (* let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in *)
         (view, idx) in
       let views = List.mapi ~f:aux view_names in
       let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
