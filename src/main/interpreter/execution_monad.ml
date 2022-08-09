@@ -245,14 +245,12 @@ module Command = struct
       | _ -> raise.error @@ Errors.generic_error Location.generated
                               "Trying to measure a non-contract"
     )
-    | Compile_contract_from_file (source_file, entry_point, views, mutation) ->
+    | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
       let options = Compiler_options.set_entry_point options entry_point in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
-      let contract_code = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views mutation in
-      let contract_code = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations contract_code)) in
-      let contract = LT.V_Michelson_contract contract_code in
-      (contract, ctxt)
+      let main, views = Michelson_backend.compile_contract_file ~raise ~options source_file entry_point views in
+      (LT.V_Ast_contract { main ; views }, ctxt)
     | Read_contract_from_file (loc, calltrace, source_file) ->
       (try
         let s = In_channel.(with_file source_file ~f:input_all) in
@@ -296,23 +294,15 @@ module Command = struct
             raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
       (LT.V_Ast_contract { main = ast_aggregated ; views = None }, ctxt)
     | Compile_ast_contract (loc, v) ->
-       let compiled_expr, compiled_expr_ty = match v with
-         | LT.V_Ast_contract { main = ast_aggregated ; views = _ } ->
-            let compiled_expr = Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated in
-            let expr = clean_locations compiled_expr.expr in
-            (* TODO-er: check the ignored second component: *)
-            let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
+       let contract = match v with
+         | LT.V_Ast_contract { main = ast_aggregated ; views } ->
+            Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated views
+            (* let expr = clean_locations compiled_expr.expr in
+             * (\* TODO-er: check the ignored second component: *\)
+             * let expr_ty = clean_locations compiled_expr.expr_ty in *)
+            (* (compiled_expr, views) *)
          | _ ->
-            raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
-        let (param_ty, storage_ty) =
-        match Self_michelson.fetch_contract_ty_inputs compiled_expr_ty with
-        | Some (param_ty, storage_ty) -> (param_ty, storage_ty)
-        | _ -> raise.error @@ Errors.generic_error loc "Compiled expression has not the correct input of contract" in
-      let open Tezos_utils in
-      let param_ty = clean_locations param_ty in
-      let storage_ty = clean_locations storage_ty in
-      let expr = clean_locations compiled_expr in
-      let contract = Michelson.contract param_ty storage_ty expr [] in
+            raise.error @@ Errors.generic_error loc "Contract does not reduce to an AST contract?" in
       (LT.V_Michelson_contract contract, ctxt)
     | Decompile (code, code_ty, ast_ty) ->
       let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps code_ty code in

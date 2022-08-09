@@ -182,23 +182,36 @@ let build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty aggregated_exp =
                                Ast_aggregated.get_t_pair in_ty in
   trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
 
-let compile_contract_ast ~raise ~options aggregated_exp =
+let compile_contract_ast ~raise ~options main views =
   let open Ligo_compile in
-  let mini_c = Of_aggregated.compile_expression ~raise aggregated_exp in
-  Of_mini_c.compile_contract ~raise ~options mini_c
+  let mini_c = Of_aggregated.compile_expression ~raise main in
+  let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
+  let views = match views with
+    | None -> []
+    | Some (view_names, aggregated) ->
+      let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+      let mini_c = trace ~raise Main_errors.self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
+      let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
+                        Mini_c.get_t_tuple mini_c.type_expression in
+      let nb_of_views = List.length view_names in
+      let aux i view =
+        let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
+                      List.nth mini_c_tys i in
+        let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
+        (* let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in *)
+        (view, idx) in
+      let views = List.mapi ~f:aux view_names in
+      let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
+      let michelsons = List.map ~f:aux views in
+      let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in
+      michelsons in
+  let contract = Ligo_compile.Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false main_michelson views in
+  Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
 
-let compile_contract_file ~raise ~options source_file entry_point declared_views mutate =
-  let open Ligo_compile in
+let compile_contract_file ~raise ~options source_file entry_point declared_views =
   let aggregated = Build.build_aggregated ~raise ~options entry_point source_file in
-  let aggregated = match mutate with
-    | None -> aggregated
-    | Some z -> let n = Z.to_int z in
-                let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
-                let l = Fuzzer.all_mutate_expression aggregated in
-                fst @@ List.nth_exn l n in
-  let michelson = compile_contract_ast ~raise ~options aggregated in
-  let views = Build.build_views ~raise ~options entry_point declared_views source_file in
-  Of_michelson.build_contract ~raise ~has_env_comments:false ~protocol_version:options.middle_end.protocol_version ~disable_typecheck:false michelson views
+  let views = Build.build_aggregated_views ~raise ~options entry_point declared_views source_file in
+  (aggregated, views)
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in

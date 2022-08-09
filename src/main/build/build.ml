@@ -194,7 +194,7 @@ let build_contract ~raise : options:Compiler_options.t -> string -> Source_input
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
 
 let build_aggregated_views ~raise :
-  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_core.expression_variable list * Ast_aggregated.expression) option =
+  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_aggregated.expression_variable list * Ast_aggregated.expression) option =
   fun ~options main_name cli_views source_file ->
     let form =
       let contract_entry = Ast_typed.ValueVar.of_input_var main_name in
