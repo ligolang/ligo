@@ -18,6 +18,7 @@ import Morley.Debugger.Core
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 
+import AST (scanContracts)
 import Control.Exception
 import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
@@ -31,8 +32,7 @@ import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Util.Lens (postfixLFields)
-import System.Directory (listDirectory)
-import System.FilePath (dropExtension)
+import System.FilePath (combine, dropExtension, makeRelative)
 import Test.Util
 import Text.Interpolation.Nyan
 
@@ -55,7 +55,7 @@ mkSnapshotsFor
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
 mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
-  result <- runExceptT $ compileLigoContractDebug entrypoint file
+  result <- compileLigoContractDebug entrypoint file
   ligoMapper <- either throwIO pure result
   (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
     case readLigoMapper ligoMapper of
@@ -629,16 +629,14 @@ instance Default CheckingOptions where
 -- (for e.g. with special entrypoint or should it check source locations for sensibility)
 unit_Contracts_locations_are_sensible :: Assertion
 unit_Contracts_locations_are_sensible = do
-  contracts <- listDirectory contractsDir
-
-  let ligoContracts = filter (hasLigoExtension && flip notElem badContracts) contracts
-  forM_ ligoContracts testContract
+  contracts <- makeRelative contractsDir <<$>> scanContracts (`notElem` badContracts) contractsDir
+  forM_ contracts testContract
   where
     testContract :: FilePath -> Assertion
     testContract contractName = do
       let CheckingOptions{..} = fromMaybe def (specialContracts M.!? dropExtension contractName)
 
-      result <- runExceptT $ compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
+      result <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
       ligoMapper <- either throwIO pure result
 
       (locations, _) <-
@@ -668,7 +666,9 @@ unit_Contracts_locations_are_sensible = do
 
     -- Valid contracts that can't be used in debugger for some reason.
     badContracts :: [FilePath]
-    badContracts =
+    badContracts = combine contractsDir <$>
       [ "self.mligo" -- this contract doesn't typecheck in Michelson
       , "iterate-big-map.mligo" -- this contract doesn't typecheck in Michelson
+      , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
+      , "module_contracts" </> "imported2.ligo" -- this file doesn't have any entrypoint
       ]

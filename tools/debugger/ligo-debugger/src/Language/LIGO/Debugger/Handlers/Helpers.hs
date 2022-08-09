@@ -25,6 +25,7 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Text.Interpolation.Nyan
 
+import Cli (HasLigoClient)
 import Language.LIGO.Debugger.CLI.Call
 
 -- TODO: move this instance to morley-debugger
@@ -88,34 +89,36 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint liftErr cont = do
 
 -- | Try our best to parse and typecheck a value of a certain category.
 parseValue
-  :: (SingI t, MonadIO m, MonadError Text m)
+  :: (SingI t, HasLigoClient m)
   => FilePath
   -> Text
   -> Text
   -> Text
-  -> m (T.Value t)
+  -> m (Either Text (T.Value t))
 parseValue ctxContractPath category val valueType = do
   let src = P.MSName category
-  uvalue <- case valueType of
+  eUvalue <- case valueType of
     "LIGO" ->
-      runExceptT (compileLigoExpression src ctxContractPath val) >>= \case
-        Right x -> pure x
-        Left err -> throwError [int||
+      compileLigoExpression src ctxContractPath val >>= \case
+        Right x -> pure $ Right x
+        Left err -> pure $ Left [int||
           Error parsing #{category}:
 
           #{err}
           |]
-    "Michelson" ->
+    "Michelson" -> pure $
       P.parseExpandValue src val
-        & either (throwError . pretty . MD.prettyFirstError) pure
-    _ -> throwError [int||
+        & first (pretty . MD.prettyFirstError)
+    _ -> pure $ Left [int||
         Expected "LIGO" or "Michelson" in field "valueType" \
         but got #{valueType}
       |]
-
-  typeVerifyTopLevelType mempty uvalue
-    & typeCheckingForDebugger
-    & either (\msg -> throwError [int||Typechecking as #{category} failed: #{msg}|]) pure
+  case eUvalue of
+    Right uvalue -> pure $
+      typeVerifyTopLevelType mempty uvalue
+        & typeCheckingForDebugger
+        & first (\msg -> [int||Typechecking as #{category} failed: #{msg}|])
+    Left err -> pure $ Left err
 
 getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
 getServerState = asks _rcLSState >>= readTVarIO >>= \case
