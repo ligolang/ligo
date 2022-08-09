@@ -81,8 +81,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
-    module C = Mangled_module_C____mligo.
-    module E = Mangled_module_E____mligo.
+    module C =
+      Mangled_module_____________________test__contracts__build__C____mligo.
+    module E =
+      Mangled_module_____________________test__contracts__build__E____mligo.
     const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
