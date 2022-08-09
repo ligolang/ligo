@@ -844,6 +844,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
        let>> code = Compile_contract (loc, contract, contract_ty) in
        return @@ code
     | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_TEST_COMPILE_AST_CONTRACT , [ contract ] ) ->
+       let>> code = Compile_ast_contract (loc, contract) in
+       return @@ code
+    | ( C_TEST_COMPILE_AST_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_SIZE , [ contract ] ) ->
        let>> size = Get_size contract in
        return @@ size
@@ -972,7 +976,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
-         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE | C_TEST_COMPILE_AST_CONTRACT |
+         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT ) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
