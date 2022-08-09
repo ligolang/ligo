@@ -395,8 +395,8 @@ let transpile_contract =
     return_result ~return ?output_file @@
     Api.Transpile.contract source_file new_syntax syntax display_format
   in
-  let summary   = "transpile a contract to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a source file to another \
+  let summary   = "[BETA] transpile a contract to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a source file to another \
                   syntax. It does not use the build system, but the \
                   source file is preprocessed. Comments are currently \
                   not transpiled. Please use at your own risk." in
@@ -409,15 +409,15 @@ let transpile_expression =
     return_result ~return @@
     Api.Transpile.expression expression new_syntax syntax display_format
   in
-  let summary   = "transpile an expression to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a LIGO expression to \
+  let summary   = "[BETA] transpile an expression to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a LIGO expression to \
                   another syntax. Comments are currently not \
                   transpiled. Please use at your own risk." in
   Command.basic ~summary ~readme
   (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format)
 
 let transpile_group =
-  Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
+  Command.group ~summary:"[BETA] transpile ligo code from a syntax to another" @@
   [ "contract"  , transpile_contract;
     "expression", transpile_expression;]
 
@@ -459,7 +459,7 @@ let test =
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
-  let summary   = "test a contract with the LIGO test framework (BETA)." in
+  let summary   = "test a contract with the LIGO test framework." in
   let readme () = "This sub-command tests a LIGO contract using a LIGO \
                   interpreter. Still under development, there are features that are work \
                   in progress and are subject to change. No real test \
@@ -772,29 +772,29 @@ let repl =
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
-  let summary   = "install LIGO packages declared in package.json" in
+  let summary   = "install LIGO dependencies declared in package.json" in
   let readme () = "This command invokes the package manager to install the external packages declared in package.json" in
   let f package_name cache_path ligo_registry () =
     return_result ~return @@ fun () -> Install.install ~package_name ~cache_path ~ligo_registry in
   Command.basic ~summary ~readme (f <$> package_name <*> cache_path <*> ligo_registry)
 
 let publish =
-  let summary   = "publish the LIGO package declared in package.json" in
-  let readme () = "Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
+  let summary   = "[BETA] publish the LIGO package declared in package.json" in
+  let readme () = "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
   let f ligo_registry ligorc_path project_root () =
     return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
 
 let add_user =
-  let summary   = "create a new user for the LIGO package registry" in
-  let readme () = "Prompt the user for details to create a new user on registry server" in
+  let summary   = "[BETA] create a new user for the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for details to create a new user on registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
 let login =
-  let summary   = "login to the LIGO package registry" in
-  let readme () = "Prompt the user for credentials and creates and login session with the registry server" in
+  let summary   = "[BETA] login to the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for credentials to creates a login session with the registry server" in
   let f ligo_registry ligorc_path () =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)

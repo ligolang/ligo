@@ -22,7 +22,12 @@ type storage_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggre
 type parameter_tys = (Tezos_protocol.Protocol.Alpha_context.Contract.t * Ast_aggregated.type_expression) list
 type state_error = Tezos_error_monad.TzCore.error list
 type tezos_op = Tezos_raw_protocol.Alpha_context.packed_operation
-
+type last_events = (
+                      Memory_proto_alpha.Protocol.Alpha_context.Contract.t *
+                      string *
+                      mcode *
+                      mcode
+                    ) list
 (*
   The threaded context has three parts:
   - Raw: Tezos state as represented in the tezos code-base (same types)
@@ -37,6 +42,7 @@ type context = {
 }
 and raw = block
 and transduced = {
+  last_events : last_events ; (* newly emited events caused by the last baking op *)
   last_originations : last_originations ; (* newly orginated contracts caused by the last baking operation *)
   bigmaps : bigmaps ; (* context bigmaps state as ligo values *)
 }
@@ -237,6 +243,24 @@ let extract_origination_from_result :
     [(src, originated_contracts)]
   | _ -> []
 
+let extract_event_from_result :
+  type a .
+    a Tezos_protocol.Protocol.Apply_results.contents_result ->
+    last_events =
+  fun x ->
+  let open Tezos_raw_protocol in
+  match x with
+  | Manager_operation_result
+      { operation_result = Applied (Transaction_result _) ; internal_operation_results ; balance_updates=_ } ->
+    let aux acc (x:Apply_internal_results.packed_internal_manager_operation_result) =
+      match x with
+      | Internal_manager_operation_result ({operation = Event { tag ; payload ; ty } ; source ; _},Applied (IEvent_result _)) ->
+        (source, Entrypoint_repr.to_string tag, canonical_to_ligo payload, canonical_to_ligo ty)::acc
+      | _ -> acc
+    in
+    List.fold ~init:[] ~f:aux internal_operation_results
+  | _ -> []
+
 let extract_lazy_storage_diff_from_result :
   type a .
     a Tezos_raw_protocol.Apply_results.contents_result ->
@@ -287,6 +311,25 @@ let get_lazy_storage_diffs : Tezos_protocol.Protocol.operation_receipt ->
             extract_lazy_storage_diff_from_result hd @ aux tl
           | Single_result x ->
             extract_lazy_storage_diff_from_result x
+      in
+      aux contents
+    )
+
+let get_last_events :
+  Tezos_protocol.Protocol.operation_receipt ->
+  last_events =
+  fun x ->
+    let open Tezos_raw_protocol in
+    match x with
+    | No_operation_metadata -> []
+    | Operation_metadata { contents } -> (
+      let rec aux : type a . a Apply_results.contents_result_list -> _ =
+        fun x ->
+          match x with
+          | Cons_result (hd, tl) ->
+            extract_event_from_result hd @ aux tl
+          | Single_result x ->
+            extract_event_from_result x
       in
       aux contents
     )
@@ -355,7 +398,8 @@ let upd_transduced_data : raise:r -> context -> Tezos_raw_protocol.Apply_results
   fun ~raise ctxt op_data ->
     let last_originations = get_last_originations ~raise ctxt.internals.source op_data in
     let bigmaps = upd_bigmaps ~raise ctxt.transduced.bigmaps op_data in
-    { last_originations ; bigmaps }
+    let last_events = get_last_events op_data in
+    { last_originations ; bigmaps ; last_events }
 
 (* result of baking an operation *)
 type add_operation_outcome =
@@ -367,7 +411,7 @@ let get_last_operations_result (incr : Tezos_alpha_test_helpers.Incremental.t) =
   | [] -> failwith "Tried to get last operation result in empty block"
   | xs -> xs
 
-let get_single_tx_result (x : Tezos_raw_protocol.Apply_results.packed_operation_metadata) =
+let get_single_tx_result_gas (x : Tezos_raw_protocol.Apply_results.packed_operation_metadata) =
   match x with
   | Operation_metadata ({contents = Single_result y} : _ Tezos_raw_protocol.Apply_results.operation_metadata)  -> (
     match y with
@@ -388,7 +432,7 @@ let get_consumed_gas x =
     (match Binary.to_bytes_opt Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.z_fp_encoding fp with Some x -> x | None -> failwith "failed decoding gas")
     |> Binary.of_bytes_exn z
   in
-  match get_single_tx_result x with
+  match get_single_tx_result_gas x with
   | Some x -> Z.((fp_to_z x) / (of_int 1000))
   | None -> Z.zero
 
@@ -605,7 +649,7 @@ let init_ctxt ~raise ?(loc=Location.generated) ?(calltrace=[]) ?(initial_balance
   match acclst with
   | baker::source::_ ->
     let baker = unwrap_baker ~raise ~loc ~calltrace baker in
-    let transduced = { last_originations = [] ; bigmaps= [] } in
+    let transduced = { last_originations = [] ; bigmaps= [] ; last_events = []} in
     let internals = { protocol_version ; baker_policy = By_account baker ; source ; next_bootstrapped_contracts = [] ; next_baker_accounts = [] ; storage_tys ; parameter_tys ; bootstrapped = acclst } in
     { raw = init_raw_ctxt ; transduced ; internals }
   | _ ->

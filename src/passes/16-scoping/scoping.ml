@@ -358,6 +358,13 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
+    | C_EMIT_EVENT -> (
+      match expr.arguments with
+       | { content = E_literal (Literal_string tag); type_expression = _; location = _ } :: [data] ->
+         let tag = Ligo_string.extract tag in
+         return (O.Type_args (Some tag, [translate_type data.type_expression]), [data])
+       | _ -> None
+    )
     | C_CONTRACT_ENTRYPOINT_OPT ->
       let* a = Mini_c.get_t_option ty in
       let* a = Mini_c.get_t_contract a in

@@ -35,15 +35,6 @@ module Data = struct
    let instances_lookup (ev : AST.expression_variable) (data : t) =
       Option.value ~default:[] @@ LIMap.find_opt ev data
 
-   let instance_lookup_opt (lid : AST.expression_variable) (type_instances' : AST.type_expression list) (type_' : AST.type_expression) (data : t) =
-      let aux { Instance.vid ; type_instances ; type_ } =
-         if AST.Helpers.type_expression_eq (type_, type_') &&
-            List.equal (fun t1 t2 -> AST.Helpers.type_expression_eq (t1, t2)) type_instances type_instances' then
-            Some (vid, type_instances)
-         else None
-      in
-      List.find_map ~f:aux @@ Option.value ~default:[] (LIMap.find_opt lid data)
-
    let instance_add (lid : AST.expression_variable) (instance : Instance.t) (data : t) =
       let lid_instances = instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data) in
       LIMap.add lid lid_instances data
@@ -249,11 +240,8 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
          | _ -> raise.Trace.error (Errors.corner_case "Monomorphisation: cannot resolve non-variables with instantiations") in
       let type_instances, lid = aux [] expr in
       let type_ = expr.type_expression in
-      let vid, data = match Data.instance_lookup_opt lid type_instances type_ data with
-         | Some (vid, _) -> vid, data
-         | None ->
-            let vid = poly_name lid in
-            vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
+      let vid, data = let vid = poly_name lid in
+                      vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
       data, AST.e_a_variable vid type_
    | E_assign {binder;expression} ->
       let data, expression = self data expression in
