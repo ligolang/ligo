@@ -9,6 +9,7 @@ import {
 export enum networkType {
   Mainnet = 'mainnet',
   Jakartanet = 'jakartanet',
+  Ghostnet = 'ghostnet',
   Kathmandunet = 'kathmandunet'
 }
 

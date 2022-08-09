@@ -7,6 +7,9 @@ export async function fetchRandomPrivateKey(network: string): Promise<string> {
   if (network === 'jakartanet') {
     URL = 'https://api.tez.ie/keys/jakartanet/';
   }
+  if (network === 'ghostnet') {
+    URL = 'https://api.tez.ie/keys/ghostnet/';
+  }
   if (network === 'kathmandunet') {
     URL = 'https://api.tez.ie/keys/kathmandunet/';
   }
