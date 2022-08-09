@@ -191,6 +191,7 @@ type constant' =
   | C_TEST_TO_CONTRACT [@only_interpreter]
   | C_TEST_TO_ENTRYPOINT [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT_FROM_FILE [@only_interpreter]
+  | C_TEST_COMPILE_AST_CONTRACT [@only_interpreter]
   | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]
