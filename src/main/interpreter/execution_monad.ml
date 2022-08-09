@@ -294,10 +294,10 @@ module Command = struct
             Michelson_backend.build_ast ~raise subst_lst arg_binder rec_name in_ty out_ty body
          | _ ->
             raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
-      (LT.V_Ast_contract ast_aggregated, ctxt)
+      (LT.V_Ast_contract { main = ast_aggregated ; views = None }, ctxt)
     | Compile_ast_contract (loc, v) ->
        let compiled_expr, compiled_expr_ty = match v with
-         | LT.V_Ast_contract ast_aggregated ->
+         | LT.V_Ast_contract { main = ast_aggregated ; views = _ } ->
             let compiled_expr = Michelson_backend.compile_contract_ast ~raise ~options ast_aggregated in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)

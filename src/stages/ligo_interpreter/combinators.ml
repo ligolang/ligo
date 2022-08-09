@@ -306,7 +306,7 @@ let rec compare_value (v : value) (v' : value) : int =
     | c -> c
   )
   | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
-  | V_Ast_contract c, V_Ast_contract c' -> Caml.compare c c'
+  | V_Ast_contract { main ; views = _ }, V_Ast_contract { main = main' ; views = _ } -> Caml.compare main main'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
   | V_Gen v, V_Gen v' -> Caml.compare v v'
   | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Ast_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
