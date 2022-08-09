@@ -32,7 +32,8 @@
                     "PascaLIGO"
                 ],
                 "extensions": [
-                    ".ligo"
+                    ".ligo",
+                    ".pligo"
                 ],
                 "icon": {
                     "light": "logo.png",

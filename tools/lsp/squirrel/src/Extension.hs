@@ -41,6 +41,7 @@ getExt path =
   case takeExtension path of
     ".religo" -> return Reason
     ".ligo"   -> return Pascal
+    ".pligo"  -> return Pascal
     ".mligo"  -> return Caml
     ".jsligo" -> return Js
     ext       -> throwError $ UnsupportedExtension ext
@@ -57,4 +58,4 @@ onExt ee path =
     Js     -> eeJs     ee
 
 supportedExtensions :: [FilePath]
-supportedExtensions = [".ligo", ".mligo", ".religo", ".jsligo"]
+supportedExtensions = [".ligo", ".pligo", ".mligo", ".religo", ".jsligo"]

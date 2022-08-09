@@ -24,6 +24,7 @@ export type ExecutionResult
 
 function extToDialect(ext : string) {
   switch (ext) {
+    case '.pligo':
     case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.religo': return 'reasonligo'
