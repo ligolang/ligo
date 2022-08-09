@@ -734,7 +734,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
     | ( C_TEST_MUTATE_CONTRACT , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
       let* () = check_value v in
-      let v = Mutation.mutate_some_contract ~raise loc n main in
+      let v = Mutation.mutate_some_contract n main in
       match v with
       | None ->
          return (v_none ())

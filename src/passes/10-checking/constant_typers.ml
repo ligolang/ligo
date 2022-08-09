@@ -480,6 +480,7 @@ module Constant_types = struct
                     of_type C_TEST_CAST_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_address () ^-> t_typed_address a b);
                     of_type C_TEST_RANDOM O.(for_all "a" @@ fun a -> t_bool () ^-> t_gen a);
                     of_type C_TEST_GENERATOR_EVAL O.(for_all "a" @@ fun a -> t_gen a ^-> a);
+                    of_type C_TEST_MUTATE_CONTRACT O.(t_nat () ^-> t_ast_contract () ^-> t_option (t_pair (t_ast_contract ()) (t_mutation ())));
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
                     of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));

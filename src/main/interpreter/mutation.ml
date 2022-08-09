@@ -4,9 +4,8 @@ module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 
 
-let mutate_some_contract : raise:(interpreter_error,_) raise -> Location.t -> Z.t -> Ast_aggregated.expression -> (Ast_aggregated.expression * LT.mutation) option =
-  fun ~raise loc z main ->
-  ignore (raise, loc);
+let mutate_some_contract : Z.t -> Ast_aggregated.expression -> (Ast_aggregated.expression * LT.mutation) option =
+  fun z main ->
   let n = Z.to_int z in
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   Fuzzer.some_mutate_expression ~n main
