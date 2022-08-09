@@ -732,6 +732,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         fail @@ error_type
     )
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
+    | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
+      let* () = check_value v in
+      let v = Mutation.mutate_some_contract ~raise loc n main in
+      match v with
+      | None ->
+         return (v_none ())
+      | Some (main, m) ->
+         return @@ (v_some (V_Record (LMap.of_list [ (Label "0", V_Ast_contract { main ; views }) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
