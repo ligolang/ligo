@@ -193,8 +193,8 @@ let build_contract ~raise : options:Compiler_options.t -> string -> Source_input
     let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c
 
-let build_views ~raise :
-  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_typed.ValueVar.t * Stacking.compiled_expression) list =
+let build_aggregated_views ~raise :
+  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_core.expression_variable list * Ast_aggregated.expression) option =
   fun ~options main_name cli_views source_file ->
     let form =
       let contract_entry = Ast_typed.ValueVar.of_input_var main_name in
@@ -207,9 +207,17 @@ let build_views ~raise :
     in
     let view_names = List.map ~f:fst (Ast_typed.Helpers.get_views contract) in
     match view_names with
-    | [] -> []
+    | [] -> None
     | _ ->
       let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
+      Some (view_names, aggregated)
+
+let build_views ~raise :
+  options:Compiler_options.t -> string -> string list -> Source_input.file_name -> (Ast_typed.ValueVar.t * Stacking.compiled_expression) list =
+  fun ~options main_name cli_views source_file ->
+    match build_aggregated_views ~raise ~options main_name cli_views source_file with
+    | None -> []
+    | Some (view_names, aggregated) ->
       let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
       let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
       let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
