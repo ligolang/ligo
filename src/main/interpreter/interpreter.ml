@@ -732,7 +732,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         fail @@ error_type
     )
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
+    | ( C_TEST_MUTATE_CONTRACT , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
       let* () = check_value v in
       let v = Mutation.mutate_some_contract ~raise loc n main in
       match v with
@@ -740,6 +740,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          return (v_none ())
       | Some (main, m) ->
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", V_Ast_contract { main ; views }) ; (Label "1", V_Mutation m) ]))))
+    | ( C_TEST_MUTATE_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -983,7 +984,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( (C_ASSERT_INFERRED | C_UPDATE | C_ITER |
          C_FOLD_LEFT | C_FOLD_RIGHT | C_PAIR | C_CAR | C_CDR | C_LEFT | C_RIGHT |
          C_SET_LITERAL | C_LIST_LITERAL | C_MAP | C_MAP_LITERAL | C_MAP_GET | C_MAP_GET_FORCE |
-         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE | C_TEST_MUTATE_CONTRACT |
+         C_BIG_MAP | C_BIG_MAP_LITERAL | C_CALL | C_SET_DELEGATE |
          C_CREATE_CONTRACT | C_OPEN_CHEST | C_VIEW | C_GLOBAL_CONSTANT ) , _ ) ->
       fail @@ Errors.generic_error loc "Unbound primitive."
   )
