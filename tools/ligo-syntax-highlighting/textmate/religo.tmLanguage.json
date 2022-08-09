@@ -3,7 +3,7 @@
   "foldingStopMarker": "}",
   "name": "ReasonLIGO",
   "scopeName": "source.religo",
-  "fileTypes": [ "religo", "rligo" ],
+  "fileTypes": [ "religo" ],
   "patterns": [
     { "include": "#string" },
     { "include": "#block_comment" },
