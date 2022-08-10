@@ -1,20 +1,21 @@
 import { LanguageClient } from 'vscode-languageclient/node'
 import { createRememberingInputBox, createQuickPickBox, Maybe } from '../ui'
 import {
-  CommandRequiredArguments, executeCommand, ExecutionResult,
+  CommandRequiredArguments, executeCommand,
 } from './common';
+import * as ex from '../exceptions'
 
 type CompileContractResult = {
   entrypoint: string,
   format: string,
-  result: ExecutionResult
+  result: string
 }
 
 type CompileStorageResult = {
   entrypoint: string,
   format: string,
-  storage : string,
-  result: ExecutionResult
+  storage: string,
+  result: string
 }
 
 export type SilentCompilationOptions = {
@@ -50,8 +51,7 @@ export async function executeCompileContract(
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   showOutput = true,
-  errorPrefix = undefined,
-) : Promise<CompileContractResult> {
+): Promise<CompileContractResult> {
   if (!entrypoint) {
     entrypoint = await createRememberingInputBox({
       title: 'Entrypoint',
@@ -60,15 +60,15 @@ export async function executeCompileContract(
       defaultValue: 'main',
     });
   }
+
   if (!format) {
     format = await createQuickPickBox(['text', 'hex', 'json'], 'Format', 'Compilation format')
-  } if (format !== 'text' && format !== 'hex' && format !== 'json') {
-    console.error('Invalid compiling format');
-    return undefined;
   }
-  if (!entrypoint) {
-    return undefined;
+
+  if (format !== 'text' && format !== 'hex' && format !== 'json') {
+    throw new ex.InvalidChoiceException(format, ['text', 'hex', 'json'])
   }
+
   const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => [
@@ -83,7 +83,6 @@ export async function executeCompileContract(
     client,
     CommandRequiredArguments.Path,
     showOutput,
-    errorPrefix,
   )
 
   return {
@@ -100,8 +99,7 @@ export async function executeCompileStorage(
   format: Maybe<string> = 'text',
   storage: Maybe<string> = undefined,
   showOutput = true,
-  errorPrefix = undefined,
-) : Promise<CompileStorageResult> {
+): Promise<CompileStorageResult> {
   if (!entrypoint) {
     entrypoint = await createRememberingInputBox({
       title: 'Entrypoint',
@@ -120,13 +118,11 @@ export async function executeCompileStorage(
   }
   if (!format) {
     format = await createQuickPickBox(['text', 'hex', 'json'], 'Format', 'Compilation format')
-  } if (format !== 'text' && format !== 'hex' && format !== 'json') {
-    console.error('Invalid compiling format');
-    return undefined;
   }
-  if (!entrypoint || !storage) {
-    return undefined;
+  if (format !== 'text' && format !== 'hex' && format !== 'json') {
+    throw new ex.InvalidChoiceException(format, ['text', 'hex', 'json'])
   }
+
   const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => [
@@ -142,7 +138,6 @@ export async function executeCompileStorage(
     client,
     CommandRequiredArguments.Path,
     showOutput,
-    errorPrefix,
   )
 
   return {
@@ -156,22 +151,15 @@ export async function executeCompileStorage(
 export async function executeCompileExpression(client: LanguageClient) {
   const listOfExpressions = await executeCommand(
     ligoBinaryInfo,
-    (path : string) => ['info', 'list-declarations', path],
+    (path: string) => ['info', 'list-declarations', path],
     client,
     1,
     false,
   )
 
-  if (listOfExpressions.t !== 'Success') {
-    return undefined
-  }
-
-  const exp = listOfExpressions.result.toString().split(':')[1].replace(/\s+/g, ' ').split(' ').slice(1, -1);
+  const exp = listOfExpressions.toString().split(':')[1].replace(/\s+/g, ' ').split(' ').slice(1, -1);
   const maybeExpression = await createQuickPickBox(exp, 'Expressions', 'Possible expressions for this contract')
 
-  if (!maybeExpression) {
-    return undefined;
-  }
   return executeCommand(
     ligoBinaryInfo,
     (path: string, syntax: string) => [
@@ -206,9 +194,7 @@ export async function executeDryRun(client: LanguageClient) {
     rememberingKey: 'dry-run-entrypoint',
     defaultValue: 'main',
   });
-  if (!maybeParameter || !maybeStorage || !maybeEntrypoint) {
-    return undefined;
-  }
+
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => ['run', 'dry-run', path, maybeParameter, maybeStorage, '-e', maybeEntrypoint],
@@ -229,9 +215,7 @@ export async function executeEvaluateFunction(client: LanguageClient) {
     rememberingKey: 'call-arg',
     defaultValue: undefined,
   })
-  if (!maybeExpr || !maybeEntrypoint) {
-    return undefined;
-  }
+
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => ['run', 'evaluate-call', path, maybeExpr, '-e', maybeEntrypoint],
@@ -246,9 +230,7 @@ export async function executeEvaluateValue(client: LanguageClient) {
     rememberingKey: 'call-value',
     defaultValue: '',
   });
-  if (!maybeEntrypoint) {
-    return undefined;
-  }
+
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => ['run', 'evaluate-expr', path, '-e', maybeEntrypoint],

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as ex from './exceptions'
 
 export type Maybe<T> = T | undefined
 
@@ -33,24 +34,30 @@ export type InputBoxOptions = {
   defaultValue: string,
 }
 
-export function createRememberingInputBox(options: InputBoxOptions): Thenable<string | undefined> {
-  return vscode.window.showInputBox({
+export async function createRememberingInputBox(options: InputBoxOptions): Promise<string> {
+  const res = await vscode.window.showInputBox({
     title: options.title,
     placeHolder: options.placeHolder,
     value: extensionState.get(options.rememberingKey) || (options.defaultValue || ''),
     ignoreFocusOut: true,
   }).then((newVal) => {
-    extensionState.set(options.rememberingKey, newVal);
+    if (newVal !== undefined) {
+      extensionState.set(options.rememberingKey, newVal);
+    }
     return newVal
   });
+  if (!res) {
+    throw new ex.UserInterruptionException()
+  }
+  return res;
 }
 
-export function createQuickPickBox(
+export async function createQuickPickBox(
   listOptions: readonly string[],
   title: string,
   placeHolder: string,
-): Thenable<string | undefined> {
-  return vscode.window.showQuickPick(
+): Promise<string> {
+  const res = await vscode.window.showQuickPick(
     listOptions,
     {
       title,
@@ -59,4 +66,9 @@ export function createQuickPickBox(
       canPickMany: false,
     },
   );
+
+  if (!res) {
+    throw new ex.UserInterruptionException()
+  }
+  return res
 }

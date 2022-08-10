@@ -17,6 +17,7 @@ import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 import { extensions } from './common'
+import { changeLastContractPath } from './commands/common';
 
 let client: LanguageClient;
 let ligoOptionButton: vscode.StatusBarItem;
@@ -39,6 +40,7 @@ function updateLigoButton(button: vscode.StatusBarItem) {
   }
 
   if (extensions.includes(ext)) {
+    changeLastContractPath(path)
     button.show();
   } else {
     button.hide();
