@@ -26,16 +26,15 @@ class read_password term = object(self)
     self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 "Password: "))
 end
 
-let prompt () =
+let prompt stdout_term =
   let open Lwt.Syntax in
   let* () = LTerm_inputrc.load () in
-  let* term = Lazy.force LTerm.stdout in
-  let* user = (new read_username term)#run in
-  let* pass = (new read_password term)#run in
+  let* user = (new read_username stdout_term)#run in
+  let* pass = (new read_password stdout_term)#run in
   Lwt.return (user, pass)
 
-let prompt () =
-  let u, p = Lwt_main.run (prompt ()) in
+let prompt stdout_term =
+  let u, p = Lwt_main.run (prompt stdout_term) in
   Zed_string.to_utf8 u, Zed_string.to_utf8 p
 
 type data =
@@ -87,7 +86,8 @@ let create_or_login ~ligo_registry ~ligorc_path =
   let registry_key = LigoRC.registry_key ligo_registry in
   let ligorc = LigoRC.read ~ligorc_path in
   let token_opt = LigoRC.get_token ligorc ~registry_key in
-  let user, pass = prompt () in
+  let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
+  let user, pass = if LTerm.is_a_tty stdout_term then prompt stdout_term else (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD") in
   let authorization = match token_opt with
     Some token -> Format.sprintf "Bearer %s" token
   | None -> 
