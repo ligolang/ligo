@@ -94,6 +94,33 @@ let%expect_test _ =
                                               toto) in ( LIST_EMPTY() , s ) |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "instance/main.mligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "FA2_TOKEN_UNDEFINED" ;
+             PUSH string "AAAA" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+                         
+let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-typed" ; contract "instance/main.mligo" ] ;
+  [%expect {|
+    module Errors =
+      Mangled_module_____________________test__contracts__build__instance____________common__errors____mligo.
+    module Storage =
+      Mangled_module_____________________test__contracts__build__instance____________common__storage____mligo.
+    const main =
+      lambda (gen#2 : ( unit * string )) return  match gen#2 with
+                                                  | ( _#4 , _#3 ) ->
+                                                  ( LIST_EMPTY() , CONCAT(Errors.undefined_token , Storage.s) ) |}]
+
+let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
   [%expect{|
 let get_balance#49 =
