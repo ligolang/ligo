@@ -40,6 +40,7 @@ let mk_wild region =
 %on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
 %on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
+%on_error_reduce bin_op(disj_expr_level,REV_APP,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
 %on_error_reduce base_expr(closed_expr)
