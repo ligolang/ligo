@@ -479,30 +479,30 @@ module Test = struct
     let a = originate_contract f s t in
     let c = size f in
     (a, f, c)
-  let mutation_test (type a b) (v : a) (tester : a -> b) : (a * mutation) option =
+  let mutation_test (type a b) (v : a) (tester : a -> b) : (b * mutation) option =
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-    type ret_code = Passed of (a * mutation) | Continue | Stop in
-    let rec mutation_nth (n : nat) : (a * mutation) option =
+    type ret_code = Passed of (b * mutation) | Continue | Stop in
+    let rec mutation_nth (n : nat) : (b * mutation) option =
       let curr = match mutate_value n v with
-        | Some (v, m) -> try_with (fun (_ : unit) -> let _b = tester v in Passed (v, m)) (fun (_ : unit) -> Continue)
+        | Some (v, m) -> try_with (fun (_ : unit) -> let b = tester v in Passed (b, m)) (fun (_ : unit) -> Continue)
         | None -> Stop in
       match curr with
       | Stop -> None
       | Continue -> mutation_nth (n + 1n)
-      | Passed (v, m) -> Some (v, m) in
+      | Passed (b, m) -> Some (b, m) in
     mutation_nth 0n
-  let mutation_test_all (type a b) (v : a) (tester : a -> b) : (a * mutation) list =
+  let mutation_test_all (type a b) (v : a) (tester : a -> b) : (b * mutation) list =
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-    type ret_code = Passed of (a * mutation) | Continue | Stop in
-    let rec mutation_nth (acc : (a * mutation) list) (n : nat) : (a * mutation) list =
+    type ret_code = Passed of (b * mutation) | Continue | Stop in
+    let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
       let curr = match mutate_value n v with
-        | Some (v, m) -> try_with (fun (_ : unit) -> let _b = tester v in Passed (v, m)) (fun (_ : unit) -> Continue)
+        | Some (v, m) -> try_with (fun (_ : unit) -> let b = tester v in Passed (b, m)) (fun (_ : unit) -> Continue)
         | None -> Stop in
       match curr with
       | Stop -> acc
       | Continue -> mutation_nth acc (n + 1n)
-      | Passed (v, m) -> mutation_nth ((v, m) :: acc) (n + 1n) in
-    mutation_nth ([] : (a * mutation) list) 0n
+      | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+    mutation_nth ([] : (b * mutation) list) 0n
 #endif
 
 #if UNCURRY
@@ -564,30 +564,30 @@ module Test = struct
     let a = originate_contract (f, s, t) in
     let c = size f in
     (a, f, c)
-  let mutation_test (type a b) ((v, tester) : a * (a -> b)) : (a * mutation) option =
+  let mutation_test (type a b) ((v, tester) : a * (a -> b)) : (b * mutation) option =
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-    type ret_code = Passed of (a * mutation) | Continue | Stop in
-    let rec mutation_nth (n : nat) : (a * mutation) option =
+    type ret_code = Passed of (b * mutation) | Continue | Stop in
+    let rec mutation_nth (n : nat) : (b * mutation) option =
       let curr = match mutate_value (n, v) with
-        | Some (v, m) -> try_with (fun (_ : unit) -> let _b = tester v in Passed (v, m)) (fun (_ : unit) -> Continue)
+        | Some (v, m) -> try_with (fun (_ : unit) -> let b = tester v in Passed (b, m)) (fun (_ : unit) -> Continue)
         | None -> Stop in
       match curr with
       | Stop -> None
       | Continue -> mutation_nth (n + 1n)
-      | Passed (v, m) -> Some (v, m) in
+      | Passed (b, m) -> Some (b, m) in
     mutation_nth 0n
-  let mutation_test_all (type a b) ((v, tester) : a * (a -> b)) : (a * mutation) list =
+  let mutation_test_all (type a b) ((v, tester) : a * (a -> b)) : (b * mutation) list =
     let try_with (type a) (v : unit -> a) (c : unit -> a) = [%external ("TEST_TRY_WITH", v, c)] in
-    type ret_code = Passed of (a * mutation) | Continue | Stop in
-    let rec mutation_nth (acc : (a * mutation) list) (n : nat) : (a * mutation) list =
+    type ret_code = Passed of (b * mutation) | Continue | Stop in
+    let rec mutation_nth (acc : (b * mutation) list) (n : nat) : (b * mutation) list =
       let curr = match mutate_value (n, v) with
-        | Some (v, m) -> try_with (fun (_ : unit) -> let _b = tester v in Passed (v, m)) (fun (_ : unit) -> Continue)
+        | Some (v, m) -> try_with (fun (_ : unit) -> let b = tester v in Passed (b, m)) (fun (_ : unit) -> Continue)
         | None -> Stop in
       match curr with
       | Stop -> acc
       | Continue -> mutation_nth acc (n + 1n)
-      | Passed (v, m) -> mutation_nth ((v, m) :: acc) (n + 1n) in
-    mutation_nth ([] : (a * mutation) list) 0n
+      | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
+    mutation_nth ([] : (b * mutation) list) 0n
 #endif
 
 end
