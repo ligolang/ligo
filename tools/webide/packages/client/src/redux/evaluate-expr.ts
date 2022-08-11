@@ -38,7 +38,7 @@ const evaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueStat
     case ActionType.ChangeProtocol:
       return {
         ...state,
-        entrypoint: action.payload
+        protocol: action.payload
       };
     case ActionType.ChangeEntrypoint:
       return {
