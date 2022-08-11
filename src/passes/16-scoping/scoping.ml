@@ -191,7 +191,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let e2 = translate_binder e2 env in
     let e3 = translate_binder e3 env in
     E_if_left (meta, e1, e2, e3)
-  | E_let_in (e1, _inline, _thunk, e2) ->
+  | E_let_in (e1, _inline, e2) ->
     let e1 = translate_expression e1 env in
     let e2 = translate_binder e2 env in
     E_let_in (meta, e1, e2)

@@ -40,6 +40,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Tez,             []) -> return (T_base TB_mutez)
     | (String,          []) -> return (T_base TB_string)
     | (Bytes,           []) -> return (T_base TB_bytes)
+    | (Typed_address,   [_;_]) -> return (T_base TB_address)
     | (Address,         []) -> return (T_base TB_address)
     | (Operation,       []) -> return (T_base TB_operation)
     | (Key,             []) -> return (T_base TB_key)
@@ -101,8 +102,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
       Never        | Chest_key | Gen                  |
-      Typed_address| Mutation  | Bytes                |
-      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
+      Typed_address | Mutation  | Bytes                |
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t)
   )
   | T_sum _ when Option.is_some (AST.get_t_bool t) ->
     return (T_base TB_bool)
@@ -193,7 +194,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (LMap.find_opt l fields)
         in
         let var = compile_variable @@ x.var in
-        return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
+        return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
         let y_var = ValueVar.fresh () in
@@ -216,10 +217,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   | E_type_abstraction _
   | E_type_inst _ ->
     raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; hidden = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, ((compile_variable let_binder.var, rhs'.type_expression), result')))
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (compile_variable name)
@@ -336,7 +337,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, false, ((record_var, record.type_expression),
+        (E_let_in (record, false, ((record_var, record.type_expression),
                    build_record_update
                      (e_var record_var record.type_expression)
                      path)))
@@ -498,7 +499,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                         (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
-                    return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                    return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let a' =
@@ -666,7 +667,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                       (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
-                  return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                  return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                 )
               | ((`Node (a , b)) , tv) ->
                 let a' =
