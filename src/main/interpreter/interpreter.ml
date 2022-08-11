@@ -23,7 +23,7 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
   `Yes -> contract_file
 | `No | `Unknown ->
   (match source_file with
-    Some source_file -> 
+    Some source_file ->
       let d = Filename.dirname source_file in
       let s = Filename.concat d contract_file in
       (match Sys.file_exists s with
@@ -635,6 +635,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
+    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = _ ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = _ } ; V_Func_val { arg_binder = _ ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = _} ]) ->
+       try_or (eval_ligo try_body (loc :: calltrace) try_env)
+         (eval_ligo catch_body (loc :: calltrace) catch_env)
+    | ( C_TEST_TRY_WITH , _ ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
       let>> mod_res = Get_mod_res () in
       let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in

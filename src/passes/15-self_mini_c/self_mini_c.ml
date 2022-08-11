@@ -156,6 +156,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_SIGN
   | C_TEST_GET_ENTRYPOINT
   | C_TEST_LAST_EVENTS
+  | C_TEST_TRY_WITH
     -> false
 
 let rec is_pure : expression -> bool = fun e ->
