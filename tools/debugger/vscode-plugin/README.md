@@ -7,7 +7,11 @@ Bugs are to be expected!
 
 In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode`).
 
-To use this package, you need to have LIGO version 0.47.0 or greater available in your PATH.
+To use this package, you need to have LIGO version 0.47.0 or greater.
+You can specify a path to the `ligo` executable in `settings.json`. The debugger will look for it in the following order:
+1. The debugger will use this path if this field is filled.
+2. If this field is blank, the debugger will try to find the `ligo` executable in the `$PATH` variable.
+3. Otherwise, the debugger will use the path from the `$LIGO_BINARY_PATH` variable.
 
 Currently, simple contracts are supported, with support for more complex contracts on the way.
 

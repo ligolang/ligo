@@ -8,7 +8,7 @@ import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoD
 import LigoProtocolClient from './LigoProtocolClient'
 import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, ValueType } from './ui'
 import LigoServer from './LigoServer'
-import { Ref, DebuggedContractSession, Maybe, getCommand, isDefined } from './base'
+import { Ref, DebuggedContractSession, Maybe, getBinaryPath, getCommand, isDefined } from './base'
 
 let server: LigoServer
 let client: LigoProtocolClient
@@ -34,6 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new LigoDebugConfigurationProvider(
 		async (info: AfterConfigResolvedInfo): Promise<string> => {
 			await client.sendMsg('initializeLogger', { file: info.file, logDir: info.logDir })
+
+			const config = vscode.workspace.getConfiguration();
+			const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, config);
+			await client.sendMsg('setLigoBinaryPath', { binaryPath });
+
 			debuggedContractSession.ref.entrypoints =
 				(await client.sendMsg('setProgramPath', { program: info.file })).entrypoints
 

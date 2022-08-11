@@ -6,7 +6,7 @@ module Language.LIGO.Debugger.Handlers.Impl
 import Debug qualified
 import Unsafe qualified
 
-import Cli (HasLigoClient (getLigoClientEnv))
+import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
 import Data.Text qualified as Text
@@ -49,7 +49,16 @@ import Language.LIGO.Debugger.Snapshots
 data LIGO
 
 instance HasLigoClient (RIO LIGO) where
-  getLigoClientEnv = lift getLigoClientEnv
+  getLigoClientEnv = do
+    lServ <- asks _rcLSState >>= readTVarIO
+    lift $ getClientEnv lServ
+    where
+      getClientEnv :: Maybe LigoLanguageServerState -> IO LigoClientEnv
+      getClientEnv = \case
+        Just lServ -> do
+          let maybeEnv = pure . LigoClientEnv <$> lsBinaryPath lServ
+          fromMaybe getLigoClientEnv maybeEnv
+        Nothing -> getLigoClientEnv
 
 instance HasSpecificMessages LIGO where
   type Launch LIGO = LigoLaunchRequest
@@ -258,6 +267,7 @@ instance HasSpecificMessages LIGO where
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
+    SetLigoBinaryPathRequest req -> handleSetLigoBinaryPath req
     SetProgramPathRequest req -> handleSetProgramPath req
     ValidateEntrypointRequest req -> handleValidateEntrypoint req
     GetContractMetadataRequest req -> handleGetContractMetadata req
@@ -323,6 +333,30 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
       pure $ Right ()
   logMessage [int||Initializing logger for #{file} finished: #s{result}|]
 
+handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
+handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
+  let LigoSetLigoBinaryPathRequestArguments{..} = argumentsLigoSetLigoBinaryPathRequest
+  let binaryPathMb = binaryPathLigoSetLigoBinaryPathRequestArguments
+
+  let binaryPath = Debug.show @Text binaryPathMb
+
+  lServVar <- asks _rcLSState
+
+  atomically $ writeTVar lServVar $ Just LigoLanguageServerState
+    { lsProgram = Nothing
+    , lsContract = Nothing
+    , lsEntrypoint = Nothing
+    , lsAllLocs = Nothing
+    , lsBinaryPath = binaryPathMb
+    }
+
+  writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
+    { seqLigoSetLigoBinaryPathResponse = 0
+    , request_seqLigoSetLigoBinaryPathResponse = seqLigoSetLigoBinaryPathRequest
+    , successLigoSetLigoBinaryPathResponse = True
+    }
+  logMessage [int||Set LIGO binary path: #{binaryPath}|]
+
 handleSetProgramPath :: LigoSetProgramPathRequest -> RIO LIGO ()
 handleSetProgramPath LigoSetProgramPathRequest{..} = do
   let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
@@ -343,10 +377,8 @@ handleSetProgramPath LigoSetProgramPathRequest{..} = do
         pure $ Left msg
       Right EntrypointsList{..} -> do
         lServVar <- asks _rcLSState
-        atomically $ writeTVar lServVar $ Just LigoLanguageServerState
+        atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
           { lsProgram = Just programPath
-          , lsContract = Nothing
-          , lsAllLocs = Nothing
           }
 
         writeResponse $ ExtraResponse $ SetProgramPathResponse LigoSetProgramPathResponse
@@ -380,8 +412,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
   let entrypoint = entrypointLigoGetContractMetadataRequestArguments
 
   lServVar <- asks _rcLSState
-  lServerStateOld <- getServerState
-  let program = fromMaybe (error "Program is not initialized") $ lsProgram lServerStateOld
+  program <- getProgram
 
   result <- runExceptT do
     unlessM (doesFileExist program) $
@@ -426,6 +457,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
         }
 
       lServerState <- getServerState
+
       logMessage [int||
         Got metadata for contract #{program}:
           Server state: #{lServerState}
