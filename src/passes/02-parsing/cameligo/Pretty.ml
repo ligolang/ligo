@@ -227,6 +227,9 @@ and pp_expr = function
 | EFun        e -> pp_fun e
 | ESeq        e -> pp_seq e
 | ECodeInj    e -> pp_code_inj e
+| ERevApp     e -> pp_rev_app e
+
+and pp_rev_app e = pp_bin_op "|>" e
 
 and pp_case_expr {value; _} =
   let {expr; cases; _} = value in
