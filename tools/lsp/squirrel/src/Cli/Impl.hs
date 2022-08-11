@@ -1,18 +1,21 @@
 -- | Module that handles ligo binary execution.
 module Cli.Impl
-  ( SomeLigoException (..)
+  ( -- * LIGO exception handling
+    SomeLigoException (..)
   , LigoErrorNodeParseErrorException  (..)
   , LigoClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
   , LigoUnexpectedCrashException (..)
   , LigoIOException (..)
 
+    -- * Versioning
   , Version (..)
 
-  , callLigoImpl
-  , callLigoImplBS
+    -- * LIGO daemon
+  , startLigoDaemon
+  , cleanupLigoDaemon
 
-  , withLigo
+    -- * Calling LIGO
   , callLigo
   , callLigoBS
   , callForFormat
@@ -20,10 +23,15 @@ module Cli.Impl
   , getLigoVersionSafe
   , preprocess
   , getLigoDefinitions
+
+  -- * Debugging
+  , WithLigoDebug (..)
+  , withLigoDebug
   ) where
 
 import Control.Arrow ((&&&))
 import Control.Monad
+import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Reader
 import Data.Aeson
   (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
@@ -44,12 +52,20 @@ import GHC.IO.Exception qualified as IOException
 import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
-import System.IO (hClose)
-import System.Process
+import System.IO (Handle, hClose, hFlush, hGetChar)
+-- 'UnliftIO.Process' forgot to lift 'cleanupProcess'.
+import System.Process (cleanupProcess)
 import System.Process.ByteString.Lazy qualified as PExtras
-import Text.Regex.TDFA (getAllTextSubmatches, (=~))
+import Text.Regex.TDFA ((=~), getAllTextSubmatches)
+import UnliftIO.Concurrent (getNumCapabilities)
 import UnliftIO.Directory (canonicalizePath)
-import UnliftIO.Exception (Exception (..), SomeException (..), handle, throwIO, try)
+import UnliftIO.Exception (Exception (..), SomeException (..), bracket, handle, throwIO, try)
+import UnliftIO.Pool (Pool)
+import UnliftIO.Pool qualified as Pool
+import UnliftIO.Process
+  ( CreateProcess (..), StdStream (CreatePipe), createProcess, getProcessExitCode, proc
+  , readCreateProcessWithExitCode
+  )
 import UnliftIO.Temporary (withTempDirectory, withTempFile)
 import Witherable (hashNub)
 
@@ -233,8 +249,8 @@ instance Exception LigoIOException where
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoImplBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m ByteString
-callLigoImplBS _rootDir args conM = do
+callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m ByteString
+callLigoBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
     let raw = maybe "" (BSL.fromStrict . encodeUtf8 . srcText) conM
@@ -258,16 +274,90 @@ callLigoImplBS _rootDir args conM = do
         , lieDescription = Text.pack $ IOException.ioe_description exc
         }
 
-callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
-callLigoImpl _rootDir args conM = lazyBytesToText <$> callLigoImplBS _rootDir args conM
+-- | Launches various @ligo daemon@ as background processes. If the processes
+-- were already launched, this function does nothing. The number of launched
+-- processes depends on the value of 'getNumCapabilities'.
+startLigoDaemon :: (HasLigoClient m, MonadFail m) => m (Maybe FilePath) -> m (Pool LigoProcess)
+startLigoDaemon _getRootDir = do
+  LigoClientEnv{_lceLigoProcesses} <- getLigoClientEnv
+  case _lceLigoProcesses of
+    Nothing -> do
+      numCapabilities <- getNumCapabilities
+      let
+        createResource = do
+          LigoClientEnv{_lceClientPath} <- getLigoClientEnv
+          -- FIXME (LIGO-545): See notes in @callLigo@.
+          (Just _lpStdin, Just _lpStdout, Just _lpStderr, _lpLigo) <-
+            createProcess (proc _lceClientPath ["daemon"])
+              { std_in  = CreatePipe
+              , std_out = CreatePipe
+              , std_err = CreatePipe
+              , delegate_ctlc = True
+              }
+          pure LigoProcess{..}
+        freeResource LigoProcess{..} =
+          liftIO $ cleanupProcess (Just _lpStdin, Just _lpStdout, Just _lpStderr, _lpLigo)
+        numStripes = numCapabilities
+        poolCacheTTL = 1
+        poolMaxResources = numCapabilities
+      Pool.createPool createResource freeResource numStripes poolCacheTTL poolMaxResources
+    Just ps -> pure ps
 
--- | Call ligo binary and return stdout and stderr accordingly.
-callLigo :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m Text
-callLigo rootDir args = callLigoImpl rootDir args . Just
+-- | Stops each LIGO process that was launched. If no LIGO processes where
+-- launched, this function does nothing.
+cleanupLigoDaemon :: HasLigoClient m => m ()
+cleanupLigoDaemon = do
+  LigoClientEnv{_lceLigoProcesses} <- getLigoClientEnv
+  maybe (pure ()) cleanupLigoDaemonImpl _lceLigoProcesses
 
--- | Same as @callLigo@ but returns lazy @ByteString@.
-callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m ByteString
-callLigoBS rootDir args = callLigoImplBS rootDir args . Just
+-- | The same as 'stopLigoDaemon', but takes a 'Pool LigoProcess' explictly.
+cleanupLigoDaemonImpl :: MonadUnliftIO m => Pool LigoProcess -> m ()
+cleanupLigoDaemonImpl = Pool.destroyAllResources
+
+-- | Calls the LIGO binary (extracted from 'getLigoClientEnv') with the provided
+-- root directory (ignored for now), arguments, and contract.
+--
+-- If '_lceLigoProcesses' is 'Nothing', this function will make a blocking call
+-- to LIGO, otherwise it will use an unused process handle from the process
+-- pool.
+callLigo :: forall m. HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
+callLigo _rootDir args conM = do
+  LigoClientEnv{..} <- getLigoClientEnv
+  let fpM = srcPath <$> conM
+  -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there is
+  -- a bug in the `process` library preventing us from doing it, as it causes
+  -- non-determinism with handles receiving invalid arguments when running our
+  -- tests with multiple threads. Additionally, using `withCurrentDirectory`
+  -- from `directory` is no help either, as it doesn't seem thread-safe either.
+  case _lceLigoProcesses of
+    Nothing -> do
+      let raw = maybe "" (unpack . srcText) conM
+      let process = proc _lceClientPath args
+      (ec, lo, le) <- readCreateProcessWithExitCode process raw
+      unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
+        throwIO $ LigoClientFailureException (pack lo) (pack le) fpM
+      pure $ pack lo
+    Just ligoProcesses ->
+      Pool.withResource ligoProcesses \LigoProcess{..} -> do
+        liftIO do
+          Text.hPutStrLn _lpStdin $ Text.pack $ unwords $ map show args
+          hFlush _lpStdin
+        lo <- readUntilNull _lpStdout
+        le <- readUntilNull _lpStderr
+        getProcessExitCode _lpLigo >>= \case
+          Nothing | Text.null le -> pure lo
+          -- We assume a failure even in the case of 'ExitSuccess' because LIGO
+          -- should not quit.
+          _ -> throwIO $ LigoClientFailureException lo le fpM
+  where
+    readLoop :: Handle -> IO String
+    readLoop h =
+      hGetChar h >>= \case
+        '\0' -> pure []
+        c    -> fmap (c :) (readLoop h)
+
+    readUntilNull :: Handle -> m Text
+    readUntilNull = liftIO . fmap Text.pack . readLoop
 
 newtype Version = Version
   { getVersion :: Text
@@ -298,7 +388,7 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
       -- Create temporary file and call LIGO with it.
       $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
       liftIO (Text.hPutStr hnd contents *> hClose hnd)
-      try (callLigoBS (Just rootDir) (getArgs tempFp) src) >>= \case
+      try (callLigoBS (Just rootDir) (getArgs tempFp) (Just src)) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
         Left LigoClientFailureException {cfeStderr} -> do
           let fixMarkers' = Text.replace (pack tempFp) (pack fp)
@@ -314,7 +404,7 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
 withLigo src@(Source fp False _) _ getArgs decode =
-  try (callLigoBS Nothing (getArgs fp) src) >>= \case
+  try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
     Left LigoClientFailureException{cfeStderr} ->
       handleLigoMessages fp cfeStderr
     Right result -> case eitherDecode' result of
@@ -346,7 +436,7 @@ fixMarkers tempFp (Source fp dirty contents) = liftIO do  -- HACK: I use `liftIO
 -- TODO: rename this back to @getLigoVersion@.
 getLigoVersionRaw :: (HasLigoClient m) => m Version
 getLigoVersionRaw =
-  Version . Text.strip <$> callLigoImpl Nothing ["--version"] Nothing
+  Version . Text.strip <$> callLigo Nothing ["--version"] Nothing
 
 -- | Get the current LIGO version, but in case of any failure return 'Nothing'.
 --
@@ -497,3 +587,47 @@ attemptToRecoverFromPossibleLigoCrash errDecoded stdErr = case getAllTextSubmatc
   where
     regex :: String
     regex = "Fatal error: exception \\(Failure \"(.*)\"\\)"
+
+----------------------------------------------------------------------------
+-- Debugging utilities
+----------------------------------------------------------------------------
+
+-- | A datatype that automatically manages a @LigoProcess@ lifecycle,
+-- for debugging.
+newtype WithLigoDebug a = WithLigoDebug
+  { runWithLigoDebug :: Pool LigoProcess -> Log.NoLoggingT IO a
+  } deriving stock (Functor)
+
+instance Applicative WithLigoDebug where
+  pure = WithLigoDebug . const . pure
+
+  WithLigoDebug f <*> WithLigoDebug a = WithLigoDebug \ligo ->
+    f ligo <*> a ligo
+
+instance Monad WithLigoDebug where
+  WithLigoDebug a >>= k = WithLigoDebug \ligo ->
+    a ligo >>= \x -> runWithLigoDebug (k x) ligo
+
+instance MonadIO WithLigoDebug where
+  liftIO = WithLigoDebug . const . lift
+
+instance MonadUnliftIO WithLigoDebug where
+  withRunInIO inner = WithLigoDebug \ligo ->
+    withRunInIO \run -> inner (run . flip runWithLigoDebug ligo)
+
+instance MonadFail WithLigoDebug where
+  fail = WithLigoDebug . const . fail
+
+instance HasLigoClient WithLigoDebug where
+  getLigoClientEnv = WithLigoDebug \ligo ->
+    LigoClientEnv <$> liftIO ligoBinaryPath <*> pure (Just ligo)
+
+-- | Start the LIGO daemon, run an action, and stop the daemon, for debugging.
+-- This function ignores logs.
+withLigoDebug :: WithLigoDebug a -> IO a
+withLigoDebug action =
+  Log.runNoLoggingT $
+    bracket
+      (startLigoDaemon (pure Nothing))
+      cleanupLigoDaemonImpl
+      (runWithLigoDebug action)

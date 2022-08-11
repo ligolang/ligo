@@ -16,6 +16,7 @@ module Log
   , addNamespace
   , sl
   , debug
+  , info
   , warning
   , err
   , critical
@@ -54,6 +55,10 @@ addNamespace = katipAddNamespace
 debug :: ExpQ
 debug = [| $logTM DebugS |]
 {-# INLINE debug #-}
+
+info :: ExpQ
+info = [| $logTM InfoS |]
+{-# INLINE info #-}
 
 warning :: ExpQ
 warning = [| $logTM WarningS |]
@@ -99,7 +104,7 @@ flagBasedSeverity :: SpliceQ Severity
 flagBasedSeverity = liftSplice do
   let flagName = "LIGO_SEVERITY"
   liftIO (lookupEnv flagName) >>= maybe
-    (examineSplice [|| WarningS ||])
+    (examineSplice [|| InfoS ||])
     (\flag -> case textToSeverity $ pack flag of
       Nothing -> fail $ "Unrecognized " <> flagName <> " flag: " <> flag
       Just severity -> examineSplice [|| severity ||])

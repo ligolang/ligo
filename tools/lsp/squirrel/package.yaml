@@ -110,6 +110,7 @@ library:
     - tree-sitter
     - unliftio
     - unliftio-core
+    - unliftio-pool
     - unordered-containers
     - witherable
 
@@ -139,6 +140,7 @@ executables:
       - text
       - unliftio
       - unliftio-core
+      - unliftio-pool
       - unordered-containers
       - witherable
 

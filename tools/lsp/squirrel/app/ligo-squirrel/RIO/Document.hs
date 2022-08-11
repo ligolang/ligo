@@ -63,7 +63,7 @@ import AST.Includes
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
 import AST.Skeleton (Error (..), Lang (Caml), SomeLIGO (..))
 import ASTMap qualified
-import Cli (TempDir (..), TempSettings (..), getLigoClientEnv)
+import Cli (LigoClientEnv (..), TempDir (..), TempSettings (..), getLigoClientEnv)
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer))
 import Language.LSP.Util (filePathToNormalizedUri, sendWarning, reverseUriMap)
 import Log qualified
@@ -206,7 +206,7 @@ loadWithoutScopes :: J.NormalizedFilePath -> RIO ContractInfo
 loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
   src <- preload normFp
   ligoEnv <- getLigoClientEnv
-  $(Log.debug) [Log.i|running with env #{ligoEnv}|]
+  $(Log.debug) [Log.i|Running with path #{_lceClientPath ligoEnv}|]
   temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath normFp
   parsePreprocessed temp src
 

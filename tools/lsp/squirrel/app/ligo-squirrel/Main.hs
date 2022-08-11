@@ -96,6 +96,7 @@ mainLoop =
         wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
           handler msg resp `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
+            RIO.shutdownRio
             resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
         wrapNotif
@@ -104,6 +105,7 @@ mainLoop =
         wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
           handler msg `withException` \(SomeException e) -> do
             $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
+            RIO.shutdownRio
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
         addReqLogging
@@ -139,6 +141,8 @@ handlers :: S.Handlers RIO
 handlers = mconcat
   [ S.notificationHandler J.SInitialized handleInitialized
 
+  , S.requestHandler J.SShutdown handleShutdown
+
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
   , S.notificationHandler J.STextDocumentDidSave handleDidSaveTextDocument
@@ -172,6 +176,11 @@ handlers = mconcat
 
 handleInitialized :: S.Handler RIO 'J.Initialized
 handleInitialized _ = RIO.initializeRio
+
+handleShutdown :: S.Handler RIO 'J.Shutdown
+handleShutdown _ respond = do
+  RIO.shutdownRio
+  respond $ Right J.Empty
 
 handleDidOpenTextDocument :: S.Handler RIO 'J.TextDocumentDidOpen
 handleDidOpenTextDocument notif = do

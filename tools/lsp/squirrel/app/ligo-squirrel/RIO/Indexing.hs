@@ -29,6 +29,7 @@ import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, t
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
 import Witherable (ordNubOn)
 
+import Cli qualified
 import Language.LSP.Util (sendError, sendInfo)
 import Log qualified
 import RIO.Types (IndexOptions (..), ProjectSettings (..), RIO, RioEnv (..))
@@ -103,14 +104,18 @@ getIndexDirectory :: FilePath -> RIO IndexOptions
 getIndexDirectory contractDir = do
   indexOptsVar <- asks reIndexOpts
   tryReadMVar indexOptsVar >>= \case
-    Nothing -> checkForLigoProjectFile contractDir >>= \case
-      Nothing -> askForIndexDirectory contractDir
-      Just ligoProjectDir -> do
-        upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
-        projectSettings <- decodeProjectSettings ligoProjectDir
-        let indexOpts = FromLigoProject ligoProjectDir projectSettings
-        hasNoOpts <- isEmptyMVar indexOptsVar
-        indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+    Nothing -> do
+      newOpts <- checkForLigoProjectFile contractDir >>= \case
+        Nothing -> askForIndexDirectory contractDir
+        Just ligoProjectDir -> do
+          upgradeProjectSettingsFormat $ ligoProjectDir </> ligoProjectName
+          projectSettings <- decodeProjectSettings ligoProjectDir
+          let indexOpts = FromLigoProject ligoProjectDir projectSettings
+          hasNoOpts <- isEmptyMVar indexOptsVar
+          indexOpts <$ bool (void . swapMVar indexOptsVar) (putMVar indexOptsVar) hasNoOpts indexOpts
+
+      -- A root directory was set; restart the daemon.
+      newOpts <$ Cli.cleanupLigoDaemon
     Just opts -> pure opts
 
 askForIndexDirectory :: FilePath -> RIO IndexOptions
