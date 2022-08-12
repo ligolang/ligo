@@ -45,7 +45,7 @@ let add_all_lines_to_buffer : In_channel.t -> Buffer.t -> unit =
     | _ -> () in
   loop_lines ()
 
-let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
+let buffer_of_mutation : mutation -> Buffer.t = fun (loc, aggregated) ->
   match Location.get_file loc with
   | Some r ->
      (* Open file *)
@@ -56,7 +56,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
      let n_syntax     = match n_syntax with
        | Ok (r,_w) -> r
        | Error _ -> failwith "Cannot detect syntax" in
-     let aggregated   = Self_ast_aggregated.reduplicate_binders ~raise _expr in
+     let aggregated   = Reduplicate_binders.reduplicate ~raise aggregated in
      let typed        = Aggregation.decompile ~raise aggregated in
      let core         = Decompile.Of_typed.decompile_expression typed in
      let sugar        = Decompile.Of_core.decompile_expression core in

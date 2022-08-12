@@ -3,7 +3,6 @@ module Helpers = Helpers
 
 let reset_counter () = Monomorphisation.poly_counter_reset ()
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
-let reduplicate_binders ~raise e = Reduplicate_binders.reduplicate ~raise e
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Helpers.map_expression Polymorphic_replace.expression e in
