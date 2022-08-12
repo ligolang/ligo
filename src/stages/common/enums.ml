@@ -182,8 +182,6 @@ type constant' =
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
-  | C_TEST_MUTATION_TEST [@only_interpreter]
-  | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
   | C_TEST_SAVE_MUTATION [@only_interpreter]
   | C_TEST_RUN [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
