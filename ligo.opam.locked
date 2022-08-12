@@ -137,6 +137,7 @@ depends: [
   "odoc-parser" {= "1.0.1"}
   "optint" {= "0.2.0"}
   "ounit2" {= "2.2.6"}
+  "parse-argv" {= "0.2.0"}
   "parsexp" {= "v0.14.2"}
   "pbkdf" {= "1.2.0"}
   "pprint" {= "20220103"}

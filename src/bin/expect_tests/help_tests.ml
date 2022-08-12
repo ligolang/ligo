@@ -23,6 +23,7 @@ let%expect_test _ =
       publish    [BETA] publish the LIGO package declared in package.json
       add-user   [BETA] create a new user for the LIGO package registry
       login      [BETA] login to the LIGO package registry
+      daemon     launch LIGO dameon
       version    print version information
       help       explain a given subcommand (perhaps recursively)
 

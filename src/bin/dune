@@ -13,6 +13,7 @@
   publish
   user
   cli_helpers
+  ldaemon
   ligo_api)
  (modules cli version))
 
@@ -47,6 +48,14 @@
  (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix lambda-term) ;Remove unused libs
  (preprocess (pps ppx_deriving_yojson))
  (modules user))
+
+(library
+ (name ldaemon)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries parse-argv ligo_api cli_helpers)
+ (preprocess (pps ppx_deriving_yojson))
+ (modules ldaemon))
 
 (rule
  (targets version.ml)
