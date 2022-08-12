@@ -1,3 +1,14 @@
+(*
+
+   This pass removes the counter from variables which were introduced
+   using `fresh_like`.
+
+   It should not be normally used. Its introduction is a response to
+   fix the problem of mutation saving after deduplication in the AST
+   has been applied.
+
+*)
+
 open Ast_aggregated
 
 let rec reduplicate ~raise : expression -> expression =
