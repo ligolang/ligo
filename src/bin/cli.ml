@@ -544,9 +544,9 @@ let run_group =
 (** Info commands *)
 let list_declarations =
   let f source_file only_ep syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+    let raw_options = Raw_options.make ~only_ep ~syntax () in
     return_result ~return @@
-    Api.Info.list_declarations raw_options only_ep source_file display_format
+    Api.Info.list_declarations raw_options source_file display_format
   in
   let summary   = "list all the top-level declarations." in
   let readme () = "This sub-command prints a list of all top-level \

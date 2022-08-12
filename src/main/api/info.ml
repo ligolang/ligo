@@ -17,13 +17,13 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format ()
       let contract = Compile.Of_michelson.build_contract ~raise ~enable_typed_opt:options.backend.enable_typed_opt ~protocol_version michelson views in
       Compile.Of_michelson.measure ~raise contract
 
-let list_declarations (raw_options : Raw_options.t) only_ep source_file display_format () =
+let list_declarations (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format Formatter.declarations_format @@
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
       let prg = Build.type_contract ~raise ~options source_file in
-      let declarations  = Compile.Of_typed.list_declarations only_ep prg in
+      let declarations  = Compile.Of_typed.list_declarations raw_options.only_ep prg in
       (source_file, declarations)
 
 let get_scope (raw_options : Raw_options.t) source_file display_format () =
