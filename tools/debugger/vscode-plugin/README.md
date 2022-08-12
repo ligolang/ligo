@@ -13,7 +13,13 @@ Currently, simple contracts are supported, with support for more complex contrac
 
 ## Running the debugger
 
-You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. For now, you can provide a LIGO entrypoint in your `launch.json`, or the extension will default to `main` if none is provided.
+You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `${command:AskForEntrypoint}`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
+```json
+"entrypoint": "${command:AskForEntrypoint}" <-- will ask you to choose an entrypoint via quickpick
+```
+```json
+"entrypoint": "main_1" <-- will use "main_1" as entrypoint
+```
 
 Use F11 (or press "Step Into") to step through LIGO code in details.
 

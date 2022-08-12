@@ -6,7 +6,7 @@ import { ValidateValueCategory } from './messages'
 import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescriptorFactory'
 import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoDebugConfigurationProvider'
 import LigoProtocolClient from './LigoProtocolClient'
-import { createRememberingQuickPick, getParameterOrStorage, ValueType } from './ui'
+import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, ValueType } from './ui'
 import LigoServer from './LigoServer'
 import { Ref, DebuggedContractSession, Maybe, ContractMetadata } from './base'
 
@@ -25,12 +25,20 @@ export function activate(context: vscode.ExtensionContext) {
 	server = new LigoServer(adapterPath, [])
 	client = new LigoProtocolClient(server.address())
 
+	const getContractMetadata = async (entrypoint: string): Promise<void> => {
+		debuggedContractSession.ref.contractMetadata =
+			(await client.sendMsg('getContractMetadata', { entrypoint }))
+				.contractMetadata
+	}
+
 	const provider = new LigoDebugConfigurationProvider(
 		async (info: AfterConfigResolvedInfo): Promise<void> => {
 			await client.sendMsg('initializeLogger', { file: info.file, logDir: info.logDir })
-			debuggedContractSession.ref.contractMetadata =
-				(await client.sendMsg('getContractMetadata', { file: info.file, entrypoint: info.entrypoint }))
-					.contractMetadata
+			debuggedContractSession.ref.entrypoints =
+				(await client.sendMsg('setProgramPath', { program: info.file })).entrypoints
+			if (info.entrypoint) {
+				await getContractMetadata(info.entrypoint);
+			}
 		});
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
 
@@ -47,6 +55,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		return undefined
 	}
+
+	const validateEntrypoint = async (entrypoint: string): Promise<Maybe<string>> => {
+		if (client) {
+			return (await client.sendMsg('validateEntrypoint', { entrypoint })).message;
+		}
+		return undefined;
+	}
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('extension.ligo-debugger.requestEntrypoint',
+			getEntrypoint(
+				context,
+				validateEntrypoint,
+				getContractMetadata,
+				debuggedContractSession)));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('extension.ligo-debugger.requestMichelsonEntrypoint',

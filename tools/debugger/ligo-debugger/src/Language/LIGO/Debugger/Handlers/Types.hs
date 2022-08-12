@@ -4,6 +4,10 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoLaunchRequestArguments (..)
   , LigoInitializeLoggerRequest (..)
   , LigoInitializeLoggerRequestArguments (..)
+  , LigoSetProgramPathRequest (..)
+  , LigoSetProgramPathRequestArguments (..)
+  , LigoValidateEntrypointRequest (..)
+  , LigoValidateEntrypointRequestArguments (..)
   , LigoGetContractMetadataRequest (..)
   , LigoGetContractMetadataRequestArguments (..)
   , LigoValidateValueRequest (..)
@@ -11,6 +15,8 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSpecificRequest (..)
 
   , LigoInitializeLoggerResponse (..)
+  , LigoSetProgramPathResponse (..)
+  , LigoValidateEntrypointResponse (..)
   , ContractMetadata (..)
   , LigoGetContractMetadataResponse (..)
   , LigoValidateValueResponse (..)
@@ -44,6 +50,9 @@ data LigoLaunchRequestArguments = LigoLaunchRequestArguments
     -- | Storage value for contract.
   , storageLigoLaunchRequestArguments :: Maybe String
 
+    -- | Entry point of the contract (@main@ method).
+  , entrypointLigoLaunchRequestArguments :: Maybe String
+
     -- | Parameter value for contract.
   , parameterLigoLaunchRequestArguments :: Maybe String
   } deriving stock (Eq, Show, Generic)
@@ -64,6 +73,32 @@ data LigoInitializeLoggerRequestArguments = LigoInitializeLoggerRequestArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoInitializeLoggerRequestArguments)
 
+data LigoSetProgramPathRequest = LigoSetProgramPathRequest
+  { seqLigoSetProgramPathRequest :: Int
+  , typeLigoSetProgramPathRequest :: String
+  , commandLigoSetProgramPathRequest :: String
+  , argumentsLigoSetProgramPathRequest :: LigoSetProgramPathRequestArguments
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetProgramPathRequest)
+
+data LigoSetProgramPathRequestArguments = LigoSetProgramPathRequestArguments
+  { programLigoSetProgramPathRequestArguments :: FilePath
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoSetProgramPathRequestArguments)
+
+data LigoValidateEntrypointRequest = LigoValidateEntrypointRequest
+  { seqLigoValidateEntrypointRequest :: Int
+  , typeLigoValidateEntrypointRequest :: String
+  , commandLigoValidateEntrypointRequest :: String
+  , argumentsLigoValidateEntrypointRequest :: LigoValidateEntrypointRequestArguments
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateEntrypointRequest)
+
+data LigoValidateEntrypointRequestArguments = LigoValidateEntrypointRequestArguments
+  { entrypointLigoValidateEntrypointRequestArguments :: String
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateEntrypointRequestArguments)
+
 data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
   { seqLigoGetContractMetadataRequest :: Int
   , typeLigoGetContractMetadataRequest :: String
@@ -73,9 +108,7 @@ data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
     deriving Buildable via (GenericBuildable LigoGetContractMetadataRequest)
 
 data LigoGetContractMetadataRequestArguments = LigoGetContractMetadataRequestArguments
-  { fileLigoGetContractMetadataRequestArguments :: String
-    -- ^ Path to the program being run.
-  , entrypointLigoGetContractMetadataRequestArguments :: Maybe String
+  { entrypointLigoGetContractMetadataRequestArguments :: String
     -- ^ LIGO entrypoint to be used.
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoGetContractMetadataRequestArguments)
@@ -102,6 +135,8 @@ data LigoValidateValueRequestArguments = LigoValidateValueRequestArguments
 
 data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
+  | SetProgramPathRequest LigoSetProgramPathRequest
+  | ValidateEntrypointRequest LigoValidateEntrypointRequest
   | GetContractMetadataRequest LigoGetContractMetadataRequest
   | ValidateValueRequest LigoValidateValueRequest
   deriving stock (Eq, Show, Generic)
@@ -113,6 +148,24 @@ data LigoInitializeLoggerResponse = LigoInitializeLoggerResponse
   , successLigoInitializeLoggerResponse :: Bool
   } deriving stock (Show, Eq, Generic)
     deriving Buildable via (GenericBuildable LigoInitializeLoggerResponse)
+
+data LigoSetProgramPathResponse = LigoSetProgramPathResponse
+  { seqLigoSetProgramPathResponse :: Int
+  , request_seqLigoSetProgramPathResponse :: Int
+  , successLigoSetProgramPathResponse :: Bool
+  , entrypointsLigoSetProgramPathResponse :: [String]
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoSetProgramPathResponse)
+
+data LigoValidateEntrypointResponse = LigoValidateEntrypointResponse
+  { seqLigoValidateEntrypointResponse :: Int
+  , request_seqLigoValidateEntrypointResponse :: Int
+  , successLigoValidateEntrypointResponse :: Bool
+  , messageLigoValidateEntrypointResponse :: Maybe String
+    -- ^ If there are issues, their description.
+    -- This is a build-in that VSCode accounts for.
+  } deriving stock (Show, Eq, Generic)
+    deriving Buildable via (GenericBuildable LigoValidateEntrypointResponse)
 
 data ContractMetadata = ContractMetadata
   { parameterMichelsonTypeContractMetadata :: MD.JsonFromBuildable U.ParameterType
@@ -141,6 +194,8 @@ data LigoValidateValueResponse = LigoValidateValueResponse
 
 data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
+  | SetProgramPathResponse LigoSetProgramPathResponse
+  | ValidateEntrypointResponse LigoValidateEntrypointResponse
   | GetContractMetadataResponse LigoGetContractMetadataResponse
   | ValidateValueResponse LigoValidateValueResponse
   deriving stock (Eq, Show, Generic)

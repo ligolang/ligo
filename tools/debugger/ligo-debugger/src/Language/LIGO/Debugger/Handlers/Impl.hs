@@ -27,6 +27,7 @@ import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO.Directory (doesFileExist)
+import UnliftIO.STM (modifyTVar)
 
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
@@ -140,6 +141,8 @@ instance HasSpecificMessages LIGO where
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
+    SetProgramPathRequest req -> handleSetProgramPath req
+    ValidateEntrypointRequest req -> handleValidateEntrypoint req
     GetContractMetadataRequest req -> handleGetContractMetadata req
     ValidateValueRequest req -> handleValidateValue req
 
@@ -203,12 +206,65 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
       pure $ Right ()
   logMessage [int||Initializing logger for #{file} finished: #s{result}|]
 
+handleSetProgramPath :: LigoSetProgramPathRequest -> RIO LIGO ()
+handleSetProgramPath LigoSetProgramPathRequest{..} = do
+  let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
+  let programPath = programLigoSetProgramPathRequestArguments
+
+  entrypointsE <- runExceptT $ getAvailableEntrypoints programPath
+
+  result <-
+    case entrypointsE of
+      Left e -> do
+        let msg = fromBuilder . build $ e
+        writeResponse $ ErrorResponse DAP.defaultErrorResponse
+          { DAP.request_seqErrorResponse = seqLigoSetProgramPathRequest
+          , DAP.commandErrorResponse = commandLigoSetProgramPathRequest
+          , DAP.messageErrorResponse = Just $ DAP.formatMessage msg
+          , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
+          }
+        pure $ Left msg
+      Right EntrypointsList{..} -> do
+        lServVar <- asks _rcLSState
+        atomically $ writeTVar lServVar $ Just LigoLanguageServerState
+          { lsProgram = Just programPath
+          , lsContract = Nothing
+          , lsAllLocs = Nothing
+          }
+
+        writeResponse $ ExtraResponse $ SetProgramPathResponse LigoSetProgramPathResponse
+          { seqLigoSetProgramPathResponse = 0
+          , request_seqLigoSetProgramPathResponse = seqLigoSetProgramPathRequest
+          , successLigoSetProgramPathResponse = True
+          , entrypointsLigoSetProgramPathResponse = unEntrypoints
+          }
+        pure $ Right ()
+
+  logMessage [int||Setting program path #{programPath} is finished: #s{result}|]
+
+handleValidateEntrypoint :: LigoValidateEntrypointRequest -> RIO LIGO ()
+handleValidateEntrypoint LigoValidateEntrypointRequest{..} = do
+  let LigoValidateEntrypointRequestArguments{..} = argumentsLigoValidateEntrypointRequest
+  let pickedEntrypoint = entrypointLigoValidateEntrypointRequestArguments
+
+  program <- getProgram
+  result <- void <<$>> runExceptT $ compileLigoContractDebug pickedEntrypoint program
+
+  writeResponse $ ExtraResponse $ ValidateEntrypointResponse LigoValidateEntrypointResponse
+    { seqLigoValidateEntrypointResponse = 0
+    , request_seqLigoValidateEntrypointResponse = seqLigoValidateEntrypointRequest
+    , successLigoValidateEntrypointResponse = True
+    , messageLigoValidateEntrypointResponse = pretty <$> leftToMaybe result
+    }
+
 handleGetContractMetadata :: LigoGetContractMetadataRequest -> RIO LIGO ()
 handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
   let LigoGetContractMetadataRequestArguments{..} = argumentsLigoGetContractMetadataRequest
-  let program = fileLigoGetContractMetadataRequestArguments
-  let entrypoint = fromMaybe "main" entrypointLigoGetContractMetadataRequestArguments
+  let entrypoint = entrypointLigoGetContractMetadataRequestArguments
+
   lServVar <- asks _rcLSState
+  lServerStateOld <- getServerState
+  let program = fromMaybe (error "Program is not initialized") $ lsProgram lServerStateOld
 
   result <- runExceptT do
     unlessM (doesFileExist program) $
@@ -226,12 +282,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
       logMessage $ pretty (cCode contract)
 
-    return LigoLanguageServerState
-      { lsProgram = program
-      , lsContract = someContract
-      , lsEntrypoint = entrypoint
-      , lsAllLocs = allLocs
-      }
+    pure (someContract, allLocs)
 
   case result of
     Left e -> do
@@ -245,35 +296,39 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
             , DAP.messageErrorResponse = Just $ toString . leMessage $ e
             , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
             }
-    Right lServerState -> case lsContract lServerState of
-      SomeContract contract -> do
-        let
-          paramNotes = cParamNotes contract
-          michelsonEntrypoints =
-            T.flattenEntrypoints paramNotes
-            <> one (U.DefEpName, T.mkUType $ T.pnNotes paramNotes)
+    Right (someContract@(SomeContract contract), allLocs) -> do
+      let
+        paramNotes = cParamNotes contract
+        michelsonEntrypoints =
+          T.flattenEntrypoints paramNotes
+          <> one (U.DefEpName, T.mkUType $ T.pnNotes paramNotes)
 
-        logMessage [int||
-          Got metadata for contract #{program}:
-            Server state: #{lServerState}
-            Michelson entrypoints: #{keys michelsonEntrypoints}
-          |]
+      atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
+        { lsContract = Just someContract
+        , lsAllLocs = Just allLocs
+        }
 
-        atomically $ writeTVar lServVar (Just lServerState)
-        writeResponse $ ExtraResponse $ GetContractMetadataResponse LigoGetContractMetadataResponse
-          { seqLigoGetContractMetadataResponse = 0
-          , request_seqLigoGetContractMetadataResponse =
-              seqLigoGetContractMetadataRequest
-          , successLigoGetContractMetadataResponse = True
-          , contractMetadataLigoGetContractMetadataResponse = ContractMetadata
-              { parameterMichelsonTypeContractMetadata =
-                  JsonFromBuildable (T.convertParamNotes paramNotes)
-              , storageMichelsonTypeContractMetadata =
-                  JsonFromBuildable (T.mkUType $ T.cStoreNotes contract)
-              , michelsonEntrypointsContractMetadata =
-                  JsonFromBuildable <$> michelsonEntrypoints
-              }
-          }
+      lServerState <- getServerState
+      logMessage [int||
+        Got metadata for contract #{program}:
+          Server state: #{lServerState}
+          Michelson entrypoints: #{keys michelsonEntrypoints}
+        |]
+
+      writeResponse $ ExtraResponse $ GetContractMetadataResponse LigoGetContractMetadataResponse
+        { seqLigoGetContractMetadataResponse = 0
+        , request_seqLigoGetContractMetadataResponse =
+            seqLigoGetContractMetadataRequest
+        , successLigoGetContractMetadataResponse = True
+        , contractMetadataLigoGetContractMetadataResponse = ContractMetadata
+            { parameterMichelsonTypeContractMetadata =
+                JsonFromBuildable (T.convertParamNotes paramNotes)
+            , storageMichelsonTypeContractMetadata =
+                JsonFromBuildable (T.mkUType $ T.cStoreNotes contract)
+            , michelsonEntrypointsContractMetadata =
+                JsonFromBuildable <$> michelsonEntrypoints
+            }
+        }
 
 handleValidateValue :: LigoValidateValueRequest -> RIO LIGO ()
 handleValidateValue LigoValidateValueRequest {..} = do
@@ -288,21 +343,17 @@ handleValidateValue LigoValidateValueRequest {..} = do
             michelsonEntrypoint
         } = argumentsLigoValidateValueRequest
 
-  lServerStateVar <- asks _rcLSState
-  lServerState <- readTVarIO lServerStateVar >>= \case
-    Nothing -> error "Language server state is not initialized"
-    Just st -> pure st
-  SomeContract (contract@Contract{} :: Contract param storage) <-
-    pure $ lsContract lServerState
+  SomeContract (contract@Contract{} :: Contract param storage) <- getContract
+  program <- getProgram
 
   parseRes <- runExceptT case category of
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint id $
         \(_ :: T.Notes arg) _ ->
-        void $ parseValue @arg (lsProgram lServerState) category (toText value) valueType
+        void $ parseValue @arg program category (toText value) valueType
 
     "storage" ->
-      void $ parseValue @storage (lsProgram lServerState) category (toText value) valueType
+      void $ parseValue @storage program category (toText value) valueType
 
     other -> error [int||Unexpected category #{other}|]
 
@@ -319,6 +370,7 @@ initDebuggerSession
 initDebuggerSession LigoLaunchRequestArguments {..} = do
   storageT <- toText <$> checkArgument "storage" storageLigoLaunchRequestArguments
   paramT <- toText <$> checkArgument "parameter" parameterLigoLaunchRequestArguments
+  entrypoint <- checkArgument "entrypoint" entrypointLigoLaunchRequestArguments
 
   let splitValueAndType value what = do
         if '@' `elem` value then do
@@ -333,17 +385,17 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   (stor, storageType) <- splitValueAndType storageT ("storage" :: Text)
   (parameter, parameterType) <- splitValueAndType paramT ("parameter" :: Text)
 
-  lServerState <- asks _rcLSState >>= readTVarIO >>= \case
+  asks _rcLSState >>= readTVarIO >>= \case
     Nothing -> throwDAPError "Language server state is not initialized"
-    Just s -> return s
-  let program = lsProgram lServerState
-  let entrypoint = lsEntrypoint lServerState
+    Just _ -> pass
+
+  program <- lift getProgram
 
   -- This do is purely for scoping, otherwise GHC trips up:
   --     • Couldn't match type ‘a0’ with ‘()’
   --         ‘a0’ is untouchable
   do
-    SomeContract contract@Contract{} <- pure $ lsContract lServerState
+    SomeContract contract@Contract{} <- lift getContract
 
     withMichelsonEntrypoint contract michelsonEntrypointLigoLaunchRequestArguments
       (pretty :: Text -> DAP.Message)
@@ -354,12 +406,14 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         storage <- parseValue program "storage" stor storageType
           & withExceptT (pretty :: Text -> DAP.Message)
 
+        allLocs <- lift getAllLocs
+
         let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv
             ds = DebuggerState
               { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>
-                  groupSourceLocations (toList $ lsAllLocs lServerState)
+                  groupSourceLocations (toList allLocs)
               }
         pure $ DAPSessionState ds mempty mempty program
 

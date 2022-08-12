@@ -5,10 +5,22 @@ import {
 	GetContractMetadataResponse,
 	InitializeLoggerArguments,
 	InitializeLoggerResponse,
+	SetProgramPathArguments,
+	SetProgramPathResponse,
+	ValidateEntrypointArguments,
+	ValidateEntrypointResponse,
 	ValidateValueArguments,
 	ValidateValueResponse
 } from "./messages";
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
+
+type LigoSpecificRequest
+	= 'initializeLogger'
+	| 'setProgramPath'
+	| 'validateEntrypoint'
+	| 'getContractMetadata'
+	| 'validateValue'
+	;
 
 export default class LigoProtocolClient extends ProtocolClient {
 	socket: Net.Socket
@@ -20,9 +32,11 @@ export default class LigoProtocolClient extends ProtocolClient {
 	}
 
 	sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
+	sendMsg(command: 'setProgramPath', args: SetProgramPathArguments): Promise<SetProgramPathResponse>
+	sendMsg(command: 'validateEntrypoint', args: ValidateEntrypointArguments): Promise<ValidateEntrypointResponse>
 	sendMsg(command: 'getContractMetadata', args: GetContractMetadataArguments): Promise<GetContractMetadataResponse>
 	sendMsg(command: 'validateValue', args: ValidateValueArguments): Promise<ValidateValueResponse>
-	sendMsg(command: 'initializeLogger' | 'getContractMetadata' | 'validateValue', args: any): Promise<DebugProtocol.Response> {
+	sendMsg(command: LigoSpecificRequest, args: any): Promise<DebugProtocol.Response> {
 		return this.send(command, args)
 	}
 }

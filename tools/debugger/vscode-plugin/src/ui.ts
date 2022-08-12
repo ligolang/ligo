@@ -108,6 +108,67 @@ export const createRememberingQuickPick =
 
 export type ValueType = "LIGO" | "Michelson";
 
+export const getEntrypoint = (
+		context: ExtensionContext,
+		validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
+		getContractMetadata: (entrypoint: string) => Promise<void>,
+		debuggedContract: Ref<DebuggedContractSession>
+	) => async (_config: any): Promise<Maybe<String>> => {
+
+		interface State {
+			pickedEntrypoint: string;
+		}
+
+		async function askForEntrypoint(input: MultiStepInput, state: Partial<State>) {
+			if (!isDefined(debuggedContract.ref.entrypoints)) {
+				throw new Error("Internal error: entrypoints must be defined");
+			}
+
+			const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
+			const entrypoints: QuickPickItem[] = currentFilePath && debuggedContract.ref.entrypoints.map(label => ({ label }));
+
+			const currentKey: Maybe<string> = currentFilePath && "quickpick_entrypoint_" + currentFilePath;
+			const previousVal: Maybe<QuickPickItem> = currentKey && context.workspaceState.get<QuickPickItem>(currentKey);
+
+			if (entrypoints.length <= 1) {
+				state.pickedEntrypoint = entrypoints.length == 1 ? entrypoints[0].label : undefined;
+				return;
+			}
+
+			const pick: QuickPickItem = await input.showQuickPick({
+				totalSteps: 1,
+				items: entrypoints,
+				activeItem: previousVal,
+				placeholder: "Please, choose entrypoint"
+			});
+
+			const validateResult = await validateEntrypoint(pick.label);
+			if (validateResult) {
+				vscode.window.showWarningMessage(validateResult);
+				input.doNotRecordStep();
+				return (input: MultiStepInput) => askForEntrypoint(input, state);
+			} else {
+				if (isDefined(currentKey)) {
+					context.workspaceState.update(currentKey, pick);
+				}
+
+				state.pickedEntrypoint = pick.label;
+			}
+		}
+
+		async function collect() {
+			let state: Partial<State> = {};
+			await MultiStepInput.run((input: MultiStepInput) => askForEntrypoint(input, state));
+			return state as State;
+		}
+
+		const pickedEntrypoint: Maybe<string> = (await collect()).pickedEntrypoint;
+		if (isDefined(pickedEntrypoint)) {
+			await getContractMetadata(pickedEntrypoint);
+			return pickedEntrypoint;
+		}
+}
+
 export const getParameterOrStorage = (
 		context: ExtensionContext,
 		validateInput: (inputType: InputBoxType, valueType: ValueType) => (value: string) => Promise<Maybe<string>>,

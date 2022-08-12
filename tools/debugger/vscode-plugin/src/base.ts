@@ -17,6 +17,10 @@ export function isDefined<T>(x: T | undefined | null): x is T {
 	return x !== null && x !== undefined
 }
 
+export function isCommand(str: Maybe<string>): boolean {
+	return isDefined(str) ? /^\$\{command:.*\}$/.test(str) : false;
+}
+
 export interface MichelsonEntrypoints {
 	[entrypoint: string]: string
 }
@@ -30,6 +34,7 @@ export interface ContractMetadata {
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>
 
 export interface DebuggedContractSession {
+	entrypoints?: [string]
 	pickedMichelsonEntrypoint?: string
 	logDir?: string
 	contractMetadata?: ContractMetadata

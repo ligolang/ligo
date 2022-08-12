@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
+import { isCommand } from './base'
 
 function createLogDir(logDir: string): void | undefined {
 	if (!fs.existsSync(logDir)) {
@@ -12,9 +13,9 @@ function createLogDir(logDir: string): void | undefined {
 }
 
 export interface AfterConfigResolvedInfo {
-		file: string
-		, entrypoint: string | null
-	, logDir: string
+	file: string,
+	entrypoint?: string,
+	logDir: string
 }
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -36,6 +37,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
+				config.entrypoint = '${command:AskForEntrypoint}'
 				config.parameter = "${command:AskForParameter}"
 				config.storage = "${command:AskForStorage}"
 			}
@@ -61,9 +63,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 
 			await this.afterConfigResolved(
 				{
-					file: currentFilePath
-					, entrypoint: config.entrypoint
-					, logDir
+					file: currentFilePath,
+					entrypoint: !isCommand(config.entrypoint) ? config.entrypoint : undefined,
+					logDir
 				}
 			)
 		}
