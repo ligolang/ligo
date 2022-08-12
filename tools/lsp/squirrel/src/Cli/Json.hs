@@ -32,6 +32,7 @@ import Control.Applicative (Alternative ((<|>)), liftA2)
 import Control.Lens.Operators ((??))
 import Control.Monad.State
 import Data.Aeson.Types hiding (Error)
+import Data.Aeson.KeyMap qualified as KM
 import Data.Char (isUpper, toLower)
 import Data.Foldable (asum, toList)
 import Data.Function
@@ -466,7 +467,7 @@ instance FromJSON LigoTypeContentInner where
           pure $ LTCRecord parsed
       , do -- parse record
           parsed <- sequence $ parseJSON <$> o
-          pure $ LTCRecord parsed
+          pure $ LTCRecord $ KM.toHashMapText parsed
       , do
           _ltciParameters <- o .: "parameters"
           _ltciLanguage <- o .: "language"
@@ -526,7 +527,7 @@ instance ToJSON LigoByte where
 
 parseOrigVar :: [Value] -> Parser (Maybe Text)
 parseOrigVar = \case
-  [_, Object (HM.toList -> [("name", name)])] -> do
+  [_, Object (KM.toList -> [("name", name)])] -> do
     name' <- parseJSON @Text name
     return $ Just name'
   _ -> return Nothing

@@ -133,7 +133,6 @@ library
     , lens
     , lsp-types
     , mtl
-    , pretty
     , process
     , regex-tdfa
     , template-haskell
@@ -215,9 +214,7 @@ executable ligo-squirrel
     , duplo
     , filepath
     , focus
-    , ghc-prim
     , hashable
-    , interpolate
     , katip
     , lens
     , ligo-squirrel
@@ -227,7 +224,6 @@ executable ligo-squirrel
     , stm
     , stm-containers
     , text
-    , transformers
     , unliftio
     , unliftio-core
     , unordered-containers
@@ -283,7 +279,6 @@ executable ligo-vet
   build-depends:
       base
     , duplo
-    , ghc-prim
     , ligo-squirrel
     , mtl
     , optparse-applicative
@@ -372,9 +367,7 @@ test-suite integration-test
     , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
@@ -460,9 +453,7 @@ test-suite ligo-contracts-test
     , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
@@ -567,9 +558,7 @@ test-suite lsp-handlers-test
     , base
     , data-default
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
@@ -669,9 +658,7 @@ test-suite lsp-test
     , algebraic-graphs
     , base
     , directory
-    , duplo
     , filepath
-    , ghc-prim
     , hspec-expectations
     , lens
     , ligo-squirrel
