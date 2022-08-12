@@ -23,7 +23,7 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
   `Yes -> contract_file
 | `No | `Unknown ->
   (match source_file with
-    Some source_file -> 
+    Some source_file ->
       let d = Filename.dirname source_file in
       let s = Filename.concat d contract_file in
       (match Sys.file_exists s with
@@ -635,6 +635,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     *)
     | ( C_TEST_FAILWITH , [ v ]) -> fail @@ Errors.meta_lang_failwith loc calltrace v
     | ( C_TEST_FAILWITH , _ ) -> fail @@ error_type
+    | ( C_TEST_TRY_WITH , [ V_Func_val { arg_binder = _ ; body = try_body ; env = try_env ; rec_name = _ ; orig_lambda = _ } ; V_Func_val { arg_binder = _ ; body = catch_body ; env = catch_env ; rec_name = _ ; orig_lambda = _} ]) ->
+       try_or (eval_ligo try_body (loc :: calltrace) try_env)
+         (eval_ligo catch_body (loc :: calltrace) catch_env)
+    | ( C_TEST_TRY_WITH , _ ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ; mutation ]) ->
       let>> mod_res = Get_mod_res () in
       let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
@@ -752,55 +756,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          let* v = eval_ligo e calltrace env in
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATE_VALUE , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATION_TEST , [ v; tester ] ) -> (
-      let* () = check_value v in
-      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-      let l = Mutation.mutate_all_value ~raise loc v value_ty in
-      let aux : AST.expression * 'a -> (value * 'a) option t = fun (e, m) ->
-        let* v = eval_ligo e calltrace env in
-        let r = match tester with
-          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-            let* AST.{ type1 = in_ty ; type2 = _ } = monad_option (Errors.generic_error loc "Expected function type") @@
-                             AST.get_t_arrow orig_lambda.type_expression in
-            let f_env' = Env.extend env arg_binder (in_ty, v) in
-            eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
-            let* AST.{ type1 = in_ty ; type2 = _ } = monad_option (Errors.generic_error loc "Expected function type") @@
-                              AST.get_t_arrow orig_lambda.type_expression in
-            let f_env' = Env.extend env arg_binder (in_ty, v) in
-            let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
-            eval_ligo body (loc :: calltrace) f_env''
-          | _ -> raise.error @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
-        in
-        try_or (let* v = r in return (Some (v, m))) (return None)
-      in
-      let* r = iter_while aux l in
-      match r with
-       | None -> return (v_none ())
-       | Some (v, m) -> return (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])))
-    )
-    | ( C_TEST_MUTATION_TEST , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATION_TEST_ALL , [ v; tester ] ) ->
-      let* () = check_value v in
-      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-      let l = Mutation.mutate_all_value ~raise loc v value_ty in
-      let* mutations = bind_map_list (fun (e, m) ->
-        let* v = eval_ligo e calltrace env in
-        let r =  match tester with
-          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
-             let f_env' = Env.extend env arg_binder (in_ty, v) in
-             eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
-             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
-             let f_env' = Env.extend env arg_binder (in_ty, v) in
-             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
-             eval_ligo body (loc :: calltrace) f_env''
-          | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
-        Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
-      let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt mutations in
-      return (V_List r)
-    | ( C_TEST_MUTATION_TEST_ALL , _  ) -> fail @@ error_type
     | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _) as mutation)) ] ) ->
       let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
       let file_contents = Fuzz.Ast_aggregated.buffer_of_mutation mutation in
@@ -1076,6 +1031,8 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
     | E_lambda {binder; result;} ->
+      let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
     | E_type_abstraction {type_binder=_ ; result} -> (
       eval_ligo (result) calltrace env
@@ -1202,6 +1159,8 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" AST.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
+      let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
+      let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
       return @@ V_Func_val { rec_name = Some fun_name ;
                              orig_lambda = term ;
                              arg_binder = lambda.binder.var ;

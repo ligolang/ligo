@@ -482,8 +482,6 @@ module Constant_types = struct
                     of_type C_TEST_GENERATOR_EVAL O.(for_all "a" @@ fun a -> t_gen a ^-> a);
                     of_type C_TEST_MUTATE_CONTRACT O.(t_nat () ^-> t_ast_contract () ^-> t_option (t_pair (t_ast_contract ()) (t_mutation ())));
                     of_type C_TEST_MUTATE_VALUE O.(for_all "a" @@ fun a -> t_nat () ^-> a ^-> t_option (t_pair a (t_mutation ())));
-                    of_type C_TEST_MUTATION_TEST O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> a ^-> (a ^-> b) ^-> t_option (t_pair b (t_mutation ())));
-                    of_type C_TEST_MUTATION_TEST_ALL O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (a ^-> (a ^-> b) ^-> t_list (t_pair b (t_mutation ()))));
                     of_type C_TEST_SAVE_MUTATION O.(t_string () ^-> t_mutation () ^-> t_option (t_string ()));
                     of_type C_TEST_ADD_ACCOUNT O.(t_string () ^-> t_key () ^-> t_unit ());
                     of_type C_TEST_NEW_ACCOUNT O.(t_unit () ^-> t_pair (t_string ()) (t_key ()));
@@ -514,6 +512,7 @@ module Constant_types = struct
                     of_type C_TEST_READ_CONTRACT_FROM_FILE O.(t_string () ^-> t_michelson_contract ());
                     of_type C_TEST_SIGN O.(t_string () ^-> t_bytes () ^-> t_signature ());
                     of_type C_TEST_GET_ENTRYPOINT O.(for_all "a" @@ fun a -> t_contract a ^-> t_option (t_string ()));
+                    of_type C_TEST_TRY_WITH O.(for_all "a" @@ fun a -> (t_unit () ^-> a) ^-> (t_unit () ^-> a) ^-> a);
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
                     of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));

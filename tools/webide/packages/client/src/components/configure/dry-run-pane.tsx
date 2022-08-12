@@ -21,6 +21,9 @@ export const DryRunPaneComponent = () => {
   const storage = useSelector<AppState, DryRunState['storage']>(
     state => state.dryRun && state.dryRun.storage
   );
+  let protocol = useSelector<AppState, DryRunState['protocol']>(
+    state => state.dryRun && state.dryRun.protocol
+  );
 
   return (
     <Container>
@@ -28,11 +31,14 @@ export const DryRunPaneComponent = () => {
         <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Jakarta}
-          onChange={ev =>
-            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          value={protocol}
+          onChange={selectedProtocol => {
+            console.log("f")
+            protocol=selectedProtocol
+            dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
           <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <AccessFunctionLabel htmlFor="entrypoint"></AccessFunctionLabel>
         <Input

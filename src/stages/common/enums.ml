@@ -183,8 +183,6 @@ type constant' =
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
   | C_TEST_MUTATE_CONTRACT [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
-  | C_TEST_MUTATION_TEST [@only_interpreter]
-  | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
   | C_TEST_SAVE_MUTATION [@only_interpreter]
   | C_TEST_RUN [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
@@ -219,6 +217,7 @@ type constant' =
   | C_TEST_SIGN [@only_interpreter]
   | C_TEST_GET_ENTRYPOINT [@only_interpreter]
   | C_TEST_LAST_EVENTS [@only_interpreter]
+  | C_TEST_TRY_WITH [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
