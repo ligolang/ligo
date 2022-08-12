@@ -22,10 +22,8 @@ let list_declarations (raw_options : Raw_options.t) source_file display_format (
       fun ~raise ->
       let syntax = Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file) in
       let options  = Compiler_options.make ~raw_options ~syntax () in
-      let meta     = Compile.Of_source.extract_meta syntax in
-      let c_unit,_ = Compile.Utils.to_c_unit ~raise ~options:options.frontend ~meta source_file in
-      let core_prg = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
-      let declarations  = Compile.Of_core.list_declarations core_prg in
+      let prg = Build.type_contract ~raise ~options source_file in
+      let declarations  = Compile.Of_typed.list_declarations prg in
       (source_file, declarations)
 
 let get_scope (raw_options : Raw_options.t) source_file display_format () =
