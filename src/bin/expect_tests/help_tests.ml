@@ -504,4 +504,35 @@ let%expect_test _ =
       [-help]                            print this help text and exit
                                          (alias: -?)
 
-    (src/command.ml.Exit_called (status 0)) |} ] ;
+    (src/command.ml.Exit_called (status 0)) |} ]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "list-declarations" ; "-help" ] ;
+  [%expect {|
+    list all the top-level declarations.
+
+      ligo info list-declarations SOURCE_FILE
+
+    This sub-command prints a list of all top-level declarations (not including types and modules).
+
+    === flags ===
+
+      [--display-format FORMAT]  the format that will be used by the CLI. Available
+                                 formats are 'dev', 'json', and 'human-readable'
+                                 (default). When human-readable lacks details (we
+                                 are still tweaking it), please contact us and use
+                                 another format in the meanwhile.
+                                 (alias: --format)
+      [--only-ep]                Only display declarations that have the type of an
+                                 entrypoint
+      [--syntax SYNTAX]          the syntax that will be used. Currently supported
+                                 syntaxes are "pascaligo", "cameligo", "reasonligo"
+                                 and "jsligo". By default, the syntax is guessed
+                                 from the extension (.ligo, .mligo, .religo, and
+                                 .jsligo respectively).
+                                 (alias: -s)
+      [-help]                    print this help text and exit
+                                 (alias: -?)
+
+    (src/command.ml.Exit_called (status 0)) |} ]
+  
