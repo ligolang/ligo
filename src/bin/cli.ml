@@ -799,15 +799,14 @@ let login =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
-
-let rec daemon = fun () ->
+let daemon = fun () ->
   let summary   = "launch LIGO dameon" in
   let readme () = "XXXXXX" in
   let f _ () =
-    return_result ~return @@ fun () -> Ldaemon.main ~reset_return ~run () in
+    return_result ~return @@ fun () -> Ldaemon.main () in
   Command.basic ~summary ~readme (f <$> ligo_registry)
 
-and main = fun () -> Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
+let main = fun () -> Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
     "transpile", transpile_group;
@@ -825,7 +824,7 @@ and main = fun () -> Command.group ~preserve_subcommand_order:() ~summary:"The L
     "daemon"   , daemon ();
   ]
 
-and run ?argv () =
+let run ?argv () =
   Command.run ~version:Version.version ?argv (main ());
   (* Effect to error code *)
   match !return with

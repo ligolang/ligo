@@ -53,7 +53,7 @@
  (name ldaemon)
  (instrumentation
   (backend bisect_ppx))
- (libraries parse-argv ligo_api)
+ (libraries parse-argv ligo_api cli_helpers)
  (preprocess (pps ppx_deriving_yojson))
  (modules ldaemon))
 
