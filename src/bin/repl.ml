@@ -71,7 +71,7 @@ let repl_result_jsonformat = function
      let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
      `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Defined_values_typed module' ->
-     let func_declarations  = Ligo_compile.Of_typed.list_declarations module' in
+     let func_declarations  = Ligo_compile.Of_typed.list_declarations false module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
      let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
      let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
