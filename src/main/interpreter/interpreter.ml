@@ -749,55 +749,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          let* v = eval_ligo e calltrace env in
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATE_VALUE , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATION_TEST , [ v; tester ] ) -> (
-      let* () = check_value v in
-      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-      let l = Mutation.mutate_all_value ~raise loc v value_ty in
-      let aux : AST.expression * 'a -> (value * 'a) option t = fun (e, m) ->
-        let* v = eval_ligo e calltrace env in
-        let r = match tester with
-          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-            let* AST.{ type1 = in_ty ; type2 = _ } = monad_option (Errors.generic_error loc "Expected function type") @@
-                             AST.get_t_arrow orig_lambda.type_expression in
-            let f_env' = Env.extend env arg_binder (in_ty, v) in
-            eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
-            let* AST.{ type1 = in_ty ; type2 = _ } = monad_option (Errors.generic_error loc "Expected function type") @@
-                              AST.get_t_arrow orig_lambda.type_expression in
-            let f_env' = Env.extend env arg_binder (in_ty, v) in
-            let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
-            eval_ligo body (loc :: calltrace) f_env''
-          | _ -> raise.error @@ Errors.generic_error loc "Trying to apply on something that is not a function?"
-        in
-        try_or (let* v = r in return (Some (v, m))) (return None)
-      in
-      let* r = iter_while aux l in
-      match r with
-       | None -> return (v_none ())
-       | Some (v, m) -> return (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])))
-    )
-    | ( C_TEST_MUTATION_TEST , _  ) -> fail @@ error_type
-    | ( C_TEST_MUTATION_TEST_ALL , [ v; tester ] ) ->
-      let* () = check_value v in
-      let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-      let l = Mutation.mutate_all_value ~raise loc v value_ty in
-      let* mutations = bind_map_list (fun (e, m) ->
-        let* v = eval_ligo e calltrace env in
-        let r =  match tester with
-          | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
-             let f_env' = Env.extend env arg_binder (in_ty, v) in
-             eval_ligo body (loc :: calltrace) f_env'
-          | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda } ->
-             let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
-             let f_env' = Env.extend env arg_binder (in_ty, v) in
-             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, tester) in
-             eval_ligo body (loc :: calltrace) f_env''
-          | _ -> fail @@ Errors.generic_error loc "Trying to apply on something that is not a function?" in
-        Monad.try_or (let* v = r in return (Some (v, m))) (return None)) l in
-      let r = List.map ~f:(fun (v, m) -> V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ])) @@ List.filter_opt mutations in
-      return (V_List r)
-    | ( C_TEST_MUTATION_TEST_ALL , _  ) -> fail @@ error_type
     | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _) as mutation)) ] ) ->
       let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
       let file_contents = Fuzz.Ast_aggregated.buffer_of_mutation mutation in
