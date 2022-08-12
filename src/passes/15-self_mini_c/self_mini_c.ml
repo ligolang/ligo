@@ -59,6 +59,7 @@ let is_pure_constant : constant' -> bool =
   | C_SAPLING_VERIFY_UPDATE
   | C_OPEN_CHEST
   | C_GLOBAL_CONSTANT (* pure because restricted to PUSH *)
+  | C_EMIT_EVENT
     -> true
   (* unfortunately impure: *)
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
@@ -154,6 +155,8 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_READ_CONTRACT_FROM_FILE
   | C_TEST_SIGN
   | C_TEST_GET_ENTRYPOINT
+  | C_TEST_LAST_EVENTS
+  | C_TEST_TRY_WITH
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

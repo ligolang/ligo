@@ -1076,11 +1076,39 @@ let%expect_test _ =
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     Reasonligo is depreacted, support will be dropped in a few versions.
 
     Reasonligo is depreacted, support will be dropped in a few versions.
 
-    Reasonligo is depreacted, support will be dropped in a few versions. |}]
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1489,6 +1517,14 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
+      7 |   {
+      8 |     const self_contract: contract(int) = Tezos.self ("%default");
+      9 |   }
+
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
     { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
@@ -1616,8 +1652,22 @@ let%expect_test _ =
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_bad_entrypoint_format.ligo" ] ;
   [%expect {|
-An internal error ocurred. Please, contact the developers.
-Michelson_v1_printer.unparse. |}];
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 6, characters 21-22:
+  5 |
+  6 | function main (const p : parameter; const s : storage) : return is
+  7 |   {
+:
+Warning: unused variable "p".
+Hint: replace it by "_p" to prevent this warning.
+
+File "../../test/contracts/negative/self_bad_entrypoint_format.ligo", line 8, characters 52-58:
+  7 |   {
+  8 |     const self_contract: contract(int) = Tezos.self("Toto") ;
+  9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+
+Invalid entrypoint "Toto". One of the following patterns is expected:
+* "%bar" is expected for entrypoint "Bar"
+* "%default" when no entrypoint is used. |}];
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
@@ -1976,22 +2026,13 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "error_self_annotations.mligo" ] ;
   [%expect {|
-    Error(s) occurred while type checking the contract:
-    Ill typed contract:
-      01: { parameter (or (unit %foo) (unit %b)) ;
-      02:   storage unit ;
-      03:   code { DROP
-      04:          /* [] */ ;
-      05:          SELF %a ;
-      06:          PUSH mutez 0 ;
-      07:          UNIT ;
-      08:          TRANSFER_TOKENS ;
-      09:          UNIT ;
-      10:          NIL operation ;
-      11:          DIG 2 ;
-      12:          CONS ;
-      13:          PAIR } }
-    Contract has no entrypoint named a |}]
+    File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 22-26:
+      5 | let main (_,_ : param * unit) : operation list * unit =
+      6 |   let c = (Tezos.self("%a") : unit contract) in
+      7 |   let op = Tezos.transaction () 0mutez c in
+
+    Invalid entrypoint value.
+    The entrypoint value does not match a constructor of the contract parameter. |}]
 
 (* entrypoint check *)
 let%expect_test _ =
@@ -2473,6 +2514,30 @@ let%expect_test _ =
       fun b#857 ->
       (fun s#858 ->
        (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#857 , s#858))))[@inline] in
+    let poly_stub_39 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_38 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_37 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_36 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_35 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_34 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_33 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_32 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_31 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_30 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_29 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_28 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_27 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_26 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_25 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_24 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_23 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_22 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_21 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_20 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_19 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_18 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_17 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_16 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
     let poly_stub_15 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
     let poly_stub_14 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
     let poly_stub_13 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
@@ -2489,60 +2554,61 @@ let%expect_test _ =
     let poly_stub_2 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
     let poly_stub_1 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
     let get_total_voting_power#99 =
-      fun _u#878 -> ((poly_stub_9)@(L(unit)))[@inline] in
-    let set_source#102 = fun _a#884 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _u#878 -> ((poly_stub_39)@(L(unit)))[@inline] in
+    let set_source#102 = fun _a#884 -> ((poly_stub_38)@(L(unit)))[@inline] in
     let get_storage_of_address#103 =
-      fun _a#886 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let get_balance#104 = fun _a#888 -> ((poly_stub_15)@(L(unit)))[@inline] in
-    let print#105 = fun _v#890 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let eprint#106 = fun _v#892 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _a#886 -> ((poly_stub_37)@(L(unit)))[@inline] in
+    let get_balance#104 = fun _a#888 -> ((poly_stub_36)@(L(unit)))[@inline] in
+    let print#105 = fun _v#890 -> ((poly_stub_35)@(L(unit)))[@inline] in
+    let eprint#106 = fun _v#892 -> ((poly_stub_34)@(L(unit)))[@inline] in
     let get_voting_power#107 =
-      fun _kh#894 -> ((poly_stub_9)@(L(unit)))[@inline] in
+      fun _kh#894 -> ((poly_stub_33)@(L(unit)))[@inline] in
     let nth_bootstrap_contract#108 =
-      fun _i#896 -> ((poly_stub_3)@(L(unit)))[@inline] in
+      fun _i#896 -> ((poly_stub_32)@(L(unit)))[@inline] in
     let nth_bootstrap_account#109 =
-      fun _i#898 -> ((poly_stub_3)@(L(unit)))[@inline] in
+      fun _i#898 -> ((poly_stub_31)@(L(unit)))[@inline] in
     let get_bootstrap_account#110 =
-      fun _n#900 -> ((poly_stub_14)@(L(unit)))[@inline] in
+      fun _n#900 -> ((poly_stub_30)@(L(unit)))[@inline] in
     let last_originations#112 =
-      fun _u#904 -> ((poly_stub_13)@(L(unit)))[@inline] in
-    let new_account#114 = fun _u#908 -> ((poly_stub_12)@(L(unit)))[@inline] in
+      fun _u#904 -> ((poly_stub_29)@(L(unit)))[@inline] in
+    let new_account#114 = fun _u#908 -> ((poly_stub_28)@(L(unit)))[@inline] in
     let bake_until_n_cycle_end#116 =
-      fun _n#912 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _n#912 -> ((poly_stub_27)@(L(unit)))[@inline] in
     let register_delegate#118 =
-      fun _kh#916 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _kh#916 -> ((poly_stub_26)@(L(unit)))[@inline] in
     let register_constant#119 =
-      fun _m#918 -> ((poly_stub_11)@(L(unit)))[@inline] in
+      fun _m#918 -> ((poly_stub_25)@(L(unit)))[@inline] in
     let constant_to_michelson_program#121 =
-      fun _s#922 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let restore_context#122 = fun _u#924 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let save_context#123 = fun _u#926 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let drop_context#124 = fun _u#928 -> ((poly_stub_2)@(L(unit)))[@inline] in
+      fun _s#922 -> ((poly_stub_24)@(L(unit)))[@inline] in
+    let restore_context#122 =
+      fun _u#924 -> ((poly_stub_23)@(L(unit)))[@inline] in
+    let save_context#123 = fun _u#926 -> ((poly_stub_22)@(L(unit)))[@inline] in
+    let drop_context#124 = fun _u#928 -> ((poly_stub_21)@(L(unit)))[@inline] in
     let set_baker_policy#127 =
-      fun _bp#934 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let set_baker#128 = fun _a#936 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let size#129 = fun _c#938 -> ((poly_stub_10)@(L(unit)))[@inline] in
+      fun _bp#934 -> ((poly_stub_20)@(L(unit)))[@inline] in
+    let set_baker#128 = fun _a#936 -> ((poly_stub_19)@(L(unit)))[@inline] in
+    let size#129 = fun _c#938 -> ((poly_stub_18)@(L(unit)))[@inline] in
     let read_contract_from_file#131 =
-      fun _fn#942 -> ((poly_stub_2)@(L(unit)))[@inline] in
-    let chr#132 = fun _n#944 -> ((poly_stub_8)@(L(unit)))[@inline] in
+      fun _fn#942 -> ((poly_stub_17)@(L(unit)))[@inline] in
+    let chr#132 = fun _n#944 -> ((poly_stub_16)@(L(unit)))[@inline] in
     let nl#133 = L("NEWLINE")[@inline] in
-    let println#134 = fun _v#947 -> ((poly_stub_2)@(L(unit)))[@inline] in
+    let println#134 = fun _v#947 -> ((poly_stub_15)@(L(unit)))[@inline] in
     let transfer#135 =
-      fun _a#949 -> (fun _s#950 -> (fun _t#951 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+      fun _a#949 -> (fun _s#950 -> (fun _t#951 -> ((poly_stub_14)@(L(unit)))))[@inline] in
     let transfer_exn#136 =
-      fun _a#953 -> (fun _s#954 -> (fun _t#955 -> ((poly_stub_9)@(L(unit)))))[@inline] in
+      fun _a#953 -> (fun _s#954 -> (fun _t#955 -> ((poly_stub_13)@(L(unit)))))[@inline] in
     let reset_state#138 =
-      fun _n#959 -> (fun _l#960 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _n#959 -> (fun _l#960 -> ((poly_stub_12)@(L(unit))))[@inline] in
     let reset_state_at#139 =
-      fun _t#962 -> (fun _n#963 -> (fun _l#964 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+      fun _t#962 -> (fun _n#963 -> (fun _l#964 -> ((poly_stub_11)@(L(unit)))))[@inline] in
     let save_mutation#142 =
-      fun _s#973 -> (fun _m#974 -> ((poly_stub_8)@(L(unit))))[@inline] in
+      fun _s#973 -> (fun _m#974 -> ((poly_stub_10)@(L(unit))))[@inline] in
     let sign#145 =
-      fun _sk#982 -> (fun _d#983 -> ((poly_stub_7)@(L(unit))))[@inline] in
+      fun _sk#982 -> (fun _d#983 -> ((poly_stub_9)@(L(unit))))[@inline] in
     let add_account#146 =
-      fun _s#985 -> (fun _k#986 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _s#985 -> (fun _k#986 -> ((poly_stub_8)@(L(unit))))[@inline] in
     let baker_account#147 =
-      fun _p#988 -> (fun _o#989 -> ((poly_stub_2)@(L(unit))))[@inline] in
+      fun _p#988 -> (fun _o#989 -> ((poly_stub_7)@(L(unit))))[@inline] in
     let create_chest#149 =
       fun _b#994 -> (fun _n#995 -> ((poly_stub_6)@(L(unit))))[@inline] in
     let create_chest_key#150 =

@@ -18,10 +18,10 @@ let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
 
 let call msg = e_constructor "Call" msg
 let mk_time ~(raise:('a,_) Trace.raise) st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
+  match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
   | Some s -> s
   | None -> raise.error @@ test_internal "bad timestamp notation"
-let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
+let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
 let storage st = e_timestamp_z (to_sec st)
 
 let early_call ~raise () =

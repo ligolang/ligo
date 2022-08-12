@@ -6,8 +6,12 @@ let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
+let key_hash_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_bytes s
 let key_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_b58check s
+let key_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option ~raise (Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_bytes_without_validation s
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse signature") @@ Tezos_crypto.Signature.of_b58check s
 
@@ -85,8 +89,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   D_string id *)
   | Prim (_, "key_hash", [], _), String (_, n) ->
      V_Ct (C_key_hash (key_hash_of_string ~raise n))
+  | Prim (_, "key_hash", [], _), Bytes (_, b) ->
+     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) ->
      V_Ct (C_key (key_of_string ~raise n))
+  | Prim (_, "key", [], _), Bytes (_, b) ->
+     V_Ct (C_key (key_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
      V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) ->
@@ -112,6 +120,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       V_Ct (C_address c)
   | Prim (_, "address", [], _), String (_, s) ->
       V_Ct (C_address (contract_of_string ~raise s))
+  | Prim (_, "contract", [_], _), String (_, s) ->
+     let (address, entrypoint) = match String.split s ~on:'%' with
+       | [a ; b] -> (contract_of_string ~raise a, Some b)
+       | [a] -> (contract_of_string ~raise a, None)
+       | _ -> raise.error (untranspilable ty value) in
+      V_Ct (C_contract { address ; entrypoint })
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       V_Ct (C_unit)
   | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->

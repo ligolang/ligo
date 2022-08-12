@@ -61,3 +61,14 @@ let entrypoint_typing ~raise : contract_type -> expression -> bool * contract_ty
     in
     (true, dat, e)
   | _ -> (true,dat,e)
+
+let emit_event_typing ~raise : contract_type -> expression -> bool * contract_type * expression = fun dat e ->
+  match e.expression_content with
+  | E_constant {cons_name=C_EMIT_EVENT ; arguments=tag::_} ->
+    let _ : string = match tag.expression_content with
+      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) tag
+      | _ -> raise.error @@ Errors.emit_tag_not_literal tag.location
+    in
+    (true, dat, e)
+  | _ -> (true,dat,e)
+  

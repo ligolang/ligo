@@ -457,12 +457,14 @@ module Constant_types = struct
                       ];
                     of_type C_LSL O.(t_nat () ^-> t_nat () ^-> t_nat ());
                     of_type C_LSR O.(t_nat () ^-> t_nat () ^-> t_nat ());
+                    of_type C_EMIT_EVENT O.(for_all "a" @@ fun a -> t_string () ^-> a ^-> t_operation ());
                     (* TEST *)
                     of_type C_TEST_COMPILE_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> t_michelson_contract ());
                     of_type C_TEST_SIZE O.(t_michelson_contract () ^-> t_int ());
                     of_type C_TEST_ORIGINATE O.(t_michelson_contract () ^-> t_michelson_code () ^-> t_mutez () ^-> t_address ());
                     of_type C_TEST_BOOTSTRAP_CONTRACT O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> (t_pair a b ^-> t_pair (t_list (t_operation ())) b) ^-> b ^-> t_mutez () ^-> t_unit ());
                     of_type C_TEST_LAST_ORIGINATIONS O.(t_unit () ^-> t_map (t_address ()) (t_list (t_address ())));
+                    of_type C_TEST_LAST_EVENTS O.(for_all "a" @@ fun a -> t_string () ^-> t_list (t_pair (t_address ()) a));
                     of_type C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS O.(for_all "a" @@ fun a -> for_all "b" @@ fun b -> t_nat () ^-> t_typed_address a b);
                     of_type C_TEST_SET_SOURCE O.(t_address () ^-> t_unit ());
                     of_type C_TEST_SET_BAKER O.(t_test_baker_policy () ^-> t_unit ());
@@ -510,6 +512,7 @@ module Constant_types = struct
                     of_type C_TEST_READ_CONTRACT_FROM_FILE O.(t_string () ^-> t_michelson_contract ());
                     of_type C_TEST_SIGN O.(t_string () ^-> t_bytes () ^-> t_signature ());
                     of_type C_TEST_GET_ENTRYPOINT O.(for_all "a" @@ fun a -> t_contract a ^-> t_option (t_string ()));
+                    of_type C_TEST_TRY_WITH O.(for_all "a" @@ fun a -> (t_unit () ^-> a) ^-> (t_unit () ^-> a) ^-> a);
                     (* SAPLING *)
                     of_type C_SAPLING_EMPTY_STATE O.(t_for_all a_var Singleton (t_sapling_state (t_variable a_var ())));
                     of_type C_SAPLING_VERIFY_UPDATE O.(t_for_all a_var Singleton (t_sapling_transaction (t_variable a_var ()) ^-> t_sapling_state (t_variable a_var ()) ^-> t_option (t_pair (t_int ()) (t_sapling_state (t_variable a_var ())))));

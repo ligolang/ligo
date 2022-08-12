@@ -3,8 +3,9 @@ module Var      = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
 
-module Tezos_protocol = Tezos_protocol_013_PtJakart
-module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol = Tezos_protocol_014_PtKathma
+module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
+module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
@@ -46,15 +47,15 @@ module Tezos_eq = struct
 
   let timestamp_add : Z.t -> Z.t-> Z.t =
     fun tz n ->
-      let open Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp in
+      let open Memory_proto_alpha.Protocol.Script_timestamp in
       let t = of_zint tz in
-      add_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
+      add_delta t (Memory_proto_alpha.Protocol.Script_int.of_zint n) |> to_zint
 
   let timestamp_sub : Z.t -> Z.t-> Z.t =
     fun tz n ->
-      let open Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp in
+      let open Memory_proto_alpha.Protocol.Script_timestamp in
       let t = of_zint tz in
-      sub_delta t (Memory_proto_alpha.Protocol.Alpha_context.Script_int.of_zint n) |> to_zint
+      sub_delta t (Memory_proto_alpha.Protocol.Script_int.of_zint n) |> to_zint
 
   let mutez_add : Z.t -> Z.t -> Z.t option = fun x y ->
     let open Memory_proto_alpha.Protocol.Alpha_context.Tez in
@@ -123,7 +124,6 @@ let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
 
 let make_options ~raise ?param ctxt =
   let open Ligo_run.Of_michelson in
-  let open Ligo_interpreter.Types in
   let default = { now = None ;
                   amount = "" ;
                   balance = "" ;
@@ -137,9 +137,9 @@ let make_options ~raise ?param ctxt =
     let source = ctxt.internals.source in
     let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
     let tezos_context = Memory_proto_alpha.Protocol.Alpha_context.Gas.set_limit tezos_context (Memory_proto_alpha.Protocol.Alpha_context.Gas.Arith.integral_exn (Z.of_int 800000)) in
-    let timestamp = Timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
+    let timestamp = Memory_proto_alpha.Protocol.Script_timestamp.of_zint (Z.of_int64 (Proto_alpha_utils.Time.Protocol.to_seconds (Tezos_state.get_timestamp ctxt))) in
     let level =
-      Memory_proto_alpha.Protocol.Alpha_context.((Level.current tezos_context).level |> Raw_level.to_int32
+      Memory_proto_alpha.Protocol.((Alpha_context.Level.current tezos_context).level |> Alpha_context.Raw_level.to_int32
       |> Script_int.of_int32 |> Script_int.abs)
     in
     {
@@ -148,7 +148,7 @@ let make_options ~raise ?param ctxt =
       payer = source ;
       self = source ;
       amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez_exn 100000000L ;
-      chain_id = Memory_proto_alpha.Protocol.Environment.Chain_id.zero;
+      chain_id = Tezos_protocol_env.Chain_id.zero;
       balance = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero ;
       now = timestamp ;
       level ;
@@ -357,7 +357,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
 
 and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
-  let env = make_subst_ast_env_exp ~raise env orig in
+  let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name:name env arg body in
   let lambda = { result=typed_exp' ; binder={var=arg;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in
   let typed_exp' = match name with
@@ -414,22 +414,14 @@ and compile_simple_value ~raise ~options ?ctxt ~loc : Ligo_interpreter.Types.val
   let expr_ty = clean_location_with () compiled_exp.expr_ty in
   { code = expr ; code_ty = expr_ty ; ast_ty = typed_exp.type_expression }
 
-and make_subst_ast_env_exp ~raise env expr =
+and make_subst_ast_env_exp ~raise env =
   let open Ligo_interpreter.Types in
-  let get_fv expr =
-   Self_ast_aggregated.Helpers.Free_variables.expression expr in
-  let rec aux fv acc = function
+  let rec aux acc = function
     | [] -> acc
     | (name, { item ; no_mutation ; inline }) :: tl ->
-       if List.mem fv name ~equal:ValueVar.equal then
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
-         let expr_fv = get_fv expr in
-         let fv = List.remove_element ~compare:ValueVar.compare name fv in
-         let fv = List.dedup_and_sort ~compare:ValueVar.compare (fv @ expr_fv) in
-         aux fv ((name, expr, no_mutation, inline) :: acc) tl
-       else
-         aux fv acc tl in
-  aux (get_fv expr) [] env
+         aux ((name, expr, no_mutation, inline) :: acc) tl in
+  aux [] env
 
 
 let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
@@ -444,7 +436,7 @@ let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code :
   | _ ->
      raise.error (Errors.generic_error Location.generated "Could not parse") in
   let options = make_options ~raise (Some ctxt) in
-  match Ligo_run.Of_michelson.run_expression ~raise ~options func func_ty with
+  match Ligo_run.Of_michelson.run_expression ~raise ~legacy:true ~options func func_ty with
   | Success (ty, value) ->
      Result.return @@ Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ty value
   | Fail f ->
