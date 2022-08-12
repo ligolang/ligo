@@ -2,13 +2,8 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
   fun exp ->
   let module I = Ast_aggregated in
   let module O = Ast_typed in
-  let remove_counter v = if I.ValueVar.is_generated v then v else I.ValueVar.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
   let return expression_content : O.expression =
     { expression_content ; location = exp.location ; type_expression = decompile_type ~raise exp.type_expression } in
-  let binder_remove_counter : ('a -> 'b) -> 'a I.binder -> 'b I.binder = fun f {var; ascr; attributes} ->
-    let ascr = Option.map ~f ascr in
-    let var = remove_counter var in
-    {var; ascr; attributes} in
   match exp.expression_content with
     | E_literal l ->
        return (O.E_literal l)
@@ -16,13 +11,13 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let arguments = List.map ~f:(decompile ~raise) arguments in
        return (O.E_constant { cons_name ; arguments })
     | E_variable v ->
-       return (O.E_variable (remove_counter v))
+       return (O.E_variable v)
     | E_application { lamb ; args } ->
        let args = decompile ~raise args in
        let lamb = decompile ~raise lamb in
        return (O.E_application { lamb ; args })
     | E_lambda { binder ; result } ->
-       let binder = binder_remove_counter (decompile_type ~raise) binder in
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        let result = decompile ~raise result in
        return (O.E_lambda { binder ; result })
     | E_type_abstraction { type_binder ; result } ->
@@ -31,12 +26,12 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
     | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
        let fun_type = decompile_type ~raise fun_type in
        let result = decompile ~raise result in
-       let binder = binder_remove_counter (decompile_type ~raise) binder in
+       let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
        return (O.E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = decompile ~raise rhs in
        let let_result = decompile ~raise let_result in
-       let let_binder = binder_remove_counter (decompile_type ~raise) let_binder in
+       let let_binder = Stage_common.Maps.binder (decompile_type ~raise) let_binder in
        return (O.E_let_in { let_binder ; rhs ; let_result ; attr })
     | E_raw_code { language ; code } ->
        let code = decompile ~raise code in
@@ -54,7 +49,6 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let tv = decompile_type ~raise tv in
        let f { I.constructor ; pattern ; body } =
          let body = decompile ~raise body in
-         let pattern = remove_counter pattern in
          { O.constructor ; pattern ; body } in
        let cases = List.map ~f cases in
        return (O.E_matching { matchee ; cases = Match_variant { cases ; tv } })
@@ -62,7 +56,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let matchee = decompile ~raise matchee in
        let tv = decompile_type ~raise tv in
        let body = decompile ~raise body in
-       let f (b: _ I.binder) = {b with ascr = Option.map ~f:(decompile_type ~raise) (b.ascr) ; var = remove_counter b.var } in
+       let f (b: _ I.binder) = {b with ascr = Option.map ~f:(decompile_type ~raise) (b.ascr) } in
        let fields = I.LMap.map f fields in
        return (O.E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
     (* Record *)
@@ -77,7 +71,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
        let update = decompile ~raise update in
        return (O.E_record_update { record ; path ; update })
    | I.E_assign {binder;expression} ->
-      let binder = binder_remove_counter (decompile_type ~raise) binder in
+      let binder = Stage_common.Maps.binder (decompile_type ~raise) binder in
       let expression = decompile ~raise expression in
       return @@ O.E_assign {binder;expression}
 
