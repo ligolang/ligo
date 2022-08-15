@@ -8,7 +8,7 @@ import LigoDebugConfigurationProvider, { AfterConfigResolvedInfo } from './LigoD
 import LigoProtocolClient from './LigoProtocolClient'
 import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, ValueType } from './ui'
 import LigoServer from './LigoServer'
-import { Ref, DebuggedContractSession, Maybe, ContractMetadata } from './base'
+import { Ref, DebuggedContractSession, Maybe, getCommand, isDefined } from './base'
 
 let server: LigoServer
 let client: LigoProtocolClient
@@ -32,12 +32,29 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	const provider = new LigoDebugConfigurationProvider(
-		async (info: AfterConfigResolvedInfo): Promise<void> => {
+		async (info: AfterConfigResolvedInfo): Promise<string> => {
 			await client.sendMsg('initializeLogger', { file: info.file, logDir: info.logDir })
 			debuggedContractSession.ref.entrypoints =
 				(await client.sendMsg('setProgramPath', { program: info.file })).entrypoints
-			if (info.entrypoint) {
+
+			const entrypointCommand = getCommand(info.entrypoint);
+			if (entrypointCommand === 'AskForEntrypoint') {
+				const entrypoint: string = await vscode.commands.executeCommand('extension.ligo-debugger.requestEntrypoint');
+				if (!isDefined(entrypoint)) {
+					// If user decided to close entrypoint quickpick
+					// then we want to stop debugging session immediately.
+					// We can do this by throwing something (tried to throw `Error`
+					// but I see annoying error message in bottom right corner).
+					//
+					// Note: 1000 - 7 is just a random value. We're throwing it
+					// in order not to trigger `vscode` to show error message.
+					throw 1000 - 7;
+				} else {
+					return entrypoint;
+				}
+			} else {
 				await getContractMetadata(info.entrypoint);
+				return info.entrypoint;
 			}
 		});
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
@@ -83,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
 				context,
 				validateInput,
 				"parameter",
-				"Please input the contract parameter",
+				"Input the contract parameter",
 				"Parameter value",
 				debuggedContractSession)));
 
@@ -92,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
 			getParameterOrStorage(context,
 				validateInput,
 				"storage",
-				"Please input the contract storage",
+				"Input the contract storage",
 				"Storage value",
 				debuggedContractSession)));
 

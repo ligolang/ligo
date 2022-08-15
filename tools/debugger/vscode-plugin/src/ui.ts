@@ -119,7 +119,7 @@ export const getEntrypoint = (
 			pickedEntrypoint: string;
 		}
 
-		async function askForEntrypoint(input: MultiStepInput, state: Partial<State>) {
+		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
 			if (!isDefined(debuggedContract.ref.entrypoints)) {
 				throw new Error("Internal error: entrypoints must be defined");
 			}
@@ -131,7 +131,10 @@ export const getEntrypoint = (
 			const previousVal: Maybe<QuickPickItem> = currentKey && context.workspaceState.get<QuickPickItem>(currentKey);
 
 			if (entrypoints.length <= 1) {
-				state.pickedEntrypoint = entrypoints.length == 1 ? entrypoints[0].label : undefined;
+				if (entrypoints.length === 0) {
+					throw new Error("Given contract doesn't have any entrypoints");
+				}
+				state.ref.pickedEntrypoint = entrypoints[0].label;
 				return;
 			}
 
@@ -139,33 +142,31 @@ export const getEntrypoint = (
 				totalSteps: 1,
 				items: entrypoints,
 				activeItem: previousVal,
-				placeholder: "Please, choose entrypoint"
+				placeholder: "Choose an entrypoint to run"
 			});
 
 			const validateResult = await validateEntrypoint(pick.label);
 			if (validateResult) {
 				vscode.window.showWarningMessage(validateResult);
 				input.doNotRecordStep();
-				return (input: MultiStepInput) => askForEntrypoint(input, state);
+				return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state);
 			} else {
 				if (isDefined(currentKey)) {
 					context.workspaceState.update(currentKey, pick);
 				}
 
-				state.pickedEntrypoint = pick.label;
+				state.ref.pickedEntrypoint = pick.label;
 			}
 		}
 
-		async function collect() {
-			let state: Partial<State> = {};
-			await MultiStepInput.run((input: MultiStepInput) => askForEntrypoint(input, state));
-			return state as State;
-		}
+		const result: State =
+			await MultiStepInput.run(
+				(input: MultiStepInput<State>, state: Ref<Partial<State>>) => askForEntrypoint(input, state)
+			) as State;
 
-		const pickedEntrypoint: Maybe<string> = (await collect()).pickedEntrypoint;
-		if (isDefined(pickedEntrypoint)) {
-			await getContractMetadata(pickedEntrypoint);
-			return pickedEntrypoint;
+		if (isDefined(result.pickedEntrypoint)) {
+			await getContractMetadata(result.pickedEntrypoint);
+			return result.pickedEntrypoint;
 		}
 }
 
@@ -203,7 +204,7 @@ export const getParameterOrStorage = (
 		currentSwitch: SwitchButton;
 	}
 
-	async function askValue(input: MultiStepInput, state: Partial<State>) {
+	async function askValue(input: MultiStepInput<State>, state: Ref<Partial<State>>) {
 		if (!isDefined(debuggedContract.ref.contractMetadata)) {
 			throw new Error("Internal error: metadata is not defined at the moment of user input")
 		}
@@ -246,8 +247,8 @@ export const getParameterOrStorage = (
 			placeholder: placeHolder + placeholderExtra,
 			prompt,
 			value: defaultValue.value,
-			validate: validateInput(inputBoxType, state.currentSwitch.typ),
-			buttons: [state.currentSwitch],
+			validate: validateInput(inputBoxType, state.ref.currentSwitch.typ),
+			buttons: [state.ref.currentSwitch],
 			// Keep input box open if focus is moved out
 			ignoreFocusOut: true
 		});
@@ -261,28 +262,26 @@ export const getParameterOrStorage = (
 		if (pick instanceof SwitchButton) {
 			switch (pick) {
 				case SwitchButton.LigoSwitch:
-					state.currentSwitch = SwitchButton.MichelsonSwitch;
+					state.ref.currentSwitch = SwitchButton.MichelsonSwitch;
 					break;
 				case SwitchButton.MichelsonSwitch:
-					state.currentSwitch = SwitchButton.LigoSwitch;
+					state.ref.currentSwitch = SwitchButton.LigoSwitch;
 					break;
 			}
-			return (input: MultiStepInput) => askValue(input, state);
+			return (input: MultiStepInput<State>, state: Ref<Partial<State>>) => askValue(input, state);
 		} else {
-			state.value = pick;
+			state.ref.value = pick;
 		}
 	}
 
-	async function collectInputs() {
-		const state = { currentSwitch: SwitchButton.LigoSwitch } as Partial<State>;
-		await MultiStepInput.run(input => askValue(input, state));
-		return state as State;
-	}
+	const result: State =
+		await MultiStepInput.run(
+			(input: MultiStepInput<State>, state) => askValue(input, state),
+			{ currentSwitch: SwitchButton.LigoSwitch }
+		) as State;
 
-	const state = await collectInputs();
-
-	if (isDefined(state.value) && isDefined(state.currentSwitch.typ)) {
-		return state.value + '@' + state.currentSwitch.typ;
+	if (isDefined(result.value) && isDefined(result.currentSwitch.typ)) {
+		return result.value + '@' + result.currentSwitch.typ;
 	}
 }
 
@@ -291,7 +290,7 @@ class InputFlowAction {
 	static cancel = new InputFlowAction();
 }
 
-type InputStep = (input: MultiStepInput) => Thenable<InputStep | void>;
+type InputStep<S> = (input: MultiStepInput<S>, state: Ref<Partial<S>>) => Thenable<InputStep<S> | void>;
 
 interface QuickPickParameters<T extends QuickPickItem> {
 	totalSteps: number;
@@ -311,15 +310,19 @@ interface InputBoxParameters {
 	ignoreFocusOut: boolean;
 }
 
-class MultiStepInput {
+class MultiStepInput<S> {
 
-	static async run<T>(start: InputStep) {
+	static async run<S>(start: InputStep<S>, state?: Partial<S>) {
 		const input = new MultiStepInput();
+		if (state) {
+			input.state.ref = state
+		}
 		return input.stepThrough(start);
 	}
 
+	private state: Ref<Partial<S>> = { ref: {} }
 	private current?: vscode.QuickInput;
-	private steps: InputStep[] = [];
+	private steps: InputStep<S>[] = [];
 	private shouldRecordStep: boolean = true;
 
 	public doNotRecordStep() {
@@ -336,8 +339,8 @@ class MultiStepInput {
 		}
 	}
 
-	private async stepThrough<T>(start: InputStep) {
-		let step: InputStep | void = start;
+	private async stepThrough<T>(start: InputStep<S>) {
+		let step: InputStep<S> | void = start;
 		while (step) {
 			this.steps.push(step);
 			if (this.current) {
@@ -345,7 +348,7 @@ class MultiStepInput {
 				this.current.busy = true;
 			}
 			try {
-				step = await step(this);
+				step = await step(this, this.state);
 			} catch (err) {
 				switch (err) {
 					case InputFlowAction.back:
@@ -368,6 +371,8 @@ class MultiStepInput {
 		if (this.current) {
 			this.current.dispose();
 		}
+
+		return this.state.ref as S
 	}
 
 	async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>({ totalSteps, items, activeItem, buttons, placeholder }: P) {

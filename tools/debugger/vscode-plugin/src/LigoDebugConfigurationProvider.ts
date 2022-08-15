@@ -1,6 +1,5 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
-import { isCommand } from './base'
 
 function createLogDir(logDir: string): void | undefined {
 	if (!fs.existsSync(logDir)) {
@@ -14,14 +13,14 @@ function createLogDir(logDir: string): void | undefined {
 
 export interface AfterConfigResolvedInfo {
 	file: string,
-	entrypoint?: string,
+	entrypoint: string,
 	logDir: string
 }
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
-	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>
+	private readonly afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>
 
-	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<void>) {
+	constructor(afterConfigResolved: (AfterConfigResolvedInfo) => Promise<string>) {
 		this.afterConfigResolved = afterConfigResolved
 	}
 
@@ -48,6 +47,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
+		config.entrypoint ??= '${command:AskForEntrypoint}'
 
 		if (config.logDir === '') {
 			config.logDir = undefined
@@ -61,10 +61,10 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				createLogDir(logDir)
 			}
 
-			await this.afterConfigResolved(
+			config.entrypoint = await this.afterConfigResolved(
 				{
 					file: currentFilePath,
-					entrypoint: !isCommand(config.entrypoint) ? config.entrypoint : undefined,
+					entrypoint: config.entrypoint,
 					logDir
 				}
 			)
