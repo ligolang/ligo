@@ -1,0 +1,20 @@
+author: er433
+description: '### New functions for testing framework\n\nThere are new functions for
+  doing mutation testing directly from files, that originate a mutated version of
+  the contract and then gives control to the passed function that can do the test:\n-
+  `Test.originate_from_file_and_mutate : string -> string -> string list -> michelson_program
+  -> tez -> (address auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning_website.sh michelson_contract
+  auto_merge_request.sh release_metadata retrieve_merge_request_info.sh update_distribution_references_with_release.sh
+  versioning_website.sh int -> b) -> (b auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning_website.sh mutation) option`\n-
+  `Test.originate_from_file_and_mutate_all : string -> string -> string list -> michelson_program
+  -> tez -> (address auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning_website.sh michelson_contract
+  auto_merge_request.sh release_metadata retrieve_merge_request_info.sh update_distribution_references_with_release.sh
+  versioning_website.sh int -> b) -> (b auto_merge_request.sh release_metadata retrieve_merge_request_info.sh
+  update_distribution_references_with_release.sh versioning_website.sh mutation) list`'
+merge_request: '1904'
+title: 'Testing framework: add support for mutation in `Test.originate_from_file`
+  functions'
+type: added
