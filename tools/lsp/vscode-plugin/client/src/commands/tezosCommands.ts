@@ -31,20 +31,13 @@ export async function fetchRandomPrivateKey(network: string): Promise<string> {
   return response.text();
 }
 
-export async function executeDeploy(client: LanguageClient) {
+export async function executeDeploy(client: LanguageClient): Promise<void> {
   const code = await executeCompileContract(
     client,
     undefined,
     'json',
     false,
-    'Attempt to compile contract failed with exception:',
   )
-
-  if (!code || code.result.t !== 'Success') {
-    return undefined;
-  }
-
-  const codeRes = code.result.result
 
   const storage = await executeCompileStorage(
     client,
@@ -52,14 +45,7 @@ export async function executeDeploy(client: LanguageClient) {
     'json',
     undefined,
     false,
-    'Attempt to compile storage failed with exception:',
   )
-
-  if (!storage || storage.result.t !== 'Success') {
-    return undefined;
-  }
-
-  const storageRes = storage.result.result
 
   const network = await createRememberingInputBox({
     title: 'Network',
@@ -68,173 +54,131 @@ export async function executeDeploy(client: LanguageClient) {
     defaultValue: 'ithacanet',
   });
 
-  if (!network) {
-    return undefined;
-  }
+  vscode.window.withProgress(
+    {
+      cancellable: false,
+      location: vscode.ProgressLocation.Notification,
+      title: 'Deploying contract. It might take some time\n',
+    },
+    async (progress) => {
+      const TezosNetwork = Tezos(network)
+
+      progress.report({
+        message: 'Generating key',
+      })
+
+      await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
+
+      progress.report({
+        message: 'Key generated, originating contract',
+      })
+
+      const op = await TezosNetwork.contract.originate({
+        code: JSON.parse(code.result),
+        init: JSON.parse(storage.result),
+      });
+
+      // TODO: Sometimes 'better-call.dev' link doesn't lead to the contract info.
+      // (see: https://gitlab.com/serokell/ligo/ligo/-/merge_requests/282#note_921119098)
+      // We need to examine why this happens and to fix it if possible
+      const contract = await op.contract();
+      ligoOutput.appendLine(`The contract was successfully deployed on the ${network} test network`)
+      ligoOutput.appendLine(`View your contract here: https://better-call.dev/${network}/${contract.address}`)
+      ligoOutput.appendLine(`The address of your new contract is: ${contract.address}`)
+      ligoOutput.appendLine(`The initial storage of your contract is: ${storage.result}`)
+      ligoOutput.show()
+
+      return contract.address
+    },
+  )
+}
+
+export async function executeGenerateDeployScript(client: LanguageClient): Promise<void> {
+  const codeJson = await executeCompileContract(
+    client,
+    undefined,
+    'json',
+    false,
+  )
+
+  const storageJson = await executeCompileStorage(
+    client,
+    codeJson.entrypoint,
+    'json',
+    undefined,
+    false,
+  )
+
+  const code = await executeCompileContract(
+    client,
+    codeJson.entrypoint,
+    'text',
+    false,
+  )
+
+  const storage = await executeCompileStorage(
+    client,
+    storageJson.entrypoint,
+    'text',
+    storageJson.storage,
+    false,
+  )
+
+  const network = await createRememberingInputBox({
+    title: 'Network',
+    placeHolder: 'Choose a network to deploy contract to',
+    rememberingKey: 'network',
+    defaultValue: 'ithacanet',
+  });
+
+  const contractInfo = getLastContractPath()
+  const name = basename(contractInfo.path).split('.')[0]
 
   vscode.window.withProgress(
     {
       cancellable: false,
       location: vscode.ProgressLocation.Notification,
-      title: 'Deploying contract. It might take some time',
+      title: 'Generating deploy script. It might take some time',
     },
     async (progress) => {
-      try {
-        const TezosNetwork = Tezos(network)
+      const TezosNetwork = Tezos(network)
+      progress.report({
+        message: 'Generating key',
+      })
 
-        progress.report({
-          message: 'Generating key',
-        })
+      await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
 
-        await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
+      progress.report({
+        message: 'Key generated, calculating burn-cap cost',
+      })
 
-        progress.report({
-          message: 'Key generated, originating contract',
-        })
+      const estimate = await TezosNetwork.estimate.originate({
+        code: JSON.parse(codeJson.result),
+        init: JSON.parse(storageJson.result),
+      });
 
-        const op = await TezosNetwork.contract.originate({
-          code: JSON.parse(codeRes),
-          init: JSON.parse(storageRes),
-        });
-        // TODO: Sometimes 'better-call.dev' link doesn't lead to the contract info.
-        // (see: https://gitlab.com/serokell/ligo/ligo/-/merge_requests/282#note_921119098)
-        // We need to examine why this happens and to fix it if possible
-        const contract = await op.contract();
-        ligoOutput.appendLine(`The contract was successfully deployed on the ${network} test network`)
-        ligoOutput.appendLine(`View your contract here: https://better-call.dev/${network}/${contract.address}`)
-        ligoOutput.appendLine(`The address of your new contract is: ${contract.address}`)
-        ligoOutput.appendLine(`The initial storage of your contract is: ${storage.result}`)
+      const sourceAccount = vscode.workspace.getConfiguration().get<string>('ligoLanguageServer.tezos_source_account');
 
-        return contract.address
-      } catch (ex) {
-        ligoOutput.appendLine(`Contract origination failed with exception: ${ex.message}`)
-      } finally {
-        ligoOutput.show()
-      }
+      ligoOutput.appendLine(`Generated deploy script for '${name}' contract:`);
+      const res = [
+        'tezos-client',
+        'originate',
+        'contract',
+        name,
+        'transferring',
+        '0',
+        'from',
+        sourceAccount,
+        'running',
+        code.result,
+        '--init',
+        storage.result,
+        '--burn-cap',
+        estimate.burnFeeMutez / 1000000,
+      ]
 
-      return undefined;
+      ligoOutput.appendLine(res.join(' '))
+      ligoOutput.show()
     },
   )
-  return undefined
-}
-
-export async function executeGenerateDeployScript(client: LanguageClient) {
-  try {
-    const codeJson = await executeCompileContract(
-      client,
-      undefined,
-      'json',
-      false,
-      'Attempt to compile contract failed with exception:',
-    )
-    if (!codeJson || codeJson.result.t !== 'Success') {
-      return undefined;
-    }
-
-    const codeJsonRes = codeJson.result.result
-
-    const storageJson = await executeCompileStorage(
-      client,
-      codeJson.entrypoint,
-      'json',
-      undefined,
-      false,
-      'Attempt to compile storage failed with exception:',
-    )
-
-    if (!storageJson || (storageJson.result.t !== 'Success')) {
-      return undefined;
-    }
-
-    const storageJsonRes = storageJson.result.result
-
-    const code = await executeCompileContract(
-      client,
-      codeJson.entrypoint,
-      'text',
-      false,
-    )
-
-    if (!code) {
-      return undefined;
-    }
-
-    const storage = await executeCompileStorage(
-      client,
-      storageJson.entrypoint,
-      'text',
-      storageJson.storage,
-      false,
-    )
-
-    if (!storage) {
-      return undefined;
-    }
-
-    const network = await createRememberingInputBox({
-      title: 'Network',
-      placeHolder: 'Choose a network to deploy contract to',
-      rememberingKey: 'network',
-      defaultValue: 'ithacanet',
-    });
-
-    if (!network) {
-      return undefined;
-    }
-    const contractInfo = getLastContractPath()
-    const name = basename(contractInfo.path).split('.')[0]
-
-    vscode.window.withProgress(
-      {
-        cancellable: false,
-        location: vscode.ProgressLocation.Notification,
-        title: 'Generating deploy script. It might take some time',
-      },
-      async (progress) => {
-        const TezosNetwork = Tezos(network)
-        progress.report({
-          message: 'Generating key',
-        })
-
-        await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
-
-        progress.report({
-          message: 'Key generated, calculating burn-cap cost',
-        })
-
-        const estimate = await TezosNetwork.estimate.originate({
-          code: JSON.parse(codeJsonRes),
-          init: JSON.parse(storageJsonRes),
-        });
-
-        const sourceAccount = vscode.workspace.getConfiguration().get<string>('ligoLanguageServer.tezos_source_account');
-
-        ligoOutput.appendLine(`Generated deploy script for '${name}' contract:`);
-        const res = [
-          'tezos-client',
-          'originate',
-          'contract',
-          name,
-          'transferring',
-          '0',
-          'from',
-          sourceAccount,
-          'running',
-          code.result,
-          '--init',
-          storage.result,
-          '--burn-cap',
-          estimate.burnFeeMutez / 1000000,
-        ]
-
-        ligoOutput.appendLine(res.join(' '))
-        ligoOutput.show()
-      },
-    )
-  } catch (ex) {
-    ligoOutput.appendLine(`Contract origination failed with exception: ${ex.message}`)
-    ligoOutput.show()
-  }
-
-  return undefined
 }
