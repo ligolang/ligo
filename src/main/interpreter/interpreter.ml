@@ -639,14 +639,12 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
        try_or (eval_ligo try_body (loc :: calltrace) try_env)
          (eval_ligo catch_body (loc :: calltrace) catch_env)
     | ( C_TEST_TRY_WITH , _ ) -> fail @@ error_type
-    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ]) ->
+    | ( C_TEST_COMPILE_CONTRACT_FROM_FILE, [ V_Ct (C_string contract_file) ; V_Ct (C_string entryp) ; V_List views ; mutation ]) ->
       let>> mod_res = Get_mod_res () in
       let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
-      let views = List.map
-                    ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
-                    views
-      in
-      let>> code = Compile_contract_from_file (contract_file,entryp,views) in
+      let views = List.map ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x) views in
+      let* mutation = monad_option (Errors.generic_error loc "Expected option") @@ LC.get_nat_option mutation in
+      let>> code = Compile_contract_from_file (contract_file,entryp,views,mutation) in
       return @@ code
     | ( C_TEST_COMPILE_CONTRACT_FROM_FILE , _  ) -> fail @@ error_type
     | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN , [ (V_Ct (C_address address)) ; entrypoint ; V_Michelson (Ty_code { code = param ; _ }) ; V_Ct ( C_mutez amt ) ] ) -> (
@@ -696,7 +694,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_BOOTSTRAP_CONTRACT , [ V_Ct (C_mutez z) ; contract ; storage ] ) ->
        let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
        let* storage_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 2 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> code = Compile_contract (loc, contract) in
        let>> storage = Eval (loc, storage, storage_ty) in
        let>> () = Bootstrap_contract ((Z.to_int z), code, storage, contract_ty) in
        return_ct C_unit
@@ -738,6 +736,15 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
         fail @@ error_type
     )
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
+    | ( C_TEST_MUTATE_CONTRACT , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
+      let* () = check_value v in
+      let v = Mutation.mutate_some_contract n main in
+      match v with
+      | None ->
+         return (v_none ())
+      | Some (main, m) ->
+         return @@ (v_some (V_Record (LMap.of_list [ (Label "0", V_Ast_contract { main ; views }) ; (Label "1", V_Mutation m) ]))))
+    | ( C_TEST_MUTATE_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
@@ -797,10 +804,13 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
       return v
     | ( C_TEST_DECOMPILE , _  ) -> fail @@ error_type
     | ( C_TEST_COMPILE_CONTRACT , [ contract ] ) ->
-       let* contract_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 0 in
-       let>> code = Compile_contract (loc, contract, contract_ty) in
+       let>> code = Compile_contract (loc, contract) in
        return @@ code
     | ( C_TEST_COMPILE_CONTRACT , _  ) -> fail @@ error_type
+    | ( C_TEST_COMPILE_AST_CONTRACT , [ contract ] ) ->
+       let>> code = Compile_ast_contract (loc, contract) in
+       return @@ code
+    | ( C_TEST_COMPILE_AST_CONTRACT , _  ) -> fail @@ error_type
     | ( C_TEST_SIZE , [ contract ] ) ->
        let>> size = Get_size contract in
        return @@ size

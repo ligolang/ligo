@@ -33,6 +33,7 @@ type t =
   | Ticket
   | Michelson_program
   | Michelson_contract
+  | Ast_contract
   | Typed_address
   | Mutation
   | Chest
@@ -76,6 +77,7 @@ let to_string = function
   | Ticket               -> "ticket"
   | Michelson_program    -> "michelson_program"
   | Michelson_contract   -> "michelson_contract"
+  | Ast_contract         -> "ast_contract"
   | Typed_address        -> "typed_address"
   | Mutation             -> "mutation"
   | Chest                -> "chest"
@@ -118,6 +120,7 @@ let to_string = function
   | "ticket"               -> Ticket
   | "michelson_program"    -> Michelson_program
   | "michelson_contract"   -> Michelson_contract
+  | "ast_contract"         -> Ast_contract
   | "typed_address"        -> Typed_address
   | "mutation"             -> Mutation
   | "chest"                -> Chest
@@ -162,6 +165,7 @@ let never                = Never
 let ticket               = Ticket
 let michelson_program    = Michelson_program
 let michelson_contract   = Michelson_contract
+let ast_contract         = Ast_contract
 let typed_address        = Typed_address
 let mutation             = Mutation
 let chest                = Chest
@@ -208,6 +212,7 @@ let v_never                : type_variable = TypeVar.of_input_var (to_string Nev
 let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
 let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
 let v_michelson_contract   : type_variable = TypeVar.of_input_var (to_string Michelson_contract)
+let v_ast_contract         : type_variable = TypeVar.of_input_var (to_string Ast_contract)
 let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
 let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
 let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)

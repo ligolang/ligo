@@ -187,7 +187,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     | ((Michelson_pair | Michelson_or),_) ->
       raise.error @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | ((Unit            | Nat                  | Tez             | Bytes    | Bls12_381_g1      | Bls12_381_g2       |
-        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         |
+        Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Ast_contract       |
         Map             | Big_map              | Set                        | Baker_hash        | Pvss_key           |
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Michelson_contract |
         Gen             | String               | Typed_address   | Mutation | List              | Chest              |

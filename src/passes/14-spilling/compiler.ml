@@ -87,12 +87,12 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
         Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
-        Michelson_pair  | Set      | Mutation             |
+        Michelson_pair  | Set      | Mutation             | Ast_contract        |
         List            | External _ | Gen), [])
         -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((             Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
-      String                   | Chest_opening_result |
+      String       | Gen       | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
       Baker_hash   | Pvss_key  | Michelson_contract   |
@@ -101,8 +101,8 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key | Gen                  |
-      Typed_address | Mutation  | Bytes                |
+      Never        | Chest_key | Ast_contract         |
+      Bytes        | Mutation  | Typed_address        |
       List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t)
   )
   | T_sum _ when Option.is_some (AST.get_t_bool t) ->
