@@ -5,21 +5,60 @@ import { importKey } from '@taquito/signer';
 
 import fetch from 'node-fetch';
 import { basename } from 'path';
-import { createRememberingInputBox } from '../ui';
-import { executeCompileContract, executeCompileStorage } from './ligoCommands';
+import { createQuickPickBox } from '../ui';
+import {
+  CompileContractResult, CompileStorageResult, executeCompileContract, executeCompileStorage,
+} from './ligoCommands';
 import { getLastContractPath, ligoOutput } from './common';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
+const currentlyActiveProtocol = 'jakartanet'
 const Tezos = (network: string) => {
   switch (network) {
     case 'mainnet':
       return new TezosToolkit('https://mainnet.api.tez.ie');
-    case 'ithacanet':
-      return new TezosToolkit('https://ithacanet.ecadinfra.com');
+    case currentlyActiveProtocol:
+      return new TezosToolkit(`https://${currentlyActiveProtocol}.ecadinfra.com`);
     default:
       vscode.window.showWarningMessage(`Currently extension does not support deployment on ${network} testnet`)
       return new TezosToolkit('empty');
   }
+}
+
+async function askForNetwork(): Promise<string> {
+  return createQuickPickBox(
+    [currentlyActiveProtocol],
+    'Network',
+    'Choose a network to deploy contract to',
+  );
+}
+
+type ContractAndStorage = {
+  code: CompileContractResult,
+  storage: CompileStorageResult
+}
+
+async function askForContractAndStorage(
+  client,
+  format,
+  prevStorage = undefined,
+): Promise<ContractAndStorage> {
+  const code = await executeCompileContract(
+    client,
+    undefined,
+    format,
+    false,
+  )
+
+  const storage = await executeCompileStorage(
+    client,
+    code.entrypoint,
+    format,
+    prevStorage,
+    false,
+  )
+
+  return { code, storage }
 }
 
 export async function fetchRandomPrivateKey(network: string): Promise<string> {
@@ -32,27 +71,8 @@ export async function fetchRandomPrivateKey(network: string): Promise<string> {
 }
 
 export async function executeDeploy(client: LanguageClient): Promise<void> {
-  const code = await executeCompileContract(
-    client,
-    undefined,
-    'json',
-    false,
-  )
-
-  const storage = await executeCompileStorage(
-    client,
-    code.entrypoint,
-    'json',
-    undefined,
-    false,
-  )
-
-  const network = await createRememberingInputBox({
-    title: 'Network',
-    placeHolder: 'Choose a network to deploy contract to',
-    rememberingKey: 'network',
-    defaultValue: 'ithacanet',
-  });
+  const { code, storage } = await askForContractAndStorage(client, 'json')
+  const network = await askForNetwork()
 
   vscode.window.withProgress(
     {
@@ -94,42 +114,10 @@ export async function executeDeploy(client: LanguageClient): Promise<void> {
 }
 
 export async function executeGenerateDeployScript(client: LanguageClient): Promise<void> {
-  const codeJson = await executeCompileContract(
-    client,
-    undefined,
-    'json',
-    false,
-  )
+  const { code: codeJson, storage: storageJson } = await askForContractAndStorage(client, 'json')
+  const { code, storage } = await askForContractAndStorage(client, 'text', storageJson.storage)
 
-  const storageJson = await executeCompileStorage(
-    client,
-    codeJson.entrypoint,
-    'json',
-    undefined,
-    false,
-  )
-
-  const code = await executeCompileContract(
-    client,
-    codeJson.entrypoint,
-    'text',
-    false,
-  )
-
-  const storage = await executeCompileStorage(
-    client,
-    storageJson.entrypoint,
-    'text',
-    storageJson.storage,
-    false,
-  )
-
-  const network = await createRememberingInputBox({
-    title: 'Network',
-    placeHolder: 'Choose a network to deploy contract to',
-    rememberingKey: 'network',
-    defaultValue: 'ithacanet',
-  });
+  const network = await askForNetwork()
 
   const contractInfo = getLastContractPath()
   const name = basename(contractInfo.path).split('.')[0]
@@ -147,10 +135,13 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
       })
 
       await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
-
       progress.report({
         message: 'Key generated, calculating burn-cap cost',
       })
+
+      ligoOutput.appendLine(codeJson.result)
+      ligoOutput.appendLine(storageJson.result)
+      ligoOutput.show()
 
       const estimate = await TezosNetwork.estimate.originate({
         code: JSON.parse(codeJson.result),
