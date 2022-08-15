@@ -8,10 +8,8 @@ module AST.Scope.Fallback
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (^.))
-import Control.Monad.State
-import Control.Monad.Trans.Reader
-import Control.Monad.Writer (Endo (..), Writer, WriterT, execWriter, mapWriterT, runWriterT, tell)
-
+import Control.Monad.RWS.Strict (RWS, ask, evalRWS, get, local, modify, tell, void)
+import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
 import Data.Bool (bool)
 import Data.Foldable (for_)
@@ -64,62 +62,57 @@ toMsg (TreeDoesNotContainName tree range name) =
 
 instance HasLigoClient m => HasScopeForest Fallback m where
   scopeContract _ (FindContract src (SomeLIGO dialect ligo) msgs) = do
-    (sf, (`appEndo` []) -> errs) <-
-        liftIO
-      $ flip runReaderT (HashMap.empty, dialect)
-      $ flip evalStateT Map.empty
-      $ runWriterT
-      $ getEnv ligo
-    let msgs' = map toMsg errs
+    let
+      (sf, (`appEndo` []) -> errs) = evalRWS (getEnv ligo) (HashMap.empty, dialect) Map.empty
+      msgs' = map toMsg errs
     pure $ FindContract src sf (msgs <> msgs')
 
-type ScopeM =
-  StateT (Map DeclRef ScopedDecl)
-  (ReaderT (HashMap Text Range, Lang) IO)
-
-type ScopeM' a = WriterT (Endo [TreeDoesNotContainName]) ScopeM a
+type ScopeM = RWS
+  (HashMap Text Range, Lang)
+  (Endo [TreeDoesNotContainName])
+  (Map DeclRef ScopedDecl)
 
 askInScope :: ScopeM (HashMap Text Range)
-askInScope = fst <$> lift ask
+askInScope = fst <$> ask
 
 askDialect :: ScopeM Lang
-askDialect = snd <$> lift ask
+askDialect = snd <$> ask
 
-mapInScope :: (HashMap Text Range -> HashMap Text Range) -> ScopeM' a -> ScopeM' a
-mapInScope = mapWriterT . mapStateT . local . first
+mapInScope :: (HashMap Text Range -> HashMap Text Range) -> ScopeM a -> ScopeM a
+mapInScope = local . first
 
-insertScope :: ScopedDecl -> ScopeM' DeclRef
+insertScope :: ScopedDecl -> ScopeM DeclRef
 insertScope scopedDecl = do
   let declRef = DeclRef (scopedDecl ^. sdName) (scopedDecl ^. sdOrigin)
   modify (Map.insert declRef scopedDecl)
   pure declRef
 
-withScope :: DeclRef -> ScopeM' a -> ScopeM' a
+withScope :: DeclRef -> ScopeM a -> ScopeM a
 withScope declRef = mapInScope (HashMap.insert (drName declRef) (drRange declRef))
 
-withScopes :: [DeclRef] -> ScopeM' a -> ScopeM' a
+withScopes :: [DeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
 
-insertRef :: Text -> PreprocessedRange -> ScopeM' ()
+insertRef :: Text -> PreprocessedRange -> ScopeM ()
 insertRef name (PreprocessedRange refRange) = do
-  inScope <- lift askInScope
+  inScope <- askInScope
   case HashMap.lookup name inScope of
     Nothing -> pure ()
     Just declRange -> modify $
       Map.adjust (sdRefs %~ (refRange:)) (DeclRef name declRange)
 
-getEnv :: LIGO ParsedInfo -> ScopeM' ScopeForest
+getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv info = do
   trees <- fmap fst <$> walk info
   decls <- get
   let sf = ScopeForest (maybeToList trees) decls
   pure sf
 
-walk :: LIGO ParsedInfo -> ScopeM' (Maybe (ScopeTree, [DeclRef]))
+walk :: LIGO ParsedInfo -> ScopeM (Maybe (ScopeTree, [DeclRef]))
 walk (r :< s) = walk' r s
 
 class HasGo (f :: Data.Kind.Type -> Data.Kind.Type) where
-  walk' :: Product ParsedInfo -> f (LIGO ParsedInfo) -> ScopeM' (Maybe (ScopeTree, [DeclRef]))
+  walk' :: Product ParsedInfo -> f (LIGO ParsedInfo) -> ScopeM (Maybe (ScopeTree, [DeclRef]))
 
 instance HasGo Name where
   walk' r (Name name) =
@@ -207,7 +200,7 @@ instance HasGo Expr where
     UnOp _ child -> Nothing <$ walk child
     Op _ -> pure Nothing
     Record assignments  -> do
-      forM_ assignments $ \case
+      for_ assignments $ \case
         (layer -> Just (Assign _ expr')) -> void (walk expr')
         _ -> pure ()
       pure Nothing
@@ -273,7 +266,7 @@ instance HasGo Expr where
       paramRefs <- scopeParams params typ
       subforest <- fmap (fmap fst) $ do
         void (maybe (pure Nothing) walk typ)
-        forM_ (zip paramRefs params) \(pr, p) ->
+        for_ (zip paramRefs params) \(pr, p) ->
           withScope pr (walk p)
         withScopes paramRefs (walk body)
       pure $ Just ((Set.fromList paramRefs, getRange r) :< maybeToList subforest, [])
@@ -302,17 +295,17 @@ instance HasGo Collection where
     CMap  -> pure Nothing
     CSet  -> pure Nothing
 
+walkTwoFields
+  :: LIGO ParsedInfo
+  -> Maybe (LIGO ParsedInfo)
+  -> ScopeM (Maybe (ScopeTree, [DeclRef]))
+walkTwoFields a b = Nothing <$ (walk a *> maybe (pure ()) (void . walk) b)
+
 instance HasGo TField where
-  walk' _ (TField name mtype) = do
-    void (walk name)
-    maybe (pure ()) (void . walk) mtype
-    pure Nothing
+  walk' _ (TField name mtype) = walkTwoFields name mtype
 
 instance HasGo Variant where
-  walk' _ (Variant name mtype) = do
-    void (walk name)
-    maybe (pure ()) (void . walk) mtype
-    pure Nothing
+  walk' _ (Variant name mtype) = walkTwoFields name mtype
 
 instance HasGo Skeleton.Type where
   walk' _ = \case
@@ -326,10 +319,10 @@ instance HasGo Skeleton.Type where
     TVariable var -> Nothing <$ walk var
     TParen typ -> walk typ
 
-scopeParams :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo)-> ScopeM' [DeclRef]
+scopeParams :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM [DeclRef]
 scopeParams args ty = foldMapM go args
   where
-    go :: LIGO ParsedInfo -> ScopeM' [DeclRef]
+    go :: LIGO ParsedInfo -> ScopeM [DeclRef]
     go node = case node of
       (match -> Just (_, BParameter (layer -> Just (IsParen xs)) _)) ->
         scopeParams [xs] ty
@@ -352,9 +345,26 @@ scopeParams args ty = foldMapM go args
             IsRecordCapture var -> go var
           _ -> pure []
       (match -> Just (r, TVariable (layer -> Just (TypeVariableName name)))) -> do
-        scopedDecl <- lift (mkTypeVariableScope name (getRange r))
+        scopedDecl <- mkTypeVariableScope name (getRange r)
         (:[]) <$> insertScope scopedDecl
       _ -> pure []
+
+walkConstTuple
+  :: Product ParsedInfo
+  -> [LIGO ParsedInfo]
+  -> Maybe (LIGO ParsedInfo)
+  -> [LIGO ParsedInfo]
+  -> ScopeM (Maybe (ScopeTree, [DeclRef]))
+walkConstTuple r names typ vals = do
+  declRefs <- flip wither (zip names vals) \(name, val) ->
+    mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
+      maybe (pure Nothing) \scopedDecl -> do
+        declRef <- insertScope scopedDecl
+        withScope declRef (walk name)
+        pure (Just declRef)
+  maybe (pure ()) (void . walk) typ
+  mapM_ walk vals
+  pure $ Just ((Set.fromList declRefs, getRange r) :< [], declRefs)
 
 instance HasGo Binding where
   walk' r = \case
@@ -393,33 +403,17 @@ instance HasGo Binding where
           paramRefs <- scopeParams params typ
           subforest <- fmap (fmap fst) $ do
             void $ withScope functionRef (walk name)
-            forM_ (zip paramRefs params) \(pr, p) -> do
+            for_ (zip paramRefs params) \(pr, p) -> do
               withScope pr (walk p)
             withScopes (functionRef : paramRefs) (walk body)
           pure $ Just ((Set.singleton functionRef, getRange r) :<
             [(Set.fromList paramRefs, getRange r) :< maybeToList subforest], [functionRef])
 
-    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) -> do
-      declRefs <- flip wither (zip names vals) \(name, val) ->
-        mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
-          maybe (pure Nothing) \scopedDecl -> do
-            declRef <- insertScope scopedDecl
-            withScope declRef (walk name)
-            pure (Just declRef)
-      maybe (pure ()) (void . walk) typ
-      mapM_ walk vals
-      pure $ Just ((Set.fromList declRefs, getRange r) :< [], declRefs)
+    BConst (layer -> Just (IsParen (layer -> Just (IsTuple names)))) typ (Just (layer -> Just (Tuple vals))) ->
+      walkConstTuple r names typ vals
 
-    BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) -> do
-      declRefs <- flip wither (zip names vals) \(name, val) -> do
-        mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
-          maybe (pure Nothing) \scopedDecl -> do
-            declRef <- insertScope scopedDecl
-            withScope declRef (walk name)
-            pure (Just declRef)
-      maybe (pure ()) (void . walk) typ
-      mapM_ walk vals
-      pure $ Just ((Set.fromList declRefs, getRange r) :< [], declRefs)
+    BConst (layer -> Just (IsTuple names)) typ (Just (layer -> Just (Tuple vals))) ->
+      walkConstTuple r names typ vals
 
     BConst pat ty mexpr -> do
       refs <- scopeParams [pat] ty
@@ -430,7 +424,7 @@ instance HasGo Binding where
           ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
 
     BTypeDecl name mparams expr -> do
-      let scopeVariant :: LIGO ParsedInfo -> ScopeM' (Maybe (ScopeTree, [DeclRef]))
+      let scopeVariant :: LIGO ParsedInfo -> ScopeM (Maybe (ScopeTree, [DeclRef]))
           scopeVariant = \case
             (layer -> Just (Variant vname vtype)) ->
               mkDecl (functionScopedDecl [] vname (maybeToList vtype) (Just name) Nothing)
@@ -450,7 +444,7 @@ instance HasGo Binding where
 
           paramRefs <- scopeParams params Nothing
           void (withScope declRef (walk name))
-          forM_ (zip paramRefs params) $ \(pr, p) ->
+          for_ (zip paramRefs params) $ \(pr, p) ->
             withScope pr (walk p)
           (subforest, fromMaybe [] -> subRefs) <-
             fmap unzip $ withScopes (declRef:paramRefs) $ case expr of
@@ -536,7 +530,7 @@ instance HasGo (Sum RawLigoList) where
 processSequence
   :: Set.Set DeclRef
   -> [LIGO ParsedInfo]
-  -> ScopeM' ([ScopeTree], Set.Set DeclRef)
+  -> ScopeM ([ScopeTree], Set.Set DeclRef)
 processSequence prevRefs [] = pure ([], prevRefs)
 processSequence prevRefs (x:xs) = do
   let addToTopLevel :: ScopeTree -> Set.Set DeclRef -> ScopeTree
@@ -568,9 +562,6 @@ loopM
 loopM go = aux
   where
     aux (r :< fs) = go . (r :<) =<< traverse aux fs
-
-tellEndoList :: Monad m => a -> WriterT (Endo [a]) m ()
-tellEndoList = tell . Endo . (<>) . pure
 
 (<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
 a <<&>> f = fmap (fmap f) a
@@ -664,11 +655,8 @@ mkTypeVariableScope name range = do
     , _sdNamespace = Namespace []
     }
 
-mkDecl
-  :: (Alternative f, Monad m)
-  => m (Either e a)
-  -> WriterT (Endo [e]) m (f a)
-mkDecl = either ((empty <$) . tellEndoList) (pure . pure) <=< lift
+mkDecl :: Alternative f => ScopeM (Either TreeDoesNotContainName a) -> ScopeM (f a)
+mkDecl = (either ((empty <$) . tell . Endo . (<>) . pure) (pure . pure) =<<)
 
 select
   :: ( PPableLIGO info
