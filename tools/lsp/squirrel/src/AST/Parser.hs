@@ -69,7 +69,7 @@ loadPreprocessed tempSettings src = do
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(e :: LigoIOException) -> do
-          $(Log.err) [i|#{displayException e}|]
+          $Log.err [i|#{displayException e}|]
           pure (src', [])
         , Handler \(_ :: SomeLigoException) ->
           pure (src', [])

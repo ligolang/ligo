@@ -159,7 +159,7 @@ preload normFp = Log.addNamespace "preload" do
       p <- getPermissions path
       setPermissions path p { writable = False }
     createTemp new = do
-      $(Log.warning) [Log.i|#{fin} not found. Creating temp file: #{new}|]
+      $Log.warning [Log.i|#{fin} not found. Creating temp file: #{new}|]
       -- We make the file read-only so the user is aware that it should not be
       -- changed. Note we can't make fin read-only, since it doesn't exist in
       -- the disk anymore, and also because LSP has no such request.
@@ -206,7 +206,7 @@ loadWithoutScopes :: J.NormalizedFilePath -> RIO ContractInfo
 loadWithoutScopes normFp = Log.addNamespace "loadWithoutScopes" do
   src <- preload normFp
   ligoEnv <- getLigoClientEnv
-  $(Log.debug) [Log.i|Running with path #{_lceClientPath ligoEnv}|]
+  $Log.debug [Log.i|Running with path #{_lceClientPath ligoEnv}|]
   temp <- getTempPath $ takeDirectory $ J.fromNormalizedFilePath normFp
   parsePreprocessed temp src
 
@@ -293,7 +293,7 @@ getInclusionsGraph root normFp = Log.addNamespace "getInclusionsGraph" do
       -- Possibly the graph hasn't been initialized yet or a new file was created.
       Nothing -> do
         let fp = J.fromNormalizedFilePath normFp
-        $(Log.debug) [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
+        $Log.debug [Log.i|Can't find #{fp} in inclusions graph, loading #{root}...|]
         (Includes paths, msgs) <- loadDirectory root rootFileName includes'
 
         let buildGraph = Includes $ G.gmap (\(Arg f _) -> f) paths
@@ -415,25 +415,25 @@ load uri = Log.addNamespace "load" do
       pure result
     | otherwise -> do
       case rootIndex of
-        IndexChoicePending -> $(Log.debug) [Log.i|Indexing directory has not been specified yet.|]
+        IndexChoicePending -> $Log.debug [Log.i|Indexing directory has not been specified yet.|]
         _ -> pure ()
       loadWithoutIndexing
 
 handleLigoFileChanged :: J.NormalizedFilePath -> J.FileChangeType -> RIO ()
 handleLigoFileChanged nfp = \case
   J.FcCreated -> do
-    $(Log.debug) [Log.i|Created #{fp}|]
+    $Log.debug [Log.i|Created #{fp}|]
     void $ forceFetch BestEffort uri
   J.FcChanged -> do
     openDocs <- asks reOpenDocs
     mOpenDoc <- atomically $ StmMap.lookup uri openDocs
     case mOpenDoc of
       Nothing -> do
-        $(Log.debug) [Log.i|Changed #{fp}|]
+        $Log.debug [Log.i|Changed #{fp}|]
         void $ forceFetch BestEffort uri
       _ -> pure ()
   J.FcDeleted -> do
-    $(Log.debug) [Log.i|Deleted #{fp}|]
+    $Log.debug [Log.i|Deleted #{fp}|]
     delete uri
   where
     uri = J.normalizedFilePathToUri nfp

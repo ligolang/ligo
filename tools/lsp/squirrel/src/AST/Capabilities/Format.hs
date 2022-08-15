@@ -31,7 +31,7 @@ formatImpl tempSettings src info = do
   let r@Range{_rFile} = getElem info
   out <- callForFormat tempSettings (Source _rFile (srcIsDirty src) source) `catches`
     [ Handler \(e :: LigoIOException) ->
-      source <$ $(Log.err) [Log.i|#{displayException e}|]
+      source <$ $Log.err [Log.i|#{displayException e}|]
     , Handler \(_ :: SomeLigoException) -> pure source
     ]
   pure $ J.List [J.TextEdit (toLspRange r) out]

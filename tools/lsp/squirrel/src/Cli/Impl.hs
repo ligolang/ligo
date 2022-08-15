@@ -448,7 +448,7 @@ getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
   mbVersion <- try getLigoVersionRaw
   case mbVersion of
     Left (SomeException e) -> do
-      $(Log.err) [i|Couldn't get LIGO version with: #{e}|]
+      $Log.err [i|Couldn't get LIGO version with: #{e}|]
       pure Nothing
     Right version ->
       pure $ Just version
@@ -476,7 +476,7 @@ callForFormat tempSettings source = Log.addNamespace "callForFormat" $ Log.addCo
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
-          $(Log.err) [i|Could not format document with error: #{err}|]
+          $Log.err [i|Could not format document with error: #{err}|]
           throwIO $ LigoFormatFailedException (pack err) fp
         Right formatted
           | isDirty   -> srcText <$> fixMarkers tempFp (Source fp isDirty formatted)
@@ -499,13 +499,13 @@ preprocess
   -> Source
   -> m Source
 preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
-  $(Log.debug) [i|preprocessing the following contract:\n#{fp}|]
+  $Log.debug [i|preprocessing the following source:\n#{fp}|]
   withLigo source tempSettings
     (\tempFp -> ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"])
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
-          $(Log.err) [i|Unable to preprocess contract with: #{err}|]
+          $Log.err [i|Unable to preprocess source with: #{err}|]
           throwIO $ LigoPreprocessFailedException (pack err) fp
         Right newContract ->
           bool pure (fixMarkers tempFp) isDirty $ Source fp isDirty newContract)
@@ -513,14 +513,14 @@ preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext 
     fp = srcPath source
     dir = takeDirectory fp
 
--- | Get ligo definitions from raw contract.
+-- | Get ligo definitions from raw source.
 getLigoDefinitions
   :: (HasLigoClient m, Log m)
   => TempSettings
   -> Source
   -> m LigoDefinitions
 getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $ Log.addContext source do
-  $(Log.debug) [i|parsing the following contract:\n#{fp}|]
+  $Log.debug [i|parsing the following source:\n#{fp}|]
   withLigo source tempSettings
     (\tempFp -> ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir])
     (\(Source tempFp isDirty output) json -> do
@@ -531,7 +531,7 @@ getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $
         json
       case parseValue json' of
         Left err -> do
-          $(Log.err) [i|Unable to parse ligo definitions with: #{err}|]
+          $Log.err [i|Unable to parse ligo definitions with: #{err}|]
           throwIO $ LigoDefinitionParseErrorException (pack err) output fp
         Right definitions -> pure definitions)
   where
@@ -547,7 +547,7 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
       let failureRecovery = attemptToRecoverFromPossibleLigoCrash err $ unpack stderr
       case failureRecovery of
         Left failure -> do
-          $(Log.err) [i|ligo error decoding failure: #{failure}|]
+          $Log.err [i|ligo error decoding failure: #{failure}|]
           throwIO $ LigoErrorNodeParseErrorException (pack failure) stderr path
         Right recovered -> do
           -- LIGO doesn't dump any information we can extract to figure out
@@ -555,10 +555,10 @@ handleLigoError path stderr = Log.addNamespace "handleLigoError" do
           -- type-checker error just crashes with "Update an expression which is not a record"
           -- in the old typer. In the new typer, the error is the less
           -- intuitive "type error : break_ctor propagator".
-          $(Log.err) [i|ligo crashed: #{recovered}|]
+          $Log.err [i|ligo crashed: #{recovered}|]
           throwIO $ LigoUnexpectedCrashException (pack recovered) path
     Right decodedError -> do
-      $(Log.err) [i|ligo error decoding successful with:\n#{decodedError}|]
+      $Log.err [i|ligo error decoding successful with:\n#{decodedError}|]
       throwIO $ LigoDecodedExpectedClientFailureException (pure decodedError) [] path
 
 -- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
@@ -568,12 +568,12 @@ handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
 handleLigoMessages path stderr = Log.addNamespace "handleLigoErrors" do
   case eitherDecodeStrict' @LigoMessages $ encodeUtf8 stderr of
     Left err -> do
-      $(Log.err) [i|ligo errors decoding failure: #{err}|]
+      $Log.err [i|ligo errors decoding failure: #{err}|]
       -- It's possible it's the old format, with only one error. Try to decode
       -- it instead:
       handleLigoError path stderr
     Right (LigoMessages decodedErrors decodedWarnings) -> do
-      $(Log.err) [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
+      $Log.err [i|ligo errors decoding successful with:\n#{toList decodedErrors <> decodedWarnings}|]
       throwIO $ LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
 
 -- | When LIGO fails to e.g. typecheck, it crashes. This function attempts to

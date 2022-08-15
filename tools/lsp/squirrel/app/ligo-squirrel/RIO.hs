@@ -79,7 +79,7 @@ fetchConfig =
    in void $ S.sendRequest J.SWorkspaceConfiguration params
         $ \case
             Right (J.List [value]) -> setConfigFromJSON value
-            err -> $(Log.warning) [i|Client did not provide config, instead got: #{err}|]
+            err -> $Log.warning [i|Client did not provide config, instead got: #{err}|]
 
 -- | Parse a @Config@ from a JSON object and set it as the configuration on the
 -- server. This also restarts the LIGO daemon if the path to LIGO has changed.
@@ -87,7 +87,7 @@ setConfigFromJSON :: Value -> RIO ()
 setConfigFromJSON value =
   case fromJSON value of
     Success newConfig -> do
-      $(Log.debug) [i|Got new config: #{newConfig}|]
+      $Log.debug [i|Got new config: #{newConfig}|]
       oldConfig <- S.getConfig
       S.setConfig newConfig
 

@@ -50,7 +50,7 @@ main = exit =<< mainLoop
 
 mainLoop :: IO Int
 mainLoop =
-  Log.withLogger $$(Log.flagBasedSeverity) "lls" $$(Log.flagBasedEnv) \runLogger -> do
+  Log.withLogger $$Log.flagBasedSeverity "lls" $$Log.flagBasedEnv \runLogger -> do
     let
       serverDefinition = S.ServerDefinition
         { S.onConfigurationChange = \old _ -> Right old
@@ -95,7 +95,7 @@ mainLoop =
              S.Handler RIO meth -> S.Handler RIO meth
         wrapReq handler msg@J.RequestMessage{_method} resp = Log.addNamespace "wrapReq" $
           handler msg resp `withException` \(SomeException e) -> do
-            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
+            $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
             RIO.shutdownRio
             resp . Left $ J.ResponseError J.InternalError (T.pack $ displayException e) Nothing
 
@@ -104,7 +104,7 @@ mainLoop =
              S.Handler RIO meth -> S.Handler RIO meth
         wrapNotif handler msg@J.NotificationMessage{_method} = Log.addNamespace "wrapNotif" $
           handler msg `withException` \(SomeException e) -> do
-            $(Log.critical) [i|Handling `#{_method}`: #{displayException e}|]
+            $Log.critical [i|Handling `#{_method}`: #{displayException e}|]
             RIO.shutdownRio
             sendError . T.pack $ "Error handling `" <> show _method <> "` (see logs)."
 
@@ -195,7 +195,7 @@ handleDidOpenTextDocument notif = do
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
-  $(Log.debug) [i|Changed text document: #{uri}|]
+  $Log.debug [i|Changed text document: #{uri}|]
 
   openDocs <- asks reOpenDocs
   atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = True}) uri openDocs
@@ -253,7 +253,7 @@ handleDefinitionRequest req respond = do
     let location = case AST.definitionOf pos tree of
           Just defPos -> [toLocation defPos]
           Nothing     -> []
-    $(Log.debug) [i|Definition request returned #{location}|]
+    $Log.debug [i|Definition request returned #{location}|]
     respond . Right . J.InR . J.InL . J.List $ location
 
 handleTypeDefinitionRequest :: S.Handler RIO 'J.TextDocumentTypeDefinition
@@ -267,7 +267,7 @@ handleTypeDefinitionRequest req respond = do
     let definition = case AST.typeDefinitionAt pos tree of
           Just defPos -> [J.Location uri $ toLspRange defPos]
           Nothing     -> []
-    $(Log.debug) [i|Type definition request returned #{definition}|]
+    $Log.debug [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
 formatImpl :: J.Uri -> RIO (TempSettings, ContractInfo')
@@ -299,7 +299,7 @@ handleFindReferencesRequest req respond = do
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing   -> []
-    $(Log.debug) [i|Find references request returned #{locations}|]
+    $Log.debug [i|Find references request returned #{locations}|]
     respond . Right . J.List $ locations
 
 handleDocumentHighlightRequest :: S.Handler RIO 'J.TextDocumentDocumentHighlight
@@ -309,7 +309,7 @@ handleDocumentHighlightRequest req respond = do
     let locations = case AST.referencesOf pos tree of
           Just refs -> toLocation <$> refs
           Nothing -> []
-    $(Log.debug) [i|Document highlight request returned #{locations}|]
+    $Log.debug [i|Document highlight request returned #{locations}|]
     let defaultKind = Just J.HkRead
         highlights = (`J.DocumentHighlight` defaultKind) . (^. J.range) <$> locations
     respond . Right . J.List $ highlights
@@ -406,7 +406,7 @@ handleRenameRequest req respond = do
 
     case renameDeclarationAt pos tree newName of
       NotFound -> do
-        $(Log.debug) [i|Declaration not found for: #{show req}|]
+        $Log.debug [i|Declaration not found for: #{show req}|]
         respond . Left $
           J.ResponseError J.InvalidRequest "Cannot rename this" Nothing
       Ok edits -> do

@@ -80,7 +80,7 @@ decodeProjectSettings projectDir = do
   eitherSettings <- liftIO $ eitherDecodeFileStrict' $ projectDir </> ligoProjectName
   case eitherSettings of
     Left err -> do
-      $(Log.err) [Log.i|Failed to read project settings.\n#{err}|]
+      $Log.err [Log.i|Failed to read project settings.\n#{err}|]
       sendError [Log.i|Failed to read project settings. Using default settings. Check the logs for more information.|]
       pure def
     Right settings -> do
@@ -172,7 +172,7 @@ askForIndexDirectory contractDir = do
 
     mkGitDirectory :: RIO (Maybe FilePath)
     mkGitDirectory = tryIO (readCreateProcess git "") >>= either
-      (\e -> Nothing <$ $(Log.warning) [Log.i|#{displayException e}|])
+      (\e -> Nothing <$ $Log.warning [Log.i|#{displayException e}|])
       -- The output includes a trailing newline, we remove it with `init`.
       (pure . Just . init)
       where
@@ -215,7 +215,7 @@ handleProjectFileChanged nfp change = do
   -- the trouble.
   _ <- tryTakeMVar indexOptsVar
   let fp = J.fromNormalizedFilePath nfp
-  $(Log.debug) case change of
+  $Log.debug case change of
     J.FcCreated -> [Log.i|Created #{fp}|]
     J.FcChanged -> [Log.i|Changed #{fp}|]
     J.FcDeleted -> [Log.i|Deleted #{fp}|]
