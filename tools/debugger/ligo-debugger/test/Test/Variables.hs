@@ -3,16 +3,24 @@ module Test.Variables
   ) where
 
 import Data.Map qualified as M
-import Language.LIGO.DAP.Variables (createVariables, runBuilder)
-import Language.LIGO.Debugger.CLI.Types
-  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry), LigoVariable (LigoVariable), LigoType (LTUnresolved))
-import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 import Morley.Debugger.Protocol.DAP (Variable (..))
 import Morley.Michelson.Typed
-  (SingI, SomeConstrainedValue (SomeValue), T (TUnit), Value, Value' (VList, VOption, VUnit))
+  (EpName (UnsafeEpName), MkEntrypointCallRes (MkEntrypointCallRes), ParamNotes (pnRootAnn), SingI,
+  SomeConstrainedValue (SomeValue), SomeEntrypointCallT (SomeEpc), T (TUnit), Value,
+  Value' (VContract, VList, VOption, VUnit), mkEntrypointCall, tyImplicitAccountParam)
+import Morley.Michelson.Untyped (Annotation (UnsafeAnnotation))
+import Morley.Tezos.Address (parseAddress)
+import Unsafe (fromJust)
+
 import Test.HUnit ((@?=))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
+
+import Language.LIGO.DAP.Variables (createVariables, runBuilder)
+import Language.LIGO.Debugger.CLI.Types
+  (LigoExposedStackEntry (LigoExposedStackEntry), LigoStackEntry (LigoStackEntry),
+  LigoType (LTUnresolved), LigoVariable (LigoVariable))
+import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 
 mkStackItem :: (SingI t) => Value t -> Maybe Text -> StackItem
 mkStackItem v nameMb = StackItem desc (SomeValue v)
@@ -24,6 +32,62 @@ test_Variables :: TestTree
 test_Variables = testGroup "variables"
   [ testOption
   , testList
+  , testAddresses
+  ]
+
+testAddresses :: TestTree
+testAddresses = testGroup "addresses"
+  [ testCase "address with entrypoint \"foo\"" do
+      let address = fromRight (error "address parse error")
+            $ parseAddress "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+      let paramNotes = tyImplicitAccountParam
+            { pnRootAnn = UnsafeAnnotation "foo"
+            }
+      let mkEntrypoint = fromJust $
+            mkEntrypointCall (UnsafeEpName "foo") paramNotes
+      case mkEntrypoint of
+        MkEntrypointCallRes _ entrypoint -> do
+          let contractItem = mkStackItem (VContract address (SomeEpc entrypoint)) (Just "addr")
+          snd (runBuilder $ createVariables [contractItem]) @?=
+            M.fromList
+              [ (1,
+                  [ Variable
+                      { nameVariable = "address"
+                      , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                      , typeVariable = ""
+                      , presentationHintVariable = Nothing
+                      , evaluateNameVariable = Nothing
+                      , variablesReferenceVariable = 0
+                      , namedVariablesVariable = Nothing
+                      , indexedVariablesVariable = Nothing
+                      , __vscodeVariableMenuContextVariable = Nothing
+                      }
+                  , Variable
+                      { nameVariable = "entrypoint"
+                      , valueVariable = "Call foo: \215"
+                      , typeVariable = ""
+                      , presentationHintVariable = Nothing
+                      , evaluateNameVariable = Nothing
+                      , variablesReferenceVariable = 0
+                      , namedVariablesVariable = Nothing
+                      , indexedVariablesVariable = Nothing
+                      , __vscodeVariableMenuContextVariable = Nothing
+                      }
+                  ])
+              , (2,
+                  [ Variable
+                      { nameVariable = "addr"
+                      , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
+                      , typeVariable = ""
+                      , presentationHintVariable = Nothing
+                      , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
+                      , variablesReferenceVariable = 1
+                      , namedVariablesVariable = Nothing
+                      , indexedVariablesVariable = Nothing
+                      , __vscodeVariableMenuContextVariable = Just "contract"
+                      }
+                  ])
+              ]
   ]
 
 testOption :: TestTree
