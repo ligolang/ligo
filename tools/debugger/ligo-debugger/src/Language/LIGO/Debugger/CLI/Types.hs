@@ -444,3 +444,10 @@ instance Buildable LigoException where
 
 instance FromBuilder LigoException where
   fromBuilder b = def {leMessage = fromBuilder b}
+
+newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
+
+instance FromJSON EntrypointsList where
+  parseJSON = withObject "list-declarations" \o -> do
+    lst <- o .: "declarations"
+    pure $ EntrypointsList lst

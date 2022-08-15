@@ -15,7 +15,8 @@ import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), RIO, RioContext (..))
+  (DAPOutputMessage (..), DAPSpecificResponse (..), HasSpecificMessages (LanguageServerStateExt),
+  RIO, RioContext (..))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
@@ -35,10 +36,9 @@ instance FromBuilder DAP.Message where
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
-  { lsProgram :: FilePath
-  , lsContract :: SomeContract
-  , lsEntrypoint :: String  -- ^ @main@ method to use
-  , lsAllLocs :: Set SourceLocation
+  { lsProgram :: Maybe FilePath
+  , lsContract :: Maybe SomeContract
+  , lsAllLocs :: Maybe (Set SourceLocation)
   }
 
 instance Buildable LigoLanguageServerState where
@@ -116,3 +116,23 @@ parseValue ctxContractPath category val valueType = do
   typeVerifyTopLevelType mempty uvalue
     & typeCheckingForDebugger
     & either (\msg -> throwError [int||Typechecking as #{category} failed: #{msg}|]) pure
+
+getServerState :: HasCallStack => RIO ext (LanguageServerStateExt ext)
+getServerState = asks _rcLSState >>= readTVarIO >>= \case
+  Nothing -> error "Language server state is not initialized"
+  Just s -> pure s
+
+getProgram
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext FilePath
+getProgram = fromMaybe (error "Program is not initialized") . lsProgram <$> getServerState
+
+getContract
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext SomeContract
+getContract = fromMaybe (error "Contract is not initialized") . lsContract <$> getServerState
+
+getAllLocs
+  :: (HasCallStack, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (Set SourceLocation)
+getAllLocs = fromMaybe (error "All locs are not initialized") . lsAllLocs <$> getServerState

@@ -1,6 +1,7 @@
 module Language.LIGO.Debugger.CLI.Call
   ( compileLigoContractDebug
   , compileLigoExpression
+  , getAvailableEntrypoints
 
     -- * Utilities
   , runAndReadOutput
@@ -112,6 +113,20 @@ compileLigoExpression valueOrigin ctxFile expr =
       (LBS.fromStrict . T.encodeUtf8 <$> (bs ^? key "text_code" . _String))
     prettyPrint :: MP.ParserException -> Text
     prettyPrint = pretty
+
+-- TODO: use "get entrypoints" functionality when it is available in `ligo`.
+
+getAvailableEntrypoints :: (MonadIO m, MonadError LigoException m)
+                        => FilePath -> m EntrypointsList
+getAvailableEntrypoints file = do
+  runAndReadOutput
+    Aeson.eitherDecode
+    "ligo"
+    [ "info", "list-declarations"
+    , "--display-format", "json"
+    , file
+    ]
+    >>= throwLeftWith [int|m|Unexpected output of `ligo` from decoding list declarations #{toText}|]
 
 {- TODO: combine ligo calling with the one from LSP and use the shared code
 
