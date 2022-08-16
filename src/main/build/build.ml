@@ -206,24 +206,21 @@ let build_views ~raise :
     match view_names with
     | [] -> []
     | _ ->
-      let aux view =
-        let contract = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.remove_unused_program view contract in
-        (* Format.printf "\n%a\n ==================== \n" Ast_typed.PP.module_ contract; *)
-        let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
-        (* Format.printf "\n%a\n ==================== \n" Ast_aggregated.PP.expression aggregated; *)
-        let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-        let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
-        let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
-                          Mini_c.get_t_tuple mini_c.type_expression in
+      let contract = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.remove_unused_for_views ~view_names contract in
+      let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
+      let mini_c = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+      let mini_c = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options mini_c in
+      let mini_c_tys = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of views")) @@
+                        Mini_c.get_t_tuple mini_c.type_expression in
+      let nb_of_views = List.length view_names in
+      let aux i view =
         let idx_ty = trace_option ~raise (`Self_mini_c_tracer (Self_mini_c.Errors.corner_case "Error reconstructing type of view")) @@
-                      List.nth mini_c_tys 0 in
-        let idx = Mini_c.e_proj mini_c idx_ty 0 1 in
-        (* Format.printf "\n%a\n ==================== \n" Mini_c.PP.expression idx; *)
-        (* Format.printf "\n%a\n ==================== \n" Mini_c.PP.type_expression idx_ty; *)
+                      List.nth mini_c_tys i in
+        let idx = Mini_c.e_proj mini_c idx_ty i nb_of_views in
         (* let idx = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options idx in *)
-        view, Ligo_compile.Of_mini_c.compile_view ~raise ~options idx in
-      (* let views = List.mapi ~f:aux view_names in *)
-      (* let aux (vn, mini_c) = (vn, ) in *)
-      let michelsons = List.map ~f:aux view_names in
+        (view, idx) in
+      let views = List.mapi ~f:aux view_names in
+      let aux (vn, mini_c) = (vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c) in
+      let michelsons = List.map ~f:aux views in
       let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise (List.map ~f:snd michelsons) in
       michelsons
