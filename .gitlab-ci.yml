@@ -147,21 +147,6 @@ xrefcheck:
     - xrefcheck/bin/xrefcheck
   allow_failure: true #TODO could be better if we do not allow failure for realeases
 
-docker:
-  stage: tooling
-  dependencies:
-    - docker_build
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - ':'
-  artifacts:
-    paths:
-      - ligo.tar.gz
-
 .docker-image:
   stage: push
   image: docker:19.03.5
@@ -241,8 +226,6 @@ pages:
   extends: .website
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
       when: always
 
 pages-attempt:

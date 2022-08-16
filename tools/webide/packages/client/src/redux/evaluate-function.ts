@@ -2,7 +2,8 @@ import { ActionType as ExamplesActionType, ChangeSelectedAction as ChangeSelecte
 
 export enum ActionType {
   ChangeEntrypoint = 'evaluate-function-change-entrypoint',
-  ChangeParameters = 'evaluate-function-change-parameters'
+  ChangeParameters = 'evaluate-function-change-parameters',
+  ChangeProtocol = 'evaluate-function-change-protocol'
 }
 
 export interface EvaluateFunctionState {
@@ -22,7 +23,7 @@ export class ChangeParametersAction {
 }
 
 export class ChangeProtocolAction {
-  public readonly type = ActionType.ChangeParameters;
+  public readonly type = ActionType.ChangeProtocol;
   constructor(public payload: EvaluateFunctionState['protocol']) {}
 }
 
@@ -53,10 +54,10 @@ const evaluateFunction = (
         ...state,
         entrypoint: action.payload
       };
-    case ActionType.ChangeEntrypoint:
+    case ActionType.ChangeProtocol:
       return {
         ...state,
-        entrypoint: action.payload
+        protocol: action.payload
       };
     case ActionType.ChangeParameters:
       return {

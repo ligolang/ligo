@@ -78,7 +78,7 @@ determine_new_stable_version:
   stage: pretooling
   image: node:12.20.0-buster
   rules:
-  - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+  - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
     when: always
   - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
     when: always
@@ -127,7 +127,7 @@ release:
 create_docker_stable_version:
   stage: push
   rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always
@@ -146,7 +146,7 @@ create_docker_stable_version:
 update_release_metadata:
   stage: push
   rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/'
       when: always
     - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
       when: always

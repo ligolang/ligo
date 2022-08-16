@@ -81,8 +81,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "D.mligo" ] ;
   [%expect {|
-    module C = Mangled_module_C____mligo.
-    module E = Mangled_module_E____mligo.
+    module C =
+      Mangled_module_____________________test__contracts__build__C____mligo.
+    module E =
+      Mangled_module_____________________test__contracts__build__E____mligo.
     const toto = ADD(E.toto , C.B.A.toto)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
@@ -90,6 +92,33 @@ let%expect_test _ =
                                               | ( p , s ) ->
                                               let s = ADD(ADD(p , s) ,
                                               toto) in ( LIST_EMPTY() , s ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "instance/main.mligo" ] ;
+  [%expect {|
+    { parameter unit ;
+      storage string ;
+      code { DROP ;
+             PUSH string "FA2_TOKEN_UNDEFINED" ;
+             PUSH string "AAAA" ;
+             DUP 2 ;
+             CONCAT ;
+             SWAP ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
+                         
+let%expect_test _ =
+  run_ligo_good [ "print" ; "ast-typed" ; contract "instance/main.mligo" ] ;
+  [%expect {|
+    module Errors =
+      Mangled_module_____________________test__contracts__build__instance____________common__errors____mligo.
+    module Storage =
+      Mangled_module_____________________test__contracts__build__instance____________common__storage____mligo.
+    const main =
+      lambda (gen#2 : ( unit * string )) return  match gen#2 with
+                                                  | ( _#4 , _#3 ) ->
+                                                  ( LIST_EMPTY() , CONCAT(Errors.undefined_token , Storage.s) ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;
