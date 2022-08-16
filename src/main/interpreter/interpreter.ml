@@ -738,7 +738,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_LAST_EVENTS , _  ) -> fail @@ error_type
     | ( C_TEST_MUTATE_CONTRACT , [ V_Ct (C_nat n); V_Ast_contract { main ; views } as v ] ) -> (
       let* () = check_value v in
-      let v = Mutation.mutate_some_contract n main in
+      let v = Mutation.mutate_some_contract ~raise n main in
       match v with
       | None ->
          return (v_none ())
@@ -748,7 +748,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
     | ( C_TEST_MUTATE_VALUE , [ V_Ct (C_nat n); v ] ) -> (
       let* () = check_value v in
       let* value_ty = monad_option (Errors.generic_error loc "Could not recover types") @@ List.nth types 1 in
-      let v = Mutation.mutate_some_value ~raise loc n v value_ty in
+      let v = Mutation.mutate_some_value ~raise ?syntax:options.frontend.syntax loc n v value_ty in
       match v with
       | None ->
          return (v_none ())
@@ -756,7 +756,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          let* v = eval_ligo e calltrace env in
          return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATE_VALUE , _  ) -> fail @@ error_type
-    | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _) as mutation)) ] ) ->
+    | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _, _) as mutation)) ] ) ->
       let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
       let file_contents = Fuzz.Ast_aggregated.buffer_of_mutation mutation in
       let id = Fuzz.Ast_aggregated.get_mutation_id mutation in

@@ -278,8 +278,7 @@ let%expect_test _ =
     - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
       1 | let main ((p, k) : int * int) : operation list * int = [], p + k
 
-    Replacing by: SUB(p#1518 ,
-    k#1519).
+    Replacing by: (p - k).
     )]. |}]
 
 let%expect_test _ =

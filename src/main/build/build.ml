@@ -209,6 +209,7 @@ let build_aggregated_views ~raise :
     match view_names with
     | [] -> None
     | _ ->
+      let contract = trace ~raise self_ast_typed_tracer @@ Self_ast_typed.remove_unused_for_views ~view_names contract in
       let aggregated = Ligo_compile.Of_typed.apply_to_entrypoint_view ~raise:{raise with warning = fun _ -> ()} ~options:options.middle_end contract in
       Some (view_names, aggregated)
 

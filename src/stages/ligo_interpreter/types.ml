@@ -9,7 +9,7 @@ module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Timestamp
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 
-type mutation = Location.t * Ast_aggregated.expression
+type mutation = Location.t * Ast_aggregated.expression * string
 
 type env_item = {
     item: value_expr ;

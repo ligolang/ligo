@@ -3,25 +3,48 @@ open Errors
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 
+let get_syntax ~raise syntax loc =
+  match syntax with
+  | Some syntax -> syntax
+  | None -> match Location.get_file loc with
+            | None -> raise.error (Errors.generic_error loc "Could not detect syntax")
+            | Some r -> let file = r # file in
+                        let syntax = Simple_utils.Trace.to_stdlib_result (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file)) in
+                        match syntax with
+                        | Ok (r,_) -> r
+                        | Error _ -> raise.error (Errors.generic_error loc "Could not detect syntax")
 
-let mutate_some_contract : Z.t -> Ast_aggregated.expression -> (Ast_aggregated.expression * LT.mutation) option =
-  fun z main ->
+
+let mutate_some_contract : raise:(interpreter_error,_) raise -> ?syntax:_ -> Z.t -> Ast_aggregated.expression -> (Ast_aggregated.expression * LT.mutation) option =
+  fun ~raise ?syntax z main ->
   let n = Z.to_int z in
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
-  Fuzzer.some_mutate_expression ~n main
+  let f (e, (l, m)) =
+    let syntax = get_syntax ~raise syntax l in
+    let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
+    (e, (l, m, s)) in
+  Option.map ~f @@ Fuzzer.some_mutate_expression ~n main
 
-let mutate_some_value : raise:(interpreter_error,_) raise -> Location.t -> Z.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) option =
-  fun ~raise loc z v v_type ->
-  let n = Z.to_int z in
-  let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
-  let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
-  Fuzzer.some_mutate_expression ~n expr
+let mutate_some_value : raise:(interpreter_error,_) raise -> ?syntax:_ -> Location.t -> Z.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) option =
+  fun ~raise ?syntax loc z v v_type ->
+    let n = Z.to_int z in
+    let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
+    let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
+    let f (e, (loc, m)) =
+      let syntax = get_syntax ~raise syntax loc in
+      let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
+      (e, (loc, m, s)) in
+    Option.map ~f @@ Fuzzer.some_mutate_expression ~n expr
 
-let mutate_all_value : raise:(interpreter_error,_) raise -> Location.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) list =
-  fun ~raise loc v v_type ->
-  let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
-  let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
-  Fuzzer.all_mutate_expression expr
+let mutate_all_value : raise:(interpreter_error,_) raise -> ?syntax:_ -> Location.t -> LT.value -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) list =
+  fun ~raise ?syntax loc v v_type ->
+    let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
+    let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
+    let f (e, (loc, m)) =
+      let syntax = get_syntax ~raise syntax loc in
+      let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
+      (e, (loc, m, s)) in
+    List.map ~f @@ Fuzzer.all_mutate_expression expr
 
 let rec value_gen : raise:(interpreter_error, _) raise -> ?small:bool -> ?known_addresses:LT.mcontract list -> Ast_aggregated.type_expression -> LT.value QCheck.Gen.t =
   fun ~raise ?(small = true) ?known_addresses type_expr ->
