@@ -40,37 +40,6 @@ module Data = struct
       LIMap.add lid lid_instances data
 end
 
-(* This is not a proper substitution, it might capture variables: it should be used only with v' a fresh variable *)
-let rec subst_var_expr v v' (e : AST.expression) =
-   let (), e = fold_map_expression (fun () e ->
-      let (=) = AST.ValueVar.equal in
-      let return expression_content = (true, (), { e with expression_content }) in
-      let return_f expression_content = (false, (), { e with expression_content }) in
-      match e.expression_content with
-      | E_variable w when (w = v) -> return @@ E_variable v'
-      | E_lambda { binder ; result } when (binder.var = v) -> return_f @@ E_lambda { binder ; result }
-      | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } when (fun_name = v) || (binder.var = v) ->
-         return_f @@ E_recursive { fun_name ; fun_type ; lambda = { binder ; result } }
-      | E_let_in { let_binder ; rhs ; let_result ; attr } when (let_binder.var = v) ->
-         let rhs = subst_var_expr v v' rhs in
-         return_f @@ E_let_in { let_binder ; rhs ; let_result ; attr }
-      | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
-         let f = function
-            ({ constructor ; pattern ; body } : AST.matching_content_case) when not (pattern = v) ->
-            let body = subst_var_expr v v' body in
-            { AST.constructor ; pattern ; body }
-         | cc -> cc in
-         let matchee = subst_var_expr v v' matchee in
-         let cases = List.map cases ~f in
-         return_f @@ E_matching { matchee ; cases = Match_variant { cases ; tv } }
-      | E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
-         when List.mem (List.map (AST.LMap.to_list fields) ~f:(fun b -> b.var)) v ~equal:(=)  ->
-         let matchee = subst_var_expr v v' matchee in
-         return_f @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
-      | _ -> return e.expression_content
-      ) () e in
-   e
-
 let apply_table_expr table (expr : AST.expression) =
    let apply_table_type u = List.fold_right table ~f:(fun (v, t) u -> AST.Helpers.subst_type v t u) ~init:u in
    let (), e = fold_map_expression (fun () e ->
@@ -199,7 +168,7 @@ let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t 
         let table = List.zip_exn type_vars type_instances in
         let data, rhs = match rhs.expression_content with
           | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
-            let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
+            let lambda = { AST.binder ; result = Subst.replace (Subst.replace result fun_name vid) lid vid } in
             let data = Data.instance_add lid { vid ; type_instances ; type_ } data in
             data, { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = rhs.type_expression ; lambda } }
           | _ -> data, rhs in
