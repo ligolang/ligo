@@ -71,12 +71,19 @@ let apply_to_entrypoint_view ~raise ~options : Ast_typed.program -> Ast_aggregat
     let aggregated_prg = compile_program ~raise prg in
     compile_expression_in_context ~raise ~options tuple_view aggregated_prg
 
-let list_declarations (m : Ast_typed.module_) : expression_variable list =
+(* if only_ep, we only list the declarations with types fiting an entrypoint *)
+let list_declarations (only_ep: bool) (m : Ast_typed.module_) : expression_variable list =
   List.fold_left
     ~f:(fun prev el ->
       let open Simple_utils.Location in
       match el.wrap_content with
-      | Declaration_constant {binder;attr;_} when attr.public -> binder.var::prev
+      | Declaration_constant {binder;attr;expr} when attr.public ->
+        if only_ep then (
+          if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content) then
+            binder.var::prev else prev
+        )
+        else
+          binder.var::prev
       | _ -> prev)
     ~init:[] m
 
