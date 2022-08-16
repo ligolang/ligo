@@ -5,10 +5,11 @@ module Test.Variables
 import Data.Map qualified as M
 import Morley.Debugger.Protocol.DAP (Variable (..))
 import Morley.Michelson.Typed
-  (EpName (UnsafeEpName), MkEntrypointCallRes (MkEntrypointCallRes), ParamNotes (pnRootAnn), SingI,
-  SomeConstrainedValue (SomeValue), SomeEntrypointCallT (SomeEpc), T (TUnit), Value,
-  Value' (VContract, VList, VOption, VUnit), mkEntrypointCall, tyImplicitAccountParam)
-import Morley.Michelson.Untyped (Annotation (UnsafeAnnotation))
+  (EpAddress (EpAddress), EpName (UnsafeEpName), MkEntrypointCallRes (MkEntrypointCallRes),
+  ParamNotes (pnRootAnn), SingI, SomeConstrainedValue (SomeValue), SomeEntrypointCallT (SomeEpc),
+  T (TUnit), Value, Value' (VAddress, VContract, VList, VOption, VUnit), mkEntrypointCall,
+  sepcPrimitive, tyImplicitAccountParam)
+import Morley.Michelson.Untyped (Annotation (UnsafeAnnotation), pattern DefEpName)
 import Morley.Tezos.Address (parseAddress)
 import Unsafe (fromJust)
 
@@ -32,14 +33,82 @@ test_Variables :: TestTree
 test_Variables = testGroup "variables"
   [ testOption
   , testList
+  , testContracts
   , testAddresses
   ]
 
 testAddresses :: TestTree
 testAddresses = testGroup "addresses"
   [ testCase "address with entrypoint \"foo\"" do
-      let address = fromRight (error "address parse error")
-            $ parseAddress "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+      let epAddress = EpAddress address (UnsafeEpName "foo")
+      let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
+      snd (runBuilder $ createVariables [addressItem]) @?=
+        M.fromList
+          [ (1,
+              [ Variable
+                  { nameVariable = "address"
+                  , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                  , typeVariable = ""
+                  , presentationHintVariable = Nothing
+                  , evaluateNameVariable = Nothing
+                  , variablesReferenceVariable = 0
+                  , namedVariablesVariable = Nothing
+                  , indexedVariablesVariable = Nothing
+                  , __vscodeVariableMenuContextVariable = Nothing
+                  }
+              , Variable
+                  { nameVariable = "entrypoint"
+                  , valueVariable = "foo"
+                  , typeVariable = ""
+                  , presentationHintVariable = Nothing
+                  , evaluateNameVariable = Nothing
+                  , variablesReferenceVariable = 0
+                  , namedVariablesVariable = Nothing
+                  , indexedVariablesVariable = Nothing
+                  , __vscodeVariableMenuContextVariable = Nothing
+                  }
+              ])
+          , (2,
+              [ Variable
+                  { nameVariable = "addr"
+                  , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
+                  , typeVariable = ""
+                  , presentationHintVariable = Nothing
+                  , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
+                  , variablesReferenceVariable = 1
+                  , namedVariablesVariable = Nothing
+                  , indexedVariablesVariable = Nothing
+                  , __vscodeVariableMenuContextVariable = Just "address"
+                  }
+              ])
+          ]
+  , testCase "address without entrypoint" do
+      let epAddress = EpAddress address DefEpName
+      let addressItem = mkStackItem (VAddress epAddress) (Just "addr")
+      snd (runBuilder $ createVariables [addressItem]) @?=
+        M.fromList
+          [ (1,
+              [ Variable
+                { nameVariable = "addr"
+                , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                , typeVariable = ""
+                , presentationHintVariable = Nothing
+                , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                , variablesReferenceVariable = 0
+                , namedVariablesVariable = Nothing
+                , indexedVariablesVariable = Nothing
+                , __vscodeVariableMenuContextVariable = Just "address"
+                }
+              ])
+          ]
+  ]
+  where
+    address = fromRight (error "address parse error")
+      $ parseAddress "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+
+testContracts :: TestTree
+testContracts = testGroup "contracts"
+  [ testCase "contract with entrypoint \"foo\"" do
       let paramNotes = tyImplicitAccountParam
             { pnRootAnn = UnsafeAnnotation "foo"
             }
@@ -47,7 +116,7 @@ testAddresses = testGroup "addresses"
             mkEntrypointCall (UnsafeEpName "foo") paramNotes
       case mkEntrypoint of
         MkEntrypointCallRes _ entrypoint -> do
-          let contractItem = mkStackItem (VContract address (SomeEpc entrypoint)) (Just "addr")
+          let contractItem = mkStackItem (VContract address (SomeEpc entrypoint)) (Just "contract")
           snd (runBuilder $ createVariables [contractItem]) @?=
             M.fromList
               [ (1,
@@ -64,7 +133,7 @@ testAddresses = testGroup "addresses"
                       }
                   , Variable
                       { nameVariable = "entrypoint"
-                      , valueVariable = "Call foo: \215"
+                      , valueVariable = "foo"
                       , typeVariable = ""
                       , presentationHintVariable = Nothing
                       , evaluateNameVariable = Nothing
@@ -76,7 +145,7 @@ testAddresses = testGroup "addresses"
                   ])
               , (2,
                   [ Variable
-                      { nameVariable = "addr"
+                      { nameVariable = "contract"
                       , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
                       , typeVariable = ""
                       , presentationHintVariable = Nothing
@@ -88,7 +157,28 @@ testAddresses = testGroup "addresses"
                       }
                   ])
               ]
+  , testCase "contract without entrypoint" do
+      let contractItem = mkStackItem (VContract address (sepcPrimitive @'TUnit)) (Just "contract")
+      snd (runBuilder $ createVariables [contractItem]) @?=
+        M.fromList
+          [ (1,
+              [ Variable
+                  { nameVariable = "contract"
+                  , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                  , typeVariable = ""
+                  , presentationHintVariable = Nothing
+                  , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
+                  , variablesReferenceVariable = 0
+                  , namedVariablesVariable = Nothing
+                  , indexedVariablesVariable = Nothing
+                  , __vscodeVariableMenuContextVariable = Just "contract"
+                  }
+              ])
+          ]
   ]
+  where
+    address = fromRight (error "address parse error")
+      $ parseAddress "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
 
 testOption :: TestTree
 testOption = testGroup "option"
