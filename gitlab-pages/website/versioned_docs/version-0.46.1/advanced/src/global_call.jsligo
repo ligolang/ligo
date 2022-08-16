@@ -1,2 +1,0 @@
-let main = ([p, s] : [string, int]) : [list<operation>, int] =>
-  [(list([]) as list<operation>), (Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8") as ((_ps : [string, int]) => int))([p, s])];
