@@ -34,7 +34,7 @@ let all_contract ~raise main_name prg =
     } in
   let all_p = List.map ~f:(fun pass -> Ast_typed.Helpers.fold_map_module pass data) @@ contract_passes ~raise in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
-  let prg = Contract_passes.remove_unused ~raise data.main_name prg in
+  let prg = Contract_passes.remove_unused ~raise data prg in
   prg
 
 let all_view ~raise command_line_views main_name prg =

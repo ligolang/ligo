@@ -150,11 +150,11 @@ and get_fv_module_expr env x =
     let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
     new_env, x
 
-let remove_unused ~raise : expression_variable -> program -> program = fun main_name prg ->
+let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data  prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder.var main_name)
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder.var contract_pass_data.main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
