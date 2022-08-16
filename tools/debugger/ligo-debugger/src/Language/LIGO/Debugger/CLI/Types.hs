@@ -4,13 +4,14 @@ module Language.LIGO.Debugger.CLI.Types
   ) where
 
 import Control.Lens (AsEmpty (..), forOf, prism)
-import Data.Aeson (FromJSON (..), Value (..), withArray, withObject, (.:!), (.:), (.:?), (.!=), withText)
+import Data.Aeson
+  (FromJSON (..), Value (..), withArray, withObject, withText, (.!=), (.:!), (.:), (.:?))
 import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as Aeson
 import Data.Aeson.Lens (key, nth, values)
 import Data.Aeson.Types qualified as Aeson
 import Data.Char (isDigit)
-import Data.Default (Default(..))
-import Data.HashMap.Strict qualified as HS
+import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
 import Data.Text qualified as T
@@ -153,7 +154,7 @@ data LigoType
 
 instance FromJSON LigoType where
   -- If value is @Array@ then it is just a '"type_content"' field from a "type" object.
-  parseJSON val@Array{} = parseJSON $ Object $ HS.singleton "type_content" val
+  parseJSON val@Array{} = parseJSON $ Object $ Aeson.singleton "type_content" val
   parseJSON val = flip (withObject "type") val \o -> do
     value <- o .: "type_content"
     flip (withArray "type_content") value \lst -> do
@@ -165,7 +166,7 @@ instance FromJSON LigoType where
         , LTArrow <$> parseJSON typ
         , flip (withObject "t_record") typ \o' -> do -- "t_record"
             parsed <- sequence $ parseJSON <$> o'
-            pure $ LTRecord parsed
+            pure $ LTRecord $ Aeson.toHashMapText parsed
         , pure LTUnresolved
         ]
 
@@ -305,11 +306,11 @@ pattern LigoStackEntryVar name ty = LigoStackEntry LigoExposedStackEntry
 
 instance FromJSON LigoStackEntry where
   parseJSON v = case v of
-    Aeson.Null     -> pure LigoHiddenStackEntry
+    Aeson.Null       -> pure LigoHiddenStackEntry
     Aeson.Object o
-      | null o    -> pure LigoHiddenStackEntry
-      | otherwise -> LigoStackEntry <$> parseJSON v
-    other          -> Aeson.unexpected other
+      | Aeson.null o -> pure LigoHiddenStackEntry
+      | otherwise    -> LigoStackEntry <$> parseJSON v
+    other            -> Aeson.unexpected other
 
 type LigoStack = [LigoStackEntry]
 

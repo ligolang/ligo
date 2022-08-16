@@ -6,22 +6,25 @@ module Language.LIGO.Debugger.Handlers.Impl
 import Debug qualified
 import Unsafe qualified
 
-import Control.Lens (ix, zoom, (.=), (^?!))
+import Control.Lens (ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
 import Fmt (build, pretty)
 import Fmt.Internal.Core (FromBuilder (fromBuilder))
 import Morley.Debugger.Core.Navigate
-  (DebugSource (..), DebuggerState (..), curSnapshot, frozen, groupSourceLocations,
-  playInterpretHistory)
+  (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition), curSnapshot,
+  frozen, groupSourceLocations, playInterpretHistory)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSessionState (..), DAPSpecificResponse (..), HasSpecificMessages (..),
-  RIO, RioContext (..), StopEventDesc (..), dsDebuggerState, dsVariables, pushMessage)
+  (DAPOutputMessage (..), DAPSessionState (..),
+  DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
+  HasSpecificMessages (..), RIO, RioContext (..), StopEventDesc (..), StoppedReason (..),
+  dsDebuggerState, dsVariables, pushMessage)
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed
-  (Contract, Contract' (..), SomeConstrainedValue (SomeValue), SomeContract (..))
+  (Contract, Contract' (..), ContractCode' (unContractCode), SomeConstrainedValue (SomeValue),
+  SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import System.FilePath (takeFileName, (<.>), (</>))
@@ -39,7 +42,9 @@ import Language.LIGO.Debugger.Snapshots
 
 import Data.Text qualified as Text
 import Language.LIGO.DAP.Variables
+import Morley.Debugger.Core (slSrcPos)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
+import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 
 data LIGO
 
@@ -51,6 +56,72 @@ instance HasSpecificMessages LIGO where
   type LanguageServerStateExt LIGO = LigoLanguageServerState
   type InterpretSnapshotExt LIGO = InterpretSnapshot
   type StopEventExt LIGO = InterpretEvent
+
+  reportErrorAndStoppedEvent = \case
+    ExceptionMet exception -> writeException exception
+    Paused reason -> writeStoppedEvent reason
+    Terminated -> writeTerminatedEvent
+    ReachedStart -> writeStoppedEvent "Reached start"
+    where
+      writeTerminatedEvent = do
+        pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
+          { DAP.bodyOutputEvent = DAP.defaultOutputEventBody
+            { DAP.categoryOutputEventBody = "stdout"
+            , DAP.outputOutputEventBody =
+                "Execution completed.\n"
+            }
+          }
+        pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
+
+      writeStoppedEvent reason = do
+        (mDesc, mLongDesc) <- zoom dsDebuggerState $ frozen (getStopEventInfo @LIGO Proxy)
+        let fullReason = case mDesc of
+              Nothing -> reason
+              Just (StopEventDesc desc) -> reason <> ", " <> desc
+        pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
+          { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody
+            { DAP.reasonStoppedEventBody = toString fullReason
+              -- ↑ By putting moderately large text we slightly violate DAP spec,
+              -- but it seems to be worth it
+            , DAP.threadIdStoppedEventBody = 1
+            , DAP.allThreadsStoppedStoppedEventBody = True
+            , DAP.textStoppedEventBody = maybe "" pretty mLongDesc
+            }
+          }
+
+      writeException exception = do
+        st <- get
+        let msg = pretty exception
+        mSrcLoc <- view slSrcPos <<$>> uses dsDebuggerState getLastExecutedPosition
+        pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
+          { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody
+            { DAP.reasonStoppedEventBody = "exception"
+            , DAP.threadIdStoppedEventBody = 1
+            , DAP.allThreadsStoppedStoppedEventBody = True
+            , DAP.descriptionStoppedEventBody = "Paused on exception"
+            , DAP.textStoppedEventBody = msg
+            }
+          }
+        pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
+          { DAP.bodyOutputEvent = withSrc st $ withSrcPos mSrcLoc DAP.defaultOutputEventBody
+            { DAP.categoryOutputEventBody = "stderr"
+            , DAP.outputOutputEventBody = msg <> "\n"
+            }
+          }
+        where
+          withSrc st event = event { DAP.sourceOutputEventBody = mkSource st }
+
+          mkSource DAPSessionState{..} = DAP.defaultSource
+            { DAP.nameSource = Just $ takeFileName _dsSource
+            , DAP.pathSource = _dsSource
+            }
+
+          withSrcPos mSrcPos event = case mSrcPos of
+            Nothing -> event
+            Just (SrcPos (Pos row) (Pos col)) -> event
+              { DAP.lineOutputEventBody   = Unsafe.fromIntegral $ row + 1
+              , DAP.columnOutputEventBody = Unsafe.fromIntegral $ col + 1
+              }
 
   handleLaunch LigoLaunchRequest {..} = do
     initRes <- lift . lift $
@@ -280,7 +351,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
 
     () <- do
       SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
-      logMessage $ pretty (cCode contract)
+      logMessage $ pretty (unContractCode $ cCode contract)
 
     pure (someContract, allLocs)
 

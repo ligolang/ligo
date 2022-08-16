@@ -18,8 +18,8 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
-import Test.Util
 import Morley.Michelson.Typed.Util (dsGoToValues)
+import Test.Util
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -64,7 +64,7 @@ test_SourceMapper = testGroup "Reading source mapper"
 
       let metasAndInstrs =
             filter (hasn't (_1 . _Empty)) $
-            toList $ collectMetas (T.cCode contract)
+            toList $ collectMetas (T.unContractCode $ T.cCode contract)
 
       metasAndInstrs
         @?=

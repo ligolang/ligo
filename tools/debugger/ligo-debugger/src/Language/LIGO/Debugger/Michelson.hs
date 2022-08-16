@@ -18,12 +18,13 @@ import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
-  (Expression (..), MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
+  (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
 import Morley.Michelson.ErrorPos (Pos (..), SrcPos (..))
 import Morley.Michelson.TypeCheck (TCError, typeCheckContract, typeCheckingWith)
 import Morley.Michelson.Typed
-  (Contract' (..), CtorEffectsApp (..), DfsSettings (..), Instr (..), SomeContract (..),
-  SomeMeta (SomeMeta), dfsFoldInstr, dfsTraverseInstr, isMichelsonInstr)
+  (Contract' (..), ContractCode' (ContractCode, unContractCode), CtorEffectsApp (..),
+  DfsSettings (..), Instr (..), SomeContract (..), SomeMeta (SomeMeta), dfsFoldInstr,
+  dfsTraverseInstr, isMichelsonInstr)
 import Text.Interpolation.Nyan
 
 import Data.DList qualified as DL
@@ -52,11 +53,11 @@ extractInstructionsIndexes =
   where
     go :: Expression -> State Int [TableEncodingIdx]
     go = \case
-      ExpressionInt _ -> skip
-      ExpressionString _ -> skip
-      ExpressionBytes _ -> skip
-      ExpressionSeq exprs -> addFold exprs
-      ExpressionPrim MichelinePrimAp {mpaPrim, mpaArgs}
+      ExpInt _ _ -> skip
+      ExpString _ _ -> skip
+      ExpBytes _ _ -> skip
+      ExpSeq _ exprs -> addFold exprs
+      ExpPrim _ MichelinePrimAp {mpaPrim, mpaArgs}
         | Set.member (coerce mpaPrim) primInstrs -> addFold mpaArgs
         | otherwise -> modify (+ 1) *> (fold <$> traverse go mpaArgs)
 
@@ -111,7 +112,7 @@ embedInInstr
   -> Either EmbedError (Instr inp out)
 embedInInstr metaTape instr = do
   (resInstr, tapeRest) <- runExcept $ usingStateT metaTape $
-    dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } pure instr
+    dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl } instr
   unless (null tapeRest) $
     Left $ RemainingExtraEntries (Unsafe.fromIntegral @Int @Word $ length tapeRest)
   return resInstr
@@ -193,15 +194,15 @@ readLigoMapper ligoMapper = do
 
   SomeContract contract <- fromExpressionToTyped (lmMichelsonCode ligoMapper)
   extendedContract@(SomeContract extContract) <- first MetaEmbeddingError $
-    (\code -> SomeContract contract{ cCode = code }) <$>
+    (\code -> SomeContract contract{ cCode = ContractCode code }) <$>
       embedInInstr @EmbeddedLigoMeta
         metaPerInstr
-        (cCode contract)
+        (unContractCode $ cCode contract)
 
   let allLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
-        mapMaybe ligoInfoToSourceLoc $ getSourceLocations (cCode extContract)
+        mapMaybe ligoInfoToSourceLoc $ getSourceLocations (unContractCode $ cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire

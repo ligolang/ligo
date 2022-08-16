@@ -3,7 +3,7 @@
 # Some commonly used options have been documented as comments in this file.
 # For advanced use and comprehensive documentation of the format, please see:
 # https://docs.haskellstack.org/en/stable/yaml_configuration/
-resolver: lts-18.10
+resolver: lts-19.16
 
 packages:
 - .
@@ -12,31 +12,26 @@ extra-deps:
 - dir-traverse-0.2.3.0
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: ce3899d8ca0e2cc18c0a556874d09bb377dfcec2  # master
+  commit: 2b565c33adeb568929210145bd52d86b48018353  # master
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git
-  commit: 1282e0b992b00089d55228a2aa9edc4a3581c319
-- git: https://github.com/serokell/galois-field.git
-  commit: 576ba98ec947370835a1f308895037c7aa7f8b71
+  commit: c8b06c4c8a271fce0c2f41ab18e88d58e64bac52
+- galois-field-1.0.2
+- elliptic-curve-0.3.0
 - hex-text-0.1.0.0
 - show-type-0.1.1
-- git: https://gitlab.com/morley-framework/morley.git
-  commit: c5df3bf7c4d683768b0a3dc36dc5154455045f45
-  subdirs:
-    - code/lorentz
-    - code/morley
-    - code/morley-client
-    - code/morley-prelude
+- morley-prelude-0.5.1
+- morley-1.17.0
+- lorentz-0.14.0
+- morley-client-0.2.0
 - git: https://github.com/int-index/caps.git
   commit: c5d61837eb358989b581ed82b1e79158c4823b1b
-- named-0.3.0.1@sha256:2975d50c9c5d88095026ffc1303d2d9be52e5f588a8f8bcb7003a04b79f10a06,2312
-- cryptonite-0.27
+- named-0.3.0.1@sha256:418543272f0c844a77639b05276ee3906d5f305cd4cab46fafcb4f15b7f1e60d,2312
+- cryptonite-0.30
 - haskell-dap-0.0.14.0@sha256:1befb8a6fce3e05c7cb10a1c883269fbd1c54ff7cec3314fa7dd64dba822a89e,3336
 - uncaught-exception-0.1.0
 - tasty-hunit-compat-0.2.0.1
-- git: https://github.com/serokell/elliptic-curve.git
-  commit: b8a3d0cf8f7bacfed77dc3b697f5d08bd33396a8
 - git: https://github.com/serokell/pairing.git
   commit: cf86cf1f6b03f478a439703b050c520a9d455353
 - base16-bytestring-0.1.1.7@sha256:0021256a9628971c08da95cb8f4d0d72192f3bb8a7b30b55c080562d17c43dd3,2231
@@ -50,5 +45,12 @@ extra-deps:
 - NaCl-0.0.5.0
 - libsodium-1.0.18.2
 - OddWord-1.0.2.0
-- nyan-interpolation-core-0.9
-- nyan-interpolation-0.9
+- git: https://github.com/serokell/nyan-interpolation.git
+  commit: 5e158057b167275d2150454e2bb731cfe686ea7a
+  subdirs:
+    - core
+    - full
+
+# Required by galois-field.
+- protolude-0.2.4
+- poly-0.4.0.0
