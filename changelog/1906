@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1906'
+title: Fix `#import` module not found
+type: fixed

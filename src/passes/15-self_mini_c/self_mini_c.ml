@@ -121,8 +121,6 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_NTH_BOOTSTRAP_CONTRACT
   | C_TEST_LAST_ORIGINATIONS
   | C_TEST_MUTATE_VALUE
-  | C_TEST_MUTATION_TEST
-  | C_TEST_MUTATION_TEST_ALL
   | C_TEST_SAVE_MUTATION
   | C_TEST_RUN
   | C_TEST_COMPILE_CONTRACT
@@ -156,6 +154,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_SIGN
   | C_TEST_GET_ENTRYPOINT
   | C_TEST_LAST_EVENTS
+  | C_TEST_TRY_WITH
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

@@ -10,26 +10,26 @@ You can also try LIGO in a Gitpod environment
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://gitlab.com/ligolang/template-ligo)
 
 ## Dockerised installation (recommended)
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.36.0](./changelog.md):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release v0.48.1](./changelog.md):
 
 Linux or OSX:
 > ```sh
-> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.36.0
+> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:v0.48.1
 > ```
 > For convenience you can alias the above command
 > ```sh
-> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.36.0"
+> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:v0.48.1"
 > ```
 > To make this `alias` persistent across terminal sessions you need to configure your shell.     
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
 
 Windows:
 > ```dos
-> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.36.0`
+> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:v0.48.1`
 > ```
 > For convenience you can alias the above command
 > ```dos
-> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.36.0 $*
+> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:v0.48.1 $*
 > ```
 > To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
 > Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
@@ -42,10 +42,10 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-You can get the rolling release [here](https://ligolang.org/bin/linux/ligo), make it executable, and you are done!
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/2841066435/artifacts/raw/ligo), make it executable, and you are done!
 
 ```zsh
-wget https://ligolang.org/bin/linux/ligo
+wget https://gitlab.com/ligolang/ligo/-/jobs/2841066435/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
@@ -59,7 +59,7 @@ sudo cp ./ligo /usr/local/bin
 ## Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://ligolang.org/deb/ligo.deb), and then install using: 
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/2841066435/artifacts/raw/ligo.deb), and then install using: 
 
 ```zsh
 sudo apt install ./ligo.deb

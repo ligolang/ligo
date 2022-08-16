@@ -3,7 +3,7 @@
 ligo transpile contract SOURCE_FILE SYNTAX
 
 ### DESCRIPTION
-This sub-command transpiles a source file to another syntax. It does not use the build system, but the source file is preprocessed. Comments are currently not transpiled. Please use at your own risk.
+[BETA] This sub-command transpiles a source file to another syntax. It does not use the build system, but the source file is preprocessed. Comments are currently not transpiled. Please use at your own risk.
 
 ### FLAGS
 **--display-format FORMAT**
