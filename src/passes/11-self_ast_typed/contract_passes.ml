@@ -11,6 +11,7 @@ module VVarSet = Caml.Set.Make(ValueVar)
 module MVarMap = Simple_utils.Map.Make(ModuleVar)
 
 type env = {env:env MVarMap.t;used_var:VVarSet.t}
+let empty_env = {env=MVarMap.empty;used_var=VVarSet.empty}
 let rec pp_env ppf env =
   Format.fprintf ppf "{env: %a;used_var: %a}"
     (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" ModuleVar.pp k pp_env v)) (MVarMap.to_kv_list env.env)
@@ -149,11 +150,11 @@ and get_fv_module_expr env x =
     let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
     new_env, x
 
-let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data prg ->
+let remove_unused ~raise : expression_variable -> program -> program = fun main_name prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
-      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder.var contract_pass_data.main_name)
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> not (ValueVar.equal binder.var main_name)
     | _ -> true in
   (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
   let _, prg_decls = List.split_while prg_decls ~f:aux in
@@ -165,6 +166,32 @@ let remove_unused ~raise : contract_pass_data -> program -> program = fun contra
   let main_dc = {main_dc with expr = main_expr} in
   let main_decl = {main_decl with wrap_content = Declaration_constant main_dc} in
   let _,module_ = get_fv_module env [main_decl] prg_decls in
+  module_
+
+let remove_unused_for_views ~raise ~(view_names:expression_variable list ) : program -> program = fun prg ->
+  let view_names = List.rev view_names in
+  let is_view_name var = List.mem view_names var ~equal:ValueVar.equal in
+  (* Process declaration in reverse order *)
+  let prg_decls = List.rev prg in
+  let pred = fun _ -> function
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> (is_view_name binder.var)
+    | _ -> false in
+  let idx,_ = trace_option ~raise (Errors.corner_case "View not found") @@ List.findi prg_decls ~f:pred in
+  (* Remove the definition after the last view (can't be relevant), mostly remove the test *)
+  let _,prg_decls = List.split_n prg_decls idx in
+  let view_decls = List.rev @@ List.filter_map prg_decls 
+    ~f:(fun decl -> 
+      match decl with
+        {Location.wrap_content = Declaration_constant dc; _} when is_view_name dc.binder.var -> Some dc
+      | _ -> None) 
+  in 
+  let env = List.fold view_decls ~init:empty_env ~f:(fun env view_decl -> 
+    let env',_ = get_fv view_decl.expr in
+    merge_env env env'
+  ) in
+  let view_decls = List.map view_decls ~f:(fun decl -> Location.wrap (Declaration_constant decl)) in
+  let _, prg_decls = trace_option ~raise (Errors.corner_case "View not found") @@ List.uncons prg_decls in
+  let _,module_ = get_fv_module env view_decls prg_decls in
   module_
 
 let remove_unused_expression : expression -> program -> expression * program = fun expr prg ->
