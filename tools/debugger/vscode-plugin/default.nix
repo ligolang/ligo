@@ -1,39 +1,23 @@
-{ lib
-, yarn2nix-moretea
-, ligo-squirrel
-, python3
-, vscodium
-, xvfb-run
-, git
-, zip
-, unzip
-, findutils
-, writeText
-, pkg-config
-, libsecret
-, doRunTests ? true
-}:
-let
-  codePath = "${vscodium}/lib/vscode/codium";
-in
-yarn2nix-moretea.mkYarnPackage {
+{ lib, yarn2nix-moretea, python3, vscodium, xvfb-run, git, zip, unzip, findutils
+, writeText, pkg-config, doRunTests ? false, doCopyBinary ? true, ligo-debugger }:
+let codePath = "${vscodium}/lib/vscode/codium";
+in yarn2nix-moretea.mkYarnPackage {
   src = ./.;
-
-  patchPhase = ''
-    export CONTRACTS_DIR="$NIX_BUILD_TOP/contracts"
-    cp --remove-destination ${../../../LICENSE.md} ./LICENSE.md
-    cp ${../squirrel/test/contracts} "$CONTRACTS_DIR" --no-preserve=all -r
-    cp -Lr ${ligo-squirrel}/* .
-  '';
 
   preBuild = ''
     # broken link fest
     rm deps/$pname/$pname
+
+    # fixing license path
+    rm deps/$pname/LICENSE.md
+    cp -L ${../../..}/tools/debugger/vscode-plugin/LICENSE.md deps/$pname/LICENSE.md
+
+    mkdir -p deps/$pname/bin
+    cp ${ligo-debugger}/bin/ligo-debugger deps/$pname/bin
   '';
 
   postBuild = ''
     yarn run package
-    yarn run lint
 
     ${lib.optionalString doRunTests ''
       echo 🛠 🧪 Running VSCode tests ...

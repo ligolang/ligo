@@ -7,6 +7,7 @@ variables:
 stages:
   - nix
   - ligo
+  - debugger
   - lsp
   - push
 
@@ -14,10 +15,14 @@ default:
   tags: [nix]
 
 # jobs for building and testing LSP
-include: '/tools/lsp/.gitlab-ci.yml'
+include:
+  #  ligo-debugger CI
+  - '/tools/debugger/.gitlab-ci.yml'
 
 ligo-build:
   stage: ligo
+  needs:
+    - print-nix-version
   only: [merge_requests, tooling]
   tags: [nix-with-docker]
   script:
@@ -56,6 +61,7 @@ ligo-build:
 
 lsp-lint:
   stage: lsp
+  needs: []
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lint
@@ -66,18 +72,21 @@ lsp-lint:
 print-nix-version:
   stage: nix
   only: [merge_requests, tooling]
+  needs: []
   script:
     - nix --version
     - nix-store --version
 
 vscode-extension-tests:
   stage: lsp
+  needs: []
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.lsp-test
 
 vscode-extension-integration-tests:
   stage: lsp
+  needs: [ ligo-build ]
   only: [merge_requests, tooling]
   script:
     - git add ./ligo # Ligo binary is needed for this tests
@@ -85,18 +94,21 @@ vscode-extension-integration-tests:
 
 vscode-extension-sexp-tests:
   stage: lsp
+  needs: [ print-nix-version ]
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.squirrel-sexp-test
 
 vscode-extension-grammar-tests:
   stage: lsp
+  needs: [ print-nix-version ]
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#checks.x86_64-linux.squirrel-grammar-test
 
 vscode-extension-lsp-handler-tests:
   stage: lsp
+  needs: [ ligo-build ]
   only: [merge_requests, tooling]
   script:
     - git add ./ligo # Ligo binary is needed for this tests
@@ -104,12 +116,14 @@ vscode-extension-lsp-handler-tests:
 
 vscode-extension-linux:
   stage: nix
+  needs: [ print-nix-version ]
   only: [merge_requests]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#vscode-extension-native
 
 vscode-extension:
   stage: nix
+  needs: [ print-nix-version ]
   only: [merge_requests, tooling, vscode-production]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#vscode-extension
@@ -120,15 +134,15 @@ vscode-extension:
 
 lsp-docker-image:
   stage: lsp
+  needs: [ ligo-build ]
   only: [merge_requests, tooling]
   script:
     - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#lsp-docker-image-default
 
 lsp-check-generated-highlighting:
   stage: lsp
+  needs: [ ligo-build ]
   only: [merge_requests, tooling]
-  dependencies:
-    - ligo-build
   script:
     - scripts/diff_dir.sh highlighting/emacs tools/emacs
     - scripts/diff_dir.sh highlighting/vim tools/vim/ligo/start/ligo/syntax
@@ -137,6 +151,7 @@ lsp-check-generated-highlighting:
 
 vscode-extension-publish-checks:
   stage: nix
+  needs: [ print-nix-version ]
   only: [merge_requests, tooling]
   script:
     - nix shell -f nix/vsce.nix $FLAKE_FLAGS --command vsce --help
@@ -145,12 +160,12 @@ vscode-extension-publish-checks:
 # publish vscode extension to the extension marketplace
 vscode-extension-publish:
   stage: push
-  dependencies: [vscode-extension]
+  needs: [vscode-extension]
   only: [vscode-production]
   when: manual
   script:
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix $FLAKE_FLAGS --command -- vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix $FLAKE_FLAGS --command -- ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:

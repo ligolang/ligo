@@ -18,6 +18,8 @@ include:
   - '/.ci/.gitlab-ci-changelog.yml'
   # jobs for building and testing LSP
   - '/tools/lsp/.gitlab-ci.yml'
+  # ligo-debugger CI
+  - '/tools/debugger/.gitlab-ci.yml'
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
 
