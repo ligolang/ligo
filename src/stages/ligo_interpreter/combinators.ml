@@ -299,7 +299,7 @@ let rec compare_value (v : value) (v' : value) : int =
     | Untyped_code c, Untyped_code c' -> Caml.compare c c'
     | Ty_code _, Untyped_code _ -> 1
   )
-  | V_Mutation (l, e), V_Mutation (l', e') -> (
+  | V_Mutation (l, e, _), V_Mutation (l', e', _) -> (
     match Location.compare l l' with
       0 -> Caml.compare e e'
     | c -> c

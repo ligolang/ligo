@@ -144,6 +144,12 @@ let disable_michelson_typechecking =
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
   flag ~doc name no_arg
 
+let only_ep =
+  let open Command.Param in
+  let name = "--only-ep" in
+  let doc  = "Only display declarations that have the type of an entrypoint" in
+  flag ~doc name no_arg
+
 let experimental_disable_optimizations_for_debugging =
   let open Command.Param in
   let name = "--experimental-disable-optimizations-for-debugging" in
@@ -537,8 +543,8 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+  let f source_file only_ep syntax display_format () =
+    let raw_options = Raw_options.make ~only_ep ~syntax () in
     return_result ~return @@
     Api.Info.list_declarations raw_options source_file display_format
   in
@@ -546,7 +552,7 @@ let list_declarations =
   let readme () = "This sub-command prints a list of all top-level \
                   declarations (not including types and modules)." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> only_ep <*> syntax <*> display_format)
 
 let measure_contract =
   let f source_file entry_point views syntax protocol_version display_format enable_typed_opt show_warnings warning_as_error project_root warn_unused_rec () =
