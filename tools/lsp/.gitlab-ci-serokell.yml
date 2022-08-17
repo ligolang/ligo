@@ -164,8 +164,8 @@ vscode-extension-publish:
   only: [vscode-production]
   when: manual
   script:
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command -- ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
+    - nix shell $FLAKE_FLAGS -f nix/vsce.nix --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
 
 # publish docker image for lsp to the gitlab registry
 lsp-docker-image-publish:
@@ -178,5 +178,4 @@ lsp-docker-image-publish:
     # docker registry credentials provided by gitlab
     - DEST_CREDS="$CI_REGISTRY_USER":"$CI_REGISTRY_PASSWORD"
     # use '--insecury-policy' to disable container signature checking, because we only upload the image
-    - nix shell 'git+file:///'$PWD'?dir=tools/lsp'#skopeo $FLAKE_FLAGS --command --
-        skopeo --insecure-policy copy --dest-creds "$DEST_CREDS" docker-archive:./result docker://"$CI_REGISTRY_IMAGE"/ligo-lsp:latest
+    - nix shell 'git+file:///'$PWD'?dir=tools/lsp'#skopeo $FLAKE_FLAGS --command  skopeo --insecure-policy copy --dest-creds "$DEST_CREDS" docker-archive:./result docker://"$CI_REGISTRY_IMAGE"/ligo-lsp:latest
