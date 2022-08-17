@@ -226,28 +226,59 @@ let make_initial_state syntax protocol dry_run_opts project_root options =
     module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make;
   }
 
-let rec read_input prompt delim =
-  let open Simple_utils.Option in
-  match LNoise.linenoise prompt with
-  | exception Sys.Break | None -> None
-  | Some s -> LNoise.history_add s |> ignore;
-              let result = Str.split_delim (Str.regexp delim) s in
-              match result with
-              | [] | [_] ->
-                 let* i = read_input "" delim in
-                 some @@ s ^ "\n" ^ i
-              | hd :: _ -> some @@ hd
+let make_prompt n =
+  let open LTerm_text in
+  let prompt = Printf.sprintf "In  [%d]: " n in
+  eval [ S prompt ]
 
-let rec loop ~raw_options display_format state n =
-  let prompt = Format.sprintf "In  [%d]: " n in
-  let s = read_input prompt ";;" in
-  match s with
-  | Some s ->
-     let k, state, out = parse_and_eval ~raw_options display_format state s in
-     let out = Format.sprintf "Out [%d]: %s" n out in
-     print_endline out;
-     loop ~raw_options display_format state (n + k)
-  | None -> ()
+let make_output n out =
+  let open LTerm_text in
+  let output = Printf.sprintf "Out [%d]: %s" n out in
+  eval [ S output ]
+
+class read_phrase ~term ~history ~n = object(self)
+  inherit LTerm_read_line.read_line ~history:(LTerm_history.contents history) () as super
+  inherit [Zed_string.t] LTerm_read_line.term term as super_term
+
+  method! show_box = false
+
+  method! send_action action =
+    let action : LTerm_read_line.action =
+      if Caml.(action == Accept) && Caml.(React.S.value self#mode <> LTerm_read_line.Edition) then
+        Accept
+      else
+        action
+    in
+    super#send_action action
+
+  method! exec ?(keys=[]) = function
+    | action :: actions when Caml.(React.S.value self#mode = LTerm_read_line.Edition) &&
+                               Caml.(action == Accept)  -> begin
+        Zed_macro.add self#macro action;
+        let input = Zed_rope.to_string (Zed_edit.text self#edit) in
+        let input_utf8 = Zed_string.to_utf8 input in
+        let result = Str.split_delim (Str.regexp ";;") input_utf8 in
+        match result with
+        | [] | [_] -> self#insert (Uchar.of_char '\n');
+                      self#exec ~keys actions
+        | hd :: _ -> LTerm_history.add history input;
+                     Lwt.return @@ LTerm_read_line.Result (Zed_string.of_utf8 hd)
+      end
+    | actions ->
+      super_term#exec actions
+
+  initializer
+    self#set_prompt (React.S.const (make_prompt n))
+end
+
+
+let rec loop ~raw_options syntax display_format term history state n =
+  let rl = new read_phrase ~term ~history ~n in
+  let command = Lwt_main.run rl#run in
+  let command_utf8 = Zed_string.to_utf8 command in
+  let k, state, out = parse_and_eval ~raw_options display_format state command_utf8 in
+  Lwt_main.run (LTerm.fprintls term (make_output n out));
+  loop ~raw_options syntax display_format term history state (n + k)
 
 let main (raw_options : Raw_options.t) display_format now amount balance sender source init_file () =
   let protocol = Environment.Protocols.protocols_to_variant raw_options.protocol_version in
@@ -259,7 +290,9 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
   | _, _, None -> Error ("Please check run options.", "")
   | Some protocol, Some syntax, Some dry_run_opts ->
     begin
-      print_endline welcome_msg;
+      Lwt_main.run (LTerm_inputrc.load ());
+      let term = Lwt_main.run (Lazy.force LTerm.stdout) in
+      let history = LTerm_history.create [] in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root options in
       let state = match init_file with
@@ -267,7 +300,9 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
         | Some file_name -> let c = use_file state ~raw_options file_name in
                             let _, state, _ = eval (Ex_display_format Dev) state c in
                             state in
-      LNoise.set_multiline true;
-      loop ~raw_options display_format state 1;
-      Ok("","")
+      Lwt_main.run (LTerm.fprintls term (LTerm_text.eval [ S welcome_msg ]));
+      try
+        loop ~raw_options syntax display_format term history state 1
+      with | LTerm_read_line.Interrupt -> Ok("","")
+           | Sys.Break -> Ok("","")
     end
