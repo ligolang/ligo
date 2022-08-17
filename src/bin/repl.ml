@@ -226,29 +226,6 @@ let make_initial_state syntax protocol dry_run_opts project_root options =
     module_resolutions = Option.bind project_root ~f:Preprocessor.ModRes.make;
   }
 
-let rec read_input prompt delim =
-  let open Simple_utils.Option in
-  match LNoise.linenoise prompt with
-  | exception Sys.Break | None -> None
-  | Some s -> LNoise.history_add s |> ignore;
-              let result = Str.split_delim (Str.regexp delim) s in
-              match result with
-              | [] | [_] ->
-                 let* i = read_input "" delim in
-                 some @@ s ^ "\n" ^ i
-              | hd :: _ -> some @@ hd
-
-(* let rec loop ~raw_options display_format state n =
- *   let prompt = Format.sprintf "In  [%d]: " n in
- *   let s = read_input prompt ";;" in
- *   match s with
- *   | Some s ->
- *      let k, state, out = parse_and_eval ~raw_options display_format state s in
- *      let out = Format.sprintf "Out [%d]: %s" n out in
- *      print_endline out;
- *      loop ~raw_options display_format state (n + k)
- *   | None -> () *)
-
 let make_prompt n =
   let open LTerm_text in
   let prompt = Printf.sprintf "In  [%d]: " n in
@@ -316,7 +293,6 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
       Lwt_main.run (LTerm_inputrc.load ());
       let term = Lwt_main.run (Lazy.force LTerm.stdout) in
       let history = LTerm_history.create [] in
-      (* print_endline welcome_msg; *)
       let options = Compiler_options.make ~raw_options ~syntax () in
       let state = make_initial_state syntax protocol dry_run_opts raw_options.project_root options in
       let state = match init_file with
@@ -329,7 +305,4 @@ let main (raw_options : Raw_options.t) display_format now amount balance sender 
         loop ~raw_options syntax display_format term history state 1
       with | LTerm_read_line.Interrupt -> Ok("","")
            | Sys.Break -> Ok("","")
-      (*                   LNoise.set_multiline true;
-       * loop ~raw_options display_format state 1; *)
-      (* Ok("","") *)
     end
