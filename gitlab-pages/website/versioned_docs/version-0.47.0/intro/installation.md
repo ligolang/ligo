@@ -10,7 +10,6 @@ You can also try LIGO in a Gitpod environment
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://gitlab.com/ligolang/template-ligo)
 
 ## Dockerised installation (recommended)
-<<<<<<< HEAD
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.49.0](./changelog.md):
 
 Linux or OSX:
@@ -20,36 +19,17 @@ Linux or OSX:
 > For convenience you can alias the above command
 > ```sh
 > alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:0.49.0"
-=======
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release v0.49.01](./changelog.md):
-
-Linux or OSX:
-> ```sh
-> docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:v0.49.01
-> ```
-> For convenience you can alias the above command
-> ```sh
-> alias ligo="docker run --rm -v "$PWD":"$PWD" -w "$PWD" ligolang/ligo:v0.49.01"
->>>>>>> ac1de5c9cd1e361f9a15e5d1188846ecf775c9d5
 > ```
 > To make this `alias` persistent across terminal sessions you need to configure your shell.     
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
 
 Windows:
 > ```dos
-<<<<<<< HEAD
 > docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.49.0`
 > ```
 > For convenience you can alias the above command
 > ```dos
 > doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.49.0 $*
-=======
-> docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:v0.49.01`
-> ```
-> For convenience you can alias the above command
-> ```dos
-> doskey ligo=docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:v0.49.01 $*
->>>>>>> ac1de5c9cd1e361f9a15e5d1188846ecf775c9d5
 > ```
 > To make the alias persistent across terminal sessions you need to add the `doskey` to the Windows Registry.  
 > Follow [this stackoverflow answer](https://stackoverflow.com/a/21040825) for the steps on how to do that.
