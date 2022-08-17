@@ -4,6 +4,5 @@ in {
   inherit (pkgs)
     ligo-deb
     ligo-editor ligo-editor-docker
-    ligo-website
     ligo-changelog;
 }
