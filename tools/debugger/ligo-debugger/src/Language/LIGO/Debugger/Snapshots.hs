@@ -39,7 +39,6 @@ import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
 import Data.Conduit.Lift qualified as CL
-import Data.List.NonEmpty qualified as NE
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Fmt (Buildable (..), genericF)
@@ -54,11 +53,12 @@ import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (ReachedBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, move,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
+import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
 
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
+import Unsafe qualified
 
 -- | Stack element, likely with an associated variable.
 data StackItem = StackItem
@@ -296,7 +296,7 @@ runCollectInterpretSnapshots
 runCollectInterpretSnapshots act env initSt =
   InterpretHistory $
   -- This is safe because we yield at least two snapshots
-  NE.fromList $
+  (Unsafe.fromJust . twoElemFromList) $
   runIdentity $
   C.sourceToList $ do
     C.yield InterpretSnapshot
@@ -325,11 +325,11 @@ collectInterpretSnapshots
   -> InterpretHistory InterpretSnapshot
 collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env =
   runCollectInterpretSnapshots
-    (runInstrCollect cCode initStack)
+    (runInstrCollect (unContractCode cCode) initStack)
     env
     collSt
   where
-    initStack = mkInitStack (liftCallArg epc param) cParamNotes initStore cStoreNotes
+    initStack = mkInitStack (liftCallArg epc param) initStore
     initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
     collSt = CollectorState
       { csInterpreterState = initSt
