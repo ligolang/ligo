@@ -21,7 +21,7 @@
  (name repl)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils cmdliner ligo build linenoise lambda-term)
+ (libraries simple-utils cmdliner ligo build lambda-term)
  (modules repl))
 
 (library
