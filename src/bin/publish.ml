@@ -249,7 +249,7 @@ let publish ~project_root ~token ~ligo_registry ~manifest =
   let sha512 = gzipped_tarball 
     |> Digestif.SHA512.digest_bytes ~off:0 ~len
     |> Digestif.SHA512.to_raw_string in
-  let () = Printf.printf "Uploading package to LIGO registry... %!" in
+  let () = Printf.printf "Uploading package... %!" in
   http ~token ~sha1 ~sha512 ~gzipped_tarball ~ligo_registry ~manifest
 
 let handle_server_response ~name response body =
