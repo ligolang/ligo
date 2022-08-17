@@ -187,6 +187,7 @@ tests:
       - filepath
       - hspec-expectations
       - HUnit
+      - interpolate
       - lens
       - ligo-squirrel
       - lsp-test
@@ -259,10 +260,10 @@ tests:
 
     dependencies:
       - algebraic-graphs
-      - HUnit
       - directory
       - filepath
       - hspec-expectations
+      - HUnit
       - lens
       - ligo-squirrel
       - lsp-types
@@ -292,10 +293,10 @@ tests:
 
     dependencies:
       - algebraic-graphs
-      - HUnit
       - directory
       - filepath
       - hspec-expectations
+      - HUnit
       - lens
       - ligo-squirrel
       - lsp-types

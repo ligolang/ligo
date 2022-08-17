@@ -151,7 +151,8 @@ class HasLigoClient m => HasScopeForest impl m where
     counter <- newMVar 0
     forAMConcurrently graph \contract -> do
       n <- modifyMVar counter (pure . (succ &&& id))
-      reportProgress $ Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
+      reportProgress $
+        Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
       scopeContract @impl tempSettings contract
 
   scopeContract

@@ -21,6 +21,7 @@ import Control.Monad
 import Control.Monad.Reader
 import Data.Aeson (FromJSON (..), ToJSON (..), Value, eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (parseEither)
+import Data.Bool (bool)
 import Data.Foldable (asum, toList)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (fromMaybe)
@@ -236,17 +237,18 @@ parseValue = parseEither parseJSON
 -- | Abstracts boilerplate present in many of our LIGO handlers.
 withLigo
   :: (HasLigoClient m, Log m)
-  => TempSettings
-  -> Source
+  => Source
+  -> TempSettings
   -> (FilePath -> [String])
   -> (Source -> Value -> m a)
   -> m a
-withLigo (TempSettings rootDir tempDirTemplate) src@(Source fp contents) getArgs decode =
+withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
   withTempDirTemplate \tempDir ->
     withTempFile tempDir (takeFileName fp) \tempFp handle -> do
       -- Create temporary file and call LIGO with it.
+      $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
       liftIO (Text.hPutStr handle contents *> hClose handle)
-      try (let args = getArgs tempFp in callLigo (Just rootDir) args src) >>= \case
+      try (callLigo (Just rootDir) (getArgs tempFp) src) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
         Left LigoClientFailureException {cfeStderr} -> do
           let fixMarkers' = Text.replace (pack tempFp) (pack fp)
@@ -256,24 +258,31 @@ withLigo (TempSettings rootDir tempDirTemplate) src@(Source fp contents) getArgs
           -- from LIGO is malformed. This is a bug in the LIGO binary and we
           -- should contact the LIGO team if it ever happens.
           Left e -> throwIO $ LigoMalformedJSONException e result fp
-          Right json -> decode (Source tempFp result) json
+          Right json -> decode (Source tempFp True result) json
   where
     withTempDirTemplate = case tempDirTemplate of
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
+withLigo src@(Source fp False _) _ getArgs decode =
+  try (callLigo Nothing (getArgs fp) src) >>= \case
+    Left LigoClientFailureException{cfeStderr} ->
+      handleLigoMessages fp cfeStderr
+    Right result -> case eitherDecodeStrict' $ encodeUtf8 result of
+      Left e -> throwIO $ LigoMalformedJSONException e result fp
+      Right json -> decode (Source fp False result) json
 
 fixMarkers
   :: MonadIO m
   => FilePath  -- ^ Name of the temporary file to be replaced.
   -> Source  -- ^ Source file which has its formatted/preprocessed contents.
   -> m Source
-fixMarkers tempFp (Source fp contents) = liftIO do  -- HACK: I use `liftIO` here to avoid a `MonadFail m` constraint.
+fixMarkers tempFp (Source fp dirty contents) = liftIO do  -- HACK: I use `liftIO` here to avoid a `MonadFail m` constraint.
   markers <- extractIncludes contents
   let files = hashNub $ map lmFile markers
   filesRelation <- filter (uncurry (/=)) <$> traverse (sequenceA . (id &&& canonicalizePath)) files
   let replace old new = Text.replace (pack old) (pack new)
   let go = mconcat $ map (\(old, new) -> Endo $ replace old new) ((tempFp, fp) : filesRelation)
-  pure $ Source fp $ appEndo go contents
+  pure $ Source fp dirty $ appEndo go contents
 
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
@@ -312,16 +321,17 @@ callForFormat
   -> Source
   -> m Text
 callForFormat tempSettings source = Log.addNamespace "callForFormat" $ Log.addContext source $
-  withLigo tempSettings source
+  withLigo source tempSettings
     (\tempFp -> ["print", "pretty", tempFp, "--format", "json"])
-    (\(Source tempFp _) json ->
+    (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
           $(Log.err) [i|Could not format document with error: #{err}|]
           throwIO $ LigoFormatFailedException (pack err) fp
-        Right formatted -> srcText <$> fixMarkers tempFp (Source fp formatted))
+        Right formatted
+          | isDirty   -> srcText <$> fixMarkers tempFp (Source fp isDirty formatted)
+          | otherwise -> pure formatted)
   where
-    fp :: FilePath
     fp = srcPath source
 
 -- | Call the preprocessor on some contract, handling all preprocessor directives.
@@ -338,19 +348,19 @@ preprocess
   => TempSettings
   -> Source
   -> m Source
-preprocess tempSettings contract = Log.addNamespace "preprocess" $ Log.addContext contract do
-  $(Log.debug) [i|preprocessing the following contract:\n #{contract}|]
-  withLigo tempSettings contract
+preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
+  $(Log.debug) [i|preprocessing the following contract:\n#{fp}|]
+  withLigo source tempSettings
     (\tempFp -> ["print", "preprocessed", tempFp, "--lib", dir, "--format", "json"])
-    (\(Source tempFp _) json ->
+    (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
           $(Log.err) [i|Unable to preprocess contract with: #{err}|]
           throwIO $ LigoPreprocessFailedException (pack err) fp
-        Right newContract -> fixMarkers tempFp $ Source fp newContract)
+        Right newContract ->
+          bool pure (fixMarkers tempFp) isDirty $ Source fp isDirty newContract)
   where
-    fp, dir :: FilePath
-    fp = srcPath contract
+    fp = srcPath source
     dir = takeDirectory fp
 
 -- | Get ligo definitions from raw contract.
@@ -359,20 +369,23 @@ getLigoDefinitions
   => TempSettings
   -> Source
   -> m LigoDefinitions
-getLigoDefinitions tempSettings contract = Log.addNamespace "getLigoDefinitions" $ Log.addContext contract do
-  $(Log.debug) [i|parsing the following contract:\n#{contract}|]
-  withLigo tempSettings contract
+getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $ Log.addContext source do
+  $(Log.debug) [i|parsing the following contract:\n#{fp}|]
+  withLigo source tempSettings
     (\tempFp -> ["info", "get-scope", tempFp, "--format", "json", "--with-types", "--lib", dir])
-    (\(Source tempFp output) json -> do
-      json' <- traverseJsonText (fmap srcText . fixMarkers tempFp . Source fp) json
+    (\(Source tempFp isDirty output) json -> do
+      json' <- bool
+        pure
+        (traverseJsonText (fmap srcText . fixMarkers tempFp . Source fp isDirty))
+        isDirty
+        json
       case parseValue json' of
         Left err -> do
           $(Log.err) [i|Unable to parse ligo definitions with: #{err}|]
           throwIO $ LigoDefinitionParseErrorException (pack err) output fp
         Right definitions -> pure definitions)
   where
-    fp, dir :: FilePath
-    fp = srcPath contract
+    fp = srcPath source
     dir = takeDirectory fp
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it

@@ -33,8 +33,8 @@ import AST.Scope
   , addLigoErrsToMsg, addScopes, contractNotFoundException, lookupContract
   )
 import Cli
-  ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
-  , SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
+  ( HasLigoClient, LigoDecodedExpectedClientFailureException (..), SomeLigoException (..)
+  , TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
   )
 import Diagnostic (Message)
 import Extension
@@ -90,7 +90,7 @@ loadPreprocessed tempSettings src = do
         prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> Text.lines contents
         shouldPreprocess = hasPreprocessor || any snd prepreprocessed
       in
-      (Source (srcPath src) $ Text.unlines $ map fst prepreprocessed, shouldPreprocess)
+      (src{srcText = Text.unlines $ map fst prepreprocessed}, shouldPreprocess)
 
 parsePreprocessed :: (HasLigoClient m, Log m) => TempSettings -> Source -> m ContractInfo
 parsePreprocessed tempSettings src = do

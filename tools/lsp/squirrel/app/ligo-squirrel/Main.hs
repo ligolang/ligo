@@ -10,36 +10,40 @@ import Control.Monad.Reader (asks, void, when)
 import Data.Aeson qualified as Aeson
 import Data.Bool (bool)
 import Data.Default (def)
-import Data.Foldable (for_)
-import Data.HashSet qualified as HashSet
-import Data.Maybe (fromMaybe)
+import Data.Foldable (for_, traverse_)
+import Data.Maybe (fromMaybe, isNothing)
+import Data.Monoid (All (..))
 import Data.Set qualified as Set
 import Data.Text qualified as T
+import Focus qualified
 import Language.LSP.Logging as L
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
 import Language.LSP.Types.Lens qualified as J
 import Prettyprinter qualified as PP
+import StmContainers.Map qualified as StmMap
 import System.Exit (ExitCode (ExitFailure), exitSuccess, exitWith)
 import System.FilePath (splitDirectories, takeDirectory)
 import System.IO (stdin, stdout)
 import UnliftIO.Exception (SomeException (..), displayException, withException)
-import UnliftIO.MVar (modifyMVar_, tryReadMVar)
+import UnliftIO.MVar (tryReadMVar)
+import UnliftIO.STM (atomically)
 
 import AST
 import Cli (TempSettings, getLigoVersion)
 import Config (Config (..))
 import Extension (isLigoFile)
-import Language.LSP.Util (sendError)
+import Language.LSP.Util (filePathToNormalizedUri, sendError)
 import Log (i)
 import Log qualified
 import RIO qualified
 import RIO.Diagnostic qualified as Diagnostic
 import RIO.Document qualified as Document
 import RIO.Indexing qualified as Indexing
-import RIO.Types
+import RIO.Types (RIO, RioEnv (..))
 import Range (Range (..), fromLspPosition, fromLspPositionUri, fromLspRange, toLspRange)
-import Util (toLocation)
+import Util (foldMapM, toLocation)
+import Util.Graph (traverseAM)
 
 main :: IO ()
 main = exit =<< mainLoop
@@ -137,7 +141,7 @@ handlers = mconcat
 
   , S.notificationHandler J.STextDocumentDidOpen handleDidOpenTextDocument
   , S.notificationHandler J.STextDocumentDidChange handleDidChangeTextDocument
-  , S.notificationHandler J.STextDocumentDidSave (\_msg -> pure ())
+  , S.notificationHandler J.STextDocumentDidSave handleDidSaveTextDocument
   , S.notificationHandler J.STextDocumentDidClose handleDidCloseTextDocument
 
   , S.requestHandler J.STextDocumentDefinition handleDefinitionRequest
@@ -162,6 +166,7 @@ handlers = mconcat
 
   , S.requestHandler (J.SCustomMethod "buildGraph") handleCustomMethod'BuildGraph
   , S.requestHandler (J.SCustomMethod "indexDirectory") handleCustomMethod'IndexDirectory
+  , S.requestHandler (J.SCustomMethod "isDirty") handleCustomMethod'IsDirty
   ]
 
 handleInitialized :: S.Handler RIO 'J.Initialized
@@ -172,45 +177,56 @@ handleDidOpenTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   let ver = notif^.J.params.J.textDocument.J.version
 
-  RIO.Contract doc _ <- Document.forceFetch' Document.BestEffort uri
-  openDocsVar <- asks reOpenDocs
-  modifyMVar_ openDocsVar \openDocs -> do
-    Diagnostic.collectErrors doc (Just ver)
-    pure $ HashSet.insert uri openDocs
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.insert RIO.OpenDocument{odIsDirty = False} uri openDocs
+
+  doc <- Document.forceFetch Document.BestEffort uri
+  Diagnostic.collectErrors doc (Just ver)
 
 handleDidChangeTextDocument :: S.Handler RIO 'J.TextDocumentDidChange
 handleDidChangeTextDocument notif = do
-  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
   $(Log.debug) [i|Changed text document: #{uri}|]
+
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = True}) uri openDocs
+
   void $ Document.forceFetchAndNotify notify Document.LeastEffort uri
   where
+    uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+
     -- Clear diagnostics for all contracts in this WCC and then send diagnostics
     -- collected from this URI.
-    -- The usage of `openDocsVar` here serves purely as a mutex to prevent race
-    -- conditions.
-    notify :: RIO.Contract -> RIO ()
-    notify (RIO.Contract doc nuris) = do
+    notify :: ContractInfo' -> RIO ()
+    notify doc = do
       let ver = notif^.J.params.J.textDocument.J.version
-      openDocsVar <- asks reOpenDocs
-      modifyMVar_ openDocsVar \openDocs -> do
-        Diagnostic.clearDiagnostics nuris
-        Diagnostic.collectErrors doc ver
-        pure openDocs
+      Diagnostic.collectErrors doc ver
+      void $ Document.wccForFilePath (contractFile doc) >>=
+        traverseAM (Diagnostic.clearDiagnostics . filePathToNormalizedUri)
+
+handleDidSaveTextDocument :: S.Handler RIO 'J.TextDocumentDidSave
+handleDidSaveTextDocument notif = do
+  let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
+  openDocs <- asks reOpenDocs
+  atomically $ StmMap.focus (Focus.adjust \openDoc -> openDoc{RIO.odIsDirty = False}) uri openDocs
 
 handleDidCloseTextDocument :: S.Handler RIO 'J.TextDocumentDidClose
 handleDidCloseTextDocument notif = do
   let uri = notif^.J.params.J.textDocument.J.uri.to J.toNormalizedUri
 
-  RIO.Contract _ nuris <- Document.fetch' Document.LeastEffort uri
+  doc <- Document.fetch Document.LeastEffort uri
+  files <- Document.wccForFilePath (contractFile doc)
+  let nuris = map filePathToNormalizedUri $ G.vertexList files
 
-  openDocsVar <- asks reOpenDocs
-  modifyMVar_ openDocsVar \openDocs -> do
-    let openDocs' = HashSet.delete uri openDocs
-    -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
-    let nuriMap = HashSet.fromList nuris
-    when (HashSet.null $ HashSet.intersection openDocs' nuriMap) $
-      Diagnostic.clearDiagnostics nuris
-    pure openDocs'
+  openDocs <- asks reOpenDocs
+  -- Clear diagnostics for all contracts in this WCC group if all of them were closed.
+  needsToClearDiagnostics <- atomically do
+    StmMap.delete uri openDocs
+    hasOpenDocumentInGroup nuris openDocs
+  when needsToClearDiagnostics $
+    traverse_ Diagnostic.clearDiagnostics nuris
+  where
+    hasOpenDocumentInGroup nuris openDocs =
+      getAll <$> foldMapM (\nuri -> All . isNothing <$> StmMap.lookup nuri openDocs) nuris
 
 handleDefinitionRequest :: S.Handler RIO 'J.TextDocumentDefinition
 handleDefinitionRequest req respond = do
@@ -244,27 +260,27 @@ handleTypeDefinitionRequest req respond = do
     $(Log.debug) [i|Type definition request returned #{definition}|]
     wrapAndRespond definition
 
-formatImpl :: J.Uri -> RIO (TempSettings, SomeLIGO Info')
+formatImpl :: J.Uri -> RIO (TempSettings, ContractInfo')
 formatImpl uri = do
   let nuri = J.toNormalizedUri uri
-  FindContract (Source path _) tree _ <- Document.fetch Document.BestEffort nuri
+  contract <- Document.fetch Document.BestEffort nuri
   Document.invalidate nuri
-  (, tree) <$> Document.getTempPath (takeDirectory path)
+  (, contract) <$> Document.getTempPath (takeDirectory $ contractFile contract)
 
 handleDocumentFormattingRequest :: S.Handler RIO 'J.TextDocumentFormatting
 handleDocumentFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
-  (temp, tree) <- formatImpl uri
-  respond . Right =<< AST.formatDocument temp tree
+  (temp, contract) <- formatImpl uri
+  respond . Right =<< AST.formatDocument temp contract
 
 handleDocumentRangeFormattingRequest :: S.Handler RIO 'J.TextDocumentRangeFormatting
 handleDocumentRangeFormattingRequest req respond = do
   let
     uri = req ^. J.params . J.textDocument . J.uri
     pos = fromLspRange $ req ^. J.params . J.range
-  (temp, tree) <- formatImpl uri
-  respond . Right =<< AST.formatAt temp pos tree
+  (temp, contract) <- formatImpl uri
+  respond . Right =<< AST.formatAt temp pos contract
 
 handleFindReferencesRequest :: S.Handler RIO 'J.TextDocumentReferences
 handleFindReferencesRequest req respond = do
@@ -428,7 +444,7 @@ handleCustomMethod'BuildGraph req respond =
       respond $ Right $ maybe Aeson.Null Aeson.toJSON buildGraphM
     other -> do
       let msg = [i|This message expects Null, but got #{other}|]
-      respond $ Left $ J.ResponseError J.InvalidRequest msg Nothing
+      respond $ Left $ J.ResponseError J.InvalidParams msg Nothing
 
 handleCustomMethod'IndexDirectory
   :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
@@ -436,6 +452,19 @@ handleCustomMethod'IndexDirectory _req respond = do
   indexOptsM <- tryReadMVar =<< asks reIndexOpts
   let pathM = Indexing.indexOptionsPath =<< indexOptsM
   respond $ Right $ maybe Aeson.Null (Aeson.String . T.pack) pathM
+
+-- | Handles whether a document is clean ('False') or dirty ('True'). If the
+-- provided file doesn't exist, returns null.
+handleCustomMethod'IsDirty
+  :: S.Handler RIO ('J.CustomMethod :: J.Method 'J.FromClient 'J.Request)
+handleCustomMethod'IsDirty req respond =
+  case req ^. J.params . to Aeson.fromJSON of
+    Aeson.Error err ->
+      respond $ Left $ J.ResponseError J.InvalidParams (T.pack err) Nothing
+    Aeson.Success (params :: J.TextDocumentIdentifier) -> do
+      let nuri = params ^. J.uri . to J.toNormalizedUri
+      openDocM <- atomically . StmMap.lookup nuri =<< asks reOpenDocs
+      respond $ Right $ maybe Aeson.Null (Aeson.toJSON . RIO.odIsDirty) openDocM
 
 getUriPos
   :: ( J.HasPosition (J.MessageParams m) J.Position

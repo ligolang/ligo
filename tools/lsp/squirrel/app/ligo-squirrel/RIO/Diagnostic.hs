@@ -4,7 +4,7 @@ module RIO.Diagnostic
   , clearDiagnostics
   ) where
 
-import Data.Foldable (for_, traverse_)
+import Data.Foldable (traverse_)
 import Data.Function (on)
 import Data.List (groupBy, sortOn)
 import Data.Map qualified as Map
@@ -44,11 +44,10 @@ collectErrors contract version = do
   let grouped = extractGroup $ groupBy ((==) `on` fst) $ sortOn fst diags
   diagnostic version grouped
 
-clearDiagnostics :: Foldable f => f J.NormalizedUri -> RIO ()
-clearDiagnostics uris = do
+clearDiagnostics :: J.NormalizedUri -> RIO ()
+clearDiagnostics nuri = do
   maxDiagnostics <- _cMaxNumberOfProblems <$> S.getConfig
-  for_ uris \nuri ->
-    S.publishDiagnostics maxDiagnostics nuri Nothing (Map.singleton source mempty)
+  S.publishDiagnostics maxDiagnostics nuri Nothing (Map.singleton source mempty)
 
 errorToDiag :: Message -> (J.NormalizedUri, J.Diagnostic)
 errorToDiag (Message what severity r) =

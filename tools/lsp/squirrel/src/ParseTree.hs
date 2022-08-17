@@ -58,13 +58,14 @@ foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
 data Source = Source
   { srcPath :: FilePath
+  , srcIsDirty :: Bool
   , srcText :: Text
   } deriving stock (Eq, Ord)
 
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
 
-deriving anyclass instance ToObject Source
+instance ToObject Source
 
 instance LogItem Source where
   payloadKeys = const $ const AllKeys
@@ -79,7 +80,7 @@ pathToSrc :: Log m => FilePath -> m Source
 pathToSrc p = do
   raw <- liftIO $ BS.readFile p
   -- Is it valid UTF-8?
-  fmap (Source p) $ Text.decodeUtf8' raw & \case
+  fmap (Source p False) $ Text.decodeUtf8' raw & \case
     Left exception -> do
       $(Log.err) [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
       -- Leniently decode the data so we can continue working even with invalid
@@ -114,7 +115,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
 toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect (Source fp input) = Log.addNamespace "toParseTree" do
+toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
   $(Log.debug) [Log.i|Reading #{fp}|]
   let language = case dialect of
         Pascal -> tree_sitter_PascaLigo
