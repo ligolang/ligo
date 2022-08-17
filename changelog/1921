@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1921'
+title: Fix `ligo publish` for big files
+type: fixed
