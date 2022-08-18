@@ -221,8 +221,6 @@ module Fold_helpers(M : Monad) = struct
        let value = (lam,args) in
        return @@ ECall {value;region}
     | ERevApp  {value;region} ->
-      let () = ignore value in
-      let () = ignore region in
       let op   = value.op in
       let* arg1 = self value.arg1 in
       let* arg2 = self value.arg2 in
