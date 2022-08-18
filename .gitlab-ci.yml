@@ -26,12 +26,7 @@ include:
     - sed -i 's;without-tests;prometheansacrifice/v12.0-ligo-windows-compat;' .git/modules/vendors/tezos-ligo/config
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
-.nix:
-  extends: .submodule-clone
-  before_script:
-    - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
-    
+
 changelog:
   stage: pretooling
   only:
@@ -95,7 +90,6 @@ docker_extract:
     - /^.*-run-dev$/
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
-  extends: .nix
   dependencies :
     - docker_build
   script:
@@ -106,8 +100,8 @@ docker_extract:
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
-    - nix-build nix -A ligo-deb
-    - cp -L result/ligo.deb .
+    # Generate ligo.deb
+    - ./scripts/create-package-deb-file.sh
   after_script:
     - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
