@@ -2,6 +2,7 @@ open Main_errors
 open Tezos_utils
 open Proto_alpha_utils
 open Trace
+open Stage_common
 
 let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
   (* From Tezos changelog on views:
@@ -56,7 +57,7 @@ let build_contract ~raise :
   ?disable_typecheck:bool ->
   ?constants:string list ->
   Stacking.compiled_expression ->
-  (Ast_typed.expression_variable * Stacking.compiled_expression) list -> _ Michelson.michelson  =
+  (ValueVar.t * Stacking.compiled_expression) list -> _ Michelson.michelson  =
     fun ~protocol_version ?(enable_typed_opt = false) ?(has_env_comments = false) ?(disable_typecheck= false) ?(constants = []) compiled views ->
       let views =
         List.map
@@ -64,7 +65,7 @@ let build_contract ~raise :
             let (view_param_ty, ret_ty) = trace_option ~raise (main_view_not_a_function name) @@ (* remitodo error specific to views*)
               Self_michelson.fetch_views_ty view.expr_ty
             in
-            (Ast_typed.ValueVar.to_name_exn name, view_param_ty, ret_ty, view.expr)
+            (ValueVar.to_name_exn name, view_param_ty, ret_ty, view.expr)
           )
           views
       in

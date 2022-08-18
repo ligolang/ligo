@@ -1,3 +1,4 @@
+open Stage_common
 open Mini_c
 
 (* Reference implementation:

@@ -1,10 +1,11 @@
 open Simple_utils.Trace
+open Stage_common
 
 (* Helpers *)
 
 module ModResHelpers = Preprocessor.ModRes.Helpers
 
-let get_declarations_core core_prg =
+let get_declarations_core (core_prg : Ast_core.program )=
   (* Note: This hack is needed because when some file is `#import`ed the `module_binder` is
      the absolute file path, and the REPL prints an absolute file path which is confusing
      So we ignore the module declarations which which have their module_binder as some absolute path.
@@ -12,7 +13,7 @@ let get_declarations_core core_prg =
      Reference: https://gitlab.com/ligolang/ligo/-/blob/c8ae194e97341dc717549c9f50c743bcea855a33/vendors/BuildSystem/BuildSystem.ml#L113-121
   *)
   let ignore_module_variable_which_is_absolute_path module_variable =
-    let module_variable = try Ast_core.ModuleVar.to_name_exn module_variable with _ -> "" in
+    let module_variable = try ModuleVar.to_name_exn module_variable with _ -> "" in
     not @@ Caml.Sys.file_exists module_variable in
 
   let func_declarations = List.map ~f:(fun a -> `Value a)  @@ Ligo_compile.Of_core.list_declarations core_prg in
@@ -29,17 +30,17 @@ let get_declarations_typed (typed_prg : Ast_typed.program) =
     | _ -> None)) @@ typed_prg
 
 let pp_declaration ppf = function
-    `Value a  -> Ast_core.PP.expression_variable ppf a
-  | `Type a   -> Ast_core.PP.type_variable       ppf a
-  | `Module a -> Ast_core.PP.module_variable     ppf a
+    `Value a  -> ValueVar.pp  ppf a
+  | `Type a   -> TypeVar.pp   ppf a
+  | `Module a -> ModuleVar.pp ppf a
 
 
 (* REPL logic *)
 
 type repl_result =
     Expression_value of Ast_core.expression
-  | Defined_values_core of Ast_core.module_
-  | Defined_values_typed of Ast_typed.module_
+  | Defined_values_core of Ast_core.program
+  | Defined_values_typed of Ast_typed.program
   | Just_ok
 
 open Simple_utils.Display
@@ -48,16 +49,16 @@ let repl_result_ppformat ~display_format f = function
     Expression_value expr ->
      (match display_format with
       | Human_readable | Dev -> Ast_core.PP.expression f expr)
-  | Defined_values_core module_ ->
+  | Defined_values_core program ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
                                   pp_declaration f
-                                  (get_declarations_core module_))
-  | Defined_values_typed module' ->
+                                  (get_declarations_core program))
+  | Defined_values_typed program ->
      (match display_format with
       | Human_readable | Dev -> Simple_utils.PP_helpers.list_sep_d
                                   pp_declaration f
-                                  (get_declarations_typed module'))
+                                  (get_declarations_typed program))
   | Just_ok -> Simple_utils.PP_helpers.string f "Done."
 
 let repl_result_jsonformat = function
@@ -67,14 +68,14 @@ let repl_result_jsonformat = function
   | Defined_values_core module_ ->
      let func_declarations  = Ligo_compile.Of_core.list_declarations module_ in
      let type_declarations  = Ligo_compile.Of_core.list_type_declarations module_ in
-     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
-     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", TypeVar.to_yojson n)]) type_declarations in
      `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Defined_values_typed module' ->
      let func_declarations  = Ligo_compile.Of_typed.list_declarations false module' in
      let type_declarations  = Ligo_compile.Of_typed.list_type_declarations module' in
-     let func_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.ValueVar.to_yojson n)]) func_declarations in
-     let type_defs = List.map ~f:(fun n -> `Assoc [("name", Ast_core.TypeVar.to_yojson n)]) type_declarations in
+     let func_defs = List.map ~f:(fun n -> `Assoc [("name", ValueVar.to_yojson n)]) func_declarations in
+     let type_defs = List.map ~f:(fun n -> `Assoc [("name", TypeVar.to_yojson n)]) type_declarations in
      `Assoc [("definitions", `List (func_defs @ type_defs))]
   | Just_ok -> `Assoc []
 
@@ -144,9 +145,10 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
     let prg = Build.merge_and_type_libraries ~raise ~options file_name in
-    Simple_utils.Location.wrap (Ast_typed.M_struct prg)
+    let prg = List.map ~f:(fun d -> Ast_typed.Decl d) prg in
+    Simple_utils.Location.wrap (Ast_typed.Declaration.M_struct prg)
   in
-  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration_module {module_binder=Ast_typed.ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
+  let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration.Declaration_module {module_binder=ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
   let env     = Environment.append module_ state.env in
   let state = { state with env = env; top_level = concat_modules ~declaration:true state.top_level module_ } in
   (state, Just_ok)

@@ -11,9 +11,7 @@ module Ligo_string = Simple_utils.Ligo_string
 
 module Tree_abstraction = struct
 
-  open Ast_imperative
-
-  let some_const c = Some (Const c)
+  let some_const c = Some (Stage_common.Constant.Const c)
 
   (*
     Each front-end has its owns constants.
@@ -87,7 +85,7 @@ module Tree_abstraction = struct
     | _ -> None
 
 
-  let pseudo_module_to_string = function
+  let pseudo_module_to_string (c : Stage_common.Constant.constant') = match c with
     | C_ADDRESS                 -> "Tezos.address"
     | C_SELF                    -> "Tezos.self"
     | C_SELF_ADDRESS            -> "Tezos.self_address"
@@ -140,12 +138,12 @@ module Tree_abstraction = struct
     | C_LSL -> "Bitwise.shift_left"
     | C_LSR -> "Bitwise.shift_right"
 
-    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
+    | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.Constant.pp_constant' c
 
 
   let constants x = pseudo_modules x
   let constant_to_string = function
-      | Const x -> pseudo_module_to_string x
+      | Stage_common.Constant.Const x -> pseudo_module_to_string x
 end
 
 module Michelson = struct
@@ -165,7 +163,7 @@ module Michelson = struct
   type protocol_type = Environment.Protocols.t
   include Helpers.Michelson
   open Tezos_utils.Michelson
-  open Stage_common.Types
+  open Stage_common.Constant
 
   let get_operators (protocol_version: protocol_type) c : predicate option =
     match c , protocol_version with

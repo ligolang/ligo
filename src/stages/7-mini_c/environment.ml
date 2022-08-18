@@ -15,6 +15,7 @@ open Types
  * end *)
 
 module Environment (* : ENVIRONMENT *) = struct
+  open Stage_common
   module List = Simple_utils.List
   type element = environment_element
   type t = environment
@@ -22,18 +23,18 @@ module Environment (* : ENVIRONMENT *) = struct
   let empty : t = []
   let add : element -> t -> t  = List.cons
   let concat : t list -> t  = List.concat
-  let get_opt : expression_variable -> t -> type_expression option = fun e lst -> List.Assoc.find ~equal:ValueVar.equal lst e
-  let has : expression_variable -> t -> bool = fun s t ->
+  let get_opt : ValueVar.t -> t -> type_expression option = fun e lst -> List.Assoc.find ~equal:ValueVar.equal lst e
+  let has : ValueVar.t -> t -> bool = fun s t ->
     match get_opt s t with
     | None -> false
     | Some _ -> true
-  let get_i_opt : expression_variable -> t -> (type_expression * int) option =fun x lst -> List.find_mapi ~f:(fun i (e,t) -> if ValueVar.equal e x then Some (t,i) else None) lst
+  let get_i_opt : ValueVar.t -> t -> (type_expression * int) option =fun x lst -> List.find_mapi ~f:(fun i (e,t) -> if ValueVar.equal e x then Some (t,i) else None) lst
   let of_list : element list -> t = fun x -> x
   let to_list : t -> element list = fun x -> x
-  let get_names : t -> expression_variable list = List.map ~f:fst
+  let get_names : t -> ValueVar.t list = List.map ~f:fst
   let remove : int -> t -> t = List.remove
 
-  let select ?(rev = false) ?(keep = true) : expression_variable list -> t -> t = fun lst env ->
+  let select ?(rev = false) ?(keep = true) : ValueVar.t list -> t -> t = fun lst env ->
     let e_lst =
       let e_lst = to_list env in
       let aux selector (s , _) =

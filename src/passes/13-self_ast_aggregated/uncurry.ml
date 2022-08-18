@@ -1,9 +1,10 @@
 let map_expression = Helpers.map_expression
+open Stage_common
 open Ast_aggregated
 
 (* Utilities *)
 
-let rec uncurry_lambda (depth : int) (expr : expression) : expression_variable list * expression =
+let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =
   match expr.expression_content with
   | E_lambda { binder; result } when depth > 0 ->
     let (vars, result) = uncurry_lambda (depth - 1) result in
@@ -54,9 +55,8 @@ let combine_usage (u1 : usage) (u2 : usage) : usage =
   | (u1, Unused) -> u1
 
 let usages = List.fold_left ~f:combine_usage ~init:Unused
-let binder_equal a b = Compare.binder Compare.type_expression a b = 0
 
-let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
+let rec usage_in_expr (f : ValueVar.t) (expr : expression) : usage =
   let self = usage_in_expr f in
   let self_binder vars e =
     if List.mem ~equal:ValueVar.equal vars f
@@ -101,12 +101,12 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
     usages (self matchee ::
             List.map ~f:(fun { constructor = _; pattern; body } -> self_binder [pattern] body) cases)
   | E_matching { matchee; cases = Ast_aggregated.Match_record { fields; body; tv = _ } } ->
-    usages [self matchee; self_binder (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) body]
+    usages [self matchee; self_binder (List.map ~f:(fun b -> b.Binder.var) (Record.LMap.to_list fields)) body]
   | E_record fields ->
-    usages (List.map ~f:self (LMap.to_list fields))
-  | E_record_accessor { record; path = _ } ->
+    usages (List.map ~f:self (Record.LMap.to_list fields))
+  | E_accessor { record; path = _ } ->
     self record
-  | E_record_update { record; path = _; update } ->
+  | E_update { record; path = _; update } ->
     usages [self record; self update]
   | E_type_inst { forall; type_ = _} ->
     self forall
@@ -115,23 +115,23 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
 (* Actually doing one instance of uncurrying *)
 
 let uncurried_labels (depth : int) =
-  Ast_core.Helpers.label_range 0 depth
+  Label.range 0 depth
 
 let uncurried_rows (depth : int) (args : type_expression list) : rows =
   let labels = uncurried_labels depth in
-  let content =
-    LMap.of_list
+  let fields =
+    Record.of_list
       (List.mapi
          ~f:(fun i (label, ty) ->
             (label,
-             { associated_type = ty ;
+             ({ associated_type = ty ;
                michelson_annotation = None ;
-               decl_pos = i }))
+               decl_pos = i }: row_element)))
          (match List.zip labels args with Ok x -> x
          | _ -> failwith @@
           Format.asprintf "uncurried_rows: args length : %i expected %i\n%!"
             (List.length args) depth)) in
-  { content ; layout = L_comb }
+  { fields ; layout = L_comb }
 
 let uncurried_record_type depth args =
   let record_type = uncurried_rows depth args in
@@ -154,7 +154,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
                   type_expression = record_type } in
   let fields =
     try
-      LMap.of_list (List.zip_exn labels (List.map2_exn ~f:(fun var ty -> {var;ascr=Some ty;attributes={const_or_var=None}}) vars arg_types))
+      Record.of_list (List.zip_exn labels (List.map2_exn ~f:(fun var ascr : _ Binder.t -> {var;ascr;attributes={const_or_var=None}}) vars arg_types))
     with
       | _ -> failwith @@
         Format.asprintf "Uncurry: mismatching number of arguments, expr: %a, type %a\n%!"
@@ -173,7 +173,7 @@ let uncurry_rhs (depth : int) (expr : expression) =
   (binder, result, arg_types, record_type, ret_type)
 
 let rec uncurry_in_expression ~raise
-    (f : expression_variable) (depth : int) (expr : expression) :
+    (f : ValueVar.t) (depth : int) (expr : expression) :
   expression =
   let self = uncurry_in_expression ~raise f depth in
   let self_binder vars e =
@@ -189,7 +189,7 @@ let rec uncurry_in_expression ~raise
     then
       (* the interesting part... *)
       let (arg_types, _ret_type) = uncurry_arrow depth lamb.type_expression in
-      let record = E_record (LMap.of_list @@
+      let record = E_record (Record.of_list @@
           match List.zip (uncurried_labels depth) args with
             Ok x -> x
           | _ -> failwith @@
@@ -203,10 +203,8 @@ let rec uncurry_in_expression ~raise
       let args = self args in
       return (E_application { lamb ; args })
     else
-      let { lamb ; args } = app in
-      let lamb = self lamb in
-      let args = self args in
-      return (E_application { lamb ; args })
+      let app = Application.map self app in
+      return (E_application app)
   | E_literal _ ->
     return_id
   | E_constant { cons_name; arguments } ->
@@ -214,15 +212,15 @@ let rec uncurry_in_expression ~raise
     return (E_constant { cons_name; arguments })
   | E_variable _ ->
     return_id
-  | E_lambda { binder; result } ->
+  | E_lambda { binder; output_type; result } ->
     let result = self_binder [binder.var] result in
-    return (E_lambda { binder; result })
+    return (E_lambda { binder; output_type; result })
   | E_type_abstraction { type_binder; result } ->
     let result = self result in
     return (E_type_abstraction { type_binder; result })
-  | E_recursive { fun_name; fun_type; lambda = { binder; result } } ->
+  | E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } } ->
     let result = self_binder [fun_name; binder.var] result in
-    return (E_recursive { fun_name; fun_type; lambda = { binder; result } })
+    return (E_recursive { fun_name; fun_type; lambda = { binder; output_type; result } })
   | E_let_in { let_binder; rhs; let_result; attr } ->
     let rhs = self rhs in
     let let_result = self_binder [let_binder.var] let_result in
@@ -243,21 +241,18 @@ let rec uncurry_in_expression ~raise
     return (E_matching { matchee; cases = Match_variant { cases; tv } } )
   | E_matching { matchee; cases = Match_record { fields; body; tv } } ->
     let matchee = self matchee in
-    let body = self_binder (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) body in
+    let body = self_binder (List.map ~f:(fun b -> b.Binder.var) (Record.LMap.to_list fields)) body in
     return (E_matching { matchee; cases = Match_record { fields; body; tv } })
   | E_record fields ->
-    let fields =
-      List.map ~f:(fun (k, v) -> let v = self v in (k, v))
-        (LMap.to_kv_list fields) in
-    let fields = LMap.of_list fields in
+    let fields = Record.map self fields in
     return (E_record fields)
-  | E_record_accessor { record; path } ->
+  | E_accessor { record; path } ->
     let record = self record in
-    return (E_record_accessor { record; path })
-  | E_record_update { record; path; update } ->
+    return (E_accessor { record; path })
+  | E_update { record; path; update } ->
     let record = self record in
     let update = self update in
-    return (E_record_update { record; path; update })
+    return (E_update { record; path; update })
   | E_type_inst {forall;type_} ->
     let forall = self forall in
     return @@ E_type_inst {forall;type_}
@@ -290,7 +285,7 @@ let uncurry_expression (expr : expression) : expression =
               (* An variable for each function argument *)
               let args = List.map ~f:(fun (b, t) -> e_a_variable b t) binder_types in
               (* Generate tupled argument (x1', ..., xn') *)
-              let record = E_record (LMap.of_list @@
+              let record = E_record (Record.of_list @@
                   match List.zip (uncurried_labels depth) args with
                     Ok x -> x
                   | _ -> failwith @@
@@ -305,19 +300,19 @@ let uncurry_expression (expr : expression) : expression =
               let fun_type = t_arrow ~loc:fun_type.location ?source_type:fun_type.source_type record_type ret_type () in
               (* Generate the rhs for the new let: (rec(f, (x1, x2, ..., xn)).E[x1, x2, ..., xn]) *)
               let rhs = { expr with
-                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = {var;ascr=None;attributes=Stage_common.Helpers.empty_attribute} ; result } } ;
+                          expression_content = E_recursive { fun_name ; fun_type ; lambda = { binder = {var;ascr=record_type;attributes=Binder.empty_attribute} ; output_type=ret_type; result } } ;
                           type_expression = { type_content = T_arrow {type1 = record_type ; type2 = ret_type} ;
                                               orig_var = None ;
                                               location = Location.generated ;
                                               source_type = None } } in
               (* Apply function to tuple: f(x1', x2', ..., xn') *)
               let result = e_a_application (e_a_variable fun_name fun_type) args ret_type in
-              let attr = { inline = true ; no_mutation = false ; view = false; public = true ; hidden = false } in
+              let attr = Attr.{ inline = true ; no_mutation = false ; view = false; public = true ; hidden = false } in
               (* Construct the let *)
-              let result = e_a_let_in {var=fun_name;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs result attr in
+              let result = e_a_let_in {var=fun_name;ascr=rhs.type_expression;attributes=Binder.empty_attribute} rhs result attr in
               let f (var, t) result =
-                let binder = {var;ascr=Some t; attributes=Stage_common.Helpers.empty_attribute} in
-                e_a_lambda { binder ; result } t result.type_expression in
+                let binder : _ Binder.t = {var;ascr=t; attributes=Binder.empty_attribute} in
+                e_a_lambda { binder ; output_type = result.type_expression; result } t result.type_expression in
               (* Add the external lambdas *)
               let lambda = List.fold_right ~f ~init:result binder_types in
               lambda

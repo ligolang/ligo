@@ -1,14 +1,15 @@
 open Errors
+open Stage_common
 open Ast_typed
 open Simple_utils.Trace
 open Ast_typed.Helpers
 module Pair = Simple_utils.Pair
-open Stage_common
 
 type 'a decl_folder = 'a -> declaration -> 'a
 type 'a folder = 'a -> expression -> 'a
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
   let self = fold_expression f in
+  let self_type = Fun.const in
   let init = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ -> init
@@ -22,9 +23,9 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
     res
   )
   | E_type_inst { forall = e; type_ = _}
-  | E_lambda { binder = _ ; result = e }
+  | E_lambda { binder = _ ; output_type = _; result = e }
   | E_type_abstraction { type_binder = _ ; result = e}
-  | E_recursive {lambda= {result=e;binder=_};fun_name=_;fun_type=_}
+  | E_recursive {lambda= {result=e;output_type=_;binder=_};fun_name=_;fun_type=_}
   | E_constructor {element=e;constructor=_} -> (
     let res = self init e in
     res
@@ -35,19 +36,15 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
     res
   )
   | E_record m -> (
-    let aux _ expr init =
-      let res = fold_expression self init expr in
-      res
-    in
-    let res = LMap.fold aux m init in
+    let res = Record.fold self init m in
     res
   )
-  | E_record_update {record;update;path=_} -> (
+  | E_update {record;update;path=_} -> (
     let res = self init record in
     let res = fold_expression self res update in
     res
   )
-  | E_record_accessor {record;path=_} -> (
+  | E_accessor {record;path=_} -> (
     let res = self init record in
     res
   )
@@ -61,13 +58,13 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->
     let res = self res let_result in
     res
   )
-  | E_assign a -> Folds.assign self (fun a _ -> a) init a
+  | E_assign a -> Assign.fold self self_type init a
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
   | M_struct decls ->
     List.fold
-      ~f:( fun acc (x: declaration) ->
+      ~f:( fun acc (Decl x) ->
         match x.wrap_content with
         | Declaration_constant x -> self acc x.expr
         | Declaration_module x -> fold_expression_in_module_expr self acc x.module_
@@ -91,7 +88,7 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a = fun f init m ->
     fold_expression f init body
 
 and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
-  let aux = fun acc (x : declaration) ->
+  let aux = fun acc (Decl x) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
     | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ }} -> (
@@ -113,8 +110,8 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
   match t.type_content with
   | T_variable _ -> ()
   | T_constant x -> List.iter ~f:self x.parameters
-  | T_sum x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
-  | T_record x -> List.iter ~f:(fun x -> self x.associated_type) (LMap.to_list x.content)
+  | T_sum x -> List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
+  | T_record x -> List.iter ~f:(fun x -> self x.associated_type) (Record.LMap.to_list x.fields)
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
@@ -133,18 +130,18 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let cases' = map_cases f cases in
     return @@ E_matching {matchee=e';cases=cases'}
   )
-  | E_record_accessor {record; path} -> (
+  | E_accessor {record; path} -> (
     let record = self record in
-    return @@ E_record_accessor {record; path}
+    return @@ E_accessor {record; path}
   )
   | E_record m -> (
-    let m' = LMap.map self m in
+    let m' = Record.map self m in
     return @@ E_record m'
   )
-  | E_record_update {record; path; update} -> (
+  | E_update {record; path; update} -> (
     let record = self record in
     let update = self update in
-    return @@ E_record_update {record;path;update}
+    return @@ E_update {record;path;update}
   )
   | E_constructor c -> (
     let e' = self c.element in
@@ -165,34 +162,34 @@ let rec map_expression : 'err mapper -> expression -> expression = fun f e ->
     let let_result = self let_result in
     return @@ E_mod_in { module_binder ; rhs ; let_result }
   )
-  | E_lambda { binder ; result } -> (
+  | E_lambda { binder ; output_type ; result } -> (
     let result = self result in
-    return @@ E_lambda { binder ; result }
+    return @@ E_lambda { binder ; output_type ; result }
   )
   | E_type_abstraction ta -> (
-      let ta = Maps.type_abs self ta in
+      let ta = Type_abs.map self ta in
       return @@ E_type_abstraction ta
   )
   | E_type_inst { forall ; type_ } -> (
     let forall = self forall in
     return @@ E_type_inst { forall ; type_ }
   )
-  | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
+  | E_recursive { fun_name; fun_type; lambda = {binder;output_type;result}} -> (
     let result = self result in
-    return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}
+    return @@ E_recursive { fun_name; fun_type; lambda = {binder;output_type;result}}
   )
   | E_constant c -> (
     let args = List.map ~f:self c.arguments in
     return @@ E_constant {c with arguments=args}
   )
   | E_assign a ->
-    let a = Maps.assign self (fun a -> a) a in
+    let a = Assign.map self (fun a -> a) a in
     return @@ E_assign a
   | E_module_accessor ma-> return @@ E_module_accessor ma
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_expression_in_module_expr : (expression -> expression) -> module_expr -> module_expr = fun self x ->
-  let return wrap_content = { x with wrap_content } in
+  let return wrap_content : module_expr = { x with wrap_content } in
   match x.wrap_content with
   | M_struct decls ->
     let decls = map_module self decls in
@@ -214,22 +211,26 @@ and map_cases : 'err mapper -> matching_expr -> matching_expr = fun f m ->
     let body = map_expression f body in
     Match_record {fields; body; tv}
 
-and map_module : 'err mapper -> module_ -> module_ = fun m p ->
-  let aux = fun (x : declaration_content) ->
-    let return (d : declaration_content) = d in
-    match x with
-    | Declaration_constant {binder; expr ; attr} -> (
-        let expr = map_expression m expr in
-        return @@ Declaration_constant {binder; expr ; attr}
-    )
-    | Declaration_type t -> return @@ Declaration_type t
-    | Declaration_module {module_binder;module_;module_attr} ->
-      let module_ = map_expression_in_module_expr m module_ in
-      return @@ Declaration_module {module_binder; module_; module_attr}
-  in
-  List.map ~f:(Location.map aux) p
+and map_declaration m = fun (x : declaration) ->
+  let return (d : declaration_content) = { x with wrap_content=d} in
+  match x.wrap_content with
+  | Declaration_constant {binder; expr ; attr} -> (
+      let expr = map_expression m expr in
+      return @@ Declaration_constant {binder; expr ; attr}
+  )
+  | Declaration_type t -> return @@ Declaration_type t
+  | Declaration_module {module_binder;module_;module_attr} ->
+    let module_ = map_expression_in_module_expr m module_ in
+    return @@ Declaration_module {module_binder; module_; module_attr}
 
-let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
+and map_decl m (Decl d) = Decl (map_declaration m d)
+and map_module : 'err mapper -> module_ -> module_ = fun m ->
+  List.map ~f:(map_decl m)
+
+and map_program : 'err mapper -> program -> program = fun m ->
+  List.map ~f:(map_declaration m)
+
+let fetch_entry_type ~raise : string -> program -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
         if ValueVar.is_name binder.var main_fname
@@ -244,7 +245,7 @@ let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t
     trace_option ~raise (corner_case ("Entrypoint '"^main_fname^"' does not exist")) @@
       main_decl_opt
     in
-  let { binder=_ ; expr ; attr=_} = main_decl in
+  let Declaration.{ binder=_ ; expr ; attr=_} = main_decl in
   expr.type_expression, expr.location
 
 type contract_type = {
@@ -252,9 +253,9 @@ type contract_type = {
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type = fun main_fname m ->
-  let aux (declt : declaration) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_} as p) ->
+let fetch_contract_type ~raise : ValueVar.t -> program -> contract_type = fun main_fname m ->
+  let aux declt = match Location.unwrap declt with
+    | Declaration.Declaration_constant ({ binder ; expr=_ ; attr=_} as p) ->
        if ValueVar.equal binder.var main_fname
        then Some p
        else None
@@ -267,13 +268,13 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
   in
-  let { binder=_ ; expr ; attr=_} = main_decl in
+  let Declaration.{ binder=_ ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
-    | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+    | T_record tin , T_record tout when (Record.is_tuple tin.fields) && (Record.is_tuple tout.fields) ->
+      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.fields in
+      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.fields in
       let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
         Ast_typed.assert_t_list_operation listop in
       let () = trace_option ~raise (expected_same_entry main_fname storage storage' expr) @@
@@ -287,8 +288,8 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
    [predicate] defines the annotation (or set of annotation) you want to match on
 *)
-let get_shadowed_decl : module_ -> (known_attributes -> bool) -> Location.t option = fun prg predicate ->
-  let aux = fun (seen,shadows : expression_variable list * location list) (x : declaration) ->
+let get_shadowed_decl : program -> (Attr.value -> bool) -> Location.t option = fun prg predicate ->
+  let aux = fun (seen,shadows : ValueVar.t list * Location.t list) (x : declaration) ->
     match Location.unwrap x with
     | Declaration_constant { binder ; attr ; _} -> (
       match List.find seen ~f:(ValueVar.equal binder.var) with
@@ -298,20 +299,20 @@ let get_shadowed_decl : module_ -> (known_attributes -> bool) -> Location.t opti
     | _ -> seen,shadows
   in
   let _,shadows = List.fold ~f:aux ~init:([],[]) prg in
-  match shadows with [] -> None | hd::_ -> Some hd 
+  match shadows with [] -> None | hd::_ -> Some hd
 
 (* strip_view_annotations [p] remove all the [@view] annotation in top-level declarations of program [p] *)
-let strip_view_annotations : module_ -> module_ = fun m ->
-  let aux = fun (x : declaration) ->
+let strip_view_annotations : program -> program = fun m ->
+  let aux = fun (x:declaration) ->
     match Location.unwrap x with
     | Declaration_constant ( {attr ; _} as decl ) when attr.view ->
-      { x with wrap_content = Declaration_constant { decl with attr = {attr with view = false} } }
+      { x with wrap_content = Declaration.Declaration_constant { decl with attr = {attr with view = false} } }
     | _ -> x
   in
   List.map ~f:aux m
 
 (* annotate_with_view [p] [binders] for all names in [binders] decorates the top-level declaration of program [p] with the annotation [@view]
-  if the name matches with declaration binder. if a name is unmatched, fails. 
+  if the name matches with declaration binder. if a name is unmatched, fails.
 
    e.g:
     annotate_with_view [p] ["a";"b"]
@@ -330,7 +331,7 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
         | Declaration_constant ({binder ; _} as decl) -> (
           match List.find views ~f:(ValueVar.is_name binder.var) with
           | Some found ->
-            let decorated = { x with wrap_content = Declaration_constant { decl with attr = {decl.attr with view = true} }} in
+            let decorated = { x with wrap_content = Declaration.Declaration_constant { decl with attr = {decl.attr with view = true} }} in
             decorated::prg, (List.remove_element ~compare:String.compare found views)
           | None -> continue
         )
@@ -342,7 +343,7 @@ let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.pr
 
 module Free_variables :
   sig
-    val expression : expression -> (module_variable list * expression_variable list)
+    val expression : expression -> (ModuleVar.t list * ValueVar.t list)
   end
   = struct
   module VarSet    = Caml.Set.Make(ValueVar)
@@ -353,7 +354,7 @@ module Free_variables :
   and moduleEnv = moduleEnv' VarMap.t
 
   let rec merge =fun {modVarSet=x1;moduleEnv=y1;varSet=z1} {modVarSet=x2;moduleEnv=y2;varSet=z2} ->
-    let aux : module_variable -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
+    let aux : ModuleVar.t -> moduleEnv' -> moduleEnv' -> moduleEnv' option =
       fun _ a b -> Some (merge a b)
     in
       {modVarSet=ModVarSet.union x1 x2;moduleEnv=VarMap.union aux y1 y2;varSet=VarSet.union z1 z2}
@@ -374,12 +375,12 @@ module Free_variables :
       merge (self lamb) (self args)
     | E_type_inst {forall;type_=_} ->
       self forall
-    | E_lambda {binder ; result} ->
+    | E_lambda {binder ; output_type=_ ; result} ->
       let {modVarSet=fmv;moduleEnv;varSet=fv} = self result in
       {modVarSet=fmv;moduleEnv;varSet=VarSet.remove binder.var @@ fv}
     | E_type_abstraction {type_binder=_ ; result} ->
       self result
-    | E_recursive {fun_name; lambda = {binder; result};fun_type=_} ->
+    | E_recursive {fun_name; lambda = {binder; output_type=_; result};fun_type=_} ->
       let {modVarSet;moduleEnv;varSet=fv} = self result in
       {modVarSet;moduleEnv;varSet=VarSet.remove fun_name @@ VarSet.remove binder.var @@ fv}
     | E_constructor {constructor=_;element} ->
@@ -387,12 +388,12 @@ module Free_variables :
     | E_matching {matchee; cases} ->
       merge (self matchee)(get_fv_cases cases)
     | E_record m ->
-      let res = LMap.map self m in
-      let res = LMap.to_list res in
+      let res = Record.map self m in
+      let res = Record.LMap.to_list res in
       unions res
-    | E_record_update {record;update;path=_} ->
+    | E_update {record;update;path=_} ->
       merge (self record) (self update)
-    | E_record_accessor {record;path=_} ->
+    | E_accessor {record;path=_} ->
       self record
     | E_let_in { let_binder ; rhs ; let_result ; attr=_} ->
       let {modVarSet;moduleEnv;varSet=fv2} = (self let_result) in
@@ -416,7 +417,7 @@ module Free_variables :
         {modVarSet;moduleEnv;varSet=VarSet.remove pattern @@ varSet} in
       unions @@  List.map ~f:aux cases
     | Match_record {fields; body; tv = _} ->
-      let pattern = LMap.values fields |> List.map ~f:(fun b -> b.var) in
+      let pattern = Record.LMap.values fields |> List.map ~f:(fun b -> b.Binder.var) in
       let {modVarSet;moduleEnv;varSet} = get_fv_expr body in
       {modVarSet;moduleEnv;varSet=List.fold_right pattern ~f:VarSet.remove ~init:varSet}
 
@@ -428,7 +429,7 @@ module Free_variables :
       | M_module_path _ -> {modVarSet=ModVarSet.empty;moduleEnv=VarMap.empty;varSet=VarSet.empty}
 
   and get_fv_module : module_ -> moduleEnv' = fun m ->
-    let aux = fun (x : declaration) ->
+    let aux = fun (Decl x) ->
       match Location.unwrap x with
       | Declaration_constant {binder=_; expr ; attr=_} ->
         get_fv_expr expr

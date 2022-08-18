@@ -3,12 +3,13 @@ module Tree     = Simple_utils.Tree
 module Snippet  = Simple_utils.Snippet
 module Location = Simple_utils.Location
 open Simple_utils.Display
+open Stage_common
 
 type spilling_error = [
   | `Spilling_corner_case of string * string
-  | `Spilling_no_type_variable of Ast_aggregated.type_variable
+  | `Spilling_no_type_variable of TypeVar.t
   | `Spilling_unsupported_pattern_matching of Location.t
-  | `Spilling_unsupported_recursive_function of Location.t * Ast_aggregated.expression_variable
+  | `Spilling_unsupported_recursive_function of Location.t * ValueVar.t
   | `Spilling_wrong_mini_c_value of Ast_aggregated.type_expression * Mini_c.value
   | `Spilling_bad_decompile of Mini_c.value
   | `Spilling_could_not_parse_raw_michelson of Location.t * string
@@ -33,8 +34,8 @@ let error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s
     | `Spilling_no_type_variable tv ->
       let s = Format.asprintf "%a@.Type \"%a\" not found (should not happen and be caught earlier)."
-        Snippet.pp (Ast_aggregated.TypeVar.get_location tv)
-        Ast_aggregated.PP.type_variable tv in
+        Snippet.pp (TypeVar.get_location tv)
+        TypeVar.pp tv in
       Format.pp_print_string f s
     | `Spilling_unsupported_pattern_matching loc ->
       let s = Format.asprintf "%a@.Invalid pattern matching.@Tuple patterns are not (yet) supported." Snippet.pp loc in
@@ -42,7 +43,7 @@ let error_ppformat : display_format:string display_format ->
     | `Spilling_unsupported_recursive_function (loc,var) ->
       let s = Format.asprintf "%a@.Invalid recursive function \"%a\".@.A recursive function can only have one argument."
         Snippet.pp loc
-        Ast_aggregated.PP.expression_variable var in
+        ValueVar.pp var in
       Format.pp_print_string f s
     | `Spilling_wrong_mini_c_value (expected , actual) ->
       let s = Format.asprintf "Invalid type.@.Expected \"%a\",@.but got \"%a\"."
@@ -82,7 +83,7 @@ let error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Spilling_no_type_variable tv ->
-    let tv' = Format.asprintf "%a" Ast_aggregated.PP.type_variable tv in
+    let tv' = Format.asprintf "%a" TypeVar.pp tv in
     let content = `Assoc [
       ("description", `String "type variables can't be transpiled");
       ("type_variable", `String tv'); ]
@@ -96,7 +97,7 @@ let error_jsonformat : spilling_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Spilling_unsupported_recursive_function (_,var) ->
-    let var' = Format.asprintf "%a" Ast_aggregated.PP.expression_variable var in
+    let var' = Format.asprintf "%a" ValueVar.pp var in
     let content = `Assoc [
       ("message", `String "Recursive functions with only one variable are supported");
       ("value", `String var'); ]

@@ -1,5 +1,6 @@
 module Trace    = Simple_utils.Trace
 module Ligo_string = Simple_utils.Ligo_string
+open Stage_common
 open Ast_aggregated
 include Fuzz_shared.Monad
 
@@ -84,6 +85,7 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _, expr) ->
 
 (* Helpers for changing operators *)
 let map_constant cons_name arguments final_type_expression =
+  let open Constant in
   let possible_const =
     match arguments with
       [ e1 ] ->
@@ -114,14 +116,14 @@ let map_constant cons_name arguments final_type_expression =
        else if is_t_nat t1 && is_t_int t2 && is_t_int t3 then
          [C_ADD;C_MUL;C_SUB]
 
-       else if Ast_aggregated.Helpers.type_expression_eq (t1, t2) && is_t_bool t3 then
+       else if Ast_aggregated.equal_type_expression t1 t2 && is_t_bool t3 then
          compare
 
        else
          []
      | _ ->
        [] in
-  if List.mem possible_const cons_name ~equal:(fun c1 c2 -> Ast_aggregated.Compare.constant' c1 c2 = 0) then
+  if List.mem possible_const cons_name ~equal:Constant.equal_constant' then
     possible_const
   else
      [cons_name]
@@ -148,11 +150,12 @@ let transform_string =
   [String.capitalize; String.uncapitalize; String.lowercase; String.uppercase; constn; double]
 
 module Mutator = struct
-  let combine : 'a -> ('a * (location * expression) option) list -> 'b -> ('b * (location * expression) option) list -> ('a * 'b * (location * expression) option) list =
+  open Literal_value
+  let combine : 'a -> ('a * (Location.t * expression) option) list -> 'b -> ('b * (Location.t * expression) option) list -> ('a * 'b * (Location.t * expression) option) list =
     fun a al b bl ->
     List.map ~f:(fun (b, m) -> (a, b, m)) bl @ List.map ~f:(fun (a, m) -> (a, b, m)) al
 
-  let combine_list : 'a list -> (('a * (location * expression) option) list) list -> ('a list * (location * expression) option) list =
+  let combine_list : 'a list -> (('a * (Location.t * expression) option) list) list -> ('a list * (Location.t * expression) option) list =
     fun a al ->
     List.concat @@ List.mapi ~f:(fun i ali ->
       List.map ~f:(fun (v, m) -> (List.take a i @ [ v ] @ List.drop a (i + 1),  m)) ali) al
@@ -184,20 +187,20 @@ module Mutator = struct
     | l ->
        return (l, false)
 
-  let mutate_constant ({cons_name; arguments} as const) final_type =
-    let ops = List.remove_element ~compare:(fun c1 c2 -> Ast_aggregated.Compare.constant' c1 c2) cons_name @@
+  let mutate_constant (Constant.{cons_name; arguments} as const) final_type =
+    let ops = List.remove_element ~compare:(Constant.compare_constant') cons_name @@
                 map_constant cons_name arguments final_type in
     let mapper x =
         ({ const with cons_name = x }), true in
     let swapper cons_name arguments =
       match cons_name with
-      | C_CONCAT ->
-         [({cons_name;arguments=List.rev arguments}, true)]
+      | Constant.C_CONCAT ->
+         [(Constant.{cons_name;arguments=List.rev arguments}, true)]
       | _ ->
          [] in
     [(const, false)] @ List.map ~f:mapper ops @ swapper cons_name arguments
 
-  let rec mutate_expression : expression -> (expression * (location * expression) option) list = fun e' ->
+  let rec mutate_expression : expression -> (expression * (Location.t * expression) option) list = fun e' ->
     let return expression_content = { e' with expression_content } in
     let self = mutate_expression in
     match e'.expression_content with
@@ -205,19 +208,19 @@ module Mutator = struct
       let+ matchee, cases, mutation = combine matchee (self matchee) cases (mutate_cases cases) in
       return @@ E_matching {matchee;cases=cases}, mutation
     )
-    | E_record_accessor {record; path} -> (
+    | E_accessor {record; path} -> (
       let+ record, mutation = self record in
-      return @@ E_record_accessor {record; path}, mutation
+      return @@ E_accessor {record; path}, mutation
     )
     | E_record m -> (
-      let ml = LMap.to_kv_list m in
+      let ml = Record.LMap.to_kv_list m in
       let mls = List.map ~f:(fun (l, v) -> let* h,m = self v in [((l, h), m)]) ml in
       let+ m', mutation = combine_list ml mls in
-      return @@ E_record (LMap.of_list m'), mutation
+      return @@ E_record (Record.LMap.of_list m'), mutation
     )
-    | E_record_update {record; path; update} -> (
+    | E_update {record; path; update} -> (
       let+ record, update, mutation = combine record (self record) update (self update) in
-      return @@ E_record_update {record;path;update}, mutation
+      return @@ E_update {record;path;update}, mutation
     )
     | E_constructor c -> (
       let+ e', mutation = self c.element in
@@ -235,21 +238,21 @@ module Mutator = struct
         let+ rhs, let_result, mutation = combine rhs (self rhs) let_result (self let_result) in
         return @@ E_let_in { let_binder ; rhs ; let_result; attr }, mutation
     )
-    | E_lambda { binder ; result } -> (
+    | E_lambda { binder ; output_type ; result } -> (
       let+ result, mutation = self result in
-      return @@ E_lambda { binder ; result }, mutation
+      return @@ E_lambda { binder ; output_type ; result }, mutation
     )
     | E_type_abstraction {type_binder; result} -> (
       let+ result, mutation = self result in
       return @@ E_type_abstraction {type_binder;result}, mutation
     )
-    | E_recursive { fun_name; fun_type; lambda = {binder;result}} -> (
+    | E_recursive { fun_name; fun_type; lambda = {binder;output_type;result}} -> (
       let+ result, mutation = self result in
-      return @@ E_recursive { fun_name; fun_type; lambda = {binder;result}}, mutation
+      return @@ E_recursive { fun_name; fun_type; lambda = {binder;output_type;result}}, mutation
     )
     | E_constant c -> (
       let cb = mutate_constant c e'.type_expression in
-      let cb = List.map ~f:(fun (cc, b) -> (cc.cons_name, Option.some_if (b && not (Location.is_dummy_or_generated e'.location)) (e'.location, return @@ E_constant cc))) cb in
+      let cb = List.map ~f:(fun (cc, b) -> (cc.Constant.cons_name, Option.some_if (b && not (Location.is_dummy_or_generated e'.location)) (e'.location, return @@ E_constant cc))) cb in
       let argumentsm = combine_list c.arguments (List.map ~f:self c.arguments) in
       let+ a,b,mutation = combine c.cons_name cb c.arguments argumentsm in
       return @@ E_constant {cons_name= a; arguments = b}, mutation
@@ -265,7 +268,7 @@ module Mutator = struct
         let+ expression, mutation = self expression in
         return @@ E_assign {binder;expression}, mutation
 
-  and mutate_cases : matching_expr -> (matching_expr * (location * expression) option) list = fun m ->
+  and mutate_cases : matching_expr -> (matching_expr * (Location.t * expression) option) list = fun m ->
     match m with
     | Match_variant {cases;tv} -> (
       let aux { constructor ; pattern ; body } =

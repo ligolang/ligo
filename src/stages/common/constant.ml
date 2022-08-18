@@ -1,220 +1,202 @@
-open Types
-(* type constants *)
-type t =
-    String
-  | Bytes
-  | Int
-  | Operation
-  | Nat
-  | Tez
-  | Unit
-  | Address
-  | Signature
-  | Key
-  | Key_hash
-  | Timestamp
-  | Chain_id
-  | List
-  | Map
-  | Big_map
-  | Set
-  | Contract
-  | Michelson_or
-  | Michelson_pair
-  | Baker_hash
-  | Pvss_key
-  | Sapling_transaction
-  | Sapling_state
-  | Baker_operation
-  | Bls12_381_g1
-  | Bls12_381_g2
-  | Bls12_381_fr
-  | Never
-  | Ticket
-  | Michelson_program
-  | Michelson_contract
-  | Typed_address
-  | Mutation
-  | Chest
-  | Chest_key
-  | Chest_opening_result
-  | Tx_rollup_l2_address 
-  | External of string
-  | Gen
-  [@@deriving ord, eq, hash]
+type constant' =
+  | C_UNIT
+  | C_NIL
+  | C_SOME
+  | C_NONE
+  | C_UNOPT
+  | C_UNOPT_WITH_ERROR
+  | C_ASSERT_INFERRED
+  | C_UPDATE
+  (* Loops *)
+  | C_ITER
+  | C_LOOP_LEFT
+  | C_LOOP_CONTINUE
+  | C_LOOP_STOP
+  | C_FOLD
+  | C_FOLD_LEFT
+  | C_FOLD_RIGHT
+  (* MATH *)
+  | C_NEG
+  | C_ADD
+  | C_SUB
+  | C_MUL
+  | C_DIV
+  | C_MOD
+  (* LOGIC *)
+  | C_NOT
+  | C_AND
+  | C_OR
+  | C_XOR
+  | C_LSL
+  | C_LSR
+  (* COMPARATOR *)
+  | C_EQ
+  | C_NEQ
+  | C_LT
+  | C_GT
+  | C_LE
+  | C_GE
+  (* Bytes/ String *)
+  | C_CONCAT
+  | C_BYTES_UNPACK
+  | C_CONS
+  (* Pair *)
+  | C_PAIR
+  | C_CAR
+  | C_CDR
+  | C_TRUE
+  | C_FALSE
+  | C_LEFT
+  | C_RIGHT
+  (* Set *)
+  | C_SET_EMPTY
+  | C_SET_LITERAL
+  | C_SET_ADD
+  | C_SET_REMOVE
+  | C_SET_ITER
+  | C_SET_FOLD
+  | C_SET_FOLD_DESC
+  | C_SET_MEM
+  | C_SET_UPDATE
+  (* List *)
+  | C_LIST_EMPTY
+  | C_LIST_LITERAL
+  | C_LIST_ITER
+  | C_LIST_MAP
+  | C_LIST_FOLD
+  | C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT
+  (* Maps *)
+  | C_MAP
+  | C_MAP_EMPTY
+  | C_MAP_LITERAL
+  | C_MAP_GET
+  | C_MAP_GET_FORCE
+  | C_MAP_ADD
+  | C_MAP_REMOVE
+  | C_MAP_UPDATE
+  | C_MAP_ITER
+  | C_MAP_MAP
+  | C_MAP_FOLD
+  | C_MAP_FIND
+  | C_MAP_FIND_OPT
+  | C_MAP_GET_AND_UPDATE
+  (* Big Maps *)
+  | C_BIG_MAP
+  | C_BIG_MAP_EMPTY
+  | C_BIG_MAP_LITERAL
+  | C_BIG_MAP_GET_AND_UPDATE
+  (* Blockchain *)
+  | C_CALL
+  | C_CONTRACT
+  | C_CONTRACT_OPT
+  | C_CONTRACT_WITH_ERROR
+  | C_CONTRACT_ENTRYPOINT
+  | C_CONTRACT_ENTRYPOINT_OPT
+  | C_ADDRESS
+  | C_SELF
+  | C_SELF_ADDRESS
+  | C_IMPLICIT_ACCOUNT
+  | C_SET_DELEGATE
+  | C_CREATE_CONTRACT
+  | C_OPEN_CHEST
+  | C_VIEW
+  (* Tests - ligo interpreter only *)
+  | C_TEST_SIZE [@only_interpreter]
+  | C_TEST_ORIGINATE [@only_interpreter]
+  | C_TEST_GET_STORAGE_OF_ADDRESS [@only_interpreter]
+  | C_TEST_GET_BALANCE [@only_interpreter]
+  | C_TEST_SET_SOURCE [@only_interpreter]
+  | C_TEST_SET_BAKER [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
+  | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
+  | C_TEST_GET_NTH_BS [@only_interpreter]
+  | C_TEST_PRINT [@only_interpreter]
+  | C_TEST_TO_STRING [@only_interpreter]
+  | C_TEST_UNESCAPE_STRING [@only_interpreter]
+  | C_TEST_STATE_RESET [@only_interpreter]
+  | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
+  | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
+  | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
+  | C_TEST_MUTATE_VALUE [@only_interpreter]
+  | C_TEST_SAVE_MUTATION [@only_interpreter]
+  | C_TEST_RUN [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT [@only_interpreter]
+  | C_TEST_DECOMPILE [@only_interpreter]
+  | C_TEST_TO_CONTRACT [@only_interpreter]
+  | C_TEST_TO_ENTRYPOINT [@only_interpreter]
+  | C_TEST_COMPILE_CONTRACT_FROM_FILE [@only_interpreter]
+  | C_TEST_TO_TYPED_ADDRESS [@only_interpreter]
+  | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
+  | C_TEST_SET_BIG_MAP [@only_interpreter]
+  | C_TEST_CAST_ADDRESS [@only_interpreter]
+  | C_TEST_CREATE_CHEST [@only_interpreter]
+  | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
+  | C_TEST_RANDOM [@only_interpreter]
+  | C_TEST_GENERATOR_EVAL [@only_interpreter]
+  | C_TEST_ADD_ACCOUNT [@only_interpreter]
+  | C_TEST_NEW_ACCOUNT [@only_interpreter]
+  | C_TEST_BAKER_ACCOUNT [@only_interpreter]
+  | C_TEST_REGISTER_DELEGATE [@only_interpreter]
+  | C_TEST_BAKE_UNTIL_N_CYCLE_END [@only_interpreter]
+  | C_TEST_GET_VOTING_POWER [@only_interpreter]
+  | C_TEST_GET_TOTAL_VOTING_POWER [@only_interpreter]
+  | C_TEST_REGISTER_CONSTANT [@only_interpreter]
+  | C_TEST_CONSTANT_TO_MICHELSON [@only_interpreter]
+  | C_TEST_REGISTER_FILE_CONSTANTS [@only_interpreter]
+  | C_TEST_PUSH_CONTEXT [@only_interpreter]
+  | C_TEST_POP_CONTEXT [@only_interpreter]
+  | C_TEST_DROP_CONTEXT [@only_interpreter]
+  | C_TEST_FAILWITH [@only_interpreter]
+  | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
+  | C_TEST_SIGN [@only_interpreter]
+  | C_TEST_GET_ENTRYPOINT [@only_interpreter]
+  | C_TEST_LAST_EVENTS [@only_interpreter]
+  | C_TEST_TRY_WITH [@only_interpreter]
+  (* New with EDO*)
+  | C_SAPLING_VERIFY_UPDATE
+  | C_SAPLING_EMPTY_STATE
+  | C_GLOBAL_CONSTANT
+  | C_EMIT_EVENT
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
+  | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
+  | C_SUB_MUTEZ
+  | C_OPTION_MAP
+[@@deriving eq,compare,yojson,hash, enum, print_constant, only_interpreter_tags, read_constant ]
 
-let to_string = function
-  | String               -> "string"
-  | Bytes                -> "bytes"
-  | Int                  -> "int"
-  | Operation            -> "operation"
-  | Nat                  -> "nat"
-  | Tez                  -> "tez"
-  | Unit                 -> "unit"
-  | Address              -> "address"
-  | Signature            -> "signature"
-  | Key                  -> "key"
-  | Key_hash             -> "key_hash"
-  | Timestamp            -> "timestamp"
-  | Chain_id             -> "chain_id"
-  | List                 -> "list"
-  | Map                  -> "map"
-  | Big_map              -> "big_map"
-  | Set                  -> "set"
-  | Contract             -> "contract"
-  | Michelson_or         -> "michelson_or"
-  | Michelson_pair       -> "michelson_pair"
-  | Baker_hash           -> "baker_hash"
-  | Pvss_key             -> "pvss_key"
-  | Sapling_transaction  -> "sapling_transaction"
-  | Sapling_state        -> "sapling_state"
-  | Baker_operation      -> "baker_operation"
-  | Bls12_381_g1         -> "bls12_381_g1"
-  | Bls12_381_g2         -> "bls12_381_g2"
-  | Bls12_381_fr         -> "bls12_381_fr"
-  | Never                -> "never"
-  | Ticket               -> "ticket"
-  | Michelson_program    -> "michelson_program"
-  | Michelson_contract   -> "michelson_contract"
-  | Typed_address        -> "typed_address"
-  | Mutation             -> "mutation"
-  | Chest                -> "chest"
-  | Chest_key            -> "chest_key"
-  | Chest_opening_result -> "chest_opening_result"
-  | Tx_rollup_l2_address -> "tx_rollup_l2_address"
-  | External s           -> "external_" ^ s
-  | Gen                  -> "pbt_gen"
 
-  let of_string = function
-  | "string"               -> String
-  | "bytes"                -> Bytes
-  | "int"                  -> Int
-  | "operation"            -> Operation
-  | "nat"                  -> Nat
-  | "tez"                  -> Tez
-  | "unit"                 -> Unit
-  | "address"              -> Address
-  | "signature"            -> Signature
-  | "key"                  -> Key
-  | "key_hash"             -> Key_hash
-  | "timestamp"            -> Timestamp
-  | "chain_id"             -> Chain_id
-  | "list"                 -> List
-  | "map"                  -> Map
-  | "big_map"              -> Big_map
-  | "set"                  -> Set
-  | "contract"             -> Contract
-  | "michelson_or"         -> Michelson_or
-  | "michelson_pair"       -> Michelson_pair
-  | "baker_hash"           -> Baker_hash
-  | "pvss_key"             -> Pvss_key
-  | "sapling_transaction"  -> Sapling_transaction
-  | "sapling_state"        -> Sapling_state
-  | "baker_operation"      -> Baker_operation
-  | "bls12_381_g1"         -> Bls12_381_g1
-  | "bls12_381_g2"         -> Bls12_381_g2
-  | "bls12_381_fr"         -> Bls12_381_fr
-  | "never"                -> Never
-  | "ticket"               -> Ticket
-  | "michelson_program"    -> Michelson_program
-  | "michelson_contract"   -> Michelson_contract
-  | "typed_address"        -> Typed_address
-  | "mutation"             -> Mutation
-  | "chest"                -> Chest
-  | "chest_key"            -> Chest_key
-  | "chest_opening_result" -> Chest_opening_result
-  | "tx_rollup_l2_address" -> Tx_rollup_l2_address
-  | "external_int"         -> External "int"
-  | "external_ediv"        -> External "ediv"
-  | "external_u_ediv"      -> External "u_ediv"
-  | "pbt_gen"                  -> Gen
-  | _ -> failwith "Forgot to add constant name in constant.ml?"
+type deprecated = {
+  name : string ;
+  const : constant' ;
+}
 
-let string               = String
-let bytes                = Bytes
-let int                  = Int
-let operation            = Operation
-let nat                  = Nat
-let tez                  = Tez
-let unit                 = Unit
-let address              = Address
-let signature            = Signature
-let key                  = Key
-let key_hash             = Key_hash
-let timestamp            = Timestamp
-let chain_id             = Chain_id
-let list                 = List
-let map                  = Map
-let big_map              = Big_map
-let set                  = Set
-let contract             = Contract
-let michelson_or         = Michelson_or
-let michelson_pair       = Michelson_pair
-let baker_hash           = Baker_hash
-let pvss_key             = Pvss_key
-let sapling_transaction  = Sapling_transaction
-let sapling_state        = Sapling_state
-let baker_operation      = Baker_operation
-let bls12_381_g1         = Bls12_381_g1
-let bls12_381_g2         = Bls12_381_g2
-let bls12_381_fr         = Bls12_381_fr
-let never                = Never
-let ticket               = Ticket
-let michelson_program    = Michelson_program
-let michelson_contract   = Michelson_contract
-let typed_address        = Typed_address
-let mutation             = Mutation
-let chest                = Chest
-let chest_key            = Chest_key
-let chest_opening_result = Chest_opening_result
-let tx_rollup_l2_address = Tx_rollup_l2_address
-let external_failwith    = External "failwith"
-let external_int         = External "int"
-let external_ediv        = External "ediv"
-let external_u_ediv      = External "u_ediv"
-let gen                  = Gen
+type rich_constant =
+  | Const of constant'
+  [@@deriving eq,compare,yojson,hash]
 
-let v_bool                 : type_variable = TypeVar.of_input_var ("bool")
-let v_string               : type_variable = TypeVar.of_input_var (to_string String)
-let v_bytes                : type_variable = TypeVar.of_input_var (to_string Bytes)
-let v_int                  : type_variable = TypeVar.of_input_var (to_string Int)
-let v_operation            : type_variable = TypeVar.of_input_var (to_string Operation)
-let v_nat                  : type_variable = TypeVar.of_input_var (to_string Nat)
-let v_tez                  : type_variable = TypeVar.of_input_var (to_string Tez)
-let v_unit                 : type_variable = TypeVar.of_input_var (to_string Unit)
-let v_address              : type_variable = TypeVar.of_input_var (to_string Address)
-let v_signature            : type_variable = TypeVar.of_input_var (to_string Signature)
-let v_key                  : type_variable = TypeVar.of_input_var (to_string Key)
-let v_key_hash             : type_variable = TypeVar.of_input_var (to_string Key_hash)
-let v_timestamp            : type_variable = TypeVar.of_input_var (to_string Timestamp)
-let v_chain_id             : type_variable = TypeVar.of_input_var (to_string Chain_id)
-let v_option               : type_variable = TypeVar.of_input_var ("option")
-let v_list                 : type_variable = TypeVar.of_input_var (to_string List)
-let v_map                  : type_variable = TypeVar.of_input_var (to_string Map)
-let v_big_map              : type_variable = TypeVar.of_input_var (to_string Big_map)
-let v_set                  : type_variable = TypeVar.of_input_var (to_string Set)
-let v_contract             : type_variable = TypeVar.of_input_var (to_string Contract)
-let v_michelson_or         : type_variable = TypeVar.of_input_var (to_string Michelson_or)
-let v_michelson_pair       : type_variable = TypeVar.of_input_var (to_string Michelson_pair)
-let v_baker_hash           : type_variable = TypeVar.of_input_var (to_string Baker_hash)
-let v_pvss_key             : type_variable = TypeVar.of_input_var (to_string Pvss_key)
-let v_sapling_trasaction   : type_variable = TypeVar.of_input_var (to_string Sapling_transaction)
-let v_sapling_state        : type_variable = TypeVar.of_input_var (to_string Sapling_state)
-let v_baker_operation      : type_variable = TypeVar.of_input_var (to_string Baker_operation)
-let v_bls12_381_g1         : type_variable = TypeVar.of_input_var (to_string Bls12_381_g1)
-let v_bls12_381_g2         : type_variable = TypeVar.of_input_var (to_string Bls12_381_g2)
-let v_bls12_381_fr         : type_variable = TypeVar.of_input_var (to_string Bls12_381_fr)
-let v_never                : type_variable = TypeVar.of_input_var (to_string Never)
-let v_ticket               : type_variable = TypeVar.of_input_var (to_string Ticket)
-let v_test_michelson       : type_variable = TypeVar.of_input_var (to_string Michelson_program)
-let v_michelson_contract   : type_variable = TypeVar.of_input_var (to_string Michelson_contract)
-let v_typed_address        : type_variable = TypeVar.of_input_var (to_string Typed_address)
-let v_mutation             : type_variable = TypeVar.of_input_var (to_string Mutation)
-let v_chest                : type_variable = TypeVar.of_input_var (to_string Chest)
-let v_chest_key            : type_variable = TypeVar.of_input_var (to_string Chest_key)
-let v_chest_opening_result : type_variable = TypeVar.of_input_var (to_string Chest_opening_result)
-let v_tx_rollup_l2_address : type_variable = TypeVar.of_input_var (to_string Tx_rollup_l2_address)
-let v_external_int         : type_variable = TypeVar.of_input_var (to_string @@ External "int")
-let v_external_ediv        : type_variable = TypeVar.of_input_var (to_string @@ External "ediv")
-let v_external_u_ediv      : type_variable = TypeVar.of_input_var (to_string @@ External "u_ediv")
-let v_gen                  : type_variable = TypeVar.of_input_var (to_string @@ Gen)
+let const_name (Const c) = c
+type 'e t = {
+  cons_name: constant' ; (* this is in enum *)
+  arguments: 'e list ;
+  } [@@deriving eq,compare,yojson,hash]
+
+let pp f ppf = fun {cons_name;arguments} ->
+  Format.fprintf ppf "@[%a@[<hv 1>(%a)@]@]"
+    pp_constant' cons_name
+    Simple_utils.PP_helpers.(list_sep_d f) arguments
+
+let fold : ('acc -> 'a ->  'acc) -> 'acc -> 'a t -> 'acc
+= fun f acc {cons_name=_;arguments} ->
+  let acc = List.fold ~f ~init:acc arguments in
+   acc
+
+let map : ('a ->  'b) -> 'a t -> 'b t
+= fun f {cons_name;arguments} ->
+  let arguments = List.map ~f arguments in
+  {cons_name;arguments}
+
+let fold_map : ('acc -> 'a ->  'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
+= fun f acc {cons_name;arguments} ->
+  let acc,arguments = List.fold_map ~f ~init:acc arguments in
+  (acc,{cons_name;arguments})

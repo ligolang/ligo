@@ -5,4 +5,11 @@
   (backend bisect_ppx))
  (libraries simple-utils ast_core ast_typed stage_common UnionFind)
  (preprocess
-  (staged_pps ppx_import ppx_map ppx_woo)))
+  (staged_pps
+   ppx_deriving.eq
+   ppx_compare
+   ppx_deriving_yojson
+   ppx_hash
+   ppx_import
+   ppx_map
+   ppx_woo)))

@@ -4,12 +4,12 @@ open Simple_utils.Display
 type stacking_error = [
   | `Stacking_corner_case of string * string
   | `Stacking_contract_entrypoint of string
-  | `Stacking_bad_iterator of Mini_c.constant'
+  | `Stacking_bad_iterator of Stage_common.Constant.constant'
   | `Stacking_not_comparable_pair_struct
   | `Stacking_could_not_tokenize_michelson of string
   | `Stacking_could_not_parse_michelson of string
   | `Stacking_untranspilable of int Michelson.t * int Michelson.t
-  | `Stacking_unsupported_primitive of Stage_common.Types.constant' * Environment.Protocols.t
+  | `Stacking_unsupported_primitive of Stage_common.Constant.constant' * Environment.Protocols.t
 ] [@@deriving poly_constructor { prefix = "stacking_" }]
 
 let stage = "stacking"
@@ -30,7 +30,7 @@ let error_ppformat : display_format:string display_format ->
   | Human_readable | Dev -> (
     match a with
     | `Stacking_unsupported_primitive (c,p) ->
-      Format.fprintf f "@[<hv>unsupported primitive %a in protocol %s@]" Stage_common.PP.constant' c (Environment.Protocols.variant_to_string p)
+      Format.fprintf f "@[<hv>unsupported primitive %a in protocol %s@]" Stage_common.Constant.pp_constant' c (Environment.Protocols.variant_to_string p)
     | `Stacking_corner_case (loc,msg) ->
       let s = Format.asprintf "Stacking corner case at %s : %s.\n%s"
         loc msg (corner_case_msg ()) in

@@ -5,7 +5,7 @@ module Location    = Simple_utils.Location
 module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Option      = Simple_utils.Option
-module Var = Stage_common.Types.ValueVar
+module Var = Stage_common.ValueVar
 module Errors = Errors
 
 type meta = Mini_c.meta
@@ -96,7 +96,7 @@ let rec int_to_nat (x : int) : Ligo_coq_ocaml.Datatypes.nat =
   else S (int_to_nat (x - 1))
 
 let translate_var (m : meta) (x : I.var_name) (env : I.environment) =
-  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Mini_c.ValueVar.pp x in
+  let (_, idx) = match I.Environment.Environment.get_i_opt x env with Some (v) -> v | None -> failwith @@ Format.asprintf "Corner case: %a not found in env" Stage_common.ValueVar.pp x in
   (O.E_var (m, int_to_nat idx))
 
 (* probably should use result monad for conformity? but all errors
@@ -116,7 +116,7 @@ let internal_error loc msg =
    env |-I expr : a, and translate_expression expr env = (expr', us), then
    select us env |-O expr' : a. *)
 let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.environment) :
-  (meta, base_type, I.literal, (meta, string) Micheline.node) O.expr =
+  (meta, base_type, Stage_common.Literal_value.t, (meta, string) Micheline.node) O.expr =
   let meta : meta =
     { location = expr.location;
       env = [];

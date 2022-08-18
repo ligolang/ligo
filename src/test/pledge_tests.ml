@@ -1,5 +1,6 @@
 module Var = Simple_utils.Var
 open Test_helpers
+open Stage_common
 open Ast_imperative
 
 

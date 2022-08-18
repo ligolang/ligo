@@ -15,6 +15,7 @@ module Tezos_client = Tezos_client_014_PtKathma
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
 
+open Stage_common
 open Errors
 type execution_trace = unit
 
@@ -124,7 +125,7 @@ module Command = struct
       ((contract, parameter_ty, storage_ty),ctxt)
     | Bootstrap_contract (mutez, contract, storage, contract_ty) ->
       let contract = trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract contract in
-      let Ast_aggregated.{ type1 = input_ty ; type2 = _ } = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_arrow contract_ty in
+      let Arrow.{ type1 = input_ty ; type2 = _ } = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_arrow contract_ty in
       let parameter_ty, _ = trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_pair input_ty in
       let { code = storage ; ast_ty = storage_ty ; _ } : LT.typed_michelson_code =
         trace_option ~raise (corner_case ()) @@ LC.get_michelson_expr storage in
@@ -267,7 +268,7 @@ module Command = struct
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env in
-      let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
+      let Arrow.{ type1 = in_ty ; type2 = out_ty } = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                             Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
       let _ = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.expression_obj func_typed_exp in
@@ -288,7 +289,7 @@ module Command = struct
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
             let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
-            let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
+            let Arrow.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
             let compiled_expr =
@@ -365,7 +366,7 @@ module Command = struct
       let () = match List.Assoc.find ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr with
         | None -> ()
         | Some ty' ->
-           if (Ast_aggregated.Helpers.type_expression_eq (ty, ty')) then ()
+           if (Ast_aggregated.equal_type_expression ty ty') then ()
            else Format.eprintf "@[<hv>%a:@.Run-time warning: cast changing the type of an address.\n@]" Simple_utils.Snippet.pp loc in
       let storage_tys = List.Assoc.add ~equal:(Tezos_state.equal_account) ctxt.internals.storage_tys addr ty in
       let internals = { ctxt.internals with storage_tys } in

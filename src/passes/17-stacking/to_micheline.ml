@@ -4,7 +4,7 @@ open Tezos_micheline.Micheline
 module Compiler = Ligo_coq_ocaml.Compiler
 module Datatypes = Ligo_coq_ocaml.Datatypes
 
-open Stage_common.Types
+open Stage_common
 
 type meta = Mini_c.meta
 let null = Mini_c.dummy_meta
@@ -59,7 +59,7 @@ let compile_dups2 (s : bool list) : _ node list =
 let compile_dups (s : bool list) : _ node list =
   smaller (compile_dups1 s) (compile_dups2 s)
 
-let literal_type_prim (l : literal) : string =
+let literal_type_prim (l : Literal_value.t) : string =
   match l with
   | Literal_unit -> "unit"
   | Literal_int _ -> "int"
@@ -80,10 +80,10 @@ let literal_type_prim (l : literal) : string =
   | Literal_chest _ -> "chest"
   | Literal_chest_key _ -> "chest_key"
 
-let literal_type (l : literal) : (meta, string) node =
+let literal_type (l : Literal_value.t) : (meta, string) node =
   Prim (null, literal_type_prim l, [], [])
 
-let literal_value (l : literal) : (meta, string) node =
+let literal_value (l : Literal_value.t) : (meta, string) node =
   match l with
   | Literal_unit -> Prim (null, "Unit", [], [])
   | Literal_int x -> Int (null, x)
@@ -104,7 +104,7 @@ let literal_value (l : literal) : (meta, string) node =
   | Literal_chest x -> Bytes (null, x)
   | Literal_chest_key x -> Bytes (null, x)
 
-let literal_code (meta : meta) (l : literal) : (meta, string) node list =
+let literal_code (meta : meta) (l : Literal_value.t) : (meta, string) node list =
   [Prim (meta, "PUSH", [literal_type l; literal_value l], [])]
 
 let global_constant (meta : meta) (hash : string) : (meta, string) node list =

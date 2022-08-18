@@ -18,7 +18,7 @@ let decompile_value_from_contract_execution ~raise (output_type: Ast_aggregated.
   match runned_result with
   | Fail s -> Fail s
   | Success ex_ty_value ->
-    let Ast_aggregated.{ type1 = _ ; type2 = return_type } = trace_option ~raise main_entrypoint_not_a_function @@ Ast_aggregated.get_t_arrow output_type in
+    let Stage_common.Arrow.{ type1 = _ ; type2 = return_type } = trace_option ~raise main_entrypoint_not_a_function @@ Ast_aggregated.get_t_arrow output_type in
     let decompiled_value = decompile_value ~raise return_type ex_ty_value in
     (Success decompiled_value)
 

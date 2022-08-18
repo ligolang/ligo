@@ -1,15 +1,16 @@
 module Michelson = Tezos_utils.Michelson
+open Stage_common
 open Simple_utils.Display
 
 type scoping_error = [
   | `Scoping_corner_case of string * string
   | `Scoping_contract_entrypoint of string
-  | `Scoping_bad_iterator of Mini_c.constant'
+  | `Scoping_bad_iterator of Constant.constant'
   | `Scoping_not_comparable_pair_struct
   | `Scoping_could_not_tokenize_michelson of string
   | `Scoping_could_not_parse_michelson of string
   | `Scoping_untranspilable of int Michelson.t * int Michelson.t
-  | `Scoping_unsupported_primitive of Stage_common.Types.constant' * Environment.Protocols.t
+  | `Scoping_unsupported_primitive of Constant.constant' * Environment.Protocols.t
 ] [@@deriving poly_constructor { prefix = "scoping_" }]
 
 let stage = "scoping"
@@ -31,7 +32,7 @@ let error_ppformat : display_format:string display_format ->
   | Human_readable | Dev -> (
     match a with
     | `Scoping_unsupported_primitive (c,p) ->
-      Format.fprintf f "@[<hv>unsupported primitive %a in protocol %s@]" Stage_common.PP.constant' c (Environment.Protocols.variant_to_string p)
+      Format.fprintf f "@[<hv>unsupported primitive %a in protocol %s@]" Constant.pp_constant' c (Environment.Protocols.variant_to_string p)
     | `Scoping_corner_case (loc,msg) ->
       let s = Format.asprintf "Scoping corner case at %s : %s.\n%s"
         loc msg (corner_case_msg ()) in

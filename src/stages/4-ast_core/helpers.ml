@@ -1,23 +1,5 @@
 open Types
 
-let range i j =
-  let rec aux i j acc = if i >= j then acc else aux i (j-1) (j-1 :: acc) in
-  aux i j []
-
-let label_range i j =
-  List.map ~f:(fun i -> Label (string_of_int i)) @@ range i j
-
-let is_tuple_lmap m =
-  List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
-
-let tuple_of_record (m: _ LMap.t) =
-  let aux i =
-    let label = Label (string_of_int i) in
-    let opt = LMap.find_opt (label) m in
-    Option.bind ~f: (fun opt -> Some ((label,opt),i+1)) opt
-  in
-  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
-
 (* This function transforms an application expression `l e1 ... en` into the pair `([ e1 ; ... ; en ] , l)` *)
 let destruct_applications (e : expression) =
   let rec destruct_applications acc (lamb : expression) =
@@ -37,6 +19,7 @@ let destruct_for_alls (t : type_expression) =
   in destruct_for_alls [] t
 
 module Free_type_variables = struct
+  open Stage_common
 
   module VarSet = Caml.Set.Make(TypeVar)
 
@@ -44,14 +27,14 @@ module Free_type_variables = struct
     fun l -> List.fold l ~init:VarSet.empty
       ~f:(fun y1 y2 -> VarSet.union y1 y2)
 
-  let rec map_type_expression : type_variable list -> type_expression -> VarSet.t = fun type_env te ->
+  let rec map_type_expression : TypeVar.t list -> type_expression -> VarSet.t = fun type_env te ->
     let self = map_type_expression type_env in
     match te.type_content with
     | T_sum { fields ; _ } ->
-       let fields = LMap.to_list fields |> List.map ~f:(fun ({ associated_type ; _ } : _ row_element_mini_c) -> self associated_type) in
+       let fields = Record.LMap.to_list fields |> List.map ~f:(fun ({ associated_type ; _ } : _ Rows.row_element_mini_c) -> self associated_type) in
        unions fields
     | T_record { fields ; _ } ->
-       let fields = LMap.to_list fields |> List.map ~f:(fun ({ associated_type ; _ } : _ row_element_mini_c) -> self associated_type) in
+       let fields = Record.LMap.to_list fields |> List.map ~f:(fun ({ associated_type ; _ } : _ Rows.row_element_mini_c) -> self associated_type) in
        unions fields
     | T_arrow { type1 ; type2 } ->
        VarSet.union (self type1) (self type2)
@@ -70,6 +53,6 @@ module Free_type_variables = struct
        let v = self type_ in
        VarSet.remove ty_binder v
 
-  let type_expression : type_variable list -> type_expression -> type_variable list = fun type_env t ->
+  let type_expression : TypeVar.t list -> type_expression -> TypeVar.t list = fun type_env t ->
     VarSet.fold (fun v r -> v :: r) (map_type_expression type_env t) []
 end

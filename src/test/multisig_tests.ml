@@ -9,6 +9,7 @@ let refile = "./contracts/multisig.religo"
 let compile_main ~raise f () =
   Test_helpers.compile_main ~raise f ()
 
+open Stage_common
 open Ast_imperative
 
 let init_storage threshold counter pkeys =

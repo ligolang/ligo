@@ -3,7 +3,8 @@ module Ligo_string = Simple_utils.Ligo_string
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
-open Stage_common.Constant
+open Stage_common
+open Literal_types
 
 let peephole_expression ~raise : expression -> expression = fun e ->
   let return expression_content = { e with expression_content } in

@@ -1,3 +1,4 @@
+open Stage_common
 open Simple_utils.Display
 module List = Simple_utils.List
 
@@ -5,11 +6,11 @@ let declarations_ppformat ~display_format f (source_file,decls) =
   match display_format with
   | Human_readable | Dev ->
     Format.fprintf f "%s declarations:\n" source_file ;
-    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" Ast_typed.ValueVar.pp decl) decls
+    List.iter ~f: (fun decl -> Format.fprintf f "%a\n" ValueVar.pp decl) decls
 
 let declarations_jsonformat (source_file,decls) : json =
   (* Use to_name instead of to_yojson for compality with IDE *)
-  let json_decl = List.map ~f:(fun decl -> `String (Ast_typed.ValueVar.to_name_exn decl)) decls in
+  let json_decl = List.map ~f:(fun decl -> `String (ValueVar.to_name_exn decl)) decls in
   `Assoc [ ("source_file", `String source_file) ; ("declarations", `List json_decl) ]
 
 let declarations_format : 'a format = {
@@ -62,7 +63,7 @@ let new_project_ppformat  ~display_format f (lst) =
   | Human_readable | Dev ->
     Format.fprintf f "Folder created: " ;
     List.iter ~f: (fun str -> Format.fprintf f "%s\n" str) lst
-  
+
 let new_project_jsonformat (_lst : string list) : json =
   `Null
 
@@ -160,7 +161,7 @@ module Michelson_formatter = struct
     else Some (yojson_to_json (Location.to_human_yojson location))
 
   let source_type_to_json (source_type : Ast_typed.type_expression) : Data_encoding.Json.t =
-    yojson_to_json (Ast_typed.Yojson.type_expression source_type)
+    yojson_to_json (Ast_typed.type_expression_to_yojson source_type)
 
   let json_object (vals : (string * Data_encoding.Json.t option) list) : Data_encoding.Json.t =
     `O (List.concat (List.map
@@ -172,7 +173,7 @@ module Michelson_formatter = struct
 
   module TypeOrd = struct
     type t = Ast_typed.type_expression
-    let compare = Ast_typed.Compare.type_expression
+    let compare = Ast_typed.compare_type_expression
   end
   module TypeSet = Stdlib.Set.Make(TypeOrd)
 

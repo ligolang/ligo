@@ -1,12 +1,11 @@
 module I = Ast_sugar
 module O = Ast_core
-module C = Stage_common.Types
 
 module Location = Simple_utils.Location
 module Var      = Simple_utils.Var
 module Pair     = Simple_utils.Pair
 
-open Stage_common.Maps
+open Stage_common
 
 let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 
@@ -22,11 +21,11 @@ let get_michelson_annotation : (string list) -> string option = fun attributes -
   in
   aux attributes
 
-let get_layout : (string list) -> O.layout option = fun attributes ->
+let get_layout : (string list) -> Layout.t option = fun attributes ->
   let rec aux lst = match lst with
     | hd::tl -> ( match is_layout hd with
-      | Some "tree" -> Some O.L_tree
-      | Some "comb" -> Some O.L_comb
+      | Some "tree" -> Some Layout.L_tree
+      | Some "comb" -> Some Layout.L_comb
       (*deal with wrong layout*)
       | None | Some _ -> aux tl
     )
@@ -34,7 +33,7 @@ let get_layout : (string list) -> O.layout option = fun attributes ->
   in
   aux attributes
 
-let compile_exp_attributes : I.attributes -> O.known_attributes = fun attributes ->
+let compile_exp_attributes : I.Attr.value -> O.Attr.value = fun attributes ->
   let is_inline attr = String.equal "inline" attr in
   let is_no_mutation attr = String.equal "no_mutation" attr in
   let is_view attr = String.equal "view" attr in
@@ -49,15 +48,15 @@ let compile_exp_attributes : I.attributes -> O.known_attributes = fun attributes
   let public = get_public attributes in
   let view = get_view attributes in
   let hidden = get_hidden attributes in
-  O.{inline; no_mutation; view; public; hidden}
+  {inline; no_mutation; view; public; hidden}
 
-let compile_type_attributes : I.attributes -> O.type_attribute = fun attributes ->
+let compile_type_attributes : I.Attr.type_ -> O.Attr.type_ = fun attributes ->
   let get_public : (string list) -> bool = fun attr -> not (List.mem attr "private" ~equal:String.equal) in
   let get_hidden : (string list) -> bool = fun attr -> List.mem attr "hidden" ~equal:String.equal in
   let public = get_public attributes in
   let hidden = get_hidden attributes in
-  O.{public;hidden}
-let compile_module_attributes : I.attributes -> O.module_attribute = compile_type_attributes
+  {public;hidden}
+let compile_module_attributes : I.Attr.type_ -> O.Attr.type_ = compile_type_attributes
 
 let rec compile_type_expression : I.type_expression -> O.type_expression =
   fun te ->
@@ -66,12 +65,12 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
   match te.type_content with
     | I.T_variable type_variable -> return @@ T_variable type_variable
     | I.T_app a ->
-      let a' = type_app compile_type_expression a in
+      let a' = Type_app.map self a in
       return @@ T_app a'
     | I.T_sum {fields ; attributes} ->
       let fields =
-        O.LMap.map (fun v ->
-          let {associated_type ; attributes ; decl_pos} : _ C.row_element = v in
+        Record.map (fun v ->
+          let {associated_type ; attributes ; decl_pos} : _ Rows.row_element = v in
           let michelson_annotation = get_michelson_annotation attributes in
           let associated_type = compile_type_expression associated_type in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
@@ -82,8 +81,8 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
       return @@ O.T_sum {fields ; layout }
     | I.T_record {fields ; attributes} ->
       let fields =
-        O.LMap.map (fun v ->
-          let {associated_type ; attributes ; decl_pos} : _ C.row_element = v in
+        Record.map (fun v ->
+          let {associated_type ; attributes ; decl_pos} : _ Rows.row_element = v in
           let associated_type = compile_type_expression associated_type in
           let michelson_annotation = get_michelson_annotation attributes in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
@@ -95,12 +94,12 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
     | I.T_tuple tuple ->
       let aux (i,acc) el =
         let el = self el in
-        (i+1,(O.Label (string_of_int i), ({associated_type=el;michelson_annotation=None;decl_pos=i}:_ O.row_element_mini_c))::acc) in
+        (i+1,(Label.of_int i, ({associated_type=el;michelson_annotation=None;decl_pos=i}:_ Rows.row_element_mini_c))::acc) in
       let (_, lst ) = List.fold ~f:aux ~init:(0,[]) tuple in
-      let record = O.LMap.of_list lst in
+      let record = Record.of_list lst in
       return @@ O.T_record {fields = record ; layout = None}
     | I.T_arrow arr ->
-      let arr = arrow self arr in
+      let arr = Arrow.map self arr in
       return @@ T_arrow arr
     | I.T_module_accessor ma -> return @@ O.T_module_accessor ma
     | I.T_singleton x ->
@@ -112,33 +111,35 @@ let rec compile_type_expression : I.type_expression -> O.type_expression =
       let type_ = self x.type_ in
       return @@ O.T_for_all { x with type_ }
 
-let compile_binder = binder compile_type_expression
+let compile_type_expression_option = Option.map ~f:compile_type_expression
+let compile_binder = Binder.map compile_type_expression_option
 
 let rec compile_expression : I.expression -> O.expression =
   fun sugar ->
   let self = compile_expression in
   let self_type = compile_type_expression in
+  let self_type_opt = compile_type_expression_option in
   let return expr = O.make_e ~loc:sugar.location ~sugar expr in
   match sugar.expression_content with
     | I.E_literal literal -> return @@ O.E_literal literal
     | I.E_constant cons ->
-      let cons = constant self cons in
+      let cons = Constant.map self cons in
       return @@ O.E_constant cons
     | I.E_variable name -> return @@ O.E_variable name
     | I.E_application app ->
-      let app = application self app in
+      let app = Application.map self app in
       return @@ O.E_application app
     | I.E_lambda lamb ->
-      let lamb = lambda self self_type lamb in
+      let lamb = Lambda.map self self_type_opt lamb in
       return @@ O.E_lambda lamb
     | I.E_type_abstraction ty_abs ->
-      let ty_abs = type_abs self ty_abs in
+      let ty_abs = Type_abs.map self ty_abs in
       return @@ O.E_type_abstraction ty_abs
     | I.E_recursive recs ->
-      let recs = recursive self self_type recs in
+      let recs = Recursive.map self self_type recs in
       return @@ O.E_recursive recs
-    | I.E_let_in {let_binder;attributes;rhs;let_result;mut=_} ->
-      let let_binder = binder self_type let_binder in
+    | I.E_let_in {let_binder;attributes;rhs;let_result} ->
+      let let_binder = Binder.map self_type_opt let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
       let attr = compile_exp_attributes attributes in
@@ -147,37 +148,29 @@ let rec compile_expression : I.expression -> O.expression =
       let rhs = self_type rhs in
       let let_result = self let_result in
       return @@ O.E_type_in {type_binder; rhs; let_result}
-    | I.E_mod_in mi ->
-      let mi = (mod_in self self_type compile_exp_attributes compile_type_attributes compile_module_attributes) mi in
-      return @@ O.E_mod_in mi
+    | I.E_mod_in {module_binder;rhs;let_result} ->
+      let rhs = compile_module_expr rhs in
+      let let_result = self let_result in
+      return @@ O.E_mod_in {module_binder;rhs;let_result}
     | I.E_raw_code rc ->
-      let rc = raw_code self rc in
+      let rc = Raw_code.map self rc in
       return @@ O.E_raw_code rc
     | I.E_constructor const ->
-      let const = constructor self const in
+      let const = Constructor.map self const in
       return @@ O.E_constructor const
-    | I.E_matching {matchee; cases} ->
-      let matchee = compile_expression matchee in
-      let cases =
-        List.map
-          ~f:(fun ({pattern ; body} : (I.expression, I.type_expression) I.match_case) ->
-            let pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
-            let body = compile_expression body in
-            ({pattern ; body} : (O.expression, O.type_expression) I.match_case)
-          )
-          cases
-      in
-      return @@ O.E_matching {matchee ; cases}
+    | I.E_matching m ->
+      let m = Match_expr.map self self_type_opt m in
+      return @@ O.E_matching m
     | I.E_record recd ->
-      let recd = record self recd in
+      let recd = Record.map self recd in
       return @@ O.E_record recd
     | I.E_accessor {record;path} ->
       let record = self record in
       let accessor ~loc expr a =
-        match a with
-          I.Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
-        | I.Access_record a -> O.e_record_accessor ~loc expr (Label a)
-        | I.Access_map k ->
+        match (a : _ Access_path.access) with
+          Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
+        | Access_record a -> O.e_record_accessor ~loc expr (Label a)
+        | Access_map k ->
           let k = self k in
           O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
@@ -186,18 +179,18 @@ let rec compile_expression : I.expression -> O.expression =
       let record = self record in
       let update = self update in
       let accessor ~loc expr a =
-        match a with
-          I.Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
-        | I.Access_record a -> O.e_record_accessor ~loc expr (Label a)
-        | I.Access_map k ->
+        match (a : _ Access_path.access) with
+          Access_tuple  i -> O.e_record_accessor ~loc expr (Label (Z.to_string i))
+        | Access_record a -> O.e_record_accessor ~loc expr (Label a)
+        | Access_map k ->
           let k = self k in
           O.e_constant ~loc C_MAP_FIND_OPT [k;expr]
       in
       let updator ~loc (s:O.expression) a expr =
-        match a with
-          I.Access_tuple  i -> O.e_record_update ~loc s (Label (Z.to_string i)) expr
-        | I.Access_record a -> O.e_record_update ~loc s (Label a) expr
-        | I.Access_map k ->
+        match (a : _ Access_path.access) with
+          Access_tuple  i -> O.e_record_update ~loc s (Label (Z.to_string i)) expr
+        | Access_record a -> O.e_record_update ~loc s (Label a) expr
+        | Access_map k ->
           let k = self k in
           O.e_constant ~loc C_MAP_ADD [k;expr;s]
       in
@@ -255,28 +248,57 @@ let rec compile_expression : I.expression -> O.expression =
       return @@ O.E_matching {
           matchee ;
           cases = [
-            { pattern = Location.wrap @@ O.P_variant (Label "True" , Location.wrap O.P_unit) ; body = match_true  } ;
-            { pattern = Location.wrap @@ O.P_variant (Label "False", Location.wrap O.P_unit) ; body = match_false } ;
+            { pattern = Location.wrap @@ Pattern.P_variant (Label "True" , Location.wrap Pattern.P_unit) ; body = match_true  } ;
+            { pattern = Location.wrap @@ Pattern.P_variant (Label "False", Location.wrap Pattern.P_unit) ; body = match_false } ;
           ]
         }
     | I.E_sequence {expr1; expr2} ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
-      let let_binder : _ O.binder = {var = I.ValueVar.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Stage_common.Helpers.empty_attribute} in
+      let let_binder : _ Binder.t = {var = ValueVar.fresh ~name:"()" () ; ascr = Some (O.t_unit ()) ; attributes = Binder.empty_attribute} in
       return @@ O.E_let_in {let_binder; rhs=expr1;let_result=expr2; attr = {inline=false; no_mutation=false; view = false ; public=true ; hidden = false}}
-    | I.E_skip -> O.e_unit ~loc:sugar.location ~sugar ()
+    | I.E_skip () -> O.e_unit ~loc:sugar.location ~sugar ()
     | I.E_tuple t ->
       let aux (i,acc) el =
         let el = self el in
-        (i+1,(O.Label (string_of_int i), el)::acc) in
+        (i+1,(Label.of_int i, el)::acc) in
       let (_, lst ) = List.fold ~f:aux ~init:(0,[]) t in
-      let m = O.LMap.of_list lst in
+      let m = Record.of_list lst in
       return @@ O.E_record m
-    | I.E_assign a -> let a = assign self self_type a in return @@ O.E_assign a
+    | I.E_assign a ->
+      let a = Assign.map self self_type_opt a in
+      return @@ O.E_assign a
 
-and compile_module : I.module_ -> O.module_ = fun x ->
-  let pass = Stage_common.Maps.declarations
-    compile_expression compile_type_expression
-    compile_exp_attributes compile_type_attributes compile_module_attributes
-  in
-  pass x
+and compile_declaration : I.declaration -> O.declaration = fun d ->
+  let return wrap_content : O.declaration = {d with wrap_content} in
+  match Location.unwrap d with
+  | Declaration_type {type_binder;type_expr;type_attr} ->
+    let type_expr = compile_type_expression type_expr in
+    let type_attr = compile_type_attributes type_attr in
+    return @@ Declaration_type {type_binder;type_expr;type_attr}
+  | Declaration_constant {binder;expr;attr} ->
+    let binder = Binder.map compile_type_expression_option binder in
+    let expr   = compile_expression expr in
+    let attr   = compile_exp_attributes attr in
+    return @@ Declaration_constant {binder;expr;attr}
+  | Declaration_module {module_binder;module_;module_attr} ->
+    let module_ = compile_module_expr module_ in
+    let module_attr = compile_module_attributes module_attr in
+    return @@ Declaration_module {module_binder;module_;module_attr}
+
+and compile_module_expr : I.module_expr -> O.module_expr = fun me ->
+  let return wrap_content : O.module_expr = {me with wrap_content} in
+  match me.wrap_content with
+    M_struct lst ->
+      let lst = compile_module lst in
+      return @@ M_struct lst
+  | M_variable mv ->
+      return @@ M_variable mv
+  | M_module_path mp ->
+      return @@ M_module_path mp
+
+and compile_decl : I.decl -> O.decl = fun (Decl d) -> Decl (compile_declaration d)
+and compile_module : I.module_ -> O.module_ = fun m ->
+  List.map ~f:compile_decl m
+
+let compile_program = List.map ~f:compile_declaration

@@ -1,7 +1,8 @@
-module Var = Simple_utils.Var
+open Stage_common
 open Ast_imperative
 open Errors
 open Simple_utils.Trace
+
 
 (* Prevents shadowing in the same scope. Needed for JsLIGO. *)
 
@@ -33,9 +34,9 @@ let peephole_expression ~raise : expression -> expression = fun e ->
    check_block_scope ~raise [] [] [] e;
    e
 
-let peephole_module ~raise : module_ -> module_ = fun m ->
+let peephole_program ~raise : program -> program = fun m ->
    let rec aux vars types mods = function
-      Location.{wrap_content = Declaration_type t; location} :: remaining ->
+      Location.{wrap_content = Types.Declaration.Declaration_type t; location} :: remaining ->
          if (List.mem ~equal:TypeVar.equal types t.type_binder) then
             raise.error @@ no_shadowing location
          else

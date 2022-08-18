@@ -1,4 +1,5 @@
 module Definitions = struct
+  open Stage_common
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
   module Def_map = Simple_utils.Map.Make( struct type t = string let compare = String.compare end)
@@ -73,17 +74,17 @@ module Definitions = struct
     fun name loc m ->
       Module { name ; range = loc ; body_range = Location.dummy ; content = m }
 
-  let add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
+  let add_reference : ValueVar.t -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
-      | Variable v -> Ast_core.ValueVar.is_name x v.name
+      | Variable v -> ValueVar.is_name x v.name
       | (Type _ | Module _ ) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
-        | Some (Variable v) -> Some (Variable { v with references = (Ast_core.ValueVar.get_location x :: v.references) })
+        | Some (Variable v) -> Some (Variable { v with references = (ValueVar.get_location x :: v.references) })
         | Some x -> Some x
         | None -> None
       in
@@ -114,5 +115,5 @@ let add_scope (range,env) (scopes:scopes) =
   if replaced then scopes
   else { range ; env } :: scopes
 
-module Bindings_map = Simple_utils.Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
+module Bindings_map = Simple_utils.Map.Make (Stage_common.ValueVar)
 type bindings_map = Ast_typed.type_expression Bindings_map.t

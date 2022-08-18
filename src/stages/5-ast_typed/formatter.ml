@@ -5,7 +5,7 @@ let program_ppformat ~display_format f typed =
   | Human_readable | Dev -> PP.program f typed
 
 let program_jsonformat p : json =
-  To_yojson.program p
+  Types.program_to_yojson p
 
 let program_format : 'a format = {
   pp = program_ppformat;

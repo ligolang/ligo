@@ -128,7 +128,7 @@ let get_program ~raise ?(st = "auto") f entry =
       program
     )
 
-let get_program f ?st = get_program ?st f (Contract (Ast_typed.ValueVar.of_input_var "main"))
+let get_program f ?st = get_program ?st f (Contract (Stage_common.ValueVar.of_input_var "main"))
 let expression_to_core ~raise expression =
   let sugar = Ligo_compile.Of_imperative.compile_expression ~raise expression in
   let core  = Ligo_compile.Of_sugar.compile_expression ~raise sugar in
@@ -338,7 +338,7 @@ let expect_eq_b_bool a b c =
   expect_eq_b a b (fun bool -> e_bool (c bool))
 
 let compile_main ~raise f () =
-  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end (get_program ~raise f ()) @@ Ast_typed.ValueVar.of_input_var "main" in
+  let agg = Ligo_compile.Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end (get_program ~raise f ()) @@ Stage_common.ValueVar.of_input_var "main" in
   let mini_c    = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let michelson_prg = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let _contract : _ Tezos_utils.Michelson.michelson =

@@ -3,12 +3,7 @@
  (public_name ligo.stage_common)
  (instrumentation
   (backend bisect_ppx))
- (libraries
-  simple-utils
-  zarith
-  hex
-  tezos-utils
-  tezos-hacl)
+ (libraries simple-utils zarith hex tezos-utils tezos-hacl)
  (inline_tests)
  (preprocess
   (pps
@@ -20,5 +15,6 @@
    ppx_print_constant
    ppx_read_constant
    ppx_compare
+   ppx_sexp_conv
    ppx_deriving_yojson
    ppx_only_interpreter_tags)))

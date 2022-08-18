@@ -2,6 +2,7 @@ module Snippet = Simple_utils.Snippet
 module PP_helpers = Simple_utils.PP_helpers
 open Simple_utils.Display
 open Ast_imperative
+open Stage_common
 
 let stage = "self_ast_imperative"
 
@@ -9,20 +10,20 @@ type self_ast_imperative_error = [
   | `Self_ast_imperative_long_constructor of (string * type_expression)
   | `Self_ast_imperative_bad_timestamp of (string * expression)
   | `Self_ast_imperative_bad_format_literal of expression
-  | `Self_ast_imperative_bad_empty_arity of (constant' * expression)
-  | `Self_ast_imperative_bad_single_arity of (constant' * expression)
-  | `Self_ast_imperative_bad_map_param_type of (constant' * expression)
-  | `Self_ast_imperative_bad_set_param_type of (constant' * expression)
+  | `Self_ast_imperative_bad_empty_arity of (Constant.constant' * expression)
+  | `Self_ast_imperative_bad_single_arity of (Constant.constant' * expression)
+  | `Self_ast_imperative_bad_map_param_type of (Constant.constant' * expression)
+  | `Self_ast_imperative_bad_set_param_type of (Constant.constant' * expression)
   | `Self_ast_imperative_bad_conversion_bytes of expression
-  | `Self_ast_imperative_vars_captured of (location * expression_variable) list
-  | `Self_ast_imperative_const_assigned of (location * expression_variable)
-  | `Self_ast_imperative_no_shadowing of location
-  | `Self_ast_imperative_non_linear_pattern of type_expression pattern
+  | `Self_ast_imperative_vars_captured of (Location.t * ValueVar.t) list
+  | `Self_ast_imperative_const_assigned of (Location.t * ValueVar.t)
+  | `Self_ast_imperative_no_shadowing of Location.t
+  | `Self_ast_imperative_non_linear_pattern of type_expression option Pattern.t
   | `Self_ast_imperative_non_linear_record of expression
   | `Self_ast_imperative_non_linear_type_decl of type_expression
   | `Self_ast_imperative_non_linear_row of type_expression
   | `Self_ast_imperative_duplicate_parameter of expression
-  | `Self_ast_imperative_reserved_name of (string * location)
+  | `Self_ast_imperative_reserved_name of (string * Location.t)
 ] [@@deriving poly_constructor { prefix = "self_ast_imperative_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -74,33 +75,33 @@ let error_ppformat : display_format:string display_format ->
     | `Self_ast_imperative_bad_empty_arity (c, e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.No functions arguments are expected. @]"
-        Snippet.pp e.location PP.constant' c
+        Snippet.pp e.location Constant.pp_constant' c
     | `Self_ast_imperative_bad_single_arity (c, e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression@.One function argument is expected. @]"
-        Snippet.pp e.location PP.constant' c
+        Snippet.pp e.location Constant.pp_constant' c
     | `Self_ast_imperative_bad_map_param_type (c,e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Snippet.pp e.location PP.constant' c
+        Snippet.pp e.location Constant.pp_constant' c
     | `Self_ast_imperative_bad_set_param_type (c,e) ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed \"%a\" expression.@.A list of pair parameters is expected.@]"
-        Snippet.pp e.location PP.constant' c
+        Snippet.pp e.location Constant.pp_constant' c
     | `Self_ast_imperative_bad_conversion_bytes e ->
       Format.fprintf f
         "@[<hv>%a@ Ill-formed bytes literal.@.Example of a valid bytes literal: \"ff7a7aff\". @]"
         Snippet.pp e.location
     | `Self_ast_imperative_vars_captured vars ->
-       let pp_var ppf ((decl_loc, var) : location * expression_variable) =
+       let pp_var ppf ((decl_loc, var) : Location.t * ValueVar.t) =
          Format.fprintf ppf
            "@[<hv>%a@ Invalid capture of non-constant variable \"%a\", declared at@.%a@]"
-           Snippet.pp (ValueVar.get_location var) PP.expression_variable var Snippet.pp decl_loc in
+           Snippet.pp (ValueVar.get_location var) ValueVar.pp var Snippet.pp decl_loc in
        Format.fprintf f "%a" (PP_helpers.list_sep pp_var (PP_helpers.tag "@.")) vars
     | `Self_ast_imperative_const_assigned (loc, var) ->
        Format.fprintf f
          "@[<hv>%a@ Invalid assignment to constant variable \"%a\", declared at@.%a@]"
-         Snippet.pp loc PP.expression_variable var Snippet.pp (ValueVar.get_location var)
+         Snippet.pp loc ValueVar.pp var Snippet.pp (ValueVar.get_location var)
     | `Self_ast_imperative_no_shadowing l ->
         Format.fprintf f
             "@[<hv>%a@ Cannot redeclare block-scoped variable. @]"
@@ -192,7 +193,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_empty_arity (c, e) ->
     let message = `String "constant expects no parameters" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant' c) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -202,7 +203,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_single_arity (c, e) ->
     let message = `String "constant expects one parameters" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant' c) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -212,7 +213,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_map_param_type (c,e) ->
     let message = `String "constant expects a list of pair as parameter" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant' c) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -222,7 +223,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
   | `Self_ast_imperative_bad_set_param_type (c,e) ->
     let message = `String "constant expects a list as parameter" in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
-    let value = `String (Format.asprintf "%a" PP.constant' c) in
+    let value = `String (Format.asprintf "%a" Constant.pp_constant' c) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -239,7 +240,7 @@ let error_jsonformat : self_ast_imperative_error -> json = fun a ->
     json_error ~stage ~content
   | `Self_ast_imperative_vars_captured vars ->
      let message = `String "Invalid capture: declared as a non-constant variable" in
-     let loc ((loc, _v) : location * expression_variable) =
+     let loc ((loc, _v) : Location.t * ValueVar.t) =
        `String (Format.asprintf "%a" Location.pp loc) in
      let locs = `List (List.map ~f:loc vars) in
      let content = `Assoc [

@@ -16,9 +16,9 @@ let test basename =
 
 (* Temporary breaking *)
 let run_ligo args =
-  Ast_core.ValueVar.reset_counter ();
-  Ast_core.TypeVar.reset_counter ();
-  Ast_core.ModuleVar.reset_counter ();
+  Stage_common.ValueVar.reset_counter ();
+  Stage_common.TypeVar.reset_counter ();
+  Stage_common.ModuleVar.reset_counter ();
   Self_ast_aggregated.reset_counter ();
   Cli.reset_return ();
   let argv = ("ligo" :: args) in

@@ -1,4 +1,5 @@
 (* This file represente the context which give the association of values to types *)
+open Stage_common
 open Ast_typed
 
 module Typing : sig
@@ -7,30 +8,30 @@ module Typing : sig
 
   val pp : Format.formatter -> t -> unit
 
-  val add_value    : t -> expression_variable -> type_expression -> t
-  val add_type     : t -> type_variable       -> type_expression -> t
-  val add_type_var : t -> type_variable       -> unit            -> t
-  val add_kind     : t -> type_variable       -> unit            -> t
-  val add_module   : t -> module_variable     -> t               -> t
+  val add_value    : t -> ValueVar.t -> type_expression -> t
+  val add_type     : t -> TypeVar.t       -> type_expression -> t
+  val add_type_var : t -> TypeVar.t       -> unit            -> t
+  val add_kind     : t -> TypeVar.t       -> unit            -> t
+  val add_module   : t -> ModuleVar.t     -> t               -> t
 
-  val get_value  : t -> expression_variable -> type_expression option
-  val get_type   : t -> type_variable       -> type_expression option
-  val get_module : t -> module_variable     -> t option
+  val get_value  : t -> ValueVar.t -> type_expression option
+  val get_type   : t -> TypeVar.t       -> type_expression option
+  val get_module : t -> ModuleVar.t     -> t option
 
-  val get_type_vars : t -> type_variable list
+  val get_type_vars : t -> TypeVar.t list
 
   val context_of_module_expr : outer_context:t -> Ast_typed.module_expr -> t
 
   val init : ?env:Environment.t -> unit -> t
 
-  val get_record : type_expression row_element_mini_c label_map -> t -> (type_variable option * rows) option
-  val get_sum    : label -> t -> (type_variable * type_variable list * type_expression * type_expression) list
+  val get_record : type_expression Rows.row_element_mini_c Record.t -> t -> (TypeVar.t option * rows) option
+  val get_sum    : Label.t -> t -> (TypeVar.t * TypeVar.t list * type_expression * type_expression) list
 end
 
 module Hashes : sig
   val set_context : Typing.t -> unit
   val hash_types : unit -> unit
-  val find_type : type_expression -> (module_variable list * type_variable) option
+  val find_type : type_expression -> (ModuleVar.t list * TypeVar.t) option
 end
 
 module App : sig

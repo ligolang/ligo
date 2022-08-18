@@ -9,6 +9,7 @@
 
 *)
 
+open Stage_common
 open Ast_aggregated
 
 let rec reduplicate ~raise : expression -> expression =
@@ -17,9 +18,9 @@ let rec reduplicate ~raise : expression -> expression =
   let remove_counter v = if ValueVar.is_generated v then v else ValueVar.(of_input_var ~loc:(get_location v) (to_name_exn v)) in
   let return expression_content : expression =
     { exp with expression_content } in
-  let binder_remove_counter = fun {var; ascr; attributes} ->
+  let binder_remove_counter = fun Binder.{var; ascr; attributes} ->
     let var = remove_counter var in
-    {var; ascr; attributes} in
+    Binder.{var; ascr; attributes} in
   match exp.expression_content with
     | E_literal l ->
        return (E_literal l)
@@ -32,17 +33,17 @@ let rec reduplicate ~raise : expression -> expression =
        let args = self args in
        let lamb = self lamb in
        return (E_application { lamb ; args })
-    | E_lambda { binder ; result } ->
+    | E_lambda { binder ; output_type ; result } ->
        let binder = binder_remove_counter binder in
        let result = self result in
-       return (E_lambda { binder ; result })
+       return (E_lambda { binder ; output_type ; result })
     | E_type_abstraction { type_binder ; result } ->
        let result = self result in
        return (E_type_abstraction { type_binder ; result })
-    | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
+    | E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } } ->
        let result = self result in
        let binder = binder_remove_counter binder in
-       return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
+       return (E_recursive { fun_name ; fun_type ; lambda = { binder ; output_type ; result } })
     | E_let_in { let_binder ; rhs ; let_result ; attr } ->
        let rhs = self rhs in
        let let_result = self let_result in
@@ -69,19 +70,19 @@ let rec reduplicate ~raise : expression -> expression =
     | E_matching { matchee ; cases = Match_record { fields ; body ; tv } } ->
        let matchee = self matchee in
        let body = self body in
-       let fields = LMap.map binder_remove_counter fields in
+       let fields = Record.map binder_remove_counter fields in
        return (E_matching { matchee ; cases = Match_record { fields ; body ; tv } })
     (* Record *)
     | E_record map ->
-       let map = LMap.map (self) map in
+       let map = Record.map (self) map in
        return (E_record map)
-    | E_record_accessor { record ; path } ->
+    | E_accessor { record ; path } ->
        let record = self record in
-       return (E_record_accessor { record ; path })
-    | E_record_update { record ; path ; update } ->
+       return (E_accessor { record ; path })
+    | E_update { record ; path ; update } ->
        let record = self record in
        let update = self update in
-       return (E_record_update { record ; path ; update })
+       return (E_update { record ; path ; update })
    | E_assign {binder;expression} ->
       let binder = binder_remove_counter binder in
       let expression = self expression in

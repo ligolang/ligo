@@ -1,44 +1,44 @@
 open Types
-include Stage_common.Helpers
+open Stage_common
 
-let kv_list_of_t_sum ?(layout = L_tree) (m: row_element LMap.t) =
-  let lst = LMap.to_kv_list m in
+let kv_list_of_t_sum ?(layout = Layout.L_tree) (m: row_element Record.t) =
+  let lst = Record.LMap.to_kv_list m in
   match layout with
   | L_tree -> lst
   | L_comb -> (
-      let aux (_ , { associated_type = _ ; decl_pos = a ; _ }) (_ , { associated_type = _ ; decl_pos = b ; _ }) = Int.compare a b in
+      let aux (_ , ({ associated_type = _ ; decl_pos = a ; _ }: row_element)) (_ , ({ associated_type = _ ; decl_pos = b ; _ } : row_element)) = Int.compare a b in
       List.sort ~compare:aux lst
     )
 
-let kv_list_of_t_record_or_tuple ?(layout = L_tree) (m: row_element LMap.t) =
+let kv_list_of_t_record_or_tuple ?(layout = Layout.L_tree) (m: row_element Record.t) =
   let lst =
-    if (is_tuple_lmap m)
-    then tuple_of_record m
-    else LMap.to_kv_list m
+    if (Record.is_tuple m)
+    then Record.tuple_of_record m
+    else Record.LMap.to_kv_list m
   in
   match layout with
   | L_tree -> lst
   | L_comb -> (
-      let aux (_ , { associated_type = _ ; decl_pos = a ; _ }) (_ , { associated_type = _ ; decl_pos = b ; _ }) = Int.compare a b in
+      let aux (_ , ({ associated_type = _ ; decl_pos = a ; _ }: row_element)) (_ , ({ associated_type = _ ; decl_pos = b ; _ } : row_element)) = Int.compare a b in
       List.sort ~compare:aux lst
     )
 
 let kv_list_of_record_or_tuple ~layout record_t_content record =
   let exps =
-    if (is_tuple_lmap record)
-    then tuple_of_record record
-    else LMap.to_kv_list record
+    if (Record.is_tuple record)
+    then Record.tuple_of_record record
+    else Record.LMap.to_kv_list record
   in
-  match layout with
+  match (layout : Layout.t) with
   | L_tree -> List.map ~f:snd exps
   | L_comb -> (
-    let types = if (is_tuple_lmap record)
-                then tuple_of_record record_t_content
-                else LMap.to_kv_list record_t_content in
+    let types = if (Record.is_tuple record)
+                then Record.tuple_of_record record_t_content
+                else Record.LMap.to_kv_list record_t_content in
     let te = List.map ~f:(fun ((label_t,t),(label_e,e)) ->
-      assert (Compare.label label_t label_e = 0) ; (*TODO TEST*)
+      assert (Label.equal label_t label_e) ; (*TODO TEST*)
       (t,e)) (List.zip_exn types exps) in
-    let s = List.sort ~compare:(fun ({ associated_type = _ ; decl_pos = a ; _ },_) ({ associated_type = _ ; decl_pos = b ; _ },_) -> Int.compare a b) te in
+    let s = List.sort ~compare:(fun (({ associated_type = _ ; decl_pos = a ; _ }: row_element),_) ({ associated_type = _ ; decl_pos = b ; _ },_) -> Int.compare a b) te in
     List.map ~f:snd s
   )
 
@@ -48,17 +48,17 @@ let remove_empty_annotation (ann : string option) : string option =
   | Some ann -> Some ann
   | None -> None
 
-let is_michelson_or (t: _ label_map) =
-  let s = List.sort ~compare:(fun (Label k1, _) (Label k2, _) -> String.compare k1 k2) @@
-    LMap.to_kv_list t in
+let is_michelson_or (t: _ Record.t) =
+  let s = List.sort ~compare:(fun (k1, _) (k2, _) -> Label.compare k1 k2) @@
+    Record.LMap.to_kv_list t in
   match s with
   | [ (Label "M_left", ta) ; (Label "M_right", tb) ] -> Some (ta,tb)
   | _ -> None
 
-let is_michelson_pair (t: row_element label_map) : (row_element * row_element) option =
-  match LMap.to_list t with
+let is_michelson_pair (t: row_element Record.t) : (row_element * row_element) option =
+  match Record.LMap.to_list t with
   | [ a ; b ] -> (
-      if List.for_all ~f:(fun i -> LMap.mem i t) @@ (label_range 0 2)
+      if List.for_all ~f:(fun i -> Record.LMap.mem i t) @@ (Label.range 0 2)
       && Option.(
         is_some a.michelson_annotation || is_some b.michelson_annotation
       )
@@ -68,7 +68,7 @@ let is_michelson_pair (t: row_element label_map) : (row_element * row_element) o
   | _ -> None
 
 (* This function parse te and replace all occurence of binder by value *)
-let rec subst_type (binder : type_variable) (value : type_expression) (te : type_expression) =
+let rec subst_type (binder : TypeVar.t) (value : type_expression) (te : type_expression) =
   let self = subst_type binder value in
   let return type_content = {te with type_content} in
   match te.type_content with
@@ -87,14 +87,14 @@ let rec subst_type (binder : type_variable) (value : type_expression) (te : type
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_sum { m with content = LMap.map aux m.content }
+    return @@ T_sum { m with fields = Record.map aux m.fields }
   )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
       let associated_type = self associated_type in
       ({associated_type;michelson_annotation;decl_pos} : row_element)
     in
-    return @@ T_record { m with content = LMap.map aux m.content }
+    return @@ T_record { m with fields = Record.map aux m.fields }
   )
   | T_for_all {ty_binder;kind;type_} ->
     let type_ = self type_ in
@@ -132,14 +132,14 @@ let assert_same_size = fun a b -> if (List.length a = List.length b) then Some (
 let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expression * type_expression)) : unit option =
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
-  | T_constant {language=_;injection=Stage_common.Constant.Ticket ;parameters=[_ty]} , _human_t | _human_t , T_constant {language=_;injection=Stage_common.Constant.Ticket;parameters=[_ty]} -> (
+  | T_constant {language=_;injection=Stage_common.Literal_types.Ticket ;parameters=[_ty]} , _human_t | _human_t , T_constant {language=_;injection=Stage_common.Literal_types.Ticket;parameters=[_ty]} -> (
     if unforged_tickets then
       Some ()
     else
       None
   )
   | T_constant {language=la;injection=ia;parameters=lsta}, T_constant {language=lb;injection=ib;parameters=lstb} -> (
-    if (String.equal la lb) && (Stage_common.Constant.equal ia ib) then (
+    if (String.equal la lb) && (Literal_types.equal ia ib) then (
       let* _ = assert_same_size lsta lstb in
       List.fold_left ~f:(fun acc p -> match acc with | None -> None | Some () -> assert_type_expression_eq ~unforged_tickets p) ~init:(Some ()) (List.zip_exn lsta lstb)
     ) else
@@ -147,9 +147,9 @@ let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expressi
   )
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list_rev sa.content in
-      let sb' = LMap.to_kv_list_rev sb.content in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
+      let sa' = Record.LMap.to_kv_list_rev sa.fields in
+      let sb' = Record.LMap.to_kv_list_rev sb.fields in
+      let aux ((ka, ({associated_type=va;_} : row_element)), (kb, ({associated_type=vb;_} : row_element))) =
         let* _ = assert_eq ka kb in
         assert_type_expression_eq ~unforged_tickets (va, vb)
       in
@@ -158,14 +158,12 @@ let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expressi
     )
   | T_sum _, _ -> None
   | T_record ra, T_record rb
-       when Bool.(<>) (is_tuple_lmap ra.content) (is_tuple_lmap rb.content) -> None
+       when Bool.(<>) (Record.is_tuple ra.fields) (Record.is_tuple rb.fields) -> None
   | T_record ra, T_record rb -> (
-      let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.content in
-      let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.content in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        let Label ka = ka in
-        let Label kb = kb in
+      let sort_lmap r' = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) r' in
+      let ra' = sort_lmap @@ Record.LMap.to_kv_list_rev ra.fields in
+      let rb' = sort_lmap @@ Record.LMap.to_kv_list_rev rb.fields in
+      let aux ((ka, ({associated_type=va;_}: row_element)), (kb, ({associated_type=vb;_}: row_element))) =
         let* _ = assert_eq ka kb in
         assert_type_expression_eq ~unforged_tickets (va, vb)
       in
@@ -187,62 +185,11 @@ let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expressi
   | T_singleton _ , _ -> None
   | T_for_all a , T_for_all b ->
     assert_type_expression_eq ~unforged_tickets (a.type_, b.type_) >>= fun _ ->
-    Some (assert (equal_kind a.kind b.kind))
+    Some (assert (Kind.equal a.kind b.kind))
   | T_for_all _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
-and assert_literal_eq (a, b : literal * literal) : unit option =
-  match (a, b) with
-  | Literal_int a, Literal_int b when Z.equal a b -> Some ()
-  | Literal_int _, Literal_int _ -> None
-  | Literal_int _, _ -> None
-  | Literal_nat a, Literal_nat b when Z.equal a b -> Some ()
-  | Literal_nat _, Literal_nat _ -> None
-  | Literal_nat _, _ -> None
-  | Literal_timestamp a, Literal_timestamp b when Z.equal a b -> Some ()
-  | Literal_timestamp _, Literal_timestamp _ -> None
-  | Literal_timestamp _, _ -> None
-  | Literal_mutez a, Literal_mutez b when Z.equal a b -> Some ()
-  | Literal_mutez _, Literal_mutez _ -> None
-  | Literal_mutez _, _ -> None
-  | Literal_string a, Literal_string b when Simple_utils.Ligo_string.equal a b -> Some ()
-  | Literal_string _, Literal_string _ -> None
-  | Literal_string _, _ -> None
-  | Literal_bytes a, Literal_bytes b when Bytes.equal a b -> Some ()
-  | Literal_bytes _, Literal_bytes _ -> None
-  | Literal_bytes _, _ -> None
-  | Literal_unit, Literal_unit -> Some ()
-  | Literal_unit, _ -> None
-  | Literal_address a, Literal_address b when String.equal a b -> Some ()
-  | Literal_address _, Literal_address _ -> None
-  | Literal_address _, _ -> None
-  | Literal_signature a, Literal_signature b when String.equal a b -> Some ()
-  | Literal_signature _, Literal_signature _ -> None
-  | Literal_signature _, _ -> None
-  | Literal_key a, Literal_key b when String.equal a b -> Some ()
-  | Literal_key _, Literal_key _ -> None
-  | Literal_key _, _ -> None
-  | Literal_key_hash a, Literal_key_hash b when String.equal a b -> Some ()
-  | Literal_key_hash _, Literal_key_hash _ -> None
-  | Literal_key_hash _, _ -> None
-  | Literal_chain_id a, Literal_chain_id b when String.equal a b -> Some ()
-  | Literal_chain_id _, Literal_chain_id _ -> None
-  | Literal_chain_id _, _ -> None
-  | Literal_operation _, Literal_operation _ -> None
-  | Literal_operation _, _ -> None
-  | Literal_bls12_381_g1 a, Literal_bls12_381_g1 b when Bytes.equal a b -> Some ()
-  | Literal_bls12_381_g1 _, Literal_bls12_381_g1 _ -> None
-  | Literal_bls12_381_g1 _, _ -> None
-  | Literal_bls12_381_g2 a, Literal_bls12_381_g2 b when Bytes.equal a b -> Some ()
-  | Literal_bls12_381_g2 _, Literal_bls12_381_g2 _ -> None
-  | Literal_bls12_381_g2 _, _ -> None
-  | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
-  | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
-  | Literal_bls12_381_fr _, _ -> None
-  | Literal_chest a, Literal_chest b when Bytes.equal a b -> Some ()
-  | Literal_chest _, Literal_chest _ -> None
-  | Literal_chest _, _ -> None
-  | Literal_chest_key a, Literal_chest_key b when Bytes.equal a b -> Some ()
-  | Literal_chest_key _, Literal_chest_key _ -> None
-  | Literal_chest_key _, _ -> None
+
+and assert_literal_eq (a, b : Literal_value.t * Literal_value.t) : unit option =
+  if Literal_value.equal a b then Some () else None

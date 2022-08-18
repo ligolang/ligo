@@ -1,4 +1,5 @@
 open Helpers_ast_imperative
+open Stage_common.Constant
 open Ast_imperative
 include Fuzz_shared.Monad
 
@@ -41,6 +42,7 @@ let transform_string =
 module Mutator (M : Monad) = struct
   open Monad_context(M)
   open Fold_helpers(M)
+  open Stage_common.Literal_value
 
   let mutate_literal = function
     | Literal_int z ->
@@ -86,8 +88,8 @@ module Mutator (M : Monad) = struct
     | _ ->
        return expr
 
-  let mutate_module_ ?n (mod_ : module_) =
-    let rndmod_ = map_module (Expression mutate_expression) mod_ in
+  let mutate_program ?n (p : program) =
+    let rndmod_ = map_program (Expression mutate_expression) p in
     get_one ?n rndmod_
 
 end

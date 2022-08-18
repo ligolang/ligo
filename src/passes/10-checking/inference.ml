@@ -4,13 +4,14 @@ open Simple_utils.Trace
 module O = Ast_typed
 
 module TMap = O.Helpers.TMap
+open Stage_common
 
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') dom table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in
   let self = infer_type_application ~raise ~loc ~default_error in
   let default_error = default_error loc type_matched type_ in
   let inj_mod_equal a b = (* TODO: cleanup with polymorphic functions in value env *)
-    Stage_common.Constant.equal a b
+    Literal_types.equal a b
   in
   match type_matched.type_content, type_.type_content with
   | T_variable v, _ when List.mem dom v ~equal:TypeVar.equal -> (
@@ -32,13 +33,13 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        table
      else
        raise.error default_error
-  | T_record {content; layout}, T_record {content=content'; layout=layout'} ->
-     let content_kv = O.LMap.to_kv_list content in
-     let content'_kv = O.LMap.to_kv_list content' in
-     if layout_eq layout layout' &&
-         List.equal equal_label (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
+  | T_record {fields; layout}, T_record {fields=content'; layout=layout'} ->
+     let content_kv = Record.LMap.to_kv_list fields in
+     let content'_kv = Record.LMap.to_kv_list content' in
+     if Layout.equal layout layout' &&
+         List.equal Label.equal (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
        let elements = List.zip_exn content_kv content'_kv in
-       let aux ((_, {associated_type;michelson_annotation;decl_pos=_}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=_})) table =
+       let aux ((_, ({associated_type;michelson_annotation;decl_pos=_}:  _ Rows.row_element_mini_c)), (_, ({associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=_} : row_element))) table =
          if Option.equal String.equal michelson_annotation michelson_annotation' then
            self dom table associated_type associated_type'
          else
@@ -47,14 +48,14 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        table
      else
        raise.error default_error
-  | T_sum {content; layout}, T_sum {content=content'; layout=layout'} ->
-     let content_kv = O.LMap.to_kv_list content in
-     let content'_kv = O.LMap.to_kv_list content' in
-     if layout_eq layout layout' &&
-          List.equal equal_label (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
+  | T_sum {fields; layout}, T_sum {fields=content'; layout=layout'} ->
+     let content_kv = Record.LMap.to_kv_list fields in
+     let content'_kv = Record.LMap.to_kv_list content' in
+     if Layout.equal layout layout' &&
+         List.equal Label.equal (List.map content_kv ~f:fst) (List.map content'_kv ~f:fst) then
        let elements = List.zip_exn content_kv content'_kv in
-       let aux ((_, {associated_type;michelson_annotation;decl_pos}), (_, {associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=decl_pos'})) table =
-         if Int.equal decl_pos decl_pos' && Option.equal String.equal michelson_annotation michelson_annotation' then
+       let aux ((_, ({associated_type;michelson_annotation;decl_pos=_}:  _ Rows.row_element_mini_c)), (_, ({associated_type=associated_type';michelson_annotation=michelson_annotation';decl_pos=_} : row_element))) table =
+         if Option.equal String.equal michelson_annotation michelson_annotation' then
            self dom table associated_type associated_type'
          else
            raise.error default_error in
@@ -62,7 +63,7 @@ let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> ass
        table
      else
        raise.error default_error
-  | T_singleton l, T_singleton l' when Int.equal 0 (Stage_common.Enums.compare_literal l l') -> table
+  | T_singleton l, T_singleton l' when Int.equal 0 (Literal_value.compare l l') -> table
   | (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _),
     (T_arrow _ | T_record _ | T_sum _ | T_constant _ | T_singleton _ | T_abstraction _ | T_for_all _ | T_variable _)
     -> raise.error default_error
@@ -95,7 +96,7 @@ let build_type_insts ~raise ~loc (forall : O.expression) table bound_variables =
     | [] -> forall
     | av :: avs' ->
        let type_ = trace_option ~raise (Errors.not_annotated loc) @@ O.Helpers.TMap.find_opt av table in
-       let O.{ ty_binder ; type_ = t ; kind = _ } = trace_option ~raise (corner_case "Expected a for all type quantifier") @@ O.get_t_for_all forall.type_expression in
+       let Abstraction.{ ty_binder ; type_ = t ; kind = _ } = trace_option ~raise (corner_case "Expected a for all type quantifier") @@ O.get_t_for_all forall.type_expression in
        build_type_insts O.(make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_no_capture_type ty_binder type_ t)) avs' in
   build_type_insts forall bound_variables
 
@@ -106,7 +107,7 @@ let build_type_insts_function ~raise ~loc (forall : O.expression) table bound_va
     | [] -> forall
     | av :: avs' ->
        let type_ = trace_option ~raise (Errors.not_annotated loc) @@ O.Helpers.TMap.find_opt av table in
-       let O.{ type1 = _ ; type2 } = trace_option ~raise (corner_case "Expected an arrow type") @@ O.get_t_arrow forall.type_expression in
+       let Arrow.{ type1 = _ ; type2 } = trace_option ~raise (corner_case "Expected an arrow type") @@ O.get_t_arrow forall.type_expression in
        build_type_insts O.(make_e (E_type_inst {forall ; type_ }) (Ast_typed.Helpers.subst_no_capture_type av type_ type2)) avs' in
   build_type_insts forall bound_variables
 

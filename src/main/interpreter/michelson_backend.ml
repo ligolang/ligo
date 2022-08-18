@@ -6,6 +6,7 @@ open Simple_utils.Option
 module Tezos_protocol = Tezos_protocol_014_PtKathma
 module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
+open Stage_common
 
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
@@ -112,11 +113,11 @@ let clean_location_with v x =
 let clean_locations e t =
   clean_location_with () e, clean_location_with () t
 
-let add_ast_env ?(name = Ast_aggregated.ValueVar.fresh ()) env binder body =
+let add_ast_env ?(name = ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation, inline) (e : expression) =
     if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
-      e_a_let_in {var=let_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false }
+      e_a_let_in {var=let_binder;ascr=expr.type_expression;attributes=Binder.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false }
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in
@@ -183,8 +184,8 @@ let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty
   let open Ligo_compile in
   let aggregated_exp' = add_ast_env subst_lst arg_binder aggregated_exp in
   let aggregated_exp = match rec_name with
-    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute} } in_ty out_ty
-    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';binder = {var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}}} in
+    | None -> Ast_aggregated.e_a_lambda { result = aggregated_exp'; output_type = out_ty ; binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute} } in_ty out_ty
+    | Some fun_name -> Ast_aggregated.e_a_recursive { fun_name ; fun_type  = (Ast_aggregated.t_arrow in_ty out_ty ()) ; lambda = { result = aggregated_exp';output_type=out_ty;binder = {var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute}}} in
   let (parameter, storage) = trace_option ~raise (Errors.generic_error Location.generated "Trying to compile a non-contract?") @@
                                Ast_aggregated.get_t_pair in_ty in
   let aggregated_exp = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp in
@@ -193,7 +194,7 @@ let compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty
 
 let make_function in_ty out_ty arg_binder body subst_lst =
   let typed_exp' = add_ast_env subst_lst arg_binder body in
-  Ast_aggregated.e_a_lambda {result=typed_exp'; binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in_ty out_ty
+  Ast_aggregated.e_a_lambda {result=typed_exp'; output_type = out_ty ; binder={var=arg_binder;ascr=in_ty;attributes=Binder.empty_attribute}} in_ty out_ty
 
 let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
                           Ast_aggregated.type_expression ->
@@ -299,7 +300,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
      e_a_bls12_381_fr x
   | V_Construct (ctor, arg) when is_t_sum ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected sum type but got %a" Ast_aggregated.PP.type_expression ty)) @@ get_t_sum_opt ty in
-     let {associated_type=ty';michelson_annotation=_;decl_pos=_} = LMap.find (Label ctor) map_ty.content in
+     let {associated_type=ty';michelson_annotation=_;decl_pos=_} : row_element = Record.LMap.find (Label ctor) map_ty.fields in
      let arg = val_to_ast ~raise ~loc arg ty' in
      e_a_constructor ctor arg ty
   | V_Construct _ ->
@@ -317,13 +318,13 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
     let ty = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_ticket ty in
     let rows = trace_option ~raise (Errors.generic_error loc "impossible") @@ get_t_record (Ast_aggregated.t_unforged_ticket ty) in
     let map =
-      let get l map = trace_option ~raise (Errors.generic_error loc "bad unforged ticket") (LMap.find_opt l map) in
+      let get l map = trace_option ~raise (Errors.generic_error loc "bad unforged ticket") (Record.LMap.find_opt l map) in
       (*  at this point the record value is a nested pair (extracted from michelson), e.g. (KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL , (0x05010000000474657374 , 10n)) *)
       let ticketer = get (Label "0") map in
       let map = match get (Label "1") map with V_Record map -> map | _ -> raise.error @@ Errors.generic_error loc "unforged ticket badly decompiled" in
       let value = get (Label "0") map in
       let amt = get (Label "1") map in
-      LMap.of_list [
+      Record.of_list [
         (Label "ticketer", ticketer) ;
         (Label "value", value) ;
         (Label "amount", amt) ;
@@ -359,22 +360,18 @@ and make_ast_func ~raise ?name env arg body orig =
   let open Ast_aggregated in
   let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name:name env arg body in
-  let lambda = { result=typed_exp' ; binder={var=arg;ascr=None;attributes=Stage_common.Helpers.empty_attribute}} in
+  let Arrow.{ type1 = in_ty ; type2 = out_ty } = get_t_arrow_exn orig.type_expression in
+  let lambda = Lambda.{ result=typed_exp' ; output_type = out_ty ; binder={var=arg;ascr=in_ty;attributes=Binder.empty_attribute}} in
   let typed_exp' = match name with
-    | None ->
-       let { type1 = in_ty ; type2 = out_ty } =
-         get_t_arrow_exn orig.type_expression in
-       e_a_lambda lambda in_ty out_ty
-    | Some fun_name ->
-       e_a_recursive {fun_name ;
-                      fun_type = orig.type_expression ;
-                      lambda } in
+    | None -> e_a_lambda lambda in_ty out_ty
+    | Some fun_name -> e_a_recursive {fun_name ; fun_type = orig.type_expression ; lambda }
+  in
   typed_exp'
 
 and make_ast_record ~raise ~loc (map_ty: Ast_aggregated.t_sum) map =
   let open Ligo_interpreter.Types in
-  let kv_list = Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout:map_ty.layout map_ty.content in
-  let kv_list = List.map ~f:(fun (l, ty) -> let value = LMap.find l map in let ast = val_to_ast ~raise ~loc value ty.associated_type in (l, ast)) kv_list in
+  let kv_list = Ast_aggregated.Helpers.kv_list_of_t_record_or_tuple ~layout:map_ty.layout map_ty.fields in
+  let kv_list = List.map ~f:(fun (l, ty) -> let value = Record.LMap.find l map in let ast = val_to_ast ~raise ~loc value ty.associated_type in (l, ast)) kv_list in
   Ast_aggregated.ez_e_a_record ~layout:map_ty.layout kv_list
 
 and make_ast_list ~raise ~loc ty l =
