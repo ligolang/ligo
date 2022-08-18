@@ -12,12 +12,12 @@ LIGO_BINARY_PATH=${1:-$LIGO_BINARY_GITLAB_CI_PATH}
 determine_version () {
   version_regex='[0-9]+\.[0-9]+\.[0-9]+'
   if [[ "$CI_COMMIT_TAG" =~ $version_regex ]]; then
-    =$CI_COMMIT_TAG
+    version=$CI_COMMIT_TAG
   else
     version="0.0.0-next"
   fi
   if [[ $CI_COMMIT_SHA ]]; then
-    revision="$CI_COMMIT_TAG"
+    revision="$CI_COMMIT_SHA"
   else
     revision=`git rev-parse HEAD`
   fi

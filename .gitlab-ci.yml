@@ -27,6 +27,12 @@ include:
     - git submodule sync --recursive
     - git submodule update --init --recursive --remote
 
+.nix:
+  extends: .submodule-clone
+  before_script:
+    - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
+    - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+
 changelog:
   stage: pretooling
   only:
