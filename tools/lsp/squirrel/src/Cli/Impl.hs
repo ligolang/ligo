@@ -8,8 +8,12 @@ module Cli.Impl
 
   , Version (..)
 
+  , callLigoImpl
+  , callLigoImplBS
+
   , withLigo
   , callLigo
+  , callLigoBS
   , callForFormat
   , getLigoVersion
   , preprocess
@@ -19,12 +23,13 @@ module Cli.Impl
 import Control.Arrow ((&&&))
 import Control.Monad
 import Control.Monad.Reader
-import Data.Aeson (FromJSON (..), ToJSON (..), Value, eitherDecodeStrict', object, (.=))
+import Data.Aeson (FromJSON (..), ToJSON (..), Value, eitherDecode', eitherDecodeStrict', object, (.=))
 import Data.Aeson.Types (parseEither)
 import Data.Bool (bool)
+import Data.ByteString.Lazy (ByteString)
+import Data.ByteString.Lazy qualified as BSL
 import Data.Foldable (asum, toList)
 import Data.List.NonEmpty (NonEmpty)
-import Data.Maybe (fromMaybe)
 import Data.Monoid (Endo (..))
 import Data.Text (Text, pack, unpack)
 import Data.Text qualified as Text
@@ -36,6 +41,7 @@ import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName)
 import System.IO (hClose)
 import System.Process
+import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Regex.TDFA ((=~), getAllTextSubmatches)
 import UnliftIO.Directory (canonicalizePath)
 import UnliftIO.Exception (Exception (..), SomeException (..), throwIO, try)
@@ -49,7 +55,7 @@ import Log (Log, i)
 import Log qualified
 import Parser (LineMarker (lmFile))
 import ParseTree (Source (..))
-import Util (traverseJsonText)
+import Util (traverseJsonText, lazyBytesToText)
 
 ----------------------------------------------------------------------------
 -- Errors
@@ -141,67 +147,78 @@ instance Exception SomeLigoException where
       ]
 
 instance Exception LigoClientFailureException where
-  displayException LigoClientFailureException {cfeStdout, cfeStderr, cfeFile} =
-    "LIGO binary failed with\nStdout:\n" <> unpack cfeStdout
-    <> "\nStderr:\n" <> unpack cfeStderr
-    <> "\nCaused by: " <> fromMaybe "<unknown file>" cfeFile
+  displayException LigoClientFailureException {..} =
+    [i|LIGO binary failed with
+#{stdOut}
+#{stdErr}
+#{causedBy}|]
+    where
+      causedBy = maybe ("" :: String) (\file -> [i|Caused by: #{file}|]) cfeFile
+
+      stdOut
+        | Text.null cfeStdout = "" :: String
+        | otherwise = [i|Stdout: #{cfeStdout}|]
+
+      stdErr
+        | Text.null cfeStderr = "" :: String
+        | otherwise = [i|Stderr: #{cfeStderr}|]
 
 instance Exception LigoDecodedExpectedClientFailureException where
-  displayException LigoDecodedExpectedClientFailureException {decfeErrorsDecoded, decfeWarningsDecoded, decfeFile} =
-    "LIGO binary produced expected error which we successfully decoded as:\n"
-    <> show (pp $ toList decfeErrorsDecoded)
-    <> "\nWith warnings:\n"
-    <> show (pp decfeWarningsDecoded)
-    <> "\nCaused by: " <> decfeFile
+  displayException LigoDecodedExpectedClientFailureException {..} =
+    [i|LIGO binary produced expected error which we successfully decoded as:
+#{pp $ toList decfeErrorsDecoded}
+With warnings
+#{pp $ toList decfeWarningsDecoded}
+Caused by: #{decfeFile}|]
 
 instance Exception LigoErrorNodeParseErrorException where
-  displayException LigoErrorNodeParseErrorException {lnpeError, lnpeOutput, lnpeFile} =
-    "LIGO binary produced an error JSON which we were unable to decode:\n"
-    <> unpack lnpeError
-    <> "\nCaused by: " <> lnpeFile
-    <> "\nJSON output dumped:\n"
-    <> unpack lnpeOutput
+  displayException LigoErrorNodeParseErrorException {..} =
+    [i|LIGO binary produced an error JSON which we were unable to decode:
+#{lnpeError}
+Caused by: #{lnpeFile}
+JSON output dumped:
+#{lnpeOutput}|]
 
 instance Exception LigoMalformedJSONException where
-  displayException LigoMalformedJSONException {lmjeError, lmjeOutput, lmjeFile} =
-    "LIGO binary produced a malformed JSON:\n"
-    <> lmjeError
-    <> "\nCaused by: " <> lmjeFile
-    <> "\nJSON output dumped:\n"
-    <> unpack lmjeOutput
+  displayException LigoMalformedJSONException {..} =
+    [i|LIGO binary produced a malformed JSON:
+#{lmjeError}
+Caused by: #{lmjeFile}
+JSON output dumped:
+#{lmjeOutput}|]
 
 instance Exception LigoDefinitionParseErrorException where
-  displayException LigoDefinitionParseErrorException {ldpeError, ldpeOutput, ldpeFile} =
-    "LIGO binary produced a definition output which we consider malformed:\n"
-    <> unpack ldpeError
-    <> "\nCaused by: " <> ldpeFile
-    <> "\nJSON output dumped:\n"
-    <> unpack ldpeOutput
+  displayException LigoDefinitionParseErrorException {..} =
+    [i|LIGO binary produced a definition output which we consider malformed:
+#{ldpeError}
+Caused by: #{ldpeFile}
+JSON output dumped:
+#{ldpeOutput}|]
 
 instance Exception LigoUnexpectedCrashException where
-  displayException LigoUnexpectedCrashException {uceMessage, uceFile} =
-    "LIGO binary crashed with error: " <> unpack uceMessage
-    <> "\nCaused by: " <> uceFile
+  displayException LigoUnexpectedCrashException {..} =
+    [i|LIGO binary crashed with error: #{uceMessage}
+Caused by: #{uceFile}|]
 
 instance Exception LigoPreprocessFailedException where
-  displayException LigoPreprocessFailedException {pfeMessage, pfeFile} =
-    "LIGO failed to preprocess contract with\n:" <> unpack pfeMessage
-    <> "\nCaused by: " <> pfeFile
+  displayException LigoPreprocessFailedException {..} =
+    [i|LIGO failed to preprocess contract with: #{pfeMessage}
+Caused by: #{pfeFile}|]
 
 instance Exception LigoFormatFailedException where
-  displayException LigoFormatFailedException {ffeMessage, ffeFile} =
-    "LIGO failed to format contract with\n:" <> unpack ffeMessage
-    <> "\nCaused by: " <> ffeFile
+  displayException LigoFormatFailedException {..} =
+    [i|LIGO failed to format contract with: #{ffeMessage}
+Caused by: #{ffeFile}|]
 
 ----------------------------------------------------------------------------
 -- Execution
 ----------------------------------------------------------------------------
 
-callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
-callLigoImpl _rootDir args conM = do
+callLigoImplBS :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m ByteString
+callLigoImplBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
-    let raw = maybe "" (unpack . srcText) conM
+    let raw = maybe "" (BSL.fromStrict . encodeUtf8 . srcText) conM
     let fpM = srcPath <$> conM
     -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there
     -- is a bug in the `process` library preventing us from doing it, as it
@@ -210,14 +227,21 @@ callLigoImpl _rootDir args conM = do
     -- Additionally, using `withCurrentDirectory` from `directory` is no help
     -- either, as it doesn't seem thread-safe either.
     let process = proc _lceClientPath args
-    (ec, lo, le) <- readCreateProcessWithExitCode process raw
+    (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
-      throwIO $ LigoClientFailureException (pack lo) (pack le) fpM
-    pure $ pack lo
+      throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM
+    pure lo
+
+callLigoImpl :: HasLigoClient m => Maybe FilePath -> [String] -> Maybe Source -> m Text
+callLigoImpl _rootDir args conM = lazyBytesToText <$> callLigoImplBS _rootDir args conM
 
 -- | Call ligo binary and return stdout and stderr accordingly.
 callLigo :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m Text
 callLigo rootDir args = callLigoImpl rootDir args . Just
+
+-- | Same as @callLigo@ but returns lazy @ByteString@.
+callLigoBS :: HasLigoClient m => Maybe FilePath -> [String] -> Source -> m ByteString
+callLigoBS rootDir args = callLigoImplBS rootDir args . Just
 
 newtype Version = Version
   { getVersion :: Text
@@ -248,28 +272,28 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
       -- Create temporary file and call LIGO with it.
       $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
       liftIO (Text.hPutStr handle contents *> hClose handle)
-      try (callLigo (Just rootDir) (getArgs tempFp) src) >>= \case
+      try (callLigoBS (Just rootDir) (getArgs tempFp) src) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
         Left LigoClientFailureException {cfeStderr} -> do
           let fixMarkers' = Text.replace (pack tempFp) (pack fp)
           handleLigoMessages fp (fixMarkers' cfeStderr)
-        Right result -> case eitherDecodeStrict' $ encodeUtf8 result of
+        Right result -> case eitherDecode' result of
           -- Failed to decode as a Value, this indicates that the JSON output
           -- from LIGO is malformed. This is a bug in the LIGO binary and we
           -- should contact the LIGO team if it ever happens.
-          Left e -> throwIO $ LigoMalformedJSONException e result fp
-          Right json -> decode (Source tempFp True result) json
+          Left e -> throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
+          Right json -> decode (Source tempFp True (lazyBytesToText result)) json
   where
     withTempDirTemplate = case tempDirTemplate of
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
 withLigo src@(Source fp False _) _ getArgs decode =
-  try (callLigo Nothing (getArgs fp) src) >>= \case
+  try (callLigoBS Nothing (getArgs fp) src) >>= \case
     Left LigoClientFailureException{cfeStderr} ->
       handleLigoMessages fp cfeStderr
-    Right result -> case eitherDecodeStrict' $ encodeUtf8 result of
-      Left e -> throwIO $ LigoMalformedJSONException e result fp
-      Right json -> decode (Source fp False result) json
+    Right result -> case eitherDecode' result of
+      Left e -> throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
+      Right json -> decode (Source fp False (lazyBytesToText result)) json
 
 fixMarkers
   :: MonadIO m
