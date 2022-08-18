@@ -149,8 +149,8 @@ let record expression r = label_map expression r
 
 let access expression = function
   | Access_tuple  a -> `List [ `String "Access_tuple"; z_to_yojson a]
-  | Access_record a -> `List [ `String "Access_tuple"; `String a]
-  | Access_map    a -> `List [ `String "Access_tuple"; expression a]
+  | Access_record a -> `List [ `String "Access_record"; `String a]
+  | Access_map    a -> `List [ `String "Access_map"; expression a]
 
 let accessor expression ({record; path}: 'exp accessor) =
   `Assoc [
