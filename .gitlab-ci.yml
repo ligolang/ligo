@@ -5,7 +5,7 @@ variables:
 
 stages:
   - pretooling                      # changelog
-  - build                    # build, test, produces binaries/.deb/doc within docker
+  - build                           # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
@@ -31,9 +31,9 @@ include:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
+    
 changelog:
   stage: pretooling
-  extends : .nix
   only:
     - merge_requests
     - dev
@@ -41,9 +41,7 @@ changelog:
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - echo $CI_WORKFLOW
-    - nix-build nix -A ligo-changelog
-    - cp -L result/* .
+    - ./scripts/changelog-generation.sh
   artifacts:
     paths:
       - changelog.md
