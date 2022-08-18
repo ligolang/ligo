@@ -50,7 +50,7 @@ const sidebars = {
       "api/cli-commands",
       "api/cheat-sheet"
     ],
-    "Command Line Options": [
+    "Sub-Commands": [
       "manpages/changelog",
       "manpages/add-user",
       "manpages/compile constant",
