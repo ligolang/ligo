@@ -109,7 +109,7 @@ const test = simple_tests(twice);
 These tests check that `twice`:
 
 - when run on input `0`, it returns `0`.
-- when run on input `2`, it returns `2`.
+- when run on input `2`, it returns `4`.
 
 The function implemented (`twice`) above passes the tests:
 
