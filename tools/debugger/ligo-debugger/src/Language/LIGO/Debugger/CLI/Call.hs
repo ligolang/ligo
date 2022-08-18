@@ -124,6 +124,7 @@ getAvailableEntrypoints file = do
     "ligo"
     [ "info", "list-declarations"
     , "--display-format", "json"
+    , "--only-ep"
     , file
     ]
     >>= throwLeftWith [int|m|Unexpected output of `ligo` from decoding list declarations #{toText}|]
