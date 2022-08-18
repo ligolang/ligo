@@ -237,23 +237,14 @@ let make_output n out =
   eval [ S output ]
 
 class read_phrase ~term ~history ~n = object(self)
-  inherit LTerm_read_line.read_line ~history:(LTerm_history.contents history) () as super
+  inherit LTerm_read_line.read_line ~history:(LTerm_history.contents history) ()
   inherit [Zed_string.t] LTerm_read_line.term term as super_term
 
   method! show_box = false
 
-  method! send_action action =
-    let action : LTerm_read_line.action =
-      if Caml.(action == Accept) && Caml.(React.S.value self#mode <> LTerm_read_line.Edition) then
-        Accept
-      else
-        action
-    in
-    super#send_action action
-
   method! exec ?(keys=[]) = function
     | action :: actions when Caml.(React.S.value self#mode = LTerm_read_line.Edition) &&
-                               Caml.(action == Accept)  -> begin
+                               Caml.(action = LTerm_read_line.Accept)  -> begin
         Zed_macro.add self#macro action;
         let input = Zed_rope.to_string (Zed_edit.text self#edit) in
         let input_utf8 = Zed_string.to_utf8 input in
