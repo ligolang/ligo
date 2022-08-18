@@ -192,6 +192,14 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (0 :: Integer)
                 )
               ]
+            lastStack =
+              [ ( Nothing
+                , SomeLorentzValue ([] :: [T.Operation], 42 :: Integer)
+                )
+              , ( Nothing
+                , SomeLorentzValue (0 :: Integer)
+                )
+              ]
           in
           [ ( InterpretRunning EventExpressionPreview
             , one
@@ -241,7 +249,7 @@ test_Snapshots = testGroup "Snapshots collection"
            , ( InterpretTerminatedOk
             , one
               ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 28)
-              , stackWithS2
+              , lastStack
               )
             )
 

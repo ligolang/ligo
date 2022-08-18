@@ -6,10 +6,12 @@ module Language.LIGO.Debugger.Handlers.Impl
 import Debug qualified
 import Unsafe qualified
 
-import Control.Lens (ix, uses, zoom, (.=), (^?!))
+import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
-import Fmt (build, pretty)
+import Data.Text qualified as Text
+import Fmt (Builder, blockListF, build, pretty)
 import Fmt.Internal.Core (FromBuilder (fromBuilder))
+import Morley.Debugger.Core (slSrcPos)
 import Morley.Debugger.Core.Navigate
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition), curSnapshot,
   frozen, groupSourceLocations, playInterpretHistory)
@@ -20,7 +22,10 @@ import Morley.Debugger.DAP.Types
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
   HasSpecificMessages (..), RIO, RioContext (..), StopEventDesc (..), StoppedReason (..),
   dsDebuggerState, dsVariables, pushMessage)
+import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
+import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed
   (Contract, Contract' (..), ContractCode' (unContractCode), SomeConstrainedValue (SomeValue),
@@ -40,11 +45,7 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
-import Data.Text qualified as Text
 import Language.LIGO.DAP.Variables
-import Morley.Debugger.Core (slSrcPos)
-import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 
 data LIGO
 
@@ -64,14 +65,57 @@ instance HasSpecificMessages LIGO where
     ReachedStart -> writeStoppedEvent "Reached start"
     where
       writeTerminatedEvent = do
-        pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
-          { DAP.bodyOutputEvent = DAP.defaultOutputEventBody
-            { DAP.categoryOutputEventBody = "stdout"
-            , DAP.outputOutputEventBody =
-                "Execution completed.\n"
+        InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
+        let someValues = head isStackFrames ^.. sfStackL . each . siValueL
+
+        let result = case someValues of
+              [someValue, someStorage] -> buildStoreOps someValue someStorage
+              _ -> Left
+                  [int||
+                  Internal Error: Expected the stack to only have 2 elements, but its length is \
+                  #{length someValues}.
+                  |]
+
+        case result of
+          Right (opsText, storeText, oldStoreText) -> do
+            pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
+              { DAP.bodyOutputEvent = DAP.defaultOutputEventBody
+                { DAP.categoryOutputEventBody = "stdout"
+                , DAP.outputOutputEventBody =
+                    [int||
+                    Execution completed.
+                    Operations:
+                    #{opsText}
+                    Storage:
+                    #{storeText}
+
+                    Old storage:
+                    #{oldStoreText}
+                    |]
+                }
+              }
+            pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
+
+          Left errMsg ->
+            pushMessage . DAPResponse $ ErrorResponse DAP.defaultErrorResponse
+            { DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just
+                (DAP.defaultMessage { DAP.formatMessage = errMsg })
             }
-          }
-        pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
+          where
+            buildStoreOps :: T.SomeValue -> T.SomeValue -> Either String (Builder, Builder, Builder)
+            buildStoreOps (SomeValue val) (SomeValue (st :: T.Value r')) = case val of
+              (T.VPair (T.VList ops, r :: T.Value r)) ->
+                case (T.valueTypeSanity r, T.valueTypeSanity st) of
+                  (T.Dict, T.Dict) ->
+                    case (T.checkOpPresence (T.sing @r), T.checkOpPresence (T.sing @r')) of
+                      (T.OpAbsent, T.OpAbsent) -> Right
+                        ( blockListF ops
+                        , printDocB False $ renderDoc doesntNeedParens r
+                        , printDocB False $ renderDoc doesntNeedParens st
+                        )
+                      _ -> Left "Internal Error: Invalid storage type."
+
+              _ -> Left "Internal Error: Expected the last element to be a pair of operations and storage."
 
       writeStoppedEvent reason = do
         (mDesc, mLongDesc) <- zoom dsDebuggerState $ frozen (getStopEventInfo @LIGO Proxy)
@@ -486,6 +530,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
                   DebugSource mempty <$>
                   groupSourceLocations (toList allLocs)
               }
+        logMessage [int||All snapshots: #{his}|]
         pure $ DAPSessionState ds mempty mempty program
 
 checkArgument :: MonadError DAP.Message m => Text -> Maybe a -> m a
