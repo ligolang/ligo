@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print dependency-graph SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the dependency graph created by the module system. It explores all imported source files (recursively) following a DFS strategy.

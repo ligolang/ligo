@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo compile contract SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command compiles a contract to Michelson code. It expects a source file and an entrypoint function that has the type of a contract: "parameter * storage -> operations list * storage".

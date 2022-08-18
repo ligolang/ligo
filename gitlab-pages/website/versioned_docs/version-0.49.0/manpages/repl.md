@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo repl SYNTAX
+```
 
 ### DESCRIPTION
 REPL (Read-Eval-Print-Loop) for LIGO
