@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo info list-declarations SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints a list of all top-level declarations (not including types and modules).

@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print mini-c SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the Mini-C stage. Internally, it uses the build system to type and compile the contract. Compilation is applied after combination in the AST typed stage.

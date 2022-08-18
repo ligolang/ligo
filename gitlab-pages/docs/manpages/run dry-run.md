@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo run dry-run SOURCE_FILE PARAMETER_EXPRESSION STORAGE_EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command runs a LIGO contract on a given storage and parameter. The context is initialized from a source file where the contract is implemented. The interpretation is done using Michelson's interpreter.

@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print ast-imperative SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the AST imperative stage, before desugaring step is applied.
