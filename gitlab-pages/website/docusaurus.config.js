@@ -32,10 +32,6 @@ const config = {
         docs: {
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://gitlab.com/ligolang/ligo/-/tree/dev/gitlab-pages/website',
         },
         blog: {
           showReadingTime: true,
