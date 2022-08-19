@@ -3,6 +3,7 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const singleTheme = require('prism-react-renderer/themes/duotoneLight');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -146,6 +147,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+        singleTheme: singleTheme
       },
       algolia: {
         // The application ID provided by Algolia

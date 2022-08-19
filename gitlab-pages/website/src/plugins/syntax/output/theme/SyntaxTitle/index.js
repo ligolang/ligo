@@ -63,20 +63,23 @@ function SyntaxTitle(props) {
       }
     }
   } = useDocusaurusContext();
-  const lightModeTheme = prism.theme || defaultTheme;
-  const darkModeTheme = prism.darkTheme || lightModeTheme;
-  const prismTheme = useColorMode().colorMode === "dark" ? darkModeTheme : lightModeTheme;
+  const lightModeTheme = prism.singleTheme || defaultTheme; // to fix Hook is called outside the <ColorModeProvider>. Please see https://docusaurus.io/docs/api/themes/configuration#use-color-mode.
+  // const {colorMode, setColorMode} = useColorMode();
+  // const prismTheme = colorMode === "dark" ? darkModeTheme : lightModeTheme;
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
-  return /*#__PURE__*/React.createElement(SyntaxContext.Consumer, null, syntax => {
+  return /*#__PURE__*/React.createElement(SyntaxContext.Consumer, null, ({
+    syntax
+  }) => {
     if (syntax === props.syntax) {
       return /*#__PURE__*/React.createElement(Highlight, _extends({}, defaultProps, {
-        key: true,
+        key: mounted,
         language: props.syntax,
         code: props.children,
-        theme: darkModeTheme
+        theme: lightModeTheme
       }), ({
         className,
         tokens,

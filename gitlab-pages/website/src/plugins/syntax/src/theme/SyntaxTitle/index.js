@@ -4,7 +4,6 @@ import Highlight, { defaultProps } from "prism-react-renderer";
 // THE PROBLEM IS USE THEME CONTEXT ==>>>>
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useColorMode } from '@docusaurus/theme-common';
-
 import { SyntaxContext } from '@theme/Syntax';
 
 import defaultTheme from 'prism-react-renderer/themes/palenight';
@@ -86,9 +85,11 @@ function SyntaxTitle(props) {
       themeConfig: {prism = {}},
     }
   } = useDocusaurusContext();
-  const lightModeTheme = prism.theme || defaultTheme;
-  const darkModeTheme = prism.darkTheme || lightModeTheme;
-  const prismTheme = useColorMode().colorMode === "dark" ? darkModeTheme : lightModeTheme;
+
+  const lightModeTheme = prism.singleTheme || defaultTheme;
+  // todo fix Hook is called outside the <ColorModeProvider>. Please see https://docusaurus.io/docs/api/themes/configuration#use-color-mode.
+  // const {colorMode, setColorMode} = useColorMode();
+  // const prismTheme = colorMode === "dark" ? darkModeTheme : lightModeTheme;
 
   const [mounted, setMounted] = useState(false);
 
@@ -98,10 +99,10 @@ function SyntaxTitle(props) {
 
   return ( 
     <SyntaxContext.Consumer>
-      {(syntax => {
+      {( ({syntax}) => {
         if (syntax === props.syntax) {
           return ( 
-            <Highlight {...defaultProps} key={true} language={props.syntax} code={props.children} theme={darkModeTheme}>
+            <Highlight {...defaultProps} key={mounted} language={props.syntax} code={props.children} theme={lightModeTheme}>
               {({ className, tokens, getLineProps, getTokenProps }) => (
                   <pre className={className} style={{backgroundColor: 'var(--ifm-background-color)', fontSize: '1.1rem', fontWeight: 'bold', padding: 0, whiteSpace: 'break-spaces', marginTop: '3rem' }}>
                     {tokens.map((line, i) => (
