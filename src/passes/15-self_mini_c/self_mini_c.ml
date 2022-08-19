@@ -2,7 +2,7 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 let eta_expand : expression -> type_expression -> type_expression -> anon_function =
   fun e in_ty out_ty ->

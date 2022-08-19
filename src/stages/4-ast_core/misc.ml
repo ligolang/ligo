@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 let rec assert_list_eq f = fun a b -> match (a,b) with
   | [], [] -> Some ()

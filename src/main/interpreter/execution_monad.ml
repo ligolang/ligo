@@ -15,7 +15,7 @@ module Tezos_client = Tezos_client_014_PtKathma
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
 
-open Stage_common
+open Ligo_prim
 open Errors
 type execution_trace = unit
 

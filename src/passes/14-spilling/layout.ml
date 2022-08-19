@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 module AST = Ast_aggregated
 open AST
 open Errors

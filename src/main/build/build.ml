@@ -1,7 +1,7 @@
 open Simple_utils
 open Trace
 open Main_errors
-open Stage_common
+open Ligo_prim
 
 module Stdlib = Stdlib
 module Source_input = BuildSystem.Source_input

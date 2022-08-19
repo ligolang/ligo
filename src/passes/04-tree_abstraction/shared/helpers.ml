@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 module Region = Simple_utils.Region
 module Attr = Lexing_shared.Attr
 

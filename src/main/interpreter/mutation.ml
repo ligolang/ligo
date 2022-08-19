@@ -2,7 +2,7 @@ open Simple_utils.Trace
 open Errors
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
-open Stage_common
+open Ligo_prim
 
 let get_syntax ~raise syntax loc =
   match syntax with

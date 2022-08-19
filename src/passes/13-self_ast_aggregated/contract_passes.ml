@@ -1,7 +1,7 @@
 open Ast_aggregated.Types
 open Simple_utils.Trace
 module Ligo_string = Simple_utils.Ligo_string
-open Stage_common
+open Ligo_prim
 
 type contract_type = {
   parameter : Ast_aggregated.type_expression ;
@@ -21,15 +21,15 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
     {e.type_expression with
       type_content =
         T_constant {
-          language=Stage_common.Backends.michelson;
-          injection=Stage_common.Literal_types.Contract;
+          language=Backend.Michelson.name;
+          injection=Ligo_prim.Literal_types.Contract;
           parameters=[dat.parameter]
         }
     }
     e.location
   in
   match e.expression_content , e.type_expression with
-  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Stage_common.Literal_types.Contract;parameters=[t]} ; _}) ->
+  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Ligo_prim.Literal_types.Contract;parameters=[t]} ; _}) ->
     let entrypoint =
       match entrypoint_exp.expression_content with
       | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
@@ -72,4 +72,3 @@ let emit_event_typing ~raise : contract_type -> expression -> bool * contract_ty
     in
     (true, dat, e)
   | _ -> (true,dat,e)
-  

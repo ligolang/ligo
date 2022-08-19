@@ -1,5 +1,5 @@
 module Michelson = Tezos_utils.Michelson
-open Stage_common
+open Ligo_prim
 open Simple_utils.Display
 
 type scoping_error = [

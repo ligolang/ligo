@@ -1,7 +1,7 @@
 module Pair = Simple_utils.Pair
 module Var  = Simple_utils.Var
 open Ast_imperative
-open Stage_common
+open Ligo_prim
 
 type 'a folder = 'a -> expression -> 'a
 let rec fold_expression : 'a folder -> 'a -> expression -> 'a = fun f init e ->

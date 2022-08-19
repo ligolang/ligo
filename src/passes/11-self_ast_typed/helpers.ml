@@ -1,5 +1,5 @@
 open Errors
-open Stage_common
+open Ligo_prim
 open Ast_typed
 open Simple_utils.Trace
 open Ast_typed.Helpers

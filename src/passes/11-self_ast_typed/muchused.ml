@@ -1,9 +1,9 @@
-open Stage_common
+open Ligo_prim
 open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
-module V = Stage_common.ValueVar
+module V = Ligo_prim.ValueVar
 module M = Simple_utils.Map.Make(V)
 
 type muchuse = int M.t * V.t list

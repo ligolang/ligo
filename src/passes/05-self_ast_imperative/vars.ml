@@ -2,7 +2,7 @@ open Helpers
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 let get_of m l =
   List.filter_map ~f:(fun v ->

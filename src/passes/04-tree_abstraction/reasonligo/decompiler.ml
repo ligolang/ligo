@@ -10,7 +10,7 @@ module Utils    = Simple_utils.Utils
 module Wrap     = Lexing_shared.Wrap
 
 open Simple_utils.Function
-open Stage_common
+open Ligo_prim
 
 (* Utils *)
 let wrap = Region.wrap_ghost

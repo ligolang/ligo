@@ -3,7 +3,7 @@ module Trace = Simple_utils.Trace
 open Ast_imperative
 open Errors
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 let predefined_data_constructor = ["Some" ; "None" ; "Unit"]
 

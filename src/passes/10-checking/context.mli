@@ -1,5 +1,5 @@
 (* This file represente the context which give the association of values to types *)
-open Stage_common
+open Ligo_prim
 open Ast_typed
 
 module Typing : sig

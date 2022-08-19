@@ -40,7 +40,7 @@ let fold_map_expression = Ast_typed.Helpers.fold_map_expression
 let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 
-open Stage_common
+open Ligo_prim
 open Ast_typed
 
 module SimplMap = Simple_utils.Map.Make(ValueVar)
@@ -54,7 +54,7 @@ let is_generated_partial_match : expression -> bool =
     (* This is bad, we probably need some constant for "internally generated failwith" ? *)
     | E_application {lamb= { expression_content = E_variable v ; _ } ; args = e } when String.equal "failwith" (Format.asprintf "%a" ValueVar.pp v)-> (
       match get_a_string e with
-      | Some fw -> String.equal fw (Ligo_string.extract Stage_common.Backends.fw_partial_match)
+      | Some fw -> String.equal fw (Ligo_string.extract Backend.Michelson.fw_partial_match)
       | None -> false
     )
     | _ -> false

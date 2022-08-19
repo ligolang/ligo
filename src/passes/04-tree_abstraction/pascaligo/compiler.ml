@@ -10,7 +10,7 @@ module AST = Ast_imperative
 module Attr = Lexing_shared.Attr
 module Location = Simple_utils.Location
 
-open Stage_common
+open Ligo_prim
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl

@@ -19,7 +19,7 @@ let destruct_for_alls (t : type_expression) =
   in destruct_for_alls [] t
 
 module Free_type_variables = struct
-  open Stage_common
+  open Ligo_prim
 
   module VarSet = Caml.Set.Make(TypeVar)
 

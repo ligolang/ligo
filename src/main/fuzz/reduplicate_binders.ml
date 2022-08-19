@@ -9,7 +9,7 @@
 
 *)
 
-open Stage_common
+open Ligo_prim
 open Ast_aggregated
 
 let rec reduplicate ~raise : expression -> expression =

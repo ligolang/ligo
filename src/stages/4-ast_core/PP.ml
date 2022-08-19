@@ -3,7 +3,7 @@ module Int64 = Caml.Int64
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Stage_common
+open Ligo_prim
 
 type 'a pretty_printer = Format.formatter -> 'a -> unit
 
@@ -37,7 +37,7 @@ let rec type_expression ppf (te : type_expression) : unit =
   if Option.is_some (Combinators.get_t_option te) then option ppf te
   else
     fprintf ppf "%a" type_content te.type_content
-and bool ppf = fprintf ppf "%a" TypeVar.pp Stage_common.Literal_types.v_bool
+and bool ppf = fprintf ppf "%a" TypeVar.pp Ligo_prim.Literal_types.v_bool
 and option ppf (te : type_expression) =
   let t = Combinators.get_t_option te in
     (match t with

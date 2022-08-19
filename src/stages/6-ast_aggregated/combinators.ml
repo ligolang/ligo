@@ -30,11 +30,11 @@ type type_content = [%import: Types.type_content]
       default_get = `Option ;
     } ]
 
-open Stage_common
+open Ligo_prim
 open Literal_types
 
 let t_constant ?loc injection parameters : type_expression =
-  t_constant ?loc {language=Stage_common.Backends.michelson; injection  ; parameters} ()
+  t_constant ?loc {language=Backend.Michelson.name; injection  ; parameters} ()
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc () : type_expression = t_constant ?loc _type_ []
@@ -89,7 +89,7 @@ let t_option ?loc typ : type_expression =
   ]
 
 (* types specific to LIGO test framework*)
-let t_michelson_code ?loc () : type_expression = t_constant ?loc Stage_common.Literal_types.Michelson_program []
+let t_michelson_code ?loc () : type_expression = t_constant ?loc Ligo_prim.Literal_types.Michelson_program []
 let t_test_exec_error ?loc () : type_expression = t_sum_ez ?loc
   [ ("Rejected", t_pair (t_michelson_code ()) (t_address ())) ; ("Other" , t_unit ())]
 let t_test_exec_result ?loc () : type_expression = t_sum_ez ?loc
@@ -122,27 +122,27 @@ let get_t_option (t:type_expression) : type_expression option =
     | _ -> None)
   | _ -> None
 
-let get_param_inj (t:type_expression) : (string * Stage_common.Literal_types.t * type_expression list) option =
+let get_param_inj (t:type_expression) : (string * Ligo_prim.Literal_types.t * type_expression list) option =
   match t.type_content with
   | T_constant {language;injection;parameters} -> Some (language,injection,parameters)
   | _ -> None
 
-let get_t_inj (t:type_expression) (v:Stage_common.Literal_types.t) : (type_expression list) option =
+let get_t_inj (t:type_expression) (v:Ligo_prim.Literal_types.t) : (type_expression list) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters} when Stage_common.Literal_types.equal injection v -> Some parameters
+  | T_constant {language=_;injection; parameters} when Ligo_prim.Literal_types.equal injection v -> Some parameters
   | _ -> None
 
-let get_t_base_inj (t:type_expression) (v:Stage_common.Literal_types.t) : unit option =
+let get_t_base_inj (t:type_expression) (v:Ligo_prim.Literal_types.t) : unit option =
   match get_t_inj t v with
   | Some [] -> Some ()
   | _ -> None
 
-let get_t_unary_inj (t:type_expression) (v:Stage_common.Literal_types.t) : type_expression option =
+let get_t_unary_inj (t:type_expression) (v:Ligo_prim.Literal_types.t) : type_expression option =
   match get_t_inj t v with
   | Some [a] -> Some a
   | _ -> None
 
-let get_t_binary_inj (t:type_expression) (v:Stage_common.Literal_types.t) : (type_expression * type_expression) option =
+let get_t_binary_inj (t:type_expression) (v:Ligo_prim.Literal_types.t) : (type_expression * type_expression) option =
   match get_t_inj t v with
   | Some [a;b] -> Some (a,b)
   | _ -> None
@@ -179,17 +179,17 @@ let get_t_pair (t:type_expression) : (type_expression * type_expression) option 
 
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Literal_types.equal injection Stage_common.Literal_types.Map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Map -> Some (k,v)
   | _ -> None
 
 let get_t_typed_address (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Literal_types.equal injection Stage_common.Literal_types.Typed_address -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Typed_address -> Some (k,v)
   | _ -> None
 
 let get_t_big_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_constant {language=_;injection; parameters = [k;v]} when Stage_common.Literal_types.equal injection Stage_common.Literal_types.Big_map -> Some (k,v)
+  | T_constant {language=_;injection; parameters = [k;v]} when Ligo_prim.Literal_types.equal injection Ligo_prim.Literal_types.Big_map -> Some (k,v)
   | _ -> None
 
 let get_t__type__exn t = match get_t__type_ t with
@@ -197,7 +197,7 @@ let get_t__type__exn t = match get_t__type_ t with
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 [@@map (_type_, ("list", "set", "map", "typed_address", "big_map", "gen"))]
 
-let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Literal_types.Contract with
+let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Ligo_prim.Literal_types.Contract with
   | Some _ -> Some ()
   | _ -> None
 
@@ -216,7 +216,7 @@ let is_t_bool t =
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
-  | Some t' -> get_t_base_inj t' Stage_common.Literal_types.Operation
+  | Some t' -> get_t_base_inj t' Ligo_prim.Literal_types.Operation
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t

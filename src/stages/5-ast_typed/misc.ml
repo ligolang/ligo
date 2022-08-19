@@ -3,7 +3,7 @@ module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Simple_utils
 open Types
-open Stage_common
+open Ligo_prim
 
 (* TODO: does that need to be cleaned-up ? *)
 module Free_variables = struct

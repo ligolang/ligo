@@ -2,7 +2,7 @@
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Stage_common
+open Ligo_prim
 
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->

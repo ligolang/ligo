@@ -2,7 +2,7 @@ module Snippet  = Simple_utils.Snippet
 module Location = Simple_utils.Location
 module PP       = Ast_typed.PP
 open Simple_utils.Display
-open Stage_common
+open Ligo_prim
 
 let stage = "self_ast_typed"
 

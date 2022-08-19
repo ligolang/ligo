@@ -5,13 +5,13 @@ val type_expression_eq : ( type_expression * type_expression ) -> bool
 
 
 module Free_variables : sig
-  type bindings = Stage_common.ValueVar.t list
+  type bindings = Ligo_prim.ValueVar.t list
 
-  val lambda : bindings -> (expr,type_expression) Stage_common.Lambda.t -> bindings
+  val lambda : bindings -> (expr,type_expression) Ligo_prim.Lambda.t -> bindings
 
 end
 
-val get_entry : program -> Stage_common.ValueVar.t -> expression option
+val get_entry : program -> Ligo_prim.ValueVar.t -> expression option
 
 
 val assert_eq : 'a -> 'a -> unit option

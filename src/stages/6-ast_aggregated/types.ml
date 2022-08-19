@@ -1,6 +1,6 @@
 [@@@warning "-30"]
 
-open Stage_common
+open Ligo_prim
 module Location = Simple_utils.Location
 
 
@@ -15,7 +15,7 @@ type type_content =
 
 and type_injection = {
   language : string ;
-  injection : Stage_common.Literal_types.t ;
+  injection : Ligo_prim.Literal_types.t ;
   parameters : ty_expr list ;
 }
 

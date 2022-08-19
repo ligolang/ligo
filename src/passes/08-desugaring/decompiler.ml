@@ -3,7 +3,7 @@ module O = Ast_core
 
 module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
-open Stage_common
+open Ligo_prim
 
 let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden } ->
   let aux : string list -> (unit -> string option) -> I.Attr.value = fun acc is_fun ->

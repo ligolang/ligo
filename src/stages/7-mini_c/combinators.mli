@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 module Expression : sig
   type t' = expression_content

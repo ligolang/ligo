@@ -1,5 +1,5 @@
 include Fuzz_shared.Monad
-open Stage_common
+open Ligo_prim
 open Ast_imperative
 
 module Fold_helpers(M : Monad) = struct

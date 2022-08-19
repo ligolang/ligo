@@ -1,5 +1,5 @@
 module AST = Ast_aggregated
-open Stage_common
+open Ligo_prim
 
 type 'err ty_exp_mapper = AST.type_expression -> unit
 
@@ -10,7 +10,7 @@ let rows : ('a -> unit) -> AST.rows -> unit = fun g {fields; _} ->
   ()
 
 let rec traverse_type_expression : 'err ty_exp_mapper -> AST.type_expression -> unit  = fun f te ->
-  let open Stage_common in
+  let open Ligo_prim in
   let self = traverse_type_expression f in
   let () = f te in
   match te.type_content with

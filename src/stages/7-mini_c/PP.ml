@@ -1,6 +1,6 @@
 [@@@coverage exclude_file]
 open Simple_utils.PP_helpers
-open Stage_common
+open Ligo_prim
 open Types
 open Format
 

@@ -1,6 +1,6 @@
 open Main_errors
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 module Location = Simple_utils.Location
 
 type form =

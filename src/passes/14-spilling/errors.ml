@@ -3,7 +3,7 @@ module Tree     = Simple_utils.Tree
 module Snippet  = Simple_utils.Snippet
 module Location = Simple_utils.Location
 open Simple_utils.Display
-open Stage_common
+open Ligo_prim
 
 type spilling_error = [
   | `Spilling_corner_case of string * string

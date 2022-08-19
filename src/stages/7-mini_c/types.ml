@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 module Location = Simple_utils.Location
 
 type 'a annotated = string option * 'a

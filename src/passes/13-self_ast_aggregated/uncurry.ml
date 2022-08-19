@@ -1,5 +1,5 @@
 let map_expression = Helpers.map_expression
-open Stage_common
+open Ligo_prim
 open Ast_aggregated
 
 (* Utilities *)

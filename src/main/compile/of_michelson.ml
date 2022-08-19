@@ -2,7 +2,7 @@ open Main_errors
 open Tezos_utils
 open Proto_alpha_utils
 open Trace
-open Stage_common
+open Ligo_prim
 
 let check_view_restrictions ~raise : Stacking.compiled_expression list -> unit = fun views_mich ->
   (* From Tezos changelog on views:

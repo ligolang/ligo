@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 module Free_variables = struct
 

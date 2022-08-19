@@ -1,5 +1,5 @@
 open Ast_aggregated
-open Stage_common.Constant
+open Ligo_prim.Constant
 
 let expression : expression -> expression = fun expr ->
   match expr.expression_content with

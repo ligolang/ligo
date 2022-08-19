@@ -4,8 +4,8 @@ module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
 open Simple_utils.Trace
-module VMap = Simple_utils.Map.Make(Stage_common.ValueVar)
-open Stage_common
+module VMap = Simple_utils.Map.Make(Ligo_prim.ValueVar)
+open Ligo_prim
 
 let rec add_to_end (expression: O.expression) to_add =
   match expression.expression_content with

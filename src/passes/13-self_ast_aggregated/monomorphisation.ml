@@ -1,6 +1,6 @@
 module PP_helpers = Simple_utils.PP_helpers
 module AST = Ast_aggregated
-open Stage_common
+open Ligo_prim
 
 let fold_map_expression = Helpers.fold_map_expression
 

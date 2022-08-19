@@ -2,7 +2,7 @@ open Helpers
 open Errors
 open Ast_imperative
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 let is_const = fun x -> match x with
                       | Binder.{ const_or_var = Some `Const } -> true

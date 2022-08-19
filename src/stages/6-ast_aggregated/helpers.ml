@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 let kv_list_of_t_sum ?(layout = Layout.L_tree) (m: row_element Record.t) =
   let lst = Record.LMap.to_kv_list m in
@@ -132,7 +132,7 @@ let assert_same_size = fun a b -> if (List.length a = List.length b) then Some (
 let rec assert_type_expression_eq ?(unforged_tickets=false)(a, b: (type_expression * type_expression)) : unit option =
   let open Simple_utils.Option in
   match (a.type_content, b.type_content) with
-  | T_constant {language=_;injection=Stage_common.Literal_types.Ticket ;parameters=[_ty]} , _human_t | _human_t , T_constant {language=_;injection=Stage_common.Literal_types.Ticket;parameters=[_ty]} -> (
+  | T_constant {language=_;injection=Ligo_prim.Literal_types.Ticket ;parameters=[_ty]} , _human_t | _human_t , T_constant {language=_;injection=Ligo_prim.Literal_types.Ticket;parameters=[_ty]} -> (
     if unforged_tickets then
       Some ()
     else

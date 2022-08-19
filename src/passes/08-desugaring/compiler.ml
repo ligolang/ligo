@@ -5,7 +5,7 @@ module Location = Simple_utils.Location
 module Var      = Simple_utils.Var
 module Pair     = Simple_utils.Pair
 
-open Stage_common
+open Ligo_prim
 
 let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
 

@@ -4,7 +4,7 @@ module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 module Raw_options = Compiler_options.Raw_options
-open Stage_common
+open Ligo_prim
 
 let test (raw_options : Raw_options.t) source_file display_format () =
     format_result ~display_format (Ligo_interpreter.Formatter.tests_format) @@

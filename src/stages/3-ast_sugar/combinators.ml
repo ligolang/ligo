@@ -2,10 +2,10 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Simple_utils.Map.String
-open Stage_common.Literal_types
-module Label = Stage_common.Label
-module Record = Stage_common.Record
-module Rows = Stage_common.Rows
+open Ligo_prim.Literal_types
+module Label = Ligo_prim.Label
+module Record = Ligo_prim.Record
+module Rows = Ligo_prim.Rows
 module LMap = Record.LMap
 
 (* Helpers for accessing and constructing elements are derived using

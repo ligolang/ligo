@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_imperative
 open Errors
 open Simple_utils.Trace

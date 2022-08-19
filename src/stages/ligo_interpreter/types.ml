@@ -1,5 +1,5 @@
 include Ast_aggregated.Types
-open Stage_common
+open Ligo_prim
 
 module Tezos_protocol = Tezos_protocol_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma

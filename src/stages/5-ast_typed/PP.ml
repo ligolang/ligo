@@ -7,7 +7,7 @@ module Int64       = Caml.Int64
 open Types
 open Format
 open Simple_utils.PP_helpers
-open Stage_common
+open Ligo_prim
 
 let lmap_sep value sep ppf m =
   let lst = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) m in

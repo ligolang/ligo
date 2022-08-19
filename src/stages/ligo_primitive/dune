@@ -1,6 +1,6 @@
 (library
- (name stage_common)
- (public_name ligo.stage_common)
+ (name ligo_prim)
+ (public_name ligo.ligo_primitive)
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils zarith hex tezos-utils tezos-hacl)

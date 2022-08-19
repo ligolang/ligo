@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Mini_c
 
 let rec uncurry_lambda (depth : int) (expr : expression) : ValueVar.t list * expression =

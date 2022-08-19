@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Simple_utils
 open Trace
 open Helpers

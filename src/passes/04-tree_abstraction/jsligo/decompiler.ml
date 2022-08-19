@@ -13,7 +13,7 @@ module Utils      = Simple_utils.Utils
 module Token = CST.Token
 
 open Simple_utils.Function
-open Stage_common
+open Ligo_prim
 
 (* Utils *)
 

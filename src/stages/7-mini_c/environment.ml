@@ -15,7 +15,7 @@ open Types
  * end *)
 
 module Environment (* : ENVIRONMENT *) = struct
-  open Stage_common
+  open Ligo_prim
   module List = Simple_utils.List
   type element = environment_element
   type t = environment

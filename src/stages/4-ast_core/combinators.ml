@@ -27,8 +27,8 @@ type type_content = [%import: Types.type_content]
       default_get = `Option ;
     } ]
 
-open Stage_common
-open Stage_common.Literal_types
+open Ligo_prim
+open Ligo_prim.Literal_types
 let t_constant ?loc ?sugar type_operator arguments : type_expression =
   make_t ?loc ?sugar (T_app {type_operator=TypeVar.of_input_var (Literal_types.to_string type_operator);arguments})
 let t_abstraction ?loc ?sugar ty_binder kind type_ =

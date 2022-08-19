@@ -1,5 +1,5 @@
 module Definitions = struct
-  open Stage_common
+  open Ligo_prim
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
   module Def_map = Simple_utils.Map.Make( struct type t = string let compare = String.compare end)
@@ -115,5 +115,5 @@ let add_scope (range,env) (scopes:scopes) =
   if replaced then scopes
   else { range ; env } :: scopes
 
-module Bindings_map = Simple_utils.Map.Make (Stage_common.ValueVar)
+module Bindings_map = Simple_utils.Map.Make (Ligo_prim.ValueVar)
 type bindings_map = Ast_typed.type_expression Bindings_map.t

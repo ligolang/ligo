@@ -1,5 +1,5 @@
 open Helpers_ast_imperative
-open Stage_common.Constant
+open Ligo_prim.Constant
 open Ast_imperative
 include Fuzz_shared.Monad
 
@@ -42,7 +42,7 @@ let transform_string =
 module Mutator (M : Monad) = struct
   open Monad_context(M)
   open Fold_helpers(M)
-  open Stage_common.Literal_value
+  open Ligo_prim.Literal_value
 
   let mutate_literal = function
     | Literal_int z ->

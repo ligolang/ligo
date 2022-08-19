@@ -6,7 +6,7 @@ let get_program = get_program "./contracts/multisig-v2.ligo"
 let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/multisig-v2.ligo" ()
 
-open Stage_common
+open Ligo_prim
 open Ast_imperative
 
 let empty_op_list =

@@ -4,7 +4,7 @@ open Tezos_micheline.Micheline
 module Compiler = Ligo_coq_ocaml.Compiler
 module Datatypes = Ligo_coq_ocaml.Datatypes
 
-open Stage_common
+open Ligo_prim
 
 type meta = Mini_c.meta
 let null = Mini_c.dummy_meta

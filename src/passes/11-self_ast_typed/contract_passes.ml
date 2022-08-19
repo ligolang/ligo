@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_typed.Types
 open Simple_utils.Trace
 module Ligo_string = Simple_utils.Ligo_string

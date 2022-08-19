@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_imperative
 
 let is_layout attr = String.chop_prefix ~prefix:"layout:" attr

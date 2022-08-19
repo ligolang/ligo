@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_typed
 open Literal_types
 module Protocols = Protocols
@@ -8,7 +8,7 @@ module Protocols = Protocols
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t = module_
 let pp ppf m = PP.module_ ppf @@ m
-let add_module : ?public:unit -> ?hidden:unit -> Stage_common.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
+let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
   let module_ = Location.wrap @@ Declaration.M_struct module_ in
   let new_d = Location.wrap @@ Declaration.Declaration_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
   let new_decl = Decl new_d in

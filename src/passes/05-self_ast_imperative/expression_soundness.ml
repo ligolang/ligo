@@ -3,7 +3,7 @@ module Trace = Simple_utils.Trace
 open Ast_imperative
 open Errors
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 let check_linearity_record_fields ~raise : expression -> unit = fun exp ->
   match exp.expression_content with

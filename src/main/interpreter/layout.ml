@@ -2,7 +2,7 @@ module AST = Ast_aggregated
 module Append_tree = Simple_utils.Tree.Append
 open Simple_utils.Trace
 open Ligo_interpreter.Types
-open Stage_common
+open Ligo_prim
 
 let extract_record ~raise ~(layout:Layout.t) (v : value) (lst : (Label.t * AST.type_expression) list) : _ list =
   match layout with

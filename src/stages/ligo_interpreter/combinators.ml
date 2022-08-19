@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 let v_pair : value * value -> value =
   fun (a, b) -> V_Record (Record.of_list [(Label.of_int 0, a) ; (Label.of_int 1, b)])

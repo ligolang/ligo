@@ -5,7 +5,7 @@ open Simple_utils.Trace
 open Errors
 open Ast_typed
 open H
-open Stage_common
+open Ligo_prim
 
 (*
   Each constant has its own type.

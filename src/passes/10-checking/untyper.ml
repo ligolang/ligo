@@ -2,7 +2,7 @@ module Ligo_string = Simple_utils.Ligo_string
 module Location    = Simple_utils.Location
 module I = Ast_core
 module O = Ast_typed
-open Stage_common
+open Ligo_prim
 
 let untype_value_attr : O.Attr.value -> I.Attr.value =
   fun {inline;no_mutation;view;public;hidden} -> {inline;no_mutation;view;public;hidden}

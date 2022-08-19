@@ -102,7 +102,7 @@ expression and place it at the end of the chain.
 
 module I = Ast_typed
 module O = Ast_aggregated
-open Stage_common
+open Ligo_prim
 
 module PathVar (M: Map.OrderedType) = struct
   type t = (ModuleVar.t list * M.t) [@deriving compare]

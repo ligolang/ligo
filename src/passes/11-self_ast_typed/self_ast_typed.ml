@@ -1,6 +1,6 @@
 module Errors = Errors
 module Helpers = Helpers
-open Stage_common
+open Ligo_prim
 
 let all_program_passes ~raise ~warn_unused_rec = [
   Unused.unused_map_program ~raise;

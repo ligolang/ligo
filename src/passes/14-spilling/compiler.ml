@@ -3,7 +3,7 @@
    For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
 module Layout_t = Layout
-open Stage_common
+open Ligo_prim
 module Layout = Layout_t
 open Simple_utils.Trace
 module Pair = Simple_utils.Pair
@@ -31,7 +31,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   | T_variable (name) -> raise.error @@ no_type_variable @@ name
   | t when (AST.compare_type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
-    let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
+    let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Backend.Michelson.name in
     match injection , parameters with
     | (Unit,            []) -> return (T_base TB_unit)
     | (Michelson_program,[]) -> return (T_base TB_unit) (* hit when testing framwork need to compile 'failwith "x" : michelson_program' *)
@@ -523,7 +523,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         compile_record_matching ~raise expr' return self record
   )
   | E_raw_code { language; code} ->
-    let backend = Stage_common.Backends.michelson in
+    let backend = Backend.Michelson.name in
     let () =
       Assert.assert_true ~raise
         (corner_case ~loc:__LOC__ "Language insert - backend mismatch only provide code insertion in the language you are compiling to")

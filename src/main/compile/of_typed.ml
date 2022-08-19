@@ -1,5 +1,5 @@
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 open Ast_typed
 open Aggregation
 open Main_errors

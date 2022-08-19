@@ -2,7 +2,7 @@ module Snippet  = Simple_utils.Snippet
 module Location = Simple_utils.Location
 module Var      = Simple_utils.Var
 open Simple_utils.Display
-open Stage_common
+open Ligo_prim
 
 let stage = "typer"
 

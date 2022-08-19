@@ -3,7 +3,7 @@ open Simple_utils
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 
-open Stage_common
+open Ligo_prim
 module AST = Ast_aggregated
 
 include AST.Types
@@ -47,7 +47,7 @@ let monad_option error = fun v ->
 
 let wrap_compare_result comp cmpres loc calltrace =
   let open Monad in
-  let open Stage_common.Constant in
+  let open Ligo_prim.Constant in
   match comp with
   | C_EQ -> return (cmpres = 0)
   | C_NEQ -> return (cmpres <> 0)
@@ -128,7 +128,7 @@ let compare_constants c o1 o2 loc calltrace =
 let rec apply_comparison :
     Location.t ->
     calltrace ->
-    Stage_common.Constant.constant' ->
+    Ligo_prim.Constant.constant' ->
     value list ->
     value Monad.t =
   fun loc calltrace c operands ->
@@ -938,7 +938,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
   )
 
 (*interpreter*)
-and eval_literal : Stage_common.Literal_value.t -> value Monad.t = function
+and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
   | Literal_unit           -> Monad.return @@ V_Ct (C_unit)
   | Literal_int i          -> Monad.return @@ V_Ct (C_int i)
   | Literal_nat n          -> Monad.return @@ V_Ct (C_nat n)
@@ -1162,7 +1162,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     | E_raw_code {language ; code} -> (
       let open AST in
       match code.expression_content with
-      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
+      | E_literal (Literal_string x) when String.equal language Backend.Michelson.name && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
         let ast_ty = get_type code in
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in

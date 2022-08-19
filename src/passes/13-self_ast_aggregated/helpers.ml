@@ -1,5 +1,5 @@
 open Ast_aggregated
-open Stage_common
+open Ligo_prim
 
 type ('a ,'err) folder = 'a -> expression -> 'a
 let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> 'a = fun f init e ->

@@ -11,7 +11,7 @@ module List     = Simple_utils.List
 module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 
-open Stage_common
+open Ligo_prim
 
 (* Utils *)
 

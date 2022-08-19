@@ -31,13 +31,13 @@ type type_content = [%import: Types.type_content]
       default_get = `Option ;
     } ]
 
-open Stage_common
+open Ligo_prim
 open Literal_types
 
 let make_t_orig_var ?(loc = Location.generated) type_content core orig_var = {type_content; location=loc; type_meta = core ; orig_var}
 
 let t_constant ?loc ?core injection parameters : type_expression =
-  make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = injection ; parameters}) core
+  make_t ?loc (T_constant {language=Backend.Michelson.name; injection = injection ; parameters}) core
 
 (* TODO?: X_name here should be replaced by X_injection *)
 let t__type_ ?loc ?core () : type_expression = t_constant ?loc ?core _type_ []

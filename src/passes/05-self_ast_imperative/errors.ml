@@ -2,7 +2,7 @@ module Snippet = Simple_utils.Snippet
 module PP_helpers = Simple_utils.PP_helpers
 open Simple_utils.Display
 open Ast_imperative
-open Stage_common
+open Ligo_prim
 
 let stage = "self_ast_imperative"
 

@@ -1,7 +1,7 @@
 module Var = Simple_utils.Var
 open Simple_utils.Trace
 open Test_helpers
-open Stage_common
+open Ligo_prim
 open Ast_imperative
 open Main_errors
 

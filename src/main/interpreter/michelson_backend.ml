@@ -6,7 +6,7 @@ open Simple_utils.Option
 module Tezos_protocol = Tezos_protocol_014_PtKathma
 module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
-open Stage_common
+open Ligo_prim
 
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
@@ -310,7 +310,7 @@ let rec val_to_ast ~raise ~loc : Ligo_interpreter.Types.value ->
   | V_Michelson (Ty_code { code ; code_ty = _ ; ast_ty }) ->
      let s = Format.asprintf "%a" Tezos_utils.Michelson.pp code in
      let s = Ligo_string.verbatim s in
-     e_a_raw_code Stage_common.Backends.michelson (make_e (e_string s) ast_ty) ast_ty
+     e_a_raw_code Backend.Michelson.name (make_e (e_string s) ast_ty) ast_ty
   | V_Record map when is_t_record ty ->
      let map_ty = trace_option ~raise (Errors.generic_error loc (Format.asprintf "Expected record type but got %a" Ast_aggregated.PP.type_expression ty)) @@  get_t_record_opt ty in
      make_ast_record ~raise ~loc map_ty map

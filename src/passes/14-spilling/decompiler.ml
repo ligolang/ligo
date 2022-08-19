@@ -4,7 +4,7 @@ module Errors = Errors
 open Errors
 open Mini_c
 open Simple_utils.Trace
-open Stage_common.Literal_types
+open Ligo_prim.Literal_types
 
 let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression =
   let open! AST in
@@ -20,7 +20,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
   | T_constant { language; injection; parameters } -> (
     let () = Assert.assert_true ~raise
       (corner_case ~loc:__LOC__ ("unsupported language "^language))
-      (String.equal language Stage_common.Backends.michelson)
+      (String.equal language Backend.Michelson.name)
     in
     match injection,parameters with
     | (Unit, []) -> (
@@ -215,7 +215,7 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
       let lst = List.map ~f:(fun (k,({associated_type;_} : row_element)) -> (k,associated_type)) @@ AST.Helpers.kv_list_of_t_record_or_tuple ~layout fields in
       let lst = Layout.extract_record ~raise ~layout v lst in
       let lst = List.Assoc.map ~f:(fun (y, z) -> self y z) lst in
-      let m' = Stage_common.Record.of_list lst in
+      let m' = Ligo_prim.Record.of_list lst in
       return (E_record m')
   | T_arrow _ ->
       let n =

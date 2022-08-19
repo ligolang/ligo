@@ -7,7 +7,7 @@ module CST = Cst.Jsligo
 module AST = Ast_imperative
 module Token = Lexing_jsligo.Token
 
-open Stage_common
+open Ligo_prim
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl

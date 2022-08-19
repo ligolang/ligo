@@ -3,7 +3,7 @@
 module CST = Cst.Reasonligo
 module AST = Ast_imperative
 module Errors = Errors
-open Stage_common
+open Ligo_prim
 
 
 val compile_expression : raise:(Errors.abs_error,Main_warnings.all) Simple_utils.Trace.raise -> ?fun_rec:ValueVar.t -> CST.expr -> AST.expr

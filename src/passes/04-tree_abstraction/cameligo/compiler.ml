@@ -6,7 +6,7 @@ module CST = Cst.Cameligo
 module AST = Ast_imperative
 module Utils = Simple_utils.Utils
 
-open Stage_common
+open Ligo_prim
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl

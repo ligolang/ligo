@@ -3,7 +3,7 @@ module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 
 open Types
-open Stage_common
+open Ligo_prim
 
 
 let get_pair m =
@@ -203,7 +203,7 @@ let rec psubst_type t (u : type_expression) =
      { u with type_content = T_record {fields; layout} }
   | _ -> u
 
-open Stage_common
+open Ligo_prim
 module Pair = Simple_utils.Pair
 
 type 'a fold_mapper = 'a -> expression -> bool * 'a * expression

@@ -1,6 +1,6 @@
 open Ast_core
 open Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 include Ast_core.PP
 

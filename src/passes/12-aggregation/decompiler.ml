@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 
 let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
   fun exp ->

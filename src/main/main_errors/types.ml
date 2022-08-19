@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 module Location = Simple_utils.Location
 
 type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]

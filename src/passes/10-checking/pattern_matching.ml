@@ -17,7 +17,7 @@ module Ligo_string = Simple_utils.Ligo_string
 
 open Simple_utils.Trace
 open Errors
-open Stage_common
+open Ligo_prim
 
 type matchees = ValueVar.t list
 type pattern = O.type_expression option Pattern.t
@@ -400,7 +400,7 @@ and product_rule ~raise : err_loc:Location.t -> typed_pattern -> matchees -> equ
 let compile_matching ~raise ~err_loc matchee (eqs: (O.type_expression option Pattern.t * O.type_expression * O.expression) list) =
   let eqs = List.map ~f:(fun (pattern,pattern_ty,body) -> ( [(pattern,pattern_ty)] , body )) eqs in
   let missing_case_default =
-    let fs = O.make_e (O.E_literal (Literal_value.Literal_string Stage_common.Backends.fw_partial_match)) (O.t_string ()) in
+    let fs = O.make_e (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match)) (O.t_string ()) in
     let t_fail =
       let a = TypeVar.of_input_var "a" in
       let b = TypeVar.of_input_var "b" in

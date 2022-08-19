@@ -1,6 +1,6 @@
 module Trace    = Simple_utils.Trace
 module Ligo_string = Simple_utils.Ligo_string
-open Stage_common
+open Ligo_prim
 open Ast_aggregated
 include Fuzz_shared.Monad
 

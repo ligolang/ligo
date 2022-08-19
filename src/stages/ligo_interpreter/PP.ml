@@ -2,7 +2,7 @@ open Types
 module Snippet = Simple_utils.Snippet
 module PP_helpers = Simple_utils.PP_helpers
 open PP_helpers
-open Stage_common
+open Ligo_prim
 
 let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
   match c with

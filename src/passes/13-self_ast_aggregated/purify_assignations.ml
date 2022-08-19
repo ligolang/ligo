@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_aggregated
 
 (* Problem we are solving
@@ -375,7 +375,7 @@ let match_on_write_effect let_binder rhs let_result effects effect_type =
     }
 
 let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) : expression =
-  (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect; *)
+  (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Ligo_prim.PP.option_type_expression expression) returned_effect; *)
   let return_1 ?returned_effect e =
     match returned_effect with None -> e
     | Some (ret_eff) -> e_a_pair ret_eff e  in

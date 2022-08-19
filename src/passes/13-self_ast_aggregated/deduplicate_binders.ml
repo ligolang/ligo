@@ -1,7 +1,7 @@
 (*
  This algorithm remove duplicate variables name in the same scope to remove shadowing.
 *)
-open Stage_common
+open Ligo_prim
 open Ast_aggregated
 
 module Scope : sig

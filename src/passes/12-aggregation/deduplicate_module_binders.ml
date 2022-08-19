@@ -2,7 +2,7 @@
  This algorithm remove duplicate variables name in the same scope to remove shadowing.
  Break the export : do not use on libraries (preprocessor for ast_aggregated)
 *)
-open Stage_common
+open Ligo_prim
 module AST = Ast_typed
 
 module Scope : sig

@@ -1,5 +1,5 @@
 open Simple_utils.Display
-open Stage_common
+open Ligo_prim
 
 let stage = "self_mini_c"
 

@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Ast_typed
 
 type contract_pass_data = Contract_passes.contract_pass_data

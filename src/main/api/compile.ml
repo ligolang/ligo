@@ -4,7 +4,7 @@ open Simple_utils
 module Helpers   = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 
-open Stage_common
+open Ligo_prim
 
 module Raw_options = Compiler_options.Raw_options
 

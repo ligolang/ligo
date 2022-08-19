@@ -4,7 +4,7 @@ module Location = Simple_utils.Location
 module Errors = Errors
 module I = Ast_imperative
 module O = Ast_sugar
-open Stage_common
+open Ligo_prim
 
 let rec decompile_type_expression : O.type_expression -> I.type_expression =
   fun te ->

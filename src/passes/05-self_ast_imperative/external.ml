@@ -12,7 +12,7 @@ let replace : expression -> expression = fun e ->
       when String.equal language "external" -> (
       match destruct_args m with
       | Some (code, arguments) -> (
-         match Stage_common.Constant.read_constant' code with
+         match Ligo_prim.Constant.read_constant' code with
          | None -> failwith @@ "Constant cannot be externalized: " ^ code
          | Some cons ->
             let expression_content = E_constant { cons_name = Const cons;
@@ -24,7 +24,7 @@ let replace : expression -> expression = fun e ->
    | E_raw_code { language ; code = { expression_content = E_literal (Literal_string code) ; _ } }
       when String.equal language "external" -> (
       let code = (Simple_utils.Ligo_string.extract code) in
-      match Stage_common.Constant.read_constant' code with
+      match Ligo_prim.Constant.read_constant' code with
       | None -> failwith @@ "Constant cannot be externalized: " ^ code
       | Some cons ->
          let expression_content = E_constant { cons_name = Const cons;

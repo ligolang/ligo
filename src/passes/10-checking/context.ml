@@ -1,6 +1,6 @@
 (* This file represente the context which give the association of values to types *)
 module Location = Simple_utils.Location
-open Stage_common
+open Ligo_prim
 open Ast_typed
 
 module HMap = Simple_utils.Map.Make(struct type t = type_expression

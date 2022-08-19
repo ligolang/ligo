@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Simple_utils.Display
 module List = Simple_utils.List
 

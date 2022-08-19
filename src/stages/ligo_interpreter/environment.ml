@@ -1,5 +1,5 @@
 open Types
-open Stage_common
+open Ligo_prim
 
 let extend :
   env -> ValueVar.t -> ?inline:bool -> ?no_mutation:bool -> (Ast_aggregated.type_expression * value) -> env

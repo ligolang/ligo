@@ -1,4 +1,4 @@
-open Stage_common
+open Ligo_prim
 open Mini_c
 
 (* Reference implementation:

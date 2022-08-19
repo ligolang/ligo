@@ -1,5 +1,5 @@
 open Simple_utils
-open Stage_common
+open Ligo_prim
 open Display
 
 type all =

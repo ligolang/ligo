@@ -5,7 +5,7 @@ module AST = Ast_typed
 module C = AST.Combinators
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
-open Stage_common
+open Ligo_prim
 
 module LMap = Record.LMap
 module XList = Simple_utils.List

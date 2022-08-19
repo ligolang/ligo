@@ -3,7 +3,7 @@ module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Simple_utils
 open Types
-open Stage_common
+open Ligo_prim
 
 let assert_eq = fun a b -> if Caml.(=) a b then Some () else None
 let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None

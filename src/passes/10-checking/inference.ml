@@ -4,7 +4,7 @@ open Simple_utils.Trace
 module O = Ast_typed
 
 module TMap = O.Helpers.TMap
-open Stage_common
+open Ligo_prim
 
 let rec infer_type_application ~raise ~loc ?(default_error = fun loc t t' -> assert_equal loc t t') dom table (type_matched : O.type_expression) (type_ : O.type_expression) =
   let open O in

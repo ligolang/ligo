@@ -1,6 +1,6 @@
 module FV = Helpers.Free_variables
 
-open Stage_common
+open Ligo_prim
 open Ast_typed
 open Errors
 open Simple_utils.Trace
