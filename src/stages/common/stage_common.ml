@@ -48,6 +48,4 @@ module Declaration(Attr:Declaration.Attr) = Declaration.Make(Attr)
 module ModuleVar = Var.ModuleVar
 module Module_access = Module_access
 
-module PP = PP
-module Debug = Debug
 module Backends  = Backends
