@@ -33,7 +33,7 @@ let reset (reset, _ : reset * storage) : return =
 let vote (vote, store : vote * storage) : return =
   (* let now = Tezos.get_now () in
      let _ = assert (now >= store.start_time && store.finish_time > now) in *)
-  let addr = Tezos.get_sender () in
+  let addr = Tezos.sender in
   (* let _ = assert (not Set.mem addr store.voters) in *)
   let store =
     match vote with
