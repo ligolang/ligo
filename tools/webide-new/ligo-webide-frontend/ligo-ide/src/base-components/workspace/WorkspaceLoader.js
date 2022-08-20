@@ -13,7 +13,7 @@ import ProjectInvalid from "./components/ProjectInvalid";
 
 import actions from "./actions";
 
-export default class WorkspaceLoader extends PureComponent {
+export class WorkspaceLoader extends PureComponent {
   constructor(props) {
     super(props);
     this.workspace = React.createRef();
@@ -45,11 +45,11 @@ export default class WorkspaceLoader extends PureComponent {
     }
   }
 
-  async prepareProject({ ProjectManager, projectRoot, type }) {
+  async prepareProject({ ProjectManagerLocal, projectRoot, type }) {
     if (projectRoot) {
       this.setState({ loading: true, invalid: false, context: {} });
 
-      const projectManager = new ProjectManager[type](this, projectRoot);
+      const projectManager = new ProjectManagerLocal(this, projectRoot);
 
       const result = await projectManager.prepareProject();
       if (result.error) {

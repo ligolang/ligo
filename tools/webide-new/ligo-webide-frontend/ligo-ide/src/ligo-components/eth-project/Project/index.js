@@ -1,5 +1,5 @@
 import findIndex from "lodash/findIndex";
-import Workspace from "~/base-components/workspace";
+import { WorkspaceLoader } from "~/base-components/workspace";
 import fileOps from "~/base-components/file-ops";
 import {
   useBuiltinCustomTabs,
@@ -8,7 +8,7 @@ import {
 } from "~/base-components/code-editor";
 import compilerManager, { CompilerTerminal } from "~/ligo-components/eth-compiler";
 import platform from "~/base-components/platform";
-import ProjectManager from "../ProjectManager";
+import { ProjectManagerLocal } from "../ProjectManager";
 
 import ProjectToolbar from "./ProjectToolbar";
 import ProjectSettingsTab from "./ProjectSettingsTab";
@@ -92,8 +92,8 @@ const makeContextMenu = (contextMenu, projectManager) => (node) => {
   return contextMenu;
 };
 
-Workspace.defaultProps = {
-  ProjectManager,
+WorkspaceLoader.defaultProps = {
+  ProjectManagerLocal,
   compilerManager,
   ProjectToolbar,
   CompilerTerminal,
@@ -101,4 +101,4 @@ Workspace.defaultProps = {
   makeContextMenu,
 };
 
-export default Workspace;
+export { WorkspaceLoader };

@@ -2,7 +2,7 @@ import React from "react";
 
 import { DropdownToolbarButton } from "~/base-components/ui-components";
 
-import { BaseProjectManager } from "~/base-components/workspace";
+import { LocalProjectManager } from "~/base-components/workspace";
 
 export default function ScriptsButton({ projectManager }) {
   const [isNodeProject, setNodeProject] = React.useState(false);
@@ -10,7 +10,7 @@ export default function ScriptsButton({ projectManager }) {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(
-    BaseProjectManager.effect("settings:framework", (framework) => {
+    LocalProjectManager.effect("settings:framework", (framework) => {
       const isNodeProject = !framework.endsWith("-docker");
       setNodeProject(isNodeProject);
     }),

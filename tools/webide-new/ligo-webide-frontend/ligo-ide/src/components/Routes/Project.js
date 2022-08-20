@@ -1,6 +1,6 @@
 import React, { PureComponent } from "react";
 
-import Project from "~/ligo-components/eth-project";
+import { WorkspaceLoader } from "~/ligo-components/eth-project";
 import { connect } from "~/base-components/redux";
 
 class ProjectWithProps extends PureComponent {
@@ -29,14 +29,12 @@ class ProjectWithProps extends PureComponent {
     }
 
     return (
-      type === "Local" && ( // type === 'Local' && platform.isWeb ? null
-        <Project
-          theme="obsidians"
-          projectRoot={projectRoot}
-          type={type}
-          signer={uiState.get("signer")}
-        />
-      )
+      <WorkspaceLoader
+        theme="obsidians"
+        projectRoot={projectRoot}
+        type={type}
+        signer={uiState.get("signer")}
+      />
     );
   }
 }

@@ -9,7 +9,7 @@ import CodeEditorCollection from "~/base-components/code-editor";
 import FileTree from "~/base-components/filetree";
 
 import WorkspaceContext from "../WorkspaceContext";
-import BaseProjectManager from "../ProjectManager/BaseProjectManager";
+import LocalProjectManager from "../ProjectManager/LocalProjectManager";
 import actions from "../actions";
 
 import contextMenu, { registerHandlers } from "./contextMenu";
@@ -50,7 +50,7 @@ export default class Workspace extends Component {
       terminalSize: 160,
     };
 
-    const effect = BaseProjectManager.effect("settings:editor", (editorConfig) => {
+    const effect = LocalProjectManager.effect("settings:editor", (editorConfig) => {
       this.state.editorConfig = editorConfig;
     });
     this.disposable = effect();
@@ -101,7 +101,7 @@ export default class Workspace extends Component {
   }
 
   openFile = ({ path, remote, pathInProject, isLeaf }, setTreeActive) => {
-    isLeaf && this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject)); // it triggers onSelectTab function eventually
+    this.codeEditor.current.openTab(this.tabFromPath(path, remote, pathInProject)); // it triggers onSelectTab function eventually
     path.startsWith("custom:") && this.setFileTreeActive();
     setTreeActive && this.setFileTreeActive(path);
   };

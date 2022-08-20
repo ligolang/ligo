@@ -4,7 +4,7 @@ import * as monaco from "monaco-editor";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
 
-import { ProjectManager, BaseProjectManager } from "~/base-components/workspace";
+import { LocalProjectManager } from "~/base-components/workspace";
 import { modelSessionManager } from "~/base-components/code-editor";
 
 import { networkManager } from "~/ligo-components/eth-network";
@@ -13,7 +13,7 @@ import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "./ProjectSettings";
 
-BaseProjectManager.ProjectSettings = ProjectSettings;
+LocalProjectManager.ProjectSettings = ProjectSettings;
 
 function makeProjectManager(Base) {
   return class ExtendedProjectManager extends Base {
@@ -367,6 +367,4 @@ function makeProjectManager(Base) {
   };
 }
 
-export default {
-  Local: makeProjectManager(ProjectManager.Local),
-};
+export const ProjectManagerLocal = makeProjectManager(LocalProjectManager);

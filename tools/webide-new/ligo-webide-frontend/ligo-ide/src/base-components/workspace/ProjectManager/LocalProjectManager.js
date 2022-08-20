@@ -1,12 +1,72 @@
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 import { modelSessionManager } from "~/base-components/code-editor";
+import { IpcChannel } from "~/base-components/ipc";
 
-import BaseProjectManager from "./BaseProjectManager";
 import { sortFile } from "./helper";
 import { getExamples } from "./examples";
 
-export default class LocalProjectManager extends BaseProjectManager {
+export default class LocalProjectManager {
+  static ProjectSettings = null;
+
+  static channel = new IpcChannel("project");
+
+  static terminalButton = null;
+
+  static instance = null;
+
+  constructor(project, projectRoot) {
+    LocalProjectManager.instance = this;
+    this.project = project;
+    this.projectRoot = projectRoot;
+  }
+
+  dispose() {}
+
+  get settingsFilePath() {
+    throw new Error("ProjectManager.settingsFilePath is not implemented.");
+  }
+
+  onRefreshDirectory(callback) {
+    LocalProjectManager.channel.on("refresh-directory", callback);
+  }
+
+  offRefreshDirectory() {
+    LocalProjectManager.channel.off("refresh-directory");
+  }
+
+  async readDirectoryRecursively(folderPath, stopCriteria = (child) => child.type === "file") {
+    const children = await this._readDirectoryRecursively(folderPath, stopCriteria);
+    return children.map((child) => {
+      child.relative = this.path.relative(folderPath, child.path);
+      return child;
+    });
+  }
+
+  async _readDirectoryRecursively(folderPath, stopCriteria) {
+    const children = await this.readDirectory(folderPath);
+    const traversed = await Promise.all(
+      children.map(async (child) => {
+        if (stopCriteria(child)) {
+          return child;
+        }
+        if (child.type === "file") {
+          return;
+        }
+        return this._readDirectoryRecursively(child.path, stopCriteria);
+      })
+    );
+    return traversed.flat().filter(Boolean);
+  }
+
+  static effect(evt, callback) {
+    return () => {
+      const dispose = LocalProjectManager.channel.on(evt, callback);
+      LocalProjectManager.channel.trigger("current-value", evt);
+      return dispose;
+    };
+  }
+
   static async createProject(name, template) {
     return this.processProject(name, undefined, template);
   }
@@ -157,10 +217,10 @@ export default class LocalProjectManager extends BaseProjectManager {
   }
 
   async readProjectSettings() {
-    this.projectSettings = new BaseProjectManager.ProjectSettings(
+    this.projectSettings = new LocalProjectManager.ProjectSettings(
       this,
       this.settingsFilePath,
-      BaseProjectManager.channel
+      LocalProjectManager.channel
     );
     await this.projectSettings.readSettings();
     return this.projectSettings;
@@ -387,11 +447,11 @@ export default class LocalProjectManager extends BaseProjectManager {
   }
 
   async refreshDirectory(data) {
-    BaseProjectManager.channel.trigger("refresh-directory", data);
+    LocalProjectManager.channel.trigger("refresh-directory", data);
   }
 
   toggleTerminal(terminal) {
-    BaseProjectManager.terminalButton?.setState({ terminal });
+    LocalProjectManager.terminalButton?.setState({ terminal });
     this.project.toggleTerminal(terminal);
   }
 }

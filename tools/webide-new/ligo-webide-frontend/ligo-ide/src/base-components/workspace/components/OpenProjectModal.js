@@ -5,7 +5,7 @@ import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 
-import ProjectManager from "../ProjectManager";
+import { LocalProjectManager } from "../ProjectManager";
 import actions from "../actions";
 
 export default class OpenProjectModal extends PureComponent {
@@ -73,7 +73,7 @@ export default class OpenProjectModal extends PureComponent {
 
   async openProject(obj, name) {
     try {
-      const Manager = ProjectManager.Local;
+      const Manager = LocalProjectManager;
       const created = await Manager.openProject(obj, name);
       notification.success("Successful", `New project <b>${name}</b> is loaded.`);
       return created;

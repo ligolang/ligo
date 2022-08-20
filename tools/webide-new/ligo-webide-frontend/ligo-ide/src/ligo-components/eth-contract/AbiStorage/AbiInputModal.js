@@ -9,7 +9,7 @@ import {
   DropdownItem,
 } from "~/base-components/ui-components";
 
-import { BaseProjectManager } from "~/base-components/workspace";
+import { LocalProjectManager } from "~/base-components/workspace";
 import { utils } from "~/ligo-components/eth-sdk";
 
 export default class AbiInputModal extends PureComponent {
@@ -57,7 +57,7 @@ export default class AbiInputModal extends PureComponent {
   };
 
   loadProjectAbis = async () => {
-    const projectAbis = await BaseProjectManager.instance?.readProjectAbis();
+    const projectAbis = await LocalProjectManager.instance?.readProjectAbis();
     this.setState({
       projectAbis: projectAbis?.map((item) => ({
         ...item,
