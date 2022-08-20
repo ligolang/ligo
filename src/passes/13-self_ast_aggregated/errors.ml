@@ -7,10 +7,11 @@ type self_ast_aggregated_error = [
   | `Self_ast_aggregated_polymorphism_unresolved of Location.t
   | `Self_ast_aggregated_fvs_in_create_contract_lambda of Ast_aggregated.expression * Ast_aggregated.ValueVar.t
   | `Self_ast_aggregated_create_contract_lambda of Ast_aggregated.constant' * Ast_aggregated.expression
-  | `Self_ast_aggregated_bad_self_type of Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
   | `Self_ast_aggregated_bad_format_entrypoint_ann of string * Location.t
   | `Self_ast_aggregated_entrypoint_ann_not_literal of Location.t
+  | `Self_ast_aggregated_emit_tag_not_literal of Location.t
   | `Self_ast_aggregated_unmatched_entrypoint of Location.t
+  | `Self_ast_aggregated_corner_case of string
 ] [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
 let error_ppformat : display_format:string display_format ->
@@ -21,11 +22,11 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_ast_aggregated_expected_obj_ligo loc ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid call to Test primitive.@]"
+        "@[<hv>%a@.Invalid usage of a Test primitive or type in object ligo.@]"
         Snippet.pp loc
     | `Self_ast_aggregated_polymorphism_unresolved loc ->
       Format.fprintf f
-        "@[<hv>%a@.Polymorphism not resolved before recursion.@]"
+        "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
         Snippet.pp loc
     | `Self_ast_aggregated_fvs_in_create_contract_lambda (e,v) ->
       Format.fprintf f
@@ -36,12 +37,6 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
         Snippet.pp e.location
-    | `Self_ast_aggregated_bad_self_type (expected,got,loc) ->
-      Format.fprintf f
-        "@[<hv>%a@.Invalid type annotation.@.\"%a\" was given, but \"%a\" was expected.@.Note that \"Tezos.self\" refers to this contract, so the parameters should be the same. @]"
-        Snippet.pp loc
-        Ast_aggregated.PP.type_expression got
-        Ast_aggregated.PP.type_expression expected
     | `Self_ast_aggregated_bad_format_entrypoint_ann (ep,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no entrypoint is used."
@@ -51,10 +46,18 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value must be a string literal. @]"
         Snippet.pp loc
+    | `Self_ast_aggregated_emit_tag_not_literal loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid event tag.@.The tag must be a string literal. @]"
+        Snippet.pp loc
     | `Self_ast_aggregated_unmatched_entrypoint loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value does not match a constructor of the contract parameter. @]"
         Snippet.pp loc
+    | `Self_ast_aggregated_corner_case desc ->
+      Format.fprintf f
+        "@[<hv>Internal error: %s @]"
+        desc
   )
 
 let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
@@ -76,8 +79,8 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
     in
     json_error ~stage ~content
   | `Self_ast_aggregated_polymorphism_unresolved loc ->
-    let message = `String "unexpected polymorphism in recursion" in
-    let description = `String "polymorphism should be resolved before recursion" in
+    let message = `String "unexpected polymorphism" in
+    let description = `String "Can't infer the type of this value, please add a type annotation" in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);
@@ -106,18 +109,6 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
       ("expression", expression);
     ] in
     json_error ~stage ~content
-  | `Self_ast_aggregated_bad_self_type (expected,got,loc) ->
-    let message = `String "bad self type" in
-    let expected = `String (Format.asprintf "%a" Ast_aggregated.PP.type_expression expected) in
-    let actual = `String (Format.asprintf "%a" Ast_aggregated.PP.type_expression got) in
-    let content = `Assoc [
-       ("message", message);
-       ("location", Location.to_yojson loc);
-       ("expected", expected);
-       ("actual", actual);
-       ]
-    in
-    json_error ~stage ~content
   | `Self_ast_aggregated_bad_format_entrypoint_ann (ep,loc) ->
     let message = `String "bad entrypoint format" in
     let entrypoint = `String ep in
@@ -138,11 +129,28 @@ let error_jsonformat : self_ast_aggregated_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
+  | `Self_ast_aggregated_emit_tag_not_literal loc ->
+    let message = `String "The tag must be a string literal" in
+    let content = `Assoc [
+       ("message", message);
+       ("location", Location.to_yojson loc);
+       ]
+    in
+    json_error ~stage ~content
   | `Self_ast_aggregated_unmatched_entrypoint loc ->
     let message = `String "no constructor matches the entrypoint annotation" in
     let content = `Assoc [
        ("message", message);
        ("location", Location.to_yojson loc);
+       ]
+    in
+    json_error ~stage ~content
+  | `Self_ast_aggregated_corner_case desc ->
+    let message = `String "internal error" in
+    let description = `String desc in
+    let content = `Assoc [
+       ("message", message);
+       ("description", description);
        ]
     in
     json_error ~stage ~content

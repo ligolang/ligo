@@ -4,28 +4,35 @@ module Location = Simple_utils.Location
 
 type form =
   | Contract of Ast_typed.expression_variable
-  | View of Ast_typed.expression_variable list * Ast_typed.expression_variable
+  | View of {
+      command_line_views : string list option ;      (* views declared as command line arguments if any *)
+      contract_entry : Ast_typed.expression_variable (* contract main function name                     *)
+    }
   | Env
 
-let typecheck ~raise ~add_warning ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
-  let typed = trace ~raise checking_tracer @@ Checking.type_program ~add_warning ~options:options.middle_end ~env:options.middle_end.init_env m in
+let specific_passes ~raise cform prg =
+  match cform with
+  | Contract entrypoint -> Self_ast_typed.all_contract ~raise entrypoint prg
+  | View { command_line_views ; contract_entry } -> Self_ast_typed.all_view ~raise command_line_views contract_entry prg
+  | Env -> prg
+
+let typecheck ~raise ~(options: Compiler_options.t) (cform : form) (m : Ast_core.module_) : Ast_typed.program =
+  let typed = trace ~raise checking_tracer @@ Checking.type_program ~options:options.middle_end ~env:options.middle_end.init_env m in
   let applied = trace ~raise self_ast_typed_tracer @@
     fun ~raise ->
-    let selfed = Self_ast_typed.all_module ~raise ~add_warning ~warn_unused_rec:options.middle_end.warn_unused_rec typed in
-    match cform with
-    | Contract entrypoint -> Self_ast_typed.all_contract ~raise entrypoint selfed
-    | View (views_name,main_name) -> Self_ast_typed.all_view ~raise views_name main_name selfed
-    | Env -> selfed in
+    let selfed = Self_ast_typed.all_module ~raise ~warn_unused_rec:options.middle_end.warn_unused_rec typed in
+    specific_passes ~raise cform selfed
+  in
   applied
 
-let compile_expression ~raise ~add_warning ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
+let compile_expression ~raise ~(options: Compiler_options.t) ~(init_prog : Ast_typed.program) (expr : Ast_core.expression)
     : Ast_typed.expression =
   let Compiler_options.{ init_env ; _ } = options.middle_end in
   let env = Environment.append init_prog init_env in
 
-  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~add_warning ~options:options.middle_end ~env expr in
-  let applied = trace ~raise self_ast_typed_tracer 
-    @@ Self_ast_typed.all_expression ~add_warning ~warn_unused_rec:options.middle_end.warn_unused_rec typed in
+  let typed = trace ~raise checking_tracer @@ Checking.type_expression ~options:options.middle_end ~env expr in
+  let applied = trace ~raise self_ast_typed_tracer
+    @@ Self_ast_typed.all_expression ~warn_unused_rec:options.middle_end.warn_unused_rec typed in
   applied
 
 let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression  =

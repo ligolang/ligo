@@ -137,7 +137,6 @@ const siteConfig = {
           { from: ["/docs/next/manpages/measure-contract"     ], to: "/docs/next/manpages/info measure-contract"  },
           { from: ["/docs/next/manpages/preprocess"           ], to: "/docs/next/manpages/print preprocessed"     },
           { from: ["/docs/next/manpages/pretty-print"         ], to: "/docs/next/manpages/print pretty"           },
-          { from: ["/docs/next/manpages/print-ast-combined"   ], to: "/docs/next/manpages/print ast-combined"     },
           { from: ["/docs/next/manpages/print-ast-core"       ], to: "/docs/next/manpages/print ast-core"         },
           { from: ["/docs/next/manpages/print-ast-sugar"      ], to: "/docs/next/manpages/print ast-sugar"        },
           { from: ["/docs/next/manpages/print-ast-typed"      ], to: "/docs/next/manpages/print ast-typed"        },
@@ -216,6 +215,7 @@ const siteConfig = {
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },
         { to: '/contact', label: 'Ask Questions', position: 'left' },
+        { to: '/docs/faq/intro', label: 'FAQ', position: 'left' },
         { to: '/docs/next/intro/changelog/', label: 'Changelog', position: 'left' }
       ],
     },

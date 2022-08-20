@@ -51,9 +51,9 @@ let rec map_expression : mapper -> expression -> expression = fun f e ->
       let (c',l',r') = Triple.map ~f:self (c,l,r) in
       return @@ E_if_left (c', ((name_l, tvl) , l'), ((name_r, tvr) , r'))
   )
-  | E_let_in (expr , inline , thunk, ((v , tv) , body)) -> (
+  | E_let_in (expr , inline , ((v , tv) , body)) -> (
       let (expr',body') = Pair.map ~f:self (expr,body) in
-      return @@ E_let_in (expr', inline, thunk, ((v , tv) , body'))
+      return @@ E_let_in (expr', inline, ((v , tv) , body'))
   )
   | E_tuple exprs ->
       let exprs = List.map ~f:self exprs in

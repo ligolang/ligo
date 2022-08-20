@@ -580,16 +580,14 @@ let rec decompile_expression : AST.expression -> CST.expr = fun expr ->
     return_expr @@ CST.ECall (wrap @@ (var,set))
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (Token.ghost_lpar,Token.ghost_rpar))
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let var_attributes = attributes |> Tree_abstraction_shared.Helpers.strings_of_binder_attributes `CameLIGO |> Shared_helpers.decompile_attributes in
     let binder : CST.pattern = CST.PVar (wrap ({variable = decompile_variable @@ var; attributes = var_attributes } : CST.var_pattern)) in
     let binders = (binder,[]) in
     let type_params, rhs_type = Option.value_map ascr ~default:(None, None)
                                            ~f:(fun t -> let type_params, lhs_type = decompile_type_params t in
                                                         type_params, Some (prefix_colon lhs_type)) in
-    let let_rhs = decompile_expression @@ match access_path with
-        [] -> expression
-      | _  -> AST.e_update (AST.e_variable var) access_path expression in
+    let let_rhs = decompile_expression expression in
     let binding : CST.let_binding = {binders;type_params;rhs_type;eq=Token.ghost_eq;let_rhs} in
     let body = decompile_expression (AST.e_unit ()) in
     let lin : CST.let_in = {kwd_let=Token.ghost_let;kwd_rec=None;binding;kwd_in=Token.ghost_in;body;attributes=[]} in
@@ -705,6 +703,8 @@ and decompile_declaration : AST.declaration -> CST.declaration = fun decl ->
 
 and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
   fun pattern ->
+    let is_unit_pattern (p : AST.type_expression AST.pattern) = 
+      match p.wrap_content with AST.P_unit -> true | _ -> false in
     match pattern.wrap_content with
     | AST.P_unit -> CST.PUnit (wrap (Token.ghost_lpar, Token.ghost_rpar))
     | AST.P_var v ->
@@ -731,13 +731,13 @@ and decompile_pattern : AST.type_expression AST.pattern -> CST.pattern =
         ret (PListComp injection)
     )
     | AST.P_variant (AST.Label constructor, p) ->
-        let p = decompile_pattern p in
-        let constr = wrap (wrap constructor, Some p) in
+        let p = if is_unit_pattern p then None else Some (decompile_pattern p) in
+        let constr = wrap (wrap constructor, p) in
         CST.PConstr constr
     | AST.P_tuple lst ->
       let pl = List.map ~f:decompile_pattern lst in
       let pl = list_to_nsepseq ~sep:Token.ghost_comma pl in
-      CST.PTuple (wrap pl)
+      CST.PPar (wrap (par (CST.PTuple (wrap pl))))
     | AST.P_record (llst,lst) ->
       let pl = List.map ~f:decompile_pattern lst in
       let fields_name = List.map ~f:(fun (AST.Label x) -> wrap x) llst in

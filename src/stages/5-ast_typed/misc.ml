@@ -44,7 +44,7 @@ module Free_variables = struct
       let b' = union (singleton fun_name) b in
       expression_content b' @@ E_lambda lambda
     | E_module_accessor _ -> empty
-    | E_assign {binder;access_path=_;expression=e} ->
+    | E_assign {binder;expression=e} ->
       let b' = union (singleton binder.var) b in
       expression b' e
 
@@ -136,11 +136,6 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
      (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
      if TypeVar.equal x y then Some () else None
   | T_variable _, _ -> None
-  | T_module_accessor {module_path=mna;element=ea}, T_module_accessor {module_path=mnb;element=eb} ->
-    let open Simple_utils.Option in
-    let* _ = if TypeVar.equal ea eb then Some () else None in
-    assert_list_eq (fun a b -> if ModuleVar.equal a b then Some () else None) mna mnb
-  | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
   | T_abstraction a , T_abstraction b ->
@@ -212,7 +207,7 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; thunk = _ ; hidden = _ }} -> (
+    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ }} -> (
       if   (ValueVar.equal name binder.var)
       then Some expr
       else None
@@ -221,3 +216,19 @@ let get_entry (lst : program) (name : expression_variable) : expression option =
     | Declaration_module _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
+
+let get_type_of_contract ty =
+  match ty with
+  | T_arrow {type1 ; type2} -> (
+    match type1.type_content , type2.type_content with
+    | T_record tin , T_record tout when (Helpers.is_tuple_lmap tin.content) && (Helpers.is_tuple_lmap tout.content) ->
+      let open Simple_utils.Option in
+      let* (parameter,storage) = Combinators.get_t_pair type1 in
+      let* (listop,storage') = Combinators.get_t_pair type2 in
+      let* () = Combinators.assert_t_list_operation listop in
+      let* () = assert_type_expression_eq (storage,storage') in
+      (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
+      return ( parameter , storage )
+    |  _ -> None
+  )
+  | _ -> None

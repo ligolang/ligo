@@ -7,70 +7,11 @@ type contract_pass_data = {
   main_name : expression_variable ;
 }
 
-let annotation_or_label annot label = String.capitalize (Option.value ~default:label (Ast_typed.Helpers.remove_empty_annotation annot))
-
-let check_entrypoint_annotation_format ~raise ep (exp: expression) =
-  match String.split ~on:'%' ep with
-    | [ "" ; ep'] ->
-      let cap = String.capitalize ep' in
-      if String.equal cap ep' then raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location
-      else cap
-    | _ -> raise.raise @@ Errors.bad_format_entrypoint_ann ep exp.location
-
-
-let self_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
-  let bad_self_err () = Errors.bad_self_type
-    e.type_expression
-    {e.type_expression with
-      type_content =
-        T_constant {
-          language=Stage_common.Backends.michelson;
-          injection=Stage_common.Constant.Contract;
-          parameters=[dat.contract_type.parameter]
-        }
-    }
-    e.location
-  in
-  match e.expression_content , e.type_expression with
-  | (E_constant {cons_name=C_SELF ; arguments=[entrypoint_exp]} , {type_content = T_constant {language=_;injection=Stage_common.Constant.Contract;parameters=[t]} ; _}) ->
-    let entrypoint =
-      match entrypoint_exp.expression_content with
-      | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
-      | _ -> raise.raise @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
-    in
-    let entrypoint_t =
-      match dat.contract_type.parameter.type_content with
-      | (T_sum _ as t) when String.equal "Default" entrypoint -> {dat.contract_type.parameter with type_content = t}
-      | T_sum cmap ->
-        let content = LMap.to_kv_list cmap.content in
-        let content = List.map ~f:(fun (Label entrypoint, {michelson_annotation;associated_type;_}) ->
-                          (annotation_or_label michelson_annotation entrypoint, associated_type)) content in
-        let associated_type = trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location) @@
-          List.Assoc.find content ~equal:String.equal entrypoint
-        in
-        associated_type
-      | t -> {dat.contract_type.parameter with type_content = t}
-    in
-    let () =
-      trace_option ~raise (bad_self_err ()) @@
-      Ast_typed.assert_type_expression_eq (entrypoint_t , t) in
-    (true, dat, e)
-  | _ -> (true,dat,e)
-
-let entrypoint_typing ~raise : contract_pass_data -> expression -> bool * contract_pass_data * expression = fun dat e ->
-  match e.expression_content with
-  | E_constant {cons_name=C_CONTRACT_ENTRYPOINT_OPT|C_CONTRACT_ENTRYPOINT ; arguments=[entrypoint_exp;_]} ->
-    let _ = match entrypoint_exp.expression_content with
-     | E_literal (Literal_string ep) -> check_entrypoint_annotation_format ~raise (Ligo_string.extract ep) entrypoint_exp
-     | _ -> raise.raise @@ Errors.entrypoint_annotation_not_literal entrypoint_exp.location
-    in
-    (true, dat, e)
-  | _ -> (true,dat,e)
-
 module VVarSet = Caml.Set.Make(ValueVar)
 module MVarMap = Simple_utils.Map.Make(ModuleVar)
 
 type env = {env:env MVarMap.t;used_var:VVarSet.t}
+let empty_env = {env=MVarMap.empty;used_var=VVarSet.empty}
 let rec pp_env ppf env =
   Format.fprintf ppf "{env: %a;used_var: %a}"
     (Simple_utils.PP_helpers.list_sep_d (fun ppf (k,v) -> Format.fprintf ppf "(%a,%a)" ModuleVar.pp k pp_env v)) (MVarMap.to_kv_list env.env)
@@ -150,9 +91,9 @@ and get_fv expr =
     let init = {env=MVarMap.empty ;used_var=VVarSet.singleton element} in
     let env = List.fold_right module_path ~f:(fun module_name env -> {env=MVarMap.singleton module_name env;used_var=VVarSet.empty}) ~init in
     return env @@ E_module_accessor {module_path;element}
-  | E_assign { binder; access_path; expression } ->
+  | E_assign { binder; expression } ->
      let env, expression = self expression in
-     return env @@ E_assign { binder; access_path; expression}
+     return env @@ E_assign { binder; expression}
 and get_fv_cases : matching_expr -> env * matching_expr = fun m ->
   match m with
   | Match_variant {cases;tv} ->
@@ -209,7 +150,7 @@ and get_fv_module_expr env x =
     let new_env = { env = MVarMap.singleton v env ; used_var = VVarSet.empty } in
     new_env, x
 
-let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data prg ->
+let remove_unused ~raise : contract_pass_data -> program -> program = fun contract_pass_data  prg ->
   (* Process declaration in reverse order *)
   let prg_decls = List.rev prg in
   let aux = function
@@ -225,6 +166,32 @@ let remove_unused ~raise : contract_pass_data -> program -> program = fun contra
   let main_dc = {main_dc with expr = main_expr} in
   let main_decl = {main_decl with wrap_content = Declaration_constant main_dc} in
   let _,module_ = get_fv_module env [main_decl] prg_decls in
+  module_
+
+let remove_unused_for_views ~raise ~(view_names:expression_variable list ) : program -> program = fun prg ->
+  let view_names = List.rev view_names in
+  let is_view_name var = List.mem view_names var ~equal:ValueVar.equal in
+  (* Process declaration in reverse order *)
+  let prg_decls = List.rev prg in
+  let pred = fun _ -> function
+      {Location.wrap_content = Declaration_constant {binder;_}; _} -> (is_view_name binder.var)
+    | _ -> false in
+  let idx,_ = trace_option ~raise (Errors.corner_case "View not found") @@ List.findi prg_decls ~f:pred in
+  (* Remove the definition after the last view (can't be relevant), mostly remove the test *)
+  let _,prg_decls = List.split_n prg_decls idx in
+  let view_decls = List.rev @@ List.filter_map prg_decls 
+    ~f:(fun decl -> 
+      match decl with
+        {Location.wrap_content = Declaration_constant dc; _} when is_view_name dc.binder.var -> Some dc
+      | _ -> None) 
+  in 
+  let env = List.fold view_decls ~init:empty_env ~f:(fun env view_decl -> 
+    let env',_ = get_fv view_decl.expr in
+    merge_env env env'
+  ) in
+  let view_decls = List.map view_decls ~f:(fun decl -> Location.wrap (Declaration_constant decl)) in
+  let _, prg_decls = trace_option ~raise (Errors.corner_case "View not found") @@ List.uncons prg_decls in
+  let _,module_ = get_fv_module env view_decls prg_decls in
   module_
 
 let remove_unused_expression : expression -> program -> expression * program = fun expr prg ->

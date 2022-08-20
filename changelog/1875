@@ -1,0 +1,5 @@
+author: rinderkn
+description: '### Added support for the reverse application operator |>'
+merge_request: '1875'
+title: 'Draft: Adding support for the reverse application operator |>'
+type: added

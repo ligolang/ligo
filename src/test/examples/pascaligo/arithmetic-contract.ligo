@@ -42,8 +42,8 @@ function sub (const store : storage; const delta : int) : storage is
    
 function main (const action : parameter; const store : storage) : return is
  ((nil : list (operation)),    // No operations
-  case action of
+  case action of [
     Increment (n) -> add (store, n)
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
-  end)
+  ])

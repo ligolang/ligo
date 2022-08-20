@@ -35,11 +35,12 @@ import Cli
   ( HasLigoClient, LigoDecodedExpectedClientFailureException (..)
   , SomeLigoException (..), TempDir (..), TempSettings (..), fromLigoErrorToMsg, preprocess
   )
+import Diagnostic (Message)
 import Extension
 import Log (Log, NoLoggingT (..), i)
 import Log qualified
 import ParseTree (Source (..), pathToSrc, toParseTree)
-import Parser
+import Parser (collectTreeErrors, parseLineMarkerText, runParserM)
 import Progress (Progress (..), ProgressCallback, noProgress, (%))
 import Util.Graph (wcc)
 
@@ -116,7 +117,7 @@ parseWithScopes fp = runNoLoggingT do
 -- | Parse the whole directory for LIGO contracts and collect the results.
 -- This ignores every other file which is not a contract.
 parseContracts
-  :: MonadUnliftIO m
+  :: (Log m, MonadUnliftIO m)
   => ParserCallback m contract
   -> ProgressCallback m
   -> (FilePath -> Bool)

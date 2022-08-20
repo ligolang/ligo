@@ -36,13 +36,12 @@ let attributes attr =
   let list = List.map ~f:(fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
-let known_attributes { inline ; no_mutation ; view ; public ; thunk ; hidden } =
+let known_attributes { inline ; no_mutation ; view ; public ; hidden } =
   `Assoc [
     ("inline", `Bool inline) ;
     ("no_mutation", `Bool no_mutation) ;
     ("view", `Bool view) ;
     ("public", `Bool public) ;
-    ("thunk", `Bool thunk) ;
     ("hidden", `Bool hidden) ;
   ]
 
@@ -150,8 +149,8 @@ let record expression r = label_map expression r
 
 let access expression = function
   | Access_tuple  a -> `List [ `String "Access_tuple"; z_to_yojson a]
-  | Access_record a -> `List [ `String "Access_tuple"; `String a]
-  | Access_map    a -> `List [ `String "Access_tuple"; expression a]
+  | Access_record a -> `List [ `String "Access_record"; `String a]
+  | Access_map    a -> `List [ `String "Access_map"; expression a]
 
 let accessor expression ({record; path}: 'exp accessor) =
   `Assoc [
@@ -196,10 +195,9 @@ let sequence expression {expr1;expr2} =
     ("expr2", expression expr2);
   ]
 
-let assign expression type_expression {binder=b; access_path; expression=e} =
+let assign expression type_expression {binder=b; expression=e} =
   `Assoc [
     ("variable", binder type_expression b);
-    ("access_path", list (access expression) access_path);
     ("expression", expression e);
   ]
 

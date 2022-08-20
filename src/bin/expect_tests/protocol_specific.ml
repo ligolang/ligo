@@ -3,6 +3,9 @@ open Cli_expect
 let contract basename =
   "../../test/contracts/" ^ basename
 
+let bad_contract basename =
+  "../../test/contracts/negative/" ^ basename
+
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "protocol_dalphanet.mligo" ] ;
   [%expect{|
@@ -57,31 +60,40 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "rollup.mligo" ; "--protocol" ; "jakarta" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "rollup.mligo" ] ;
   [%expect{|
     { parameter tx_rollup_l2_address ;
       storage unit ;
       code { DROP ; PUSH string "roll up !" ; FAILWITH } } |}] ;
 
-  run_ligo_bad [ "compile" ; "contract" ; contract "rollup.mligo"] ;
-  [%expect{|
-    File "../../test/contracts/rollup.mligo", line 1, characters 14-34:
-      1 | let main (_ : tx_rollup_l2_address * unit ) : operation list * unit =
-      2 |   (failwith "roll up !" : operation list * unit)
-
-    Type "tx_rollup_l2_address" not found. |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; contract "min_block_time.mligo" ] ;
-  [%expect{|
-    File "../../test/contracts/min_block_time.mligo", line 2, characters 6-30:
-      1 | let main (_ : unit * nat ) : operation list * nat =
-      2 |   ([],Tezos.get_min_block_time ())
-
-    Variable "get_min_block_time" not found. |}];
-
-  run_ligo_good [ "compile" ; "contract" ; contract "min_block_time.mligo" ; "-p" ; "jakarta" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "min_block_time.mligo" ] ;
   [%expect{|
     { parameter unit ;
       storage nat ;
-      code { DROP ; MIN_BLOCK_TIME ; NIL operation ; PAIR } } |}] ;
+      code { DROP ; MIN_BLOCK_TIME ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "emit.mligo" ; "--protocol" ; "kathmandu" ] ;
+  [%expect{|
+    { parameter (pair int int) ;
+      storage unit ;
+      code { CAR ;
+             UNIT ;
+             NIL operation ;
+             DUP 3 ;
+             CAR ;
+             EMIT %bar int ;
+             CONS ;
+             DIG 2 ;
+             EMIT %foo (pair int int) ;
+             CONS ;
+             PAIR } } |}] ;
+
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "emit.mligo" ; "--protocol" ; "kathmandu" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/emit.mligo", line 3, characters 14-15:
+      2 |   let x = "%lol" in
+      3 |   [Tezos.emit x 12],x
+
+    Invalid event tag.
+    The tag must be a string literal. |}]

@@ -36,7 +36,7 @@ let t_sum ~raise ~layout return compile_type m =
       (annot_opt,t)
     in
     let rec lst_fold_right = function
-      | [] -> raise.raise (corner_case ~loc:__LOC__ "t_record empty")
+      | [] -> raise.error (corner_case ~loc:__LOC__ "t_record empty")
       | [ x ] -> aux x
       | hd :: tl -> (
           let hd = aux hd in
@@ -260,7 +260,7 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
         Append_tree.of_list kt_list
       in
       let ne_tree = match kt_tree with
-        | Empty -> raise.raise (corner_case ~loc:__LOC__ "match empty variant")
+        | Empty -> raise.error (corner_case ~loc:__LOC__ "match empty variant")
         | Full x -> x in
       let vp =
         let rec aux t : variant_pair =
@@ -280,7 +280,7 @@ let match_variant_to_tree ~raise ~layout ~compile_type content : variant_pair =
     )
   | L_comb -> (
       let rec aux : _ -> variant_pair = function
-        | [] -> raise.raise (corner_case ~loc:__LOC__ "variant build")
+        | [] -> raise.error (corner_case ~loc:__LOC__ "variant build")
         | [(k , ty)] -> (
             let t = compile_type ty in
             (`Leaf k , t)
@@ -302,7 +302,7 @@ let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.t
   | L_tree -> (
     let open Append_tree in
     let tree = match Append_tree.of_list lst with
-      | Empty -> raise.raise @@ corner_case ~loc:__LOC__ "empty record"
+      | Empty -> raise.error @@ corner_case ~loc:__LOC__ "empty record"
       | Full t -> t in
     let rec aux tv : (AST.label * (value * AST.type_expression)) list =
       match tv with
@@ -311,14 +311,14 @@ let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.t
           let a' = aux (a, va) in
           let b' = aux (b, vb) in
           (a' @ b')
-      | _ -> raise.raise @@ corner_case ~loc:__LOC__ "bad record path"
+      | _ -> raise.error @@ corner_case ~loc:__LOC__ "bad record path"
     in
     aux (tree, v)
   )
   | L_comb -> (
     let rec aux lst_record v : (AST.label * (value * AST.type_expression)) list =
       match lst_record,v with
-      | [], _ -> raise.raise @@ corner_case ~loc:__LOC__ "empty record"
+      | [], _ -> raise.error @@ corner_case ~loc:__LOC__ "empty record"
       | [(s,t)], v -> [s,(v,t)]
       | [(sa,ta);(sb,tb)], D_pair (va,vb) ->
           let a' = aux [sa, ta] va in
@@ -327,7 +327,7 @@ let extract_record ~raise ~(layout:layout) (v : value) (lst : (AST.label * AST.t
       | (shd,thd)::tl, D_pair (va,vb) ->
         let tl' = aux tl vb in
         ((shd,(va,thd))::tl')
-      | _ -> raise.raise @@ corner_case ~loc:__LOC__ "bad record path"
+      | _ -> raise.error @@ corner_case ~loc:__LOC__ "bad record path"
     in
     aux lst v
   )
@@ -337,14 +337,14 @@ let extract_constructor ~raise ~(layout:layout) (v : value) (lst : (AST.label * 
   | L_tree ->
     let open Append_tree in
     let tree = match Append_tree.of_list lst with
-      | Empty -> raise.raise @@ corner_case ~loc:__LOC__ "empty variant"
+      | Empty -> raise.error @@ corner_case ~loc:__LOC__ "empty variant"
       | Full t -> t in
     let rec aux tv : (label * value * AST.type_expression) =
       match tv with
       | Leaf (k, t), v -> (k, v, t)
       | Node {a;b=_;size=_;full=_}, D_left v -> aux (a, v)
       | Node {a=_;b;size=_;full=_}, D_right v -> aux (b, v)
-      | _ -> raise.raise @@ corner_case ~loc:__LOC__ "bad constructor path"
+      | _ -> raise.error @@ corner_case ~loc:__LOC__ "bad constructor path"
     in
     let (s, v, t) = aux (tree, v) in
     (s, v, t)

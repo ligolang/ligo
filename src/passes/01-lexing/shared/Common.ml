@@ -12,6 +12,7 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
   struct
     module Trace = Simple_utils.Trace
     module Errors = Errors
+    module Warnings = Warnings
 
     type file_path = string
 
@@ -36,9 +37,9 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
 
     (* Lifting [Stdlib.result] to [Trace.result]. *)
 
-    let lift ~(raise:'a Trace.raise) = function
+    let lift ~(raise:('a,'w) Trace.raise) = function
       Ok tokens -> tokens
-    | Error msg -> raise.raise @@ Errors.generic msg
+    | Error msg -> raise.error @@ Errors.generic msg
 
     (* Lexing functions *)
 

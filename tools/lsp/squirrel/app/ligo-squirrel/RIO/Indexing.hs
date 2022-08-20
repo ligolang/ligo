@@ -24,7 +24,6 @@ import Language.LSP.Types.Lens qualified as J
 import System.FilePath (joinPath, splitPath, takeDirectory, (</>))
 import System.IO (IOMode (ReadMode), hFileSize, withFile)
 import UnliftIO.Directory (canonicalizePath, findFile, withCurrentDirectory)
-import UnliftIO.Environment (lookupEnv)
 import UnliftIO.Exception (displayException, tryIO)
 import UnliftIO.MVar (isEmptyMVar, putMVar, swapMVar, tryPutMVar, tryReadMVar, tryTakeMVar)
 import UnliftIO.Process (CreateProcess (..), proc, readCreateProcess)
@@ -126,16 +125,11 @@ askForIndexDirectory contractDir = do
       , Just DoNotIndex
       ]
 
-  env <- lookupEnv "LIGO_ENV"
-
-  if
-    -- On tests we want the directory to be indexed and we assume it's set.
-    | Just "testing" <- env
-    , Just rootDirectory <- rootDirectoryM -> pure $ FromRoot rootDirectory
+  case suggestions of
     -- Not a git directory, and has no root in VS Code. Do nothing.
-    | [DoNotIndex] <- suggestions -> pure DoNotIndex
+    [DoNotIndex] -> pure DoNotIndex
     -- Ask the user what to do.
-    | otherwise -> do
+    _ -> do
       indexVar <- asks reIndexOpts
       -- Wait for user input before proceeding.
       void $ S.sendRequest J.SWindowShowMessageRequest

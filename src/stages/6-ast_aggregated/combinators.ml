@@ -66,6 +66,11 @@ let t_triplet ?loc a b c : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 1}) ;
     (Label "2",{associated_type=c;michelson_annotation=None ; decl_pos = 2}) ]
+let t_unforged_ticket ?loc ty : type_expression =
+  ez_t_record ?loc [
+    (Label "ticketer", {associated_type=(t_address ()); michelson_annotation=None ; decl_pos = 0}) ;
+    (Label "value"   , {associated_type=ty            ; michelson_annotation=None ; decl_pos = 1}) ;
+    (Label "amount"  , {associated_type=(t_nat ())    ; michelson_annotation=None ; decl_pos = 2}) ]
 
 let t_sum ?loc ~layout content : type_expression = make_t ?loc (T_sum {content;layout})
 let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
@@ -75,7 +80,7 @@ let t_sum_ez ?loc ?(layout=default_layout) (lst:(string * type_expression) list)
 let t_bool ?loc ()       : type_expression = t_sum_ez ?loc
   [("True", t_unit ());("False", t_unit ())]
 
-let t_option ?loc typ : type_expression = 
+let t_option ?loc typ : type_expression =
   t_sum_ez ?loc [
     ("Some", typ) ;
     ("None", t_unit ());
@@ -101,7 +106,7 @@ let get_t_bool (t:type_expression) : unit option = match t.type_content with
   | t when (Compare.type_content t (t_bool ()).type_content) = 0 -> Some ()
   | _ -> None
 
-let get_t_option (t:type_expression) : type_expression option = 
+let get_t_option (t:type_expression) : type_expression option =
   match t.type_content with
   | T_sum {content;_} ->
     let keys = LMap.keys content in
@@ -109,7 +114,7 @@ let get_t_option (t:type_expression) : type_expression option =
       [Label "Some" ; Label "None"]
     | [Label "None" ; Label "Some"] ->
         let some = LMap.find (Label "Some") content in
-        Some some.associated_type 
+        Some some.associated_type
     | _ -> None)
   | _ -> None
 
@@ -142,7 +147,7 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
 [@@map (_type_, ("int", "nat", "unit", "tez", "timestamp", "address", "bytes", "string", "key", "signature", "key_hash", "chest", "chest_key", "michelson_program", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr"))]
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
-[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction"))]
+[@@map (_type_, ("contract", "list", "set", "ticket", "sapling_state", "sapling_transaction", "gen"))]
 
 let get_t_mutez (t:type_expression) : unit option = get_t_tez t
 let get_t_michelson_code (t:type_expression) : unit option = get_t_michelson_program t
@@ -186,16 +191,24 @@ let get_t_big_map (t:type_expression) : (type_expression * type_expression) opti
 let get_t__type__exn t = match get_t__type_ t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-[@@map (_type_, ("list", "set", "map", "typed_address", "big_map"))]
+[@@map (_type_, ("list", "set", "map", "typed_address", "big_map", "gen"))]
 
 let assert_t_contract (t:type_expression) : unit option = match get_t_unary_inj t Stage_common.Constant.Contract with
   | Some _ -> Some ()
   | _ -> None
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
-[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "bool", "unit", "address", "tez", "contract", "map", "big_map"))]
+[@@map (_type_, ("list", "set", "nat", "string", "bytes", "int", "unit", "address", "tez", "contract", "map", "big_map" , "typed_address"))]
 
 let is_t_mutez t = is_t_tez t
+
+let is_t_bool t =
+  match t.type_content with
+    T_sum { content ; _ } ->
+    (match LMap.keys content with
+      [Label "True" ; Label "False"] -> true
+    | _ -> false)
+  | _ -> false
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
@@ -203,7 +216,7 @@ let assert_t_list_operation (t : type_expression) : unit option =
   | None -> None
 
 let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
-[@@map (_type_, ("int", "nat", "bool", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
+[@@map (_type_, ("int", "nat", "unit", "mutez", "key", "signature", "key_hash", "bytes", "string", "michelson_code"))]
 
 let assert_t__type_ : type_expression -> unit option = fun v -> Option.map ~f:(fun _ -> ()) @@ get_t__type_ v
 [@@map (_type_, ("set", "list"))]
@@ -239,7 +252,7 @@ let e_bool b : expression_content =
 
 let e_a_literal l t = make_e (E_literal l) t
 let e_a__type_ p = make_e (e__type_ p) (t__type_ ())
-[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "bool", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
+[@@map (_type_, ("unit", "int", "nat", "mutez", "timestamp", "key_hash", "string", "bytes", "address", "key", "signature", "bls12_381_g1", "bls12_381_g2", "bls12_381_fr" , "chest", "chest_key"))]
 
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
@@ -259,6 +272,7 @@ let e_a_recursive l= e_recursive l l.fun_type
 let e_a_let_in let_binder rhs let_result attr = e_let_in { let_binder ; rhs ; let_result ; attr } (get_type let_result)
 let e_a_raw_code language code t = e_raw_code { language ; code } t
 let e_a_type_inst forall type_ u = e_type_inst { forall ; type_ } u
+let e_a_bool b = make_e (e_bool b) (t_bool ())
 
 (* Constants *)
 let e_a_nil t = make_e (e_nil ()) (t_list t)
@@ -315,3 +329,10 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
     match LMap.find_opt label record.content with
     | None -> None
     | Some row_element -> Some row_element.associated_type
+
+let get_type_abstractions (e : expression) =
+  let rec aux tv e = match get_e_type_abstraction e with
+  | None -> tv, e
+  | Some { type_binder ; result } ->
+     aux (type_binder :: tv) result in
+  aux [] e

@@ -6,8 +6,12 @@ let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
+let key_hash_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_bytes s
 let key_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_b58check s
+let key_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option ~raise (Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_bytes_without_validation s
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse signature") @@ Tezos_crypto.Signature.of_b58check s
 
@@ -55,7 +59,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let els = List.map ~f:(fun (t,v) -> decompile_to_untyped_value ~raise ~bigmaps t v) (List.zip_exn ts vs) in
       let rec aux l : value =
         match l with
-        | [] -> raise.raise (untranspilable ty value)
+        | [] -> raise.error (untranspilable ty value)
         | [x] -> x
         | hd::tl -> (
             let tl' = aux tl in
@@ -85,8 +89,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   D_string id *)
   | Prim (_, "key_hash", [], _), String (_, n) ->
      V_Ct (C_key_hash (key_hash_of_string ~raise n))
+  | Prim (_, "key_hash", [], _), Bytes (_, b) ->
+     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) ->
      V_Ct (C_key (key_of_string ~raise n))
+  | Prim (_, "key", [], _), Bytes (_, b) ->
+     V_Ct (C_key (key_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
      V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) ->
@@ -112,6 +120,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       V_Ct (C_address c)
   | Prim (_, "address", [], _), String (_, s) ->
       V_Ct (C_address (contract_of_string ~raise s))
+  | Prim (_, "contract", [_], _), String (_, s) ->
+     let (address, entrypoint) = match String.split s ~on:'%' with
+       | [a ; b] -> (contract_of_string ~raise a, Some b)
+       | [a] -> (contract_of_string ~raise a, None)
+       | _ -> raise.error (untranspilable ty value) in
+      V_Ct (C_contract { address ; entrypoint })
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       V_Ct (C_unit)
   | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->
@@ -130,7 +144,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -146,7 +160,7 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
           | _ ->
             let ty = root (strip_locations ty) in
             let value = root (strip_locations value) in
-            raise.raise (untranspilable ty value)
+            raise.error (untranspilable ty value)
         in
         List.map ~f:aux lst
       in
@@ -192,14 +206,15 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
       let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
-  (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
-   *   ignore addr;
-   *   let ty_nat = Prim (xx, "nat", [], []) in
-   *   let v' = decompile_to_mini_c ~raise ~bigmaps ty v in
-   *   let amt' = decompile_to_mini_c ~raise ~bigmaps ty_nat amt in
-   *   D_ticket (v', amt') *)
+  | Prim (loct, "ticket", [ty], _) , Prim (_, "Pair", [String (_,addr);vt;amt], _) ->
+    let ty_nat = Prim (loct, "nat", [], []) in
+    let addr =  V_Ct (C_address (contract_of_string ~raise addr)) in
+    let vt = decompile_to_untyped_value ~raise ~bigmaps ty vt in
+    let amt = decompile_to_untyped_value ~raise ~bigmaps ty_nat amt in
+    let va = Ligo_interpreter.Combinators.v_pair (vt, amt) in
+    Ligo_interpreter.Combinators.v_pair (addr, va) 
   | ty, v ->
-    raise.raise (untranspilable ty v)
+    raise.error (untranspilable ty v)
 
 let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_aggregated.type_expression) : value =
   let open Stage_common.Constant in
@@ -228,7 +243,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
     | (Big_map, [k_ty; v_ty]) -> (
         match get_nat v with
         | Some _ ->
-           raise.raise @@ corner_case ~loc:"unspiller" "Big map id not supported"
+           raise.error @@ corner_case ~loc:"unspiller" "Big map id not supported"
         | None ->
         let big_map = trace_option ~raise (wrong_mini_c_value t v) @@ get_map v in
         let big_map' =
@@ -253,14 +268,15 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | ((               Map           | Big_map             | List                 | Set              | Bool         |
+    | ((               Map           | Big_map             | List                 | Set              |
         String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |
         Pvss_key     | Sapling_state | Sapling_transaction | Baker_operation      | Bls12_381_g1     | Bls12_381_g2 |
-        Bls12_381_fr | Never         | Ticket              | Michelson_contract                      | Chest        |
+        Bls12_381_fr | Never         | Ticket              | Michelson_contract   | Gen              | Chest        |
         Chest_key    | Typed_address | Mutation            | Chest_opening_result | External _       | Tx_rollup_l2_address), _) -> v
   )
+  | T_sum _ when (Option.is_some (Ast_aggregated.get_t_bool t)) -> v
   | T_sum _ when (Option.is_some (Ast_aggregated.get_t_option t)) -> (
     let opt = trace_option ~raise (wrong_mini_c_value t v) @@ get_option v in
     match opt with

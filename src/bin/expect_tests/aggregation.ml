@@ -6,10 +6,10 @@ let contract basename =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias.mligo" ] ;
   [%expect {xxx|
-    let #A#a#261 : int = 42 in
-    let #B#b#262 : int = 1 in
-    let x : int = #A#a#261 in
-    unit |xxx}]
+let a#159 = 42 in
+let b#160 = 1 in
+let x = a#159 in
+unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias.mligo" ] ;
   [%expect {|
@@ -18,12 +18,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias2.mligo" ] ;
   [%expect {xxx|
-    let #A#a#261 : int = 40 in
-    let #B#b#264 : int = let #LOCAL#inA#ba#262 : int = 1 in
-    let #LOCAL#inA#baa#263 : int = #LOCAL#inA#ba#262 in
-    ADD(#LOCAL#inA#ba#262 ,
-    #LOCAL#inA#baa#263) in
-    let x : int = ADD(#A#a#261 , #B#b#264) in
+    let a#159 = 40 in
+    let b#162 = let ba#160 = 1 in
+    let baa#161 = ba#160 in
+    ADD(ba#160 ,
+    baa#161) in
+    let x = ADD(a#159 , b#162) in
     unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias2.mligo" ] ;
@@ -32,11 +32,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias3.mligo" ] ;
   [%expect {xxx|
-    let #A#a#261 : int = 1 in
-    let #A_s#as#262 : int = 42 in
-    let #B#x#263 : int = #A#a#261 in
-    let #B#b#264 : int = #A_s#as#262 in
-    let x : int = #A_s#as#262 in
+    let a#159 = 1 in
+    let as#160 = 42 in
+    let x#161 = a#159 in
+    let b#162 = as#160 in
+    let x = as#160 in
     unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias3.mligo" ] ;
@@ -45,9 +45,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias4.mligo" ] ;
   [%expect {xxx|
-  let #A_s#as#261 : int = 20 in
-  let #A#s_as#262 : int = 22 in
-  let x : int = ADD(#A_s#as#261 , #A#s_as#262) in
+  let as#159 = 20 in
+  let s_as#160 = 22 in
+  let x = ADD(as#159 , s_as#160) in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias4.mligo" ] ;
@@ -56,12 +56,12 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias5.mligo" ] ;
-  [%expect {xxx|
-  let #A#a#261 : int = 1 in
-  let #A#A_s#as#262 : int = 42 in
-  let #A#A_s#as#263 : int = 3 in
-  let x : int = #A#A_s#as#262 in
-  unit |xxx}]
+  [%expect{|
+    let a#159 = 1 in
+    let as#160 = 42 in
+    let as#161 = 3 in
+    let x = as#160 in
+    unit |}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias5.mligo" ] ;
   [%expect{| 42 |}]
@@ -69,14 +69,14 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias6.mligo" ] ;
   [%expect {xxx|
-  let #Foo#x#261 : int = 1 in
-  let foo : int = let x = 20 in
-  let #LOCAL#inFoo#x#262 : int = x in
-  let #LOCAL#inFoo#y#263 : int = #Foo#x#261 in
-  let #LOCAL#inFoo#z#264 : int = #LOCAL#inFoo#y#263 in
-  ADD(ADD(ADD(#LOCAL#inFoo#x#262 , #LOCAL#inFoo#y#263) , x) ,
-  #LOCAL#inFoo#z#264) in
-  let x : int = foo in
+  let x#159 = 1 in
+  let foo = let x = 20 in
+  let x#160 = x in
+  let y#161 = x#159 in
+  let z#162 = y#161 in
+  ADD(ADD(ADD(x#160 , y#161) , x) ,
+  z#162) in
+  let x = foo in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias6.mligo" ] ;
@@ -85,10 +85,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias7.mligo" ] ;
   [%expect {xxx|
-  let #A#v#261 : int = 40 in
-  let #A#B#v#262 : int = ADD(#A#v#261 , 1) in
-  let #A#B#C#v#263 : int = ADD(#A#B#v#262 , 1) in
-  let x : int = #A#B#C#v#263 in
+  let v#159 = 40 in
+  let v#160 = ADD(v#159 , 1) in
+  let v#161 = ADD(v#160 , 1) in
+  let x = v#161 in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias7.mligo" ] ;
@@ -98,12 +98,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias8.mligo" ] ;
   [%expect {xxx|
-  let #Foo#x#261 : int = 41 in
-  let x : int = 1 in
-  let #TFoo#x#262 : int = x in
-  let #TFoo#y#263 : int = #Foo#x#261 in
-  let u : int = ADD(#TFoo#x#262 , #TFoo#y#263) in
-  let x : int = u in
+  let x#159 = 41 in
+  let x = 1 in
+  let x#160 = x in
+  let y#161 = x#159 in
+  let u = ADD(x#160 , y#161) in
+  let x = u in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias8.mligo" ] ;
@@ -112,9 +112,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias9.mligo" ] ;
   [%expect {xxx|
-  let #A#B#x#261 : int = 41 in
-  let #A#B#x#262 : int = ADD(#A#B#x#261 , 1) in
-  let x : int = #A#B#x#262 in
+  let x#159 = 41 in
+  let x#160 = ADD(x#159 , 1) in
+  let x = x#160 in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias9.mligo" ] ;
@@ -123,10 +123,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias10.mligo" ] ;
   [%expect {xxx|
-  let #A#B#x#261 : int = 42 in
-  let #A#B#x#262 : int = 2 in
-  let #A#y#263 : int = #A#B#x#261 in
-  let x : int = #A#y#263 in
+  let x#159 = 42 in
+  let x#160 = 2 in
+  let y#161 = x#159 in
+  let x = y#161 in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias10.mligo" ] ;
@@ -135,11 +135,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias11.mligo" ] ;
   [%expect {xxx|
-  let #Foo#x#261 : int = 19 in
-  let #Foo#y#262 : int = 22 in
-  let x : int = let x = 1 in
-  let u = #Foo#x#261 in
-  let v = #Foo#y#262 in
+  let x#159 = 19 in
+  let y#160 = 22 in
+  let x = let x = 1 in
+  let u = x#159 in
+  let v = y#160 in
   ADD(ADD(u , v) ,
   x) in
   unit |xxx}]
@@ -150,9 +150,9 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias12.mligo" ] ;
   [%expect {xxx|
-  let #F#F#a#261 : int = 42 in
-  let #F#F#x#262 : int = #F#F#a#261 in
-  let x : int = #F#F#x#262 in
+  let a#159 = 42 in
+  let x#160 = a#159 in
+  let x = x#160 in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "x" ; "--init-file" ; contract "bug_alias12.mligo" ] ;
@@ -161,14 +161,16 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-aggregated" ; contract "bug_alias13.mligo" ] ;
   [%expect {xxx|
-  let #A#current_turn#263 : nat -> nat = lambda (i : nat) return ADD(i , +1) in
-  let #A#other#264 : nat -> unit = lambda (n : nat) return let current_turn = (#A#current_turn#263)@(+1) in
+  let current_turn#161 = lambda (i : nat) return ADD(i , +1) in
+  let other#162 = lambda (n : nat) return let current_turn = (current_turn#161)@(+1) in
   (assert)@(EQ(n ,
   current_turn)) in
   let main : ( unit * unit ) -> ( list (operation) * unit ) = lambda (gen#2 : ( unit * unit )) return  match
                                                                       gen#2 with
-                                                                      | ( _p , _s ) ->
-                                                                      ( LIST_EMPTY() , (#A#other#264)@(+2) ) in
+                                                                      | ( _p ,
+                                                                      _s ) ->
+                                                                      ( LIST_EMPTY() ,
+                                                                      (other#162)@(+2) ) in
   unit |xxx}]
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "bug_alias13.mligo" ] ;
@@ -194,6 +196,31 @@ let%expect_test _ =
       code { CDR ; PUSH string "foo" ; FAILWITH } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "mini-c" ; contract "bug_module_record.ligo" ] ;
-  [%expect {|
-    L(unit) |}]
+  run_ligo_good [ "compile" ; "expression" ; "pascaligo" ; "tm" ; "--init-file" ; contract "bug_module_record.ligo" ] ;
+  [%expect{|
+    (Pair 1 "b") |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test" ; "--init-file" ; contract "bug_locally_bound_vars.mligo" ] ;
+  [%expect{|
+           42 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test2" ; "--init-file" ; contract "bug_locally_bound_vars.mligo" ] ;
+  [%expect{|
+    "hehe" |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test" ; "--init-file" ; contract "bug_locally_bound_vars2.mligo" ] ;
+  [%expect{|
+    43 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test" ; "--init-file" ; contract "bug_locally_bound_vars3.mligo" ] ;
+  [%expect{|
+    2 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "test" ; "--init-file" ; contract "bug_locally_bound_vars4.mligo" ] ;
+  [%expect{|
+    42 |}]

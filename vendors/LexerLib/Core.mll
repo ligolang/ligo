@@ -514,8 +514,6 @@ let natural    = digit | digit (digit | '_')* digit
 let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
-let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
-               | "\\r" | "\\t" | "\\x" byte
 let flag       = '1' | '2' (* Linemarkers *)
 
 (* Comment delimiters *)
@@ -713,32 +711,35 @@ and scan_string delimiter thread state = parse
            (* Control characters and 8-bit ASCII *)
          { let {region; _} = state#sync lexbuf in
            fail region Invalid_character_in_string }
-| '"'    {
-  if Char.(=) delimiter '"' then
-    let {state; _} = state#sync lexbuf
-        in thread, state
-  else
-    let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char '"') state lexbuf
-  }
-| '\''   {
-  if Char.(=) delimiter '\'' then
-    let {state; _} = state#sync lexbuf
-        in thread, state
-  else
-    let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char '\'') state lexbuf
-
-  }
-| esc    { let {lexeme; state; _} = state#sync lexbuf in
-           let thread = thread#push_string lexeme
-           in scan_string delimiter thread state lexbuf }
-| '\\' _ { let {region; _} = state#sync lexbuf
-           in fail region Undefined_escape_sequence }
+| '"'    { let {state; _} = state#sync lexbuf in
+           if Char.(=) delimiter '"' then thread, state
+           else
+             let thread = thread#push_char '"' in
+             scan_string delimiter thread state lexbuf }
+| '\\'   { let {state; region; _} = state#sync lexbuf
+           in unescape region delimiter thread state lexbuf }
 | _ as c { let {state; _} = state#sync lexbuf in
            scan_string delimiter (thread#push_char c) state lexbuf }
 
-  (* Scanner called first *)
+and unescape backslash delimiter thread state = parse
+  '"'  { let {state; lexeme; _} = state#sync lexbuf in
+         let interpretation =
+           if Char.(=) delimiter '"' then
+             lexeme (* E.g. unescaped \" into " *)
+           else "\\" ^ lexeme (* verbatim *) in
+         let thread = thread#push_string interpretation
+         in scan_string delimiter thread state lexbuf }
+| 'n'  { let {state; _} = state#sync lexbuf
+         and thread = thread#push_char '\n' (* Unescaped "\n" into '\010' *)
+         in scan_string delimiter thread state lexbuf }
+| '\\' { let {state; lexeme; _} = state#sync lexbuf in
+         let thread = thread#push_string lexeme (* Unescaped "\\" into '\\' *)
+         in scan_string delimiter thread state lexbuf }
+| _    { let {region; _} = state#sync lexbuf in
+         let region = Region.cover backslash region in
+         fail region Undefined_escape_sequence }
+
+(* Scanner called first *)
 
 and init client state = parse
   utf8_bom { state#mk_bom lexbuf                       }

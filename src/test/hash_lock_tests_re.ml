@@ -7,15 +7,15 @@ open Main_errors
 module Alpha_context = Memory_proto_alpha.Protocol.Alpha_context
 
 let get_program = get_program "./contracts/hashlock.religo"
-let compile_main ~raise ~add_warning () =
-  Test_helpers.compile_main ~raise ~add_warning "./contracts/hashlock.religo" ()
+let compile_main ~raise () =
+  Test_helpers.compile_main ~raise "./contracts/hashlock.religo" ()
 
 let call msg = e_constructor "Call" msg
 let mk_time ~raise st =
-  match Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.of_string st with
+  match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
   | Some s -> s
-  | None -> raise.raise @@ test_internal "bad timestamp notation"
-let to_sec t = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp.to_zint t
+  | None -> raise.error @@ test_internal "bad timestamp notation"
+let to_sec t = Memory_proto_alpha.Protocol.Script_timestamp.to_zint t
 let storage hashed used commits =
   e_record_ez [("hashed", hashed);
                ("unused", e_bool used);
@@ -34,8 +34,8 @@ let empty_message = e_lambda_ez (ValueVar.of_input_var "arguments")
   empty_op_list
 
 
-let commit ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let commit ~raise () =
+  let program = get_program ~raise () in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options
       ~env:(test_environment ())
@@ -43,7 +43,7 @@ let commit ~raise ~add_warning () =
       ())
   in
   let now = options.now in
-  let lock_time = Alpha_context.Script_timestamp.add_delta now (Alpha_context.Script_int.of_int 86_400) in
+  let lock_time = Memory_proto_alpha.Protocol.Script_timestamp.add_delta now (Memory_proto_alpha.Protocol.Script_int.of_int 86_400) in
   let test_hash_raw = sha_256_hash (Bytes.of_string "hello world") in
   let test_hash = e_bytes_raw test_hash_raw in
   let packed_sender = pack_payload ~raise program (e_address first_committer) in
@@ -63,12 +63,12 @@ let commit ~raise ~add_warning () =
   let post_commits = e_big_map [((e_address first_committer), commit)]
   in
   let post_storage = storage test_hash true post_commits in
-  expect_eq ~raise ~add_warning ~options program "commit"
+  expect_eq ~raise ~options program "commit"
     (e_pair salted_hash init_storage) (e_pair empty_op_list post_storage)
 
 (* Test that the contract fails if we haven't committed before revealing the answer *)
-let reveal_no_commit ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal_no_commit ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -79,13 +79,13 @@ let reveal_no_commit ~raise ~add_warning () =
                                                               ("salted_hash", (t_bytes ()))])
   in
   let init_storage = storage test_hash true pre_commits in
-  expect_string_failwith ~raise ~add_warning program "reveal"
+  expect_string_failwith ~raise program "reveal"
     (e_pair reveal init_storage)
     "You have not made a commitment to hash against yet."
 
 (* Test that the contract fails if our commit isn't 24 hours old yet *)
-let reveal_young_commit ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal_young_commit ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -112,13 +112,13 @@ let reveal_young_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~add_warning ~options program "reveal"
+  expect_string_failwith ~raise ~options program "reveal"
     (e_pair reveal init_storage)
     "It has not been 24 hours since your commit yet."
 
 (* Test that the contract fails if our reveal doesn't meet our commitment *)
-let reveal_breaks_commit ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal_breaks_commit ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -144,13 +144,13 @@ let reveal_breaks_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~add_warning ~options program "reveal"
+  expect_string_failwith ~raise ~options program "reveal"
     (e_pair reveal init_storage)
     "This reveal does not match your commitment."
 
 (* Test that the contract fails if we reveal the wrong bytes for the stored hash *)
-let reveal_wrong_commit ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal_wrong_commit ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -176,13 +176,13 @@ let reveal_wrong_commit ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~add_warning ~options program "reveal"
+  expect_string_failwith ~raise ~options program "reveal"
     (e_pair reveal init_storage)
     "Your commitment did not match the storage hash."
 
 (* Test that the contract fails if we try to reuse it after unused flag changed *)
-let reveal_no_reuse ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal_no_reuse ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello");
                             ("message", empty_message)]
@@ -208,13 +208,13 @@ let reveal_no_reuse ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_string_failwith ~raise ~add_warning ~options program "reveal"
+  expect_string_failwith ~raise ~options program "reveal"
     (e_pair reveal init_storage)
     "This contract has already been used."
 
 (* Test that the contract executes successfully with valid commit-reveal *)
-let reveal ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let reveal ~raise () =
+  let program = get_program ~raise () in
   let empty_message = empty_message in
   let reveal = e_record_ez [("hashable", e_bytes_string "hello world");
                             ("message", empty_message)]
@@ -241,16 +241,16 @@ let reveal ~raise ~add_warning () =
       ~sender:first_contract
       ())
   in
-  expect_eq ~raise ~add_warning ~options program "reveal"
+  expect_eq ~raise ~options program "reveal"
     (e_pair reveal init_storage) (e_pair empty_op_list post_storage)
 
 let main = test_suite "Hashlock (ReasonLIGO)" [
     test_w "compile"                               (compile_main) ;
     test_w "commit"                                (commit) ;
-    test_w "reveal (raise.raise if no commitment)"        (reveal_no_commit) ;
-    test_w "reveal (raise.raise if commit too young)"     (reveal_young_commit) ;
-    test_w "reveal (raise.raise if breaks commitment)"    (reveal_breaks_commit) ;
-    test_w "reveal (raise.raise if wrong bytes for hash)" (reveal_wrong_commit) ;
-    test_w "reveal (raise.raise if attempt to reuse)"     (reveal_no_reuse) ;
+    test_w "reveal (raise.error if no commitment)"        (reveal_no_commit) ;
+    test_w "reveal (raise.error if commit too young)"     (reveal_young_commit) ;
+    test_w "reveal (raise.error if breaks commitment)"    (reveal_breaks_commit) ;
+    test_w "reveal (raise.error if wrong bytes for hash)" (reveal_wrong_commit) ;
+    test_w "reveal (raise.error if attempt to reuse)"     (reveal_no_reuse) ;
     test_w "reveal"                                (reveal) ;
 ]

@@ -14,7 +14,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
   | `Self_ast_typed_bad_contract_io of Ast_typed.expression_variable * Ast_typed.expression
-  | `Self_ast_typed_bad_view_io of Ast_typed.expression_variable * Ast_typed.expression
+  | `Self_ast_typed_bad_view_io of Ast_typed.expression_variable * Location.t
   | `Self_ast_typed_expected_list_operation of Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
     Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
@@ -23,6 +23,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_pattern_matching_anomaly of Location.t
   | `Self_ast_typed_storage_view_contract of Location.t * Ast_typed.expression_variable * Ast_typed.expression_variable * Ast_typed.type_expression * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [`In | `Out]
+  | `Self_ast_typed_annotated_declaration_shadowed of Location.t
 ] [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
 
 let expected_pair_in_contract loc = expected_pair_in loc `Contract
@@ -36,6 +37,10 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Self_ast_typed_annotated_declaration_shadowed (loc) ->
+      Format.fprintf f
+        "@[<hv>%a@.This declaration holds an annotation and is later shadowed.@]"
+        Snippet.pp loc
     | `Self_ast_typed_storage_view_contract (loc,main_name,view_name,ct,vt) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid view argument.@.View '%a' has storage type '%a' and contract '%a' has storage type '%a'.@]"
@@ -91,17 +96,17 @@ let error_ppformat : display_format:string display_format ->
         desc
     | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\". @]"
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\". @]"
         Snippet.pp e.location
         Ast_typed.PP.expression_variable entrypoint
-    | `Self_ast_typed_bad_view_io (entrypoint, e) ->
+    | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
-        Snippet.pp e.location
+        Snippet.pp loc
         Ast_typed.PP.expression_variable entrypoint
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operations list * storage\".@.\
+        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\".@.\
         We expected a list of operations but we got %a@]"
         Snippet.pp e.location
         PP.expression_variable entrypoint
@@ -133,6 +138,14 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Self_ast_typed_annotated_declaration_shadowed (loc) ->
+    let message = `String "This declaration holds an annotation and is later shadowed" in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ]
+    in
+    json_error ~stage ~content
   | `Self_ast_typed_storage_view_contract (loc,main_name,view_name,_,_) ->
     let message = `String "Invalid view argument" in
     let content = `Assoc [
@@ -240,17 +253,15 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-  | `Self_ast_typed_bad_view_io (entrypoint, e) ->
+  | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
     let message = `String "badly typed view" in
     let description = `String "unexpected view type" in
     let entrypoint = Ast_typed.ValueVar.to_yojson entrypoint in
-    let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
     let content = `Assoc [
        ("message", message);
        ("description", description);
        ("entrypoint", entrypoint);
-       ("location", Location.to_yojson e.location);
-       ("type", eptype);
+       ("location", Location.to_yojson loc);
        ]
     in
     json_error ~stage ~content
@@ -306,4 +317,3 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-

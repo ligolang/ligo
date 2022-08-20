@@ -14,22 +14,22 @@ import Test.HUnit (Assertion)
 unit_document_symbols_example_heap :: Assertion
 unit_document_symbols_example_heap = do
   documentSymbolsExampleHeapDriver @Standard
-  --documentSymbolsExampleHeapDriver @FromCompiler  -- FIXME (LIGO-208)
+  --documentSymbolsExampleHeapDriver @FromCompiler  -- FIXME (LIGO-596)
 
 unit_document_symbols_example_access :: Assertion
 unit_document_symbols_example_access = do
   documentSymbolsExampleAccessDriver @Standard
-  --documentSymbolsExampleAccessDriver @FromCompiler  -- FIXME (LIGO-93)
+  --documentSymbolsExampleAccessDriver @FromCompiler  -- FIXME (LIGO-93) (LIGO-505)
 
 unit_document_symbols_example_let_camligo :: Assertion
 unit_document_symbols_example_let_camligo = do
   documentSymbolsExampleLetCamligoDriver @Standard
-  --documentSymbolsExampleLetCamligoDriver @FromCompiler  -- FIXME (LIGO-93)
+  --documentSymbolsExampleLetCamligoDriver @FromCompiler  -- FIXME (LIGO-93) (LIGO-505)
 
 unit_document_symbols_example_let_religo :: Assertion
 unit_document_symbols_example_let_religo = do
   documentSymbolsExampleLetReligoDriver @Standard
-  --documentSymbolsExampleLetReligoDriver @FromCompiler  -- FIXME (LIGO-208)
+  --documentSymbolsExampleLetReligoDriver @FromCompiler  -- FIXME (LIGO-596)
 
 unit_document_symbols_example_let_jsligo :: Assertion
 unit_document_symbols_example_let_jsligo = do

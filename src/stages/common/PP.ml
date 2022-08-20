@@ -27,25 +27,18 @@ let option_public ppf public =
   else
     fprintf ppf ""
 
-let option_thunk ppf thunk =
-  if thunk then
-    fprintf ppf "[@@thunk]"
-  else
-    fprintf ppf ""
-
 let option_hidden ppf hidden =
   if hidden then
     fprintf ppf "[@@hidden]"
   else
     fprintf ppf ""
 
-let e_attributes ppf { inline ; no_mutation ; view ; public ; thunk ; hidden } =
-  fprintf ppf "%a%a%a%a%a%a"
+let e_attributes ppf { inline ; no_mutation ; view ; public ; hidden } =
+  fprintf ppf "%a%a%a%a%a"
     option_inline inline
     option_no_mutation no_mutation
     option_view view
     option_public public
-    option_thunk thunk
     option_hidden hidden
 
 let label ppf (l:label) : unit =
@@ -268,10 +261,9 @@ let lst expression ppf = fun lst ->
 let set expression ppf = fun set ->
   fprintf ppf "set[%a]" (list_sep_d expression) set
 
-let assign expression type_expression ppf = fun {binder=b; access_path; expression=e} ->
-  fprintf ppf "%a%a := %a"
+let assign expression type_expression ppf = fun {binder=b; expression=e} ->
+  fprintf ppf "%a := %a"
     (binder type_expression) b
-    (list_sep_prep (access expression) (const ".")) access_path
     expression e
 
 let for_ expression ppf = fun {binder; start; final; incr; f_body} ->
@@ -303,8 +295,8 @@ let while_ expression ppf = fun {cond; body} ->
 let rec list_pattern type_expression ppf = fun pl ->
   let mpp = match_pattern type_expression in
   match pl with
-  | Cons (pl,pr) -> fprintf ppf "%a :: %a" mpp pl mpp pr
-  | List pl -> fprintf ppf "[ %a ]" (list_sep mpp (tag " ; ")) pl
+  | Cons (pl,pr) -> fprintf ppf "%a::%a" mpp pl mpp pr
+  | List pl -> fprintf ppf "[%a]" (list_sep mpp (tag " ; ")) pl
 
 and match_pattern type_expression ppf = fun p ->
   match p.wrap_content with
@@ -319,7 +311,7 @@ and match_pattern type_expression ppf = fun p ->
     let aux ppf (l,p) =
       fprintf ppf "%a = %a" label l (match_pattern type_expression) p
     in
-    fprintf ppf "{%a}" (list_sep aux (tag " ; ")) x
+    fprintf ppf "{ %a }" (list_sep aux (tag " ; ")) x
 
 let match_case expression type_expression ppf = fun {pattern ; body} ->
   fprintf ppf "@[| %a -> %a@]" (match_pattern type_expression) pattern expression body

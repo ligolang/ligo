@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1820'
+title: Fix abstractors for nested builtin submodules
+type: fixed

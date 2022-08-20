@@ -4,9 +4,8 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - esy
   - pretooling                      # changelog
-  - docker-build                    # build, test, produces binaries/.deb/doc within docker
+  - build                    # build, test, produces binaries/.deb/doc within docker
   - post-build-action               # Post build action
   - docker-extract                  # extract what have been built and expose them as artifact
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
@@ -32,28 +31,6 @@ include:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
-
-esy:
-  tags:
-    - windows
-  stage: esy
-  only:
-  - merge_requests
-  - dev
-  - /^.*-run-dev$/
-  - /^release/.*$/
-  - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - $env:GIT_CURL_VERBOSE = 1
-    - $env:GIT_TRACE = 1
-    - $env:GIT_TRACE_PACKET = 1
-    - git config http.postBuffer 1048576000
-    - npm i -g esy@beta --force
-    - $env:PATH = 'C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
-    - $env:HOME = 'C:/Users/gitlabrunner'
-    - esy -vvv
-    - rm -Recurse -Force _esy
-
 changelog:
   stage: pretooling
   extends : .nix
@@ -84,11 +61,11 @@ to_dos:
   artifacts:
     paths:
       - to-dos.html
-
+  
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
   extends: .submodule-clone
-  stage: docker-build
+  stage: build
   dependencies:
     - changelog
   only:
@@ -98,7 +75,7 @@ docker_build:
     - /^release/.*$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - docker build .
+    - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
       --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
@@ -129,19 +106,16 @@ docker_extract:
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
     - ldd ligo | grep 'statically' # TODO: there is maybe a better way to do that ?
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/coverage .
-    - cat coverage/coverage-summary
     - docker cp -La $(docker create ${LIGO_IMAGE_TAG}):/root/doc .
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
     - nix-build nix -A ligo-deb
     - cp -L result/ligo.deb .
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/highlighting ./highlighting
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     paths:
       - ligo
       - ligo.deb
-      - coverage
       - doc
       - highlighting
 
@@ -172,21 +146,6 @@ xrefcheck:
     - curl -L https://github.com/serokell/xrefcheck/releases/download/v0.1.1/release.tar.gz | tar -zxf - xrefcheck/bin/xrefcheck
     - xrefcheck/bin/xrefcheck
   allow_failure: true #TODO could be better if we do not allow failure for realeases
-
-docker:
-  stage: tooling
-  dependencies:
-    - docker_build
-  only:
-    - merge_requests
-    - dev
-    - /^.*-run-dev$/
-    - /[0-9]+\.[0-9]+\.[0-9]+/
-  script:
-    - ':'
-  artifacts:
-    paths:
-      - ligo.tar.gz
 
 .docker-image:
   stage: push
@@ -268,8 +227,6 @@ pages:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
 
 pages-attempt:
   extends: .website
@@ -307,7 +264,7 @@ deploy-handoff-feature:
   variables:
     APP_NAME: "web-ide-backend"
     NEW_VERSION: "${CI_COMMIT_SHORT_SHA}"
-    ENV: "dev"
+    ENV: "non-prod"
   trigger: 
     project: ligolang/kubernetes-infrastructure
   rules:
@@ -330,6 +287,9 @@ deploy-handoff:
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - tools/webide/**/*
+        - src/test/examples/**/*
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.

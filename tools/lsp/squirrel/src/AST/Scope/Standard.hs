@@ -2,54 +2,49 @@ module AST.Scope.Standard
   ( Standard
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G
 import Data.Foldable (toList)
 import UnliftIO.Exception (Handler (..), catches, displayException)
 
 import AST.Scope.Common
-  ( pattern FindContract, FindFilepath (..), HasScopeForest (..), Includes (..)
-  , ParsedContract (..), MergeStrategy (..), addLigoErrsToMsg, contractNotFoundException
-  , lookupContract, mergeScopeForest
+  ( pattern FindContract, FindFilepath (..), HasScopeForest (..), MergeStrategy (..)
+  , ParsedContract (..), ScopeForest, mergeScopeForest
   )
 import AST.Scope.Fallback (Fallback)
 import AST.Scope.FromCompiler (FromCompiler)
-
 import Cli.Impl
 import Cli.Json (fromLigoErrorToMsg)
 import Cli.Types (HasLigoClient)
-
+import Diagnostic (Message)
 import Log (Log, i)
 import Log qualified
-import ParseTree (srcPath)
-import Util.Graph (traverseAMConcurrently)
 
 data Standard
 
+data FromCompilerStatus
+  = Scopes (FindFilepath ScopeForest)
+  | LigoErrors [Message]
+  | Failure
+
 instance (HasLigoClient m, Log m) => HasScopeForest Standard m where
-  scopeForest tempSettings reportProgress graph = do
-    fbForest <- scopeForest @Fallback tempSettings reportProgress graph
-    tryMergeWithFromCompiler fbForest `catches`
+  scopeContract tempSettings contract = do
+    compilerStatus <- (Scopes <$> scopeContract @FromCompiler tempSettings contract) `catches`
       [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) -> do
           -- catch only errors that we expect from ligo and try to use fallback parser
-          let addErrs = addLigoErrsToMsg (fromLigoErrorToMsg <$> toList errs <> warns)
-          pure $ Includes $ G.gmap addErrs $ getIncludes fbForest
+          pure $ LigoErrors $ fromLigoErrorToMsg <$> toList errs <> warns
       , Handler \(_ :: SomeLigoException) ->
-          pure fbForest
+          pure Failure
       , Handler \(e :: IOError) -> do
         -- Likely LIGO isn't installed or was not found.
         $(Log.err) [i|Couldn't call LIGO, failed with #{displayException e}|]
-        pure fbForest
+        pure Failure
       ]
-    where
-      tryMergeWithFromCompiler fbForest = do
-        lgForest <- scopeForest @FromCompiler tempSettings reportProgress graph
-        merge lgForest fbForest
-
-      merge l f = Includes <$> flip traverseAMConcurrently (getIncludes l) \(FindFilepath lf) -> do
-        let src = _cFile lf
-        let fp = srcPath src
-        FindFilepath ff <- maybe (contractNotFoundException fp f) pure (lookupContract fp f)
-        pure $ FindContract
-          src
-          (mergeScopeForest OnUnion (_cTree ff) (_cTree lf))
-          (_cMsgs ff <> _cMsgs lf)
+    FindFilepath fallback <- scopeContract @Fallback tempSettings contract
+    let src = _cFile $ _getContract contract
+    pure case compilerStatus of
+      Scopes (FindFilepath compiler) -> FindContract src
+        (mergeScopeForest OnUnion (_cTree fallback) (_cTree compiler))
+        (_cMsgs fallback <> _cMsgs compiler)
+      LigoErrors msgs -> FindContract src
+        (_cTree fallback)
+        (msgs <> _cMsgs fallback)
+      Failure -> FindFilepath fallback

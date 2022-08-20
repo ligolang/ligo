@@ -1,10 +1,5 @@
 (*
  This algorithm remove duplicate variables name in the same scope to remove shadowing.
- The algorithm works in two step :
-  1. Replace all variable by adding a "'" at the end. If the variable was already seen, add an extra "'"
-  2. Replace the variables with the most "'" by it's base name (for each similar base name).
-2. is done in order to preserve the exported names for the files
-TODO : actually take into consideration the export
 *)
 open Ast_aggregated
 
@@ -166,11 +161,11 @@ let rec swap_expression : Scope.swapper -> expression -> expression = fun swaper
     let record = self record in
     let update = self update in
     return @@ E_record_update {record;path;update}
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let var = swaper.value var in
     let ascr = Option.map ~f:self_type ascr in
     let expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};expression}
 
 and matching_cases : Scope.swapper -> matching_expr -> matching_expr = fun swaper me ->
   let self = swap_expression swaper in
@@ -297,11 +292,11 @@ let rec expression : Scope.t -> expression -> Scope.t * expression = fun scope e
     let _,record = self record in
     let _,update = self update in
     return @@ E_record_update {record;path;update}
-  | E_assign {binder={var;ascr;attributes};access_path;expression} ->
+  | E_assign {binder={var;ascr;attributes};expression} ->
     let var = Scope.get_value_var scope var in
     let ascr = Option.map ~f:self_type ascr in
     let _,expression = self expression in
-    return @@ E_assign {binder={var;ascr;attributes};access_path;expression}
+    return @@ E_assign {binder={var;ascr;attributes};expression}
 
 and matching_cases : Scope.t -> matching_expr -> matching_expr = fun scope me ->
   let self ?(scope = scope) = expression scope in

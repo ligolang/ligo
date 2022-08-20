@@ -67,9 +67,8 @@ let%expect_test _ =
   ()
 
 let%expect_test _  =
-  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "Tezos.now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
+  run_ligo_good [ "compile" ; "storage" ; contract "timestamp.ligo" ; "(Tezos.get_now ())" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
   [%expect {|
-    Warning: the constant Tezos.now is soon to be deprecated. Use instead Tezos.get_now : unit -> timestamp.
     File "../../test/contracts/timestamp.ligo", line 3, characters 21-22:
       2 |
       3 | function main (const p : unit; const s : storage_) :
@@ -1009,13 +1008,21 @@ let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "amount_lambda.mligo" ] ;
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect {|
-    File "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13:
-      9 |
-     10 | let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
-     11 |   (([] : operation list), (if b then f1 () else f2 ()))
+    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
+      3 |   let amt : tez = Tezos.get_amount () in
+      4 |   fun (x : unit) -> amt
+      5 |
     :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
+
+    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
+      1 | (* should return a constant function *)
+      2 | let f1 (x : unit) : unit -> tez =
+      3 |   let amt : tez = Tezos.get_amount () in
+    :
+    Warning: unused variable "x".
+    Hint: replace it by "_x" to prevent this warning.
 
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
@@ -1033,21 +1040,13 @@ let%expect_test _ =
     Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning.
 
-    File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
-      3 |   let amt : tez = Tezos.get_amount () in
-      4 |   fun (x : unit) -> amt
-      5 |
+    File "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13:
+      9 |
+     10 | let main (b,s : bool * (unit -> tez)) : operation list * (unit -> tez) =
+     11 |   (([] : operation list), (if b then f1 () else f2 ()))
     :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
-      1 | (* should return a constant function *)
-      2 | let f1 (x : unit) : unit -> tez =
-      3 |   let amt : tez = Tezos.get_amount () in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
 
     { parameter bool ;
       storage (lambda unit mutez) ;
@@ -1071,19 +1070,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
   [%expect{|
-    Warning: Error(s) occurred while type checking the produced michelson contract:
-    Ill typed contract:
-      1: { parameter int ;
-      2:   storage address ;
-      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
-    At line 3 characters 38 to 50, value "KT1badaddr"
-    is invalid for type address.
-    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
-      "description":
-        "Failed to read a valid destination from a b58check_encoding data",
-      "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol jakarta
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
 
     Warning: Error(s) occurred while type checking the produced michelson contract:
     Ill typed contract:
@@ -1092,12 +1083,32 @@ let%expect_test _ =
       3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
     At line 3 characters 38 to 50, value "KT1badaddr"
     is invalid for type address.
-    { "id": "proto.013-PtJakart.destination_repr.invalid_b58check",
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
       "description":
         "Failed to read a valid destination from a b58check_encoding data",
       "data": { "input": "KT1badaddr" } }
-    Note: You compiled your contract with protocol ithaca although we internally use protocol jakarta to typecheck the produced Michelson contract
-    so you might want to ignore this error if related to a breaking change in protocol jakarta |}]
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Warning: Error(s) occurred while type checking the produced michelson contract:
+    Ill typed contract:
+      1: { parameter int ;
+      2:   storage address ;
+      3:   code { DROP /* [] */ ; PUSH address "KT1badaddr" ; NIL operation ; PAIR } }
+    At line 3 characters 38 to 50, value "KT1badaddr"
+    is invalid for type address.
+    { "id": "proto.014-PtKathma.destination_repr.invalid_b58check",
+      "description":
+        "Failed to read a valid destination from a b58check_encoding data",
+      "data": { "input": "KT1badaddr" } }
+    Note: You compiled your contract with protocol jakarta although we internally use protocol kathmandu to typecheck the produced Michelson contract
+    so you might want to ignore this error if related to a breaking change in protocol kathmandu |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_timestamp.ligo" ] ;
@@ -1113,9 +1124,9 @@ let%expect_test _ =
 let%expect_test _ =
     run_ligo_good [ "run" ; "dry-run" ; contract "redeclaration.ligo" ; "unit" ; "0" ] ;
     [%expect {|
-      File "../../test/contracts/redeclaration.ligo", line 6, characters 20-21:
-        5 |
-        6 | function foo (const p : unit) : int is 1
+      File "../../test/contracts/redeclaration.ligo", line 1, characters 20-21:
+        1 | function foo (const p : unit) : int is 0
+        2 |
       :
       Warning: unused variable "p".
       Hint: replace it by "_p" to prevent this warning.
@@ -1136,9 +1147,9 @@ let%expect_test _ =
       Warning: unused variable "s".
       Hint: replace it by "_s" to prevent this warning.
 
-      File "../../test/contracts/redeclaration.ligo", line 1, characters 20-21:
-        1 | function foo (const p : unit) : int is 0
-        2 |
+      File "../../test/contracts/redeclaration.ligo", line 6, characters 20-21:
+        5 |
+        6 | function foo (const p : unit) : int is 1
       :
       Warning: unused variable "p".
       Hint: replace it by "_p" to prevent this warning.
@@ -1274,7 +1285,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, cha
   8 |     "un"
   9 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#30. |}] ;
+Not all free variables could be inlined in Tezos.create_contract usage: gen#32. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract_var.mligo" ] ;
   [%expect{|
@@ -1355,10 +1366,26 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#30. 
      11 |     "un"
      12 |   in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#32. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#35. |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "create_contract_no_inline.mligo" ] ;
   [%expect{|
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "p".
+    Hint: replace it by "_p" to prevent this warning.
+
+    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
+      4 |
+      5 | let dummy_contract (p, s : nat * int) : return =
+      6 |  (([] : operation list), foo)
+    :
+    Warning: unused variable "s".
+    Hint: replace it by "_s" to prevent this warning.
+
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
       8 | let main (action, store : int * int) : return =
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
@@ -1383,28 +1410,12 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#30. 
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
-      4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
-      6 |  (([] : operation list), foo)
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 23-24:
-      4 |
-      5 | let dummy_contract (p, s : nat * int) : return =
-      6 |  (([] : operation list), foo)
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 19-89:
       8 | let main (action, store : int * int) : return =
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
      10 |   let toto : operation list = [ op ] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo. |}] ;
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#48. |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "create_contract.mligo" ] ;
   [%expect{|
@@ -1452,6 +1463,12 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#30. 
 
   run_ligo_good [ "compile" ; "contract" ; contract "tuples_no_annotation.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14:
       4 |
       5 | let main = ((p,storage): (parameter, storage)) => {
@@ -1482,9 +1499,9 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#30. 
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile" ; "contract" ; bad_contract "self_type_annotation.ligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation_warn.ligo" ] ;
   [%expect {|
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 10-23:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 10-23:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
@@ -1492,7 +1509,7 @@ let%expect_test _ =
     Warning: unused variable "self_contract".
     Hint: replace it by "_self_contract" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 6, characters 21-22:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 6, characters 21-22:
       5 |
       6 | function main (const p : parameter; const s : storage) : return is
       7 |   {
@@ -1500,14 +1517,15 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
-    File "../../test/contracts/negative/self_type_annotation.ligo", line 8, characters 41-64:
+    File "../../test/contracts/self_type_annotation_warn.ligo", line 8, characters 41-64:
       7 |   {
       8 |     const self_contract: contract(int) = Tezos.self ("%default");
       9 |   }
 
-    Invalid type annotation.
-    "contract (nat)" was given, but "contract (int)" was expected.
-    Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (nat)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}] ;
 
   run_ligo_good [ "compile" ; "contract" ; contract "self_type_annotation.ligo" ] ;
   [%expect{|
@@ -1538,7 +1556,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-2
   5 |   store + 1
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage". |}] ;
+An entrypoint must of type "parameter * storage -> operation list * storage". |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract2.mligo" ] ;
   [%expect {|
@@ -1556,7 +1574,7 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-
   6 |   ("bad",store + 1)
 
 Invalid type for entrypoint "main".
-An entrypoint must of type "parameter * storage -> operations list * storage".
+An entrypoint must of type "parameter * storage -> operation list * storage".
 We expected a list of operations but we got string |}] ;
 
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract3.mligo" ] ;
@@ -1653,6 +1671,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_1.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_1.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1662,6 +1686,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_2.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_2.religo", line 2, characters 29-50:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = big_map (nat, big_map (int, string));
@@ -1672,6 +1702,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_3.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_3.religo", line 1, characters 11-29:
       1 | type bar = big_map (nat, int);
       2 |
@@ -1681,6 +1717,12 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
 
   run_ligo_bad ["compile" ; "contract"; bad_contract "nested_bigmap_4.religo"];
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     File "../../test/contracts/negative/nested_bigmap_4.religo", line 2, characters 25-61:
       1 | /* this should result in an error as nested big_maps are not supported: */
       2 | type storage = map (int, big_map (nat, big_map (int, string)));
@@ -1759,7 +1801,17 @@ const x =  match (+1 , (+2 , +3)) with
 
   run_ligo_bad ["print" ; "ast-typed"; contract "existential.mligo"];
   [%expect {|
-    File "../../test/contracts/existential.mligo", line 2, characters 21-22:
+    File "../../test/contracts/existential.mligo", line 4, characters 23-24:
+      3 | let c : 'a -> 'a = fun x -> 2
+      4 | let d : 'a -> 'b = fun x -> x
+      5 | let e =
+
+    Missing a type annotation for argument "x". File "../../test/contracts/existential.mligo", line 3, characters 23-24:
+      2 | let b : _ ->'b = fun _ -> 2
+      3 | let c : 'a -> 'a = fun x -> 2
+      4 | let d : 'a -> 'b = fun x -> x
+
+    Missing a type annotation for argument "x". File "../../test/contracts/existential.mligo", line 2, characters 21-22:
       1 | let a : 'a = 2
       2 | let b : _ ->'b = fun _ -> 2
       3 | let c : 'a -> 'a = fun x -> 2
@@ -1767,7 +1819,16 @@ const x =  match (+1 , (+2 , +3)) with
     Missing a type annotation for argument "_". |}];
   run_ligo_bad ["print" ; "ast-typed"; bad_contract "missing_funarg_annotation.mligo"];
   [%expect {|
-    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 5, characters 12-13:
+    File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 7, characters 14-15:
+      6 | let a = fun (b,c) -> b
+      7 | let a = fun ((b)) -> b
+
+    Missing a type annotation for argument "b". File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 6, characters 13-14:
+      5 | let a = fun b -> b
+      6 | let a = fun (b,c) -> b
+      7 | let a = fun ((b)) -> b
+
+    Missing a type annotation for argument "b". File "../../test/contracts/negative/missing_funarg_annotation.mligo", line 5, characters 12-13:
       4 | let a ((b)) = b
       5 | let a = fun b -> b
       6 | let a = fun (b,c) -> b
@@ -1870,9 +1931,6 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "B 42n" ; "--init-file" ; contract "warning_layout.mligo" ] ;
   [%expect {|
-    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
-    Hint: You might want to add a type annotation.
-
     File "../../test/contracts/warning_layout.mligo", line 3, character 4 to line 6, character 13:
       2 |   [@layout:comb]
       3 |     B of nat
@@ -1882,6 +1940,10 @@ let%expect_test _ =
       7 |
 
     Warning: layout attribute only applying to B, probably ignored.
+
+
+    Warning: The type of this value is ambiguous: Inferred type is parameter_ok but could be of type parameter_warns.
+    Hint: You might want to add a type annotation.
 
     (Left 42)
   |}]
@@ -1913,6 +1975,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "never.religo" ] ;
   [%expect {|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
       code { UNPAIR ;
@@ -2228,20 +2296,20 @@ let%expect_test _ =
              LAMBDA
                unit
                unit
-               { { /* x */ } }
+               { { /* x#24 */ } }
              /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */ ;
-             { /* f, _ */ } ;
+             { /* f#23, _ */ } ;
              SWAP ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s2, f */ } ;
+             { /* s2#25, f#23 */ } ;
              DUP 2 ;
              SWAP ;
              EXEC ;
-             { /* s3, f */ } ;
+             { /* s3#26, f#23 */ } ;
              EXEC ;
-             { /* s */ } ;
+             { /* s#27 */ } ;
              NIL operation
                  /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */
              /* File "../../test/contracts/noop.mligo", line 6, characters 3-24 */ ;
@@ -2309,17 +2377,17 @@ let%expect_test _ =
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "2",
                         "col": "29" } } }, {}, {}, {},
-              { "environment": [ { "name": "x", "source_type": "0" } ] },
+              { "environment": [ { "name": "x#24", "source_type": "0" } ] },
               { "environment":
-                  [ { "name": "f", "source_type": "1" }, { "source_type": "0" } ] },
-              {}, {}, {}, {}, {},
+                  [ { "name": "f#23", "source_type": "1" },
+                    { "source_type": "0" } ] }, {}, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s2", "source_type": "0" },
-                    { "name": "f", "source_type": "1" } ] }, {}, {}, {}, {},
+                  [ { "name": "s2#25", "source_type": "0" },
+                    { "name": "f#23", "source_type": "1" } ] }, {}, {}, {}, {},
               { "environment":
-                  [ { "name": "s3", "source_type": "0" },
-                    { "name": "f", "source_type": "1" } ] }, {},
-              { "environment": [ { "name": "s", "source_type": "0" } ] },
+                  [ { "name": "s3#26", "source_type": "0" },
+                    { "name": "f#23", "source_type": "1" } ] }, {},
+              { "environment": [ { "name": "s#27", "source_type": "0" } ] },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
@@ -2362,6 +2430,209 @@ const foo =
   let gen#10[@var] = (c)@(unit) in  match gen#10 with
                                      | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
                                      unit |} ]
+
+(* Module being defined does not type with its own type *)
+let%expect_test _ =
+  run_ligo_good [ "print" ; "mini-c" ; contract "modules_env.mligo" ] ;
+  [%expect {|
+    let get_balance#8 =
+      fun _u#598 -> (({ DROP ; BALANCE })@(L(unit)))[@inline] in
+    let get_amount#9 = fun _u#600 -> (({ DROP ; AMOUNT })@(L(unit)))[@inline] in
+    let get_now#10 = fun _u#602 -> (({ DROP ; NOW })@(L(unit)))[@inline] in
+    let get_sender#11 = fun _u#604 -> (({ DROP ; SENDER })@(L(unit)))[@inline] in
+    let get_source#12 = fun _u#606 -> (({ DROP ; SOURCE })@(L(unit)))[@inline] in
+    let get_level#13 = fun _u#608 -> (({ DROP ; LEVEL })@(L(unit)))[@inline] in
+    let get_self_address#14 = fun _u#610 -> (SELF_ADDRESS())[@inline] in
+    let get_chain_id#15 =
+      fun _u#612 -> (({ DROP ; CHAIN_ID })@(L(unit)))[@inline] in
+    let get_total_voting_power#16 =
+      fun _u#614 -> (({ DROP ; TOTAL_VOTING_POWER })@(L(unit)))[@inline] in
+    let get_min_block_time#17 =
+      fun _u#616 -> (({ DROP ; MIN_BLOCK_TIME })@(L(unit)))[@inline] in
+    let voting_power#18 = fun kh#618 -> (({ VOTING_POWER })@(kh#618))[@inline] in
+    let implicit_account#20 =
+      fun kh#622 -> (IMPLICIT_ACCOUNT(kh#622))[@inline] in
+    let pairing_check#24 = fun l#630 -> (({ PAIRING_CHECK })@(l#630))[@inline] in
+    let set_delegate#26 = fun o#634 -> (SET_DELEGATE(o#634))[@inline] in
+    let open_chest#32 =
+      fun ck#650 ->
+      (fun c#651 -> (fun n#652 -> (OPEN_CHEST(ck#650 , c#651 , n#652))))[@inline] in
+    let xor#35 = fun l#661 -> (fun r#662 -> (XOR(l#661 , r#662)))[@inline] in
+    let shift_left#36 =
+      fun l#664 -> (fun r#665 -> (LSL(l#664 , r#665)))[@inline] in
+    let shift_right#37 =
+      fun l#667 -> (fun r#668 -> (LSR(l#667 , r#668)))[@inline] in
+    let length#78 = fun b#798 -> (({ SIZE })@(b#798))[@inline] in
+    let concat#79 =
+      fun b1#800 ->
+      (fun b2#801 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#800 , b2#801))))[@inline] in
+    let sub#80 =
+      fun s#803 ->
+      (fun l#804 ->
+       (fun b#805 ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#803 ,
+                                                                       l#804) ,
+                                                                  b#805)))))[@inline] in
+    let length#85 = fun b#816 -> (({ SIZE })@(b#816))[@inline] in
+    let concat#86 =
+      fun b1#818 ->
+      (fun b2#819 -> (({ UNPAIR ; CONCAT })@(PAIR(b1#818 , b2#819))))[@inline] in
+    let sub#87 =
+      fun s#821 ->
+      (fun l#822 ->
+       (fun b#823 ->
+        (({ UNPAIR ;
+           UNPAIR ;
+           SLICE ;
+           IF_NONE { PUSH string "SLICE" ; FAILWITH } {} })@(PAIR(PAIR(s#821 ,
+                                                                       l#822) ,
+                                                                  b#823)))))[@inline] in
+    let blake2b#88 = fun b#825 -> (({ BLAKE2B })@(b#825))[@inline] in
+    let sha256#89 = fun b#827 -> (({ SHA256 })@(b#827))[@inline] in
+    let sha512#90 = fun b#829 -> (({ SHA512 })@(b#829))[@inline] in
+    let sha3#91 = fun b#831 -> (({ SHA3 })@(b#831))[@inline] in
+    let keccak#92 = fun b#833 -> (({ KECCAK })@(b#833))[@inline] in
+    let hash_key#93 = fun k#835 -> (({ HASH_KEY })@(k#835))[@inline] in
+    let check#94 =
+      fun k#837 ->
+      (fun s#838 ->
+       (fun b#839 ->
+        (({ UNPAIR ; UNPAIR ; CHECK_SIGNATURE })@(PAIR(PAIR(k#837 , s#838) ,
+                                                       b#839)))))[@inline] in
+    let assert =
+      fun b#841 ->
+      (({ IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } })@(b#841))[@inline] in
+    let abs = fun i#847 -> (({ ABS })@(i#847))[@inline] in
+    let is_nat = fun i#849 -> (({ ISNAT })@(i#849))[@inline] in
+    let true = TRUE()[@inline] in
+    let false = FALSE()[@inline] in
+    let unit = UNIT()[@inline] in
+    let assert_with_error =
+      fun b#857 ->
+      (fun s#858 ->
+       (({ UNPAIR ; IF { DROP ; UNIT } { FAILWITH } })@(PAIR(b#857 , s#858))))[@inline] in
+    let poly_stub_39 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_38 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_37 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_36 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_35 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_34 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_33 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_32 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_31 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_30 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_29 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_28 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_27 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_26 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_25 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_24 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_23 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_22 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_21 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_20 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_19 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_18 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_17 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_16 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_15 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_14 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_13 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_12 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_11 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_10 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_9 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_8 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_7 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_6 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_5 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_4 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_3 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_2 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let poly_stub_1 = fun x#869 -> (({ FAILWITH })@(x#869))[@inline] in
+    let get_total_voting_power#99 =
+      fun _u#878 -> ((poly_stub_39)@(L(unit)))[@inline] in
+    let set_source#102 = fun _a#884 -> ((poly_stub_38)@(L(unit)))[@inline] in
+    let get_storage_of_address#103 =
+      fun _a#886 -> ((poly_stub_37)@(L(unit)))[@inline] in
+    let get_balance#104 = fun _a#888 -> ((poly_stub_36)@(L(unit)))[@inline] in
+    let print#105 = fun _v#890 -> ((poly_stub_35)@(L(unit)))[@inline] in
+    let eprint#106 = fun _v#892 -> ((poly_stub_34)@(L(unit)))[@inline] in
+    let get_voting_power#107 =
+      fun _kh#894 -> ((poly_stub_33)@(L(unit)))[@inline] in
+    let nth_bootstrap_contract#108 =
+      fun _i#896 -> ((poly_stub_32)@(L(unit)))[@inline] in
+    let nth_bootstrap_account#109 =
+      fun _i#898 -> ((poly_stub_31)@(L(unit)))[@inline] in
+    let get_bootstrap_account#110 =
+      fun _n#900 -> ((poly_stub_30)@(L(unit)))[@inline] in
+    let last_originations#112 =
+      fun _u#904 -> ((poly_stub_29)@(L(unit)))[@inline] in
+    let new_account#114 = fun _u#908 -> ((poly_stub_28)@(L(unit)))[@inline] in
+    let bake_until_n_cycle_end#116 =
+      fun _n#912 -> ((poly_stub_27)@(L(unit)))[@inline] in
+    let register_delegate#118 =
+      fun _kh#916 -> ((poly_stub_26)@(L(unit)))[@inline] in
+    let register_constant#119 =
+      fun _m#918 -> ((poly_stub_25)@(L(unit)))[@inline] in
+    let constant_to_michelson_program#121 =
+      fun _s#922 -> ((poly_stub_24)@(L(unit)))[@inline] in
+    let restore_context#122 =
+      fun _u#924 -> ((poly_stub_23)@(L(unit)))[@inline] in
+    let save_context#123 = fun _u#926 -> ((poly_stub_22)@(L(unit)))[@inline] in
+    let drop_context#124 = fun _u#928 -> ((poly_stub_21)@(L(unit)))[@inline] in
+    let set_baker_policy#127 =
+      fun _bp#934 -> ((poly_stub_20)@(L(unit)))[@inline] in
+    let set_baker#128 = fun _a#936 -> ((poly_stub_19)@(L(unit)))[@inline] in
+    let size#129 = fun _c#938 -> ((poly_stub_18)@(L(unit)))[@inline] in
+    let read_contract_from_file#131 =
+      fun _fn#942 -> ((poly_stub_17)@(L(unit)))[@inline] in
+    let chr#132 = fun _n#944 -> ((poly_stub_16)@(L(unit)))[@inline] in
+    let nl#133 = L("NEWLINE")[@inline] in
+    let println#134 = fun _v#947 -> ((poly_stub_15)@(L(unit)))[@inline] in
+    let transfer#135 =
+      fun _a#949 -> (fun _s#950 -> (fun _t#951 -> ((poly_stub_14)@(L(unit)))))[@inline] in
+    let transfer_exn#136 =
+      fun _a#953 -> (fun _s#954 -> (fun _t#955 -> ((poly_stub_13)@(L(unit)))))[@inline] in
+    let reset_state#138 =
+      fun _n#959 -> (fun _l#960 -> ((poly_stub_12)@(L(unit))))[@inline] in
+    let reset_state_at#139 =
+      fun _t#962 -> (fun _n#963 -> (fun _l#964 -> ((poly_stub_11)@(L(unit)))))[@inline] in
+    let save_mutation#142 =
+      fun _s#973 -> (fun _m#974 -> ((poly_stub_10)@(L(unit))))[@inline] in
+    let sign#145 =
+      fun _sk#982 -> (fun _d#983 -> ((poly_stub_9)@(L(unit))))[@inline] in
+    let add_account#146 =
+      fun _s#985 -> (fun _k#986 -> ((poly_stub_8)@(L(unit))))[@inline] in
+    let baker_account#147 =
+      fun _p#988 -> (fun _o#989 -> ((poly_stub_7)@(L(unit))))[@inline] in
+    let create_chest#149 =
+      fun _b#994 -> (fun _n#995 -> ((poly_stub_6)@(L(unit))))[@inline] in
+    let create_chest_key#150 =
+      fun _c#997 -> (fun _n#998 -> ((poly_stub_5)@(L(unit))))[@inline] in
+    let michelson_equal#153 =
+      fun _m1#1008 -> (fun _m2#1009 -> ((poly_stub_4)@(L(unit))))[@inline] in
+    let originate_contract#155 =
+      fun _c#1014 -> (fun _s#1015 -> (fun _t#1016 -> ((poly_stub_3)@(L(unit)))))[@inline] in
+    let compile_contract_from_file#157 =
+      fun _fn#1022 -> (fun _e#1023 -> (fun _v#1024 -> ((poly_stub_2)@(L(unit)))))[@inline] in
+    let originate_from_file#158 =
+      fun _fn#1026 ->
+      (fun _e#1027 ->
+       (fun _v#1028 ->
+        (fun _s#1029 -> (fun _t#1030 -> ((poly_stub_1)@(L(unit)))))))[@inline] in
+    let x#159 = L(54) in let y#160 = x#159 in L(unit) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "storage" ; contract "module_contract_simple.mligo" ; "999" ] ;
+  [%expect{| 999 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "parameter" ; contract "module_contract_simple.mligo" ; "Add 999" ] ;
+  [%expect{| (Left (Left 999)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "storage" ; contract "module_contract_complex.mligo" ; "{ number = 999 ; previous_action = Reset }" ] ;
@@ -2483,6 +2754,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "increment.religo" ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2499,6 +2776,26 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
              NIL operation ;
              PAIR } } |}]
+
+(* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
+let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "get_capitalized_entrypoint.mligo" ] ;
+  [%expect{|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             SENDER ;
+             CONTRACT %Upper unit ;
+             IF_NONE
+               { PUSH string "lol" ; FAILWITH }
+               { PUSH mutez 0 ;
+                 UNIT ;
+                 TRANSFER_TOKENS ;
+                 UNIT ;
+                 NIL operation ;
+                 DIG 2 ;
+                 CONS ;
+                 PAIR } } } |}]
 
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
@@ -2661,6 +2958,12 @@ Toplevel let declaration are silently change to const declaration.
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
   [%expect{|
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
+Reasonligo is depreacted, support will be dropped in a few versions.
+
 44 |}]
 
 (* check compiling many (more than 10) views *)
@@ -2670,17 +2973,17 @@ let%expect_test _ =
 { parameter unit ;
   storage nat ;
   code { CDR ; NIL operation ; PAIR } ;
-  view "view_11" unit int { CDR ; PUSH int 11 ; ADD } ;
-  view "view_10" unit int { CDR ; PUSH int 10 ; ADD } ;
-  view "view_9" unit int { CDR ; PUSH int 9 ; ADD } ;
-  view "view_8" unit int { CDR ; PUSH int 8 ; ADD } ;
-  view "view_7" unit int { CDR ; PUSH int 7 ; ADD } ;
-  view "view_6" unit int { CDR ; PUSH int 6 ; ADD } ;
-  view "view_5" unit int { CDR ; PUSH int 5 ; ADD } ;
-  view "view_4" unit int { CDR ; PUSH int 4 ; ADD } ;
-  view "view_3" unit int { CDR ; PUSH int 3 ; ADD } ;
+  view "view_1" unit int { CDR ; PUSH int 1 ; ADD } ;
   view "view_2" unit int { CDR ; PUSH int 2 ; ADD } ;
-  view "view_1" unit int { CDR ; PUSH int 1 ; ADD } } |}]
+  view "view_3" unit int { CDR ; PUSH int 3 ; ADD } ;
+  view "view_4" unit int { CDR ; PUSH int 4 ; ADD } ;
+  view "view_5" unit int { CDR ; PUSH int 5 ; ADD } ;
+  view "view_6" unit int { CDR ; PUSH int 6 ; ADD } ;
+  view "view_7" unit int { CDR ; PUSH int 7 ; ADD } ;
+  view "view_8" unit int { CDR ; PUSH int 8 ; ADD } ;
+  view "view_9" unit int { CDR ; PUSH int 9 ; ADD } ;
+  view "view_10" unit int { CDR ; PUSH int 10 ; ADD } ;
+  view "view_11" unit int { CDR ; PUSH int 11 ; ADD } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "call_view_impure.mligo" ] ;

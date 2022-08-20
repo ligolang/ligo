@@ -68,6 +68,7 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Katip (LogItem (..), PayloadSelection (..), ToObject, Verbosity (..))
 import UnliftIO.Exception (Exception (..), throwIO)
+import UnliftIO.MVar (modifyMVar, newMVar)
 import Witherable (ordNub)
 
 import Duplo.Lattice
@@ -81,13 +82,15 @@ import AST.Skeleton
   , TypeVariableName (..), withNestedLIGO
   )
 import Cli.Types
+import Diagnostic (Message)
+import Log qualified
 import ParseTree
-import Parser
+import Parser (Info, LineMarker, ParsedInfo)
 import Product
-import Progress (ProgressCallback)
+import Progress (Progress (..), ProgressCallback, (%))
 import Range
 import Util (findKey, unionOrd)
-import Util.Graph (traverseAMConcurrently)
+import Util.Graph (forAMConcurrently, traverseAMConcurrently)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.
@@ -141,6 +144,22 @@ class HasLigoClient m => HasScopeForest impl m where
     -> Includes ParsedContractInfo
     -- ^ Inclusion graph of the parsed contracts.
     -> m (Includes (FindFilepath ScopeForest))
+  scopeForest tempSettings reportProgress (Includes graph) = Includes <$> do
+    let nContracts = G.vertexCount graph
+    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
+    -- 'StateT'. It's best to avoid using this class for stateful monads.
+    counter <- newMVar 0
+    forAMConcurrently graph \contract -> do
+      n <- modifyMVar counter (pure . (succ &&& id))
+      reportProgress $ Progress (n % nContracts) [Log.i|Adding scopes for #{contractFile contract}|]
+      scopeContract @impl tempSettings contract
+
+  scopeContract
+    :: TempSettings
+    -- ^ Settings for the temporary directory to call LIGO.
+    -> ParsedContractInfo
+    -- ^ Inclusion graph of the parsed contracts.
+    -> m (FindFilepath ScopeForest)
 
 data Level = TermLevel | TypeLevel
   deriving stock (Eq, Show)

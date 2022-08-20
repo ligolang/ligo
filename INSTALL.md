@@ -64,3 +64,17 @@ For tests:
    ```
 
 For an example Ubuntu-based Docker image, see [`Dockerfile.ubuntu`][./Dockerfile.ubuntu].
+
+## MacOS
+1. Please first upgrade the default `make` and `difftools` installations by executing:
+   ```sh
+   brew install make
+   echo -n 'export PATH = ${HOMEBREW_PREFIX}/opt/make/libexec/gnubin:$PATH' >> ~/.zshenv
+   ```
+   and
+   ```sh
+   brew install difftools
+   echo -n 'export PATH = ${HOMEBREW_PREFIX}/opt/difftools/bin:$PATH' >> ~/.zshenv
+   ```
+
+   Restart your shell or execute `source ~/.zshenv` to ensure these changes take effect. 

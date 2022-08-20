@@ -2,8 +2,8 @@ open Test_helpers
 open Ast_imperative
 
 let get_program = get_program "./contracts/id.ligo"
-let compile_main ~raise ~add_warning () =
-  Test_helpers.compile_main ~raise ~add_warning "./contracts/id.ligo" ()
+let compile_main ~raise () =
+  Test_helpers.compile_main ~raise "./contracts/id.ligo" ()
 
 let (first_owner , first_contract) =
   let open Proto_alpha_utils.Memory_proto_alpha in
@@ -11,8 +11,8 @@ let (first_owner , first_contract) =
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
-let buy_id ~raise ~add_warning () =
-  let program    = get_program ~raise ~add_warning () in
+let buy_id ~raise () =
+  let program    = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -44,13 +44,13 @@ let buy_id ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~add_warning ~options program "buy"
+  let () = expect_eq ~raise ~options program "buy"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
-let buy_id_sender_addr ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let buy_id_sender_addr ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -81,14 +81,14 @@ let buy_id_sender_addr ~raise ~add_warning () =
                                  ("name_price", e_mutez 1000000) ;
                                  ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~add_warning ~options program "buy"
+  let () = expect_eq ~raise ~options program "buy"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
 (* Test that contract fails if we attempt to buy an ID for the wrong amount *)
-let buy_id_wrong_amount ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let buy_id_wrong_amount ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -108,13 +108,13 @@ let buy_id_wrong_amount ~raise ~add_warning () =
   in
   let param = e_record_ez [("profile", owner_website) ;
                            ("initial_controller", (e_some (e_address new_addr)))] in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "buy"
+  let () = expect_string_failwith ~raise ~options program "buy"
       (e_pair param storage)
       "Incorrect amount paid."
   in ()
 
-let update_details_owner ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_details_owner ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -153,13 +153,13 @@ let update_details_owner ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                        ("new_profile", e_some details) ;
                        ("new_controller", e_some (e_address new_addr))] in
-  let () = expect_eq ~raise ~add_warning ~options program "update_details"
+  let () = expect_eq ~raise ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
-let update_details_controller ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_details_controller ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -199,14 +199,14 @@ let update_details_controller ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_eq ~raise ~add_warning ~options program "update_details"
+  let () = expect_eq ~raise ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
-let update_details_nonexistent ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_details_nonexistent ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -236,14 +236,14 @@ let update_details_nonexistent ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 2) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "update_details"
+  let () = expect_string_failwith ~raise ~options program "update_details"
       (e_pair param storage)
       "This ID does not exist."
   in ()
 
 (* Test that contract fails when we attempt to update details from wrong addr *)
-let update_details_wrong_addr ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_details_wrong_addr ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -272,14 +272,14 @@ let update_details_wrong_addr ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 0) ;
                            ("new_profile", e_some details) ;
                            ("new_controller", e_some (e_address owner_addr))] in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "update_details"
+  let () = expect_string_failwith ~raise ~options program "update_details"
       (e_pair param storage)
       "You are not the owner or controller of this ID."
   in ()
 
 (* Test that giving none on both profile and controller address is a no-op *)
-let update_details_unchanged ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_details_unchanged ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -308,13 +308,13 @@ let update_details_unchanged ~raise ~add_warning () =
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_profile", e_typed_none (t_bytes ())) ;
                            ("new_controller", e_typed_none (t_address ()))] in
-  let () = expect_eq ~raise ~add_warning ~options program "update_details"
+  let () = expect_eq ~raise ~options program "update_details"
       (e_pair param storage)
       (e_pair (e_list []) storage)
   in ()
 
-let update_owner ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_owner ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -352,14 +352,14 @@ let update_owner ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 1) ;
                            ("new_owner", e_address owner_addr)] in
-  let () = expect_eq ~raise ~add_warning ~options program "update_owner"
+  let () = expect_eq ~raise ~options program "update_owner"
       (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ()
 
 (* Test that contract fails when we attempt to update owner of nonexistent ID *)
-let update_owner_nonexistent ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_owner_nonexistent ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -387,14 +387,14 @@ let update_owner_nonexistent ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 2);
                            ("new_owner", e_address new_addr)] in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "update_owner"
+  let () = expect_string_failwith ~raise ~options program "update_owner"
       (e_pair param storage)
       "This ID does not exist."
   in ()
 
 (* Test that contract fails when we attempt to update owner from non-owner addr *)
-let update_owner_wrong_addr ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let update_owner_wrong_addr ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -422,13 +422,13 @@ let update_owner_wrong_addr ~raise ~add_warning () =
   in
   let param = e_record_ez [("id", e_int 0);
                            ("new_owner", e_address new_addr)] in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "update_owner"
+  let () = expect_string_failwith ~raise ~options program "update_owner"
       (e_pair param storage)
       "You are not the owner of this ID."
   in ()
 
-let skip ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let skip ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -460,14 +460,14 @@ let skip ~raise ~add_warning () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_eq ~raise ~add_warning ~options program "skip_"
+  let () = expect_eq ~raise ~options program "skip_"
       (e_pair (e_unit ()) storage)
       (e_pair (e_list []) new_storage)
   in ()
 
 (* Test that contract fails if we try to skip without paying the right amount *)
-let skip_wrong_amount ~raise ~add_warning () =
-  let program = get_program ~raise ~add_warning () in
+let skip_wrong_amount ~raise () =
+  let program = get_program ~raise () in
   let owner_addr = addr 5 in
   let owner_website = e_bytes_string "ligolang.org" in
   let id_details_1 = e_record_ez [("owner", e_address owner_addr) ;
@@ -492,7 +492,7 @@ let skip_wrong_amount ~raise ~add_warning () =
                              ("name_price", e_mutez 1000000) ;
                              ("skip_price", e_mutez 1000000) ; ]
   in
-  let () = expect_string_failwith ~raise ~add_warning ~options program "skip_"
+  let () = expect_string_failwith ~raise ~options program "skip_"
       (e_pair (e_unit ()) storage)
       "Incorrect amount paid."
   in ()

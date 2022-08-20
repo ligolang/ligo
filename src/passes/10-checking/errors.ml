@@ -10,7 +10,12 @@ let type_improve t =
   let make_type (module_path, element) =
     match module_path with
       [] -> (t_variable element ())
-    | _ -> t_module_accessor { module_path ; element } () in
+    | _ ->
+      let open Simple_utils.PP_helpers in
+      let x = Format.asprintf "%a" (list_sep ModuleVar.pp (tag ".")) module_path in
+      let y = Format.asprintf "%a" TypeVar.pp element in
+      (t_variable (TypeVar.of_input_var (x^"."^y)) ())
+  in
   match t.type_content with
   | T_constant { parameters ; _ } when List.length parameters = 0 -> t
   | _ ->
@@ -72,6 +77,8 @@ type typer_error = [
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
+  | `Typer_pattern_missing_cases of Location.t * (Syntax_types.t option) * Ast_core.type_expression Ast_core.pattern list
+  | `Typer_pattern_redundant_case of Location.t
   | `Typer_redundant_pattern of Location.t
   | `Typer_wrong_type_for_unit_pattern of Location.t * Ast_typed.type_expression
   | `Typer_constant_since_protocol of Location.t * string * Environment.Protocols.t
@@ -289,6 +296,18 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Redundant pattern matching@]"
         Snippet.pp loc
+    | `Typer_pattern_missing_cases (loc, syntax, ps) ->
+      let ps = List.fold ps ~init:"" ~f:(fun s p ->
+        let s' = Desugaring.Decompiler.decompile_pattern_to_string ~syntax p in
+        s ^ "- " ^ s' ^ "\n") in
+      Format.fprintf f
+        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples of cases that are not matched:@.%s@]"
+        Snippet.pp loc
+        ps
+    | `Typer_pattern_redundant_case loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Error : this match case is unused.@]"
+        Snippet.pp loc
     | `Typer_constant_since_protocol (loc, constant, protocol) ->
       let protocol_name = Environment.Protocols.variant_to_string protocol in
       Format.fprintf f
@@ -504,8 +523,8 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_assert_equal (loc,expected,actual) ->
     let message = `String "bad types" in
-    let expected = Ast_typed.Yojson.type_expression expected in
-    let actual = Ast_typed.Yojson.type_expression actual in
+    let expected = Ast_typed.Yojson.type_expression (type_improve expected) in
+    let actual = Ast_typed.Yojson.type_expression (type_improve actual) in
     let content = `Assoc [
       ("location", Location.to_yojson loc);
       ("message" , message);
@@ -644,6 +663,23 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("type", t);
       ("pattern", pattern);
       ("location", Location.to_yojson p.location);
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_missing_cases (loc,syntax,ps) ->
+    let message = `String "pattern-matching is not exhaustive." in
+    let patterns = List.map ps ~f:(fun p -> 
+      `String (Desugaring.Decompiler.decompile_pattern_to_string ~syntax p)) in
+    let content = `Assoc [
+      ("message", message);
+      ("patterns", `List patterns);
+      ("location", Location.to_yojson loc);
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_redundant_case loc -> 
+    let message = `String "redundant case in pattern-matching" in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
     ] in
     json_error ~stage ~content
   | `Typer_constant_since_protocol (loc, constant, protocol) ->

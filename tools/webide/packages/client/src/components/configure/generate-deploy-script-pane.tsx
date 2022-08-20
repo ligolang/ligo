@@ -35,17 +35,23 @@ export const GenerateDeployScriptPane = () => {
     state => state.generateDeployScript && state.generateDeployScript.storage
   );
 
+  let protocol = useSelector<AppState, GenerateDeployScriptState['protocol']>(
+    state => state.generateDeployScript && state.generateDeployScript.protocol
+  );
+
   return (
     <Container>
       <Group>
       <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
-        <SelectCommand
+      <SelectCommand
           id="protocol-select"
-          value={protocolType.Ithaca}
-          onChange={ev =>
-            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          value={protocol}
+          onChange={selectedProtocol => {
+            protocol=selectedProtocol
+            dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
-          <Option value={protocolType.Ithaca}>Ithaca</Option>
+          <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <Label>Tool</Label>
         <Select

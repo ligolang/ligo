@@ -1,0 +1,11 @@
+let main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+  let s2 = 0;
+
+  if (s > 10) {
+    s2 = s * 2
+  } else {
+    s2 = s / 2
+  }
+
+  return [(list([]) as list<operation>), s2]
+};

@@ -77,14 +77,11 @@ let michelson_base : (type_variable * type_expression) list = [
     (v_external_int       , t_abstraction1 (External "int")           star) ;
     (v_external_ediv      , t_abstraction2 (External "ediv")     star star) ;
     (v_external_u_ediv    , t_abstraction2 (External "u_ediv")     star star) ;
-]
-
-let jakarta_extra : (type_variable * type_expression) list = [
-    (v_tx_rollup_l2_address, t_tx_rollup_l2_address ())
+    (v_tx_rollup_l2_address, t_tx_rollup_l2_address ()             ) ;
 ]
 
 let base = basic_types @ michelson_base
-let jakarta_types = base @ jakarta_extra
+let jakarta_types = base
 
 let meta_ligo_types : (type_variable * type_expression) list -> (type_variable * type_expression) list =
   fun proto_types ->
@@ -93,14 +90,15 @@ let meta_ligo_types : (type_variable * type_expression) list -> (type_variable *
     (v_typed_address      , t_abstraction2 Typed_address star star) ;
     (v_mutation           , t_constant Mutation                 []) ;
     (v_michelson_contract , t_constant Michelson_contract       []) ;
+    (v_gen                , t_abstraction1 Gen star               ) ;
   ]
 
 let of_list_type : (type_variable * type_expression) list -> t = List.map ~f:(fun (type_binder,type_expr) -> Location.wrap @@ Ast_typed.Declaration_type {type_binder;type_expr;type_attr={public=true;hidden=false}})
 
 let default : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type base
   | Protocols.Jakarta -> of_list_type jakarta_types
+  | Protocols.Kathmandu -> of_list_type jakarta_types
 
 let default_with_test : Protocols.t -> t = function
-  | Protocols.Ithaca -> of_list_type (meta_ligo_types base)
   | Protocols.Jakarta -> of_list_type (meta_ligo_types jakarta_types)
+  | Protocols.Kathmandu -> of_list_type (meta_ligo_types jakarta_types)

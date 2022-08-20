@@ -188,14 +188,12 @@ module.exports = grammar({
     michelson_interop: $ => seq(
       '(Michelson',
         seq(
-          field("code", $.michelson_code),
+          field("code", $.Verbatim),
           'as',
           field("type", $._type_expr),
         ),
       ')'
     ),
-
-    michelson_code: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
 
     module_access: $ => seq(
       common.sepBy1('.', field("path", $.ModuleName)),
@@ -505,6 +503,7 @@ module.exports = grammar({
     Int: $ => $._Int,
     Nat: $ => seq($._Int, 'as', 'nat'),
     Tez: $ => seq($._Int, 'as', choice('tez', 'mutez')),
+    Verbatim: $ => seq('`', repeat(/([^\|]|\|[^}])/), '`'),
     Bytes: $ => /0x[0-9a-fA-F]+/,
 
     _Name: $ => /[a-z][a-zA-Z0-9_]*|_(?:_?[a-zA-Z0-9])+/,

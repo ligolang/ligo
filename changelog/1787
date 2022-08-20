@@ -1,0 +1,7 @@
+author: er433
+description: '### New `Test` function: `drop_context`\n\nA new `val Test.drop_context
+  : unit -> unit` in the testing framework is introduced. It allows to drop contexts
+  from the context stack.'
+merge_request: '1787'
+title: 'Testing framework: add missing `Test.drop_context`'
+type: added

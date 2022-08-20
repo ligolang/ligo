@@ -15,8 +15,8 @@ let positive_contract_tests =
   List.filter ~f:(fun path -> not (ends_with ".md" path)) |>
   List.map
     ~f:(fun path ->
-      let run ~raise ~add_warning () =
-        Test_helpers.compile_main ~raise ~add_warning path ()
+      let run ~raise () =
+        Test_helpers.compile_main ~raise path ()
       in
       test_w ("src/test/"^path) run)
 

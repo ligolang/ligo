@@ -37,8 +37,8 @@
       "api/cheat-sheet"
     ],
     "Command Line Options": [
-      "manpages/ligo",
       "manpages/changelog",
+      "manpages/add-user",
       "manpages/compile constant",
       "manpages/compile contract",
       "manpages/compile expression",
@@ -47,11 +47,14 @@
       "manpages/info get-scope",
       "manpages/info list-declarations",
       "manpages/info measure-contract",
+      "manpages/init contract",
+      "manpages/init library",
       "manpages/install",
+      "manpages/ligo",
+      "manpages/login",
       "manpages/mutate ast",
       "manpages/mutate cst",
       "manpages/print ast-aggregated",
-      "manpages/print ast-combined",
       "manpages/print ast-core",
       "manpages/print ast-imperative",
       "manpages/print ast-sugar",
@@ -61,6 +64,7 @@
       "manpages/print mini-c",
       "manpages/print preprocessed",
       "manpages/print pretty",
+      "manpages/publish",
       "manpages/repl",
       "manpages/run dry-run",
       "manpages/run evaluate-call",
@@ -87,7 +91,8 @@
     "Protocol Upgrades": [
       "protocol/hangzhou",
       "protocol/ithaca",
-      "protocol/jakarta"
+      "protocol/jakarta",
+      "protocol/kathmandu"
     ]
   },
   "contributors-docs": {
@@ -128,6 +133,15 @@
     ],
     "Optimisation": [
       "tutorials/optimisation/optimisation"
+    ]
+  },
+  "faq": {
+    "FAQ": [
+      "faq/intro",
+      "faq/convert-address-to-contract",
+      "faq/polymorphic-comparison",
+      "faq/catch-error-view",
+      "faq/cameligo-ocaml-syntax-diff"
     ]
   }
 }

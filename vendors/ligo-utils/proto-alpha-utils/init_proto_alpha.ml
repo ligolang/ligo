@@ -4,6 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
+module Proto_env = Tezos_protocol_environment_014_PtKathma
 open Error_monad
 open Protocol
 
@@ -43,12 +44,12 @@ module Context_init = struct
 
   let protocol_param_key = [ "protocol_parameters" ]
 
-  let check_constants_consistency constants : unit tzresult Lwt.t =
+  let check_constants_consistency (constants:Alpha_context.Constants.Parametric.t) : unit tzresult Lwt.t =
     let open Alpha_context.Constants in
     let open Error_monad in
     let open Lwt_result_syntax in
-    let { blocks_per_cycle ; blocks_per_commitment ;
-      blocks_per_stake_snapshot ; _ } = constants in
+    let Parametric.({ blocks_per_cycle ; blocks_per_commitment ;
+      blocks_per_stake_snapshot ; _ }) = constants in
     let* () = Error_monad.unless (blocks_per_commitment <= blocks_per_cycle)
       (fun () -> failwith "Inconsistent constants : blocks per commitment must be \
                            less than blocks per cycle")
@@ -63,7 +64,7 @@ module Context_init = struct
         constants
         header
         commitments
-        initial_accounts
+        (initial_accounts : (account * Alpha_context.Tez.t) trace)
         security_deposit_ramp_up_cycles
         no_reward_cycles
     =
@@ -72,7 +73,7 @@ module Context_init = struct
     let open Lwt in
     let bootstrap_accounts =
       List.mapi ~f:(fun i ({ pk ; pkh ; _ }, amount) ->
-          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = if i > 0 then None else Some pk ; amount }
+          Alpha_context.Parameters.{ public_key_hash = pkh ; public_key = if i > 0 then None else Some pk ; amount ; delegate_to = None }
         ) initial_accounts
     in
     let json =
@@ -90,8 +91,8 @@ module Context_init = struct
     let proto_params =
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
-    let* ctxt = Tezos_protocol_environment.Context.(
-      add Memory_context.empty ["version"] (MBytes.of_string "genesis")
+    let* ctxt = Tezos_protocol_environment.(
+      Context.add Memory_context.empty ["version"] (MBytes.of_string "genesis")
       )
     in
     let* ctxt = Tezos_protocol_environment.Context.(
@@ -99,7 +100,7 @@ module Context_init = struct
       )
     in
     let* context =
-      let+ x = Main.init ctxt header in
+      let+ x = Main.init Proto_env.Chain_id.zero ctxt header in
       Alpha_environment.wrap_tzresult x
     in
     return context
@@ -115,7 +116,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.parametric = Tezos_protocol_013_PtJakart_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.Parametric.t = Tezos_protocol_014_PtKathma_parameters.Default_parameters.constants_test in
     let* () = check_constants_consistency constants in
     let hash =
       Alpha_environment.Block_hash.of_b58check_exn "BLockGenesisGenesisGenesisGenesisGenesisCCCCCeZiLHU"
@@ -144,7 +145,7 @@ module Context_init = struct
     let open Lwt_result_syntax in
     let accounts = generate_accounts n in
     let contracts = List.map ~f:(fun (a, _) ->
-                        Alpha_context.Contract.implicit_contract (a.pkh)) accounts in
+                        Alpha_context.Contract.Implicit (a.pkh)) accounts in
     let* ctxt =
       genesis
         ?commitments

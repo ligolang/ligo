@@ -1,5 +1,5 @@
 [submodule "vendors/tezos-ligo"]
 	path = vendors/tezos-ligo
 	url = https://github.com/ligolang/tezos-ligo.git
-	branch = laucans/v13-windows-compat
+	branch = v14-expose-balance-error
 
