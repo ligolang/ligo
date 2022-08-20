@@ -8,7 +8,7 @@ import {
 } from "~/base-components/code-editor";
 import compilerManager, { CompilerTerminal } from "~/ligo-components/eth-compiler";
 import platform from "~/base-components/platform";
-import { ProjectManagerLocal } from "../ProjectManager";
+import { ExtendedProjectManager } from "../ProjectManager";
 
 import ProjectToolbar from "./ProjectToolbar";
 import ProjectSettingsTab from "./ProjectSettingsTab";
@@ -93,7 +93,7 @@ const makeContextMenu = (contextMenu, projectManager) => (node) => {
 };
 
 WorkspaceLoader.defaultProps = {
-  ProjectManagerLocal,
+  ExtendedProjectManager,
   compilerManager,
   ProjectToolbar,
   CompilerTerminal,
