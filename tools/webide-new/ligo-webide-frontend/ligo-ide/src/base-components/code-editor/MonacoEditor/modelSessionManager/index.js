@@ -182,7 +182,7 @@ class ModelSessionManager {
       if (!filePath.startsWith("custom:")) {
         let content = "";
         try {
-          content = await this.projectManager.readFile(filePath);
+          content = await fileOps.readFile(filePath);
         } catch (e) {
           console.warn(e);
         }
@@ -212,7 +212,7 @@ class ModelSessionManager {
       this.sessions[filePath].dismissTopbar();
       this._editorContainer.refresh();
     }
-    await this.projectManager.saveFile(filePath, this.sessions[filePath].value);
+    await fileOps.writeFile(filePath, this.sessions[filePath].value);
     this._editorContainer.fileSaved(filePath);
     this.sessions[filePath].saved = true;
   }
@@ -234,7 +234,7 @@ class ModelSessionManager {
       throw new Error(`File "${filePath}" is not open in the current workspace.`);
     }
     // this._editorContainer.fileSaving(filePath)
-    const content = await this.projectManager.readFile(filePath);
+    const content = await fileOps.readFile(filePath);
     // this.sessions[filePath].saved = true
     // this._editorContainer.fileSaved(filePath)
     this.sessions[filePath].refreshValue(content);

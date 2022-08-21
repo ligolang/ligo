@@ -1,5 +1,6 @@
 import set from "lodash/set";
 import get from "lodash/get";
+import fileOps from "~/base-components/file-ops";
 
 export default class ProjectSettings {
   constructor(projectManager, settingFilePath, channel) {
@@ -16,7 +17,7 @@ export default class ProjectSettings {
   async readSettings() {
     let settingsJson;
     try {
-      settingsJson = await this.projectManager.readFile(this.settingFilePath);
+      settingsJson = await fileOps.readFile(this.settingFilePath);
     } catch (e) {}
 
     this.update(settingsJson);
@@ -27,7 +28,7 @@ export default class ProjectSettings {
     const settings = this.trimSettings(rawSettings);
 
     const settingsJson = JSON.stringify(settings, null, 2);
-    await this.projectManager.saveFile(this.settingFilePath, settingsJson);
+    await fileOps.writeFile(this.settingFilePath, settingsJson);
   }
 
   update(settingsJson) {

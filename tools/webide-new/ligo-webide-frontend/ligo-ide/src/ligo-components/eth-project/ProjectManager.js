@@ -4,6 +4,7 @@ import * as monaco from "monaco-editor";
 import pathHelper from "path-browserify";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
+import fileOps from "~/base-components/file-ops";
 
 import { LocalProjectManager } from "~/base-components/workspace";
 import { modelSessionManager } from "~/base-components/code-editor";
@@ -100,7 +101,7 @@ export class ExtendedProjectManager extends LocalProjectManager {
       contracts = [contractFileNode];
     } else {
       try {
-        contracts = await this.getBuiltContracts();
+        contracts = await this.getMainContract(); // TODO this is not real getMainContract for this function as deploy is not implemented yet (old version of deploy function is used here)
       } catch {
         notification.error(
           "Cannot Deploy",
@@ -138,30 +139,12 @@ export class ExtendedProjectManager extends LocalProjectManager {
     return { path: filePath, pathInProject };
   }
 
-  async getBuiltContracts() {
-    const settings = await this.checkSettings();
-    const builtFolder = this.pathForProjectFile(
-      settings.framework === "hardhat" ? "artifacts/contracts" : "build/contracts"
-    );
-    let stopCriteria;
-    if (settings.framework === "hardhat") {
-      stopCriteria = (child) =>
-        child.type === "file" && child.name.endsWith(".json") && !child.name.endsWith(".dbg.json");
-    } else {
-      stopCriteria = (child) => child.type === "file" && child.name.endsWith(".json");
-    }
-    const files = await this.readDirectoryRecursively(builtFolder, stopCriteria);
-    return files.map((f) => ({
-      ...f,
-      pathInProject: this.pathInProject(f.path),
-    }));
-  }
-
   async readProjectAbis() {
-    const contracts = await this.getBuiltContracts();
+    const contracts = await this.getMainContract(); // TODO this is not real getMainContract for this function as readProjectAbis is not implemented yet (old version of readProjectAbis function is used here)
     const abis = await Promise.all(
       contracts.map((contract) =>
-        this.readFile(contract.path)
+        fileOps
+          .readFile(contract.path)
           .then((content) => ({
             contractPath: contract.path,
             pathInProject: this.pathInProject(contract.path),
@@ -359,7 +342,6 @@ export class ExtendedProjectManager extends LocalProjectManager {
       "deploys",
       `${result.network}_${moment().format("YYYYMMDD_HHmmss")}.json`
     );
-    await this.ensureFile(deployResultPath);
-    await this.saveFile(deployResultPath, JSON.stringify(result, null, 2));
+    await this.writeFile(deployResultPath, JSON.stringify(result, null, 2));
   }
 }

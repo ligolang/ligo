@@ -1,5 +1,6 @@
 import React, { PureComponent } from "react";
 import pathHelper from "path-browserify";
+import fileOps from "~/base-components/file-ops";
 
 import {
   Modal,
@@ -101,7 +102,7 @@ export default class DeployerButton extends PureComponent {
   };
 
   readContractJson = async (fileNode) => {
-    const contractJson = await this.props.projectManager.readFile(fileNode.path);
+    const contractJson = await fileOps.readFile(fileNode.path);
 
     try {
       return JSON.parse(contractJson);

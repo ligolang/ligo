@@ -22,42 +22,8 @@ export default class LocalProjectManager {
     this.projectRoot = projectRoot;
   }
 
-  dispose() {}
-
-  get settingsFilePath() {
-    throw new Error("ProjectManager.settingsFilePath is not implemented.");
-  }
-
   onRefreshDirectory(callback) {
     LocalProjectManager.channel.on("refresh-directory", callback);
-  }
-
-  offRefreshDirectory() {
-    LocalProjectManager.channel.off("refresh-directory");
-  }
-
-  async readDirectoryRecursively(folderPath, stopCriteria = (child) => child.type === "file") {
-    const children = await this._readDirectoryRecursively(folderPath, stopCriteria);
-    return children.map((child) => {
-      child.relative = pathHelper.relative(folderPath, child.path);
-      return child;
-    });
-  }
-
-  async _readDirectoryRecursively(folderPath, stopCriteria) {
-    const children = await this.readDirectory(folderPath);
-    const traversed = await Promise.all(
-      children.map(async (child) => {
-        if (stopCriteria(child)) {
-          return child;
-        }
-        if (child.type === "file") {
-          return;
-        }
-        return this._readDirectoryRecursively(child.path, stopCriteria);
-      })
-    );
-    return traversed.flat().filter(Boolean);
   }
 
   static effect(evt, callback) {
@@ -67,8 +33,6 @@ export default class LocalProjectManager {
       return dispose;
     };
   }
-
-  // /////////////////////////////////////////////////////////////////
 
   static async createProject(name, template) {
     return this.processProject(name, undefined, template);
@@ -157,12 +121,8 @@ export default class LocalProjectManager {
     return pathHelper.relative(this.projectRoot, filePath);
   }
 
-  async readDirectory(folderPath) {
-    return await fileOps.readDirectory(folderPath);
-  }
-
   async loadRootDirectory() {
-    const result = await this.readDirectory(this.projectRoot);
+    const result = await fileOps.readDirectory(this.projectRoot);
 
     const rawData = result.map((item) => ({
       ...item,
@@ -207,7 +167,7 @@ export default class LocalProjectManager {
   }
 
   async loadDirectory(node) {
-    const result = await this.readDirectory(node.path);
+    const result = await fileOps.readDirectory(node.path);
     const rawData = result.map((item) => ({
       ...item,
       pathInProject: this.pathInProject(item.path),
@@ -303,22 +263,6 @@ export default class LocalProjectManager {
     }
 
     return await this.projectSettings.readSettings();
-  }
-
-  async isFile(filePath) {
-    return await fileOps.isFile(filePath);
-  }
-
-  async ensureFile(filePath) {
-    return await fileOps.fs.ensureFile(filePath);
-  }
-
-  async readFile(filePath, cb) {
-    return await fileOps.readFile(filePath, cb);
-  }
-
-  async saveFile(filePath, content) {
-    await fileOps.writeFile(filePath, content);
   }
 
   async createNewFile(basePath, name) {

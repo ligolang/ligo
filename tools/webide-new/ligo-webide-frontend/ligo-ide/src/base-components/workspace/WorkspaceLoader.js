@@ -38,9 +38,6 @@ export class WorkspaceLoader extends PureComponent {
       window.dispatchEvent(new Event("resize"));
     }
     if (this.props.projectRoot !== prevProps.projectRoot) {
-      if (this.state.context.projectManager) {
-        this.state.context.projectManager.dispose();
-      }
       this.prepareProject(this.props);
     }
   }

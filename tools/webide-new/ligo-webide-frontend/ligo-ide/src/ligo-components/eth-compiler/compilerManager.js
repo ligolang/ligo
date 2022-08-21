@@ -162,9 +162,9 @@ export class CompilerManager {
 
     if (!(await fileOps.exists(amendedBuildPath))) {
       await projectManager.createNewFile(fileFolder, fileName);
-      await projectManager.saveFile(amendedBuildPath, data);
+      await fileOps.writeFile(amendedBuildPath, data);
     } else {
-      await projectManager.saveFile(amendedBuildPath, data);
+      await fileOps.writeFile(amendedBuildPath, data);
     }
 
     return amendedBuildPath;
