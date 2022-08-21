@@ -1,6 +1,7 @@
 import debounce from "lodash/debounce";
 import moment from "moment";
 import * as monaco from "monaco-editor";
+import pathHelper from "path-browserify";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
 
@@ -170,7 +171,7 @@ export class ExtendedProjectManager extends LocalProjectManager {
       )
     );
     return abis.filter(Boolean).map(({ contractPath, pathInProject, content }) => {
-      const name = content.contractName || this.path.parse(contractPath).name;
+      const name = content.contractName || pathHelper.parse(contractPath).name;
       return {
         contractPath,
         pathInProject,
@@ -353,7 +354,7 @@ export class ExtendedProjectManager extends LocalProjectManager {
       abi: JSON.stringify(deploy.abi),
     });
 
-    const deployResultPath = this.path.join(
+    const deployResultPath = pathHelper.join(
       this.projectRoot,
       "deploys",
       `${result.network}_${moment().format("YYYYMMDD_HHmmss")}.json`

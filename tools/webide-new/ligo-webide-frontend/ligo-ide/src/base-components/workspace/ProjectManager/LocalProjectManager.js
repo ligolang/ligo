@@ -39,7 +39,7 @@ export default class LocalProjectManager {
   async readDirectoryRecursively(folderPath, stopCriteria = (child) => child.type === "file") {
     const children = await this._readDirectoryRecursively(folderPath, stopCriteria);
     return children.map((child) => {
-      child.relative = this.path.relative(folderPath, child.path);
+      child.relative = pathHelper.relative(folderPath, child.path);
       return child;
     });
   }
@@ -67,6 +67,8 @@ export default class LocalProjectManager {
       return dispose;
     };
   }
+
+  // /////////////////////////////////////////////////////////////////
 
   static async createProject(name, template) {
     return this.processProject(name, undefined, template);
@@ -111,10 +113,6 @@ export default class LocalProjectManager {
     }
 
     return data;
-  }
-
-  get path() {
-    return pathHelper;
   }
 
   async prepareProject() {

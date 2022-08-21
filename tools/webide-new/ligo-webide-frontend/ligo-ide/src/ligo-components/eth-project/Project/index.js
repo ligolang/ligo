@@ -62,7 +62,7 @@ const makeContextMenu = (contextMenu, projectManager) => (node) => {
   }
 
   if (node.name.endsWith(".json")) {
-    const { dir, name } = projectManager.path.parse(node.path);
+    const { dir, name } = pathHelper.parse(node.path);
     if (!name.endsWith(".abi")) {
       // && dir.endsWith(path.join('build', 'contracts'))
       const cloned = [...contextMenu];

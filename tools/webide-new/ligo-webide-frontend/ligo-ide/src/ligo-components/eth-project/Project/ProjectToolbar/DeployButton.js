@@ -1,4 +1,5 @@
 import React, { PureComponent } from "react";
+import pathHelper from "path-browserify";
 
 import {
   Modal,
@@ -71,7 +72,7 @@ export default class DeployerButton extends PureComponent {
   };
 
   updateAbi = async (fileNode) => {
-    const contractName = this.props.projectManager.path.parse(fileNode.path).name;
+    const contractName = pathHelper.parse(fileNode.path).name;
 
     let contractObj;
     try {
