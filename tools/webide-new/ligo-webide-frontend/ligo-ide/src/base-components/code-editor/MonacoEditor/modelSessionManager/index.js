@@ -1,5 +1,6 @@
 import React from "react";
 import * as monaco from "monaco-editor";
+import pathHelper from "path-browserify";
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 
@@ -145,7 +146,7 @@ class ModelSessionManager {
       return tab.text;
     }
     if (tab.remote) {
-      const basename = fileOps.pathHelper.basename(tab.path);
+      const basename = pathHelper.basename(tab.path);
       return (
         <span key="cloud-icon">
           <i className="fas fa-cloud small text-muted mr-1" />
@@ -153,7 +154,7 @@ class ModelSessionManager {
         </span>
       );
     }
-    return fileOps.pathHelper.basename(tab.path);
+    return pathHelper.basename(tab.path);
   }
 
   get projectRoot() {
@@ -165,8 +166,8 @@ class ModelSessionManager {
   }
 
   openFile(filePath, remote = this.projectManager.remote) {
-    if (!fileOps.pathHelper.isAbsolute(filePath)) {
-      filePath = fileOps.pathHelper.join(this.projectRoot, filePath);
+    if (!pathHelper.isAbsolute(filePath)) {
+      filePath = pathHelper.join(this.projectRoot, filePath);
     }
     this._editorContainer.openTab({ key: filePath, path: filePath, remote });
   }

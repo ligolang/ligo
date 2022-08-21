@@ -1,3 +1,4 @@
+import pathHelper from "path-browserify";
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 import { modelSessionManager } from "~/base-components/code-editor";
@@ -113,7 +114,7 @@ export default class LocalProjectManager {
   }
 
   get path() {
-    return fileOps.pathHelper;
+    return pathHelper;
   }
 
   async prepareProject() {
@@ -151,11 +152,11 @@ export default class LocalProjectManager {
   }
 
   pathForProjectFile(relativePath) {
-    return this.projectRoot ? fileOps.pathHelper.join(this.projectRoot, relativePath) : "";
+    return this.projectRoot ? pathHelper.join(this.projectRoot, relativePath) : "";
   }
 
   pathInProject(filePath) {
-    return fileOps.pathHelper.relative(this.projectRoot, filePath);
+    return pathHelper.relative(this.projectRoot, filePath);
   }
 
   async readDirectory(folderPath) {
@@ -276,7 +277,7 @@ export default class LocalProjectManager {
     const dirPath = path.substring(0, path.lastIndexOf("/"));
 
     for (let i = 0; i < importPaths.length; i++) {
-      const absImportPath = fileOps.pathHelper.join(dirPath, importPaths[i]);
+      const absImportPath = pathHelper.join(dirPath, importPaths[i]);
       const cycleCheck = existingFiles.has(absImportPath);
       if (cycleCheck) {
         throw new Error(`Cycle deps beween "${absImportPath}" and "${path}"`);
@@ -323,7 +324,7 @@ export default class LocalProjectManager {
   }
 
   async createNewFile(basePath, name) {
-    const filePath = fileOps.pathHelper.join(basePath, name);
+    const filePath = pathHelper.join(basePath, name);
     if (await fileOps.exists(filePath)) {
       throw new Error(`File <b>${filePath}</b> already exists.`);
     }
@@ -344,7 +345,7 @@ export default class LocalProjectManager {
   }
 
   async writeDirectory(basePath, name) {
-    const folderPath = fileOps.pathHelper.join(basePath, name);
+    const folderPath = pathHelper.join(basePath, name);
     if (await fileOps.exists(folderPath)) {
       throw new Error(`Folder <b>${folderPath}</b> already exists.`);
     }
@@ -407,7 +408,7 @@ export default class LocalProjectManager {
   }
 
   async rename(oldPath, name) {
-    const path = fileOps.pathHelper;
+    const path = pathHelper;
     const { dir } = path.parse(oldPath);
     const newPath = path.join(dir, name);
     const isFile = await fileOps.isFile(oldPath);

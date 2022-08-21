@@ -1,4 +1,5 @@
 import findIndex from "lodash/findIndex";
+import pathHelper from "path-browserify";
 import { WorkspaceLoader } from "~/base-components/workspace";
 import fileOps from "~/base-components/file-ops";
 import {
@@ -20,7 +21,7 @@ useBuiltinCustomTabs(["markdown"]);
 modelSessionManager.registerCustomTab("settings", ProjectSettingsTab, "Project Settings");
 modelSessionManager.registerModeDetector((filePath) => {
   const { prefix, userId, projectId, settingsFilePath } = modelSessionManager.projectManager;
-  const { base } = fileOps.pathHelper.parse(filePath);
+  const { base } = pathHelper.parse(filePath);
   const settingFilePath = settingsFilePath; // platform.isDesktop ? settingsFilePath : `${prefix}/${userId}/${projectId}/config.json`
   const isRoot = settingFilePath === filePath;
 

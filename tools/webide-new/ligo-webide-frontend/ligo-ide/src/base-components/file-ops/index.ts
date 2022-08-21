@@ -36,13 +36,10 @@ class FileManager {
 
   workspace: string;
 
-  pathHelper: any;
-
   constructor() {
     this.localFs = new IndexedLocalFs();
     this.gistFs = new GistFs();
     this.workspace = ""; // TODO use ./workspaces as workspace root instead of full path
-    this.pathHelper = pathHelper;
   }
 
   async isDirectory(path: string): Promise<boolean> {

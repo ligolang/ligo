@@ -1,3 +1,4 @@
+import pathHelper from "path-browserify";
 import platform from "~/base-components/platform";
 import fileOps from "~/base-components/file-ops";
 
@@ -21,7 +22,7 @@ export default class SolcjsCompiler {
       const solcFile =
         platform.isWeb || process.env.NODE_ENV === "development"
           ? "/solc.js"
-          : fileOps.pathHelper.join(fileOps.appPath, "build/solc.js");
+          : pathHelper.join(fileOps.appPath, "build/solc.js");
       this.worker = new Worker(solcFile);
       this.worker.onmessage = this.onMessage.bind(this);
     }

@@ -1,4 +1,5 @@
 import React, { PureComponent } from "react";
+import pathHelper from "path-browserify";
 
 import { Modal, DebouncedFormGroup, DropdownInput } from "~/base-components/ui-components";
 
@@ -19,7 +20,7 @@ export default class NewProjectModal extends PureComponent {
     };
 
     this.modal = React.createRef();
-    this.path = fileOps.pathHelper;
+    this.path = pathHelper;
 
     actions.newProjectModal = this;
   }

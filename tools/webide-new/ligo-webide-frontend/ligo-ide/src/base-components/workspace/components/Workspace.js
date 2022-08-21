@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import throttle from "lodash/throttle";
+import pathHelper from "path-browserify";
 
 import { SplitPane, ToolbarButton } from "~/base-components/ui-components";
 
@@ -121,12 +122,10 @@ export default class Workspace extends Component {
   openCreateFileModal = (node) => {
     const activeNode =
       node || this.filetree.current.activeNode || this.filetree.current.rootNode[0];
-    const basePath = activeNode.children
-      ? activeNode.path
-      : fileOps.pathHelper.dirname(activeNode.path);
+    const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
     // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
     // }
     this.createModal.current.openCreateFileModal({ baseName, basePath });
   };
@@ -138,12 +137,10 @@ export default class Workspace extends Component {
 
   openCreateFolderModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode;
-    const basePath = activeNode.children
-      ? activeNode.path
-      : fileOps.pathHelper.dirname(activeNode.path);
+    const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
     // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : fileOps.pathHelper.dirname(activeNode.pathInProject)
+    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
     // }
     this.createModal.current.openCreateFolderModal({ baseName, basePath });
   };
@@ -151,7 +148,7 @@ export default class Workspace extends Component {
   openRenameModal = (node) => {
     const activeNode = node || this.filetree.current.activeNode;
     const type = activeNode.children ? "folder" : "file";
-    const { base } = fileOps.pathHelper.parse(activeNode.path);
+    const { base } = pathHelper.parse(activeNode.path);
     this.renameModal.current.openModal({
       type,
       name: base,
