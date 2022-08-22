@@ -973,7 +973,7 @@ Verify sapling update
 ```pascaligo group=sap_t
 function f (const tr : tr) : int * st is
   case Tezos.sapling_verify_update (tr, x) of [
-    Some (x) -> x
+    Some (_, x) -> x
   | None -> (failwith ("failed") : int * st)
   ]
 ```
@@ -984,7 +984,7 @@ function f (const tr : tr) : int * st is
 ```cameligo group=sap_t
 let f (tr : tr) : int * st =
   match Tezos.sapling_verify_update tr x with
-    Some x -> x
+    Some (_, x) -> x
   | None -> (failwith "failed" : int * st)
 ```
 
@@ -994,7 +994,7 @@ let f (tr : tr) : int * st =
 ```reasonligo group=sap_t
 let f = (tr : tr) : (int , st) =>
   switch (Tezos.sapling_verify_update (tr, x)) {
-    | Some x => x
+    | Some (_, x) => x
     | None => (failwith ("failed") : (int , st))
   }
 ```
@@ -1005,7 +1005,7 @@ let f = (tr : tr) : (int , st) =>
 ```jsligo group=sap_t
 let f = (tr : tr) : [int , st] =>
   match (Tezos.sapling_verify_update(tr, x), {
-    Some: (x: [int, st]) => x,
+    Some: (p: [bytes, [int, st]]) => p[1],
     None: () => (failwith ("failed") as [int , st])
   });
 ```
