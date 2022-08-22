@@ -4,7 +4,7 @@ import { DropdownItem } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import { DockerImageSelector } from "~/base-components/docker";
-import { LocalProjectManager } from "~/base-components/workspace";
+import { ProjectManager } from "~/base-components/workspace";
 
 let n;
 
@@ -13,7 +13,7 @@ export default function (props) {
   const [selected, onSelected] = React.useState("");
 
   React.useEffect(
-    LocalProjectManager.effect("settings:framework", (framework) => {
+    ProjectManager.effect("settings:framework", (framework) => {
       if (props.remote) {
         setHasDefault(false);
         return;
@@ -24,7 +24,7 @@ export default function (props) {
   );
 
   React.useEffect(
-    LocalProjectManager.effect("settings:compilers.solc", (v) => {
+    ProjectManager.effect("settings:compilers.solc", (v) => {
       // if (!props.remote) {
       //   if (v === 'default') {
       //     n = notification.info('Solc from truffle-config.js Selected', 'The version of solc used in compilation will be determined by <b>truffle-config.js</b>.', 4)
@@ -47,14 +47,14 @@ export default function (props) {
       noManager
       selected={selected}
       selectedText={selected === "default" ? "truffle-config.js" : undefined}
-      onSelected={(v) => LocalProjectManager.instance.projectSettings?.set("compilers.solc", v)}
+      onSelected={(v) => ProjectManager.instance.projectSettings?.set("compilers.solc", v)}
     >
       {hasDefault && (
         <>
           <DropdownItem
             active={selected === "default"}
             onClick={() =>
-              LocalProjectManager.instance.projectSettings?.set("compilers.solc", "default")
+              ProjectManager.instance.projectSettings?.set("compilers.solc", "default")
             }
           >
             From truffle-config.js

@@ -10,7 +10,7 @@ export { default as AbstractProjectSettingsTab } from "./components/AbstractProj
 export { default as ProjectPath } from "./components/ProjectPath";
 export { default as TerminalButton } from "./components/TerminalButton";
 
-export { LocalProjectManager } from "./ProjectManager";
+export { ProjectManager } from "./ProjectManager";
 export { default as ProjectSettings } from "./ProjectSettings";
 
 export { default as redux } from "./redux";

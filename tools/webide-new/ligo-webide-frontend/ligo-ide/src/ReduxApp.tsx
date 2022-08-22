@@ -12,7 +12,7 @@ import { NotificationSystem } from "~/base-components/notification";
 import Routes from "./components/Routes";
 import fileOps, { indexedDBFileSystem, fileSystems, fileSystem } from "~/base-components/file-ops";
 import icon from "./components/icon.png";
-import { LocalProjectManager } from "~/base-components/workspace";
+import { ProjectManager } from "~/base-components/workspace";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -29,7 +29,7 @@ function ReduxApp(props: { history: any }) {
       await ligoIdeFileSystems.current.addFileSystem(indexedDB.current);
       ligoIdeFileSystems.current.setFileSystem([indexedDB.current]);
       if (!(await fileOps.exists(".workspaces/default-project"))) {
-        const Manager = LocalProjectManager;
+        const Manager = ProjectManager;
         const defaultProject = await Manager.createProject("default-project", "increment");
         redux.dispatch("ADD_PROJECT", {
           type: "local",

@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 
 import { ToolbarButton } from "~/base-components/ui-components";
-import LocalProjectManager from "../ProjectManager/LocalProjectManager";
+import ProjectManager from "../ProjectManager/ProjectManager";
 
 export default class TerminalButton extends PureComponent {
   state = {
@@ -9,7 +9,7 @@ export default class TerminalButton extends PureComponent {
   };
 
   componentDidMount() {
-    LocalProjectManager.terminalButton = this;
+    ProjectManager.terminalButton = this;
   }
 
   render() {
@@ -21,7 +21,7 @@ export default class TerminalButton extends PureComponent {
         size={size}
         icon="fas fa-terminal"
         color={this.state.terminal ? "primary" : "default"}
-        onClick={() => LocalProjectManager.instance.toggleTerminal(!this.state.terminal)}
+        onClick={() => ProjectManager.instance.toggleTerminal(!this.state.terminal)}
       />
     );
   }

@@ -18,7 +18,7 @@ import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "../ProjectSettings";
 
-export default class LocalProjectManager {
+export default class ProjectManager {
   static ProjectSettings = ProjectSettings;
 
   static channel = new IpcChannel("project");
@@ -28,7 +28,7 @@ export default class LocalProjectManager {
   static instance = null;
 
   constructor(project, projectRoot) {
-    LocalProjectManager.instance = this;
+    ProjectManager.instance = this;
     this.project = project;
     this.projectRoot = projectRoot;
 
@@ -37,13 +37,13 @@ export default class LocalProjectManager {
   }
 
   onRefreshDirectory(callback) {
-    LocalProjectManager.channel.on("refresh-directory", callback);
+    ProjectManager.channel.on("refresh-directory", callback);
   }
 
   static effect(evt, callback) {
     return () => {
-      const dispose = LocalProjectManager.channel.on(evt, callback);
-      LocalProjectManager.channel.trigger("current-value", evt);
+      const dispose = ProjectManager.channel.on(evt, callback);
+      ProjectManager.channel.trigger("current-value", evt);
       return dispose;
     };
   }
@@ -190,10 +190,10 @@ export default class LocalProjectManager {
   }
 
   async readProjectSettings() {
-    this.projectSettings = new LocalProjectManager.ProjectSettings(
+    this.projectSettings = new ProjectManager.ProjectSettings(
       this,
       this.settingsFilePath,
-      LocalProjectManager.channel
+      ProjectManager.channel
     );
     await this.projectSettings.readSettings();
     return this.projectSettings;
@@ -404,15 +404,13 @@ export default class LocalProjectManager {
   }
 
   async refreshDirectory(data) {
-    LocalProjectManager.channel.trigger("refresh-directory", data);
+    ProjectManager.channel.trigger("refresh-directory", data);
   }
 
   toggleTerminal(terminal) {
-    LocalProjectManager.terminalButton?.setState({ terminal });
+    ProjectManager.terminalButton?.setState({ terminal });
     this.project.toggleTerminal(terminal);
   }
-
-  // /////////////////////////////////////////////////
 
   get settingsFilePath() {
     return this.pathForProjectFile("config.json");
@@ -432,16 +430,6 @@ export default class LocalProjectManager {
 
   onFileChanged() {
     this.lint();
-  }
-
-  async readPackageJson() {
-    // const packageJson = await this.readFile(this.pathForProjectFile('package.json'))
-    return {}; // JSON.parse(packageJson)
-  }
-
-  async executeInTerminal(cmd) {
-    this.toggleTerminal(true);
-    return await compilerManager.execute(cmd);
   }
 
   lint() {}

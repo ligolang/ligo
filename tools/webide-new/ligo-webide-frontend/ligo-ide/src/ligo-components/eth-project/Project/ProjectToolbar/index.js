@@ -9,7 +9,6 @@ import DeployScriptModal from "./DeployScriptModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
 
 // import DeployButton from './DeployButton'
-// import ScriptsButton from './ScriptsButton'
 import SignRequestModal from "./SignRequestModal";
 
 export default class ProjectToolbar extends PureComponent {
@@ -78,7 +77,6 @@ export default class ProjectToolbar extends PureComponent {
           onClick={() => this.expressionExecutionModal("compile")}
         />
         {/* { !noDeploy && <DeployButton projectManager={projectManager} signer={signer} /> } */}
-        {/* <ScriptsButton projectManager={projectManager} /> */}
         <ExtraButtons projectManager={projectManager} signer={signer} />
         <div className="flex-1" />
         <ToolbarButton

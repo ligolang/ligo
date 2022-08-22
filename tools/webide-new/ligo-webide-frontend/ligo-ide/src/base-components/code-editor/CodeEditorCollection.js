@@ -64,8 +64,7 @@ export default class CodeEditorCollection extends PureComponent {
   };
 
   // NOTE: there is no pathInProject props return in the local project, while will return it in remote project
-  // see: packages/workspace/src/ProjectManager/LocalProjectManager.js
-  // see: packages/workspace/src/ProjectManager/RemoteProjectManager.js
+  // see: packages/workspace/src/ProjectManager/ProjectManager.js
   copyPath = ({ pathInProject, path }) => {
     const filePath = pathInProject || path;
     const clipboard = new ClipBoardService();

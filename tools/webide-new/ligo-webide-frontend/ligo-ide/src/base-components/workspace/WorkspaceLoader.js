@@ -10,7 +10,7 @@ import WorkspaceContext from "./WorkspaceContext";
 
 import ProjectLoading from "./components/ProjectLoading";
 import ProjectInvalid from "./components/ProjectInvalid";
-import LocalProjectManager from "./ProjectManager/LocalProjectManager";
+import ProjectManager from "./ProjectManager/ProjectManager";
 
 import actions from "./actions";
 
@@ -47,7 +47,7 @@ export class WorkspaceLoader extends PureComponent {
     if (projectRoot) {
       this.setState({ loading: true, invalid: false, context: {} });
 
-      const projectManager = new LocalProjectManager(this, projectRoot);
+      const projectManager = new ProjectManager(this, projectRoot);
 
       const result = await projectManager.prepareProject();
       if (result.error) {

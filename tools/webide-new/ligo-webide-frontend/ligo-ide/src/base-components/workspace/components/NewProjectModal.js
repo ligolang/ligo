@@ -5,7 +5,7 @@ import { Modal, DebouncedFormGroup, DropdownInput } from "~/base-components/ui-c
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 
-import { LocalProjectManager } from "../ProjectManager";
+import { ProjectManager } from "../ProjectManager";
 import actions from "../actions";
 
 export default class NewProjectModal extends PureComponent {
@@ -58,7 +58,7 @@ export default class NewProjectModal extends PureComponent {
 
   async createProject(name, template) {
     try {
-      const Manager = LocalProjectManager;
+      const Manager = ProjectManager;
       const created = await Manager.createProject(name, template);
       notification.success("Successful", `New project <b>${name}</b> is created.`);
       return created;

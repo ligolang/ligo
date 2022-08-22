@@ -13,7 +13,7 @@ import {
 
 import { networkManager } from "~/ligo-components/eth-network";
 import redux from "~/base-components/redux";
-import { LocalProjectManager } from "~/base-components/workspace";
+import { ProjectManager } from "~/base-components/workspace";
 
 import ContractActions from "./ContractActions";
 import ContractViews from "./ContractViews";
@@ -153,7 +153,7 @@ export default class ContractPage extends PureComponent {
   };
 
   loadProjectAbis = async () => {
-    const projectAbis = await LocalProjectManager.instance?.readProjectAbis();
+    const projectAbis = await ProjectManager.instance?.readProjectAbis();
     this.setState({
       projectAbis: projectAbis?.map((item) => ({
         ...item,

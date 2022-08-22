@@ -10,7 +10,7 @@ import CodeEditorCollection from "~/base-components/code-editor";
 import FileTree from "~/base-components/filetree";
 
 import WorkspaceContext from "../WorkspaceContext";
-import LocalProjectManager from "../ProjectManager/LocalProjectManager";
+import ProjectManager from "../ProjectManager/ProjectManager";
 import actions from "../actions";
 
 import contextMenu, { registerHandlers } from "./contextMenu";
@@ -51,7 +51,7 @@ export default class Workspace extends Component {
       terminalSize: 160,
     };
 
-    const effect = LocalProjectManager.effect("settings:editor", (editorConfig) => {
+    const effect = ProjectManager.effect("settings:editor", (editorConfig) => {
       this.state.editorConfig = editorConfig;
     });
     this.disposable = effect();

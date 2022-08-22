@@ -2,7 +2,7 @@ import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 import fileOps from "~/base-components/file-ops";
 
-import LocalProjectManager from "./ProjectManager/LocalProjectManager";
+import ProjectManager from "./ProjectManager/ProjectManager";
 
 export class ProjectActions {
   constructor() {
@@ -71,7 +71,7 @@ export class ProjectActions {
   }
 
   openTerminal() {
-    LocalProjectManager.instance?.toggleTerminal(true);
+    ProjectManager.instance?.toggleTerminal(true);
   }
 
   // TODO remove project from local storage
