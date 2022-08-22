@@ -12,7 +12,7 @@ import Control.Monad.RWS.Strict (RWS, ask, evalRWS, get, local, modify, tell, vo
 import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
 import Data.Bool (bool)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.Kind qualified (Type)
 import Data.HashMap.Lazy qualified as HashMap
 import Data.HashMap.Lazy (HashMap)
@@ -41,7 +41,7 @@ import AST.Skeleton qualified as Skeleton (Type (..), TypeParams (..))
 import Cli.Types
 import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
-import Parser
+import Parser (ParsedInfo)
 import Product
 import Range
 import Util (foldMapM)
@@ -424,13 +424,22 @@ instance HasGo Binding where
           ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
 
     BTypeDecl name mparams expr -> do
-      let scopeVariant :: LIGO ParsedInfo -> ScopeM (Maybe (ScopeTree, [DeclRef]))
+      let scopeVariant, scopeTField :: LIGO ParsedInfo -> ScopeM (Maybe (ScopeTree, [DeclRef]))
           scopeVariant = \case
             (layer -> Just (Variant vname vtype)) ->
               mkDecl (functionScopedDecl [] vname (maybeToList vtype) (Just name) Nothing)
                 >>= maybe (pure Nothing) \decl -> do
                   ref <- insertScope decl
                   withScope ref (walk vname)
+                  pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
+            _ -> pure Nothing
+          scopeTField = \case
+            (layer -> Just (TField fname ftype)) ->
+              mkDecl (valueScopedDecl [] fname ftype Nothing)
+                >>= maybe (pure Nothing) \decl -> do
+                  ref <- insertScope decl
+                  withScope ref (walk fname)
+                  traverse_ walk ftype
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
 
@@ -450,6 +459,9 @@ instance HasGo Binding where
             fmap unzip $ withScopes (declRef:paramRefs) $ case expr of
               (layer -> Just (TSum variants)) -> do
                 (sts, concat -> refs) <- unzip <$> wither scopeVariant (toList variants)
+                pure $ Just ((Set.empty, getRange r) :< sts, refs)
+              (layer -> Just (TRecord fields)) -> do
+                (sts, concat -> refs) <- unzip <$> wither scopeTField fields
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
               _ -> pure Nothing
           pure $ Just
