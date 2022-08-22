@@ -14,11 +14,6 @@ let label_range i j =
 let is_tuple_lmap m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
-let get_pair m =
-  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
-  | _ -> None
-
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in

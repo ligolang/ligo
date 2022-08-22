@@ -1550,7 +1550,7 @@ File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-1
 Warning: unused variable "action".
 Hint: replace it by "_action" to prevent this warning.
 
-File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-23:
+File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 4-8:
   3 |
   4 | let main (action, store : parameter * storage) : storage =
   5 |   store + 1
@@ -3007,4 +3007,16 @@ let%expect_test _ =
      14 |
 
     Constructor "A" not found.
+  |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; bad_contract "bad_contract_return_type.mligo" ] ;
+  [%expect{|
+    File "../../test/contracts/negative/bad_contract_return_type.mligo", line 5, characters 4-8:
+      4 |
+      5 | let main (_,s : paramater * storage) : _return =
+      6 |     [], s, 1tez
+
+    Invalid type for entrypoint "main".
+    An entrypoint must of type "parameter * storage -> operation list * storage".
   |}]
