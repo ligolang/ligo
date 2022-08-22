@@ -215,7 +215,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
     covers = spineTo (leq pos . getRange) nested
 
     toTspec TypeNotFound = Nothing
-    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO
+    toTspec (TypeDeclared decl) = decl ^? sdSpec . _TypeSpec . _2  -- TODO (LIGO-331): Check this case
     toTspec (TypeInlined tspec) = Just tspec
 
     accessAndDereference :: TypeDeclSpecifics Type -> Accessor -> Maybe (TypeDeclSpecifics Type)

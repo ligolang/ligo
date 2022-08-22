@@ -46,7 +46,7 @@ findScopedDecl pos tree = do
   let fullEnv = getElem info
   level <- getElem info
   let filtered = filter (ofLevel level) fullEnv
-  lookupEnv (ppToText $ void node) filtered
+  lookupEnv (ppToText $ void node) (getRange node) filtered
 
 findInfoAtPoint
   :: Contains Range xs
@@ -93,14 +93,14 @@ typeDefinitionOf pos tree = fromMaybe TypeNotFound $ do
   scope <- getElem <$> findInfoAtPoint pos tree
   varDecl <- findScopedDecl pos tree
   tspec <- varDecl ^? sdSpec . _ValueSpec . vdsTspec . _Just
-  Just $ case findTypeRefDeclaration scope (_tdsInit tspec) of
+  Just $ case findTypeRefDeclaration scope (_tdsInit tspec) (_tdsInitRange tspec) of
     Nothing -> TypeInlined tspec
     Just decl -> TypeDeclared decl
 
-findTypeRefDeclaration :: Scope -> Type -> Maybe ScopedDecl
-findTypeRefDeclaration scope typ = do
+findTypeRefDeclaration :: Scope -> Type -> Range -> Maybe ScopedDecl
+findTypeRefDeclaration scope typ pos = do
   refName <- extractRefName typ
-  lookupEnv refName (filter (ofLevel TypeLevel) scope)
+  lookupEnv refName pos (filter (ofLevel TypeLevel) scope)
 
 typeDefinitionAt :: CanSearch xs => Range -> SomeLIGO xs -> Maybe Range
 typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
@@ -114,7 +114,7 @@ typeDefinitionAt pos tree = case typeDefinitionOf pos tree of
 -- If the aliased name is undeclared, leave the type be.
 dereferenceTspec :: Scope -> TypeDeclSpecifics Type -> TypeDeclSpecifics Type
 dereferenceTspec scope tspec = fromMaybe tspec $ do
-  refDecl <- findTypeRefDeclaration scope (_tdsInit tspec)
+  refDecl <- findTypeRefDeclaration scope (_tdsInit tspec) (_tdsInitRange tspec)
   refDecl ^? sdSpec . _TypeSpec . _2
 
 referencesOf

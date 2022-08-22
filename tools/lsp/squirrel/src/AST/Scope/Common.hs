@@ -300,10 +300,10 @@ instance Pretty ScopeForest where
 
       decls' = sexpr "decls" . map (\(a, b) -> pp a <.> ":" `indent` pp b) . Map.toList
 
-lookupEnv :: Text -> Scope -> Maybe ScopedDecl
-lookupEnv name = getFirst . foldMap \decl ->
+lookupEnv :: Text -> Range -> Scope -> Maybe ScopedDecl
+lookupEnv name pos = getFirst . foldMap \decl@ScopedDecl{..} ->
   First do
-    guard (_sdName decl == name)
+    guard (_sdName == name && (_sdOrigin == pos || pos `elem` _sdRefs))
     return decl
 
 -- | return scoped declarations related to the range

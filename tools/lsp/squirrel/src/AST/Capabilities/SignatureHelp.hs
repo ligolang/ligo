@@ -43,7 +43,7 @@ findNestingFunction
 findNestingFunction tree position = do
   (callInfo, fName, args) <- asum (map extractFunctionCall covers)
   let termEnv = filter (ofLevel TermLevel) (getElem callInfo)
-  decl <- lookupEnv fName termEnv
+  decl <- lookupEnv (ppToText (void fName)) (getRange fName) termEnv
   pure (decl, args)
   where
     covers = spineTo (leq position . getElem) tree
@@ -51,10 +51,10 @@ findNestingFunction tree position = do
 -- | If the given tree is a function application, extract it's information
 -- characteristics, the function's name and applied parameters.
 extractFunctionCall
-  :: LIGO xs -> Maybe (Product xs, Text, [LIGO xs])
+  :: LIGO xs -> Maybe (Product xs, LIGO xs, [LIGO xs])
 extractFunctionCall tree = do
   (i, Apply name params) <- match tree
-  pure (i, ppToText (void name), params)
+  pure (i, name, params)
 
 matchValuesAndTypes
   :: forall xs. Contains Range xs
