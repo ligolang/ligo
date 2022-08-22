@@ -36,7 +36,7 @@ import System.FilePath
 import Text.Regex.TDFA ((=~))
 
 import AST.Capabilities.Find
-  ( TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf
+  ( CanSearch, TypeDefinitionRes (..), dereferenceTspec, findNodeAtPoint, typeDefinitionOf
   )
 import AST.Pretty (PPableLIGO, docToText)
 import AST.Scope
@@ -68,13 +68,14 @@ withCompleterM :: (MonadIO m, Logger m) => CompleterEnv xs -> CompleterM xs a ->
 withCompleterM complEnv action = do
   env <- getLogEnv
   liftIO $ runReaderT
-     (runKatipContextT env () (Namespace ["Completion"]) $ runCompleterM action)
+     (runKatipContextT env () (Log.Namespace ["Completion"]) $ runCompleterM action)
      complEnv
 
 newtype NameCompletion = NameCompletion { getNameCompletion :: Text } deriving newtype (Eq, Show)
 newtype TypeCompletion = TypeCompletion { getTypeCompletion :: Text } deriving newtype (Eq, Show)
 newtype DocCompletion  = DocCompletion  { getDocCompletion  :: Text } deriving newtype (Eq, Show)
 
+-- TODO: implement completion for module fields
 data Completion
   = Completion
       (Maybe CompletionItemKind)
@@ -92,8 +93,7 @@ completionName (ImportCompletion name) = name
 completionName (CompletionKeyword name) = name
 
 type CompletionLIGO info =
-  ( Contains Scope info
-  , Contains (Maybe Level) info
+  ( CanSearch info
   , PPableLIGO info
   )
 
@@ -240,8 +240,8 @@ completionKind :: ScopedDecl -> Maybe CompletionItemKind
 completionKind ScopedDecl {_sdName, _sdSpec} = case _sdSpec of
   TypeSpec _typeParams spec ->
     Just $ completeFromTSpec spec
-  ModuleSpec _ ->
-    Nothing
+  ModuleSpec _mspec ->
+    Just CiModule
   ValueSpec ValueDeclSpecifics {_vdsParams, _vdsTspec} ->
     let completion = completeFromTSpec <$> _vdsTspec in
     bool

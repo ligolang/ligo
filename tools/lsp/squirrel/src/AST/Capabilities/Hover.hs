@@ -33,6 +33,7 @@ mkContents decl@ScopedDecl{ .. } = LSP.HoverContents $ LSP.MarkupContent
   }
   where
     contentDoc = mconcat
+      -- TODO: handle namespaces and modules
       [ ppToText _sdName <> " : " <> docToText (lppDeclCategory decl)
       , "\n\n"
       , "*defined at* " <> ppToText _sdOrigin

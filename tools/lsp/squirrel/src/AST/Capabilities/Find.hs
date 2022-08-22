@@ -14,15 +14,15 @@ module AST.Capabilities.Find
 import Control.Lens (_Just, _2, (^.), (^?))
 import Control.Monad
 import Data.Maybe (fromMaybe, listToMaybe)
-import Data.Text (Text)
 import Duplo.Lattice
 import Duplo.Pretty
 import Duplo.Tree
 
 import AST.Scope (Level (..), lookupEnv, ofLevel)
 import AST.Scope.ScopedDecl
-  (Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec,
-   _ValueSpec, extractRefName, sdSpec, vdsTspec)
+  ( Scope, ScopedDecl (..), Type (..), TypeDeclSpecifics (..), _TypeSpec
+  , _ValueSpec, extractRefName, sdSpec, vdsTspec
+  )
 import AST.Skeleton (LIGO, SomeLIGO, nestedLIGO)
 
 import Product
@@ -32,7 +32,6 @@ type CanSearch xs =
   ( Contains Scope xs
   , Contains Range xs
   , Contains (Maybe Level) xs
-  , Contains [Text] xs
   )
 
 findScopedDecl
@@ -56,8 +55,12 @@ findInfoAtPoint pos tree = extract <$> findNodeAtPoint pos tree
 findNodeAtPoint
   :: Contains Range xs
   => Range -> SomeLIGO xs -> Maybe (LIGO xs)
-findNodeAtPoint pos tree =
-  listToMaybe (spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO))
+findNodeAtPoint pos tree = listToMaybe $ spineAtPoint pos tree
+
+spineAtPoint
+  :: Contains Range xs
+  => Range -> SomeLIGO xs -> [LIGO xs]
+spineAtPoint pos tree = spineTo (\i -> pos `leq` getRange i) (tree ^. nestedLIGO)
 
 rangeOf
   :: CanSearch xs

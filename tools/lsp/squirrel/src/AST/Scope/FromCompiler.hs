@@ -21,7 +21,7 @@ import UnliftIO.Directory (canonicalizePath)
 import AST.Scope.Common
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), ScopedDecl (..), Type (ArrowType), Module (..)
-  , ModuleDeclSpecifics (..), Namespace (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
+  , ModuleDeclSpecifics (..), TypeDeclSpecifics (..), ValueDeclSpecifics (..)
   , _tdsInit
   )
 import AST.Scope.ScopedDecl.Parser (parseTypeDeclSpecifics)
