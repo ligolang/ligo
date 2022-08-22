@@ -7,7 +7,7 @@ let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 let inline_let : bool ref -> Ast_aggregated.expression -> Ast_aggregated.expression =
   fun changed e ->
   match e.expression_content with
-  | E_let_in { let_binder = { var ; _ } ; rhs ; let_result ; attr = { ast_inline = true ; _ } } ->
+  | E_let_in { let_binder = { var ; _ } ; rhs ; let_result ; attr = { force_inline = true ; _ } } ->
      let e2' = Subst.subst_expression ~body:let_result ~x:var ~expr:rhs in
      (changed := true ; e2')
   | _ -> e
@@ -16,11 +16,11 @@ let inline_lets : bool ref -> Ast_aggregated.expression -> Ast_aggregated.expres
   fun changed ->
   Helpers.map_expression (inline_let changed)
 
-let rec ast_inline e =
+let rec force_inline e =
   let changed = ref false in
   let e = inline_lets changed e in
   if !changed
-  then ast_inline e
+  then force_inline e
   else e
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
@@ -29,7 +29,7 @@ let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = Purify_assignations.expression ~raise e in
   let e = Monomorphisation.mono_polymorphic_expr ~raise e in
   let e = Uncurry.uncurry_expression e in
-  let e = ast_inline e in
+  let e = force_inline e in
   e
 
 let contract_passes ~raise = [

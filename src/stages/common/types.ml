@@ -27,7 +27,7 @@ type known_attributes = {
   *)
   hidden: bool;
   (* Controls whether it should be inlined at AST level *)
-  ast_inline: bool ;
+  force_inline: bool ;
 } [@@deriving hash]
 
 type expression_variable = ValueVar.t [@@deriving hash]

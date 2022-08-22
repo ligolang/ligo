@@ -136,14 +136,14 @@ and type_in {type_binder;rhs;let_result} =
   ]
 
 
-and known_attribute {inline;no_mutation;public;view;hidden;ast_inline} =
+and known_attribute {inline;no_mutation;public;view;hidden;force_inline} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
     ("public", `Bool public);
     ("view", `Bool view);
     ("hidden", `Bool hidden);
-    ("ast_inline", `Bool ast_inline);
+    ("force_inline", `Bool force_inline);
   ]
 
 and type_attribute ({public ; hidden}: type_attribute) =

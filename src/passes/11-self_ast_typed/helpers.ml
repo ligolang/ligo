@@ -94,7 +94,7 @@ and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc (x : declaration) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; ast_inline = _ }} -> (
+    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; force_inline = _ }} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
