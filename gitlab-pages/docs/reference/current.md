@@ -953,16 +953,16 @@ let x : st = Tezos.sapling_empty_state ;
 Sapling empty state
 
 <SyntaxTitle syntax="pascaligo">
-val sapling_verify_update&lt;a&gt; : sapling_transaction (a) -> sapling_state (a) -> option (int * sapling_state (a))
+val sapling_verify_update&lt;a&gt; : sapling_transaction (a) -> sapling_state (a) -> option (bytes * (int * sapling_state (a)))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val sapling_verify_update : 'a sapling_transaction -> 'a sapling_state -> (int * 'a sapling_state) option
+val sapling_verify_update : 'a sapling_transaction -> 'a sapling_state -> (bytes * (int * 'a sapling_state)) option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let sapling_verify_update: sapling_transaction('a) => sapling_state('a) => option(int, sapling_state('a))
+let sapling_verify_update: sapling_transaction('a) => sapling_state('a) => option(bytes, (int, sapling_state('a)))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sapling_verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;int, sapling_state&lt;'a&gt;&gt;
+let sapling_verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;[bytes, [int, sapling_state&lt;'a&gt;]]&gt;
 </SyntaxTitle>
 
 
