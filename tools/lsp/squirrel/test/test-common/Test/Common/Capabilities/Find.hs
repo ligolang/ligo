@@ -307,6 +307,43 @@ invariants =
     , driDef = Just (interval 1 5 8)
     , driRefs = [interval 5 16 19]
     }
+  -- -- Test variable shadowing (including interaction between type names, parameters and variable names)
+  -- -- that contains several declaration with the same names
+  -- -- TODO: Issue LIGO-729:
+  -- -- For the reference in interval (3, 19, 25) server shows all references except the interval itself
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "name-shadowing.mligo"
+  --   , driDesc = "type name"
+  --   , driDef  = Just (interval 1 6 12)
+  --   , driRefs = [interval 3 19 25, interval 3 29 35]
+  --   }
+  -- -- TODO: Issue LIGO-700:
+  -- -- For the reference in interval (4, 16, 22) server shows references for the first local variable
+  -- -- TODO: Issue LIGO-729:
+  -- -- For the declaration in interval (3, 10, 16) server shows extra reference that is actually type name
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "name-shadowing.mligo"
+  --   , driDesc = "parameter"
+  --   , driDef  = Just (interval 3 10 16)
+  --   , driRefs = [interval 4 16 22]
+  --   }
+  -- -- TODO: Issue LIGO-700:
+  -- -- For the reference in interval (5, 16, 22) server shows references for the second local variable
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "name-shadowing.mligo"
+  --   , driDesc = "first local variable"
+  --   , driDef  = Just (interval 4 7 13)
+  --   , driRefs = [interval 5 16 22]
+  --   }
+  -- , DefinitionReferenceInvariant
+  --   { driFile = contractsDir </> "name-shadowing.mligo"
+  --   , driDesc = "second local variable"
+  --   , driDef  = Just (interval 5 7 13)
+  --   , driRefs = [interval 6 3 9]
+  --   }
+
+
+
 
   -- FIXME:
   -- * Does not pass because we have troubles with recursive functions
