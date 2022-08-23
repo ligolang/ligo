@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1930'
+title: Update type for `SAPLING_VERIFY_UPDATE` after Jakarta
+type: fixed
