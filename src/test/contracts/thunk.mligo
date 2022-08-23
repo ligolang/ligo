@@ -1,7 +1,7 @@
 type return = operation list * string
 
 let main (_action, store : string * string) : return =
-  [@force_inline] let sender = Tezos.get_sender () in
+  [@thunk] let sender = Tezos.get_sender () in
   let toto : operation * address = Tezos.create_contract
     (fun (_, _ : nat * address) -> (([] : operation list), sender)) 
     (None: key_hash option) 

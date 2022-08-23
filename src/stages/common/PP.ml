@@ -33,20 +33,20 @@ let option_hidden ppf hidden =
   else
     fprintf ppf ""
 
-let option_force_inline ppf force_inline =
-  if force_inline then
-    fprintf ppf "[@@force_inline]"
+let option_thunk ppf thunk =
+  if thunk then
+    fprintf ppf "[@@thunk]"
   else
     fprintf ppf ""
 
-let e_attributes ppf { inline ; no_mutation ; view ; public ; hidden ; force_inline } =
+let e_attributes ppf { inline ; no_mutation ; view ; public ; hidden ; thunk } =
   fprintf ppf "%a%a%a%a%a%a"
     option_inline inline
     option_no_mutation no_mutation
     option_view view
     option_public public
     option_hidden hidden
-    option_force_inline force_inline
+    option_thunk thunk
 
 let label ppf (l:label) : unit =
   let Label l = l in fprintf ppf "%s" l

@@ -2956,7 +2956,7 @@ Toplevel let declaration are silently change to const declaration.
 44 |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile" ; "contract" ; contract "force_inline.mligo" ] ;
+  run_ligo_good [ "compile" ; "contract" ; contract "thunk.mligo" ] ;
   [%expect{|
 { parameter string ;
   storage string ;
