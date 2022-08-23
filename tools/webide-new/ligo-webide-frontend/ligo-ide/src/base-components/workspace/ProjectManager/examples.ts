@@ -1140,7 +1140,7 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
 
 `;
 
-const config = (name) => `{
+const config = (name: string) => `{
   "main": "./contracts/${name}.mligo",
   "deploy": "./build/contracts/${name}.tz",
   "framework": "#framework",
@@ -1150,7 +1150,10 @@ const config = (name) => `{
 }
 `;
 
-export const getExamples = (name, template) => {
+export const getExamples = (
+  name: string,
+  template: string
+): { [a: string]: { name: string; content: string } } => {
   if (template === "increment") {
     return {
       storageM: {

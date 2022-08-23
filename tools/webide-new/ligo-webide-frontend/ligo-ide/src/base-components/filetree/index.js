@@ -552,8 +552,8 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
     }
 
     isCopy
-      ? projectManager.copyOps(dragNode.path, `${targetFolderPath}/${dragNode.name}`, dragNode.type)
-      : projectManager.moveOps(
+      ? ProjectManager.copyOps(dragNode.path, `${targetFolderPath}/${dragNode.name}`, dragNode.type)
+      : ProjectManager.moveOps(
           dragNode.path,
           `${targetFolderPath}/${dragNode.name}`,
           dragNode.type

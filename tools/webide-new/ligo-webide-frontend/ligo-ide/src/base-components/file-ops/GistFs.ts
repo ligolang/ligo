@@ -6,8 +6,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Gists from "gists";
 
+export type GistContent = { [a: string]: { content: string } };
+
 export type GistData = {
-  files?: { [a: string]: string };
+  files?: GistContent;
   message: string;
 };
 

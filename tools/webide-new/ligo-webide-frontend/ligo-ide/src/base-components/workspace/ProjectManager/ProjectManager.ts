@@ -1,8 +1,7 @@
 import pathHelper from "path-browserify";
-import debounce from "lodash/debounce";
 import moment from "moment";
 import * as monaco from "monaco-editor";
-import fileOps from "~/base-components/file-ops";
+import fileOps, { FileInfo, FolderInfo } from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 import { modelSessionManager } from "~/base-components/code-editor";
 import { IpcChannel } from "~/base-components/ipc";
@@ -18,29 +17,49 @@ import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "../ProjectSettings";
 
+import type { WorkspaceLoader } from "../WorkspaceLoader";
+import type TerminalButton from "../components/TerminalButton";
+import { RefreshData } from "~base-components/filetree/types";
+import { GistContent } from "~base-components/file-ops/GistFs";
+import MonacoEditor from "~base-components/code-editor/MonacoEditor/MonacoEditor";
+
 export default class ProjectManager {
   static ProjectSettings = ProjectSettings;
 
   static channel = new IpcChannel("project");
 
-  static terminalButton = null;
+  static terminalButton: TerminalButton | undefined = undefined;
 
-  static instance = null;
+  static instance: ProjectManager | undefined = undefined;
 
-  constructor(project, projectRoot) {
+  project: WorkspaceLoader;
+
+  projectRoot: string;
+
+  deployButton: any;
+
+  projectSettings: ProjectSettings | undefined;
+
+  projectName: string | undefined;
+
+  constructor(project: WorkspaceLoader, projectRoot: string) {
     ProjectManager.instance = this;
     this.project = project;
     this.projectRoot = projectRoot;
 
     this.deployButton = null;
-    this.onFileChanged = debounce(this.onFileChanged, 1500).bind(this);
   }
 
-  onRefreshDirectory(callback) {
+  static onRefreshDirectory(callback: (data: RefreshData) => void) {
     ProjectManager.channel.on("refresh-directory", callback);
   }
 
-  static effect(evt, callback) {
+  // TODO: using Function as a type is not a great solution.
+  // Each event has its own callback which should be possible to type.
+  // Right now it is not really understandable what events we need
+  // so in future it should be possible to type callbacks and remove eslint-disable.
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  static effect(evt: string, callback: Function) {
     return () => {
       const dispose = ProjectManager.channel.on(evt, callback);
       ProjectManager.channel.trigger("current-value", evt);
@@ -48,15 +67,19 @@ export default class ProjectManager {
     };
   }
 
-  static async createProject(name, template) {
+  static async createProject(name: string, template: string) {
     return this.processProject(name, undefined, template);
   }
 
-  static async openProject(obj, name) {
+  static async openProject(obj: GistContent, name: string) {
     return this.processProject(name, obj, undefined);
   }
 
-  static async processProject(name, obj, template) {
+  static async processProject(
+    name: string,
+    obj: GistContent | undefined,
+    template: string | undefined
+  ) {
     const data = {
       id: name,
       author: "local",
@@ -81,7 +104,7 @@ export default class ProjectManager {
     } else if (template) {
       const examples = getExamples(data.name, template);
 
-      for (const file in examples) {
+      for (const file of Object.keys(examples)) {
         try {
           await fileOps.writeFile(examples[file].name, examples[file].content);
         } catch (error) {
@@ -127,20 +150,20 @@ export default class ProjectManager {
     };
   }
 
-  pathForProjectFile(relativePath) {
+  pathForProjectFile(relativePath: string) {
     return this.projectRoot ? pathHelper.join(this.projectRoot, relativePath) : "";
   }
 
-  pathInProject(filePath) {
+  pathInProject(filePath: string) {
     return pathHelper.relative(this.projectRoot, filePath);
   }
 
   async loadRootDirectory() {
     const result = await fileOps.readDirectory(this.projectRoot);
 
-    const rawData = result.map((item) => ({
+    const rawData: (FolderInfo | FileInfo)[] = result.map((item) => ({
       ...item,
-      pathInProject: `${this.projectName}/${item.name}`,
+      pathInProject: `${this.projectName ? this.projectName : "undefined"}/${item.name}`,
     }));
     return {
       name: this.projectRoot,
@@ -158,29 +181,29 @@ export default class ProjectManager {
     const rootDirectory = await this.loadRootDirectory();
 
     for (let i = 0; i < rootDirectory.children.length; i++) {
-      if (rootDirectory.children[i].type === "folder") {
-        rootDirectory.children[i].children = await this.loadDirectoryRecursively(
-          rootDirectory.children[i]
-        );
+      const child = rootDirectory.children[i];
+      if (child.type === "folder") {
+        child.children = await this.loadDirectoryRecursively(child);
       }
     }
 
     return rootDirectory;
   }
 
-  async loadDirectoryRecursively(node) {
+  async loadDirectoryRecursively(node: FolderInfo) {
     const children = await this.loadDirectory(node);
 
     for (let i = 0; i < children.length; i++) {
-      if (children[i].type === "folder") {
-        children[i].children = await this.loadDirectoryRecursively(children[i]);
+      const child = children[i];
+      if (child.type === "folder") {
+        child.children = await this.loadDirectoryRecursively(child);
       }
     }
 
     return children;
   }
 
-  async loadDirectory(node) {
+  async loadDirectory(node: FolderInfo) {
     const result = await fileOps.readDirectory(node.path);
     const rawData = result.map((item) => ({
       ...item,
@@ -221,13 +244,18 @@ export default class ProjectManager {
   async getMainContract() {
     const { mainFilePath } = this;
     const mainFile = await fileOps.readFile(mainFilePath);
-    const existingPaths = new Set([mainFilePath]);
-    const resultMap = new Map();
+    const existingPaths = new Set<string>([mainFilePath]);
+    const resultMap = new Map<string, string>();
     await this.getContractsRecursively(mainFilePath, mainFile, resultMap, existingPaths);
     return Array.from(resultMap);
   }
 
-  async getContractsRecursively(path, content, resultMap, existingFiles) {
+  async getContractsRecursively(
+    path: string,
+    content: string,
+    resultMap: Map<string, string>,
+    existingFiles: Set<string>
+  ): Promise<void> {
     resultMap.set(path, content);
 
     const includeImportRegexp = /^#[ \t]*(include|import)[ \t]*"[^"]*"[ \t]*/gm;
@@ -273,13 +301,13 @@ export default class ProjectManager {
   async checkSettings() {
     if (!this.project || !this.projectRoot) {
       notification.error("No Project", "Please open a project first.");
-      return;
+      return undefined;
     }
 
-    return await this.projectSettings.readSettings();
+    return this.projectSettings?.readSettings();
   }
 
-  async createNewFile(basePath, name) {
+  static async createNewFile(basePath: string, name: string) {
     const filePath = pathHelper.join(basePath, name);
     if (await fileOps.exists(filePath)) {
       throw new Error(`File <b>${filePath}</b> already exists.`);
@@ -291,7 +319,7 @@ export default class ProjectManager {
       throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`);
     }
 
-    await this.refreshDirectory({
+    ProjectManager.refreshDirectory({
       type: "newFile",
       basePath,
       name,
@@ -300,7 +328,7 @@ export default class ProjectManager {
     return filePath;
   }
 
-  async writeDirectory(basePath, name) {
+  static async writeDirectory(basePath: string, name: string) {
     const folderPath = pathHelper.join(basePath, name);
     if (await fileOps.exists(folderPath)) {
       throw new Error(`Folder <b>${folderPath}</b> already exists.`);
@@ -313,7 +341,7 @@ export default class ProjectManager {
       throw new Error(`File <b>${JSON.stringify(e)}</b> already exists.`);
     }
 
-    await this.refreshDirectory({
+    ProjectManager.refreshDirectory({
       type: "newDirectory",
       basePath,
       name,
@@ -321,7 +349,7 @@ export default class ProjectManager {
     });
   }
 
-  async moveOps(from, to, type) {
+  static async moveOps(from: string, to: string, type: "file" | "folder") {
     try {
       if (type === "file") {
         await fileOps.copyMoveFile(from, to, "move");
@@ -330,19 +358,22 @@ export default class ProjectManager {
       if (type === "folder") {
         await fileOps.copyMoveFolder(from, to, "move");
       }
-    } catch (e) {
-      notification.error(`Move ${type} error`, e.message);
-      return;
+    } catch (e: any) {
+      if (e instanceof Error) {
+        notification.error(`Move ${type} error`, e.message);
+        return;
+      }
+      throw e;
     }
 
-    await this.refreshDirectory({
+    ProjectManager.refreshDirectory({
       type: type === "file" ? "moveFile" : "moveDirectory",
       targetPath: from,
       dropPath: to,
     });
   }
 
-  async copyOps(from, to, type) {
+  static async copyOps(from: string, to: string, type: "file" | "folder") {
     try {
       if (type === "file") {
         await fileOps.copyMoveFile(from, to, "copy");
@@ -351,19 +382,22 @@ export default class ProjectManager {
       if (type === "folder") {
         await fileOps.copyMoveFolder(from, to, "copy");
       }
-    } catch (e) {
-      notification.error(`Copy ${type} error`, e.message);
-      return;
+    } catch (e: any) {
+      if (e instanceof Error) {
+        notification.error(`Copy ${type} error`, e.message);
+        return;
+      }
+      throw e;
     }
 
-    await this.refreshDirectory({
+    ProjectManager.refreshDirectory({
       type: type === "file" ? "copyFile" : "copyDirectory",
       targetPath: from,
       dropPath: to,
     });
   }
 
-  async rename(oldPath, name) {
+  static async rename(oldPath: string, name: string) {
     const path = pathHelper;
     const { dir } = path.parse(oldPath);
     const newPath = path.join(dir, name);
@@ -377,7 +411,7 @@ export default class ProjectManager {
       throw new Error(`Fail to rename <b>${oldPath}</b>.`);
     }
 
-    await this.refreshDirectory({
+    ProjectManager.refreshDirectory({
       type: isFile ? "renameFile" : "renameDirectory",
       oldPath,
       newName: name,
@@ -385,29 +419,28 @@ export default class ProjectManager {
     });
   }
 
-  async deleteFile(node) {
-    const { response } = await fileOps.showMessageBox({
+  static async deleteFile(node: FolderInfo | FileInfo) {
+    const { response } = fileOps.showMessageBox({
       message: `Are you sure you want to delete ${node.path}?`,
-      buttons: ["Move to Trash", "Cancel"],
     });
     if (response === 0) {
-      if (node.children) {
+      if (node.type === "folder" && node.children) {
         await fileOps.deleteDirectory(node.path);
       } else {
         await fileOps.deleteFile(node.path);
       }
-      await this.refreshDirectory({
-        type: node.children ? "deleteDirectory" : "deleteFile",
+      ProjectManager.refreshDirectory({
+        type: node.type === "folder" ? "deleteDirectory" : "deleteFile",
         path: node.path,
       });
     }
   }
 
-  async refreshDirectory(data) {
+  static refreshDirectory(data: RefreshData) {
     ProjectManager.channel.trigger("refresh-directory", data);
   }
 
-  toggleTerminal(terminal) {
+  toggleTerminal(terminal: boolean) {
     ProjectManager.terminalButton?.setState({ terminal });
     this.project.toggleTerminal(terminal);
   }
@@ -416,10 +449,11 @@ export default class ProjectManager {
     return this.pathForProjectFile("config.json");
   }
 
-  onEditorReady(editor, editorComponent) {
+  onEditorReady(editor: monaco.editor.IStandaloneCodeEditor, editorComponent: MonacoEditor) {
     modelSessionManager.decorationMap = {};
     // eslint-disable-next-line no-bitwise
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       editorComponent.props.onCommand("save");
       this.lint();
     });
@@ -432,10 +466,14 @@ export default class ProjectManager {
     this.lint();
   }
 
+  // eslint-disable-next-line class-methods-use-this
   lint() {}
 
-  async compile(sourceFile, finalCall) {
+  async compile(sourceFile?: string, finalCall?: () => void) {
+    /* eslint-disable */
+    // @ts-ignore
     if (CompilerManager.button.state.building) {
+      /* eslint-enable */
       notification.error("Build Failed", "Another build task is running now.");
       return false;
     }
@@ -445,32 +483,43 @@ export default class ProjectManager {
     await this.project.saveAll();
     this.toggleTerminal(true);
 
-    let result;
     try {
-      result = await compilerManager.build(settings, this, sourceFile);
+      await compilerManager.build(settings, this, sourceFile);
     } catch {
-      finalCall && finalCall();
+      if (finalCall) {
+        finalCall();
+      }
       return false;
     }
-    if (result?.decorations) {
-      modelSessionManager.updateDecorations(result.decorations);
-    }
-    if (result?.errors) {
-      finalCall && finalCall();
-      return false;
-    }
+    // if (result?.decorations) {
+    //   modelSessionManager.updateDecorations(result.decorations);
+    // }
+    // if (result?.errors) {
+    //   if (finalCall) {
+    //     finalCall();
+    //   }
+    //   return false;
+    // }
 
-    finalCall && finalCall();
+    // if (finalCall) {
+    //   finalCall();
+    // }
     return true;
   }
 
-  async deploy(contractFileNode) {
+  // TODO: a great part of code was disabled for eslint, filled with
+  // all ts autofixes and ts-ignore flags. The problem is that we do not
+  // use this code right now and moreover if one day we will return to it
+  // it will be rewrited. So, right now there is no reason to type and
+  // pretty it.
+  /* eslint-disable */
+  async deploy(contractFileNode: { pathInProject: string; path: string }) {
     if (!networkManager.sdk) {
       notification.error(
         "Cannot Deploy",
         "No connected network. Please start a local network or switch to a remote network."
       );
-      return true;
+      return;
     }
 
     let contracts;
@@ -502,16 +551,18 @@ export default class ProjectManager {
         contractFileNode: contractFileNode || (await this.getDefaultContractFileNode()),
         contracts,
       },
-      (contractObj, allParameters) => this.pushDeployment(contractObj, allParameters),
-      (contractObj, allParameters) => this.estimate(contractObj, allParameters)
+      (contractObj: any, allParameters: any) => this.pushDeployment(contractObj, allParameters),
+      (contractObj: any, allParameters: any) => this.estimate(contractObj, allParameters)
     );
   }
 
   async getDefaultContractFileNode() {
     const settings = await this.checkSettings();
+    // @ts-ignore
     if (!settings?.deploy) {
       return;
     }
+    // @ts-ignore
     const filePath = this.pathForProjectFile(settings.deploy);
     const pathInProject = this.pathInProject(filePath);
     return { path: filePath, pathInProject };
@@ -522,15 +573,19 @@ export default class ProjectManager {
     const abis = await Promise.all(
       contracts.map((contract) =>
         fileOps
+          // @ts-ignore
           .readFile(contract.path)
           .then((content) => ({
+            // @ts-ignore
             contractPath: contract.path,
+            // @ts-ignore
             pathInProject: this.pathInProject(contract.path),
             content: JSON.parse(content),
           }))
           .catch(() => null)
       )
     );
+    // @ts-ignore
     return abis.filter(Boolean).map(({ contractPath, pathInProject, content }) => {
       const name = content.contractName || pathHelper.parse(contractPath).name;
       return {
@@ -543,7 +598,7 @@ export default class ProjectManager {
     });
   }
 
-  checkSdkAndSigner(allParameters) {
+  checkSdkAndSigner(allParameters: { signer: any }) {
     if (!networkManager.sdk) {
       notification.error(
         "No Network",
@@ -559,9 +614,16 @@ export default class ProjectManager {
       );
       return true;
     }
+
+    return false;
   }
 
-  validateDeployment(contractObj) {
+  validateDeployment(contractObj: {
+    bytecode: any;
+    evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
+    deployedBytecode: any;
+    abi: any;
+  }) {
     let bytecode = contractObj.bytecode || contractObj.evm?.bytecode?.object;
     let deployedBytecode =
       contractObj.deployedBytecode || contractObj.evm?.deployedBytecode?.object;
@@ -593,7 +655,16 @@ export default class ProjectManager {
     };
   }
 
-  async estimate(contractObj, allParameters) {
+  async estimate(
+    contractObj: {
+      bytecode: any;
+      evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
+      deployedBytecode: any;
+      abi: any;
+    },
+    allParameters: { signer?: any; amount?: any; parameters?: any }
+  ) {
+    // @ts-ignore
     if (this.checkSdkAndSigner(allParameters)) {
       return;
     }
@@ -612,6 +683,7 @@ export default class ProjectManager {
         {
           abi: deploy.abi,
           bytecode: deploy.bytecode,
+          // @ts-ignore
           options: deploy.options,
           parameters: parameters.array,
           amount,
@@ -623,6 +695,7 @@ export default class ProjectManager {
       result = await networkManager.sdk.estimate(tx);
     } catch (e) {
       console.warn(e);
+      // @ts-ignore
       notification.error("Estimate Failed", e.reason || e.message);
       this.deployButton.setState({ pending: false });
       return;
@@ -633,7 +706,22 @@ export default class ProjectManager {
     return result;
   }
 
-  async pushDeployment(contractObj, allParameters) {
+  async pushDeployment(
+    contractObj: {
+      bytecode: any;
+      evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
+      deployedBytecode: any;
+      abi: any;
+    },
+    allParameters: {
+      [x: string]: any;
+      signer?: any;
+      contractName?: any;
+      amount?: any;
+      parameters?: any;
+    }
+  ) {
+    // @ts-ignore
     if (this.checkSdkAndSigner(allParameters)) {
       return;
     }
@@ -654,6 +742,7 @@ export default class ProjectManager {
         {
           abi: deploy.abi,
           bytecode: deploy.bytecode,
+          // @ts-ignore
           options: deploy.options,
           parameters: parameters.array,
           amount,
@@ -681,6 +770,7 @@ export default class ProjectManager {
             },
             {
               pushing: () => this.deployButton.closeModal(),
+              // @ts-ignore
               executed: ({ tx, receipt, abi }) => {
                 resolve({
                   network: networkId,
@@ -700,6 +790,7 @@ export default class ProjectManager {
       });
     } catch (e) {
       console.warn(e);
+      // @ts-ignore
       notification.error("Deploy Failed", e.reason || e.message);
       this.deployButton.setState({ pending: false });
       return;
@@ -709,8 +800,10 @@ export default class ProjectManager {
     notification.success("Deploy Successful");
 
     redux.dispatch("ABI_ADD", {
+      // @ts-ignore
       ...deploy.options,
       name: contractName,
+      // @ts-ignore
       codeHash: result.codeHash,
       abi: JSON.stringify(deploy.abi),
     });
@@ -718,8 +811,11 @@ export default class ProjectManager {
     const deployResultPath = pathHelper.join(
       this.projectRoot,
       "deploys",
+      // @ts-ignore
       `${result.network}_${moment().format("YYYYMMDD_HHmmss")}.json`
     );
+    // @ts-ignore
     await this.writeFile(deployResultPath, JSON.stringify(result, null, 2));
   }
+  /* eslint-enable */
 }

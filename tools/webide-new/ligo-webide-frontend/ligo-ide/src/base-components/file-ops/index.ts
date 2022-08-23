@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable class-methods-use-this */
 import pathHelper from "path-browserify";
-import GistFs, { GistData } from "~/base-components/file-ops/GistFs";
+import GistFs, { GistContent, GistData } from "~/base-components/file-ops/GistFs";
 import IndexedLocalFs from "./IndexedLocalFs";
 
 export type FolderInfo = {
@@ -17,6 +17,7 @@ export type FolderInfo = {
   path: string;
   loading: boolean;
   remote: boolean;
+  pathInProject?: string;
 };
 
 export type FileInfo = {
@@ -27,6 +28,7 @@ export type FileInfo = {
   path: string;
   remote: boolean;
   isLeaf: boolean;
+  pathInProject?: string;
 };
 
 class FileManager {
@@ -262,12 +264,13 @@ class FileManager {
         throw new Error(`<b>${e.message}</b>`);
       });
 
-    const obj: { [a: string]: string } = {};
+    const obj: GistContent = {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     Object.keys(data).forEach((element) => {
       const path = element.replace(/\.\.\./g, "/");
       obj[path] = data[element];
     });
+    console.log(obj);
     return obj;
   }
 
@@ -304,7 +307,6 @@ class FileManager {
     if (await this.exists(path)) {
       const items = await this.readDirectory(path);
       if (items.length !== 0) {
-        /* eslint-disable no-await-in-loop */
         for (let i = 0; i < items.length; i++) {
           const curPath = items[i].key;
           if (await this.isDirectory(curPath)) {
@@ -315,7 +317,6 @@ class FileManager {
             files.push({ path: curPath, content: fileContent });
           }
         }
-        /* eslint-enable no-await-in-loop */
       }
     }
 
