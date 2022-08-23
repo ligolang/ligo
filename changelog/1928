@@ -1,0 +1,5 @@
+author: er433
+description: ''
+merge_request: '1928'
+title: Add `@force_inline` for forcing AST-inlining
+type: internal
