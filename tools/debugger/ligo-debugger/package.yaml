@@ -72,8 +72,10 @@ library:
     - data-default
     - directory
     - dlist
+    - duplo
     - filepath
     - fmt
+    - hashable
     - lens
     - lens-aeson
     - ligo-squirrel
@@ -140,6 +142,7 @@ tests:
       - singletons
       - tasty
       - text
+      - unordered-containers
       - HUnit
       - tasty-hunit-compat
 

@@ -19,6 +19,7 @@ import Data.Vector qualified as V
 import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
 import Morley.Micheline.Expression qualified as Micheline
+import Morley.Util.Lens
 import Text.Interpolation.Nyan (int, rmode')
 
 -- | Sometimes numbers are carries as strings in order to fit into
@@ -49,7 +50,7 @@ data LigoPosition = LigoPosition
   , lpCol  :: Int
     -- ^ 0-indexed column number
   } deriving stock (Show, Eq, Ord, Generic)
-    deriving anyclass (NFData)
+    deriving anyclass (NFData, Hashable)
 
 instance Buildable LigoPosition where
   build (LigoPosition line col) = [int||#{line}:#{col}|]
@@ -70,7 +71,9 @@ data LigoRange = LigoRange
   , lrStart :: LigoPosition
   , lrEnd   :: LigoPosition
   } deriving stock (Show, Eq, Generic)
-    deriving anyclass (NFData)
+    deriving anyclass (NFData, Hashable)
+
+makeLensesWith postfixLFields ''LigoRange
 
 instance Buildable LigoRange where
   build (LigoRange file start end) = [int||#{file}:#{start}-#{end}|]
@@ -352,6 +355,8 @@ data LigoIndexedInfo = LigoIndexedInfo
 
   } deriving stock (Show, Eq, Generic)
     deriving anyclass (NFData)
+
+makeLensesWith postfixLFields ''LigoIndexedInfo
 
 instance Buildable LigoIndexedInfo where
   build = \case

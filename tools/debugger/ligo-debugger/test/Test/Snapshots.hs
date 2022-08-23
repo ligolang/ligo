@@ -22,11 +22,9 @@ import AST (scanContracts)
 import Control.Exception
 import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
+import Data.HashSet qualified as HS
 import Data.Map qualified as M
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Michelson
-import Language.LIGO.Debugger.Snapshots
+
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
@@ -35,6 +33,13 @@ import Morley.Util.Lens (postfixLFields)
 import System.FilePath (combine, dropExtension, makeRelative)
 import Test.Util
 import Text.Interpolation.Nyan
+
+import Language.LIGO.Debugger.CLI.Call
+import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Snapshots
 
 data ContractRunData =
   forall param st.
@@ -52,12 +57,12 @@ data ContractRunData =
 -- | Make snapshots history for simple contract.
 mkSnapshotsFor
   :: HasCallStack
-  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
+  => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot, HashSet LigoRange)
 mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
   result <- compileLigoContractDebug entrypoint file
   ligoMapper <- either throwIO pure result
-  (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st')) <-
+  (allLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
       Left err -> assertFailure $ pretty err
@@ -65,18 +70,31 @@ mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = 
     & maybe (assertFailure "Parameter type mismatch") pure
   Refl <- sing @st' `decideEquality` sing @(T.ToT st)
     & maybe (assertFailure "Storage type mismatch") pure
-  let his = collectInterpretSnapshots file (fromString entrypoint) contract T.epcPrimitive (T.toVal param) (T.toVal st) dummyContractEnv
-  return (allLocs, his)
+
+  parsedContracts <- parseContracts allFiles
+
+  let (his, ranges) =
+        collectInterpretSnapshots
+          file
+          (fromString entrypoint)
+          contract
+          T.epcPrimitive
+          (T.toVal param)
+          (T.toVal st)
+          dummyContractEnv
+          parsedContracts
+
+  return (allLocs, his, ranges)
 
 testWithSnapshots
   :: ContractRunData
   -> StateT (DebuggerState InterpretSnapshot) IO ()
   -> Assertion
 testWithSnapshots runData action = do
-  (allLocs, his) <- mkSnapshotsFor runData
+  (allLocs, his, ranges) <- mkSnapshotsFor runData
   let st = DebuggerState
         { _dsSnapshots = playInterpretHistory his
-        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs)
+        , _dsSources = DebugSource mempty <$> groupSourceLocations (toList allLocs <> fmap ligoRangeToSourceLocation (HS.toList ranges))
         }
   evalStateT action st
 
@@ -141,10 +159,10 @@ test_Snapshots = testGroup "Snapshots collection"
 
         checkSnapshot \case
           InterpretSnapshot
-            { isStatus = InterpretRunning EventExpressionPreview
+            { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
+                , sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 17)
                 , sfStack =
                   [ StackItem
                     { siLigoDesc = LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable "s")) typ)
@@ -201,7 +219,15 @@ test_Snapshots = testGroup "Snapshots collection"
                 )
               ]
           in
-          [ ( InterpretRunning EventExpressionPreview
+          [ ( InterpretRunning . EventExpressionEvaluated . Just $
+                SomeLorentzValue (42 :: Integer)
+            , one
+              ( LigoRange file (LigoPosition 2 15) (LigoPosition 2 17)
+              , stackWithS
+              )
+            )
+
+          , ( InterpretRunning EventExpressionPreview
             , one
               ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
               , stackWithS
@@ -269,10 +295,10 @@ test_Snapshots = testGroup "Snapshots collection"
 
         checkSnapshot \case
           InterpretSnapshot
-            { isStatus = InterpretRunning EventExpressionPreview
+            { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
+                , sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -293,9 +319,9 @@ test_Snapshots = testGroup "Snapshots collection"
 
           checkSnapshot \case
             InterpretSnapshot
-              { isStatus = InterpretRunning EventExpressionPreview
+              { isStatus = InterpretRunning EventFacedStatement
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 2 15) (LigoPosition 2 17)
+                  { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 17)
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -322,9 +348,9 @@ test_Snapshots = testGroup "Snapshots collection"
 
         checkSnapshot \case
           InterpretSnapshot
-            { isStatus = InterpretRunning EventExpressionPreview
+            { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 2 11) (LigoPosition 4 17)
+                { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 4 17)
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -421,7 +447,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 5 17) (LigoPosition 5 18)
+                { sfLoc = LigoRange file' (LigoPosition 5 0) (LigoPosition 5 18)
                 } :| []
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -431,7 +457,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 6 21) (LigoPosition 6 22)
+                { sfLoc = LigoRange file' (LigoPosition 6 2) (LigoPosition 6 26)
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -441,7 +467,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 2 19) (LigoPosition 2 20)
+                { sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 20)
                 } :| []
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
@@ -604,10 +630,63 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 7 23) (LigoPosition 7 24)
+                { sfLoc = LigoRange file' (LigoPosition 7 2) (LigoPosition 7 25)
                 } :| []
             } | file' == file -> pass
           snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Check statements" \step -> do
+      let checkLocations runData locs = testWithSnapshots runData do
+            let snapPred InterpretSnapshot{..} = case isStatus of
+                  InterpretRunning EventFacedStatement -> True
+                  _ -> False
+
+            (_, filter snapPred . tsAfterInstrs -> snaps) <- moveTill Forward (FrozenPredicate $ pure False)
+
+            ( snaps
+                <&> do \InterpretSnapshot{..} ->
+                        toList isStackFrames
+                        <&> \StackFrame{..} -> sfLoc
+                & concat
+              ) @?= locs
+
+      let file = contractsDir </> "statement-visiting.mligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 42 :: Integer
+            }
+
+      step [int||Checking locations for #{file}|]
+      checkLocations
+        runData
+        [ LigoRange file (LigoPosition 9 2) (LigoPosition 9 15)
+        , LigoRange file (LigoPosition 10 2) (LigoPosition 10 19)
+        , LigoRange file (LigoPosition 11 2) (LigoPosition 11 23)
+        , LigoRange file (LigoPosition 11 27) (LigoPosition 11 43)
+        ]
+
+      let file2 = contractsDir </> "statement-visiting.ligo"
+      let runData2 = ContractRunData
+            { crdProgram = file2
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 3 :: Integer
+            }
+
+      step [int||Checking locations for #{file2}|]
+      checkLocations
+        runData2
+        ( [LigoRange file2 (LigoPosition 2 2) (LigoPosition 2 20)]
+        <>
+          concat
+            ( replicate 3
+              [ LigoRange file2 (LigoPosition 4 4) (LigoPosition 4 28)
+              , LigoRange file2 (LigoPosition 5 4) (LigoPosition 5 22)
+              ]
+            )
+        )
   ]
 
 -- | Special options for checking contract.
@@ -639,7 +718,7 @@ unit_Contracts_locations_are_sensible = do
       result <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
       ligoMapper <- either throwIO pure result
 
-      (locations, _) <-
+      (locations, _, _) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err

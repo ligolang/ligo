@@ -9,6 +9,7 @@ import Unsafe qualified
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
+import Data.HashSet qualified as HS
 import Data.Text qualified as Text
 import Fmt (Builder, blockListF, build, pretty)
 import Fmt.Internal.Core (FromBuilder (fromBuilder))
@@ -39,10 +40,13 @@ import UnliftIO.Directory (doesFileExist)
 import UnliftIO.STM (modifyTVar)
 
 import Language.LIGO.DAP.Variables
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
+
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
+
+import Language.LIGO.Debugger.CLI.Call
+import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Common (ligoRangeToSourceLocation)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
@@ -348,6 +352,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsEntrypoint = Nothing
     , lsAllLocs = Nothing
     , lsBinaryPath = binaryPathMb
+    , lsParsedContracts = Nothing
     }
 
   writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
@@ -421,7 +426,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     ligoDebugInfo <- ExceptT $ compileLigoContractDebug entrypoint program
     logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-    (allLocs, someContract) <-
+    (allLocs, someContract, allFiles) <-
       readLigoMapper ligoDebugInfo
       & first [int|m|"Failed to process contract: #{id}|]
       & liftEither
@@ -430,7 +435,9 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       SomeContract (contract@Contract{} :: Contract cp st) <- pure someContract
       logMessage $ pretty (unContractCode $ cCode contract)
 
-    pure (someContract, allLocs)
+    parsedContracts <- parseContracts allFiles
+
+    pure (someContract, allLocs, parsedContracts)
 
   case result of
     Left e -> do
@@ -444,7 +451,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
             , DAP.messageErrorResponse = Just $ toString . leMessage $ e
             , DAP.bodyErrorResponse = DAP.ErrorResponseBody $ Just msg
             }
-    Right (someContract@(SomeContract contract), allLocs) -> do
+    Right (someContract@(SomeContract contract), allLocs, parsedContracts) -> do
       let
         paramNotes = cParamNotes contract
         michelsonEntrypoints =
@@ -454,6 +461,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
         { lsContract = Just someContract
         , lsAllLocs = Just allLocs
+        , lsParsedContracts = Just parsedContracts
         }
 
       lServerState <- getServerState
@@ -556,14 +564,26 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
           & withExceptT (pretty :: Text -> DAP.Message)
 
         allLocs <- lift getAllLocs
+        parsedContracts <- lift getParsedContracts
 
-        let his = collectInterpretSnapshots program (fromString entrypoint) contract epc arg storage dummyContractEnv
+        let (his, ranges) =
+              collectInterpretSnapshots
+              program
+              (fromString entrypoint)
+              contract
+              epc
+              arg
+              storage
+              dummyContractEnv
+              parsedContracts
+
             ds = DebuggerState
               { _dsSnapshots = playInterpretHistory his
               , _dsSources =
                   DebugSource mempty <$>
-                  groupSourceLocations (toList allLocs)
+                  groupSourceLocations (toList allLocs <> fmap ligoRangeToSourceLocation (HS.toList ranges))
               }
+
         logMessage [int||All snapshots: #{his}|]
         pure $ DAPSessionState ds mempty mempty program
 
