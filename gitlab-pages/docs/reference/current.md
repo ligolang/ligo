@@ -953,16 +953,16 @@ let x : st = Tezos.sapling_empty_state ;
 Sapling empty state
 
 <SyntaxTitle syntax="pascaligo">
-val sapling_verify_update&lt;a&gt; : sapling_transaction (a) -> sapling_state (a) -> option (int * sapling_state (a))
+val sapling_verify_update&lt;a&gt; : sapling_transaction (a) -> sapling_state (a) -> option (bytes * (int * sapling_state (a)))
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val sapling_verify_update : 'a sapling_transaction -> 'a sapling_state -> (int * 'a sapling_state) option
+val sapling_verify_update : 'a sapling_transaction -> 'a sapling_state -> (bytes * (int * 'a sapling_state)) option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let sapling_verify_update: sapling_transaction('a) => sapling_state('a) => option(int, sapling_state('a))
+let sapling_verify_update: sapling_transaction('a) => sapling_state('a) => option(bytes, (int, sapling_state('a)))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sapling_verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;int, sapling_state&lt;'a&gt;&gt;
+let sapling_verify_update: sapling_transaction&lt;'a&gt; => sapling_state&lt;'a&gt; => option&lt;[bytes, [int, sapling_state&lt;'a&gt;]]&gt;
 </SyntaxTitle>
 
 
@@ -973,7 +973,7 @@ Verify sapling update
 ```pascaligo group=sap_t
 function f (const tr : tr) : int * st is
   case Tezos.sapling_verify_update (tr, x) of [
-    Some (x) -> x
+    Some (_, x) -> x
   | None -> (failwith ("failed") : int * st)
   ]
 ```
@@ -984,7 +984,7 @@ function f (const tr : tr) : int * st is
 ```cameligo group=sap_t
 let f (tr : tr) : int * st =
   match Tezos.sapling_verify_update tr x with
-    Some x -> x
+    Some (_, x) -> x
   | None -> (failwith "failed" : int * st)
 ```
 
@@ -994,7 +994,7 @@ let f (tr : tr) : int * st =
 ```reasonligo group=sap_t
 let f = (tr : tr) : (int , st) =>
   switch (Tezos.sapling_verify_update (tr, x)) {
-    | Some x => x
+    | Some (_, x) => x
     | None => (failwith ("failed") : (int , st))
   }
 ```
@@ -1005,7 +1005,7 @@ let f = (tr : tr) : (int , st) =>
 ```jsligo group=sap_t
 let f = (tr : tr) : [int , st] =>
   match (Tezos.sapling_verify_update(tr, x), {
-    Some: (x: [int, st]) => x,
+    Some: (p: [bytes, [int, st]]) => p[1],
     None: () => (failwith ("failed") as [int , st])
   });
 ```
