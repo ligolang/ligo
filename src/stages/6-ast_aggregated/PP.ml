@@ -133,10 +133,10 @@ and expression_content ppf (ec: expression_content) =
   | E_type_abstraction e -> type_abs expression ppf e
   | E_matching {matchee; cases;} ->
       fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; hidden = false } } ->
-      fprintf ppf "@[<h>let %a = %a%a%a in@.%a@]" (binder type_expression) let_binder expression
-        rhs option_inline inline option_no_mutation no_mutation expression let_result
-  | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true} } ->
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation; public=__LOC__ ; view = _ ; hidden = false ; force_inline } } ->
+      fprintf ppf "@[<h>let %a = %a%a%a%a in@.%a@]" (binder type_expression) let_binder expression
+        rhs option_inline inline option_no_mutation no_mutation option_force_inline force_inline expression let_result
+  | E_let_in {let_binder = _ ; rhs = _ ; let_result; attr = { inline = _ ; no_mutation = _ ; public=__LOC__ ; view = _ ; hidden = true ; force_inline = _ } } ->
       fprintf ppf "@[<h>%a@]" expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
@@ -152,6 +152,12 @@ and expression_content ppf (ec: expression_content) =
 and option_inline ppf inline =
   if inline then
     fprintf ppf "[@inline]"
+  else
+    fprintf ppf ""
+
+and option_force_inline ppf force_inline =
+  if force_inline then
+    fprintf ppf "[@force_inline]"
   else
     fprintf ppf ""
 
