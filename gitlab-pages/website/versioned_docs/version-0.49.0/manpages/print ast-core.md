@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print ast-core SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the AST core stage.

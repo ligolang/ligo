@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo run interpret EXPRESSION_EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command interprets a LIGO expression. The context can be initialized by providing a source file. The interpretation is done using Michelson's interpreter.

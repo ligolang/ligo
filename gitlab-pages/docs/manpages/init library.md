@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo init library [PROJECT_NAME]
+```
 
 ### DESCRIPTION
 Generate new folder from library template. Internet connexion needed

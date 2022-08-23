@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo publish
+```
 
 ### DESCRIPTION
 [BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server

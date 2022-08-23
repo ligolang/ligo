@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print preprocessed SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command runs the pre-processor on a LIGO source file and outputs the result. The directive `#include` directly inlines the included file and therefore its content appears in the output. In contrast, the directive `#import` includes the file as a module and therefore the content of the imported file is not printed by this sub-command.

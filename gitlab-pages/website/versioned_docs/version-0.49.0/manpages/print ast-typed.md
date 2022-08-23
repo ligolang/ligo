@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print ast-typed SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the AST typed stage. Internally, it uses the build system to type the contract, but the contract is not combined with imported modules.

@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo compile parameter SOURCE_FILE PARAMETER_EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command compiles a parameter for a given contract to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract.

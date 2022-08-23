@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo run test SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command tests a LIGO contract using a LIGO interpreter. Still under development, there are features that are work in progress and are subject to change. No real test procedure should rely on this sub-command alone.

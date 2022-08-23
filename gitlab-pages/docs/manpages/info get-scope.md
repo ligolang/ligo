@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo info get-scope SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command returns the environment for a given file in JSON format. It does not use the build system.

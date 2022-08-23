@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo run evaluate-expr SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command evaluates a LIGO definition. The context is initialized from a source file where the definition is written. The interpretation is done using a Michelson interpreter.

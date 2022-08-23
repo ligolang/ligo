@@ -210,13 +210,22 @@ webide-backend-build-and-push-backend:
 
 .website:
   stage: push
-  extends: .nix
-  dependencies:
-    - docker_extract
-    - to_dos
+  tags:
+    - docker
+  image: node:16.17.0-buster
+  needs:
+    - job: changelog
+      artifacts: true
   script:
-    - nix-build nix -A ligo-website
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
+    - export DOC_PATH=./gitlab-pages/docs
+    - export WEBSITE_PATH=./gitlab-pages/website
+    - cp -f ./changelog.md $DOC_PATH/intro/changelog.md
+    - export LATEST_VERSION=$(ls -1r $WEBSITE_PATH/versioned_docs | sed -n '1p')
+    - echo $LATEST_VERSION
+    - cp -f ./changelog.md $WEBSITE_PATH/versioned_docs/$LATEST_VERSION/intro/changelog.md
+    - npm --prefix $WEBSITE_PATH ci
+    - npm --prefix $WEBSITE_PATH run build
+    - cp -Lr --no-preserve=mode,ownership,timestamps $WEBSITE_PATH/build public
     - touch to-dos.html; cp to-dos.html public/to-dos.html
   artifacts:
     paths:
@@ -230,17 +239,20 @@ pages:
 
 pages-attempt:
   extends: .website
-  only:
-    - merge_requests
-    - /^.*-run-dev$/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - gitlab-pages/**/*
+      when: on_success
 
 deploy_website_preview:
   stage: deploy
   image: node:12.20.0-buster
   tags:
     - docker
-  dependencies:
-    - pages-attempt
+  needs:
+    - job: pages-attempt
+      artifacts: true
   script: 
     - apt-get update
     - apt-get install -y --no-install-recommends jq

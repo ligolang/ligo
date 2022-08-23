@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo changelog
+```
 
 ### DESCRIPTION
 Dump the LIGO changelog to stdout.
