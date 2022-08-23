@@ -9,6 +9,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import StatusTitle from "./statusTitle";
 import { travelTree, updateErrorInfo, findChildren, findInTree, mapTree, sortFile } from "./helper";
 import { modelSessionManager } from "~/base-components/code-editor";
+import { ProjectManager } from "~/base-components/workspace/ProjectManager";
 
 let disableSetActive = false; // stop useless setActive function when filetree trigger onSelect event
 
@@ -343,7 +344,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   };
 
   const initTree = async () => {
-    projectManager.onRefreshDirectory(refreshDirectory);
+    ProjectManager.onRefreshDirectory(refreshDirectory);
     await fetchTreeData(true);
   };
 

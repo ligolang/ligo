@@ -219,7 +219,7 @@ export default class ProjectManager {
   }
 
   async getMainContract() {
-    const mainFilePath = this.mainFilePath;
+    const { mainFilePath } = this;
     const mainFile = await fileOps.readFile(mainFilePath);
     const existingPaths = new Set([mainFilePath]);
     const resultMap = new Map();

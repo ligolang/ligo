@@ -99,6 +99,7 @@
     "@hot-loader/react-dom": "^16.9.0",
     "@types/jest": "24.0.15",
     "@types/loadjs": "^4.0.1",
+    "@types/lodash": "^4.14.184",
     "@types/node": "12.6.3",
     "@types/path-browserify": "^1.0.0",
     "@types/react": "^18.0.15",
