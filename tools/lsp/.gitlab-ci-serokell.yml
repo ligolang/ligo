@@ -5,6 +5,7 @@ variables:
   FLAKE_FLAGS: --accept-flake-config -L
 
 stages:
+  - cabal
   - nix
   - ligo
   - debugger
@@ -18,6 +19,13 @@ default:
 include:
   #  ligo-debugger CI
   - '/tools/debugger/.gitlab-ci.yml'
+
+validate-cabal-files:
+  stage: cabal
+  only: [merge_requests, tooling]
+  script:
+    - cd tools/lsp/squirrel
+    - nix-shell -p 'haskell.lib.overrideCabal haskellPackages.stack2cabal (drv:{ jailbreak = true; broken = false; })' --command scripts/validate-cabal-files.sh
 
 ligo-build:
   stage: ligo
