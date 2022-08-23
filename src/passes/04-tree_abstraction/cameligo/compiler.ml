@@ -304,6 +304,11 @@ let rec compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | Neq ne   -> compile_bin_op C_NEQ ne
     )
   )
+  | ERevApp {value; region} -> 
+    let loc  = Location.lift region in
+    let x = self value.arg1 in
+    let f = self value.arg2 in
+    return @@ e_application ~loc f x
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
   | ECall {value=(EVar var,args);region} ->

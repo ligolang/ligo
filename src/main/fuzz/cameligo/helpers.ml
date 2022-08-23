@@ -220,6 +220,12 @@ module Fold_helpers(M : Monad) = struct
        let* args = bind_map_ne_list self @@ args in
        let value = (lam,args) in
        return @@ ECall {value;region}
+    | ERevApp  {value;region} ->
+      let op   = value.op in
+      let* arg1 = self value.arg1 in
+      let* arg2 = self value.arg2 in
+      let value = {op; arg1; arg2} in
+      return @@ ERevApp {value; region}
     | EBytes   _ as e -> return @@ e
     | EUnit    _ as e -> return @@ e
     | ETuple   {value;region} ->
