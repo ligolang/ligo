@@ -1,6 +1,8 @@
 {
   nixConfig = {
-    extra-substituters = ["https://hydra.iohk.io"];
+    extra-substituters = [
+      "https://hydra.iohk.io\?want-mass-query=1"
+    ];
     extra-trusted-public-keys = ["hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="];
   };
 
@@ -121,71 +123,35 @@
             in
             proj.${name}.components.exes.ligo-webide-backend;
 
-          webide =
-            let
-              packageCache =
-                let
-                  loadCache = f: y2n.importOfflineCache (y2n.mkYarnNix {
-                    yarnLock = f;
-                  });
+          webide = y2n.mkYarnPackage {
+                src = ./ligo-webide-frontend/ligo-ide;
+                buildPhase = ''
+                  # moving all of the node_modules into a new, mutable folder,
+                  # because some weird npm (react-app-rewire iirc) thing decided that it needs node_modules/.cache
 
-                  paths = map loadCache [
-                    ./ligo-webide-frontend/ligo-ide/yarn.lock
-                    ./ligo-webide-frontend/base-components/yarn.lock
-                    ./ligo-webide-frontend/ligo-components/yarn.lock
-                  ];
-                in
-                pkgs.symlinkJoin {
-                  name = "cache";
-                  inherit paths;
-                };
-              yarnInstall = ''
-                ${y2n.fixup_yarn_lock}/bin/fixup_yarn_lock yarn.lock
-                yarn install --ignore-scripts --ignore-engines --ignore-platform --frozen-lockfile --offline
-                patchShebangs node_modules
-              '';
+                  pushd "$PWD/deps/ligo-ide"
+                    cp -raL "node_modules" "node_modules.mut"
+                    chmod -R +rw "node_modules.mut"
 
-              setupYarn = ''
-                export HOME=$TMP
-                yarn config --offline set yarn-offline-mirror ${packageCache}
-                mkdir build; cd build;
-              '';
+                    # bin needs to stay symlinked
+                    rm -rf node_modules.mut/.bin
+                    cp -r "node_modules/.bin" "node_modules.mut/.bin"
 
-              setupSources = s:
-                let name = builtins.baseNameOf s; in
-                ''
-                  cp -r ${s} ${name}
-                  chmod -R +w ${name}
-                  pushd ${name}
+                    rm "node_modules"
+                    mv "node_modules.mut" "node_modules"
+                  popd
+
+                  # gotta love node's non-existent module isolation
+                  # hack in highlight.js from global deps
+                  cp -r node_modules/highlight.js "$PWD/deps/ligo-ide/node_modules"
+
+                  yarn --offline --frozen-lockfile build:react
                 '';
-
-              yarnCommand = name: args: script: pkgs.runCommand name
-                (args // {
-                  buildInputs = [
-                    yarn
-                    nodejs
-                  ] ++ (args.buildInputs or [ ]);
-                })
-                script;
-
-              ligo-ide = yarnCommand "ligo-ide" { } ''
-                ${setupYarn}
-                ${setupSources ./ligo-webide-frontend/base-components}
-                  ${yarnInstall}
-                  yarn build
-                popd
-                ${setupSources ./ligo-webide-frontend/ligo-components}
-                  ${yarnInstall}
-                  yarn build
-                popd
-                ${setupSources ./ligo-webide-frontend/ligo-ide}
-                  ${yarnInstall}
-                  yarn build:react
-                  cp -rL build $out
-                popd
-              '';
-            in
-            ligo-ide;
+                distPhase = ":";
+                installPhase = ''
+                  cp -rL $PWD/deps/ligo-ide/build $out
+                '';
+              };
 
         }
 
