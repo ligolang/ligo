@@ -27,6 +27,7 @@ library
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
       DerivingStrategies
       DerivingVia
@@ -91,6 +92,7 @@ executable ligo-webide-backend
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
       DerivingStrategies
       DerivingVia
@@ -146,6 +148,7 @@ test-suite ligo-webide-backend-test
       DeriveAnyClass
       DeriveFoldable
       DeriveFunctor
+      DeriveGeneric
       DeriveTraversable
       DerivingStrategies
       DerivingVia

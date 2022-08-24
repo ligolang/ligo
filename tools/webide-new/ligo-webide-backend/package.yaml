@@ -13,6 +13,7 @@ default-extensions:
   - DeriveAnyClass
   - DeriveFoldable
   - DeriveFunctor
+  - DeriveGeneric
   - DeriveTraversable
   - DerivingStrategies
   - DerivingVia

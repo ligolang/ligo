@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main (main) where
 
 import Data.Aeson qualified as Aeson

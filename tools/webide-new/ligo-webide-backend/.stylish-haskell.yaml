@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2018 Serokell <https://serokell.io>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+### This is a TEMPLATE of stylish-haskell config.
+### It MAY be used as is, but see the NOTE about `language_pragmas`
+
+# Default stylish-haskell config used in Serokell.
+
+steps:
+  - simple_align:
+      cases: false
+      top_level_patterns: false
+      records: false
+  - imports:
+      align: none
+      list_align: after_alias
+      pad_module_names: false
+      long_list_align: new_line
+      empty_list_align: inherit
+      list_padding: 2
+      post_qualify: true
+      separate_lists: false
+      space_surround: false
+# NOTE: if you don't want language pragmas to be affected, remove these lines.
+# Otherwise, uncomment and set style to `compact`, `vertical` or `compact_line`
+# as you prefer.
+#  - language_pragmas:
+#      style: compact
+#      remove_redundant: true
+  - trailing_whitespace: {}
+columns: 100
+newline: native
+language_extensions:
+  - BangPatterns
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveGeneric
+  - DerivingStrategies
+  - EmptyCase
+  - ExistentialQuantification
+  - ExplicitNamespaces
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - ImportQualifiedPost
+  - LambdaCase
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+# NOTE: NoImplicitPrelude is not recognized by stylish-haskell
+# See https://github.com/haskell/stylish-haskell/issues/199
+#  - NoImplicitPrelude
+  - OverloadedLabels
+  - OverloadedStrings
+  - PatternSynonyms
+  - RecordWildCards
+  - RecursiveDo
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TemplateHaskell
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - ViewPatterns
