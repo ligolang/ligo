@@ -145,7 +145,7 @@ class FileManager {
 
   async writeFile(path: string, content: string) {
     await IndexedLocalFs.writeFile(path, content).catch((e) => {
-      throw new Error(`Fail to create the file <b>${JSON.stringify(e)}</b>.`);
+      throw new Error(`Fail to save the file <b>${JSON.stringify(e)}</b>.`);
     });
   }
 
@@ -270,7 +270,6 @@ class FileManager {
       const path = element.replace(/\.\.\./g, "/");
       obj[path] = data[element];
     });
-    console.log(obj);
     return obj;
   }
 

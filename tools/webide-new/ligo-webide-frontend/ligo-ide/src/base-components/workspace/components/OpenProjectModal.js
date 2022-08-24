@@ -54,6 +54,10 @@ export default class OpenProjectModal extends PureComponent {
       return;
     }
 
+    const config = JSON.parse(obj["/config.json"].content || "{}");
+    config.gistId = gistId;
+    obj["/config.json"].content = JSON.stringify(config);
+
     const created = await this.openProject(obj, name);
 
     if (created) {

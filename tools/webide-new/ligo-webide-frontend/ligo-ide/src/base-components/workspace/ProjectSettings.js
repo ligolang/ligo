@@ -113,6 +113,9 @@ export default class ProjectSettings {
     if (!settings.npmClient) {
       delete settings.npmClient;
     }
+    if (rawSettings.gistId) {
+      settings.gistId = rawSettings.gistId;
+    }
     return settings;
   };
 }

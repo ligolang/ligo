@@ -301,7 +301,11 @@ export default class Workspace extends Component {
           ref={this.createModal}
           projectManager={this.context.projectManager}
         />
-        <GistUploadModals modalRef={this.uploadModal} fileTreeRef={this.filetree} />
+        <GistUploadModals
+          modalRef={this.uploadModal}
+          fileTreeRef={this.filetree}
+          projectManager={this.context.projectManager}
+        />
         <RenameModal ref={this.renameModal} projectManager={this.context.projectManager} />
       </>
     );
