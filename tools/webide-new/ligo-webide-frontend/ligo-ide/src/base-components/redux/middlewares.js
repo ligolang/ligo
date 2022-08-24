@@ -12,6 +12,7 @@ const trackedActions = [
   "SELECT_PROJECT",
   "ADD_PROJECT",
   "REMOVE_PROJECT",
+  "SET_GIST_TOKEN",
   "SET_PROTOCOL",
 ];
 

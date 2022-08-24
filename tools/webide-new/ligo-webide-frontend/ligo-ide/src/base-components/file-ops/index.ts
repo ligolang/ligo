@@ -344,3 +344,4 @@ export default new FileManager();
 
 export { fileSystems, fileSystem } from "./filesystems/fileSystem";
 export { indexedDBFileSystem } from "./filesystems/indexedDB";
+export { default as redux } from "./redux";

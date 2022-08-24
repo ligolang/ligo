@@ -4,7 +4,6 @@ import { WorkspaceContext } from "~/base-components/workspace";
 import { ToolbarButton, DropdownToolbarButton } from "~/base-components/ui-components";
 import { CompilerButton } from "~/ligo-components/eth-compiler";
 import keypairManager from "~/base-components/keypair";
-import GistUploadModals from "~/base-components/workspace/components/GistUploadModals";
 import DeployScriptModal from "./DeployScriptModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
 
