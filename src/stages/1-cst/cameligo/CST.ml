@@ -77,6 +77,10 @@ type times    = lexeme wrap  (* "*" *)
 type bool_or  = lexeme wrap  (* "||" *)
 type bool_and = lexeme wrap  (* "&&" *)
 
+(* Reverse application *)
+
+type rev_app = lexeme wrap (* "|>" *)
+
 (* Comparisons *)
 
 type equal = lexeme wrap  (* "="  *)
@@ -305,6 +309,7 @@ and expr =
 | EFun      of fun_expr reg
 | ESeq      of expr injection reg
 | ECodeInj  of code_inj reg
+| ERevApp   of rev_app bin_op reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -569,7 +574,8 @@ let expr_to_region = function
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
 | EModA {region; _}
-| ECodeInj {region; _} -> region
+| ECodeInj {region; _}
+| ERevApp {region; _} -> region
 
 let declaration_to_region = function
   Let         {region;_}

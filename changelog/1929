@@ -1,0 +1,5 @@
+author: melwyn95
+description: ''
+merge_request: '1929'
+title: Better error mesage for incorrect contract type
+type: fixed
