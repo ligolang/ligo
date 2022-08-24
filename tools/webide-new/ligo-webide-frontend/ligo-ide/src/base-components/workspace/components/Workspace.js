@@ -131,7 +131,11 @@ export default class Workspace extends Component {
   };
 
   gistUploadFileModal = () => {
-    this.uploadModal.current.openModal();
+    this.uploadModal.current.openModal(
+      this.context.projectManager
+        ? this.context.projectManager.projectSettings.get("gistId")
+        : undefined
+    );
   };
 
   openCreateFolderModal = (node) => {
@@ -302,7 +306,7 @@ export default class Workspace extends Component {
           projectManager={this.context.projectManager}
         />
         <GistUploadModals
-          modalRef={this.uploadModal}
+          ref={this.uploadModal}
           fileTreeRef={this.filetree}
           projectManager={this.context.projectManager}
         />

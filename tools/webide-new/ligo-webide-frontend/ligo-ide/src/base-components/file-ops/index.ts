@@ -273,7 +273,7 @@ class FileManager {
     return obj;
   }
 
-  async uploadGistProject(token: string, projectRoot: string): Promise<string> {
+  async uploadGistProject(token: string, projectRoot: string, gistId?: string): Promise<string> {
     if (await this.isFile(projectRoot)) {
       throw Error(`${projectRoot} is not a directory`);
     }
@@ -284,7 +284,7 @@ class FileManager {
       packagedObject[path] = { content };
     });
     const description = "Description";
-    return GistFs.uploadData(packagedObject, description, token);
+    return GistFs.uploadData(packagedObject, description, token, gistId);
   }
 
   async copyFolderToJson(path: string): Promise<{ path: string; content: string }[]> {
