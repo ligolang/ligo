@@ -199,9 +199,9 @@ handleDidChangeTextDocument notif = do
     notify :: ContractInfo' -> RIO ()
     notify doc = do
       let ver = notif^.J.params.J.textDocument.J.version
-      Diagnostic.collectErrors doc ver
       void $ Document.wccForFilePath (contractFile doc) >>=
         traverseAM (Diagnostic.clearDiagnostics . filePathToNormalizedUri)
+      Diagnostic.collectErrors doc ver
 
 handleDidSaveTextDocument :: S.Handler RIO 'J.TextDocumentDidSave
 handleDidSaveTextDocument notif = do
