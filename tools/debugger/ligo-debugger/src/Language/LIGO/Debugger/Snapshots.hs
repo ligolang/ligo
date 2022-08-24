@@ -13,6 +13,9 @@ module Language.LIGO.Debugger.Snapshots
   , collectInterpretSnapshots
 
     -- * Lenses
+  , siLigoDescL
+  , siValueL
+
   , sfNameL
   , sfLocL
   , sfStackL
@@ -34,7 +37,7 @@ module Language.LIGO.Debugger.Snapshots
   , _EventExpressionEvaluated
   ) where
 
-import Control.Lens (Zoom (zoom), makeLensesWith, makePrisms, (.=))
+import Control.Lens (Ixed (ix), Zoom (zoom), makeLensesWith, makePrisms, (.=), (?=))
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
@@ -55,9 +58,11 @@ import Morley.Debugger.Core.Navigate
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots (InterpretHistory (..), twoElemFromList)
 
+import Control.Monad.Except (throwError)
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
+import Text.Interpolation.Nyan
 import Unsafe qualified
 
 -- | Stack element, likely with an associated variable.
@@ -185,8 +190,12 @@ data CollectorState = CollectorState
     -- ^ State of the Morley interpreter.
   , csStackFrames :: NonEmpty StackFrame
     -- ^ Stack frames at this point, top-level frame goes last.
+  , csLastRecordedSnapshot :: Maybe InterpretSnapshot
+    -- ^ Last recorded snapshot.
+    -- We can pick @[operation] * storage@ value from it.
   } deriving stock (Show)
 
+makeLensesWith postfixLFields ''StackItem
 makeLensesWith postfixLFields ''StackFrame
 makeLensesWith postfixLFields ''InterpretSnapshot
 makeLensesWith postfixLFields ''CollectorState
@@ -269,10 +278,13 @@ runInstrCollect = \case
 
       isStackFrames <- use csStackFramesL
 
-      lift $ C.yield InterpretSnapshot
-        { isStatus = InterpretRunning event
-        , ..
-        }
+      let newSnap = InterpretSnapshot
+            { isStatus = InterpretRunning event
+            , ..
+            }
+
+      csLastRecordedSnapshotL ?= newSnap
+      lift $ C.yield newSnap
 
     -- Leave only information that matters in LIGO.
     refineStack :: Rec StkEl st -> [SomeValue]
@@ -292,8 +304,9 @@ runCollectInterpretSnapshots
   :: CollectingEvalOp a
   -> ContractEnv
   -> CollectorState
+  -> Value st
   -> InterpretHistory InterpretSnapshot
-runCollectInterpretSnapshots act env initSt =
+runCollectInterpretSnapshots act env initSt initStorage =
   InterpretHistory $
   -- This is safe because we yield at least two snapshots
   (Unsafe.fromJust . twoElemFromList) $
@@ -305,11 +318,45 @@ runCollectInterpretSnapshots act env initSt =
       }
     (outcome, endState, _) <-
       CL.runRWSC env initSt $ runExceptT act
-    let endStatus = either InterpretFailed (const InterpretTerminatedOk) outcome
-    C.yield InterpretSnapshot
-      { isStatus = endStatus
-      , isStackFrames = csStackFrames endState
-      }
+
+    case outcome of
+      Left stack ->
+        C.yield InterpretSnapshot
+          { isStatus = InterpretFailed stack
+          , isStackFrames = csStackFrames endState
+          }
+
+      Right _ -> do
+        let isStackFrames = either error id do
+              lastSnap <-
+                maybeToRight
+                  "Internal error: No snapshots were recorded while interpreting Michelson code"
+                  do csLastRecordedSnapshot endState
+
+              case isStatus lastSnap of
+                InterpretRunning (EventExpressionEvaluated (Just val)) -> do
+                  let stackItemWithOpsAndStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = val
+                        }
+                  let oldStorage = StackItem
+                        { siLigoDesc = LigoHiddenStackEntry
+                        , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
+                        }
+                  pure
+                    $ (lastSnap ^. isStackFramesL)
+                        & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
+                status ->
+                  throwError
+                    [int||
+                    Internal error:
+                    Expected "Interpret running" status with evaluated expression status.
+
+                    Got #{status}|]
+        C.yield InterpretSnapshot
+          { isStatus = InterpretTerminatedOk
+          , ..
+          }
 
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
@@ -328,6 +375,7 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
     (runInstrCollect (unContractCode cCode) initStack)
     env
     collSt
+    initStore
   where
     initStack = mkInitStack (liftCallArg epc param) initStore
     initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
@@ -342,6 +390,7 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
             , lrEnd = LigoPosition 1 0
             }
           }
+      , csLastRecordedSnapshot = Nothing
       }
 
 makePrisms ''InterpretStatus
