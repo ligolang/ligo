@@ -2956,6 +2956,27 @@ Toplevel let declaration are silently change to const declaration.
 44 |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile" ; "contract" ; contract "thunk.mligo" ] ;
+  [%expect{|
+{ parameter string ;
+  storage string ;
+  code { CDR ;
+         SENDER ;
+         PUSH mutez 1000000 ;
+         NONE key_hash ;
+         CREATE_CONTRACT
+           { parameter nat ;
+             storage address ;
+             code { DROP ; SENDER ; NIL operation ; PAIR } } ;
+         PAIR ;
+         SWAP ;
+         NIL operation ;
+         DIG 2 ;
+         CAR ;
+         CONS ;
+         PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "y" ; "--init-file" ; contract "extend_builtin.religo" ] ;
   [%expect{|
 Reasonligo is depreacted, support will be dropped in a few versions.
