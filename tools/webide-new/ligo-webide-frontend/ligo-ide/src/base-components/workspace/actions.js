@@ -21,7 +21,7 @@ export class ProjectActions {
   }
 
   async openProject() {
-    await this.processNewProject(this.openProjectModal);
+    await this.processNewProject(this.openProjectModal.current);
   }
 
   async processNewProject(modal) {

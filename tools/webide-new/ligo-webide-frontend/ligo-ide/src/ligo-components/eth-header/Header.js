@@ -15,6 +15,7 @@ export default class Header extends PureComponent {
     this.state = {
       keypairs: [],
     };
+    this.openProjectModalRef = React.createRef();
   }
 
   componentDidMount() {
@@ -178,7 +179,7 @@ export default class Header extends PureComponent {
           {logo}
         </Navbar>
         <NewProjectModal createProject={createProject} />
-        <OpenProjectModal createProject={createProject} />
+        <OpenProjectModal createProject={createProject} ref={this.openProjectModalRef} />
       </>
     );
   }
