@@ -63,11 +63,15 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
-    , bytestring
+    , directory
+    , filepath
     , katip
     , mtl
     , process
     , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , swagger2
     , temporary
     , text
     , wai
@@ -185,6 +189,7 @@ test-suite ligo-webide-backend-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , filepath
     , hspec
     , hspec-wai
     , http-types
