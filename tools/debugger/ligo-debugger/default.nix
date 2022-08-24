@@ -1,4 +1,4 @@
-{ config, lib, pkgs, haskell-nix, stackProject, haskellLib, ... }:
+{ config, lib, pkgs, haskell-nix, stackProject, haskellLib, grammars, ... }:
 let
   name = "ligo-debugger";
   ligo-bin = pkgs.runCommand "ligo-bin" {} ''
@@ -7,9 +7,9 @@ let
   '';
 in stackProject {
   src = haskellLib.cleanGit {
-    inherit name;
     src = ../../..;
     subDir = "tools/debugger/ligo-debugger";
+    includeSiblings = true;
   };
   modules = [
     ({ ... }: {
@@ -33,6 +33,14 @@ in stackProject {
             exit $CODE
           ''))
         ];
+      };
+
+      #TODO: try to have a dependency on a `ligo-squirrel` flake
+      packages.ligo-squirrel = {
+        preBuild = ''
+          rm -rf grammar
+          cp -r ${grammars} grammar
+        '';
       };
     })
   ];
