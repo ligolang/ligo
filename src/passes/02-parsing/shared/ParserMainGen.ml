@@ -10,6 +10,7 @@ module PreprocMainGen = Preprocessor.PreprocMainGen
 
 module type FILE        = Preprocessing_shared.File.S
 module type COMMENTS    = Preprocessing_shared.Comments.S
+module type MODULES     = Preprocessing_shared.Modules.S
 module type TOKEN       = Lexing_shared.Token.S
 module type SELF_TOKENS = Lexing_shared.Self_tokens.S
 module type PARSER      = ParserLib.API.PARSER
@@ -19,8 +20,8 @@ module Tree         = Cst_shared.Tree
 
 (* The functor *)
 
-(* Warning handling *)
-module type Warning = sig
+(* Error & Warning handling *)
+module type Raiser = sig
   val add_warning : Main_warnings.all -> unit
 end
 module type PRINTER =
@@ -44,6 +45,7 @@ type 'token window = <
 module Make
          (File        : FILE)
          (Comments    : COMMENTS)
+         (Modules     : MODULES)
          (Token       : TOKEN)
          (ParErr      : sig val message : int -> string end)
          (Self_tokens : SELF_TOKENS with type token = Token.t)
@@ -53,7 +55,7 @@ module Make
          (Print       : PRINTER with type tree = CST.t)
          (Pretty      : PRETTY with type tree = CST.t)
          (CLI         : ParserLib.CLI.S)
-         (Warning     : Warning) =
+         (Raiser      : Raiser) =
 
   struct
     (* Instantiating the lexer *)
@@ -65,7 +67,7 @@ module Make
                         (Token)
                         (Lexer_CLI : LexerLib.CLI.S)
                         (Self_tokens)
-                        (Warning)
+                        (Raiser)
     (* Other CLIs *)
 
     module Preprocessor_CLI = Lexer_CLI.Preprocessor_CLI

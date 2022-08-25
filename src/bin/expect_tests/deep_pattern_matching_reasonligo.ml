@@ -61,9 +61,14 @@ let%expect_test _ =
     Pattern not of the expected type option (int) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
+  run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_test6.religo") ] ;
   [%expect{|
-    const t = lambda (x : list (int)) return 0 |}]
+    File "../../test/contracts/negative//deep_pattern_matching/pm_test6.religo", line 4, characters 5-14:
+      3 |   | a           => 0
+      4 |   | [hd, ...tl] => 0
+      5 |   }
+
+    Error : this match case is unused. |}]
 
 (* wrong body type *)
 
@@ -94,14 +99,12 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail3.religo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.religo", line 4, character 2 to line 7, character 3:
-      3 | let t = (x: (myt, (int , int , int))) =>
-      4 |   switch(x) {
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.religo", line 6, characters 5-17:
       5 |   | (xs , (a,b,c)) => 1
       6 |   | (xs , (c,b,a)) => 2
       7 |   }
 
-    Redundant pattern matching |}]
+    Error : this match case is unused. |}]
 
 (* anomaly detected in the pattern matching self_ast_typed pass *)
 
@@ -115,7 +118,9 @@ let%expect_test _ =
       4 |   | [] => 0
       5 |   }
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - [_, ...[]] |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail12.religo") ] ;
@@ -127,7 +132,9 @@ let%expect_test _ =
       6 |   | { a : Some ([hd, ...tl]) , b : [] }          => hd
       7 |   }
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - {a : None,b : _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail4.religo") ] ;
@@ -139,7 +146,9 @@ let%expect_test _ =
       6 |   | (xs  , Nil) => 2
       7 |   }
 
-    Pattern matching anomaly (redundant, or non exhaustive). |}]
+    Error : this pattern-matching is not exhaustive.
+    Here are examples of cases that are not matched:
+    - (Cons(_, _), Cons(_, _)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print" ; "ast-typed" ; (bad_test "pm_fail13.religo") ] ;
@@ -347,13 +356,19 @@ let%expect_test _ =
   [%expect{|
     const a =
        match CONS(1 , LIST_EMPTY()) with
-        | [  ] -> 1
-        | a :: b :: c :: [  ] -> 2
+        | [] -> 1
+        | a::b::c::[] -> 2
         | gen#2 -> 3 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; (good_test "pm_ticket.religo") ] ;
   [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
     { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
       storage nat ;
       code { CAR ;

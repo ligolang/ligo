@@ -14,11 +14,6 @@ let label_range i j =
 let is_tuple_lmap m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
-let get_pair m =
-  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
-  | _ -> None
-
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in
@@ -90,6 +85,16 @@ let build_applications_opt (lamb : expression) (args : expression list) =
     | _, _ ->
        None in
   aux lamb args lamb.type_expression
+
+(* This function re-builds a term prefixed with E_type_abstraction:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression /\ t1 . ... . /\ tn . e *)
+let rec build_type_abstractions e = function
+  | [] -> e
+  | (abs_var :: abs_vars) ->
+     let e = build_type_abstractions e abs_vars in
+     { e with expression_content = E_type_abstraction { type_binder = abs_var ; result = e } ;
+              type_expression = Combinators.t_for_all abs_var Type e.type_expression }
 
 (* These tables are used during inference / for substitution *)
 module TMap = Simple_utils.Map.Make(TypeVar)
@@ -337,7 +342,6 @@ let rec fold_type_expression : type a . type_expression -> init:a -> f:(a -> typ
     | T_arrow {type1; type2} -> (
         self type2 ~init:(self type1 ~init)
       )
-    | T_module_accessor _ -> init
     | T_singleton _ -> init
     | T_abstraction {type_; _}
     | T_for_all {type_; _} -> (
@@ -488,3 +492,23 @@ let add_shadowed_nested_t_sum = fun tsum_list (tv, te) ->
     ~f:(add_if_shadowed_t_sum tv)
   in
   (tv, te) :: nested_t_sums
+
+(* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
+let get_views : program -> (expression_variable * location) list = fun p ->
+  let f : declaration -> (expression_variable * location) list -> (expression_variable * location) list =
+    fun {wrap_content=decl ; location=_ } acc ->
+      match decl with
+      | Declaration_constant { binder ; expr=_ ; attr } when attr.view -> (binder.var, ValueVar.get_location binder.var)::acc
+      | _ -> acc
+  in
+  List.fold_right ~init:[] ~f p
+
+let fetch_view_type : declaration -> (type_expression * type_expression binder) option = fun declt ->
+  match Location.unwrap declt with
+  | Declaration_constant { binder ; expr ; attr } when attr.view -> (
+    Some (expr.type_expression, binder)
+  )
+  | _ -> None
+
+let fetch_views_in_program : program -> (type_expression * type_expression binder) list = fun prg ->
+  List.filter_map ~f:fetch_view_type prg

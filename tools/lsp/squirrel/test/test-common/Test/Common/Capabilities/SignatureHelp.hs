@@ -60,7 +60,7 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "no-semicolon-in-block-after-var-decl.ligo"
-    , tiCursor = point 5 24
+    , tiCursor = point 4 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]
@@ -68,7 +68,7 @@ caseInfos =
     }
   , TestInfo
     { tiContract = "no-semicolon-in-block-after-const-decl.ligo"
-    , tiCursor = point 5 24
+    , tiCursor = point 4 24
     , tiFunction = "bar"
     , tiLabel = "function bar (const i : int)"
     , tiParameters = [ParameterBinding (IsVar "i") (Just $ AliasType "int")]

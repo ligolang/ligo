@@ -40,7 +40,7 @@ recognise (SomeRawTree dialect rawTree)
         "tuple"             -> Tuple      <$> fields "item"
         "switch_case"       -> Case       <$> field  "subject"     <*> fields   "alt"
         "lambda"            -> Lambda     <$> fields "argument"    <*> fieldOpt "type"     <*> field "body"
-        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"     <*> fields "argument"
+        "michelson_interop" -> Michelson  <$> field  "code"        <*> field    "type"
         "let_in"            -> Let        <$> field  "declaration" <*> field    "body"
         "paren_expr"        -> Paren      <$> field  "expr"
         _                   -> fallthrough
@@ -167,11 +167,11 @@ recognise (SomeRawTree dialect rawTree)
         "type_params" -> TypeParams <$> fields "param"
         _             -> fallthrough
 
-    -- MichelsonCode
+    -- Verbatim
   , Descent do
       boilerplate' \case
-        ("michelson_code", code) -> return $ MichelsonCode code
-        _                        -> fallthrough
+        ("Verbatim", code) -> pure $ Verbatim code
+        _                  -> fallthrough
 
     -- Name
   , Descent do

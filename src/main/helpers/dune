@@ -15,3 +15,13 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils main_errors syntax_types))
+
+
+(library
+ (name cli_helpers)
+ (public_name ligo.cli_helpers)
+ (modules cli_helpers)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils lwt lwt.unix semver))
+ 

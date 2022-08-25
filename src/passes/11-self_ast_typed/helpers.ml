@@ -94,7 +94,7 @@ and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc (x : declaration) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; thunk = _ ; hidden = _ }} -> (
+    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; thunk = _ }} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
@@ -118,7 +118,6 @@ let rec iter_type_expression : ty_mapper -> type_expression -> unit = fun f t ->
   | T_arrow x ->
     let () = self x.type1 in
     self x.type2
-  | T_module_accessor _ -> ()
   | T_singleton _ -> ()
   | T_abstraction x -> self x.type_
   | T_for_all x -> self x.type_
@@ -229,7 +228,7 @@ and map_module : 'err mapper -> module_ -> module_ = fun m p ->
       return @@ Declaration_module {module_binder; module_; module_attr}
   in
   List.map ~f:(Location.map aux) p
-  
+
 let fetch_entry_type ~raise : string -> module_ -> (type_expression * Location.t) = fun main_fname m ->
   let aux (declt : declaration) = match Location.unwrap declt with
     | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
@@ -268,52 +267,76 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
   in
-  let { binder=_ ; expr ; attr=_} = main_decl in
+  let { binder ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
-    match type1.type_content , type2.type_content with
-    | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+    match Ast_typed.Combinators.(get_t_pair type1 , get_t_pair type2) with
+    | Some (parameter,storage) , Some (listop, storage') ->
       let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
         Ast_typed.assert_t_list_operation listop in
       let () = trace_option ~raise (expected_same_entry main_fname storage storage' expr) @@
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.raise @@ bad_contract_io main_fname expr
+    |  _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
   )
-  | _ -> raise.raise @@ bad_contract_io main_fname expr
+  | _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
 
-type view_type = {
-  arg : Ast_typed.type_expression ;
-  storage : Ast_typed.type_expression ;
-  return : Ast_typed.type_expression ;
-}
-
-let fetch_view_type ~raise : expression_variable -> module_ -> (view_type * Location.t) = fun main_fname m ->
-  let aux (declt : declaration) = match Location.unwrap declt with
-    | Declaration_constant ({ binder ; expr=_ ; attr=_ } as p) ->
-        if ValueVar.equal binder.var main_fname
-        then Some p
-        else None
-    | Declaration_type   _
-    | Declaration_module _ -> None
+(* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
+   [predicate] defines the annotation (or set of annotation) you want to match on
+*)
+let get_shadowed_decl : module_ -> (known_attributes -> bool) -> Location.t option = fun prg predicate ->
+  let aux = fun (seen,shadows : expression_variable list * location list) (x : declaration) ->
+    match Location.unwrap x with
+    | Declaration_constant { binder ; attr ; _} -> (
+      match List.find seen ~f:(ValueVar.equal binder.var) with
+      | Some x -> (seen , ValueVar.get_location x::shadows)
+      | None -> if predicate attr then (binder.var::seen , shadows) else seen,shadows
+    )
+    | _ -> seen,shadows
   in
-  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
-  let main_decl =
-    trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
-      main_decl_opt
-    in
-  let { binder ; expr ; attr=_ } = main_decl in
-  match get_t_arrow expr.type_expression with
-  | Some { type1 = tin ; type2  = return } -> (
-    match get_t_tuple tin with
-    | Some [ arg ; storage ] -> ({ arg ; storage ; return }, expr.location)
-    | _ -> raise.raise (expected_pair_in_view @@ ValueVar.get_location binder.var)
-  )
-  | None -> raise.raise @@ bad_view_io main_fname expr
+  let _,shadows = List.fold ~f:aux ~init:([],[]) prg in
+  match shadows with [] -> None | hd::_ -> Some hd 
 
+(* strip_view_annotations [p] remove all the [@view] annotation in top-level declarations of program [p] *)
+let strip_view_annotations : module_ -> module_ = fun m ->
+  let aux = fun (x : declaration) ->
+    match Location.unwrap x with
+    | Declaration_constant ( {attr ; _} as decl ) when attr.view ->
+      { x with wrap_content = Declaration_constant { decl with attr = {attr with view = false} } }
+    | _ -> x
+  in
+  List.map ~f:aux m
+
+(* annotate_with_view [p] [binders] for all names in [binders] decorates the top-level declaration of program [p] with the annotation [@view]
+  if the name matches with declaration binder. if a name is unmatched, fails. 
+
+   e.g:
+    annotate_with_view [p] ["a";"b"]
+      |->
+    [@view] let a = <..>
+    let b = <..>
+    [@view] let b = <..>
+    let c = <..>
+*)
+let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.program = fun names prg ->
+  let (prg,not_found) = List.fold_right prg ~init:([],names)
+    ~f:(
+      fun (x:declaration) (prg,views:Ast_typed.program * string list) ->
+        let continue = x::prg,views in
+        match Location.unwrap x with
+        | Declaration_constant ({binder ; _} as decl) -> (
+          match List.find views ~f:(ValueVar.is_name binder.var) with
+          | Some found ->
+            let decorated = { x with wrap_content = Declaration_constant { decl with attr = {decl.attr with view = true} }} in
+            decorated::prg, (List.remove_element ~compare:String.compare found views)
+          | None -> continue
+        )
+        | _ -> continue
+    )
+  in
+  let () = match not_found with [] -> () | not_found::_ -> raise.error (corner_case (Format.asprintf "View %s does not exist" not_found : string)) in
+  prg
 
 module Free_variables :
   sig
@@ -380,7 +403,7 @@ module Free_variables :
     | E_module_accessor { module_path ; element } ->
       ignore element;
       {modVarSet = ModVarSet.of_list module_path (* not sure about that *) ;moduleEnv=VarMap.empty ;varSet=VarSet.empty}
-    | E_assign { binder=_; access_path=_; expression } ->
+    | E_assign { binder=_; expression } ->
       self expression
 
   and get_fv_cases : matching_expr -> moduleEnv' = fun m ->

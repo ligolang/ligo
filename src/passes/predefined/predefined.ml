@@ -43,6 +43,7 @@ module Tree_abstraction = struct
     | "Tezos.get_entrypoint"     -> some_const C_CONTRACT_ENTRYPOINT
     | "Tezos.call_view"          -> some_const C_VIEW
     | "Tezos.constant"           -> some_const C_GLOBAL_CONSTANT
+    | "Tezos.emit"         -> some_const C_EMIT_EVENT
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -268,6 +269,7 @@ module Michelson = struct
       Some (special
         (fun with_args ->  with_args "PUSH")
         )
+    | C_EMIT_EVENT , Kathmandu -> Some (trivial_special "EMIT")
     | _ -> None
 
 end

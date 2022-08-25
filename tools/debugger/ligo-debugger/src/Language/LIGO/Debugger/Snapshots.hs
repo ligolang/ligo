@@ -23,9 +23,18 @@ module Language.LIGO.Debugger.Snapshots
   , csInterpreterStateL
   , csStackFramesL
   , csActiveStackFrameL
+
+  , _InterpretStarted
+  , _InterpretRunning
+  , _InterpretTerminatedOk
+  , _InterpretFailed
+
+  , _EventFacedStatement
+  , _EventExpressionPreview
+  , _EventExpressionEvaluated
   ) where
 
-import Control.Lens (Zoom (zoom), makeLensesWith, (.=))
+import Control.Lens (Zoom (zoom), makeLensesWith, makePrisms, (.=))
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
@@ -34,7 +43,6 @@ import Data.List.NonEmpty qualified as NE
 import Data.Typeable (cast)
 import Data.Vinyl (Rec (..))
 import Fmt (Buildable (..), genericF)
-import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailureWithStack, MorleyLogsBuilder, StkEl, initInterpreterState, mkInitStack,
@@ -49,7 +57,7 @@ import Morley.Debugger.Core.Navigate
 import Morley.Debugger.Core.Snapshots (InterpretHistory (..))
 
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Types
+import Language.LIGO.Debugger.Common
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 
 -- | Stack element, likely with an associated variable.
@@ -153,12 +161,9 @@ instance Buildable InterpretSnapshot where
   build = genericF
 
 instance NavigableSnapshot InterpretSnapshot where
-  getExecutedPosition =
-    -- TODO: this conversion will be replaced after morley-debugger#44
-    let toSrcPos range =
-          let LigoPosition{..} = lrStart range
-          in SrcPos (Pos $ fromIntegral lpLine) (Pos $ fromIntegral lpCol - 1)
-    in Just . toSrcPos . sfLoc . head . isStackFrames <$> curSnapshot
+  getExecutedPosition = do
+    locRange <- sfLoc . head . isStackFrames <$> curSnapshot
+    return . Just $ ligoRangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
     move Backward >>= \case
       ReachedBoundary -> return Nothing
@@ -262,6 +267,7 @@ runInstrCollect = \case
       csActiveStackFrameL . sfLocL .= loc
 
       isStackFrames <- use csStackFramesL
+
       lift $ C.yield InterpretSnapshot
         { isStatus = InterpretRunning event
         , ..
@@ -309,13 +315,14 @@ runCollectInterpretSnapshots act env initSt =
 collectInterpretSnapshots
   :: forall cp st arg.
      FilePath
+  -> Text
   -> Contract cp st
   -> EntrypointCallT cp arg
   -> Value arg
   -> Value st
   -> ContractEnv
   -> InterpretHistory InterpretSnapshot
-collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
+collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env =
   runCollectInterpretSnapshots
     (runInstrCollect cCode initStack)
     env
@@ -326,7 +333,7 @@ collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
     collSt = CollectorState
       { csInterpreterState = initSt
       , csStackFrames = one StackFrame
-          { sfName = "main"
+          { sfName = entrypoint
           , sfStack = []
           , sfLoc = LigoRange
             { lrFile = mainFile
@@ -335,3 +342,6 @@ collectInterpretSnapshots mainFile Contract{..} epc param initStore env =
             }
           }
       }
+
+makePrisms ''InterpretStatus
+makePrisms ''InterpretEvent

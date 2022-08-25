@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: \n- Fixing potential bug related to view declaration shadowing
+merge_request: '1833'
+title: 'Draft: view compilation clean-up'
+type: fixed

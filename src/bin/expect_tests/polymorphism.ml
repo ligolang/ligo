@@ -37,11 +37,25 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "(zip([1,2,3]))([4n,5n,6n])" ; "--init-file" ; (test "comb.religo") ] ;
-  [%expect{| { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
+  [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    { Pair 1 4 ; Pair 2 5 ; Pair 3 6 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "(zip((zip([1,2,3]))([4n,5n,6n])))([\"a\",\"b\",\"c\"])" ; "--init-file" ; (test "comb.religo") ] ;
-  [%expect{| { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
+  [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    { Pair (Pair 1 4) "a" ; Pair (Pair 2 5) "b" ; Pair (Pair 3 6) "c" } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "jsligo" ; "(zip(list([1,2,3])))(list([(4 as nat),(5 as nat),(6 as nat)]))" ; "--init-file" ; (test "comb.jsligo") ] ;
@@ -188,7 +202,14 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "reasonligo" ; "bar" ; "--init-file" ; (test "modules.religo") ] ;
-  [%expect{| (Pair (Some 1) (Some "hello")) |}]
+  [%expect{|
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    Reasonligo is depreacted, support will be dropped in a few versions.
+
+    (Pair (Some 1) (Some "hello")) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "foo" ; "--init-file" ; (test "use_nelist.mligo") ] ;
@@ -212,13 +233,11 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "solve 5" ; "--init-file" ; (test "use_monad.mligo") ] ;
-  [%expect{|
-    { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect{| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "cameligo" ; "solve 5" ; "--init-file" ; (test "use_monad_set.mligo") ] ;
-  [%expect{|
-    { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect{| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "expression" ; "auto" ; "solve(10)" ; "--init-file" ; (test "use_monad.jsligo") ] ;
@@ -334,5 +353,47 @@ let%expect_test _ =
   [%expect{|
     An error occurred while evaluating an expression: "Division by zero" |}]
 
+(* Unresolved polymorphism *)
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract.mligo") ] ;
+  [%expect{|
+    File "./unresolved/contract.mligo", line 6, characters 29-31:
+      5 |     let b                = List.length ys in
+      6 |     [], (a + b + List.length [])
+
+    Can't infer the type of this value, please add a type annotation. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "contract" ; (test "unresolved/contract2.mligo") ] ;
+  [%expect{|
+    File "./unresolved/contract2.mligo", line 4, characters 13-15:
+      3 | let main (_, _ : int list * nat) : (operation list * nat) =
+      4 |     [], (one [])
+
+    Can't infer the type of this value, please add a type annotation. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "storage" ; (test "unresolved/storage.mligo") ; "s" ] ;
+  [%expect{|
+    File "./unresolved/storage.mligo", line 1, characters 20-22:
+      1 | let s = List.length []
+      2 |
+
+    Can't infer the type of this value, please add a type annotation. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "parameter" ; (test "unresolved/parameter.mligo") ; "p" ] ;
+  [%expect{|
+    File "./unresolved/parameter.mligo", line 1, characters 8-10:
+      1 | let p = []
+      2 |
+
+    Can't infer the type of this value, please add a type annotation. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile" ; "expression" ; "cameligo" ; "[]" ] ;
+  [%expect{|
+    Can't infer the type of this value, please add a type annotation. |}]
 
 let () = Sys.chdir pwd

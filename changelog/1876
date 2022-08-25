@@ -1,0 +1,6 @@
+author: er433
+description: '### Testing framework: support for `Tezos.get_entrypoint_opt`, `Tezos.get_contract_opt`
+  and variants.'
+merge_request: '1876'
+title: 'Testing framework: add support for C_CONTRACT and similar'
+type: added

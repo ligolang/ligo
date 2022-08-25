@@ -224,6 +224,7 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     dependencies:
+      - algebraic-graphs
       - HUnit
       - directory
       - filepath
@@ -231,8 +232,10 @@ tests:
       - lens
       - ligo-squirrel
       - lsp-types
+      - QuickCheck
       - tasty
       - tasty-hunit
+      - tasty-quickcheck
       - template-haskell
       - text
       - unliftio

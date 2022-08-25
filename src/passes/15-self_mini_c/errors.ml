@@ -5,6 +5,7 @@ let stage = "self_mini_c"
 type self_mini_c_error = [
   | `Self_mini_c_bad_self_address of Mini_c.constant'
   | `Self_mini_c_not_a_function
+  | `Self_mini_c_not_a_pair
   | `Self_mini_c_could_not_aggregate_entry
   | `Self_mini_c_corner_case of string
   | `Self_mini_c_fvs_in_create_contract_lambda of Mini_c.expression * Mini_c.ValueVar.t
@@ -22,8 +23,9 @@ let error_ppformat : display_format:string display_format ->
     | `Self_mini_c_bad_self_address _cst ->
       let s = Format.asprintf "\"Tezos.self\" must be used directly and cannot be used via another function." in
       Format.pp_print_string f s ;
-    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
-    | `Self_mini_c_could_not_aggregate_entry -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operations list * storage\"."
+    | `Self_mini_c_not_a_function -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operation list * storage\"."
+    | `Self_mini_c_not_a_pair -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"a * storage -> b\"."
+    | `Self_mini_c_could_not_aggregate_entry -> Format.fprintf f "Invalid type for entrypoint.@.An entrypoint must of type \"parameter * storage -> operation list * storage\"."
     | `Self_mini_c_fvs_in_create_contract_lambda (e,v) ->
       Format.fprintf f
         "@[<hv>%a@.Not all free variables could be inlined in Tezos.create_contract usage: %a.@]"
@@ -57,6 +59,11 @@ let error_jsonformat : self_mini_c_error -> Yojson.Safe.t = fun a ->
   | `Self_mini_c_not_a_function ->
     let content = `Assoc [
       ("message", `String "getting function has failed"); ]
+    in
+    json_error ~stage ~content
+  | `Self_mini_c_not_a_pair ->
+    let content = `Assoc [
+      ("message", `String "getting pair has failed"); ]
     in
     json_error ~stage ~content
   | `Self_mini_c_could_not_aggregate_entry ->

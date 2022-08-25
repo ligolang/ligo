@@ -1,0 +1,5 @@
+author: lesenechal.remi
+description: '- Support for Kathmandu EMIT primitives (see https://tezos.gitlab.io/alpha/event.html)'
+merge_request: '1889'
+title: 'update to kathmandu (2/2 : EMIT)'
+type: added

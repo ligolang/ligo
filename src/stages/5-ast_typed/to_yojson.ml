@@ -30,7 +30,31 @@ let layout = function
   | L_tree -> `List [ `String "L_tree"; `Null ]
 let type_and_module_attr ({ public ; hidden } : type_attribute) = `Assoc [ ("public", `Bool public) ; ("hidden", `Bool hidden) ]
 
-let rec type_expression {type_content=tc;type_meta;location;orig_var} =
+let rec bool () =
+  `List [ `String "t_constant";
+          `Assoc [
+              ("language", `String "Michelson");
+              ("injection", `String "bool");
+              ("parameters", `List []);
+            ]
+    ]
+
+and opt te =
+  let parameters = match Combinators.get_t_option te  with
+    | Some parameter -> list type_expression [parameter]
+    | None -> `List [] in
+  `List [ `String "t_constant";
+          `Assoc [
+              ("language", `String "Michelson");
+              ("injection", `String "option");
+              ("parameters", parameters);
+            ]
+    ]
+
+and type_expression ({type_content=tc;type_meta;location;orig_var} as te) =
+  if Option.is_some (Combinators.get_t_bool te) then bool () else
+  if Option.is_some (Combinators.get_t_option te) then opt te
+  else
   `Assoc [
     ("type_content", type_content tc);
     ("type_meta", option Ast_core.Yojson.type_expression type_meta);
@@ -44,7 +68,6 @@ and type_content = function
   | T_record          t -> `List [ `String "t_record"; rows t]
   | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
-  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access TypeVar.to_yojson t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
   | T_abstraction         t -> `List [ `String "t_abstraction" ; for_all type_expression t]
   | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
@@ -135,14 +158,14 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and attribute {inline;no_mutation;public;view;thunk;hidden} =
+and attribute {inline;no_mutation;public;view;hidden;thunk} =
   `Assoc [
     ("inline", `Bool inline);
     ("no_mutation", `Bool no_mutation);
     ("view", `Bool view);
     ("public", `Bool public);
-    ("thunk", `Bool thunk);
     ("hidden", `Bool hidden);
+    ("thunk", `Bool thunk);
   ]
 
 and type_attribute ({public ; hidden}: type_attribute) =

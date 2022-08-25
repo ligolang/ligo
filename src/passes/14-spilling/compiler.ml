@@ -26,13 +26,12 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   let compile_type = compile_type ~raise in
   let return tc = Expression.make_t ~loc:t.location ?source_type:t.source_type @@ tc in
   match t.type_content with
-  | T_variable (name) -> raise.raise @@ no_type_variable @@ name
+  | T_variable (name) -> raise.error @@ no_type_variable @@ name
   | t when (AST.Compare.type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
     let open Stage_common.Constant in
     let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
     match injection , parameters with
-    | (Bool,            []) -> return (T_base TB_bool)
     | (Unit,            []) -> return (T_base TB_unit)
     | (Michelson_program,[]) -> return (T_base TB_unit) (* hit when testing framwork need to compile 'failwith "x" : michelson_program' *)
     | (Int,             []) -> return (T_base TB_int)
@@ -41,6 +40,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Tez,             []) -> return (T_base TB_mutez)
     | (String,          []) -> return (T_base TB_string)
     | (Bytes,           []) -> return (T_base TB_bytes)
+    | (Typed_address,   [_;_]) -> return (T_base TB_address)
     | (Address,         []) -> return (T_base TB_address)
     | (Operation,       []) -> return (T_base TB_operation)
     | (Key,             []) -> return (T_base TB_key)
@@ -88,9 +88,9 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
         Ticket                     | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             |
-        List            | External _), [])
-        -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
-    | ((Bool       | Unit      | Baker_operation      |
+        List            | External _ | Gen), [])
+        -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
+    | ((             Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
       String                   | Chest_opening_result |
       Address      | Operation | Bls12_381_fr         |
@@ -101,10 +101,12 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key |
-      Typed_address| Mutation  | Bytes                |
-      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.raise @@ corner_case ~loc:__LOC__ "wrong constant"
+      Never        | Chest_key | Gen                  |
+      Typed_address | Mutation  | Bytes                |
+      List         | External _ | Tx_rollup_l2_address ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t)
   )
+  | T_sum _ when Option.is_some (AST.get_t_bool t) ->
+    return (T_base TB_bool)
   | T_sum _ when Option.is_some (AST.get_t_option t) ->
     let o = trace_option ~raise (corner_case ~loc:__LOC__ ("impossible")) @@ AST.get_t_option t in
     let o' = compile_type o in
@@ -146,9 +148,9 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       return @@ (T_function (param',result'))
   )
   | T_singleton _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "Singleton uncaught"
+    raise.error @@ corner_case ~loc:__LOC__ "Singleton uncaught"
   | T_for_all _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ "For all type uncaught"
+    raise.error @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -192,7 +194,7 @@ let compile_record_matching ~raise expr' return k ({ fields; body; tv } : AST.ma
           (LMap.find_opt l fields)
         in
         let var = compile_variable @@ x.var in
-        return @@ E_let_in (expr, false, false, ((var, tree.type_), body))
+        return @@ E_let_in (expr, false, ((var, tree.type_), body))
       | Pair (x, y) ->
         let x_var = ValueVar.fresh () in
         let y_var = ValueVar.fresh () in
@@ -214,11 +216,11 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
   match ae.expression_content with
   | E_type_abstraction _
   | E_type_inst _ ->
-    raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
-  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; thunk ; hidden = _ } } ->
+    raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "Type instance: This program should be monomorphised")
+  | E_let_in {let_binder; rhs; let_result; attr = { inline; no_mutation=_; view=_; public=_ ; hidden = _ ; thunk = _ } } ->
     let rhs' = self rhs in
     let result' = self let_result in
-    return (E_let_in (rhs', inline, thunk, ((compile_variable let_binder.var, rhs'.type_expression), result')))
+    return (E_let_in (rhs', inline, ((compile_variable let_binder.var, rhs'.type_expression), result')))
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (compile_variable name)
@@ -335,7 +337,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                                    arguments = [ car record;
                                                  build_record_update (cdr record) path ] } } in
       return
-        (E_let_in (record, false, false, ((record_var, record.type_expression),
+        (E_let_in (record, false, ((record_var, record.type_expression),
                    build_record_update
                      (e_var record_var record.type_expression)
                      path)))
@@ -395,7 +397,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                   (get_t_pair code_input_type) in
               return @@ E_create_contract (p, s, code', args')
             )
-          | _ -> raise.raise @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
+          | _ -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
       let iter = iterator_generator C_ITER in
       let map = iterator_generator C_MAP in
@@ -497,7 +499,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                         (String.equal c constructor_name) in
                       List.find ~f:aux cases in
                     let body' = self body in
-                    return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                    return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                   )
                 | ((`Node (a , b)) , tv) ->
                   let a' =
@@ -535,11 +537,11 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     let orig_code = code in
     let (code, errs) = Micheline_parser.tokenize code in
     (match errs with
-    | _ :: _ -> raise.raise (could_not_parse_raw_michelson ae.location orig_code)
+    | _ :: _ -> raise.error (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
       let (code, errs) = Micheline_parser.parse_expression ~check:false code in
       match errs with
-      | _ :: _ -> raise.raise (could_not_parse_raw_michelson ae.location orig_code)
+      | _ :: _ -> raise.error (could_not_parse_raw_michelson ae.location orig_code)
       | [] ->
         let code = Micheline.strip_locations code in
         (* hmm *)
@@ -548,7 +550,7 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         | Seq (_, code) ->
           return ~tv:type_anno' @@ E_raw_michelson code
         | _ ->
-          raise.raise (raw_michelson_must_be_seq ae.location code)
+          raise.error (raw_michelson_must_be_seq ae.location code)
     )
     | E_assign _ -> failwith "assign should be compiled to let in self-ast-aggregated"
 
@@ -665,7 +667,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
                       (String.equal c constructor_name) in
                     List.find ~f:aux cases in
                   let body' = self body in
-                  return @@ E_let_in (top, false, false, ((compile_variable pattern , tv) , body'))
+                  return @@ E_let_in (top, false, ((compile_variable pattern , tv) , body'))
                 )
               | ((`Node (a , b)) , tv) ->
                 let a' =
@@ -695,7 +697,7 @@ and compile_recursive ~raise {fun_name; fun_type; lambda} =
   let (body,binder) = map_lambda fun_name loop_type lambda.result in
   let binder = compile_variable lambda.binder.var :: binder in
   let loc = Ast_typed.ValueVar.get_location fun_name in
-  let binder = match binder with hd::[] -> hd | _ -> raise.raise @@ unsupported_recursive_function loc fun_name in
+  let binder = match binder with hd::[] -> hd | _ -> raise.error @@ unsupported_recursive_function loc fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((compile_variable lambda.binder.var, input_type), body), expr)) output_type in
   Expression.make (E_closure {binder;body}) fun_type

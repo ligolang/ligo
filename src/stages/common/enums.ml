@@ -174,14 +174,14 @@ type constant' =
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS [@only_interpreter]
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN [@only_interpreter]
   | C_TEST_GET_NTH_BS [@only_interpreter]
-  | C_TEST_LOG [@only_interpreter]
+  | C_TEST_PRINT [@only_interpreter]
+  | C_TEST_TO_STRING [@only_interpreter]
+  | C_TEST_UNESCAPE_STRING [@only_interpreter]
   | C_TEST_STATE_RESET [@only_interpreter]
   | C_TEST_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_NTH_BOOTSTRAP_CONTRACT [@only_interpreter]
   | C_TEST_LAST_ORIGINATIONS [@only_interpreter]
   | C_TEST_MUTATE_VALUE [@only_interpreter]
-  | C_TEST_MUTATION_TEST [@only_interpreter]
-  | C_TEST_MUTATION_TEST_ALL [@only_interpreter]
   | C_TEST_SAVE_MUTATION [@only_interpreter]
   | C_TEST_RUN [@only_interpreter]
   | C_TEST_COMPILE_CONTRACT [@only_interpreter]
@@ -196,6 +196,7 @@ type constant' =
   | C_TEST_CREATE_CHEST [@only_interpreter]
   | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   | C_TEST_RANDOM [@only_interpreter]
+  | C_TEST_GENERATOR_EVAL [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]
   | C_TEST_NEW_ACCOUNT [@only_interpreter]
   | C_TEST_BAKER_ACCOUNT [@only_interpreter]
@@ -212,10 +213,14 @@ type constant' =
   | C_TEST_FAILWITH [@only_interpreter]
   | C_TEST_READ_CONTRACT_FROM_FILE [@only_interpreter]
   | C_TEST_SIGN [@only_interpreter]
+  | C_TEST_GET_ENTRYPOINT [@only_interpreter]
+  | C_TEST_LAST_EVENTS [@only_interpreter]
+  | C_TEST_TRY_WITH [@only_interpreter]
   (* New with EDO*)
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
   | C_GLOBAL_CONSTANT
+  | C_EMIT_EVENT
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD [@print "C_POLYMORPHIC_ADD"]
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]

@@ -132,7 +132,7 @@ and expression_content ppf (e:expression_content) = match e with
       fprintf ppf
         "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
         expression c ValueVar.pp name_l expression l ValueVar.pp name_r expression r
-  | E_let_in (expr, inline , _, ((name , _) , body)) ->
+  | E_let_in (expr, inline , ((name , _) , body)) ->
       fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" ValueVar.pp name expression expr option_inline inline expression body
   | E_tuple exprs ->
     fprintf ppf "@[(%a)@]"

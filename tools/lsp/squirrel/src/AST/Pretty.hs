@@ -100,7 +100,7 @@ instance
   lpp (d :< f) = ascribe d $ lpp1 @d $ lpp @d <$> f
 
 instance LPP1 d Error where
-  lpp1 (Error msg _) = lpp @d msg
+  lpp1 (Error msg _) = pp msg
 
 -- class LPPProd (dialect :: Lang) xs where
 --   lppProd :: Product xs -> Doc
@@ -234,7 +234,7 @@ instance Pretty1 Expr where
     Lambda    ps ty b    -> sexpr "lam" $ concat [ps, [":", pp ty], ["=>", b]]
     Patch     z bs       -> sexpr "patch" [z, bs]
     RecordUpd r up       -> sexpr "update" (r : up)
-    Michelson c t args   -> sexpr "%Michelson" (c : t : args)
+    Michelson c t        -> sexpr "%Michelson" [c, t]
     Paren     e          -> "(" <> pp e <> ")"
     SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
@@ -249,9 +249,9 @@ instance Pretty1 Collection where
     CMap  -> "map"
     CSet  -> "set"
 
-instance Pretty1 MichelsonCode where
+instance Pretty1 Verbatim where
   pp1 = \case
-    MichelsonCode _ -> "<SomeMichelsonCode>"
+    Verbatim v -> pp v
 
 instance Pretty1 Alt where
   pp1 = \case
@@ -410,7 +410,7 @@ instance LPP1 d Preprocessor where
 instance LPP1 d PreprocessorCommand where
   lpp1 = pp1
 
-instance LPP1 d MichelsonCode where
+instance LPP1 d Verbatim where
   lpp1 = pp
 
 --instance LPP1 d LineMarker where
@@ -779,7 +779,7 @@ instance LPP1 'Js Expr where
     SwitchStm c cs       -> "switch (" <+> c <+> ") {" `indent` lpp cs `above` "}"
     Return    e          -> "return " <+> lpp e
     RecordUpd s fs       -> lpp s <+> train "," fs
-    Michelson c t _      -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
+    Michelson c t        -> "(Michelson `" <+> c <+> "` as " <+> t <+> ")"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Js PatchableExpr where

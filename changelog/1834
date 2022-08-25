@@ -1,0 +1,6 @@
+author: pewulfman
+description: \nThe compiler is now able to report all errors corresponding to the
+  same step of compilation at the same time
+merge_request: '1834'
+title: Improvement on Trace module
+type: internal

@@ -56,7 +56,7 @@ and expression_content = function
   | E_matching    e -> `List [ `String "E_matching";    match_exp expression type_expression e ]
   (* Record *)
   | E_record          e -> `List [ `String "E_record";          record      e ]
-  | E_accessor        e -> `List [ `String "E_record_accessor"; accessor    expression e ]
+  | E_accessor        e -> `List [ `String "E_accessor";        accessor    expression e ]
   | E_update          e -> `List [ `String "E_record_update";   update      expression e ]
   | E_ascription      e -> `List [ `String "E_ascription";      ascription  expression type_expression e ]
   | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access ValueVar.to_yojson e]

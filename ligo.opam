@@ -21,14 +21,20 @@ depends: [
   "menhir" { = "20211128" }
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
+  "bos"
   "getopt"
   "tezos-clic"
   "qcheck"
-  "linenoise"
   "terminal_size"
   "pprint"
   "yojson"
   "ocaml-recovery-parser" { = "0.2.4" }
+  "semver"
+  "tls"
+  "decompress"
+  "tar"
+  "tar-unix"
+  "lambda-term"
   # Tezos libs
   "tezos-base"
   "tezos-crypto"
@@ -56,49 +62,50 @@ depends: [
   "resto-cohttp-self-serving-client"
   "tezos-rust-libs"
   "crunch"
+  "class_group_vdf"
+  "tezos-plonk"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 pin-depends: [
-  [ "tezos-013-PtJakart-test-helpers.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol/test/helpers" ]
-  [ "tezos-base.dev" "./vendors/tezos-ligo/src/lib_base" ]
-  [ "tezos-clic.dev" "./vendors/tezos-ligo/src/lib_clic" ]
-  [ "tezos-client-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_client" ]
-  [ "tezos-client-base.dev" "./vendors/tezos-ligo/src/lib_client_base" ]
-  [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/src/lib_client_base_unix" ]
-  [ "tezos-client-commands.dev" "./vendors/tezos-ligo/src/lib_client_commands" ]
-  [ "tezos-context.dev" "./vendors/tezos-ligo/src/lib_context" ]
-  [ "tezos-crypto.dev" "./vendors/tezos-ligo/src/lib_crypto" ]
-  [ "tezos-error-monad.dev" "./vendors/tezos-ligo/src/lib_error_monad" ]
-  [ "tezos-event-logging.dev" "./vendors/tezos-ligo/src/lib_event_logging" ]
-  [ "tezos-hacl.dev" "./vendors/tezos-ligo/src/lib_hacl"]
-  [ "tezos-lwt-result-stdlib.dev" "./vendors/tezos-ligo/src/lib_lwt_result_stdlib" ]
-  [ "tezos-micheline.dev" "./vendors/tezos-ligo/src/lib_micheline" ]
-  [ "tezos-mockup.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
-  [ "tezos-mockup-commands.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
-  [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/src/lib_mockup_proxy" ]
-  [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/src/lib_mockup" ]
-  [ "tezos-p2p.dev" "./vendors/tezos-ligo/src/lib_p2p" ]
-  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/src/lib_p2p_services" ]
-  [ "tezos-protocol-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_protocol" ]
-  [ "PtJakart-parameters.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_parameters" ]
-  [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/src/lib_protocol_compiler" ]
-  [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/src/lib_protocol_environment" ]
-  [ "tezos-protocol-plugin-013-PtJakart.dev" "./vendors/tezos-ligo/src/proto_013_PtJakart/lib_plugin" ]
-  [ "tezos-proxy.dev" "./vendors/tezos-ligo/src/lib_proxy" ]
-  [ "tezos-rpc.dev" "./vendors/tezos-ligo/src/lib_rpc" ]
-  [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/src/lib_rpc_http" ]
-  [ "tezos-rpc-http-client.dev" "./vendors/tezos-ligo/src/lib_rpc_http" ]
-  [ "tezos-rpc-http-client-unix.dev" "./vendors/tezos-ligo/src/lib_rpc_http" ]
-  [ "tezos-sapling.dev" "./vendors/tezos-ligo/src/lib_sapling" ]
-  [ "tezos-shell-services.dev" "./vendors/tezos-ligo/src/lib_shell_services" ]
-  [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/src/lib_signer_backends" ]
-  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/src/lib_signer_services" ]
-  [ "tezos-stdlib.dev" "./vendors/tezos-ligo/src/lib_stdlib" ]
-  [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/src/lib_stdlib_unix" ]
-  [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/src/lib_test" ]
-  [ "tezos-version.dev" "./vendors/tezos-ligo/src/lib_version" ]
-  [ "tezos-workers.dev" "./vendors/tezos-ligo/src/lib_workers" ]
+  [ "tezos-014-PtKathma-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-context.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-crypto.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-error-monad.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-event-logging.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-hacl.dev" "./vendors/tezos-ligo/opam"]
+  [ "tezos-lwt-result-stdlib.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-micheline.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup-commands.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-plugin-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc-http-client.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc-http-client-unix.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-sapling.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-shell-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-stdlib.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
 ]

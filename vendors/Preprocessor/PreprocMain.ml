@@ -9,7 +9,13 @@ module Comments =
     let line  = None
   end
 
-module CLI     = Preprocessor.CLI.Make (Comments)
+module Modules =
+  struct
+    let mk_module _ _ = ""
+  end
+
+
+module CLI     = Preprocessor.CLI.Make (Comments) (Modules)
 module MainGen = Preprocessor.PreprocMainGen
 module Main    = MainGen.Make (CLI)
 

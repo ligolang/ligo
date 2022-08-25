@@ -17,11 +17,16 @@ module type COMMENTS =
     val line  : line_comment option
   end
 
+module type MODULES =
+  sig
+    val mk_module : string -> string -> string
+  end
 (* Command-Line Interface (CLI) options *)
 
 module type S =
   sig
     include COMMENTS
+    include MODULES
 
     val input        : string option (* input file     *)
     val extension    : string option (* file extension *)
@@ -44,9 +49,10 @@ module type S =
 
 (* Parsing the command line options *)
 
-module Make (Comments: COMMENTS) : S =
+module Make (Comments: COMMENTS) (Modules : MODULES): S =
   struct
     include Comments
+    include Modules
 
     (* Auxiliary functions and modules *)
 

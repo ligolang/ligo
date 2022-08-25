@@ -3,9 +3,9 @@ module Ligo_string = Simple_utils.Ligo_string
 open Ast_aggregated
 include Fuzz_shared.Monad
 
-type mutation = Location.t * expression
+type mutation = Location.t * expression * string
 
-let get_mutation_id (loc, expr) =
+let get_mutation_id (loc, expr, _) =
   let s = Format.asprintf  "%a%a" Location.pp loc Ast_aggregated.PP.expression expr in
   let hash = Tezos_crypto.Base58.raw_encode @@ Bytes.to_string @@ Tezos_crypto.Hacl.Hash.Keccak_256.digest (Bytes.of_string s) in
   String.sub hash ~pos:0 ~len:8
@@ -45,22 +45,21 @@ let add_all_lines_to_buffer : In_channel.t -> Buffer.t -> unit =
     | _ -> () in
   loop_lines ()
 
-let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
+let expression_to_string ~syntax aggregated =
+  let aggregated   = Reduplicate_binders.reduplicate ~raise aggregated in
+  let typed        = Aggregation.decompile ~raise aggregated in
+  let core         = Decompile.Of_typed.decompile_expression typed in
+  let sugar        = Decompile.Of_core.decompile_expression core in
+  let imperative   = Decompile.Of_sugar.decompile_expression sugar in
+  let buffer       = Decompile.Of_imperative.decompile_expression imperative syntax in
+  Buffer.contents buffer
+
+let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _, expr) ->
   match Location.get_file loc with
   | Some r ->
      (* Open file *)
      let file = r # file in
      let ic = In_channel.create ~binary:true file in
-     (* Decompile expression *)
-     let n_syntax     = Trace.to_stdlib_result (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file)) in
-     let n_syntax     = match n_syntax with
-       | Ok r -> r
-       | Error _ -> failwith "Cannot detect syntax" in
-     let typed        = Aggregation.decompile ~raise _expr in
-     let core         = Decompile.Of_typed.decompile_expression typed in
-     let sugar        = Decompile.Of_core.decompile_expression core in
-     let imperative   = Decompile.Of_sugar.decompile_expression sugar in
-     let buffer       = Decompile.Of_imperative.decompile_expression imperative n_syntax in
      (* Create buffer *)
      let output_buffer = Buffer.create 0 in
      (* Read first lines *)
@@ -69,13 +68,13 @@ let buffer_of_mutation : mutation -> Buffer.t = fun (loc, _expr) ->
                let line = In_channel.input_line_exn ic in
                let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
                let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
-               prefix ^ Buffer.contents buffer ^ postfix
+               prefix ^ expr ^ postfix
              else
                let line = In_channel.input_line_exn ic in
                let prefix = String.sub line ~pos:0 ~len:(r # start # offset `Byte) in
                let line = consume_lines ic (r # stop # line - r # start # line) in
                let postfix = String.sub line ~pos:(r # stop # offset `Byte) ~len:(String.length line - r # stop # offset `Byte) in
-               prefix ^ Buffer.contents buffer ^ postfix in
+               prefix ^ expr ^ postfix in
      let () = add_line output_buffer s in
      (* Read rest of lines *)
      let () = add_all_lines_to_buffer ic output_buffer in
@@ -149,11 +148,11 @@ let transform_string =
   [String.capitalize; String.uncapitalize; String.lowercase; String.uppercase; constn; double]
 
 module Mutator = struct
-  let combine : 'a -> ('a * mutation option) list -> 'b -> ('b * mutation option) list -> ('a * 'b * mutation option) list =
+  let combine : 'a -> ('a * (location * expression) option) list -> 'b -> ('b * (location * expression) option) list -> ('a * 'b * (location * expression) option) list =
     fun a al b bl ->
     List.map ~f:(fun (b, m) -> (a, b, m)) bl @ List.map ~f:(fun (a, m) -> (a, b, m)) al
 
-  let combine_list : 'a list -> (('a * mutation option) list) list -> ('a list * mutation option) list =
+  let combine_list : 'a list -> (('a * (location * expression) option) list) list -> ('a list * (location * expression) option) list =
     fun a al ->
     List.concat @@ List.mapi ~f:(fun i ali ->
       List.map ~f:(fun (v, m) -> (List.take a i @ [ v ] @ List.drop a (i + 1),  m)) ali) al
@@ -198,7 +197,7 @@ module Mutator = struct
          [] in
     [(const, false)] @ List.map ~f:mapper ops @ swapper cons_name arguments
 
-  let rec mutate_expression : expression -> (expression * mutation option) list = fun e' ->
+  let rec mutate_expression : expression -> (expression * (location * expression) option) list = fun e' ->
     let return expression_content = { e' with expression_content } in
     let self = mutate_expression in
     match e'.expression_content with
@@ -262,11 +261,11 @@ module Mutator = struct
     )
     | E_variable _ | E_raw_code _ as e' -> [ (return e'), None ]
     | E_type_inst _ as e' -> [ (return e'), None ]
-    | E_assign {binder;access_path;expression} ->
+    | E_assign {binder;expression} ->
         let+ expression, mutation = self expression in
-        return @@ E_assign {binder;access_path;expression}, mutation
+        return @@ E_assign {binder;expression}, mutation
 
-  and mutate_cases : matching_expr -> (matching_expr * mutation option) list = fun m ->
+  and mutate_cases : matching_expr -> (matching_expr * (location * expression) option) list = fun m ->
     match m with
     | Match_variant {cases;tv} -> (
       let aux { constructor ; pattern ; body } =

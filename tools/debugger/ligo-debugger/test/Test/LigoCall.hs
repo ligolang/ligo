@@ -6,14 +6,17 @@ import Test.Tasty (TestTree, testGroup)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Morley.Michelson.Parser (MichelsonSource (MSName))
+import Morley.Michelson.Text (mt)
+import Morley.Michelson.Untyped qualified as U
 import Test.Util
 
-test_Call :: TestTree
-test_Call = testGroup "Getting debug info"
+test_Compilation :: TestTree
+test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
-      let file = inContractsDir "simple-ops.mligo"
+      let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
-      res <- compileLigoContractDebug file
+      res <- compileLigoContractDebug "main" file
       take 15 (toList $ lmLocations res) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
@@ -21,11 +24,34 @@ test_Call = testGroup "Getting debug info"
           , LigoEmptyLocationInfo
           ]
 
-        , [ LigoMereEnvInfo [LigoStackEntryNoVar (LigoTypeRef 0)] ]
+        , [ LigoMereEnvInfo [LigoStackEntryNoVar intType] ]
         , replicate 3 LigoEmptyLocationInfo
         , [ LigoMereLocInfo ((2, 11) <-> (2, 17)) ]
-        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" (LigoTypeRef 0)] ]
+        , [ LigoMereEnvInfo [LigoStackEntryVar "s2" intType] ]
 
         ]
+
+  ]
+
+test_ExpressionCompilation :: TestTree
+test_ExpressionCompilation = testGroup "Compiling expression"
+  let evalExprOverContract1 =
+        compileLigoExpression (MSName "test") (contractsDir </> "complex-storage.mligo")
+  in
+  [ testCase "Evaluating pure values" do
+      res <- evalExprOverContract1 "(5n, \"abc\")"
+      res @?= Right (U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|]))
+
+  , testCase "Relying on constants defined in the contract" do
+      res <- evalExprOverContract1 "defEmptyStorage"
+      res @?= Right (U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|]))
+
+  , testCase "Relying on functions defined in the contract" do
+      res <- evalExprOverContract1 "defStorage \"a\""
+      res @? isRight
+
+  , testCase "Non-existing variable" do
+      res <- evalExprOverContract1 "absentStorage"
+      res @? isLeft
 
   ]

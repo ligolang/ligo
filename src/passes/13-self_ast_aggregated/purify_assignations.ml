@@ -140,11 +140,11 @@ module Effect = struct
 
   let get_read_effect (t:t) (ev : expression_variable) =
     match ValueVarMap.find_opt ev t.env with
-      None -> None,false
-    | Some ({effects=_; read=None}) -> None,false
+      None -> None
+    | Some ({effects=_; read=None}) -> None
     | Some {effects=_; read=Some(read)} ->
       if ValueVarMap.(compare Compare.type_expression read empty) = 0
-        then None,false else Some (make_tuple read),true
+        then None else Some (make_tuple read)
 
   let get_effect_var (t:t) (ev : expression_variable) =
     (* Format.printf "get effect for %a in %a\n%!" PP.expression_variable ev pp t; *)
@@ -172,6 +172,10 @@ module Effect = struct
     let global = {effects = ValueVarMap.remove ev t.global.effects; read} in
     {t with global = global}
   let remove_read_effect (t:t) = {t with global = {t.global with read = None}}
+  let load_write_effect_in_read_effect (t: t) =
+    let read = Option.value ~default:ValueVarMap.empty t.global.read in
+    let global = {t.global with read = Some (ValueVarMap.union (fun _ a _ -> Some a) t.global.effects read)} in
+    {t with global = global}
 end
 
 module ValueVarSet = Caml.Set.Make(ValueVar)
@@ -197,7 +201,9 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
   | E_lambda {binder;result} ->
       self result |> Effect.rm_var binder.var
   | E_recursive {fun_name;fun_type=_;lambda={binder;result}} ->
-      self result |> Effect.rm_var binder.var |> Effect.rm_var fun_name
+      let effect = self result in
+      let effect =  Effect.load_write_effect_in_read_effect effect in
+      Effect.rm_var binder.var @@ Effect.rm_var fun_name effect
   | E_let_in {let_binder;rhs;let_result;attr=_} ->
       let effect = self rhs in
       let effect =
@@ -247,7 +253,7 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
     let effect = self record in
     let effect = Effect.add effect @@ self update in
     effect
-  | E_assign {binder;access_path=_;expression} ->
+  | E_assign {binder;expression} ->
     let effect = self expression in
     return @@ Effect.add_effect effect binder.var (Option.value_exn binder.ascr)
 
@@ -324,36 +330,6 @@ let add_parameter read_effect read_effects effects_type rhs =
       e_recursive {fun_name;fun_type;lambda={binder=binder_eff;result}} fun_type
   | _ -> failwith "Add_parameters: not a function"
 
-let rec apply_for_all_on (binder : type_variable) (value : type_expression) (te : type_expression) =
-  let self = apply_for_all_on binder value in
-  let return tv' = make_t ~loc:te.location tv' in
-  match te.type_content with
-    T_variable var when TypeVar.equal binder var -> value
-  | T_variable  _ -> te
-  | T_constant  _ -> te
-  | T_singleton _ -> te
-  | T_arrow {type1;type2} ->
-      let type1 = self type1 in
-      let type2 = self type2 in
-      return @@ T_arrow {type1;type2}
-  | T_sum m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
-      let associated_type = self associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : row_element)
-    in
-    return @@ T_sum { m with content = LMap.map aux m.content }
-  )
-  | T_record m -> (
-    let aux ({associated_type;michelson_annotation;decl_pos} : row_element) =
-      let associated_type = self associated_type in
-      ({associated_type;michelson_annotation;decl_pos} : row_element)
-    in
-    return @@ T_sum { m with content = LMap.map aux m.content }
-  )
-  | T_for_all {ty_binder;kind;type_} ->
-    let type_ = self type_ in
-    return @@ T_for_all {ty_binder;kind;type_}
-
 let rec morph_function_application (effect : Effect.t) (e: expression) : _ * expression =
   let self = morph_function_application effect in
   let return returned_effect type_expression expression_content = returned_effect, { e with expression_content ; type_expression } in
@@ -371,7 +347,7 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
   | E_type_inst {forall;type_} ->
       let returned_effect,forall = self forall in
       let {ty_binder;kind=_;type_=ty} = get_t_for_all_exn forall.type_expression in
-      let ty = apply_for_all_on ty_binder type_ ty in
+      let ty = Helpers.subst_type ty_binder type_ ty in
       return returned_effect ty @@ E_type_inst {forall;type_}
   | E_application {lamb;args} ->
       let returned_effect,lamb = self lamb in
@@ -409,7 +385,7 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
   | E_raw_code rc -> return ?returned_effect @@ E_raw_code rc
   | E_variable variable ->
       (match Effect.get_read_effect effect variable with
-        None,false -> return ?returned_effect @@ E_variable variable
+        None -> return ?returned_effect @@ E_variable variable
       | _ ->
           failwith "Hypothesis 2 failed"
       )
@@ -550,75 +526,33 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
       let update = self update in
       return ?returned_effect @@ E_record_update {record;path;update}
   (* Todo : check if we can replace by morphin directly let () = x := e in into let x = e in *)
-  | E_assign {binder;access_path;expression} ->
+  | E_assign {binder;expression} ->
       let expression = self expression in
       let let_binder = binder in
-      let attr = {inline = false; no_mutation = false; view = false; public = false; thunk = false; hidden = false} in
-      (* This part is similar to desugaring of fonctional update. But is kept here for not wanting to desugar it if we
-        keep the effect in the backend *)
-      let rhs =
-        let accessor expr a : expression =
-          match a with
-            Access_tuple  i ->
-              let _ty =
-                let record_ty = get_t_record_exn expr.type_expression in
-                LMap.find (Label (Z.to_string i)) record_ty.content
-              in
-              e_record_accessor {record=expr;path=(Label (Z.to_string i))} @@ t_unit ()
-          | Access_record a ->
-              let _ty =
-                let record_ty = get_t_record_exn expr.type_expression in
-                LMap.find (Label a) record_ty.content
-              in
-              e_record_accessor {record=expr;path=(Label a)} @@ t_unit ()
-          | Access_map k ->
-            let k = self k in
-            let _ty = snd @@ get_t_map_exn expr.type_expression in
-            e_constant {cons_name=C_MAP_FIND_OPT;arguments=[k;expr]} @@ t_unit ()
-        in
-        let updator s a expr : expression =
-          match a with
-            Access_tuple  i -> e_record_update {record=s;path=(Label (Z.to_string i));update=expr} s.type_expression
-          | Access_record a -> e_record_update {record=s;path=(Label a);update=expr} s.type_expression
-          | Access_map k ->
-            let k = self k in
-            e_constant {cons_name=C_MAP_ADD;arguments=[k;expr;s]} s.type_expression
-        in
-        let aux (s, e : expression * _) lst =
-          let s' = accessor s lst in
-          let e' = fun expr ->
-            let u = updator s lst expr in
-            e u
-          in
-          (s',e')
-        in
-        let (_,rhs) = List.fold ~f:aux ~init:(e_variable binder.var (Option.value_exn binder.ascr), fun e -> e) access_path in
-        rhs @@ expression in
+      let attr = {inline = false; no_mutation = false; view = false; public = false; hidden = false ; thunk = false} in
+      let rhs = expression in
       (* Todo : Check for correct use *)
       let let_result = return ?returned_effect @@ e_unit () in
       return @@ E_let_in {let_binder;rhs;let_result;attr}
 
-let rec silent_cast_top_level_var_to_const ~add_warning e =
-  let self = silent_cast_top_level_var_to_const ~add_warning in
+let rec silent_cast_top_level_var_to_const ~raise e =
+  let self = silent_cast_top_level_var_to_const ~raise in
   match e.expression_content with
     E_let_in {let_binder;rhs;let_result;attr} ->
-    let let_result = self let_result in
     (match let_binder.attributes.const_or_var with
-      Some `Var -> add_warning @@ `Jsligo_deprecated_toplevel_let (ValueVar.get_location let_binder.var)
+      Some `Var -> raise.Trace.warning @@ `Jsligo_deprecated_toplevel_let (ValueVar.get_location let_binder.var)
     | _ -> ()
     );
+    let let_result = self let_result in
     let let_binder = {let_binder with attributes={const_or_var = Some `Const}} in
     let expression_content = E_let_in {let_binder;rhs;let_result;attr} in
     {e with expression_content}
   | _ -> e
 
-let expression ~add_warning e =
+let expression ~raise e =
   (* Pretreatement especialy for JSLigo replace top-level let to const *)
-  let e = silent_cast_top_level_var_to_const ~add_warning e in
+  let e = silent_cast_top_level_var_to_const ~raise e in
   let e = Deduplicate_binders.program e in
-  (* Format.printf "origin : %a\n%!" PP.expression e; *)
   let effect = detect_effect_in_expression ValueVarSet.empty e in
-  (* Format.printf "test: %a\n%!" Effect.pp effect; *)
   let e = morph_expression effect e in
-  (* Format.printf "morphed: %a\n%!" PP.expression e; *)
   e

@@ -146,9 +146,8 @@ let conditional : ('acc -> 'a -> 'acc) -> 'acc -> 'a conditional -> 'acc
    acc
 
 let assign : ('acc -> 'a -> 'acc) -> ('acc -> 'b -> 'acc) -> 'acc -> ('a,'b) assign -> 'acc
-= fun f g acc {binder=b; access_path; expression} ->
+= fun f g acc {binder=b; expression} ->
   let acc = binder g acc b in
-  let acc = path f acc access_path in
   let acc = f acc expression in
   acc
 

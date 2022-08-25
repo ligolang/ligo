@@ -16,7 +16,7 @@ module AST.Skeleton
   , Constant (..), FieldAssignment (..), MapBinding (..), Alt (..), Expr (..)
   , Collection (..), TField (..), Variant (..), Type (..), Binding (..)
   , RawContract (..), TypeName (..), TypeVariableName (..), FieldName (..)
-  , MichelsonCode (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
+  , Verbatim (..), Error (..), Ctor (..), NameDecl (..), Preprocessor (..)
   , PreprocessorCommand (..), ModuleName (..), ModuleAccess (..)
   , TypeParams (..), PatchableExpr (..), CaseOrDefaultStm (..)
 
@@ -36,6 +36,7 @@ import GHC.Generics (Generic)
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
+import Diagnostic (MessageDetail)
 import Product (Product)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
@@ -68,7 +69,7 @@ type Tree' fs xs = Tree fs (Product xs)
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , MapBinding, Alt, Expr, Collection, TField, Variant, Type, Binding
-  , RawContract, TypeName, TypeVariableName, FieldName, MichelsonCode
+  , RawContract, TypeName, TypeVariableName, FieldName, Verbatim
   , Error, Ctor, NameDecl, Preprocessor, PreprocessorCommand, PatchableExpr
   , ModuleName, ModuleAccess, TypeParams, CaseOrDefaultStm
   ]
@@ -192,7 +193,7 @@ data Expr it
   | ForBox    it (Maybe it) it it it -- (Name) (Maybe (Name)) (Collection) (Expr) (Expr)
   | Patch     it it -- (Expr) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | Michelson it it [it] -- (MichelsonCode) (Type) (Arguments)
+  | Michelson it it -- (Verbatim) (Type)
   | Paren     it -- (Expr)
   deriving stock (Generic, Functor, Foldable, Traversable)
 
@@ -211,8 +212,8 @@ data Collection it
   | CSet
   deriving stock (Generic, Functor, Foldable, Traversable)
 
-newtype MichelsonCode it
-  = MichelsonCode Text
+newtype Verbatim it
+  = Verbatim Text
   deriving stock (Generic, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
@@ -318,7 +319,7 @@ newtype FieldName it = FieldName Text
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
   deriving Eq1 via DefaultEq1DeriveForText
 
-data Error it = Error Text [it]
+data Error it = Error MessageDetail [it]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 --------------------------------------------------------------------------------

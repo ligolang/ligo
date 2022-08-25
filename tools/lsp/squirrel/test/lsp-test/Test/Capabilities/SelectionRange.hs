@@ -29,17 +29,17 @@ unit_selectionRangeInsideCase :: Assertion
 unit_selectionRangeInsideCase = do
   let filepath = contractsDir </> "heap.ligo"
   tree <- readContract filepath
-  let position = (point 16 8){_rFile = filepath}
+  let position = (point 15 8){_rFile = filepath}
       results = findCoveringRanges (tree ^. nestedLIGO) position
               & map simplify
   results `shouldMatchList`
-    [ SimpleRange (16, 8) ( 16, 12) filepath
-    , SimpleRange (16, 8) ( 16, 16) filepath
-    , SimpleRange (16, 8) ( 16, 21) filepath
-    , SimpleRange (15, 6) ( 18,  7) filepath
-    , SimpleRange (14, 4) ( 18,  7) filepath
-    , SimpleRange (11, 3) ( 21,  4) filepath
-    , SimpleRange (11, 3) ( 21, 11) filepath
-    , SimpleRange (10, 1) ( 21, 11) filepath
-    , SimpleRange ( 1, 1) (105,  1) filepath
+    [ SimpleRange (15,  8) ( 15, 12) filepath
+    , SimpleRange (15,  8) ( 15, 16) filepath
+    , SimpleRange (15,  8) ( 15, 21) filepath
+    , SimpleRange (14,  6) ( 17,  7) filepath
+    , SimpleRange (13,  4) ( 17,  7) filepath
+    , SimpleRange (10, 46) ( 20,  4) filepath
+    , SimpleRange (10, 46) ( 20, 11) filepath
+    , SimpleRange (10,  1) ( 20, 11) filepath
+    , SimpleRange ( 1,  1) (101,  1) filepath
     ]

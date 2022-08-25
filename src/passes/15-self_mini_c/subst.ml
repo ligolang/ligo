@@ -83,11 +83,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in (e1, inline, thunk, ((v, tv), e2)) ->
+  | E_let_in (e1, inline, ((v, tv), e2)) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in (e1, inline, thunk, ((v, tv), e2))
+    return @@ E_let_in (e1, inline, ((v, tv), e2))
   | E_tuple exprs ->
     let exprs = List.map ~f:replace exprs in
     return @@ E_tuple exprs
@@ -185,10 +185,10 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     let (binder, body) = self_binder1 ~body:(binder, body) in
     return @@ E_closure { binder ; body }
   )
-  | E_let_in (expr, inline, thunk, ((v , tv), body)) -> (
+  | E_let_in (expr, inline, ((v , tv), body)) -> (
     let expr = self expr in
     let (v, body) = self_binder1 ~body:(v, body) in
-    return @@ E_let_in (expr, inline, thunk, ((v , tv) , body))
+    return @@ E_let_in (expr, inline, ((v , tv) , body))
   )
   | E_tuple exprs ->
     let exprs = List.map ~f:self exprs in
@@ -335,13 +335,13 @@ let%expect_test _ =
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
     (fun y -> ((x)@(y)))[x := y] =
-    fun y -> ((y)@(y))
+    fun y#2 -> ((y)@(y#2))
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((x, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, ((x, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -352,7 +352,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type), var x))))
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type), var x))))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -363,13 +363,13 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   TypeVar.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in (var x, false, false, ((y, dummy_type),
+    ~body:(wrap (E_let_in (var x, false, ((y, dummy_type),
                            app (var x) (var y)))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|
     (let y = x in (x)@(y))[x := y] =
-    let y = y in (y)@(y)
+    let y#3 = y in (y)@(y#3)
   |}] ;
 
   (* iter shadowed *)
@@ -402,7 +402,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (for_ITER y of (x)@(y) do ( (x)@(y) ))[x := y] =
-    for_ITER y of (y)@(y) do ( (y)@(y) )
+    for_ITER y#4 of (y)@(y) do ( (y)@(y#4) )
   |}] ;
 
   (* if_cons shadowed 1 *)
@@ -458,7 +458,7 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := y] =
-    y ?? y : (y :: z) -> (y)@((y)@(z))
+    y ?? y : (y#5 :: z) -> (y)@((y#5)@(z))
   |}] ;
 
   (* if_cons capture avoidance 2 *)
@@ -472,7 +472,7 @@ let%expect_test _ =
     ~expr:(var z) ;
   [%expect{|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := z] =
-    z ?? z : (y :: z) -> (z)@((y)@(z))
+    z ?? z : (y :: z#6) -> (z)@((y)@(z#6))
   |}] ;
 
   (* old bug *)
@@ -484,5 +484,5 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (fun y -> (fun y#2 -> ((x)@((y)@(y#2)))))[x := y] =
-    fun y -> (fun y#2 -> ((y)@((y)@(y#2))))
+    fun y#3 -> (fun y#2 -> ((y)@((y#3)@(y#2))))
   |}] ;

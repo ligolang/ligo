@@ -17,7 +17,7 @@ let michelson_add = (n: [nat, nat]): nat =>
       (TypeName)
       (apply
         (michelson_interop
-          (michelson_code)
+          (Verbatim)
           (paren_type
             (fun_type
               (domain (tuple_type (TypeName) (TypeName)))

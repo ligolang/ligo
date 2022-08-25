@@ -9,6 +9,7 @@ module Trace  = Simple_utils.Trace
 
 module type FILE        = Preprocessing_shared.Common.FILE
 module type COMMENTS    = Preprocessing_shared.Comments.S
+module type MODULES     = Preprocessing_shared.Modules.S
 module type TOKEN       = Lexing_shared.Token.S
 module type SELF_TOKENS = Lexing_shared.Self_tokens.S
 module type PARSER      = ParserLib.API.PARSER
@@ -17,13 +18,14 @@ module LexerMainGen = Lexing_shared.LexerMainGen
 
 (* CONFIGURATION *)
 
-module CLI (File : FILE) (Comments : COMMENTS) =
+module CLI (File : FILE) (Comments : COMMENTS) (Modules : MODULES) =
   struct
     (* Stubs for the libraries CLIs *)
 
     module Preprocessor_CLI : Preprocessor.CLI.S =
       struct
         include Comments
+        include Modules
 
         let input        = File.input
         let extension    = Some File.extension
@@ -109,6 +111,7 @@ type 'token window = <
 module MakeParser
          (File        : Preprocessing_shared.File.S)
          (Comments    : COMMENTS)
+         (Modules     : MODULES)
          (Token       : TOKEN)
          (ParErr      : PAR_ERR)
          (Self_tokens : SELF_TOKENS with type token = Token.t)
@@ -120,18 +123,18 @@ module MakeParser
 
     (* Lifting [Stdlib.result] to [Trace]. *)
 
-    let lift ~(raise:Errors.t Trace.raise) = function
+    let lift ~(raise:(Errors.t, Main_warnings.all) Trace.raise) = function
       Ok tree -> tree
-    | Error msg -> raise.raise @@ `Parsing msg
+    | Error msg -> raise.error @@ `Parsing msg
 
-    let lift_recov ~(raise:Errors.t Trace.raise)
+    let lift_recov ~(raise:(Errors.t, Main_warnings.all) Trace.raise)
       = function
           Ok (tree, errors)     -> List.iter (List.rev errors)
                                        ~f:(fun e -> raise.log_error @@ `Parsing e);
                                    tree
         | Error (error, errors) -> List.iter (List.rev errors)
                                        ~f:(fun e -> raise.log_error @@ `Parsing e);
-                                   raise.raise @@ `Parsing error
+                                   raise.error @@ `Parsing error
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
@@ -142,7 +145,7 @@ module MakeParser
 
     (* Parsing a file *)
 
-    let from_file ~add_warning ~raise buffer file_path : CST.tree =
+    let from_file ~raise buffer file_path : CST.tree =
       let module File =
         struct
           let input        = Some file_path
@@ -150,11 +153,11 @@ module MakeParser
           let dirs         = []
           let project_root = None
         end in
-      let module CLI = CLI (File) (Comments) in
-      let module Warning = struct let add_warning = add_warning end in
+      let module CLI = CLI (File) (Comments) (Modules) in
+      let module Raiser = struct let add_warning = raise.Trace.warning end in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Raiser) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) (CLI.ParserConfig) in
       let string = Buffer.contents buffer in
@@ -170,7 +173,7 @@ module MakeParser
 
     (* Parsing a string *)
 
-    let from_string ~add_warning ~raise buffer : CST.tree =
+    let from_string ~raise buffer : CST.tree =
       let module File =
         struct
           let input        = None
@@ -178,8 +181,8 @@ module MakeParser
           let dirs         = []
           let project_root = None
         end in
-      let module CLI = CLI (File) (Comments) in
-      let module Warning = struct let add_warning = add_warning end in
+      let module CLI = CLI (File) (Comments) (Modules) in
+      let module Warning = struct let add_warning = raise.Trace.warning end in
       let module MainLexer =
         LexerMainGen.Make
           (File) (Token) (CLI.Lexer_CLI) (Self_tokens) (Warning) in
@@ -254,6 +257,7 @@ module type LIGO_PARSER =
 module MakeTwoParsers
          (File        : Preprocessing_shared.File.S)
          (Comments    : COMMENTS)
+         (Modules     : MODULES)
          (Token       : TOKEN)
          (ParErr      : PAR_ERR)
          (Self_tokens : SELF_TOKENS with type token = Token.t)
@@ -262,7 +266,7 @@ module MakeTwoParsers
                                      and module CST = CST) =
   struct
     type file_path = string
-    type 'a parser = raise:Errors.t Trace.raise -> Buffer.t -> 'a
+    type 'a parser = raise:(Errors.t, Main_warnings.all) Trace.raise -> Buffer.t -> 'a
     module Errors = Errors
 
     (* Results *)
@@ -272,7 +276,7 @@ module MakeTwoParsers
     type buffer = Buffer.t
 
     module Partial =
-      MakeParser (File) (Comments) (Token) (ParErr) (Self_tokens)
+      MakeParser (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
 
     (* Parsing contracts *)
 
@@ -366,13 +370,14 @@ module MakePretty (CST    : CST)
 
     (* Pretty-print a pattern from its CST *)
 
-    let print_pattern pattern =
+    let print_pattern ?cols pattern =
       let width, buffer = set () in
       let doc = Pretty.print_pattern pattern in
+      let width = match cols with Some cols -> cols | None -> width in 
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
 
-    let pretty_print_pattern = print_pattern
+    let pretty_print_pattern ?cols = print_pattern ?cols
 
     (* Pretty-print a type expression from its CST *)
 

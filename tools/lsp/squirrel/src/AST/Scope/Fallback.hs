@@ -5,11 +5,9 @@ module AST.Scope.Fallback
   , loopM_
   ) where
 
-import Algebra.Graph.AdjacencyMap qualified as G (vertexCount)
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
 import Control.Lens ((%~), (&), _Just, _head)
-import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.State
 import Control.Monad.Trans.Reader
 import Control.Monad.Writer (Endo (..), Writer, WriterT, execWriter, runWriter, runWriterT, tell)
@@ -22,7 +20,6 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Duplo.Pretty (Doc, pp, ppToText)
 import Duplo.Tree hiding (loop)
-import UnliftIO.MVar (modifyMVar, newMVar)
 import Witherable (forMaybe)
 
 import AST.Pretty (PPableLIGO)
@@ -35,14 +32,12 @@ import AST.Scope.ScopedDecl
 import AST.Scope.ScopedDecl.Parser (parseParameters, parseTypeDeclSpecifics, parseTypeParams)
 import AST.Skeleton hiding (Type, TypeParams (..))
 import Cli.Types
+import Diagnostic (Message (..), MessageDetail (FromLanguageServer), Severity (..))
 import Log (i)
 import Parser
-import ParseTree (srcPath)
 import Product
-import Progress (Progress (..), (%))
 import Range
 import Util (foldMapM, unconsFromEnd)
-import Util.Graph (forAMConcurrently)
 
 data Fallback
 
@@ -56,20 +51,13 @@ data TreeDoesNotContainName =
 
 toMsg :: TreeDoesNotContainName -> Message
 toMsg (TreeDoesNotContainName tree range name) =
-  Message [i|Expected to find a #{name}, but got `#{tree}`|] SeverityError range
+  Message (FromLanguageServer [i|Expected to find a #{name}, but got `#{tree}`|]) SeverityError range
 
-instance (MonadUnliftIO m, HasLigoClient m) => HasScopeForest Fallback m where
-  scopeForest _ reportProgress (Includes graph) = Includes <$> do
-    let nContracts = G.vertexCount graph
-    -- We use a MVar here since there is no instance of 'MonadUnliftIO' for
-    -- 'StateT'. It's best to avoid using this class for stateful monads.
-    counter <- newMVar 0
-    forAMConcurrently graph \(FindContract src (SomeLIGO dialect ligo) msgs) -> do
-      n <- modifyMVar counter (pure . (succ &&& id))
-      reportProgress $ Progress (n % nContracts) [i|Adding scopes for #{srcPath src}|]
-      (sf, (`appEndo` []) -> errs) <- liftIO $ flip runReaderT dialect $ runWriterT $ getEnv ligo
-      let msgs' = map toMsg errs
-      pure $ FindContract src sf (msgs <> msgs')
+instance HasLigoClient m => HasScopeForest Fallback m where
+  scopeContract _ (FindContract src (SomeLIGO dialect ligo) msgs) = do
+    (sf, (`appEndo` []) -> errs) <- liftIO $ flip runReaderT dialect $ runWriterT $ getEnv ligo
+    let msgs' = map toMsg errs
+    pure $ FindContract src sf (msgs <> msgs')
 
 addReferences :: LIGO ParsedInfo -> ScopeForest -> ScopeForest
 addReferences ligo = execState $ loopM_ addRef ligo

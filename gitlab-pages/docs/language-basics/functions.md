@@ -180,6 +180,52 @@ or use an identifier starting with wildcard:
 let k (x : int) (_y : int) = x
 ```
 
+
+Sometimes, one has to chain multiple function applications.
+In this case, parentheses are needed.
+
+```cameligo group=revapp
+let f (x : int) = x + 1
+let g (x : int) = x - 2
+let h (x : int) = x + x - 3
+
+(* Here we apply function f on value 42,
+then apply g on the result,
+and then apply h on the result *)
+let result = h (g (f 42))
+
+(* Parentheses are indeed necessary here. If we remove them, we have : *)
+// let result' = h g f 42
+(* Which is different, it is equivalent to : *)
+// let result' = ((h g) f) 42
+```
+
+Here, one might want to reduce the number of parentheses, for readability.
+In this case, the reverse-application operator (`|>`) can be used instead.
+
+Expression `f x` can be rewritten as `x |> f`,
+and `g (f x)` can be rewritten as `x |> f |> g`
+(you can think of it as "I take `x`, give it to function `f`, and then to function `g`").
+
+Above `result` can thus be rewritten as :
+
+```cameligo group=revapp
+let result = 42 |> f |> g |> h
+```
+
+Function application has precedence over reverse-application operator,
+which means `f 42 |> g` is the same as `(f 42) |> g` and not `f (42 |> g)`.
+So you can rewrite `result` as :
+
+```cameligo group=revapp
+let result = f 42 |> g |> h
+```
+
+This can be useful when you have to deal with a long chain of function calls.
+
+This operator actually comes from [OCaml's pervasives](https://v2.ocaml.org/releases/4.02/htmlman/libref/Pervasives.html#6_Compositionoperators).
+Other similar operators will be added when enabling support for custom operator definition.
+
 </Syntax>
 <Syntax syntax="reasonligo">
 

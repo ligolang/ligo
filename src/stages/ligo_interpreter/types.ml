@@ -1,20 +1,23 @@
 include Ast_aggregated.Types
 
-module Tezos_protocol = Tezos_protocol_013_PtJakart
-module Tezos_raw_protocol = Tezos_raw_protocol_013_PtJakart
+module Tezos_protocol = Tezos_protocol_014_PtKathma
+module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 
 module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
-module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
+module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Timestamp
 
 type mcode = unit Tezos_utils.Michelson.michelson
 type mcontract = Tezos_protocol.Protocol.Alpha_context.Contract.t
 
-type mutation = Location.t * Ast_aggregated.expression
+type mutation = Location.t * Ast_aggregated.expression * string
 
-type env_item =
-  | Expression of { name: expression_variable ; item: value_expr ; no_mutation : bool ; inline : bool }
+type env_item = {
+    item: value_expr ;
+    no_mutation : bool ;
+    inline : bool
+  }
 
-and env = env_item list
+and env = (expression_variable * env_item) list
 
 and func_val = {
     rec_name : expression_variable option ;
@@ -62,6 +65,10 @@ and micheline_value = (unit, string) Tezos_micheline.Micheline.node *
 
 and value_expr = { ast_type : Ast_aggregated.type_expression ;
                    eval_term : value }
+
+and gen = { generator : value QCheck.Gen.t ;
+            gen_type : Ast_aggregated.type_expression }
+  
 and value =
   | V_Ct of constant_val
   | V_List of value list
@@ -73,7 +80,7 @@ and value =
   | V_Michelson_contract of mcode
   | V_Mutation of mutation
   | V_Func_val of func_val
-  | V_Thunk of thunk_val
+  | V_Gen of gen
 
 and calltrace = Location.t list
 

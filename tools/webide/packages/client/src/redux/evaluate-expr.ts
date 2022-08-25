@@ -25,7 +25,7 @@ type Action = ChangeEntrypointAction | ChangeSelectedExampleAction | ChangeProto
 
 const DEFAULT_STATE: EvaluateValueState = {
   entrypoint: '',
-  protocol: 'ithaca'
+  protocol: 'jakarta'
 };
 
 const evaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueState => {
@@ -38,7 +38,7 @@ const evaluateValue = (state = DEFAULT_STATE, action: Action): EvaluateValueStat
     case ActionType.ChangeProtocol:
       return {
         ...state,
-        entrypoint: action.payload
+        protocol: action.payload
       };
     case ActionType.ChangeEntrypoint:
       return {

@@ -6,6 +6,7 @@ module Trace = Simple_utils.Trace
 
 module File        = Preprocessing_cameligo.File
 module Comments    = Preprocessing_cameligo.Comments
+module Modules     = Preprocessing_cameligo.Modules
 module Token       = Lexing_cameligo.Token
 module Self_tokens = Lexing_cameligo.Self_tokens
 module ParErr      = Parsing_cameligo.ParErr
@@ -26,18 +27,18 @@ module CameligoParser =
   end
 
 include Common.MakeTwoParsers
-          (File) (Comments) (Token) (ParErr) (Self_tokens)
+          (File) (Comments) (Modules) (Token) (ParErr) (Self_tokens)
           (CST) (CameligoParser)
 
 (* Making the pretty-printers *)
 
 include Common.MakePretty (CST) (Pretty)
 
-let pretty_print_file ~add_warning ~raise buffer file_path =
-  ContractParser.parse_file ~add_warning ~raise buffer file_path |> pretty_print
+let pretty_print_file ~raise buffer file_path =
+  ContractParser.parse_file ~raise buffer file_path |> pretty_print
 
-let pretty_print_cst ~add_warning ~raise buffer file_path =
-  let cst = ContractParser.parse_file ~add_warning ~raise buffer file_path in
+let pretty_print_cst ~raise buffer file_path =
+  let cst = ContractParser.parse_file ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state =
     Tree.mk_state ~buffer

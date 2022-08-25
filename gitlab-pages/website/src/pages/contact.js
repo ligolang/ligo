@@ -6,49 +6,42 @@ const TEAM = [
   {
     firstName: 'Christian',
     lastName: 'Rinderknecht',
-    image: 'img/christian.jpg',
+    image: 'img/team/christian.jpg',
     link: 'https://github.com/rinderknecht',
     pinned: true
   },
   {
     firstName: 'Eowyn',
     lastName: 'Dean',
-    image: 'img/eowyn.jpg',
+    image: 'img/team/eowyn.jpg',
     link: 'https://gitlab.com/dernhelm7',
-    pinned: true
-  },
-  {
-    firstName: 'Francis',
-    lastName: 'Brunelle',
-    image: 'img/francis.jpg',
-    link: 'https://github.com/frabrunelle',
     pinned: true
   },
   {
     firstName: 'Gabriel',
     lastName: 'Alfour',
-    image: 'img/gabriel.jpeg',
+    image: 'img/team/gabriel.jpeg',
     link: 'https://gitlab.com/gabriel.alfour',
     pinned: true
   },
   {
     firstName: 'Pierre-Emmanuel',
     lastName: 'Wolfman',
-    image: 'img/pierre-emmanuel.jpg',
+    image: 'img/team/pierre-emmanuel.jpg',
     link: 'https://gitlab.com/Popu-sama',
     pinned: true
   },
   {
     firstName: 'Sander',
     lastName: 'Spies',
-    image: 'img/sander.jpeg',
+    image: 'img/team/sander.jpeg',
     link: 'https://github.com/SanderSpies',
     pinned: true
   },
   {
     firstName: 'Suzanne',
     lastName: 'Dupéron',
-    image: 'img/suzanne.jpg',
+    image: 'img/team/suzanne.jpg',
     link: 'https://gitlab.com/suzanne.duperon',
     pinned: true
   }
@@ -57,22 +50,22 @@ const TEAM = [
 const COMMUNICATION_CHANNELS = [
   {
     link: 'https://discord.gg/9rhYaEt',
-    icon: 'img/discord.svg',
+    icon: 'img/communication_channels/discord.svg',
     description: "Join our Discord server. We're here to help."
   },
   {
     link: 'https://t.me/LigoLang',
-    icon: 'img/telegram.svg',
+    icon: 'img/communication_channels/telegram.svg',
     description: "We're also on Telegram. Ask us anything!"
   },
   {
     link: 'https://gitlab.com/ligolang/ligo/issues',
-    icon: 'img/gitlab.svg',
+    icon: 'img/communication_channels/gitlab.svg',
     description: 'Need a fix? Create an issue on GitLab.'
   },
   {
     link: 'https://twitter.com/ligolang',
-    icon: 'img/twitter.svg',
+    icon: 'img/communication_channels/twitter.svg',
     description: 'Join the latest chit-chat and follow us on Twitter!'
   }
 ];

@@ -21,11 +21,20 @@ let v_unit : unit -> value =
 let v_string : string -> value =
   fun s -> V_Ct (C_string s)
 
+let v_bytes : bytes -> value =
+  fun b -> V_Ct (C_bytes b)
+
 let v_some : value -> value =
   fun v -> V_Construct ("Some", v)
 
 let v_nat : Z.t -> value =
   fun v -> V_Ct (C_nat v)
+
+let v_int : Z.t -> value =
+  fun v -> V_Ct (C_int v)
+
+let v_mutez : Z.t -> value =
+  fun v -> V_Ct (C_mutez v)
 
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
@@ -33,8 +42,17 @@ let v_none : unit -> value =
 let v_ctor : string -> value -> value =
   fun ctor value -> V_Construct (ctor, value)
 
-let v_address : Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t -> value =
+let v_address : Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t -> value =
   fun a -> V_Ct (C_address a)
+
+let v_list : value list -> value =
+  fun xs -> V_List xs
+
+let v_set : value list -> value =
+  fun xs -> V_Set xs
+
+let v_map : (value * value) list -> value =
+  fun xs -> V_Map xs
 
 let extract_pair : value -> (value * value) option =
   fun p ->
@@ -65,7 +83,7 @@ let is_bool : value -> bool =
 let counter_of_address : string -> int = fun addr ->
   try (int_of_string addr) with | Failure _ -> -1
 
-let get_address : value -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.t option = function
+let get_address : value -> Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.t option = function
   | V_Ct ( C_address x ) -> Some x
   | _ -> None
 
@@ -216,9 +234,9 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
   | C_string s, C_string s' -> String.compare s s'
   | C_bytes b, C_bytes b' -> Bytes.compare b b'
   | C_mutez m, C_mutez m' -> Z.compare m m'
-  | C_address a, C_address a' -> Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a'
+  | C_address a, C_address a' -> Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a'
   | C_contract {address=a;entrypoint=e}, C_contract {address=a';entrypoint=e'} -> (
-     match Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.compare a a' with
+     match Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.compare a a' with
        0 -> Option.compare String.compare e e'
      | c -> c
   )
@@ -246,8 +264,8 @@ let tag_value : value -> int = function
   | V_Michelson _ -> 6
   | V_Mutation _ -> 7
   | V_Func_val _ -> 8
-  | V_Thunk _ -> 9
-  | V_Michelson_contract _ -> 10
+  | V_Michelson_contract _ -> 9
+  | V_Gen _ -> 10
 
 let rec compare_value (v : value) (v' : value) : int =
   match v, v' with
@@ -281,15 +299,15 @@ let rec compare_value (v : value) (v' : value) : int =
     | Untyped_code c, Untyped_code c' -> Caml.compare c c'
     | Ty_code _, Untyped_code _ -> 1
   )
-  | V_Mutation (l, e), V_Mutation (l', e') -> (
+  | V_Mutation (l, e, _), V_Mutation (l', e', _) -> (
     match Location.compare l l' with
       0 -> Caml.compare e e'
     | c -> c
   )
   | V_Michelson_contract c, V_Michelson_contract c' -> Caml.compare c c'
   | V_Func_val f, V_Func_val f' -> Caml.compare f f'
-  | V_Thunk v, V_Thunk v' -> Caml.compare v v'
-  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Thunk _ | V_Michelson_contract _) -> Int.compare (tag_value v) (tag_value v')
+  | V_Gen v, V_Gen v' -> Caml.compare v v'
+  | (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _), (V_Ct _ | V_List _ | V_Record _ | V_Map _ | V_Set _ | V_Construct _ | V_Michelson _ | V_Mutation _ | V_Func_val _ | V_Michelson_contract _ | V_Gen _) -> Int.compare (tag_value v) (tag_value v')
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool = Int.equal (compare_constant_val c c') 0
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

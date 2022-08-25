@@ -4,12 +4,12 @@ let file   = "./contracts/basic_multisig/multisig.ligo"
 let mfile  = "./contracts/basic_multisig/multisig.mligo"
 let refile = "./contracts/basic_multisig/multisig.religo"
 
-let compile_main ~raise ~add_warning f () =
-  Test_helpers.compile_main ~raise ~add_warning f ()
+let compile_main ~raise f () =
+  Test_helpers.compile_main ~raise f ()
 
-open Ast_imperative
 
 let init_storage threshold counter pkeys =
+  let open Ast_imperative in
   let keys = List.map
     ~f:(fun el ->
       let (_,pk_str,_) = str_keys el in
@@ -34,42 +34,37 @@ let op_list ~raise =
   let source =
     Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
     (Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG") in
-  (* let operation : 'a Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation = *)
-  let transaction : transaction =
-    let parameters : Script.lazy_expr = Script.unit_parameter in
-    let entrypoint =
-      let open Tezos_raw_protocol_013_PtJakart in
-      match (Entrypoint_repr.of_annot_lax_opt (Non_empty_string.of_string_exn "default")) with
-      | Some x -> x
-      | None -> raise.raise (Main_errors.test_internal __LOC__)
-    in
-    let destination =
-      let c = Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
-       Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
-      in
-      Destination.Contract c
-    in
-    {amount=Tez.zero; parameters; entrypoint; destination}
+  let entrypoint =
+    let open Tezos_raw_protocol_014_PtKathma in
+    match (Entrypoint_repr.of_annot_lax_opt (Non_empty_string.of_string_exn "default")) with
+    | Some x -> x
+    | None -> raise.error (Main_errors.test_internal __LOC__)
   in
+  let destination =
+    Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__) @@
+      Contract.of_b58check "tz1PpDGHRXFQq3sYDuH8EpLWzPm5PFpe1sLE"
+  in
+  let unparsed_parameters : Script.expr = Memory_proto_alpha.Protocol.Script_repr.unit in
   let operation : _ Memory_proto_alpha.Protocol.Script_typed_ir.manager_operation =
-    Memory_proto_alpha.Protocol.Script_typed_ir.( Transaction {transaction ; location = 0 ; parameters = () ; parameters_ty = Unit_t } )
+    Transaction_to_contract { destination ; amount = Tez.zero ; entrypoint ; location = 0 ; parameters = () ; parameters_ty = Unit_t ; unparsed_parameters }
   in
   let internal_operation : Memory_proto_alpha.Protocol.Script_typed_ir.packed_internal_operation =
     Memory_proto_alpha.Protocol.Script_typed_ir.( Internal_operation { source ; operation ; nonce=0 } ) in
   let opbytes =
-    let contents = Memory_proto_alpha.Protocol.Apply_results.contents_of_packed_internal_operation internal_operation in
-    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_results.internal_contents_encoding contents
+    let contents = Memory_proto_alpha.Protocol.Apply_internal_results.contents_of_packed_internal_operation internal_operation in
+    Data_encoding.Binary.to_bytes_exn Memory_proto_alpha.Protocol.Apply_internal_results.internal_contents_encoding contents
   in
-  (e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
+  Ast_imperative.(e_typed_list [e_literal (Literal_operation opbytes)] (t_operation ()))
 
-let empty_payload = e_unit ()
+let empty_payload = Ast_imperative.e_unit ()
 
 let chain_id_zero =
-  e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
+  Ast_imperative.e_bytes_raw (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
-let params ~raise ~add_warning counter payload keys is_validl f =
-  let prog = get_program ~raise ~add_warning f () in
+let params ~raise counter payload keys is_validl f =
+  let open Ast_imperative in
+  let prog = get_program ~raise f () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in
@@ -88,44 +83,48 @@ let params ~raise ~add_warning counter payload keys is_validl f =
     ]
 
 (* Provide one valid signature when the threshold is two of two keys *)
-let not_enough_1_of_2 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let not_enough_1_of_2 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let exp_failwith = "Not enough signatures passed the check" in
   let keys = gen_keys () in
-  let test_params = params ~raise ~add_warning 0 empty_payload [keys] [true] f in
+  let test_params = params ~raise 0 empty_payload [keys] [true] f in
   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~sender:first_contract ()) in
-  let () = expect_string_failwith ~raise ~add_warning
+  let () = expect_string_failwith ~raise
     program ~options "main" (e_pair test_params (init_storage 2 0 [keys;gen_keys()])) exp_failwith in
   ()
 
-let unmatching_counter ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let unmatching_counter ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let exp_failwith = "Counters does not match" in
   let keys = gen_keys () in
-  let test_params = params ~raise ~add_warning 1 empty_payload [keys] [true] f in
-  let () = expect_string_failwith ~raise ~add_warning
+  let test_params = params ~raise 1 empty_payload [keys] [true] f in
+  let () = expect_string_failwith ~raise
     program "main" (e_pair test_params (init_storage 1 0 [keys])) exp_failwith in
   ()
 
 (* Provide one invalid signature (correct key but incorrect signature)
    when the threshold is one of one key *)
-let invalid_1_of_1 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let invalid_1_of_1 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let exp_failwith = "Invalid signature" in
   let keys = [gen_keys ()] in
-  let test_params = params ~raise ~add_warning 0 empty_payload keys [false] f in
-  let () = expect_string_failwith ~raise ~add_warning
+  let test_params = params ~raise 0 empty_payload keys [false] f in
+  let () = expect_string_failwith ~raise
     program "main" (e_pair test_params (init_storage 1 0 keys)) exp_failwith in
   ()
 
 (* Provide one valid signature when the threshold is one of one key *)
-let valid_1_of_1 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let valid_1_of_1 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let op_list = op_list ~raise in
   let keys = gen_keys () in
   let () = expect_eq_n_trace_aux ~raise [0;1;2] program "main"
       (fun n ->
-        let params = params ~raise ~add_warning n empty_payload [keys] [true] f in
+        let params = params ~raise n empty_payload [keys] [true] f in
         e_pair params (init_storage 1 n [keys])
       )
       (fun n ->
@@ -134,14 +133,15 @@ let valid_1_of_1 ~raise ~add_warning f () =
   ()
 
 (* Provive two valid signatures when the threshold is two of three keys *)
-let valid_2_of_3 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let valid_2_of_3 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let op_list = op_list ~raise in
   let param_keys = [gen_keys (); gen_keys ()] in
   let st_keys = param_keys @ [gen_keys ()] in
   let () = expect_eq_n_trace_aux ~raise [0;1;2] program "main"
       (fun n ->
-        let params = params ~raise ~add_warning n empty_payload param_keys [true;true] f in
+        let params = params ~raise n empty_payload param_keys [true;true] f in
         e_pair params (init_storage 2 n st_keys)
       )
       (fun n ->
@@ -150,26 +150,28 @@ let valid_2_of_3 ~raise ~add_warning f () =
   ()
 
 (* Provide one invalid signature and two valid signatures when the threshold is two of three keys *)
-let invalid_3_of_3 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let invalid_3_of_3 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let invalid_key = gen_keys () in
   let param_keys = valid_keys @ [invalid_key] in
   let st_keys = valid_keys @ [gen_keys ()] in
-  let test_params = params ~raise ~add_warning 0 empty_payload param_keys [false;true;true] f in
+  let test_params = params ~raise 0 empty_payload param_keys [false;true;true] f in
   let exp_failwith = "Invalid signature" in
-  let () = expect_string_failwith ~raise ~add_warning
+  let () = expect_string_failwith ~raise
     program "main" (e_pair test_params (init_storage 2 0 st_keys)) exp_failwith in
   ()
 
 (* Provide two valid signatures when the threshold is three of three keys *)
-let not_enough_2_of_3 ~raise ~add_warning f () =
-  let program = get_program ~raise ~add_warning f () in
+let not_enough_2_of_3 ~raise f () =
+  let open Ast_imperative in
+  let program = get_program ~raise f () in
   let valid_keys = [gen_keys() ; gen_keys()] in
   let st_keys = gen_keys () :: valid_keys  in
-  let test_params = params ~raise ~add_warning 0 empty_payload (valid_keys) [true;true] f in
+  let test_params = params ~raise 0 empty_payload (valid_keys) [true;true] f in
   let exp_failwith = "Not enough signatures passed the check" in
-  let () = expect_string_failwith ~raise ~add_warning
+  let () = expect_string_failwith ~raise
     program "main" (e_pair test_params (init_storage 3 0 st_keys)) exp_failwith in
   ()
 

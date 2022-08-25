@@ -1,0 +1,8 @@
+let main = ([p, s] : [int, list<int>]) : [list<operation>, list<int>] => {
+  const s2 = match(s, list([
+    ([] : list<int>) => list([p]),
+    ([x, ...l] : list<int>) => list([x, ...list([p, ...list([x, ...l])])])
+  ]));
+
+  return [(list([]) as list<operation>), s2]
+};

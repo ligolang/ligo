@@ -17,3 +17,5 @@ val layout_eq : layout -> layout -> bool
 
 val assert_eq : 'a -> 'a -> unit option
 val assert_list_eq : ('a -> 'a -> unit option) -> 'a list -> 'a list -> unit option
+
+val get_type_of_contract : type_content -> (type_expression * type_expression) option

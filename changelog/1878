@@ -1,0 +1,7 @@
+author: prometheansacrifice
+description: '### Here replace this sentence and put what you want to share with ligo
+  users through changelog. Markdown formatted (### for title). If you don''t want
+  to describe the feature remove keyword \"Description details:\"'
+merge_request: '1878'
+title: 'Package management: Adds package author to metadata during publish'
+type: internal

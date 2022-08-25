@@ -19,14 +19,13 @@ let pseq_to_list = function
   None -> []
 | Some seq -> npseq_to_list seq
 
-let build_ins = ["Operator";"Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Option"]
-
+let built_ins = ["Operator";"Tezos";"List";"Set";"Map";"Big_map";"Bitwise";"Option"]
 
 open Predefined.Tree_abstraction
 
-let check_no_attributes ~(raise:Errors.abs_error Simple_utils.Trace.raise) (loc: Location.t) lst =
+let check_no_attributes ~(raise:(Errors.abs_error,Main_warnings.all) Simple_utils.Trace.raise) (loc: Location.t) lst =
   (* TODO: should be done in a dedicated pass ?*)
-  if not (List.is_empty lst) then raise.raise (ignored_attribute loc)
+  if not (List.is_empty lst) then raise.error (ignored_attribute loc)
 
 let r_split = Location.r_split
 
@@ -62,7 +61,7 @@ let compile_selection : CST.selection -> 'a access * location = function
     let (_, index), loc = w_split comp in
     Access_tuple  index, loc
 
-let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) : ?attr:CST.attribute list -> CST.type_expr -> AST.type_expression =
+let rec compile_type_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_utils.Trace.raise) : ?attr:CST.attribute list -> CST.type_expr -> AST.type_expression =
   fun ?(attr = []) te ->
     let self = compile_type_expression ~raise in
     match te with
@@ -112,7 +111,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
           let c' = self c in
           t_michelson_or ~loc a' b' c' d'
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc v#payload
+        | _ -> raise.error @@ michelson_type_wrong_arity loc v#payload
       )
       | T_Var v when String.equal v#payload "michelson_pair" -> (
         let lst = npseq_to_list args.value.inside in
@@ -124,7 +123,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
           let c' = self c  in
           t_michelson_pair ~loc a' b' c' d'
         )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc v#payload
+        | _ -> raise.error @@ michelson_type_wrong_arity loc v#payload
       )
       | T_Var v when String.equal v#payload "sapling_state" -> (
         let lst = npseq_to_list args.value.inside in
@@ -135,7 +134,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           t_sapling_state ~loc singleton
         )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc v#payload
+        | _ -> raise.error @@ michelson_type_wrong_arity loc v#payload
       )
       | T_Var v when String.equal v#payload "sapling_transaction" -> (
         let lst = npseq_to_list args.value.inside in
@@ -146,7 +145,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
           let singleton = t_singleton ~loc:sloc (Literal_int a') in
           t_sapling_transaction ~loc singleton
           )
-        | _ -> raise.raise @@ michelson_type_wrong_arity loc v#payload
+        | _ -> raise.error @@ michelson_type_wrong_arity loc v#payload
       )
       | T_Var type_var -> (
         let operator = compile_type_var type_var in
@@ -155,8 +154,8 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
         t_app ~loc operator lst
       )
       | T_ModPath x ->
-        raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region x.value.field))
-      | _ -> raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region type_constant))
+        raise.error (expected_variable (Location.lift @@ CST.type_expr_to_region x.value.field))
+      | _ -> raise.error (expected_variable (Location.lift @@ CST.type_expr_to_region type_constant))
     )
     | T_Fun { region ; value = (lhs , _ , rhs) } -> (
       let loc = Location.lift region in
@@ -168,7 +167,7 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
       match field with
       | T_Var v ->
         t_module_accessor ~loc module_path (compile_type_var v)
-      | _ -> raise.raise (expected_variable (Location.lift @@ CST.type_expr_to_region field))
+      | _ -> raise.error (expected_variable (Location.lift @@ CST.type_expr_to_region field))
     )
     | T_Par { region ; value = { lpar = _ ; inside ; rpar = _} } -> (
       let loc = Location.lift region in
@@ -193,9 +192,9 @@ let rec compile_type_expression ~(raise :Errors.abs_error Simple_utils.Trace.rai
       let lst = List.map ~f elements in
       t_record_ez_attr ~loc:(Location.lift region) ~attr:(compile_attributes attr) lst
     )
-    | T_Int _ | T_String _ -> raise.raise @@ unsupported_string_singleton te
+    | T_Int _ | T_String _ -> raise.error @@ unsupported_string_singleton te
 
-let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) : ?attr:CST.attribute list -> CST.expr -> AST.expr = fun ?(attr = []) e ->
+let rec compile_expression ~(raise :(Errors.abs_error,Main_warnings.all) Simple_utils.Trace.raise) : ?attr:CST.attribute list -> CST.expr -> AST.expr = fun ?(attr = []) e ->
   let self = compile_expression ~raise
   in
   let compile_arguments
@@ -229,10 +228,11 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
     let arg = self op.arg in
     e_constant ~loc (Const op_type) [arg]
   in
-  let compile_pseudomodule_access ~loc : CST.expr -> string -> string = fun field module_name ->
+  let rec compile_pseudomodule_access : CST.expr -> string = fun field ->
     match field with
     | E_Var v -> v#payload
-    | E_ModPath _ -> raise.raise @@ unknown_constant module_name loc
+    | E_ModPath { value = { module_path ; field ; selector = _ } ; region = _ } ->
+       Utils.nsepseq_foldr (fun module_name b -> module_name#payload ^ "." ^ b) module_path (compile_pseudomodule_access field)
     | _ -> failwith "Corner case : This couldn't be produce by the parser"
   in
   match e with
@@ -296,11 +296,10 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       e_application ~loc func args
   )
   (*TODO: move to proper module*)
-  | E_Call ({ value=( E_ModPath { value={ module_path = (module_name,[]) ; field ; _ }; region=_ }, args ); region } as call)
-      when List.mem ~equal:String.equal build_ins module_name#payload -> (
+  | E_Call ({ value=( E_ModPath { value={ module_path = (module_name,[]) ; _ }; region=_ } as value, args ); region } as call)
+      when List.mem ~equal:String.equal built_ins module_name#payload -> (
     let loc = Location.lift region in
-    let fun_name = compile_pseudomodule_access ~loc field module_name#payload in
-    let var = module_name#payload ^ "." ^ fun_name in
+    let var = compile_pseudomodule_access value in
     match constants var with
     | Some const ->
        let (args, _) = r_split args in
@@ -328,7 +327,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       | CST.Punned { pun ; attributes } ->
         check_no_attributes ~raise loc_field attributes ;
         let (label,_) = trace_option ~raise (expected_field_name @@ CST.expr_to_region pun) @@ get_var pun in
-        if String.equal label "_" then raise.raise (unexpected_wildcard @@ CST.expr_to_region pun) ;
+        if String.equal label "_" then raise.error (unexpected_wildcard @@ CST.expr_to_region pun) ;
         (label, self pun)
       | CST.Complete {field_lhs ; field_lens ; field_rhs ; attributes } -> (
         check_no_attributes ~raise loc_field attributes ;
@@ -336,7 +335,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
         | Lens_Id _ ->
           let (label,_) = trace_option ~raise (expected_field_name @@ CST.expr_to_region field_lhs) @@ get_var field_lhs in
           (label, self field_rhs)
-        | _ -> raise.raise (wrong_functional_lens @@ CST.field_lens_to_region field_lens)
+        | _ -> raise.error (wrong_functional_lens @@ CST.field_lens_to_region field_lens)
       )
     in
     let record = List.map ~f:aux @@ Utils.sepseq_to_list record.elements in
@@ -349,10 +348,9 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
   | E_ModPath ma -> (
     let (ma, loc) = r_split ma in
     match ma.module_path with
-    | (module_name,[]) when List.mem ~equal:Caml.(=) build_ins module_name#payload -> (
+    | (module_name,[]) when List.mem ~equal:String.(=) built_ins module_name#payload -> (
       (*TODO: move to proper module*)
-      let fun_name = compile_pseudomodule_access ~loc ma.field module_name#payload in
-      let var = module_name#payload ^ "." ^ fun_name in
+      let var = compile_pseudomodule_access e in
       match constants var with
       | Some const -> e_constant ~loc const []
       | None -> (
@@ -369,7 +367,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
            in
            let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ Utils.nsepseq_to_list proj.field_path in
            e_accessor ~loc (e_module_accessor ~loc module_path var) sels
-        | _ -> raise.raise (expected_variable (Location.lift @@ CST.expr_to_region ma.field))
+        | _ -> raise.error (expected_variable (Location.lift @@ CST.expr_to_region ma.field))
       )
     )
     | _ -> (
@@ -386,7 +384,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
         in
         let (sels, _) = List.unzip @@ List.map ~f:compile_selection @@ Utils.nsepseq_to_list proj.field_path in
         e_accessor ~loc (e_module_accessor ~loc module_path var) sels
-      | _ -> raise.raise (expected_variable (Location.lift @@ CST.expr_to_region ma.field))
+      | _ -> raise.error (expected_variable (Location.lift @@ CST.expr_to_region ma.field))
     )
   )
   | E_Update { value = { structure ; kwd_with=_ ; update } ; region } -> (
@@ -426,13 +424,13 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
             let self_accessor = e_accessor ~loc:(Location.lift region) structure path in
             e_update ~loc acc path (func_update self_accessor)
           )
-          | x -> raise.raise (expected_field_or_access @@ CST.expr_to_region x)
+          | x -> raise.error (expected_field_or_access @@ CST.expr_to_region x)
         )
         | CST.Punned {pun ; attributes} -> (
           check_no_attributes ~raise field_loc attributes;
           let label,v =
             let (label,loc) = trace_option ~raise (expected_variable (Location.lift @@ CST.expr_to_region pun)) @@ get_var pun in
-            if String.equal label "_" then raise.raise (unexpected_wildcard @@ CST.expr_to_region pun) ;
+            if String.equal label "_" then raise.error (unexpected_wildcard @@ CST.expr_to_region pun) ;
             (label, ValueVar.of_input_var ~loc label)
           in
           e_update ~loc acc [AST.Access_record label] (e_variable v)
@@ -440,7 +438,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       in
       List.fold_left (Utils.sepseq_to_list record_lhs.value.elements) ~f ~init:structure
     )
-    | x -> raise.raise (wrong_functional_updator @@ CST.expr_to_region x)
+    | x -> raise.error (wrong_functional_updator @@ CST.expr_to_region x)
   )
   | E_Fun { value = { parameters; ret_type ; return ; _ } ; region} -> (
     check_no_attributes ~raise (Location.lift region) attr ;
@@ -449,7 +447,7 @@ let rec compile_expression ~(raise :Errors.abs_error Simple_utils.Trace.raise) :
       let var =
         match pattern with
         | P_Var x -> compile_variable x
-        | x -> raise.raise (unsuported_pattern_in_function @@ CST.pattern_to_region x)
+        | x -> raise.error (unsuported_pattern_in_function @@ CST.pattern_to_region x)
       in
       let ascr = Option.map ~f:(compile_type_expression ~raise <@ snd) param_type in
       let attributes =
@@ -616,7 +614,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
   fun ?(const = false) p ->
     let self = conv ~raise ~const in
     match p with
-    | P_Verbatim _ | P_Attr _ -> raise.raise (unsupported_pattern_type p)
+    | P_Verbatim _ | P_Attr _ -> raise.error (unsupported_pattern_type p)
     | P_Var var -> (
       let var = compile_variable var in
       let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
@@ -647,7 +645,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
           | None -> Location.wrap ~loc P_unit
         in
         Location.wrap ~loc @@ P_variant (Label label, carg)
-      | None -> raise.raise (unsupported_pattern_type p)
+      | None -> raise.error (unsupported_pattern_type p)
     )
     | P_List { region ; value = { elements ; _ } } -> (
       (* let () = check_no_attributes attr in *)
@@ -684,9 +682,9 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
             check_no_attributes ~raise field_loc attributes ;
             let (label,loc) = match pun with
               | P_Var pun -> w_split pun
-              | x -> raise.raise (expected_field_name @@ CST.pattern_to_region x)
+              | x -> raise.error (expected_field_name @@ CST.pattern_to_region x)
             in
-            if String.equal label "_" then raise.raise (unexpected_wildcard @@ CST.pattern_to_region pun) ;
+            if String.equal label "_" then raise.error (unexpected_wildcard @@ CST.pattern_to_region pun) ;
             let attributes = if const then Stage_common.Helpers.const_attribute else Stage_common.Helpers.var_attribute in
             let binder = { var = ValueVar.of_input_var ~loc label ; ascr = None ; attributes } in
             (AST.Label label , Location.wrap ~loc (P_var binder))
@@ -694,7 +692,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
             check_no_attributes ~raise field_loc attributes ;
             let (lhs,_loc) = match field_lhs with
               | P_Var x -> w_split x
-              | x -> raise.raise (expected_field_or_access @@ CST.pattern_to_region x)
+              | x -> raise.error (expected_field_or_access @@ CST.pattern_to_region x)
             in
             (AST.Label lhs, self field_rhs)
       in
@@ -708,7 +706,7 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
       let ty_expr = compile_type_expression ~raise ty_expr in
       match p.wrap_content with
       | P_var x -> Location.wrap ~loc (P_var {x with ascr = Some ty_expr})
-      | _ -> raise.raise (unsupported_type_ann_on_patterns @@ CST.pattern_to_region pattern)
+      | _ -> raise.error (unsupported_type_ann_on_patterns @@ CST.pattern_to_region pattern)
     )
     | P_Ctor x -> (
       let (c,loc) = w_split x in
@@ -716,9 +714,9 @@ and conv ~raise : ?const:bool -> CST.pattern -> AST.ty_expr AST.pattern =
       | "Unit" -> Location.wrap ~loc P_unit
       | _ -> Location.wrap ~loc (P_variant (Label c, Location.wrap P_unit))
     )
-    | P_ModPath _ | P_Mutez _ | P_Bytes _ | P_Int _ | P_Nat _ | P_String _ -> raise.raise @@ unsupported_pattern_type p
+    | P_ModPath _ | P_Mutez _ | P_Bytes _ | P_Int _ | P_Nat _ | P_String _ -> raise.error @@ unsupported_pattern_type p
 
-and compile_matching_expr : type a . raise:'b raise -> (a-> AST.expression) -> a CST.case_clause CST.reg List.Ne.t -> (AST.expression, AST.ty_expr) AST.match_case list =
+and compile_matching_expr : type a . raise:('b,'w) raise -> (a-> AST.expression) -> a CST.case_clause CST.reg List.Ne.t -> (AST.expression, AST.ty_expr) AST.match_case list =
   fun ~raise compiler cases ->
     let aux (case : a CST.case_clause CST.reg) =
       let (case, _loc) = r_split case in
@@ -739,7 +737,7 @@ and compile_parameters ~raise : CST.parameters -> (AST.type_expression AST.binde
     let (param, _loc) = r_split param in
     let var = match param.pattern with
       | P_Var param -> compile_variable param
-      | x -> raise.raise (unsuported_pattern_in_function @@ CST.pattern_to_region x)
+      | x -> raise.error (unsuported_pattern_in_function @@ CST.pattern_to_region x)
     in
     match param.param_kind with
     | `Var _ ->
@@ -794,8 +792,8 @@ and path_of_lvalue ~raise : CST.expr -> AST.expression_variable * AST.expression
       | Some v -> (v,path)
       | None -> aux map path
     )
-    | E_ModPath _ -> raise.raise (expected_field_or_access @@ CST.expr_to_region lhs)
-    | _ -> raise.raise (expected_field_or_access @@ CST.expr_to_region lhs)
+    | E_ModPath _ -> raise.error (expected_field_or_access @@ CST.expr_to_region lhs)
+    | _ -> raise.error (expected_field_or_access @@ CST.expr_to_region lhs)
   in
   aux expr []
 
@@ -844,10 +842,10 @@ and compile_assignment : loc:Location.t -> last_proj_update:(expression -> expre
         )
     in
     match path with
-    | [] -> e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] default_rhs
+    | [] -> e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} default_rhs
     | _ ->
       let init = e_variable ~loc lhs in
-      e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} [] (aux (init,Fun.id) path)
+      e_assign ~loc {var=lhs;ascr=None;attributes={const_or_var=Some `Var}} (aux (init,Fun.id) path)
 
 and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST.expression  = fun ?next instruction ->
   let return expr = Option.value_map next ~default:expr ~f:(e_sequence expr) in
@@ -877,7 +875,7 @@ and compile_instruction ~raise : ?next: AST.expression -> CST.instruction -> AST
     match List.rev path with
     | [] ->
       let rhs = compile_expression ~raise rhs in
-      return @@ e_assign ~loc {var;ascr=None;attributes={const_or_var=Some `Var}} [] rhs
+      return @@ e_assign ~loc {var;ascr=None;attributes={const_or_var=Some `Var}} rhs
     | last_access::path -> (
       let path = List.rev path in
       match last_access with
@@ -1055,7 +1053,7 @@ and compile_block ~raise : ?next:AST.expression -> CST.block CST.reg -> AST.expr
     let block' = List.fold_right ~f:aux ~init:next statements in
     match block' with
     | Some block -> block
-    | None -> raise.raise @@ block_start_with_attribute block
+    | None -> raise.error @@ block_start_with_attribute block
 
 and compile_fun_decl loc ~raise : CST.fun_decl -> expression_variable * type_expression option * expression =
   fun ({kwd_recursive; kwd_function=_; fun_name; type_params; parameters; ret_type; kwd_is=_; return=r; terminator=_ }: CST.fun_decl) ->
@@ -1128,7 +1126,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
       let ast = AST.Declaration_constant {binder; attr; expr} in
       return region ast
     | _ ->
-        raise.raise (unsupported_top_level_destructuring region)
+        raise.error (unsupported_top_level_destructuring region)
   )
 
   | D_Fun {value; region} ->
@@ -1170,3 +1168,9 @@ and compile_declarations ~raise : CST.declaration Utils.nseq -> AST.module_ =
   fun decl ->
     let lst = List.map ~f:(compile_declaration ~raise) @@ nseq_to_list decl
     in List.concat lst
+
+let compile_program ~raise : CST.declaration Utils.nseq -> AST.program = fun t ->
+  nseq_to_list t
+  |> List.map ~f:(fun a ~raise -> compile_declaration ~raise a)
+  |> Simple_utils.Trace.collect ~raise
+  |> List.concat

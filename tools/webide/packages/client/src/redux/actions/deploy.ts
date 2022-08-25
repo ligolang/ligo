@@ -42,12 +42,28 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === NetworkType.ITHACANET) {
+    if (launchNetwork === NetworkType.JAKARTANET) {
       await beaconWallet.requestPermissions({
         network: {
-          type: NetworkType.ITHACANET,
-          name: 'Ithacanet',
-          rpcUrl: `https://ithacanet.ecadinfra.com`,
+          type: NetworkType.JAKARTANET,
+          name: 'Jakartanet',
+          rpcUrl: `https://jakartanet.ecadinfra.com`,
+        },
+      });
+    } else if (launchNetwork === NetworkType.GHOSTNET) {
+      await beaconWallet.requestPermissions({
+        network: {
+          type: NetworkType.GHOSTNET,
+          name: 'Ghostnet',
+          rpcUrl: `https://ghostnet.ecadinfra.com`,
+        },
+      });
+    } else if (launchNetwork === NetworkType.KATHMANDUNET) {
+      await beaconWallet.requestPermissions({
+        network: {
+          type: NetworkType.KATHMANDUNET,
+          name: 'Kathmandunet',
+          rpcUrl: `https://kathmandunet.ecadinfra.com`,
         },
       });
     } else if (launchNetwork === NetworkType.MAINNET) {
@@ -83,12 +99,18 @@ export class DeployAction extends CancellableAction {
       MichelsonFormat.Json
     );
 
-    let networkURL = 'https://ithacanet.ecadinfra.com';
-    let network = { type: NetworkType.ITHACANET };
+    let networkURL = 'https://jakartanet.ecadinfra.com';
+    let network = { type: NetworkType.JAKARTANET };
 
-    if (deployState.network === 'Ithacanet') {
-      networkURL = 'https://ithacanet.ecadinfra.com';
-      network = { type: NetworkType.ITHACANET };
+    if (deployState.network === 'Jakartanet') {
+      networkURL = 'https://jakartanet.ecadinfra.com';
+      network = { type: NetworkType.JAKARTANET };
+    } else if (deployState.network === NetworkType.KATHMANDUNET) {
+      networkURL = 'https://kathmandunet.ecadinfra.com';
+      network = { type: NetworkType.KATHMANDUNET };
+    }else if (deployState.network === NetworkType.GHOSTNET) {
+      networkURL = 'https://ghostnet.ecadinfra.com';
+      network = { type: NetworkType.GHOSTNET };
     } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://mainnet.api.tez.ie';
       network = { type: NetworkType.MAINNET };
