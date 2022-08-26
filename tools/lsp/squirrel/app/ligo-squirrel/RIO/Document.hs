@@ -36,7 +36,6 @@ import Data.Set qualified as Set
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe, isJust, isNothing)
-import Data.Traversable (for)
 import Duplo.Tree (fastMake)
 import Language.LSP.Server qualified as S
 import Language.LSP.Types qualified as J
@@ -47,15 +46,15 @@ import UnliftIO.Directory
   ( Permissions (writable), createDirectoryIfMissing, doesDirectoryExist, doesFileExist
   , getPermissions, setPermissions
   )
-import UnliftIO.Exception (throwIO, tryIO)
+import UnliftIO.Exception (tryIO)
 import UnliftIO.MVar (modifyMVar, modifyMVar_, newMVar, readMVar, swapMVar, tryReadMVar, withMVar)
 import UnliftIO.STM (atomically)
 import Witherable (iwither)
 
 import AST
- ( ContractInfo, ContractInfo', ContractNotFoundException (..), pattern FindContract
- , FindFilepath (..), HasScopeForest, Includes (..), ParsedContract (..), ParsedContractInfo
- , addLigoErrsToMsg, addScopes, addShallowScopes, contractFile, lookupContract
+ ( ContractInfo, ContractInfo', pattern FindContract, FindFilepath (..), HasScopeForest
+ , Includes (..), ParsedContract (..), ParsedContractInfo, addLigoErrsToMsg, addScopes
+ , addShallowScopes, contractFile, lookupContract
  )
 import AST.Includes (extractIncludedFiles, includesGraph', insertPreprocessorRanges)
 import AST.Parser (loadPreprocessed, parse, parseContracts, parsePreprocessed)
@@ -114,9 +113,9 @@ forceFetchAndNotify notify effort uri = Log.addContext (Log.sl "uri" $ J.fromNor
 wccForFilePath :: FilePath -> RIO (G.AdjacencyMap FilePath)
 wccForFilePath fp = do
   buildGraphM <- tryReadMVar =<< asks reBuildGraph
-  fromMaybe G.empty <$> for buildGraphM \buildGraph -> do
-    let throwErr = throwIO $ ContractNotFoundException fp buildGraph
-    maybe throwErr pure $ wccFor fp $ getIncludes buildGraph
+  -- It's possible that the file is ignored, so let's return a graph containing
+  -- only this file.
+  pure $ fromMaybe (G.vertex fp) $ wccFor fp . getIncludes =<< buildGraphM
 
 delete :: J.NormalizedUri -> RIO ()
 delete uri = do
