@@ -1,4 +1,5 @@
 import { NetworkType } from '@airgap/beacon-sdk';
+import { protocolType } from './compile';
 
 import {
   ActionType as ExamplesActionType,
@@ -8,6 +9,8 @@ import {
 export enum networkType {
   Mainnet = 'mainnet',
   Jakartanet = 'jakartanet',
+  Ghostnet = 'ghostnet',
+  Kathmandunet = 'kathmandunet'
 }
 
 export enum signerType {
@@ -69,7 +72,7 @@ const DEFAULT_STATE: DeployState = {
   entrypoint: '',
   storage: '',
   network: NetworkType.JAKARTANET,
-  protocol: 'jakarta',
+  protocol: protocolType.Jakarta,
   signer: signerType.Sign,
 };
 

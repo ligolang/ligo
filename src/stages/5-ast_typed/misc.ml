@@ -207,7 +207,7 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
 let get_entry (lst : program) (name : expression_variable) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; thunk = _ ; hidden = _ }} -> (
+    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _ }} -> (
       if   (ValueVar.equal name binder.var)
       then Some expr
       else None
@@ -216,3 +216,19 @@ let get_entry (lst : program) (name : expression_variable) : expression option =
     | Declaration_module _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
+
+let get_type_of_contract ty =
+  match ty with
+  | T_arrow {type1 ; type2} -> (
+    match type1.type_content , type2.type_content with
+    | T_record tin , T_record tout when (Helpers.is_tuple_lmap tin.content) && (Helpers.is_tuple_lmap tout.content) ->
+      let open Simple_utils.Option in
+      let* (parameter,storage) = Combinators.get_t_pair type1 in
+      let* (listop,storage') = Combinators.get_t_pair type2 in
+      let* () = Combinators.assert_t_list_operation listop in
+      let* () = assert_type_expression_eq (storage,storage') in
+      (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
+      return ( parameter , storage )
+    |  _ -> None
+  )
+  | _ -> None

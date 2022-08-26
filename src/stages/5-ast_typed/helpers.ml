@@ -14,11 +14,6 @@ let label_range i j =
 let is_tuple_lmap m =
   List.for_all ~f:(fun i -> LMap.mem i m) @@ (label_range 0 (LMap.cardinal m))
 
-let get_pair m =
-  match (LMap.find_opt (Label "0") m , LMap.find_opt (Label "1") m) with
-  | Some {associated_type=e1;_}, Some {associated_type=e2;_} -> Some (e1,e2)
-  | _ -> None
-
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
     let label = Label (string_of_int i) in
@@ -90,6 +85,16 @@ let build_applications_opt (lamb : expression) (args : expression list) =
     | _, _ ->
        None in
   aux lamb args lamb.type_expression
+
+(* This function re-builds a term prefixed with E_type_abstraction:
+   given an expression e and a list of type variables [t1; ...; tn],
+   it constructs an expression /\ t1 . ... . /\ tn . e *)
+let rec build_type_abstractions e = function
+  | [] -> e
+  | (abs_var :: abs_vars) ->
+     let e = build_type_abstractions e abs_vars in
+     { e with expression_content = E_type_abstraction { type_binder = abs_var ; result = e } ;
+              type_expression = Combinators.t_for_all abs_var Type e.type_expression }
 
 (* These tables are used during inference / for substitution *)
 module TMap = Simple_utils.Map.Make(TypeVar)

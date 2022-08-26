@@ -35,57 +35,11 @@ module Data = struct
    let instances_lookup (ev : AST.expression_variable) (data : t) =
       Option.value ~default:[] @@ LIMap.find_opt ev data
 
-   let instances_remove (ev : AST.expression_variable) (data : t) =
-      LIMap.remove ev data
-
-   let instance_lookup_opt (lid : AST.expression_variable) (type_instances' : AST.type_expression list) (type_' : AST.type_expression) (data : t) =
-      let aux { Instance.vid ; type_instances ; type_ } =
-         if AST.Helpers.type_expression_eq (type_, type_') &&
-            List.equal (fun t1 t2 -> AST.Helpers.type_expression_eq (t1, t2)) type_instances type_instances' then
-            Some (vid, type_instances)
-         else None
-      in
-      List.find_map ~f:aux @@ Option.value ~default:[] (LIMap.find_opt lid data)
-
    let instance_add (lid : AST.expression_variable) (instance : Instance.t) (data : t) =
       let lid_instances = instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data) in
       LIMap.add lid lid_instances data
-
-   let instances_add (lid : AST.expression_variable) (instances : Instance.t list) (data : t) =
-      let lid_instances = instances @ (Option.value ~default:[] @@ LIMap.find_opt lid data) in
-      LIMap.add lid lid_instances data
 end
 
-(* This is not a proper substitution, it might capture variables: it should be used only with v' a fresh variable *)
-let rec subst_var_expr v v' (e : AST.expression) =
-   let (), e = fold_map_expression (fun () e ->
-      let (=) = AST.ValueVar.equal in
-      let return expression_content = (true, (), { e with expression_content }) in
-      let return_f expression_content = (false, (), { e with expression_content }) in
-      match e.expression_content with
-      | E_variable w when (w = v) -> return @@ E_variable v'
-      | E_lambda { binder ; result } when (binder.var = v) -> return_f @@ E_lambda { binder ; result }
-      | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } when (fun_name = v) || (binder.var = v) ->
-         return_f @@ E_recursive { fun_name ; fun_type ; lambda = { binder ; result } }
-      | E_let_in { let_binder ; rhs ; let_result ; attr } when (let_binder.var = v) ->
-         let rhs = subst_var_expr v v' rhs in
-         return_f @@ E_let_in { let_binder ; rhs ; let_result ; attr }
-      | E_matching { matchee ; cases = Match_variant { cases ; tv } } ->
-         let f = function
-            ({ constructor ; pattern ; body } : AST.matching_content_case) when not (pattern = v) ->
-            let body = subst_var_expr v v' body in
-            { AST.constructor ; pattern ; body }
-         | cc -> cc in
-         let matchee = subst_var_expr v v' matchee in
-         let cases = List.map cases ~f in
-         return_f @@ E_matching { matchee ; cases = Match_variant { cases ; tv } }
-      | E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
-         when List.mem (List.map (AST.LMap.to_list fields) ~f:(fun b -> b.var)) v ~equal:(=)  ->
-         let matchee = subst_var_expr v v' matchee in
-         return_f @@ E_matching { matchee ; cases = Match_record { fields ; body ; tv } }
-      | _ -> return e.expression_content
-      ) () e in
-   e
 let apply_table_expr table (expr : AST.expression) =
    let apply_table_type u = List.fold_right table ~f:(fun (v, t) u -> AST.Helpers.subst_type v t u) ~init:u in
    let (), e = fold_map_expression (fun () e ->
@@ -183,8 +137,8 @@ let evaluate_external_typer typed rhs =
       subst_external_term external_type external_type_for rhs
    | _ -> rhs
 
-let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.expression = fun data expr ->
-   let self = mono_polymorphic_expression in
+let rec mono_polymorphic_expression ~raise : Data.t -> AST.expression -> Data.t * AST.expression = fun data expr ->
+   let self = mono_polymorphic_expression ~raise in
    let return ec = { expr with expression_content = ec } in
    match expr.expression_content with
    | E_variable _ | E_literal _ | E_raw_code _ -> data, expr
@@ -197,58 +151,43 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
       let data, args = self data args in
       data, return (E_application { lamb; args })
    | E_lambda { binder ; result } ->
-      let binder_instances = Data.instances_lookup binder.var data in
-      let data = Data.instances_remove binder.var data in
       let data, result = self data result in
-      let data = Data.instances_remove binder.var data in
-      let data = Data.instances_add binder.var binder_instances data in
       data, return (E_lambda { binder ; result })
    | E_type_abstraction { type_binder ; result } ->
       ignore (type_binder,result);
-      failwith "not implemented yet"
+      raise.Trace.error (Errors.corner_case "Monomorphisation: E_type_abstraction found in unexpected position")
    | E_recursive { fun_name ; fun_type ; lambda = { binder ; result } } ->
-      let data = Data.instances_remove binder.var data in
-      let data = Data.instances_remove fun_name   data in
       let data, result = self data result in
       data, return (E_recursive { fun_name ; fun_type ; lambda = { binder ; result } })
    | E_let_in { let_binder ; rhs ; let_result ; attr } -> (
-      match rhs.type_expression.type_content with
-      | T_for_all _ ->
-         let type_vars, type_ = AST.Helpers.destruct_for_alls rhs.type_expression in
-         let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ = typed } (let_result, data) =
-            let let_binder = vid in
-            let table = List.zip_exn type_vars type_instances in
-            let rhs = { rhs with type_expression = type_ } in
-            let rhs, data = match rhs.expression_content with
-            | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
-               let lambda = { AST.binder ; result = subst_var_expr lid vid (subst_var_expr fun_name vid result) } in
-               let data = Data.instance_add lid { vid ; type_instances ; type_ = typed } data in
-               { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = type_ ; lambda } }, data
-            | _ -> rhs, data in
-            let rhs = apply_table_expr table rhs in
-            let data, rhs = self data rhs in
-            let rhs = evaluate_external_typer typed rhs in
-            let rhs = { rhs with type_expression = typed } in
-            (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}, data) in
-         let data, let_result = self data let_result in
-         let instances = Data.instances_lookup let_binder.var data in
-         let data = Data.instances_remove let_binder.var data in
-         let expr, data = List.fold_right instances ~f:(build_let @@ let_binder.var) ~init:(let_result, data) in
-         data, expr
-      | _ ->
-         let binder_instances = Data.instances_lookup let_binder.var data in
-         let data = Data.instances_remove let_binder.var data in
-         let data, let_result = self data let_result in
-         let data = Data.instances_remove let_binder.var data in
-         let data = Data.instances_add let_binder.var binder_instances data in
-         let data, rhs = self data rhs in
-         data, return (E_let_in { let_binder ; rhs ; let_result ; attr })
+      let type_vars, rhs = AST.Combinators.get_type_abstractions rhs in
+      let data, let_result = self data let_result in
+      let binder_instances = Data.instances_lookup let_binder.var data in
+      let build_let (lid : AST.expression_variable) Instance.{ vid ; type_instances ; type_ } (data, let_result) =
+        let let_binder = vid in
+        let table = List.zip_exn type_vars type_instances in
+        let data, rhs = match rhs.expression_content with
+          | E_recursive { fun_name ; fun_type = _ ; lambda = { binder ; result } } ->
+            let lambda = { AST.binder ; result = Subst.replace (Subst.replace result fun_name vid) lid vid } in
+            let data = Data.instance_add lid { vid ; type_instances ; type_ } data in
+            data, { rhs with expression_content = E_recursive { fun_name = vid ; fun_type = rhs.type_expression ; lambda } }
+          | _ -> data, rhs in
+        let rhs = apply_table_expr table rhs in
+        let data, rhs = self data rhs in
+        let rhs = evaluate_external_typer type_ rhs in
+        let rhs = { rhs with type_expression = type_ } in
+        data, (AST.e_a_let_in {var=let_binder;ascr=Some rhs.type_expression;attributes=Stage_common.Helpers.empty_attribute} rhs let_result {attr with hidden = false}) in
+      let data, expr = match type_vars with
+        | [] -> let data, rhs = self data rhs in
+                data, return (E_let_in { let_binder ; rhs ; let_result ; attr })
+        | _ -> List.fold_right binder_instances ~f:(build_let @@ let_binder.var) ~init:(data, let_result) in
+      data, expr
    )
    | E_constructor { constructor ; element } ->
       let data, element  = self data element in
       data, return (E_constructor { constructor ; element })
    | E_matching { matchee ; cases } ->
-      let data, cases = mono_polymorphic_cases data cases in
+      let data, cases = mono_polymorphic_cases ~raise data cases in
       let data, matchee = self data matchee in
       data, return (E_matching { matchee ; cases })
    | E_record lmap ->
@@ -267,42 +206,26 @@ let rec mono_polymorphic_expression : Data.t -> AST.expression -> Data.t * AST.e
             aux (type_ :: type_insts) forall
          | E_variable variable -> (
             (List.rev type_insts, variable))
-         | _ -> failwith "Corner case : Cannot resolve non-variables with instantiations" in
+         | _ -> raise.Trace.error (Errors.corner_case "Monomorphisation: cannot resolve non-variables with instantiations") in
       let type_instances, lid = aux [] expr in
       let type_ = expr.type_expression in
-      let vid, data = match Data.instance_lookup_opt lid type_instances type_ data with
-         | Some (vid, _) -> vid, data
-         | None ->
-            let vid = poly_name lid in
-            vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
+      let vid, data = let vid = poly_name lid in
+                      vid, Data.instance_add lid { vid ; type_instances ; type_ } data in
       data, AST.e_a_variable vid type_
    | E_assign {binder;expression} ->
       let data, expression = self data expression in
       data, return (E_assign {binder;expression})
 
-and mono_polymorphic_cases : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
+and mono_polymorphic_cases ~raise : Data.t -> AST.matching_expr -> Data.t * AST.matching_expr = fun data m ->
    match m with
    | Match_variant { tv ; cases } ->
       let aux { AST.constructor ; pattern ; body } (data, r) =
-         let binder_instances = Data.instances_lookup pattern data in
-         let data = Data.instances_remove pattern data in
-         let data, body = mono_polymorphic_expression data body in
-         let data = Data.instances_remove pattern data in
-         let data = Data.instances_add pattern binder_instances data in
+         let data, body = mono_polymorphic_expression ~raise data body in
          data, { AST.constructor ; pattern ; body} :: r in
       let data, cases = List.fold_right cases ~f:aux ~init:(data, []) in
       data, Match_variant { tv ; cases }
    | Match_record { tv ; body ; fields } ->
-      let binders = List.map ~f:(fun (b : _ AST.binder) -> b.var) @@ AST.LMap.to_list fields in
-      let data, binders_instances = List.fold_right binders ~init:(data, []) ~f:(fun binder (data, binders_instances) ->
-                                       let binder_instances = Data.instances_lookup binder data in
-                                       let data = Data.instances_remove binder data in
-                                       data, (binder, binder_instances) :: binders_instances) in
-      let data, body = mono_polymorphic_expression data body in
-      let data = List.fold_right binders ~init:data ~f:(fun binder data ->
-                     let data = Data.instances_remove binder data in data) in
-      let data = List.fold_right binders_instances ~init:data ~f:(fun (binder, binder_instances) data ->
-                     Data.instances_add binder binder_instances data) in
+      let data, body = mono_polymorphic_expression ~raise data body in
       data, Match_record { tv ; body ; fields }
 
 let check_if_polymorphism_present ~raise e =
@@ -335,6 +258,7 @@ let check_if_polymorphism_present ~raise e =
    e
 
 let mono_polymorphic_expr ~raise e =
-  let _, m = mono_polymorphic_expression Data.empty e in
+  let e = Deduplicate_binders.program e in
+  let _, m = mono_polymorphic_expression ~raise Data.empty e in
   let m = check_if_polymorphism_present ~raise m in
   m

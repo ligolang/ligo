@@ -13,8 +13,8 @@ let pp_ct : Format.formatter -> constant_val -> unit = fun ppf c ->
     Format.fprintf ppf "timestamp(%s)" Memory_proto_alpha.Protocol.Time_repr.(to_notation @@ of_seconds (Z.to_int64 t))
   | C_string s -> Format.fprintf ppf "\"%s\"" s
   | C_bytes b -> Format.fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)
-  | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.pp c
-  | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_013_PtJakart.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
+  | C_address c -> Format.fprintf ppf "%a" Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp c
+  | C_contract c -> Format.fprintf ppf "%a(%a)" Tezos_protocol_014_PtKathma.Protocol.Alpha_context.Contract.pp c.address (PP_helpers.option PP_helpers.string) c.entrypoint
   | C_mutez n -> Format.fprintf ppf "%smutez" (Z.to_string n)
   | C_key_hash c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key_hash.pp c
   | C_key c -> Format.fprintf ppf "%a" Tezos_crypto.Signature.Public_key.pp c
@@ -50,10 +50,8 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Michelson_contract code ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
-  | V_Mutation (l, e) ->
-     Format.fprintf ppf "Mutation at: %a@.Replacing by: %a.@." Snippet.pp l Ast_aggregated.PP.expression e
-  | V_Thunk { context = _ ; value } ->
-     Format.fprintf ppf "Thunk(%a)" Ast_aggregated.PP.expression value
+  | V_Mutation (l, _, s) ->
+     Format.fprintf ppf "Mutation at: %a@.Replacing by: %s.@." Snippet.pp l s
   | V_Gen _ ->
      Format.fprintf ppf "Generator"
 

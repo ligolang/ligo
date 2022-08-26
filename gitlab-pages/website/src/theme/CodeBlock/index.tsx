@@ -1,3 +1,4 @@
+
 /**
  * Copyright (c) Facebook, Inc. and its affiliates.
  *
@@ -11,7 +12,13 @@ import React, {useEffect, useState, useRef} from 'react';
 import clsx from 'clsx';
 import Highlight, {defaultProps} from 'prism-react-renderer';
 import copy from 'copy-text-to-clipboard';
+import defaultTheme from 'prism-react-renderer/themes/palenight';
+import rangeParser from 'parse-numeric-range';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import { useColorMode } from '@docusaurus/theme-common';
+import type {Props} from '@theme/CodeBlock';
 
+import styles from './styles.module.css';
 import Prism from 'prism-react-renderer/prism';
 
 Prism.languages = {
@@ -80,17 +87,9 @@ Prism.languages = {
       /\(\*[\s\S]*?\*\)/,
       /\/\/.*/
     ]
-  }
+  },
+  jsligo: Prism.languages.typescript
 };
-
-import defaultTheme from 'prism-react-renderer/themes/palenight';
-import rangeParser from 'parse-numeric-range';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import useThemeContext from '@theme/hooks/useThemeContext';
-import type {Props} from '@theme/CodeBlock';
-import {LigoSnippet} from '@ligolang/ligo-snippets'
-
-import styles from './styles.module.css';
 
 const highlightLinesRangeRegex = /{([\d,-]+)}/;
 const getHighlightDirectiveRegex = (
@@ -169,9 +168,16 @@ export default ({
 }: Props): JSX.Element => {
   const {
     siteConfig: {
-      themeConfig: {prism = {}},
+      themeConfig: {
+        prism = {}
+      },
     },
   } = useDocusaurusContext();
+  // @ts-ignore
+  const lightModeTheme = prism.theme || defaultTheme;
+  // @ts-ignore
+  const darkModeTheme = prism.darkTheme || lightModeTheme;
+  const prismTheme = useColorMode().colorMode === "dark" ? darkModeTheme : lightModeTheme;
 
   const [showCopied, setShowCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -189,11 +195,6 @@ export default ({
   const button = useRef(null);
   let highlightLines: number[] = [];
   let codeBlockTitle = '';
-
-  const {isDarkTheme} = useThemeContext();
-  const lightModeTheme = prism.theme || defaultTheme;
-  const darkModeTheme = prism.darkTheme || lightModeTheme;
-  const prismTheme = isDarkTheme ? darkModeTheme : lightModeTheme;
 
   if (metastring && highlightLinesRangeRegex.test(metastring)) {
     // Tested above
@@ -215,16 +216,20 @@ export default ({
   let language =
     languageClassName && languageClassName.replace(/language-/, '');
 
+  // @ts-ignore
   if (!language && prism.defaultLanguage) {
+    // @ts-ignore   
     language = prism.defaultLanguage;
   }
 
   // only declaration OR directive highlight can be used for a block
+  // @ts-ignore
   let code = children.replace(/\n$/, '');
   if (highlightLines.length === 0 && language !== undefined) {
     let range = '';
     const directiveRegex = highlightDirectiveRegex(language);
     // go through line by line
+    // @ts-ignore
     const lines = children.replace(/\n$/, '').split('\n');
     let blockStart;
     // loop through lines
@@ -273,33 +278,7 @@ export default ({
     setTimeout(() => setShowCopied(false), 2000);
   };
 
-  // ligo-snippets - begin
-  if (metastring) {
-    const theme = isDarkTheme ? 'dark' : 'light';
-    let isObject = true
-    let metadata
-
-    try {
-      metadata = JSON.parse(metastring)
-    } catch (e) {
-      isObject = false
-    }
-
-    if (isObject) {
-      const snippetData = {
-        "language": language,
-        "name": metadata.name,
-        "code": children,
-        "theme": theme,
-        "height": "" // Optional 
-      }
-
-      if (metadata.editor) {
-        return <LigoSnippet data={snippetData} />
-      }
-    }
-  }
-  // ligo-snippets - end
+  // ligo snippet don't work and looks to not be used ? 
 
   return (
     <Highlight

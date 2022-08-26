@@ -6,8 +6,12 @@ let contract_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse address") @@ Tezos_protocol.Protocol.Alpha_context.Contract.of_b58check s
 let key_hash_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_b58check s
+let key_hash_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key_hash") @@ Tezos_crypto.Signature.Public_key_hash.of_bytes s
 let key_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_b58check s
+let key_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option ~raise (Errors.generic_error Location.generated "Cannot parse key") @@ Tezos_crypto.Signature.Public_key.of_bytes_without_validation s
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ -> Errors.generic_error Location.generated "Cannot parse signature") @@ Tezos_crypto.Signature.of_b58check s
 
@@ -85,8 +89,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
    *   D_string id *)
   | Prim (_, "key_hash", [], _), String (_, n) ->
      V_Ct (C_key_hash (key_hash_of_string ~raise n))
+  | Prim (_, "key_hash", [], _), Bytes (_, b) ->
+     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) ->
      V_Ct (C_key (key_of_string ~raise n))
+  | Prim (_, "key", [], _), Bytes (_, b) ->
+     V_Ct (C_key (key_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
      V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) ->
@@ -112,6 +120,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       V_Ct (C_address c)
   | Prim (_, "address", [], _), String (_, s) ->
       V_Ct (C_address (contract_of_string ~raise s))
+  | Prim (_, "contract", [_], _), String (_, s) ->
+     let (address, entrypoint) = match String.split s ~on:'%' with
+       | [a ; b] -> (contract_of_string ~raise a, Some b)
+       | [a] -> (contract_of_string ~raise a, None)
+       | _ -> raise.error (untranspilable ty value) in
+      V_Ct (C_contract { address ; entrypoint })
   | Prim (_, "unit", [], _), Prim (_, "Unit", [], _) ->
       V_Ct (C_unit)
   | Prim (_, "option", [_], _), Prim (_, "None", [], _) ->
@@ -192,12 +206,13 @@ let rec decompile_to_untyped_value ~raise ~bigmaps :
       let body = e_a_application insertion (e_a_variable arg_binder t_input) t_output in
       let orig_lambda = e_a_lambda {binder={var=arg_binder;ascr=None;attributes=Stage_common.Helpers.empty_attribute}; result=body} t_input t_output in
       V_Func_val {rec_name = None; orig_lambda; arg_binder; body; env = Ligo_interpreter.Environment.empty_env }
-  (* | Prim (xx, "ticket", [ty], _) , Prim (_, "Pair", [addr;v;amt], _) ->
-   *   ignore addr;
-   *   let ty_nat = Prim (xx, "nat", [], []) in
-   *   let v' = decompile_to_mini_c ~raise ~bigmaps ty v in
-   *   let amt' = decompile_to_mini_c ~raise ~bigmaps ty_nat amt in
-   *   D_ticket (v', amt') *)
+  | Prim (loct, "ticket", [ty], _) , Prim (_, "Pair", [String (_,addr);vt;amt], _) ->
+    let ty_nat = Prim (loct, "nat", [], []) in
+    let addr =  V_Ct (C_address (contract_of_string ~raise addr)) in
+    let vt = decompile_to_untyped_value ~raise ~bigmaps ty vt in
+    let amt = decompile_to_untyped_value ~raise ~bigmaps ty_nat amt in
+    let va = Ligo_interpreter.Combinators.v_pair (vt, amt) in
+    Ligo_interpreter.Combinators.v_pair (addr, va) 
   | ty, v ->
     raise.error (untranspilable ty v)
 

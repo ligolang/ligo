@@ -3,5 +3,5 @@
  (public_name ligo.main_interpreter)
  (instrumentation
   (backend bisect_ppx))
- (libraries tezos-013-PtJakart-test-helpers ast_aggregated ligo_interpreter
+ (libraries tezos-014-PtKathma-test-helpers ast_aggregated ligo_interpreter
    main_errors ligo_compile build fuzz ligo_run self_ast_typed bls12-381))

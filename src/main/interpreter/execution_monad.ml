@@ -8,8 +8,9 @@ open Simple_utils.Trace
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 module Exc = Ligo_interpreter_exc
-module Tezos_protocol = Tezos_protocol_013_PtJakart
-module Tezos_client = Tezos_client_013_PtJakart
+module Tezos_protocol = Tezos_protocol_014_PtKathma
+module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
+module Tezos_client = Tezos_client_014_PtKathma
 
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
@@ -48,6 +49,7 @@ module Command = struct
     | Get_size : LT.value -> LT.value t
     | Get_balance : Location.t * Ligo_interpreter.Types.calltrace * LT.value -> LT.value t
     | Get_last_originations : unit -> LT.value t
+    | Get_last_events : string * LT.type_expression -> LT.value t
     | Check_obj_ligo : LT.expression -> unit t
     | Compile_contract_from_file : string * string * string list -> LT.value t
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
@@ -67,7 +69,8 @@ module Command = struct
     | Add_cast : Location.t * LT.mcontract * Ast_aggregated.type_expression -> unit t
     (* TODO : move them ou to here *)
     | Michelson_equal : Location.t * LT.value * LT.value -> bool t
-    | Implicit_account : Location.t * LT.calltrace * Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Implicit_account : Tezos_protocol.Protocol.Alpha_context.public_key_hash -> LT.value t
+    | Contract : Location.t * LT.calltrace * LT.mcontract * string option * Ast_aggregated.type_expression -> LT.value t
     | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value t
     | Add_account : Location.t * LT.calltrace * string * Tezos_protocol.Protocol.Alpha_context.public_key -> unit t
     | New_account : unit -> LT.value t
@@ -159,7 +162,7 @@ module Command = struct
     )
     | State_error_to_value errs -> (
       let open Tezos_protocol.Protocol in
-      let open Environment in
+      let open Tezos_protocol_env in
       let fail_ctor arg = LC.v_ctor "Fail" arg in
       let fail_other () =
         let errs_as_str =
@@ -171,7 +174,7 @@ module Command = struct
       in
       match errs with
       | Ecoproto_error (Script_interpreter.Runtime_contract_error contract_failing) :: rest -> (
-        let contract_failing = LT.V_Ct (C_address contract_failing) in
+        let contract_failing = LT.V_Ct (C_address (Tezos_state.contract_of_hash ~raise contract_failing)) in
         match rest with
         | Ecoproto_error (Script_interpreter.Reject (_,x,_)) :: _ -> (
           let code = Tezos_state.canonical_to_ligo x in
@@ -263,7 +266,7 @@ module Command = struct
           raise.error @@ generic_error ~calltrace loc @@ "Could not open " ^ source_file ^ " for reading.")
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
-      let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env f.orig_lambda in
+      let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env in
       let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } = trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                             Ast_aggregated.get_t_arrow f.orig_lambda.type_expression in
       let func_typed_exp = Michelson_backend.make_function in_ty out_ty f.arg_binder f.body subst_lst in
@@ -284,7 +287,7 @@ module Command = struct
     | Compile_contract (loc, v, _ty_expr) ->
        let compiled_expr, compiled_expr_ty = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
-            let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env orig_lambda in
+            let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
             let Ast_aggregated.{ type1 = in_ty ; type2 = out_ty } =
               trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?") @@
                 Ast_aggregated.get_t_arrow orig_lambda.type_expression in
@@ -292,8 +295,7 @@ module Command = struct
               Michelson_backend.compile_contract_ ~raise ~options subst_lst arg_binder rec_name in_ty out_ty body in
             let expr = clean_locations compiled_expr.expr in
             (* TODO-er: check the ignored second component: *)
-            let expr_ty = clean_locations compiled_expr.expr_ty in
-            (expr, expr_ty)
+            let expr_ty = clean_locations compiled_expr.expr_ty in            (expr, expr_ty)
          | _ ->
             raise.error @@ Errors.generic_error loc "Contract does not reduce to a function value?" in
         let (param_ty, storage_ty) =
@@ -348,9 +350,12 @@ module Command = struct
       let x = trace_option ~raise (corner_case ()) @@ LC.get_int x in
       match List.nth ctxt.internals.bootstrapped (Z.to_int x) with
       | Some x ->
-         let (sk, pk) = Tezos_state.get_account ~raise ~loc ~calltrace x in
-         let record = LC.v_triple LT.(V_Ct (C_address x), V_Ct (C_key pk), V_Ct (C_string sk)) in
-         (record, ctxt)
+        let (sk, pk) =
+          let pkh = Tezos_state.implicit_account ~raise ~loc ~calltrace "The source address is not an implicit account" x in
+          Tezos_state.get_account ~raise ~loc ~calltrace pkh
+        in
+        let record = LC.v_triple LT.(V_Ct (C_address x), V_Ct (C_key pk), V_Ct (C_string sk)) in
+        (record, ctxt)
       | None -> raise.error (Errors.generic_error loc "This bootstrap account do not exist")
     )
     | Sign (loc, calltrace, sk, data) ->
@@ -379,18 +384,46 @@ module Command = struct
       in
       let v = LT.V_Map (List.map ~f:aux ctxt.transduced.last_originations) in
       (v,ctxt)
-    | Implicit_account (loc, calltrace, kh) -> (
-      let address = Tezos_protocol.Protocol.Environment.Signature.Public_key_hash.to_b58check kh in
-      let address = Tezos_state.implicit_account ~raise ~loc ~calltrace address in
+    | Get_last_events (rq_tag,rq_p_ty) ->
+      let rq_p_ty = Michelson_backend.compile_type ~raise rq_p_ty in
+      let rq_p_ty = Tezos_micheline.Micheline.(inject_locations (fun _ -> ()) (strip_locations rq_p_ty)) in
+      let aux (src, _tag, payload, ty) =
+        let src = LC.v_address src in
+        let x = Michelson_to_value.decompile_to_untyped_value
+          ~raise ~bigmaps:ctxt.transduced.bigmaps
+          ty payload
+        in
+        LC.v_pair (src, x)
+      in
+      let x =
+        let f = fun (_,tag,_,p_ty) ->
+          (*this comparison looks fishy*)
+          (Caml.compare rq_p_ty p_ty = 0) && (String.equal rq_tag tag)
+        in
+        List.filter ctxt.transduced.last_events ~f
+      in
+      let v = LT.V_List (List.map ~f:aux x) in
+      (v,ctxt)
+    | Implicit_account (kh) -> (
+      let address = Memory_proto_alpha.Protocol.Alpha_context.Contract.Implicit kh in
       let v = LT.V_Ct (LT.C_contract { address ; entrypoint = None }) in
       (v, ctxt)
+    )
+    | Contract (loc, _calltrace, addr, entrypoint, value_ty) -> (
+      let expr = match entrypoint with
+        | None -> Ast_aggregated.(e_a_contract_opt (e_a_address @@ Michelson_backend.string_of_contract addr) value_ty)
+        | Some entrypoint -> Ast_aggregated.(e_a_contract_entrypoint_opt (e_a_string (Ligo_string.standard entrypoint)) (e_a_address @@ Michelson_backend.string_of_contract addr) value_ty) in
+      let mich = Michelson_backend.compile_value ~raise ~options expr in
+      let (ret_co, ret_ty) = Michelson_backend.run_expression_unwrap ~raise ~ctxt ~loc mich in
+      let ret = Michelson_to_value.decompile_to_untyped_value ~raise ~bigmaps:ctxt.transduced.bigmaps ret_ty ret_co in
+      (ret, ctxt)
     )
     | Pairing_check l -> (
       let check = Bls12_381.Pairing.pairing_check l in
       (LC.v_bool check, ctxt)
     )
     | Add_account (loc, calltrace, sk, pk) -> (
-      let pkh = Tezos_protocol.Protocol.Environment.Signature.Public_key.hash pk in
+      let pkh = Tezos_protocol_env.Signature.Public_key.hash pk in
       Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;
       ((), ctxt)
     )

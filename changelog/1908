@@ -1,0 +1,5 @@
+author: prometheansacrifice
+description: ''
+merge_request: '1908'
+title: 'Ligo Login: lookup env when not tty'
+type: internal

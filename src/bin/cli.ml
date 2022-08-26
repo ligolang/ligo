@@ -144,6 +144,12 @@ let disable_michelson_typechecking =
   let doc  = "Disable Michelson typecking, this might produce ill-typed Michelson code." in
   flag ~doc name no_arg
 
+let only_ep =
+  let open Command.Param in
+  let name = "--only-ep" in
+  let doc  = "Only display declarations that have the type of an entrypoint" in
+  flag ~doc name no_arg
+
 let experimental_disable_optimizations_for_debugging =
   let open Command.Param in
   let name = "--experimental-disable-optimizations-for-debugging" in
@@ -277,6 +283,8 @@ let project_root =
   let name = "--project-root" in
   let doc  = "PATH The path to root of the project." in
   let spec = optional string in
+  let spec = map_flag spec
+    ~f:(function None -> Cli_helpers.find_project_root () | Some x -> Some x) in
   flag ~doc name spec
 
 let cache_path =
@@ -284,6 +292,20 @@ let cache_path =
   let name = "--cache-path" in
   let doc  = "PATH The path where dependencies are installed." in
   let spec = optional_with_default Constants.ligo_install_path string in
+  flag ~doc name spec
+
+let ligo_registry =
+  let open Command.Param in
+  let name = "--registry" in
+  let doc  = "URL The url to a LIGO registry." in
+  let spec = optional_with_default Constants.ligo_registry string in
+  flag ~doc name spec
+
+let ligorc_path =
+  let open Command.Param in
+  let name = "--ligorc-path" in
+  let doc  = "PATH path to gobal .ligorc file." in
+  let spec = optional_with_default Constants.ligo_rc_path string in
   flag ~doc name spec
 
 module Api = Ligo_api
@@ -379,8 +401,8 @@ let transpile_contract =
     return_result ~return ?output_file @@
     Api.Transpile.contract source_file new_syntax syntax display_format
   in
-  let summary   = "transpile a contract to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a source file to another \
+  let summary   = "[BETA] transpile a contract to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a source file to another \
                   syntax. It does not use the build system, but the \
                   source file is preprocessed. Comments are currently \
                   not transpiled. Please use at your own risk." in
@@ -393,15 +415,15 @@ let transpile_expression =
     return_result ~return @@
     Api.Transpile.expression expression new_syntax syntax display_format
   in
-  let summary   = "transpile an expression to another syntax (BETA)." in
-  let readme () = "This sub-command transpiles a LIGO expression to \
+  let summary   = "[BETA] transpile an expression to another syntax." in
+  let readme () = "[BETA] This sub-command transpiles a LIGO expression to \
                   another syntax. Comments are currently not \
                   transpiled. Please use at your own risk." in
   Command.basic ~summary ~readme
   (f <$> req_syntax <*> expression "" <*> req_syntax <*> display_format)
 
 let transpile_group =
-  Command.group ~summary:"transpile ligo code from a syntax to another (BETA)" @@
+  Command.group ~summary:"[BETA] transpile ligo code from a syntax to another" @@
   [ "contract"  , transpile_contract;
     "expression", transpile_expression;]
 
@@ -443,7 +465,7 @@ let test =
     return_result ~return ~show_warnings @@
     Api.Run.test raw_options source_file display_format
   in
-  let summary   = "test a contract with the LIGO test framework (BETA)." in
+  let summary   = "test a contract with the LIGO test framework." in
   let readme () = "This sub-command tests a LIGO contract using a LIGO \
                   interpreter. Still under development, there are features that are work \
                   in progress and are subject to change. No real test \
@@ -521,8 +543,8 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file syntax display_format () =
-    let raw_options = Raw_options.make ~syntax () in
+  let f source_file only_ep syntax display_format () =
+    let raw_options = Raw_options.make ~only_ep ~syntax () in
     return_result ~return @@
     Api.Info.list_declarations raw_options source_file display_format
   in
@@ -530,7 +552,7 @@ let list_declarations =
   let readme () = "This sub-command prints a list of all top-level \
                   declarations (not including types and modules)." in
   Command.basic ~summary ~readme
-  (f <$> source_file <*> syntax <*> display_format)
+  (f <$> source_file <*> only_ep <*> syntax <*> display_format)
 
 let measure_contract =
   let f source_file entry_point views syntax protocol_version display_format enable_typed_opt show_warnings warning_as_error project_root warn_unused_rec () =
@@ -756,11 +778,32 @@ let repl =
   (f <$> req_syntax <*> protocol_version <*> amount <*> balance <*> sender <*> source <*> now <*> display_format <*> init_file <*> project_root )
 
 let install =
-  let summary   = "install ligo packages declared in package.json" in
+  let summary   = "install LIGO dependencies declared in package.json" in
   let readme () = "This command invokes the package manager to install the external packages declared in package.json" in
-  let f package_name cache_path () =
-    return_result ~return @@ fun () -> Install.install ~package_name ~cache_path in
-  Command.basic ~summary ~readme (f <$> package_name <*> cache_path)
+  let f package_name cache_path ligo_registry () =
+    return_result ~return @@ fun () -> Install.install ~package_name ~cache_path ~ligo_registry in
+  Command.basic ~summary ~readme (f <$> package_name <*> cache_path <*> ligo_registry)
+
+let publish =
+  let summary   = "[BETA] publish the LIGO package declared in package.json" in
+  let readme () = "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the registry server" in
+  let f ligo_registry ligorc_path project_root () =
+    return_result ~return @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> project_root)
+
+let add_user =
+  let summary   = "[BETA] create a new user for the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for details to create a new user on registry server" in
+  let f ligo_registry ligorc_path () =
+    return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
+
+let login =
+  let summary   = "[BETA] login to the LIGO package registry" in
+  let readme () = "[BETA] Prompt the user for credentials to creates a login session with the registry server" in
+  let f ligo_registry ligorc_path () =
+    return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
+  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
 let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
@@ -774,6 +817,9 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
     "changelog", changelog;
     "print"    , print_group;
     "install"  , install;
+    "publish"  , publish;
+    "add-user" , add_user;
+    "login"    , login;
   ]
 
 let run ?argv () =

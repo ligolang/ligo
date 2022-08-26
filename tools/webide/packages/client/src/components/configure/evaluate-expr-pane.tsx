@@ -16,18 +16,22 @@ export const EvaluateValuePaneComponent = () => {
   const entrypoint = useSelector<AppState, EvaluateValueState['entrypoint']>(
     state => state.evaluateValue && state.evaluateValue.entrypoint
   );
-
+  let protocol = useSelector<AppState, EvaluateValueState['protocol']>(
+    state => state.evaluateValue && state.evaluateValue.protocol
+  );
   return (
     <Container>
       <Group>
         <Label htmlFor="protocol">Choose a protocol (used for compilation)</Label>
         <SelectCommand
           id="protocol-select"
-          value={protocolType.Jakarta}
-          onChange={ev =>
-            dispatch({ ...new ChangeProtocolAction(ev.target.value) })
+          value={protocol}
+          onChange={selectedProtocol => {
+            protocol=selectedProtocol
+            dispatch({ ...new ChangeProtocolAction(selectedProtocol) })}
           }>
           <Option value={protocolType.Jakarta}>Jakarta</Option>
+          <Option value={protocolType.Kathmandu}>Kathmandu</Option>
         </SelectCommand>
         <Label htmlFor="entrypoint">Expression</Label>
         <Input

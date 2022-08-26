@@ -191,7 +191,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     let e2 = translate_binder e2 env in
     let e3 = translate_binder e3 env in
     E_if_left (meta, e1, e2, e3)
-  | E_let_in (e1, _inline, _thunk, e2) ->
+  | E_let_in (e1, _inline, e2) ->
     let e1 = translate_expression e1 env in
     let e2 = translate_binder e2 env in
     E_let_in (meta, e1, e2)
@@ -358,6 +358,13 @@ and translate_constant ~raise ~proto (meta : meta) (expr : I.constant) (ty : I.t
          let annot = Ligo_string.extract annot in
          return (O.Type_args (Some annot, [translate_type a]), arguments)
        | _ -> None)
+    | C_EMIT_EVENT -> (
+      match expr.arguments with
+       | { content = E_literal (Literal_string tag); type_expression = _; location = _ } :: [data] ->
+         let tag = Ligo_string.extract tag in
+         return (O.Type_args (Some tag, [translate_type data.type_expression]), [data])
+       | _ -> None
+    )
     | C_CONTRACT_ENTRYPOINT_OPT ->
       let* a = Mini_c.get_t_option ty in
       let* a = Mini_c.get_t_contract a in

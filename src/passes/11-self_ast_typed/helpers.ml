@@ -94,7 +94,7 @@ and fold_module : 'a folder -> 'a -> module_ -> 'a = fun f init m ->
   let aux = fun acc (x : declaration) ->
     let return (d : 'a) = d in
     match Location.unwrap x with
-    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; thunk = _ ; hidden = _ }} -> (
+    | Declaration_constant {binder=_; expr ; attr = { inline=_ ; no_mutation = _ ; view = _ ;public = _ ; hidden = _ ; thunk = _ }} -> (
         let res = fold_expression f acc expr in
         return @@ res
     )
@@ -267,22 +267,20 @@ let fetch_contract_type ~raise : expression_variable -> module_ -> contract_type
     trace_option ~raise (corner_case (Format.asprintf "Entrypoint %a does not exist" ValueVar.pp main_fname : string)) @@
       main_decl_opt
   in
-  let { binder=_ ; expr ; attr=_} = main_decl in
+  let { binder ; expr ; attr=_} = main_decl in
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
-    match type1.type_content , type2.type_content with
-    | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
-      let (parameter,storage) = trace_option ~raise (expected_pair_in_contract expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
-      let (listop,storage') = trace_option ~raise (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
+    match Ast_typed.Combinators.(get_t_pair type1 , get_t_pair type2) with
+    | Some (parameter,storage) , Some (listop, storage') ->
       let () = trace_option ~raise (expected_list_operation main_fname listop expr) @@
         Ast_typed.assert_t_list_operation listop in
       let () = trace_option ~raise (expected_same_entry main_fname storage storage' expr) @@
         Ast_typed.assert_type_expression_eq (storage,storage') in
       (* TODO: on storage/parameter : asert_storable, assert_passable ? *)
       { parameter ; storage }
-    |  _ -> raise.error @@ bad_contract_io main_fname expr
+    |  _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
   )
-  | _ -> raise.error @@ bad_contract_io main_fname expr
+  | _ -> raise.error @@ bad_contract_io main_fname expr (ValueVar.get_location binder.var)
 
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
    [predicate] defines the annotation (or set of annotation) you want to match on
