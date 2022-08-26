@@ -30,7 +30,7 @@ import Control.Exception (Exception (..), throwIO)
 import Control.Monad.RWS hiding (Product)
 import Data.Foldable (find)
 import Data.Functor
-import Data.Maybe (fromJust, isJust, mapMaybe)
+import Data.Maybe (fromJust, fromMaybe, isJust, mapMaybe)
 import Data.String.Interpolate (i)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -119,7 +119,7 @@ parseLineMarkerText marker = do
   pure (file, markerType, line)
 
 parseLineMarker :: (RawInfo, ParseTree RawTree) -> Maybe LineMarker
-parseLineMarker ((range, _), ParseTree ty _ marker) = do
+parseLineMarker ((range, _), ParseTree (ParseTreeNode ty _) _ marker) = do
   guard (ty == "line_marker")
   (file, markerType, line) <- parseLineMarkerText marker
   pure $ LineMarker file markerType line range
@@ -159,15 +159,17 @@ allComments = first (map getBody . filter isComment) . break isMeaningful
     isMeaningful = not . Text.null . snd . extract
 
     isComment :: RawTree -> Bool
-    isComment (gist -> ParseTree ty _ _) = "comment" `Text.isSuffixOf` ty
+    isComment (gist -> (ParseTree (ParseTreeNode ty _) _ _)) = "comment" `Text.isSuffixOf` ty
 
 allErrors :: [RawTree] -> [Message]
 allErrors = mapMaybe extractUnnamedError
   where
     extractUnnamedError :: RawTree -> Maybe Message
     extractUnnamedError tree = case only tree of
-      ((r, ""), ParseTree "ERROR" _ _)
+      ((r, ""), ParseTree (ParseTreeNode "ERROR" _) _ _)
         -> Just (Message (Unexpected $ getBody tree) SeverityError r)
+      ((r, ""), ParseTree (ParseTreeNode "MISSING" info) _ _)
+        -> Just (Message (Missing $ fromMaybe (getBody tree) info) SeverityError r)
       _ -> Nothing
 
 getBody :: RawTree -> Text
@@ -199,7 +201,7 @@ fields name = go <$> asks peNodes
     go _ = []
 
     errorAtTheTop :: RawTree -> Bool
-    errorAtTheTop (match -> Just (_, ParseTree "ERROR" _ _)) = True
+    errorAtTheTop (match -> Just (_, ParseTree (ParseTreeNode "ERROR" _) _ _)) = True
     errorAtTheTop _ = False
 
 newtype CodeSource = CodeSource { unCodeSource :: Text }
@@ -242,7 +244,7 @@ boilerplateImpl
   -> RawInfo
   -> ParseTree RawTree
   -> ParserM (Product Info, f RawTree)
-boilerplateImpl handler (r, _) (ParseTree ty cs src) =
+boilerplateImpl handler (r, _) (ParseTree (ParseTreeNode ty _) cs src) =
   withComments do
     -- TODO: What is exactly the appropriate action in case something ever
     -- returns 'Nothing'? 'catMaybes'? If something goes wrong, then we will
@@ -256,14 +258,14 @@ boilerplate
   -> RawInfo
   -> ParseTree RawTree
   -> ParserM (Product Info, f RawTree)
-boilerplate f info pt = boilerplateImpl (f $ ptName pt) info pt
+boilerplate f info pt = boilerplateImpl (f $ ptnName $ ptName pt) info pt
 
 boilerplate'
   :: ((Text, Text) -> ParserM (f RawTree))
   -> RawInfo
   -> ParseTree RawTree
   -> ParserM (Product Info, f RawTree)
-boilerplate' f info pt@(ParseTree ty _ src) = boilerplateImpl (f (ty, src)) info pt
+boilerplate' f info pt@(ParseTree (ParseTreeNode ty _) _ src) = boilerplateImpl (f (ty, src)) info pt
 
 fallthrough :: ParserM a
 fallthrough = lift $ throwIO HandlerFailed
