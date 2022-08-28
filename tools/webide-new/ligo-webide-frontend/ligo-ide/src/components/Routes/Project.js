@@ -17,6 +17,7 @@ class ProjectWithProps extends PureComponent {
     }
     const { username, project } = match?.params;
     const selected = projects.get("selected")?.toJS() || {};
+    console.log("selected", selected);
 
     let type;
     let projectRoot;
