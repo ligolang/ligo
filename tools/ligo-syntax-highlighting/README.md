@@ -9,7 +9,7 @@ Change one of the definition files, CameLIGO.ml, ReasonLIGO.ml, JsLIGO.ml and Pa
 Run the following command:
 
 ```
-dune exec tools/ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=tools/vim/ligo/start/ligo/syntax --emacs=tools/emacs --vscode=tools/lsp/vscode-plugin/syntaxes --textmate=tools/ligo-syntax-highlighting/textmate
+dune exec tools/ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=tools/vim/ligo/start/ligo --emacs=tools/emacs --vscode=tools/lsp/vscode-plugin/syntaxes --textmate=tools/ligo-syntax-highlighting/textmate
 ```
 
 This will place the files where needed.

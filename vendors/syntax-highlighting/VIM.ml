@@ -149,7 +149,6 @@ module Print = struct
 end
 
 module Convert = struct 
-  
   let pattern_to_vim: string list -> Core.pattern -> item list = fun toplevel -> function
     {name; kind = Begin_end {meta_name=highlight; begin_; end_; patterns}} ->
     let rec aux name result (begin_: (Core.regexp * Core.highlight_name option) list) end_ = (
@@ -333,10 +332,41 @@ module Convert = struct
     @
     [Highlight (Link {group_name = "blockcomment"; highlight = Core.Comment})]
 end
-  
-let to_vim: Core.t -> string = fun t ->
+
+let vim_ftdetect (syntaxes: (string * Core.t) list): string =
+  let buffer = Buffer.create 512 in
+  let open Format in
+  let fmt = formatter_of_buffer buffer in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
+  Fun.flip List.iter syntaxes (fun (name, t) ->
+    Fun.flip List.iter t.file_types (fun file_type ->
+      fprintf fmt "au BufNewFile,BufRead *.%s setfiletype %s\n" file_type name));
+  Buffer.contents buffer
+
+let vim_plugin (syntaxes: (string * Core.t) list): string =
+  let buffer = Buffer.create 512 in
+  let open Format in
+  let fmt = formatter_of_buffer buffer in
+  let allow_list = String.concat ", " (List.map (fun (name, _) -> "'" ^ name ^ "'") syntaxes) in
+  fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
+  fprintf fmt "if executable('ligo-squirrel')\n";
+  fprintf fmt "  if !exists(\"autocommands_loaded\")\n";
+  fprintf fmt "    let autocommands_loaded=1\n";
+  fprintf fmt "    augroup ligoRegisterLanguageServer\n";
+  fprintf fmt "      autocmd User lsp_setup\n";
+  fprintf fmt "          \\ call lsp#register_server({\n";
+  fprintf fmt "          \\   'name': 'ligo_lsp',\n";
+  fprintf fmt "          \\   'cmd': {server_info->['ligo-squirrel']},\n";
+  fprintf fmt "          \\   'allowlist': [%s],\n" allow_list;
+  fprintf fmt "          \\ })\n";
+  fprintf fmt "    augroup END\n";
+  fprintf fmt "  endif\n";
+  fprintf fmt "endif\n";
+  Buffer.contents buffer
+
+let vim_syntax (name, t: string * Core.t): string =
   let v = Convert.to_vim t in
-  let buffer = Buffer.create 100 in
+  let buffer = Buffer.create 8192 in
   let open Format in
   let fmt = formatter_of_buffer buffer in
   fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
@@ -346,10 +376,5 @@ let to_vim: Core.t -> string = fun t ->
   fprintf fmt "\n";
   fprintf fmt "syntax cluster top contains=TOP\n";
   Print.print fmt v;
-  let name = match Filename.extension t.scope_name with 
-      "" -> t.scope_name
-    | a -> String.sub a 1 (String.length a - 1)
-  in
-  fprintf fmt "\nlet b:current_syntax = \"%s\"" name;
+  fprintf fmt "\nlet b:current_syntax = \"%s\"\n" name;
   Buffer.contents buffer
-

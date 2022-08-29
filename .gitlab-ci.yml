@@ -127,7 +127,9 @@ check-generated-highlighting:
     - docker_extract
   script:
     - scripts/diff_dir.sh highlighting/emacs tools/emacs
-    - scripts/diff_dir.sh highlighting/vim tools/vim/ligo/start/ligo/syntax
+    - scripts/diff_dir.sh highlighting/vim/ftdetect tools/vim/ligo/start/ligo/ftdetect
+    - scripts/diff_dir.sh highlighting/vim/plugin tools/vim/ligo/start/ligo/plugin
+    - scripts/diff_dir.sh highlighting/vim/syntax tools/vim/ligo/start/ligo/syntax
     - scripts/diff_dir.sh highlighting/vscode tools/lsp/vscode-plugin/syntaxes
     - scripts/diff_dir.sh highlighting/textmate tools/ligo-syntax-highlighting/textmate
   rules:

@@ -1,7 +1,7 @@
 {
   "name": "ligo",
   "scopeName": "source.ligo",
-  "fileTypes": [],
+  "fileTypes": [ "ligo", "pligo" ],
   "patterns": [
     { "include": "#string" },
     { "include": "#block_comment" },

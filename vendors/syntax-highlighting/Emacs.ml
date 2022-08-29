@@ -446,8 +446,8 @@ For debugging.
     fprintf fmt "\t(setq font-lock-defaults '(%s-font-lock-defaults))\n" syntax;
     fprintf fmt "\t(set-syntax-table (%s-syntax-table)))\n\n" syntax;
 
-    
-    fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" syntax alt_name;
+    Fun.flip List.iter t.file_types (fun file_type ->
+      fprintf fmt "(add-to-list 'auto-mode-alist '(\"\\\\.%s\\\\'\" . ligo-%s-mode))\n" file_type alt_name);
     fprintf fmt "(provide '%s-mode)\n" syntax
 
   let print_footer fmt =

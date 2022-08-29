@@ -47,10 +47,7 @@ let syntax_highlighting =
     syntax_name = "ReasonLIGO";
     alt_name = "reason";
     scope_name = "source.religo";
-    file_types = [
-      "religo";
-      "rligo"
-    ];
+    file_types = ["religo"];
     folding_start_marker = Some "{";
     folding_stop_marker = Some "}";
     language_features = {
