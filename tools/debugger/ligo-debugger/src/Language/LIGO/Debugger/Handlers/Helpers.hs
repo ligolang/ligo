@@ -39,7 +39,9 @@ instance FromBuilder DAP.Message where
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: Maybe FilePath
   , lsContract :: Maybe SomeContract
+  , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
   , lsAllLocs :: Maybe (Set SourceLocation)
+  , lsBinaryPath :: Maybe FilePath
   }
 
 instance Buildable LigoLanguageServerState where

@@ -17,6 +17,20 @@ export interface InitializeLoggerArguments {
 export interface InitializeLoggerResponse extends DebugProtocol.Response {
 }
 
+// SetLigoBinaryPath //
+
+export interface SetLigoBinaryPathArguments {
+	binaryPath?: string
+}
+
+export interface SetLigoBinaryPathRequest extends DebugProtocol.Request {
+	command: 'setLigoBinaryPath'
+	arguments: SetLigoBinaryPathArguments
+}
+
+export interface SetLigoBinaryPathResponse extends DebugProtocol.Response {
+}
+
 // SetProgramPath //
 
 export interface SetProgramPathRequest extends DebugProtocol.Request {
