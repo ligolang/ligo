@@ -76,6 +76,7 @@ library:
     - fmt
     - lens
     - lens-aeson
+    - ligo-squirrel
     - morley
     - morley-debugger
     - mtl
@@ -131,6 +132,7 @@ tests:
       - fmt
       - lens
       - ligo-debugger
+      - ligo-squirrel
       - nyan-interpolation
       - nyan-interpolation-core
       - morley

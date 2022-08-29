@@ -6,6 +6,7 @@ module Language.LIGO.Debugger.Handlers.Impl
 import Debug qualified
 import Unsafe qualified
 
+import Cli (HasLigoClient (getLigoClientEnv))
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Control.Monad.Except (MonadError (..), liftEither, withExceptT)
 import Data.Text qualified as Text
@@ -37,17 +38,18 @@ import Text.Interpolation.Nyan
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.STM (modifyTVar)
 
-import Language.LIGO.Debugger.Handlers.Helpers
-import Language.LIGO.Debugger.Handlers.Types
-
+import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Snapshots
 
-import Language.LIGO.DAP.Variables
-
 data LIGO
+
+instance HasLigoClient (RIO LIGO) where
+  getLigoClientEnv = lift getLigoClientEnv
 
 instance HasSpecificMessages LIGO where
   type Launch LIGO = LigoLaunchRequest
@@ -326,7 +328,7 @@ handleSetProgramPath LigoSetProgramPathRequest{..} = do
   let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
   let programPath = programLigoSetProgramPathRequestArguments
 
-  entrypointsE <- runExceptT $ getAvailableEntrypoints programPath
+  entrypointsE <- getAvailableEntrypoints programPath
 
   result <-
     case entrypointsE of
@@ -363,7 +365,7 @@ handleValidateEntrypoint LigoValidateEntrypointRequest{..} = do
   let pickedEntrypoint = entrypointLigoValidateEntrypointRequestArguments
 
   program <- getProgram
-  result <- void <<$>> runExceptT $ compileLigoContractDebug pickedEntrypoint program
+  result <- void <$> compileLigoContractDebug pickedEntrypoint program
 
   writeResponse $ ExtraResponse $ ValidateEntrypointResponse LigoValidateEntrypointResponse
     { seqLigoValidateEntrypointResponse = 0
@@ -385,7 +387,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     unlessM (doesFileExist program) $
       throwError [int||Contract file not found: #{toText program}|]
 
-    ligoDebugInfo <- compileLigoContractDebug entrypoint program
+    ligoDebugInfo <- ExceptT $ compileLigoContractDebug entrypoint program
     logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
     (allLocs, someContract) <-
@@ -465,10 +467,10 @@ handleValidateValue LigoValidateValueRequest {..} = do
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint id $
         \(_ :: T.Notes arg) _ ->
-        void $ parseValue @arg program category (toText value) valueType
+        void $ ExceptT $ parseValue @arg program category (toText value) valueType
 
     "storage" ->
-      void $ parseValue @storage program category (toText value) valueType
+      void $ ExceptT $ parseValue @storage program category (toText value) valueType
 
     other -> error [int||Unexpected category #{other}|]
 
@@ -516,9 +518,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
       (pretty :: Text -> DAP.Message)
       \(_ :: T.Notes arg) epc -> do
 
-        arg <- parseValue program "parameter" parameter parameterType
+        arg <- ExceptT (parseValue program "parameter" parameter parameterType)
           & withExceptT (pretty :: Text -> DAP.Message)
-        storage <- parseValue program "storage" stor storageType
+        storage <- ExceptT (parseValue program "storage" stor storageType)
           & withExceptT (pretty :: Text -> DAP.Message)
 
         allLocs <- lift getAllLocs

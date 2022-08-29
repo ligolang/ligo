@@ -134,6 +134,7 @@ library
     , lsp-types
     , mtl
     , process
+    , process-extras
     , regex-tdfa
     , template-haskell
     , temporary

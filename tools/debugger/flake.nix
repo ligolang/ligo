@@ -15,8 +15,11 @@
     in utils.lib.eachSystem haskellSystems (system:
       let
         pkgs = haskell-nix.legacyPackages.${system};
+
+        grammars = import ./../lsp/squirrel/grammar { inherit pkgs; };
+
         ligo-debugger-package = pkgs:
-          (pkgs.haskell-nix.callPackage ./ligo-debugger { }).ligo-debugger;
+          (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
 
         ligo-debugger-exec = pkgs:
           (ligo-debugger-package pkgs).components.exes.ligo-debugger;
