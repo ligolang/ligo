@@ -6,9 +6,13 @@ module Language.LIGO.Debugger.Michelson
 
 import Unsafe qualified
 
+import Control.Lens (each)
+import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, runExcept, throwError)
 import Data.Char (isAsciiUpper, isDigit)
 import Data.Coerce (coerce)
+import Data.DList qualified as DL
+import Data.Data (cast)
 import Data.Default (def)
 import Data.Set qualified as Set
 import Data.Text qualified as Text
@@ -16,6 +20,7 @@ import Data.Vector qualified as V
 import Fmt (Buildable (..), Builder, genericF)
 import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Debugger.Core.Navigate (SourceLocation (..))
+import Morley.Debugger.Core.Snapshots (SourceType (..))
 import Morley.Micheline.Class (FromExpressionError, fromExpression)
 import Morley.Micheline.Expression
   (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), michelsonPrimitive)
@@ -27,11 +32,8 @@ import Morley.Michelson.Typed
   dfsTraverseInstr, isMichelsonInstr)
 import Text.Interpolation.Nyan
 
-import Data.DList qualified as DL
-import Data.Data (cast)
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
-import Morley.Debugger.Core.Snapshots (SourceType (..))
 
 -- | When it comes to information attached to entries in Michelson code,
 -- so-called table encoding stands for representing that info in a list
@@ -181,9 +183,10 @@ michelsonInstrInnerBranches = \case
 --    in switching breakpoints.
 -- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
 --    wrappers that carry the debug info.
+-- 3. All contract filepaths that would be used in debugging session.
 readLigoMapper
   :: LigoMapper
-  -> Either DecodeError (Set SourceLocation, SomeContract)
+  -> Either DecodeError (Set SourceLocation, SomeContract, [FilePath])
 readLigoMapper ligoMapper = do
   let indexes :: [TableEncodingIdx] =
         extractInstructionsIndexes (lmMichelsonCode ligoMapper)
@@ -199,6 +202,11 @@ readLigoMapper ligoMapper = do
         metaPerInstr
         (unContractCode $ cCode contract)
 
+  let allFiles = metaPerInstr ^.. each . liiLocationL . _Just . lrFileL
+        -- We want to remove duplicates
+        & unstableNub
+        & filter (/= "")
+
   let allLocs =
         -- We expect a lot of duplicates, stripping them via putting to Set
         Set.fromList $
@@ -207,7 +215,7 @@ readLigoMapper ligoMapper = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (allLocs, extendedContract)
+  return $! force (allLocs, extendedContract, allFiles)
 
   where
     ligoInfoToSourceLoc :: LigoIndexedInfo -> Maybe SourceLocation

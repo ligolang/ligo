@@ -57,7 +57,7 @@ test_SourceMapper = testGroup "Reading source mapper"
       let file = contractsDir </> "simple-ops.mligo"
       result <- compileLigoContractDebug "main" file
       ligoMapper <- either throwIO pure result
-      (allLocs, T.SomeContract contract) <-
+      (allLocs, T.SomeContract contract, _) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err

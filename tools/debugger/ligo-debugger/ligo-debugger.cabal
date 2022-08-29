@@ -81,8 +81,10 @@ library
     , data-default
     , directory
     , dlist
+    , duplo
     , filepath
     , fmt
+    , hashable
     , lens
     , lens-aeson
     , ligo-squirrel
@@ -242,4 +244,5 @@ test-suite ligo-debugger-test
     , tasty
     , tasty-hunit-compat
     , text
+    , unordered-containers
   default-language: Haskell2010
