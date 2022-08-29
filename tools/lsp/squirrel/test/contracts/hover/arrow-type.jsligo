@@ -1,0 +1,6 @@
+let iter_op = (s : list <int>) : unit => {
+  let do_nothing = (_useless : int):unit => unit;
+  List.iter (do_nothing, s);
+};
+
+let test = iter_op
