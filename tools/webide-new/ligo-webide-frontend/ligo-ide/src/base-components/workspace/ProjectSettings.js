@@ -106,6 +106,8 @@ export default class ProjectSettings {
         fontSize: rawSettings.editor?.fontSize || "13px",
         ligatures: Boolean(rawSettings.editor?.ligatures),
       },
+      projectName: rawSettings.projectName,
+      gistId: rawSettings.gistId,
     };
     if (rawSettings.language) {
       settings.language = rawSettings.language;

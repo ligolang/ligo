@@ -46,7 +46,7 @@ const GistUploadModals = forwardRef(
       return match ? match[0] : null;
     };
 
-    const onCreate = async () => {
+    const onCreate = async (action: "update" | "create") => {
       if (gistLink !== "") {
         setGistLink("");
         modalRef.current?.closeModal().catch((me: Error) => {
@@ -73,7 +73,7 @@ const GistUploadModals = forwardRef(
       setLoading(true);
 
       const link = await fileOps
-        .uploadGistProject(token, root, gistId !== "" ? gistId : undefined)
+        .uploadGistProject(token, root, action === "update" && gistId !== "" ? gistId : undefined)
         .catch((e: Error) => {
           notification.error("Gist load error", e.message);
         });
@@ -83,7 +83,7 @@ const GistUploadModals = forwardRef(
         return;
       }
 
-      if (gistId !== "") {
+      if (action === "update") {
         setLoading(false);
         modalRef.current?.closeModal().catch((me: Error) => {
           console.error(me);
@@ -112,7 +112,7 @@ const GistUploadModals = forwardRef(
         confirmDisabled={!token}
         onConfirm={
           newToken === ""
-            ? onCreate
+            ? () => onCreate("create")
             : () => {
                 dispatch({ type: "SET_GIST_TOKEN", payload: newToken });
                 setNewToken("");
@@ -126,7 +126,7 @@ const GistUploadModals = forwardRef(
           return true;
         }}
         textActions={isUpdatable && gistLink === "" ? ["Update"] : ""}
-        onActions={isUpdatable && gistLink === "" ? [() => onCreate()] : []}
+        onActions={isUpdatable && gistLink === "" ? [() => onCreate("update")] : []}
       >
         {gistLink === "" && (
           <>
@@ -158,12 +158,31 @@ const GistUploadModals = forwardRef(
         )}
         {gistLink !== "" && (
           <>
+            {getGistId(gistLink) !== null && (
+              <p>
+                Your Gist id <kbd>{getGistId(gistLink)}</kbd>
+              </p>
+            )}
             <p>
-              Your Gist link{" "}
+              Gist link{" "}
               <a href={gistLink} target="_blank" rel="noreferrer">
                 {gistLink}
               </a>
             </p>
+            {getGistId(gistLink) !== null && (
+              <p>
+                LIGO Web IDE link{" "}
+                <a
+                  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                  href={`${window.location.host}/share/${getGistId(gistLink)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
+                  {`${window.location.host}/share/${getGistId(gistLink)}`}
+                </a>
+              </p>
+            )}
             <p>
               Its id will be stored in config. You will be able to use it to update files in gist.
             </p>

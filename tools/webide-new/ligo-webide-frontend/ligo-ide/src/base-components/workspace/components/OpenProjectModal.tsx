@@ -13,7 +13,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
   actions.openProjectModal = ref;
   const modalRef = useRef<Modal>(null);
   const [name, setName] = useState("");
-  const [link, setLink] = useState("");
+  const [gistId, setGistId] = useState("");
   const [loading, setLoading] = useState(false);
   const resolverRef = useRef<
     ((_: { id: string; author: string; path: string; name: string }) => void) | undefined
@@ -22,7 +22,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
   useImperativeHandle(ref, () => ({
     async openModal() {
       setName("");
-      setLink("");
+      setGistId("");
       setLoading(false);
       await modalRef.current?.openModal();
       return new Promise((resolve) => {
@@ -34,9 +34,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
   const onOpenProject = async () => {
     setLoading(true);
 
-    const gistId = getGistId(link);
-
-    if (gistId === null) {
+    if (gistId === "") {
       return;
     }
 
@@ -55,7 +53,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
     config.gistId = gistId;
     obj["/config.json"].content = JSON.stringify(config);
 
-    const created = await openProject(obj, name);
+    const created = await openProject(obj, gistId, name === "" ? undefined : name);
 
     if (created && resolverRef.current) {
       modalRef.current?.closeModal().catch((me: Error) => {
@@ -63,24 +61,18 @@ const OpenProjectModal = forwardRef((_, ref) => {
       });
       resolverRef.current(created);
       setName("");
-      setLink("");
+      setGistId("");
       setLoading(false);
     } else {
       setLoading(false);
     }
   };
 
-  const getGistId = (str: string) => {
-    const idr = /[0-9A-Fa-f]{8,}/;
-    const match = idr.exec(str);
-    return match ? match[0] : null;
-  };
-
-  const openProject = async (obj: GistContent, pName: string) => {
+  const openProject = async (obj: GistContent, gId: string, pName?: string) => {
     try {
       const Manager = ProjectManager;
-      const created = await Manager.openProject(obj, pName);
-      notification.success("Successful", `New project <b>${pName}</b> is loaded.`);
+      const created = await Manager.openProject(obj, gId, pName);
+      notification.success("Successful", `New project <b>${created.id}</b> is loaded.`);
       return created;
     } catch (e: any) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -96,10 +88,22 @@ const OpenProjectModal = forwardRef((_, ref) => {
       textConfirm="Load"
       onConfirm={onOpenProject}
       pending={loading && "Loading..."}
-      confirmDisabled={!name || !link}
+      confirmDisabled={gistId === ""}
     >
-      <DebouncedFormGroup label="Project name" value={name} onChange={(n: string) => setName(n)} />
-      <DebouncedFormGroup label="Gist link" value={link} onChange={(l: string) => setLink(l)} />
+      <DebouncedFormGroup
+        label="Project name (optional)"
+        placeholder="Name"
+        value={name}
+        onChange={(n: string) => setName(n)}
+      />
+      <DebouncedFormGroup
+        label={
+          'Gist id (use gist id from your gist link or simply open it addind "/share/{gist_id}" to the host name'
+        }
+        placeholder="Id"
+        value={gistId}
+        onChange={(l: string) => setGistId(l)}
+      />
     </Modal>
   );
 });

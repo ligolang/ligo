@@ -1140,19 +1140,21 @@ let main = ([p, s]: [parameter, storage]) : return_ => {
 
 `;
 
-const config = (name: string) => `{
+const config = (name: string, projectName: string) => `{
   "main": "./contracts/${name}.mligo",
   "deploy": "./build/contracts/${name}.tz",
   "framework": "#framework",
   "compilers": {
     "solc": "0.6.12"
-  }
+  },
+  "projectName": "${projectName}"
 }
 `;
 
 export const getExamples = (
   name: string,
-  template: string
+  template: string,
+  projectName: string
 ): { [a: string]: { name: string; content: string } } => {
   if (template === "increment") {
     return {
@@ -1175,7 +1177,7 @@ export const getExamples = (
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("Increment"),
+        content: config("Increment", projectName),
       },
     };
   }
@@ -1197,7 +1199,7 @@ export const getExamples = (
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("ID"),
+        content: config("ID", projectName),
       },
     };
   }
@@ -1222,7 +1224,7 @@ export const getExamples = (
       readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
       config: {
         name: `.workspaces/${name}/config.json`,
-        content: config("Hashlock"),
+        content: config("Hashlock", projectName),
       },
     };
   }
@@ -1235,7 +1237,7 @@ export const getExamples = (
     readme: { name: `.workspaces/${name}/README.md`, content: `# ${name}` },
     config: {
       name: `.workspaces/${name}/config.json`,
-      content: config("Contract"),
+      content: config("Contract", projectName),
     },
   };
 };

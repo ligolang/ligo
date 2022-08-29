@@ -71,8 +71,26 @@ export default class ProjectManager {
     return this.processProject(name, undefined, template);
   }
 
-  static async openProject(obj: GistContent, name: string) {
-    return this.processProject(name, obj, undefined);
+  static async openProject(obj: GistContent, gistId: string, name?: string) {
+    const projectData = obj;
+
+    const projectsNames = await fileOps.getProjectNames();
+
+    /* eslint-disable */
+    const config = JSON.parse(projectData["/config.json"].content || "{}");
+    config.gistId = gistId;
+
+    const projectNameFromParams = name ? name : config.projectName ? config.projectName : gistId;
+    const exitstingNames = projectsNames.filter((pn) => pn.includes(projectNameFromParams));
+    const projectName: string =
+      exitstingNames.length === 0
+        ? projectNameFromParams
+        : `${projectNameFromParams}(${exitstingNames.length})`;
+    config.projectName = projectName;
+    projectData["/config.json"].content = JSON.stringify(config);
+    /* eslint-enable */
+
+    return this.processProject(projectName, projectData, undefined);
   }
 
   static async processProject(
@@ -102,7 +120,7 @@ export default class ProjectManager {
         }
       }
     } else if (template) {
-      const examples = getExamples(data.name, template);
+      const examples = getExamples(data.name, template, data.name);
 
       for (const file of Object.keys(examples)) {
         try {
@@ -326,6 +344,26 @@ export default class ProjectManager {
       path: filePath,
     });
     return filePath;
+  }
+
+  static async renameProject(name: string, newName: string) {
+    try {
+      const config = await fileOps.readFile(`.workspaces/${name}/config.json`);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const configJSON = JSON.parse(config || "{}");
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      configJSON.projectName = newName;
+      await fileOps.writeFile(`.workspaces/${name}/config.json`, JSON.stringify(configJSON));
+      await fileOps.rename(`.workspaces/${name}`, `.workspaces/${newName}`);
+    } catch (e: any) {
+      if (e instanceof Error) {
+        notification.error("Rename project error", e.message);
+        return;
+      }
+      throw e;
+    }
+    redux.dispatch("RENAME_PROJECT", { id: name, newName });
+    notification.info("Rename Project Successful", `Project "${name}" renamed to "${newName}"`);
   }
 
   static async writeDirectory(basePath: string, name: string) {

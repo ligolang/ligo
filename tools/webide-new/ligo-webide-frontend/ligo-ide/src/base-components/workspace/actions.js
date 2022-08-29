@@ -97,18 +97,7 @@ export class ProjectActions {
 
   async renameProjects(project) {
     const newName = await this.renameProjectModal.openModal(project);
-    const selected = redux.getState().projects.get("selected");
-    if (selected && selected.get("id") === project.id) {
-      redux.dispatch("SELECT_PROJECT", { project: undefined });
-      const author = "local";
-      this.history.replace(`/${author}`);
-    }
-    await fileOps.rename(`.workspaces/${project.id}`, `.workspaces/${newName}`);
-    redux.dispatch("RENAME_PROJECT", { id: project.id, newName });
-    notification.info(
-      "Rename Project Successful",
-      `Project "${project.name}" renamed to "${newName}"`
-    );
+    await ProjectManager.renameProject(project.id, newName);
   }
 }
 

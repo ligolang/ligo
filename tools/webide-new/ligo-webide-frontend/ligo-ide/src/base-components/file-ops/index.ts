@@ -250,6 +250,21 @@ class FileManager {
     }
   }
 
+  async getProjectNames() {
+    const dirFiles: { [a: string]: { isDirectory: boolean } } = await IndexedLocalFs.readDirectory(
+      ".workspaces"
+    ).catch((e) => {
+      throw new Error(`Fail to fetch directory: <b>${JSON.stringify(e)}</b>.`);
+    });
+
+    return Object.keys(dirFiles)
+      .filter((item) => dirFiles[item].isDirectory)
+      .map((item) => {
+        const dirPath = item;
+        return dirPath.replace(".workspaces/", "");
+      });
+  }
+
   async loadGistProject(gistId: string) {
     const data = await GistFs.loadData(gistId)
       .then((dt: GistData) => {
