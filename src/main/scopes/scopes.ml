@@ -28,7 +28,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       find_scopes' (all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_in { module_binder; rhs; let_result } -> (
-      (* TODO: module & module alias here ... *)
+      (* TODO: module & module alias here ... 2 cases *)
       let (new_outer_def_map,scopes) = module_expr ~options ~env ~scopes rhs in
       let def = make_m_def (get_mod_binder_name module_binder) e.location new_outer_def_map in
       let env = add_shadowing_def (get_mod_binder_name module_binder) def env in (* shadowing def is needed here *)
@@ -141,17 +141,14 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
 
   and module_expr ~options ~env ~scopes (me: Ast_core.module_expr) =
     match me.wrap_content with
-    | M_struct decls -> (
-      let (new_def_map,_,scopes,_) = declaration ~options decls in
-      (new_def_map,scopes)
-    )
+    | M_struct decls -> declaration ~options decls
     | M_module_path path -> (
       let aux (env:def_map) binder : def_map =
         match Def_map.find_opt (get_mod_binder_name binder) env with
         | Some (Module m) -> m.members
         | _ -> env
       in
-      let def_map = List.fold_left ~f:aux ~init:env(List.Ne.to_list path) in
+      let def_map = List.fold_left ~f:aux ~init:env (List.Ne.to_list path) in
       (def_map,scopes)
     )
     | M_variable mv -> (
@@ -216,12 +213,12 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       )
     in
     let init = { type_env = options.init_env ; bindings = Bindings_map.empty } in
-    List.fold_left ~f:aux ~init:(Def_map.empty, Def_map.empty, [], init) core_prg
+    let (top,inner,scopes,_) = List.fold_left ~f:aux ~init:(Def_map.empty, Def_map.empty, [], init) core_prg in
+    let defs = merge_defs top inner in 
+    defs, scopes
   in
-  let (top_d,inner_d,s,_) = declaration ~options core_prg in
-  let d = Def_map.union merge_refs top_d inner_d in
   let () = Misc.reset_counter () in
-  (d,s)
+  declaration ~options core_prg
 
   (* TODO: nested module name B2 or A.B.2 ?? *)
   (* TODO: update schema.json after modifying code *)

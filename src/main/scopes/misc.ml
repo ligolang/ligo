@@ -2,12 +2,13 @@ open Types
 
 type tenv = Environment.t
 
-let extract_variable_types :
+let rec extract_variable_types :
   bindings_map -> Ast_typed.declaration_content -> bindings_map =
   fun prev decl ->
     let add env b =
       let aux : Ast_typed.expression_variable *  Ast_typed.type_expression -> Ast_typed.expression_variable * Ast_typed.type_expression = fun (v,t) ->
-        let t' = match t.orig_var with Some t' -> { t with type_content = T_variable t'} | None -> (* let () = Format.printf "\nYAA\n NONE : %a" Ast_typed.PP.type_expression t in *) t in
+        let t' = match t.orig_var with Some t' -> 
+          { t with type_content = T_variable t'} | None -> t in
         (v,t')
       in
       let b' = List.map ~f:aux b in
@@ -19,7 +20,6 @@ let extract_variable_types :
       | E_literal _ | E_application _ | E_raw_code _ | E_constructor _ | E_assign _
       | E_type_abstraction _ | E_mod_in _
       | E_record _ | E_record_accessor _ | E_record_update _ | E_constant _ -> return []
-      | E_module_accessor _ -> return []
       | E_type_inst _ -> return [] (* TODO *)
       | E_variable v -> return [(v,exp.type_expression)]
       | E_lambda { binder ; _ } ->
@@ -38,14 +38,14 @@ let extract_variable_types :
         return [ (fun_name , fun_type) ; (binder.var , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
         return [(let_binder.var,rhs.type_expression)]
-      | E_matching {matchee ; cases } -> (
+      | E_matching { matchee ; cases } -> (
         match cases with
         | Match_variant {cases ; tv=_} -> (
           match Ast_typed.get_t_sum matchee.type_expression with
             | Some variant_t ->
               let aux : Ast_typed.matching_content_case -> (Ast_typed.expression_variable * Ast_typed.type_expression) =
                 fun { constructor ; pattern ; _ } ->
-                  let proj_t = (Ast_core.LMap.find constructor variant_t.content).associated_type in
+                  let proj_t = (Ast_typed.LMap.find constructor variant_t.content).associated_type in
                   (pattern,proj_t)
               in
               return (List.map ~f:aux cases)
@@ -59,9 +59,10 @@ let extract_variable_types :
             )
         )
         | Match_record { fields ; _ }  ->
-          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ascr) in
+          let aux = fun Ast_typed.{var;ascr;attributes=_} -> (var, Option.value_exn ~here:[%here] ascr) in
           return (List.map ~f:aux @@ Ast_typed.LMap.to_list fields)
       )
+      | E_module_accessor { element=e ; _ } -> return [(e,exp.type_expression)]
     in
     match decl with
     | Declaration_constant { attr = { hidden = true ; _ } ; _ } -> prev
@@ -69,7 +70,13 @@ let extract_variable_types :
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | Declaration_type _ -> prev
-    | Declaration_module _ -> prev (* ?? maybe call recursively for struct ... end *)
+    | Declaration_module { module_ ; _ } ->
+      (match module_.wrap_content with
+      | M_variable _ -> prev
+      | M_module_path _ -> prev
+      | M_struct ds -> 
+        List.fold_left ds ~init:prev 
+          ~f:(fun prev d -> extract_variable_types prev d.wrap_content))
 
 let generated_flag = "#?generated"
 let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->

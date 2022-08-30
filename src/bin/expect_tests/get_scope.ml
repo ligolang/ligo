@@ -451,7 +451,7 @@ let%expect_test _ =
   run_ligo_good [ "info"; "get-scope" ; gs "module.mligo" ; "--format"; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
-    [ A B C D a#1 b#2 ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
+    [ A B C#4 D#5 a#1 b#2 ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
     [ ] File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 8-17
 
     Variable definitions:
@@ -459,11 +459,11 @@ let%expect_test _ =
     references: []
     (b#2 -> b) File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 4-5 |resolved: int|
     references: []
-    (titi#4 -> titi) File "../../test/contracts/get_scope_tests/module.mligo", line 11, characters 4-8 |resolved: int|
+    (titi#6 -> titi) File "../../test/contracts/get_scope_tests/module.mligo", line 11, characters 4-8 |resolved: int|
     references: []
     Type definitions:
     Module definitions:
     (A -> A) File "../../test/contracts/get_scope_tests/module.mligo", line 1, character 0 to line 3, character 3
     (B -> B) File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 0-12
-    (C -> C) File "../../test/contracts/get_scope_tests/module.mligo", line 12, character 4 to line 16, character 7
-    (D -> D) File "../../test/contracts/get_scope_tests/module.mligo", line 15, character 4 to line 16, character 7 |} ]
+    (C#4 -> C) File "../../test/contracts/get_scope_tests/module.mligo", line 12, character 4 to line 16, character 7
+    (D#5 -> D) File "../../test/contracts/get_scope_tests/module.mligo", line 15, character 4 to line 16, character 7 |} ]
