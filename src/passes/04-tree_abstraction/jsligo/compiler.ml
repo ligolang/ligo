@@ -412,23 +412,6 @@ and compile_expression ~raise : CST.expr -> AST.expr = fun e ->
       | Neq ne   -> compile_bin_op ~raise C_NEQ ne
     )
   )
-  | ECall {value = EProj {value = {expr = EVar {value = module_name; _} as value; selection = _}; _}, arguments; region} when
-    List.mem ~equal:String.(=) built_ins module_name ->
-      let var = compile_pseudomodule_access value in
-      let loc = Location.lift region in
-      let argsx = match arguments with
-        Unit e -> CST.EUnit e, []
-      | Multiple xs ->
-        let hd,tl = xs.value.inside in
-        hd,List.map ~f:snd tl
-      in
-      (match constants var with
-      Some const ->
-      let args = List.map ~f:(fun e -> self e) @@ nseq_to_list argsx in
-      return @@ e_constant ~loc const args
-    | None ->
-      raise.error @@ unknown_constant var loc
-      )
   | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = Some (Expr_entry e, [(_, Rest_entry {value = {expr; _}; _})]); _}; _}, []); _}; _}); region } ->
     let loc = Location.lift region in
     let a = self e in
