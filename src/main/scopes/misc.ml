@@ -37,7 +37,7 @@ let extract_variable_types :
         in
         return [ (fun_name , fun_type) ; (binder.var , in_t) ]
       | E_let_in { let_binder ; rhs ; _ } ->
-        return @@ [(let_binder.var,rhs.type_expression)]
+        return [(let_binder.var,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
         | Match_variant {cases ; tv=_} -> (
@@ -69,7 +69,7 @@ let extract_variable_types :
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | Declaration_type _ -> prev
-    | Declaration_module _ -> prev
+    | Declaration_module _ -> prev (* call recursively for struct ... end *)
 
 let generated_flag = "#?generated"
 let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
@@ -86,22 +86,27 @@ let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
   then generated_flag
   else Ast_typed.ModuleVar.to_name_exn v
 
-let make_def_id name i =
-  (name ^ "#" ^ (string_of_int i), i+1)
+let counter = ref 0
+let reset_counter () = counter := 0
 
-let add_shadowing_def : (int * string) -> def -> def_map -> (int * def_map) =  fun (i,name) def env ->
+let make_def_id name =
+  let c, () = !counter, incr counter in
+  name ^ "#" ^ (string_of_int c)
+
+let add_shadowing_def : string -> def -> def_map -> def_map =  fun name def env ->
   match get_def_name def with
-  | x when String.equal x generated_flag -> (i,env)
+  | x when String.equal x generated_flag -> env
   | _ ->
-    let (definition_id,i) = make_def_id name i in
+    let definition_id = make_def_id name in
     let shadow = Def_map.filter
       (fun _ s_def -> match def, s_def with
+      (* TODO: Module & ModuleAlias here... *)
         | Variable _ , Variable _ | Type _ , Type _ ->
           not @@ String.equal (get_def_name s_def) name
         | _ -> true )
       env in
     let env = Def_map.add definition_id def shadow in
-    (i,env)
+    env
 
 type type_ppx = Ast_typed.type_expression -> Ast_typed.type_expression
 

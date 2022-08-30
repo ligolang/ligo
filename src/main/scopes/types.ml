@@ -1,7 +1,7 @@
 module Definitions = struct
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
-  module Def_map = Simple_utils.Map.Make( struct type t = string let compare = String.compare end)
+  module Def_map = Simple_utils.Map.Make(String)
 
   type type_case =
     | Core of Ast_core.type_expression
@@ -23,15 +23,25 @@ module Definitions = struct
     content : Ast_core.type_expression ;
   }
 
+  type maliasdef = {
+    name : string ;
+    range : Location.t ;
+    body_range : Location.t ;
+    references : Location.t list ;
+    
+    alias : string list
+  }
+
   type mdef = {
     name : string ;
     range : Location.t ;
     body_range : Location.t ;
-    (* this field is used internally to build the definition map, but should not be present in the final representation *)
-    content : def_map ;
+    references : Location.t list ;
+
+    members : def_map ;
   }
 
-  and def = Variable of vdef | Type of tdef | Module of mdef
+  and def = Variable of vdef | Type of tdef | Module of mdef | ModuleAlias of maliasdef
   and def_map = def Def_map.t
 
   let def_equal a b =
@@ -39,14 +49,15 @@ module Definitions = struct
     | Variable x , Variable y -> String.equal x.name y.name
     | Type x , Type y -> String.equal x.name y.name
     | Module x , Module y -> String.equal x.name y.name
-    | (Variable _ | Type _ | Module _) , (Variable _ | Type _ | Module _) -> false
+    | (Variable _ | Type _ | Module _ | ModuleAlias _) , (Variable _ | Type _ | Module _ | ModuleAlias _) -> false
 
   let merge_refs : string -> def -> def -> def option = fun _ a b ->
     match a,b with
     | Variable a , Variable b ->
       let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
       Some (Variable { a with references })
-    | (Variable _ |Type _ | Module _ ) , (Variable _ |Type _ | Module _ ) -> Some a
+    (* TODO: implement for Module & ModuleAlias *)
+    | (Variable _ |Type _ | Module _ | ModuleAlias _) , (Variable _ |Type _ | Module _ | ModuleAlias _) -> Some a
 
   let merge_defs a b =
     Def_map.union merge_refs a b
@@ -55,11 +66,13 @@ module Definitions = struct
     | Variable    d -> d.name
     | Type        d -> d.name
     | Module      d -> d.name
+    | ModuleAlias d -> d.name
 
   let get_range = function
     | Type        t -> t.range
     | Variable    v -> v.range
     | Module      m -> m.range
+    | ModuleAlias m -> m.range
 
   let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
@@ -71,13 +84,15 @@ module Definitions = struct
 
   let make_m_def : string -> Location.t -> _ Def_map.t -> def =
     fun name loc m ->
-      Module { name ; range = loc ; body_range = Location.dummy ; content = m }
+      (* TODO: check this *)
+      Module { name ; range = loc ; body_range = Location.dummy ; members = m ; references = [] }
 
+  (* TODO: implement for Module & ModuleAlias *)
   let add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
       | Variable v -> Ast_core.ValueVar.is_name x v.name
-      | (Type _ | Module _ ) -> false
+      | (Type _ | Module _ | ModuleAlias _) -> false
     in
     match List.find ~f:aux (Def_map.bindings env) with
     | Some (k,_) ->
