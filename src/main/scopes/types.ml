@@ -13,7 +13,7 @@ module Definitions = struct
     range : Location.t ;
     body_range : Location.t ;
     t : type_case ;
-    references : Location.t list
+    references : Location.t list (* TODO: make this Location set *)
   }
 
   type tdef = {
@@ -27,7 +27,7 @@ module Definitions = struct
     name : string ;
     range : Location.t ;
     body_range : Location.t ;
-    references : Location.t list ;
+    references : Location.t list ; (* TODO: make this Location set *)
     
     alias : string list
   }
@@ -36,7 +36,7 @@ module Definitions = struct
     name : string ;
     range : Location.t ;
     body_range : Location.t ;
-    references : Location.t list ;
+    references : Location.t list ; (* TODO: make this Location set *)
 
     members : def_map ;
   }
@@ -113,9 +113,7 @@ type scope = { range : Location.t ; env : def_map }
 type scopes = scope list
 
 let add_scope (range,env) (scopes:scopes) =
-  let def_map_equal : def_map -> def_map -> bool = fun a b ->
-    Def_map.equal def_equal a b
-  in
+  let def_map_equal = Def_map.equal def_equal in
   let replaced,scopes = List.fold_map scopes ~init:false
     ~f:(fun replaced scope ->
           if replaced then replaced,scope else (

@@ -7,8 +7,7 @@ module Api_helper = Api_helper
 type sub_module = { type_env : tenv  ; bindings : bindings_map }
 
 let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.module_ -> (def_map * scopes) = fun ~with_types ~options core_prg ->
-  let make_v_def_from_core = make_v_def_from_core ~with_types  in
-  let make_v_def_option_type = make_v_def_option_type ~with_types in
+  let make_v_def = make_v_def ~with_types in
 
   let rec find_scopes' = fun (all_defs,env,scopes,lastloc) (bindings:bindings_map) (e : Ast_core.expression) ->
     match e.expression_content with
@@ -17,7 +16,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     )
     | E_let_in { let_binder = {var ; ascr ; attributes=_} ; rhs ; let_result ; attr=_} -> (
       let (all_defs,_, scopes) = find_scopes' (all_defs,env,scopes,e.location) bindings rhs in
-      let def = make_v_def_option_type bindings var ascr (Ast_core.ValueVar.get_location var) rhs.location in
+      let def = make_v_def bindings var ?core_type:ascr (Ast_core.ValueVar.get_location var) rhs.location in
       let env = add_shadowing_def (get_binder_name var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (all_defs,env,scopes,let_result.location) bindings let_result
@@ -29,19 +28,20 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       find_scopes' (all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_mod_in { module_binder; rhs; let_result } -> (
+      (* TODO: module & module alias here ... *)
       let (new_outer_def_map,scopes) = module_expr ~options ~env ~scopes rhs in
       let def = make_m_def (get_mod_binder_name module_binder) e.location new_outer_def_map in
-      let env = Def_map.add (get_mod_binder_name module_binder) def env in
-      let all_defs = merge_defs env all_defs in
+      let env = add_shadowing_def (get_mod_binder_name module_binder) def env in (* shadowing def is needed here *)
+      let all_defs = merge_defs env all_defs in (* TODO: is it necessary to merge_defs?? *)
       find_scopes' (all_defs,env,scopes,let_result.location) bindings let_result
     )
     | E_recursive { fun_name ; fun_type ; lambda = { binder = {var;ascr=input_type; attributes=_} ; output_type = _ ; result ; _ } } -> (
       let env =
-        let def = make_v_def_option_type bindings fun_name (Some fun_type) (Ast_typed.ValueVar.get_location fun_name) result.location in
+        let def = make_v_def bindings fun_name ~core_type:fun_type (Ast_typed.ValueVar.get_location fun_name) result.location in
         add_shadowing_def (get_binder_name fun_name) def env
       in
       let env =
-        let def = make_v_def_option_type bindings var input_type (Ast_typed.ValueVar.get_location var) result.location in
+        let def = make_v_def bindings var ?core_type:input_type (Ast_typed.ValueVar.get_location var) result.location in
         add_shadowing_def (get_binder_name var) def env
       in
       let all_defs = merge_defs env all_defs in
@@ -49,7 +49,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     )
     | E_lambda { binder={var;ascr=input_type; attributes=_} ; output_type = _ ; result } -> (
       let env =
-        let def = make_v_def_option_type bindings var input_type (Ast_typed.ValueVar.get_location var) result.location in
+        let def = make_v_def bindings var ?core_type:input_type (Ast_typed.ValueVar.get_location var) result.location in
         add_shadowing_def (get_binder_name var) def env
       in
       let all_defs = merge_defs env all_defs in
@@ -68,7 +68,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
           match p.wrap_content with
           | Ast_core.P_var binder ->
             let loc = Ast_core.ValueVar.get_location binder.var in
-            let proj_def = make_v_def_from_core bindings binder.var loc loc in
+            let proj_def = make_v_def bindings binder.var loc loc in
             add_shadowing_def (get_binder_name binder.var) proj_def env
           | _ -> env
         in
@@ -111,6 +111,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | E_module_accessor _ -> (
       (* ??? *)
       (* TODOREWORK we should update all_defs so that references to variable accessed are taken into account *)
+      (* M.x -> M (resolved module) x (var) *)
       let scopes = add_scope (lastloc, env) scopes in
       (all_defs,env,scopes)
     )
@@ -125,11 +126,15 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       (all_defs,env,scopes)
     )
     | E_assign { binder ; expression ; _ } -> (
-      let def = make_v_def_option_type bindings binder.var binder.ascr (Ast_typed.ValueVar.get_location binder.var) expression.location in
+      (* in case of e_assign I dont think a shadowing def needs to be added ?? *)
+      let def = make_v_def bindings binder.var ?core_type:binder.ascr (Ast_typed.ValueVar.get_location binder.var) expression.location in
       let env = add_shadowing_def (get_binder_name binder.var) def env in
       let all_defs = merge_defs env all_defs in
       find_scopes' (all_defs,env,scopes,expression.location) bindings expression
     )
+  
+  (* What is a scope ? *)
+
   and find_scopes (top_lvl_defs,scopes,loc) bindings e =
     let (defs,_,scopes) = find_scopes' (top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (defs,scopes)
@@ -187,7 +192,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       | Declaration_constant { binder= { var ; ascr ; attributes=_ } ; expr ; _ } -> (
         let (new_inner_def_map,scopes) = find_scopes (top_def_map,scopes,decl.location) partials.bindings expr in
         let inner_def_map = merge_defs new_inner_def_map inner_def_map in
-        let def = make_v_def_option_type partials.bindings var ascr (Ast_core.ValueVar.get_location var) expr.location in
+        let def = make_v_def partials.bindings var ?core_type:ascr (Ast_core.ValueVar.get_location var) expr.location in
         let top_def_map = add_shadowing_def (get_binder_name var) def top_def_map in
         ( top_def_map, inner_def_map, scopes , partials )
       )
@@ -219,3 +224,4 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
   (d,s)
 
   (* TODO: nested module name B2 or A.B.2 ?? *)
+  (* TODO: update schema.json after modifying code *)

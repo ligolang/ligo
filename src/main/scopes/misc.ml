@@ -69,7 +69,7 @@ let extract_variable_types :
       let prev = add prev [binder.var,expr.type_expression] in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | Declaration_type _ -> prev
-    | Declaration_module _ -> prev (* call recursively for struct ... end *)
+    | Declaration_module _ -> prev (* ?? maybe call recursively for struct ... end *)
 
 let generated_flag = "#?generated"
 let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
@@ -100,37 +100,29 @@ let add_shadowing_def : string -> def -> def_map -> def_map =  fun name def env 
     let definition_id = make_def_id name in
     let shadow = Def_map.filter
       (fun _ s_def -> match def, s_def with
-      (* TODO: Module & ModuleAlias here... *)
-        | Variable _ , Variable _ | Type _ , Type _ ->
-          not @@ String.equal (get_def_name s_def) name
+        | Variable _ , Variable _ | Type _ , Type _
+        | Module _, Module _ | ModuleAlias _, ModuleAlias _ 
+          -> not @@ String.equal (get_def_name s_def) name
         | _ -> true )
       env in
     let env = Def_map.add definition_id def shadow in
     env
 
-type type_ppx = Ast_typed.type_expression -> Ast_typed.type_expression
-
 let resolve_if :
-  with_types:bool -> ?ppx:type_ppx -> bindings_map -> Ast_core.expression_variable -> type_case =
-  fun ~with_types ?(ppx = fun i -> i) bindings var ->
+  with_types:bool -> bindings_map -> Ast_core.expression_variable -> type_case =
+  fun ~with_types bindings var ->
     if with_types then (
       let t_opt = Bindings_map.find_opt var bindings in
       match t_opt with
-      | Some t -> Resolved (ppx t)
+      | Some t -> Resolved t
       | None -> Unresolved
     )
     else Unresolved
 
-let make_v_def_from_core :
-  with_types:bool -> bindings_map -> Ast_core.expression_variable -> Location.t -> Location.t -> def =
-  fun ~with_types bindings var range body_range ->
-    let type_case = resolve_if ~with_types bindings var in
-    make_v_def (get_binder_name var) type_case range body_range
-
-let make_v_def_option_type :
-  with_types:bool -> bindings_map -> Ast_core.expression_variable -> Ast_core.type_expression option -> Location.t -> Location.t -> def =
-  fun ~with_types bindings var core_t_opt range body_range ->
-    let type_case = match core_t_opt with
+let make_v_def :
+  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> Ast_core.expression_variable -> Location.t -> Location.t -> def =
+  fun ~with_types ?core_type bindings var range body_range ->
+    let type_case = match core_type with
       | Some t -> Core t
       | None -> resolve_if ~with_types bindings var
     in
