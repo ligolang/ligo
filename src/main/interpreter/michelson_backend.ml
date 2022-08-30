@@ -117,7 +117,7 @@ let add_ast_env ?(name = ValueVar.fresh ()) env binder body =
   let open Ast_aggregated in
   let aux (let_binder , expr, no_mutation, inline) (e : expression) =
     if ValueVar.compare let_binder binder <> 0 && ValueVar.compare let_binder name <> 0 then
-      e_a_let_in {var=let_binder;ascr=expr.type_expression;attributes=Binder.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false }
+      e_a_let_in {var=let_binder;ascr=expr.type_expression;attributes=Binder.empty_attribute} expr e { inline ; no_mutation ; view = false ; public = false ; hidden = false ; thunk = false}
     else
       e in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in

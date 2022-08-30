@@ -212,7 +212,7 @@ end
 
 
 let compile_value_attr : I.Attr.value -> O.Attr.value =
-  fun {inline;no_mutation;view;public;hidden} -> {inline;no_mutation;view;public;hidden}
+  fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
 
 let rec compile_type_expression ~raise path scope (type_expression : I.type_expression) : O.type_expression =
   let self ?(path=path) ?(scope=scope) = compile_type_expression ~raise path scope in

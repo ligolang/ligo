@@ -55,7 +55,7 @@ let%expect_test _ =
              SAPLING_EMPTY_STATE 8 ;
              SWAP ;
              SAPLING_VERIFY_UPDATE ;
-             IF_NONE { PUSH string "failed" ; FAILWITH } {} ;
+             IF_NONE { PUSH string "failed" ; FAILWITH } { CDR } ;
              NIL operation ;
              PAIR } } |}]
 

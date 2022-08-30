@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print pretty SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command pretty-prints a source file in LIGO. The width of the pretty-printed text is adjusted to the number of columns in the terminal (or 60 if it cannot be determined).

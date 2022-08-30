@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo init contract [PROJECT_NAME]
+```
 
 ### DESCRIPTION
 Generate new folder from contract template. Internet connexion needed

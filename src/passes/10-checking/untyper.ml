@@ -5,7 +5,7 @@ module O = Ast_typed
 open Ligo_prim
 
 let untype_value_attr : O.Attr.value -> I.Attr.value =
-  fun {inline;no_mutation;view;public;hidden} -> {inline;no_mutation;view;public;hidden}
+  fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
 let rec untype_type_expression (t:O.type_expression) : I.type_expression =
   let self = untype_type_expression in
   let return t = I.make_t t in

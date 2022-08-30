@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo compile storage SOURCE_FILE STORAGE_EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command compiles an initial storage for a given contract to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract.

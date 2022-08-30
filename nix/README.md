@@ -7,7 +7,6 @@ These expressions are used on CI to reproducibly build the LIGO compiler, as wel
 If you wish to build it yourself, do `nix build -f. $thing`, where `$thing` is
 
 - `ligo-editor`: WebIDE, it can be started with `result/bin/ligo-editor`
-- `ligo-website`: the website, website root is `result`
 - `ligo-editor-docker`: a docker image with webide
 - `ligo-deb`: debian package with static binaries
 - `ligo-changelog`: changelogs

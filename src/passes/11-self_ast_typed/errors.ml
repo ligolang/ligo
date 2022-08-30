@@ -14,7 +14,7 @@ type self_ast_typed_error = [
   | `Self_ast_typed_unmatched_entrypoint of Location.t
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
-  | `Self_ast_typed_bad_contract_io of ValueVar.t * Ast_typed.expression
+  | `Self_ast_typed_bad_contract_io of ValueVar.t * Ast_typed.expression * Location.t
   | `Self_ast_typed_bad_view_io of ValueVar.t * Location.t
   | `Self_ast_typed_expected_list_operation of ValueVar.t * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
@@ -95,10 +95,10 @@ let error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>Internal error: %s @]"
         desc
-    | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
+    | `Self_ast_typed_bad_contract_io (entrypoint, _, location) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * storage -> operation list * storage\". @]"
-        Snippet.pp e.location
+        Snippet.pp location
         ValueVar.pp entrypoint
     | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
       Format.fprintf f
@@ -240,7 +240,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ]
     in
     json_error ~stage ~content
-  | `Self_ast_typed_bad_contract_io (entrypoint, e) ->
+  | `Self_ast_typed_bad_contract_io (entrypoint, e, location) ->
     let message = `String "badly typed contract" in
     let description = `String "unexpected entrypoint type" in
     let entrypoint = ValueVar.to_yojson entrypoint in
@@ -249,7 +249,7 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
        ("message", message);
        ("description", description);
        ("entrypoint", entrypoint);
-       ("location", Location.to_yojson e.location);
+       ("location", Location.to_yojson location);
        ("type", eptype);
        ]
     in

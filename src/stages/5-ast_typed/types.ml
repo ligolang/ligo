@@ -58,6 +58,8 @@ module Attr = struct
       set to true for standard libraries
     *)
     hidden: bool;
+    (* Controls whether it should be inlined at AST level *)
+    thunk: bool ;
   } [@@deriving eq,compare,yojson,hash]
   type type_ = { public: bool ; hidden : bool }
     [@@deriving eq,compare,yojson,hash]
@@ -70,13 +72,14 @@ module Attr = struct
       fprintf ppf "[@@%s]" str
     else
       fprintf ppf ""
-  let pp_value ppf { inline ; no_mutation ; view ; public ; hidden } =
-    fprintf ppf "%a%a%a%a%a"
+  let pp_value ppf { inline ; no_mutation ; view ; public ; hidden ; thunk } =
+    fprintf ppf "%a%a%a%a%a%a"
       (pp_if_set "inline") inline
       (pp_if_set "no_mutation") no_mutation
       (pp_if_set "view") view
       (pp_if_set "private") (not public)
       (pp_if_set "hidden") hidden
+      (pp_if_set "thunk") thunk
 
   let pp_type ppf { public ; hidden } =
     fprintf ppf "%a%a"

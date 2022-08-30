@@ -23,7 +23,9 @@ const LIGO = args[0] !== undefined ? args[0] : "./_build/install/default/bin/lig
 
 const MAIN_COMMAND_TEMPLATE = ({ synopsis, descrption, subcommands }) => `
 ### SYNOPSIS
+\`\`\`
 ${synopsis}
+\`\`\`
 
 ### DESCRIPTION
 ${descrption}
@@ -102,7 +104,9 @@ let sub = top.then(sub_commands => {
 
 const TEMPLATE = ({ synopsis, descrption, flags }) => `
 ### SYNOPSIS
+\`\`\`
 ${synopsis}
+\`\`\`
 
 ### DESCRIPTION
 ${descrption}

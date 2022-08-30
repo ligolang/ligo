@@ -5,7 +5,7 @@ module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
 open Ligo_prim
 
-let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden } ->
+let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
   let aux : string list -> (unit -> string option) -> I.Attr.value = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
@@ -18,6 +18,7 @@ let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_
       (fun () -> if view then Some "view" else None) ;
       (fun () -> if public then None else Some "private") ;
       (fun () -> if hidden then Some "hidden" else None) ;
+      (fun () -> if thunk then Some "thunk" else None) ;
     ]
 
 let decompile_type_attributes : O.Attr.type_ -> I.Attr.type_ = fun { public ; hidden } ->
@@ -113,7 +114,7 @@ let rec decompile_expression : O.expression -> I.expression =
     | O.E_recursive recs ->
       let recs = Recursive.map self self_type recs in
       return @@ I.E_recursive recs
-    | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_;hidden=_};rhs=expr1;let_result=expr2}
+    | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_;hidden=_;thunk=false};rhs=expr1;let_result=expr2}
       when ValueVar.is_name var "()"
            && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let expr1 = self expr1 in

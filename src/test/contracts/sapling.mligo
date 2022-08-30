@@ -10,6 +10,6 @@ let main (tr, store : parameter * storage) : return =
  (
     let es : ss = Tezos.sapling_empty_state in
     match Tezos.sapling_verify_update tr es with
-   | Some x -> x
+   | Some (_, x) -> x
    | None -> (failwith "failed" : storage)
  )

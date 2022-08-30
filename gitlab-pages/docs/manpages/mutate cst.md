@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo mutate cst SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command returns a mutated version for a given file. It does not use the build system.

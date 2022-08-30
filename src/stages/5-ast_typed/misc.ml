@@ -201,7 +201,7 @@ and assert_literal_eq (a, b : Literal_value.t * Literal_value.t) : unit option =
 let get_entry (lst : program) (name : ValueVar.t) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Types.Declaration.Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ }} -> (
+    | Types.Declaration.Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _}} -> (
       if   (ValueVar.equal name binder.var)
       then Some expr
       else None

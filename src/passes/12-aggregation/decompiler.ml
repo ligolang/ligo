@@ -5,7 +5,7 @@ let rec decompile ~raise : Ast_aggregated.expression -> Ast_typed.expression =
   let module I = Ast_aggregated in
   let module O = Ast_typed in
    let decompile_value_attr : I.Attr.value -> O.Attr.value =
-      fun {inline;no_mutation;view;public;hidden} -> {inline;no_mutation;view;public;hidden}
+      fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
    in
 
   let return expression_content : O.expression =

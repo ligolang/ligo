@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo compile constant SYNTAX _EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command compiles a LIGO expression to a Michelson value and its hash as a global constant. It works by compiling the LIGO expression to a Michelson expression and then interpreting it using Michelson's interpreter.

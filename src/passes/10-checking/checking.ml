@@ -16,7 +16,7 @@ type typing_context = Typing_context.t
 type context = Context.t
 
 let type_value_attr : I.Attr.value -> O.Attr.value =
-  fun {inline;no_mutation;view;public;hidden} -> {inline;no_mutation;view;public;hidden}
+  fun {inline;no_mutation;view;public;hidden;thunk} -> {inline;no_mutation;view;public;hidden;thunk}
 let untype_expression = Untyper.untype_expression
 let untype_program = Untyper.untype_program
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
@@ -460,7 +460,7 @@ and type_expression ~raise ~options : context -> ?tv_opt:O.type_expression -> I.
       let matcheevar = ValueVar.fresh () in
       let case_exp = Pattern_matching.compile_matching ~raise ~err_loc:e.location matcheevar eqs in
       let case_exp = { case_exp with location = e.location } in
-      let x = O.E_let_in { let_binder = {var=matcheevar;ascr=matchee'.type_expression;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; hidden = false } } in
+      let x = O.E_let_in { let_binder = {var=matcheevar;ascr=matchee'.type_expression;attributes={const_or_var=Some `Var}} ; rhs = matchee' ; let_result = case_exp ; attr = {inline = false; no_mutation = false; public = true ; view= false ; hidden = false ; thunk = false } } in
       return x case_exp.type_expression
   )
   | E_let_in {let_binder = {var ; ascr ; attributes} ; rhs ; let_result; attr } ->
