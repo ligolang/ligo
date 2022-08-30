@@ -45,7 +45,7 @@ extra-deps:
 - stm-containers-1.2
 - stm-hamt-1.2.0.7
 - git: https://github.com/serokell/tree-sitter.git
-  commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+  commit: 59b427b5739c5ae348addcedac31632a663f2a45
 - git: https://github.com/serokell/duplo.git
   commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 - git: https://github.com/haskell/lsp.git

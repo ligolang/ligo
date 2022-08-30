@@ -34,6 +34,7 @@ data MessageDetail
   = FromLanguageServer Text
   | FromLIGO Text
   | MissingContract FilePath
+  | Missing Text
   | Unexpected Text
   | Unrecognized Text
   deriving stock (Eq, Ord, Show)
@@ -42,6 +43,7 @@ instance Pretty MessageDetail where
   pp (FromLanguageServer msg) = pp msg
   pp (FromLIGO msg) = pp msg
   pp (MissingContract path) = "Missing contract: " <> pp (Text.pack path)
+  pp (Missing src) = "Missing: " <> pp src
   pp (Unexpected src) = "Unexpected: " <> pp src
   pp (Unrecognized src) = "Unrecognized: " <> pp src
 
@@ -71,11 +73,11 @@ groupByIntersections = Map.elems . foldr go Map.empty
         lub = maybe r fst $ Map.lookupMin right
 
 -- | Filters messages according to the following: if there are no `Unexpected`
--- errors, then just returns the list as it is. Otherwise, filters out all
--- `Unrecognized` errors, to avoid excessive cluttering of errors.
+-- or `Missing` errors, then just returns the list as it is. Otherwise, filters
+-- out all `Unrecognized` errors, to avoid excessive cluttering of errors.
 --
--- To make the filtering smarter, this is done only if the unexpected and
--- unrecognized errors appear together.
+-- To make the filtering smarter, this is done only if unrecognized
+-- errors appear together with unexpected or missing ones.
 --
 -- Normally, the presence of `Unrecognized` errors without `Unexpected` errors
 -- indicate a bug, however, at the time of this writing, `tree-sitter` itself
@@ -85,6 +87,11 @@ groupByIntersections = Map.elems . foldr go Map.empty
 filterDiagnostics :: [Message] -> [Message]
 filterDiagnostics msgs = go =<< groupByIntersections msgs
   where
-    go msgs' = case find (\case Message (Unexpected _) _ _ -> True; _ -> False) msgs' of
+    go msgs' = case find findMatcher msgs' of
       Nothing -> NE.toList msgs'
       Just _  -> NE.filter (\case Message (Unrecognized _) _ _ -> False; _ -> True) msgs'
+
+    findMatcher = \case
+      Message (Unexpected _) _ _ -> True
+      Message (Missing _) _ _ -> True
+      _ -> False

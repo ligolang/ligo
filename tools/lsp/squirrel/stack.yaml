@@ -16,7 +16,7 @@ extra-deps:
     - lsp
     - lsp-test
 - git: https://github.com/serokell/tree-sitter.git
-  commit: 5a9d65462db287b271b44d2c6dad54d86c598f34
+  commit: 59b427b5739c5ae348addcedac31632a663f2a45
 - git: https://github.com/co-log/co-log-core.git
   commit: 3beef1315de1b0afb01003695e6c94f7d078cdb5
   # nix-sha256: 04hr72vrcyz02gxqlrbizbscjz0ykqgxk42kl4ccvzj864han6b3
