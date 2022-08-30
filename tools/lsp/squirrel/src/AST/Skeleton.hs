@@ -75,7 +75,6 @@ type RawLigoList =
   , ModuleAccess, Attr, TypeParams, CaseOrDefaultStm
   ]
 
--- TODO (LIGO-169): Implement a parser for JsLIGO.
 data Lang
   = Pascal
   | Caml

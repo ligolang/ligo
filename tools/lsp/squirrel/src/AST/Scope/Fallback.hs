@@ -7,7 +7,7 @@ module AST.Scope.Fallback
 
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
-import Control.Lens (makeLenses, view, (%~), (^.), (|>))
+import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>))
 import Control.Monad.RWS.Strict (RWS, asks, evalRWS, get, local, modify, tell, void)
 import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
@@ -20,11 +20,11 @@ import Data.List (foldl')
 import Data.List.NonEmpty (toList, unzip)
 import Data.Map qualified as Map
 import Data.Map (Map)
-import Data.Maybe (catMaybes, fromMaybe, listToMaybe, mapMaybe, maybeToList)
+import Data.Maybe (catMaybes, fromMaybe, listToMaybe, maybeToList)
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Text (Text)
-import Duplo.Pretty (Doc, pp, ppToText)
+import Duplo.Pretty (Doc, PP (..), Pretty (..), ppToText, (<.>), (<+>))
 import Duplo.Tree hiding (loop)
 import Prelude hiding (unzip)
 import Witherable (wither)
@@ -64,15 +64,39 @@ data ExtendedDeclRef = ExtendedDeclRef
     -- ^ The 'DeclRef' of this reference.
   , edrNamespace :: Namespace
     -- ^ The namespace where this reference was declared.
-  } deriving stock (Eq, Ord)
+  , edrRefKind :: RefKind
+    -- ^ Whether this is an ordinary declaration, or a module declaration.
+  } deriving Show via PP ExtendedDeclRef
+    deriving stock (Eq, Ord)
+
+data RefKind
+  = OrdinaryRef
+  | ModuleAliasRef Namespace
+  deriving Show via PP RefKind
+  deriving stock (Eq, Ord)
+
+instance Pretty ExtendedDeclRef where
+  pp (ExtendedDeclRef ref ns rk) = pp ns <.> "." <.> pp ref <+> pp rk
+
+instance Pretty RefKind where
+  pp OrdinaryRef = "ref"
+  pp (ModuleAliasRef ns) = "alias" <+> pp ns
 
 type ExtendedScopeInfo = (Set ExtendedDeclRef, Range)
 type ExtendedScopeTree = Cofree [] ExtendedScopeInfo
 
+data InScopeRef
+  = InScopeOrdinaryRef Range
+  -- ^ An ordinary value, function, or type reference, with its 'Range'.
+  | InScopeModuleAliasRef Range Namespace
+  -- ^ A reference to a module alias. Suppose that @module A = B.C@, then this
+  -- constructor contains the 'Range' of @A@ as well as its alias @B.C@.
+  deriving stock (Show)
+
 -- | The scoping environment, that may be locally updated at each subnode.
 data ScopeEnv = ScopeEnv
   { _seNamespace :: Namespace
-  , _seInScope :: HashMap (Namespace, Text) Range
+  , _seInScope :: HashMap (Namespace, Text) InScopeRef
   , _seDialect :: Lang
   }
 
@@ -102,7 +126,7 @@ askNamespace :: ScopeM Namespace
 askNamespace = asks (view seNamespace)
 {-# INLINE askNamespace #-}
 
-askInScope :: ScopeM (HashMap (Namespace, Text) Range)
+askInScope :: ScopeM (HashMap (Namespace, Text) InScopeRef)
 askInScope = asks (view seInScope)
 {-# INLINE askInScope #-}
 
@@ -119,27 +143,40 @@ mapNamespace f = local (seNamespace %~ f)
 
 -- | Apply some transformation to the current scope.
 mapInScope
-  :: (HashMap (Namespace, Text) Range -> HashMap (Namespace, Text) Range)
+  :: (HashMap (Namespace, Text) InScopeRef -> HashMap (Namespace, Text) InScopeRef)
   -> ScopeM a
   -> ScopeM a
 mapInScope f = local (seInScope %~ f)
 
-insertScope :: ScopedDecl -> ScopeM ExtendedDeclRef
-insertScope scopedDecl = do
+insertScope :: RefKind -> ScopedDecl -> ScopeM ExtendedDeclRef
+insertScope edrRefKind scopedDecl = do
   let
     declRef = ExtendedDeclRef
       { edrDeclRef = DeclRef
-        {drName = scopedDecl ^. sdName
+        { drName = scopedDecl ^. sdName
         , drRange = scopedDecl ^. sdOrigin
         }
       , edrNamespace = scopedDecl ^. sdNamespace
+      , edrRefKind
       }
   modify (Map.insert declRef scopedDecl)
   pure declRef
 
+resolveModuleAlias :: Text -> ScopeM (Maybe Namespace)
+resolveModuleAlias moduleName = do
+  namespace <- askNamespace
+  inScope <- askInScope
+  pure $ HashMap.lookup (namespace, moduleName) inScope >>= \case
+    InScopeOrdinaryRef _ -> Nothing
+    InScopeModuleAliasRef _ ns -> Just ns
+
 withScope :: ExtendedDeclRef -> ScopeM a -> ScopeM a
 withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
-  mapInScope (HashMap.insert (edrNamespace, drName) drRange)
+  mapInScope (HashMap.insert (edrNamespace, drName) ref)
+  where
+    ref = case edrRefKind of
+      OrdinaryRef -> InScopeOrdinaryRef drRange
+      ModuleAliasRef rhs -> InScopeModuleAliasRef drRange rhs
 
 withScopes :: [ExtendedDeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
@@ -155,20 +192,31 @@ insertRef name (PreprocessedRange refRange) = do
   inScope <- askInScope
   case HashMap.lookup (namespace, name) inScope of
     Nothing -> pure ()
-    Just declRange -> modify $
-      Map.adjust (sdRefs %~ (refRange :)) (ExtendedDeclRef (DeclRef name declRange) namespace)
+    Just inScopeRef -> do
+      let
+        (declRange, refKind) = case inScopeRef of
+          InScopeOrdinaryRef range -> (range, OrdinaryRef)
+          InScopeModuleAliasRef range ns -> (range, ModuleAliasRef ns)
+      modify $ Map.adjust (sdRefs %~ (refRange :)) (ExtendedDeclRef (DeclRef name declRange) namespace refKind)
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv info = do
-  trees <- fmap fst <$> walk info
+  trees <- fmap getTree <$> walk info
   decls <- get
-  let sf = ScopeForest (fmap (first (Set.map edrDeclRef)) <$> maybeToList trees) (Map.mapKeys edrDeclRef decls)
+  let
+    sf = ScopeForest
+      (fmap (first (Set.map edrDeclRef)) <$> maybeToList trees)
+      (Map.mapKeys edrDeclRef decls)
   pure sf
 
 type ScopeRet =
   ( ExtendedScopeTree
   , [ExtendedDeclRef]
   )
+
+getTree :: ScopeRet -> ExtendedScopeTree
+getTree = view _1
+{-# INLINE getTree #-}
 
 -- | A helper function for @walk'@ that takes an ordinary @LIGO@ cofree node
 -- rather than the individual field and layer components.
@@ -244,17 +292,17 @@ instance HasGo Expr where
     Let statements body -> do
       walk statements >>= \case
         Nothing -> do
-          bodyTree <- fmap (fmap fst) (walk body)
-          pure ((,[]) <$> bodyTree)
+          bodyTree <- fmap getTree <$> walk body
+          pure ((, []) <$> bodyTree)
         Just (statementsTree, decls) -> do
-          bodyTree <- fmap (fmap fst) (withScopes decls (walk body))
+          scopes <- withScopes decls (walk body)
+          let bodyTree = getTree <$> scopes
           let scopeTrees = [statementsTree, (Set.fromList decls, getRange $ extract body) :< maybeToList bodyTree]
-          pure $ Just $ (,[]) $
+          pure $ Just $ (, []) $
             (Set.empty, getRange r) :< scopeTrees
     Apply func params -> do
-      funcTree <- maybeToList . fmap fst <$> walk func
-      xs <- map unzip <$> mapM walk params
-      let paramTrees = mapMaybe fst xs
+      funcTree <- maybeToList . fmap getTree <$> walk func
+      paramTrees <- map getTree <$> wither walk params
       pure $ Just ((Set.empty, getRange r) :< funcTree ++ paramTrees, [])
     Constant _ -> pure Nothing
     Ident _ -> pure Nothing
@@ -298,38 +346,38 @@ instance HasGo Expr where
     Remove expr1 _ expr2 -> walk expr1 >> walk expr2 >> pure Nothing
     Case expr' alts -> do
       void (walk expr')
-      scopeTrees <- map fst <$> wither walk alts
+      scopeTrees <- map getTree <$> wither walk alts
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
     Skip -> pure Nothing
     Break -> pure Nothing
     Return line -> maybe (pure Nothing) walk line
     SwitchStm expr' cases -> do
       void (walk expr')
-      scopeTrees <- map fst <$> wither walk cases
+      scopeTrees <- map getTree <$> wither walk cases
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
     ForLoop name begin end step body -> do
       void (walk name)
       void (walk begin)
       void (walk end)
       maybe (pure ()) (void . walk) step
-      st <- fmap fst <$> walk body
-      pure $ fmap (,[]) st
+      st <- fmap getTree <$> walk body
+      pure $ fmap (, []) st
     WhileLoop clause body -> do
       walk clause
-      st <- fmap fst <$> walk body
-      pure $ fmap (,[]) st
+      st <- fmap getTree <$> walk body
+      pure $ fmap (, []) st
     ForOfLoop expr1 expr2 body -> do
       walk expr1
       walk expr2
-      st <- fmap fst <$> walk body
-      pure $ fmap (,[]) st
+      st <- fmap getTree <$> walk body
+      pure $ fmap (, []) st
     Seq decls -> do
-      (sts, refs) <- processSequence Set.empty decls
+      (sts, refs) <- processSequence decls
       pure $ Just ((Set.empty, getRange r) :< sts, Set.toList refs)
     Block {} -> pure Nothing
     Lambda params typ body -> do
       paramRefs <- scopeParams params typ
-      subforest <- fmap (fmap fst) $ do
+      subforest <- fmap (fmap getTree) $ do
         void (maybe (pure Nothing) walk typ)
         for_ (zip paramRefs params) \(pr, p) ->
           withScope pr (walk p)
@@ -342,7 +390,7 @@ instance HasGo Expr where
         maybe (pure ()) (void . walk) mname2
       walk coll
       walk expr1
-      subforest <- fmap (fmap fst) $ withScopes declRefs $ walk expr2
+      subforest <- fmap (fmap getTree) $ withScopes declRefs $ walk expr2
       pure $ Just ((Set.fromList declRefs, getRange r) :< maybeToList subforest, [])
     Patch expr1 expr2 -> do
       void (walk expr1)
@@ -395,14 +443,14 @@ scopeParams args ty = foldMapM go args
         foldMapM go xs
       (match -> Just (_, BParameter name mType)) -> do
         mkDecl (valueScopedDecl [] name mType Nothing)
-          >>= maybe (pure []) (fmap (:[]) . insertScope)
+          >>= maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
       (match -> Just (_, IsAnnot pat _)) -> go pat
       (match -> Just (_, IsTuple xs)) -> foldMapM go xs
       (match -> Just (_, IsParen x)) -> go x
       (match -> Just (_, IsVar x)) -> go x
       (match -> Just (_, NameDecl _)) -> do
         mkDecl (valueScopedDecl [] node ty Nothing) >>=
-          maybe (pure []) (fmap (:[]) . insertScope)
+          maybe (pure []) (fmap (:[]) . insertScope OrdinaryRef)
       (match -> Just (_, IsRecord rfps)) -> do
         flip foldMapM rfps $ \case
           (layer -> Just x) -> case x of
@@ -411,7 +459,7 @@ scopeParams args ty = foldMapM go args
           _ -> pure []
       (match -> Just (r, TVariable (layer -> Just (TypeVariableName name)))) -> do
         scopedDecl <- mkTypeVariableScope name (getRange r)
-        (:[]) <$> insertScope scopedDecl
+        (:[]) <$> insertScope OrdinaryRef scopedDecl
       _ -> pure []
 
 walkConstTuple
@@ -424,7 +472,7 @@ walkConstTuple r names typ vals = do
   declRefs <- flip wither (zip names vals) \(name, val) ->
     mkDecl (valueScopedDecl (getElem r) name typ (Just val)) >>=
       maybe (pure Nothing) \scopedDecl -> do
-        declRef <- insertScope scopedDecl
+        declRef <- insertScope OrdinaryRef scopedDecl
         withScope declRef (walk name)
         pure (Just declRef)
   maybe (pure ()) (void . walk) typ
@@ -436,9 +484,9 @@ instance HasGo Binding where
     BFunction isRec name params typ body ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope functionDecl
+          functionRef <- insertScope OrdinaryRef functionDecl
           paramRefs <- scopeParams params typ
-          subforest <- fmap (fmap fst) $ do
+          subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
             mapM_ (withScopes paramRefs . walk) params
             maybe (pure ()) (void . walk) typ
@@ -453,8 +501,8 @@ instance HasGo Binding where
     BVar pat typ mexpr ->
       mkDecl (valueScopedDecl [] pat typ mexpr)
         >>= maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope scopedDecl
-          subforest <- fmap (fmap fst) $ withScope declRef $ do
+          declRef <- insertScope OrdinaryRef scopedDecl
+          subforest <- fmap (fmap getTree) $ withScope declRef $ do
             void (walk pat)
             maybe (pure Nothing) walk mexpr
           maybe (pure ()) (void . walk) typ
@@ -464,9 +512,9 @@ instance HasGo Binding where
     BConst name typ (Just (layer -> Just (Lambda params _ body))) ->
       mkDecl (functionScopedDecl [] name params typ (Just body))
         >>= maybe (pure Nothing) \functionDecl -> do
-          functionRef <- insertScope functionDecl
+          functionRef <- insertScope OrdinaryRef functionDecl
           paramRefs <- scopeParams params typ
-          subforest <- fmap (fmap fst) $ do
+          subforest <- fmap (fmap getTree) $ do
             void $ withScope functionRef (walk name)
             for_ (zip paramRefs params) \(pr, p) -> do
               withScope pr (walk p)
@@ -484,9 +532,8 @@ instance HasGo Binding where
       refs <- scopeParams [pat] ty
       void $ withScopes refs (walk pat)
       maybe (pure ()) (void . walk) ty
-      subforest <- maybe (pure Nothing) (fmap (fmap fst) . walk) mexpr
-      pure $ Just
-          ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
+      subforest <- maybe (pure Nothing) (fmap (fmap getTree) . walk) mexpr
+      pure $ Just ((Set.fromList refs, getRange r) :< maybeToList subforest, refs)
 
     BTypeDecl name mparams expr -> do
       let scopeVariant, scopeTField :: LIGO ParsedInfo -> ScopeM (Maybe ScopeRet)
@@ -494,7 +541,7 @@ instance HasGo Binding where
             (layer -> Just (Variant vname vtype)) ->
               mkDecl (functionScopedDecl [] vname (maybeToList vtype) (Just name) Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope decl
+                  ref <- insertScope OrdinaryRef decl
                   withScope ref (walk vname)
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
             _ -> pure Nothing
@@ -502,7 +549,7 @@ instance HasGo Binding where
             (layer -> Just (TField fname ftype)) ->
               mkDecl (valueScopedDecl [] fname ftype Nothing)
                 >>= maybe (pure Nothing) \decl -> do
-                  ref <- insertScope decl
+                  ref <- insertScope OrdinaryRef decl
                   withScope ref (walk fname)
                   traverse_ walk ftype
                   pure $ Just ((Set.singleton ref, getRange r) :< [], [ref])
@@ -510,7 +557,7 @@ instance HasGo Binding where
 
       mkDecl (typeScopedDecl (getElem r) name expr) >>=
         maybe (pure Nothing) \scopedDecl -> do
-          declRef <- insertScope scopedDecl
+          declRef <- insertScope OrdinaryRef scopedDecl
           let params = case mparams of
                 Just (layer -> Just (Skeleton.TypeParams ps)) -> ps
                 Just (layer -> Just (Skeleton.TypeParam p)) -> [p]
@@ -530,7 +577,9 @@ instance HasGo Binding where
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
               _ -> pure Nothing
           pure $ Just
-            ((Set.fromList (declRef:paramRefs), getRange r) :< maybeToList subforest, declRef : paramRefs ++ subRefs)
+            ( (Set.fromList (declRef : paramRefs), getRange r) :< maybeToList subforest
+            , declRef : paramRefs ++ subRefs
+            )
 
     BAttribute    {} -> pure Nothing
     BInclude      {} -> pure Nothing
@@ -538,16 +587,30 @@ instance HasGo Binding where
     BModuleDecl name decls ->
       mkDecl (moduleScopedDecl [] name)
         >>= maybe (pure Nothing) \moduleDecl -> do
-          moduleRef <- insertScope moduleDecl
-          void $ withScope moduleRef (walk name)
+          moduleRef <- insertScope OrdinaryRef moduleDecl
+          void $ withScope moduleRef $ walk name
           let moduleName = moduleDecl ^. sdName
-          (declTree, declRefs) <- withNamespace moduleName $ processSequence Set.empty decls
-          pure $ Just ((Set.singleton moduleRef, getRange r) :< declTree, moduleRef : Set.toList declRefs)
-    BModuleAlias  {} -> pure Nothing
+          (declTree, declRefs) <- withNamespace moduleName $ processSequence decls
+          pure $ Just
+            ( (Set.singleton moduleRef, getRange r) :< declTree
+            , moduleRef : Set.toList declRefs
+            )
+    BModuleAlias name path ->
+      mkDecl (moduleScopedDecl [] name)
+        >>= maybe (pure Nothing) \moduleDecl -> do
+          aliasM <- walkModuleAccess path Nothing
+          -- It's not technically correct to use an 'OrdinaryRef' here, but we'd
+          -- like to insert something anyway if it fails.
+          moduleRef <- insertScope (maybe OrdinaryRef ModuleAliasRef aliasM) moduleDecl
+          void $ withScope moduleRef $ walk name
+          pure $ Just
+            ( (Set.singleton moduleRef, getRange r) :< []
+            , [moduleRef]
+            )
 
 instance HasGo RawContract where
   walk' r (RawContract statements) = do
-    xs <- fst <$> processSequence Set.empty statements
+    xs <- view _1 <$> processSequence statements
     pure $ Just ((Set.empty, getRange r) :< xs, [])
 
 walkName :: Product ParsedInfo -> Text -> ScopeM (Maybe ScopeRet)
@@ -591,17 +654,21 @@ instance HasGo ModuleName where
 
 -- | Given a module access such as `A.B.C` ('Nothing' case) or `A.B.C.x` ('Just'
 -- case), add references to each module in the chain and maybe walk over the
--- qualified accessor.
-walkModuleAccess :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM ()
+-- qualified accessor. Returns the walked namespace, if we successfuly walked
+-- over it.
+walkModuleAccess :: [LIGO ParsedInfo] -> Maybe (LIGO ParsedInfo) -> ScopeM (Maybe Namespace)
 walkModuleAccess path accessorM = go path
   where
     go [] = do
       maybe (pure ()) (void . walk) accessorM
+      Just <$> askNamespace
     go (modName : modNames) = do
       void $ walk modName
       getName modName >>= \case
-        Left _ -> pure ()
-        Right (_, namespace) -> withNamespace namespace (go modNames)
+        Left _ -> pure Nothing
+        Right (_, namespacePart) -> resolveModuleAlias namespacePart >>= \case
+          Nothing -> withNamespace namespacePart (go modNames)
+          Just resolved -> mapNamespace (const resolved) (go modNames)
 
 instance HasGo ModuleAccess where
   walk' _ (ModuleAccess path accessor) = Nothing <$ walkModuleAccess path (Just accessor)
@@ -615,33 +682,32 @@ instance HasGo CaseOrDefaultStm where
   walk' r = \case
     CaseStm expr statements -> do
       void (walk expr)
-      scopeTrees <- fst <$> processSequence Set.empty statements
+      scopeTrees <- view _1 <$> processSequence statements
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
     DefaultStm statements -> do
-      scopeTrees <- fst <$> processSequence Set.empty statements
+      scopeTrees <- view _1 <$> processSequence statements
       pure $ Just ((Set.empty, getRange r) :< scopeTrees, [])
 
 instance HasGo (Sum RawLigoList) where
   walk' r = apply @HasGo (walk' r)
 
-processSequence
-  :: Set.Set ExtendedDeclRef
-  -> [LIGO ParsedInfo]
-  -> ScopeM ([ExtendedScopeTree], Set.Set ExtendedDeclRef)
-processSequence prevRefs [] = pure ([], prevRefs)
-processSequence prevRefs (x:xs) = do
-  let addToTopLevel :: ExtendedScopeTree -> Set.Set ExtendedDeclRef -> ExtendedScopeTree
-      addToTopLevel ((refs, range) :< rest) refs' =
-        (Set.union refs refs', range) :< rest
+processSequence :: [LIGO ParsedInfo] -> ScopeM ([ExtendedScopeTree], Set.Set ExtendedDeclRef)
+processSequence = go Set.empty
+  where
+    go prevRefs [] = pure ([], prevRefs)
+    go prevRefs (x : xs) = do
+      let
+        addToTopLevel :: ExtendedScopeTree -> Set.Set ExtendedDeclRef -> ExtendedScopeTree
+        addToTopLevel ((refs, range) :< rest) refs' = (Set.union refs refs', range) :< rest
 
-  walk x >>= \case
-    Nothing -> do
-      (nextTrees, nextDecls) <- processSequence prevRefs xs
-      pure (((prevRefs, getRange (extract x)) :< []) : nextTrees, nextDecls)
-    Just (scopeTree, refs) -> do
-      let newRefs = Set.union prevRefs (Set.fromList refs)
-      (nextTrees, nextDecls) <- withScopes refs (processSequence newRefs xs)
-      pure (addToTopLevel scopeTree prevRefs : nextTrees, nextDecls)
+      walk x >>= \case
+        Nothing -> do
+          (nextTrees, nextDecls) <- go prevRefs xs
+          pure (((prevRefs, getRange (extract x)) :< []) : nextTrees, nextDecls)
+        Just (scopeTree, refs) -> do
+          let newRefs = Set.union prevRefs (Set.fromList refs)
+          (nextTrees, nextDecls) <- withScopes refs $ go newRefs xs
+          pure (addToTopLevel scopeTree prevRefs : nextTrees, nextDecls)
 
 loop :: Functor f => (Cofree f a -> Cofree f a) -> Cofree f a -> Cofree f a
 loop go = aux

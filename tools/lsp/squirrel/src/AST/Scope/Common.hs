@@ -264,6 +264,8 @@ mergeScopeForest strategy (ScopeForest sl dl) (ScopeForest sr dr) =
       { _sdRefs = unionOrd (_sdRefs r) (_sdRefs l)
       , _sdDoc  = unionOrd (_sdDoc  r) (_sdDoc  l)
       , _sdSpec = mergeValueSpecs (_sdSpec l) (_sdSpec r)
+      -- TODO: support modules from get-scope
+      , _sdNamespace = _sdNamespace l
       }
 
     -- FromCompiler scope doesn't have correct `_vdsParams`.
