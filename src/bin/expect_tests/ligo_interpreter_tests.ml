@@ -271,6 +271,17 @@ let%expect_test _ =
     - test_mutation_all exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run" ; "test" ; test "test_mutate_from_file.mligo" ] ;
+  [%expect{|
+    Everything at the top-level was executed.
+    - tester exited with value <fun>.
+    - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 59-64:
+      1 | let main ((p, k) : int * int) : operation list * int = [], p + k
+
+    Replacing by: (p - k).
+    )]. |}]
+
+let%expect_test _ =
   run_ligo_good [ "run" ; "test" ; test "iteration.jsligo" ] ;
   [%expect{|
     Everything at the top-level was executed.

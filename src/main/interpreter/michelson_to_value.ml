@@ -270,7 +270,7 @@ let rec decompile_value ~raise ~(bigmaps : bigmap list) (v : value) (t : Ast_agg
           List.map ~f:aux lst in
         V_Set lst'
       )
-    | ((               Map           | Big_map             | List                 | Set              |
+    | ((Ast_contract | Map           | Big_map             | List                 | Set              |
         String       | Bytes         | Int                 | Operation            | Nat              | Tez          |
         Unit         | Address       | Signature           | Key                  | Key_hash         | Timestamp    |
         Chain_id     | Contract      | Michelson_program   | Michelson_or         | Michelson_pair   | Baker_hash   |

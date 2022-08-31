@@ -79,6 +79,7 @@ and value =
   | V_Construct of (string * value)
   | V_Michelson of michelson_code
   | V_Michelson_contract of mcode
+  | V_Ast_contract of { main: Ast_aggregated.expression ; views: (ValueVar.t list * Ast_aggregated.expression) option }
   | V_Mutation of mutation
   | V_Func_val of func_val
   | V_Gen of gen
