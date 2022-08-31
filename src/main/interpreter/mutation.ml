@@ -2,6 +2,7 @@ open Simple_utils.Trace
 open Errors
 module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
+open Ligo_prim
 
 let get_syntax ~raise syntax loc =
   match syntax with
@@ -84,7 +85,7 @@ let rec value_gen : raise:(interpreter_error, _) raise -> ?small:bool -> ?known_
   else if is_t_sum type_expr then
     match get_t_sum_opt type_expr with
     | Some rows ->
-       let l = LMap.to_kv_list rows.content in
+       let l = Record.LMap.to_kv_list rows.fields in
        let gens = List.map ~f:(fun (Label label, row_el) ->
                       QCheck.Gen.(value_gen ~raise ~small row_el.associated_type >>= fun v ->
                                   return (v_ctor label v))) l in
@@ -93,7 +94,7 @@ let rec value_gen : raise:(interpreter_error, _) raise -> ?small:bool -> ?known_
   else if is_t_record type_expr then
     match get_t_record_opt type_expr with
     | Some rows ->
-       let l = LMap.to_kv_list rows.content in
+       let l = Record.LMap.to_kv_list rows.fields in
        let gens = List.map ~f:(fun (Label label, row_el) ->
                        (label, value_gen ~raise ~small row_el.associated_type)) l in
        let rec gen l : ((string * LT.value) list) QCheck.Gen.t = match l with

@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo login
+```
 
 ### DESCRIPTION
 [BETA] Prompt the user for credentials to creates a login session with the registry server

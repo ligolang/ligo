@@ -2,7 +2,6 @@ open Types
 module Option = Simple_utils.Option
 
 module SMap = Simple_utils.Map.String
-open Stage_common.Constant
 
 type expression_content = [%import: Types.expression_content]
 [@@deriving ez {
@@ -38,6 +37,9 @@ type module_expr_content = [%import: Types.module_expr_content]
       wrap_get = ("module_content" , get) ;
     } ]
 
+open Ligo_prim
+open Literal_types
+
 let t_variable ?loc variable  = make_t ?loc @@ T_variable variable
 let t_singleton ?loc x = make_t ?loc @@ T_singleton x
 let t_variable_ez ?loc n     : type_expression = t_variable ?loc (TypeVar.of_input_var n)
@@ -54,7 +56,7 @@ let t__type_ ?loc t t' :type_expression = t_app ?loc v__type_ [t; t']
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
 let t_record_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
-    (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
+    (Label.of_string name, Rows.{associated_type=t_expr; decl_pos=i; attributes}) in
   let fields = List.mapi ~f:aux fields in
   t_record ?loc {fields; attributes=attr}
 let t_record_ez ?loc ?attr lst =
@@ -68,11 +70,11 @@ let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
 let t_sum_ez_attr ?loc ?(attr=[]) fields =
   let aux i (name, t_expr, attributes) =
-    (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
+    (Label.of_string name, Rows.{associated_type=t_expr; decl_pos=i; attributes}) in
   let fields = List.mapi ~f:aux fields in
   t_sum ?loc {fields; attributes=attr}
 
-let t_option ?loc t : type_expression = 
+let t_option ?loc t : type_expression =
   t_sum_ez_attr ?loc [("Some", t, []);("None", t_unit (), [])]
 
 
@@ -153,17 +155,17 @@ let e_false ?loc (): expression = e_constructor ?loc "False" @@ e_unit ?loc ()
 let e_some ?loc s  : expression = e_constructor ?loc "Some"  @@ s
 let e_none ?loc () : expression = e_constructor ?loc "None"  @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
-let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
-  let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap ?loc @@ (P_var b)) binders in
-  let pattern = Location.wrap ?loc @@ P_tuple pv_lst in
-  let cases = [ { pattern ; body } ] in
+let e_matching_tuple ?loc matchee (binders: _ Binder.t list) body : expression =
+  let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
+  let pattern = Location.wrap ?loc @@ Pattern.P_tuple pv_lst in
+  let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
-let e_matching_record ?loc matchee (binders: (string * _ binder) list) body : expression =
+let e_matching_record ?loc matchee (binders: (string * _ Binder.t) list) body : expression =
   let labels,binders = List.unzip binders in
-  let pv_lst = List.map ~f:(fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
-  let labels = List.map ~f:(fun s -> Label s) labels in
-  let pattern = Location.wrap @@ P_record (labels,pv_lst) in
-  let cases = [ { pattern ; body } ] in
+  let pv_lst = List.map ~f:(fun (b:_ Binder.t) -> Location.wrap ?loc @@ (Pattern.P_var b)) binders in
+  let labels = List.map ~f:(fun s -> Label.of_string s) labels in
+  let pattern = Location.wrap ?loc @@ Pattern.P_record (labels,pv_lst) in
+  let cases = [ Match_expr.{ pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
 let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
@@ -176,7 +178,7 @@ let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
 let e_sequence ?loc expr1 expr2 = make_e ?loc @@ E_sequence {expr1; expr2}
-let e_skip ?loc () = make_e ?loc @@ E_skip
+let e_skip ?loc () = make_e ?loc @@ E_skip ()
 
 let e_list ?loc lst : expression = make_e ?loc @@ E_list lst
 let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
@@ -192,7 +194,7 @@ let e_bool ?loc   b : expression =
   else e_constructor ?loc "False" (e_unit ())
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
-  let map = List.fold_right ~f:(fun (x, y) acc -> ((Label x),y) :: acc) ~init:[] lst in
+  let map = List.fold_right ~f:(fun (x, y) acc -> ((Label.of_string x),y) :: acc) ~init:[] lst in
   e_record ?loc map
 
 let make_option_typed ?loc e t_opt =
@@ -221,19 +223,19 @@ let e_assign ?loc binder expression = make_e ?loc @@ E_assign {binder;expression
 let e_assign_ez ?loc variable expression = e_assign ?loc ({var=ValueVar.of_input_var ?loc variable;ascr=None;attributes={const_or_var=Some `Var}}) expression
 
 let e_unopt ?loc matchee none_body (var_some,some_body) =
-  let attributes = {const_or_var = None} in
+  let attributes = Binder.{const_or_var = None} in
   let ascr = None in
   let some_case =
     let pattern = Location.wrap @@
-      P_variant (Label "Some", Location.wrap @@ P_var {var = var_some ; ascr ; attributes })
+      Pattern.P_variant (Label "Some", Location.wrap @@ Pattern.P_var {var = var_some ; ascr ; attributes })
     in
-    { pattern ; body = some_body }
+    Match_expr.{ pattern ; body = some_body }
   in
   let none_case =
     let pattern = Location.wrap @@
-      P_variant (Label "None", Location.wrap @@ P_unit)
+      Pattern.P_variant (Label "None", Location.wrap @@ Pattern.P_unit)
     in
-    { pattern ; body = none_body }
+    Match_expr.{ pattern ; body = none_body }
   in
   e_matching ?loc matchee [some_case ; none_case]
 
@@ -283,7 +285,7 @@ let extract_list : expression -> expression list option = fun e ->
   | E_list lst -> Some lst
   | _ -> None
 
-let extract_record : expression -> (label * expression) list option = fun e ->
+let extract_record : expression -> (Label.t * expression) list option = fun e ->
   match e.expression_content with
   | E_record lst -> Some lst
   | _ -> None

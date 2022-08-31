@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo compile expression SYNTAX _EXPRESSION
+```
 
 ### DESCRIPTION
 This sub-command compiles a LIGO expression to a Michelson value. It works by compiling the LIGO expression to a Michelson expression and then interpreting it using Michelson's interpreter.

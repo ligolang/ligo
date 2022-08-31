@@ -38,9 +38,6 @@ in pkgs.extend (self: super: {
     name = "ligo-editor";
     extraContents = [ tmp ];
   };
-  ligo-website = self.callPackage ./ligo-website.nix {
-    inherit (nix-npm-buildpackage) buildNpmPackage;
-  };
   ligo-changelog = self.callPackage ./changelog.nix { };
   ligo-static = compressBinaries self.pkgsMusl.ligo-bin;
   pkgsMusl = super.pkgsMusl.extend (static-overlay self);

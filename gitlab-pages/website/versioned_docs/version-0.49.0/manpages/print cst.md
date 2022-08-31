@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo print cst SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command prints the source file in the CST stage, obtained after preprocessing and parsing.

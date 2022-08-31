@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo info measure-contract SOURCE_FILE
+```
 
 ### DESCRIPTION
 This sub-command compiles a source file and measures the contract's compiled size in bytes.

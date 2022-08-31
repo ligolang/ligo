@@ -1,6 +1,8 @@
 
 ### SYNOPSIS
+```
 ligo add-user
+```
 
 ### DESCRIPTION
 [BETA] Prompt the user for details to create a new user on registry server

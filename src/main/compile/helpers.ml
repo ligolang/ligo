@@ -116,7 +116,7 @@ let parse_and_abstract_expression_jsligo ~raise buffer =
   in imperative
 
 let parse_and_abstract ~raise ~(meta: meta) buffer file_path
-    : Ast_imperative.module_ =
+    : Ast_imperative.program =
   let parse_and_abstract =
     match meta.syntax with
       PascaLIGO  -> parse_and_abstract_pascaligo
@@ -128,7 +128,7 @@ let parse_and_abstract ~raise ~(meta: meta) buffer file_path
   let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~js_style_no_shadowing in
+    Self_ast_imperative.all_program abstracted ~js_style_no_shadowing in
   applied
 
 let parse_and_abstract_expression ~raise ~(meta: meta) buffer =
@@ -201,7 +201,7 @@ let parse_and_abstract_string ~raise (syntax: Syntax_types.t) buffer =
   let js_style_no_shadowing = Caml.(=) syntax JsLIGO in
   let applied =
     trace ~raise self_ast_imperative_tracer @@
-    Self_ast_imperative.all_module abstracted ~js_style_no_shadowing
+    Self_ast_imperative.all_program abstracted ~js_style_no_shadowing
   in applied
 
 let pretty_print_pascaligo_cst =

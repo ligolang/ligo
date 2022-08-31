@@ -1,12 +1,13 @@
 module FV = Helpers.Free_variables
 
+open Ligo_prim
 open Ast_typed
 open Errors
 open Simple_utils.Trace
 
 let var_equal = ValueVar.equal
 
-let rec check_recursive_call ~raise : expression_variable -> bool -> expression -> unit = fun n final_path e ->
+let rec check_recursive_call ~raise : ValueVar.t -> bool -> expression -> unit = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ()
   | E_constant c  ->
@@ -36,10 +37,10 @@ let rec check_recursive_call ~raise : expression_variable -> bool -> expression 
     check_recursive_call ~raise n false matchee;
     check_recursive_call_in_matching ~raise n final_path cases
   | E_record elm ->
-    List.iter ~f:(check_recursive_call ~raise n false) @@ LMap.to_list elm
-  | E_record_accessor {record;_} ->
+    List.iter ~f:(check_recursive_call ~raise n false) @@ Record.LMap.to_list elm
+  | E_accessor {record;_} ->
     check_recursive_call ~raise n false record
-  | E_record_update {record;update;_} ->
+  | E_update {record;update;_} ->
     check_recursive_call ~raise n false record;
     check_recursive_call ~raise n false update
   | E_module_accessor _
@@ -56,7 +57,7 @@ and check_recursive_call_in_matching ~raise = fun n final_path c ->
   | Match_record {fields = _; body; tv = _} ->
     check_recursive_call ~raise n final_path body
 
-let check_rec_binder_shadowed ~fun_name ~lambda =
+let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
   let _, fv = FV.expression lambda.result in
   let is_binder_shadowed_in_body
     = not @@ List.mem fv fun_name ~equal:var_equal in

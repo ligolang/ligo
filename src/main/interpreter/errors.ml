@@ -29,7 +29,7 @@ let generic_error ?(calltrace = []) : Location.t -> string -> interpreter_error 
 let not_enough_initial_accounts : Location.t -> Memory_proto_alpha.Protocol.Alpha_context.Tez.tez -> interpreter_error = fun loc max ->
   `Main_interpret_not_enough_initial_accounts (loc,max)
 
-let literal : Location.t -> Ast_typed.literal -> interpreter_error = fun s l ->
+let literal : Location.t -> Ligo_prim.Literal_value.t -> interpreter_error = fun s l ->
   `Main_interpret_literal (s, l)
 
 let corner_case ?(loc = Location.generated) () = generic_error loc "Corner case, please report to devs."

@@ -18,7 +18,7 @@ let bind_union (a , b) = match (a , b) with
   | None , Some x -> Some (`Right x)
   | _ -> None
 let bind_pair = fun (a , b) ->
-  let* a' = a in 
+  let* a' = a in
   let* b' = b in
   Some (a' , b')
 
@@ -27,3 +27,11 @@ let unzip = function
 | None       -> None    , None
 
 let bind_map_pair = fun f (a , b) -> bind_pair (f a , f b)
+
+let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t
+= fun f acc opt ->
+  match opt with
+    Some (x) ->
+      let acc,x = f acc x in
+      acc,Some (x)
+  | None -> (acc,None)

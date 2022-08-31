@@ -198,12 +198,12 @@ module Option = struct
 
 #if CURRY
   let unopt_with_error (type a) (v : a option) (s : string) : a = [%external ("UNOPT_WITH_ERROR", v, s)]
-  (* let map (type a b) (f : a -> b) (v : a option) : b option = [%external ("OPTION_MAP", f, v)] *)
+  [@thunk] let map (type a b) (f : a -> b) (v : a option) : b option = [%external ("OPTION_MAP", f, v)]
 #endif
 
 #if UNCURRY
   let unopt_with_error (type a) ((v, s) : (a option) * string) : a = [%external ("UNOPT_WITH_ERROR", v, s)]
-  (* let map (type a b) ((f, v) : (a -> b) * (a option)) : b option = [%external ("OPTION_MAP", f, v)] *)
+  [@thunk] let map (type a b) ((f, v) : (a -> b) * (a option)) : b option = [%external ("OPTION_MAP", f, v)]
 #endif
 
 end
