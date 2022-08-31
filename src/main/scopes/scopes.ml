@@ -33,8 +33,8 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | E_mod_in { module_binder; rhs; let_result } -> (
       let range = ModVar.get_location module_binder in
       match rhs.wrap_content with
-      | M_struct m ->
-        let (all_defs, env, scopes, _) = List.fold_left ~f:declaration ~init:(all_defs, env, scopes, partials) m in
+      | M_struct decls ->
+        let (all_defs, env, scopes, _) = List.fold_left ~f:declaration ~init:(all_defs, env, scopes, partials) decls in
         let def = make_m_def ~range ~body_range:rhs.location (get_mod_binder_name module_binder) env in
         let env = add_shadowing_def (get_mod_binder_name module_binder) def env in
         let all_defs = merge_defs env all_defs in
@@ -127,16 +127,16 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | E_ascription { anno_expr=e;_ } | E_record_accessor { record=e;_ } | E_constructor { element=e;_ } -> (
       find_scopes' (all_defs,env,scopes,e.location) partials e
     )
-    | E_module_accessor _ -> (
-      (* ??? *)
-      (* TODOREWORK we should update all_defs so that references to variable accessed are taken into account *)
-      (* M.x -> M (resolved module) x (var) *)
+    | E_module_accessor { module_path ; element } -> (
+      let env = add_module_reference module_path env in
+      let env = add_module_element_reference module_path element env in
+      (* TODO: add scope *)
       let scopes = add_scope (lastloc, env) scopes in
       (all_defs,env,scopes)
     )
     | E_variable x -> (
       let env = add_reference x env in
-      let all_defs = merge_defs env all_defs in
+    let all_defs = merge_defs env all_defs in
       let scopes = add_scope (lastloc, env) scopes in
       (all_defs,env,scopes)
     )
@@ -155,10 +155,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
   and find_scopes (top_lvl_defs,scopes,loc) bindings e =
     let (defs,_,scopes) = find_scopes' (top_lvl_defs,top_lvl_defs,scopes,loc) bindings e in
     (defs,scopes)
-
-(* Module Alias module A = B.C -> M_variable A, M_path  [B ; C]
-   Module Defn module A = struct ... end -> M_variable A, M_struct ...  *)
-
 
   and declaration = fun (top_def_map, inner_def_map, scopes, partials) (decl : Ast_core.declaration) ->
     let typed_prg =

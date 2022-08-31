@@ -38,4 +38,6 @@ end
 
 module ModuleVar : sig
    include VAR
+
+   val is_name    : t -> string -> bool
 end

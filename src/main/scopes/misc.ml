@@ -78,21 +78,6 @@ let rec extract_variable_types :
         List.fold_left ds ~init:prev 
           ~f:(fun prev d -> extract_variable_types prev d.wrap_content))
 
-let generated_flag = "#?generated"
-let get_binder_name : Ast_typed.ValueVar.t -> string = fun v ->
-  if Ast_typed.ValueVar.is_generated v
-  then generated_flag
-  else Ast_typed.ValueVar.to_name_exn v
-
-let get_type_binder_name : Ast_typed.TypeVar.t -> string = fun v ->
-  if Ast_typed.TypeVar.is_generated v
-  then generated_flag
-  else Ast_typed.TypeVar.to_name_exn v
-let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
-  if Ast_typed.ModuleVar.is_generated v
-  then generated_flag
-  else Ast_typed.ModuleVar.to_name_exn v
-
 let counter = ref 0
 let reset_counter () = counter := 0
 
