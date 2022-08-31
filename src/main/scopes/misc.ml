@@ -107,8 +107,7 @@ let add_shadowing_def : string -> def -> def_map -> def_map =  fun name def env 
     let definition_id = make_def_id name in
     let shadow = Def_map.filter
       (fun _ s_def -> match def, s_def with
-        | Variable _ , Variable _ | Type _ , Type _
-        | Module _, Module _ | ModuleAlias _, ModuleAlias _ 
+        | Variable _ , Variable _ | Type _ , Type _ | Module _, Module _
           -> not @@ String.equal (get_def_name s_def) name
         | _ -> true )
       env in

@@ -28,10 +28,9 @@ let definitions : Format.formatter -> def_map -> unit = fun f dm ->
         Format.fprintf ppf "|%a|@ %a" tys v.t refs v.references
     )
     | Type t -> Format.fprintf ppf ": %a" Ast_core.PP.type_expression t.content
-    | Module _ -> () (* Do not print content *)
-    | ModuleAlias _ -> () (* Do not print content *)
+    | Module _ -> () (* TODO: ?? *)
   in
-  let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) kvl in
+  let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ -> false | Variable _ -> true) kvl in
   let (types,modules) = List.partition_tf ~f:(fun (_,def) -> match def with |Type _ -> true | _ -> false) types in
   let pp_def f = List.iter ~f: (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) Location.pp (get_range v) pp_content v) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]" pp_def variables pp_def types pp_def modules
@@ -57,15 +56,8 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
       ("body_range", Location.to_yojson body_range);
       ("content", Ast_core.Yojson.type_expression content );
     ]
-  | Module { name ; range ; body_range ; members ; _ } ->
-    ignore members; (* DO NOT PRINT CONTENT (not necessary, only use internally)*)
-    `Assoc [
-      ("name", `String name);
-      ("range", Location.to_yojson range);
-      ("body_range", Location.to_yojson body_range);
-    ]
-  | ModuleAlias { name ; range ; body_range ; alias ; _ } ->
-    ignore alias; (* DO NOT PRINT CONTENT (not necessary, only use internally)*)
+  | Module { name ; range ; body_range ; mod_case } ->
+    ignore mod_case; (* DO NOT PRINT CONTENT (not necessary, only use internally)*)
     `Assoc [
       ("name", `String name);
       ("range", Location.to_yojson range);
@@ -74,7 +66,7 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
 
 and defs_json d : Yojson.Safe.t =
   let get_defs d =
-    let (v,tv) = List.partition_tf ~f:(fun (_,def) -> match def with Variable _ -> true | Type _ | Module _ | ModuleAlias _ -> false) (Def_map.to_kv_list d) in
+    let (v,tv) = List.partition_tf ~f:(fun (_,def) -> match def with Variable _ -> true | Type _ | Module _ -> false) (Def_map.to_kv_list d) in
     [
       ("variables", `Assoc (List.map ~f:(fun (def_id,def) -> (def_id,def_to_yojson def)) v));
       ("types", `Assoc (List.map ~f:(fun (def_id,def) -> (def_id,def_to_yojson def)) tv))
@@ -86,7 +78,7 @@ let scopes_json s : Yojson.Safe.t = `List (
   List.map
     ~f:(fun scope ->
       let sd = Def_map.to_kv_list scope.env in
-      let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ | ModuleAlias _ -> false | Variable _ -> true) sd in
+      let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ -> false | Variable _ -> true) sd in
       let v = List.map ~f:(fun (k,_) -> `String k) variables in
       let t = List.map ~f:(fun (k,_) -> `String k) types in
       (`Assoc [("range", Location.to_yojson scope.range) ; ("expression_environment", `List v) ; ("type_environment", `List t)])
