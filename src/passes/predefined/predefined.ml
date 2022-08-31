@@ -49,9 +49,6 @@ module Tree_abstraction = struct
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
     | "Tezos.sapling_verify_update" -> some_const C_SAPLING_VERIFY_UPDATE
 
-    (* Options module *)
-    | "Option.map"              -> some_const C_OPTION_MAP
-
     (* Set module *)
     | "Set.literal"    -> some_const C_SET_LITERAL
 
