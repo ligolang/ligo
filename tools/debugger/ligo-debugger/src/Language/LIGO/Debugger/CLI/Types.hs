@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
   ( module Language.LIGO.Debugger.CLI.Types
@@ -15,9 +17,11 @@ import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Scientific qualified as Sci
 import Data.Text qualified as T
+import Data.Typeable (cast)
 import Data.Vector qualified as V
 import Fmt (Buildable (..), blockListF, mapF, nameF, pretty, tupleF)
 import Fmt.Internal.Core (FromBuilder (..))
+import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
 import Text.Interpolation.Nyan (int, rmode')
@@ -418,12 +422,15 @@ instance FromJSON LigoMapper where
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}
 
+class (Exception e) => DebuggerException e
+
 data LigoException = LigoException
   { leMessage :: Text
   , leDescription :: Text
   , leLocation :: Maybe LigoPosition
   }
   deriving stock (Eq, Show)
+  deriving anyclass (DebuggerException)
 
 instance FromJSON LigoException where
   parseJSON = withObject "LIGO output" $ \o -> do
@@ -431,8 +438,7 @@ instance FromJSON LigoException where
     flip (withObject "Content") content $ \c -> do
       leMessage <- c .: "message"
       leDescription <- c .:? "description" .!= ""
-      location <- c .:? "location"
-      leLocation <- maybe (pure Nothing) parseJSON location
+      leLocation <- c .:? "location"
       pure LigoException{..}
 
 instance Default LigoException where
@@ -458,3 +464,31 @@ instance FromJSON EntrypointsList where
   parseJSON = withObject "list-declarations" \o -> do
     lst <- o .: "declarations"
     pure $ EntrypointsList lst
+
+-- TODO: move this instance to morley-debugger
+instance FromBuilder DAP.Message where
+  fromBuilder txt = DAP.defaultMessage
+    { DAP.formatMessage = fromBuilder txt
+    }
+
+newtype DapMessageException = DapMessageException DAP.Message
+  deriving newtype (Show, Buildable, FromBuilder)
+  deriving anyclass (DebuggerException)
+
+instance Exception DapMessageException where
+  displayException (DapMessageException msg) = DAP.formatMessage msg
+
+data SomeDebuggerException where
+  SomeDebuggerException :: DebuggerException e => e -> SomeDebuggerException
+
+deriving stock instance Show SomeDebuggerException
+
+instance Exception SomeDebuggerException where
+  displayException (SomeDebuggerException e) = displayException e
+
+  fromException e@(SomeException e') =
+    asum
+      [ SomeDebuggerException <$> fromException @LigoException e
+      , SomeDebuggerException <$> fromException @DapMessageException e
+      , cast @_ @SomeDebuggerException e'
+      ]

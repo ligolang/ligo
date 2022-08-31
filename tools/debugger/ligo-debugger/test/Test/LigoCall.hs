@@ -2,7 +2,8 @@ module Test.LigoCall
   ( module Test.LigoCall
   ) where
 
-import Control.Exception
+import Prelude hiding (try)
+
 import Test.Tasty (TestTree, testGroup)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -11,14 +12,14 @@ import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (mt)
 import Morley.Michelson.Untyped qualified as U
 import Test.Util
+import UnliftIO.Exception ( try )
 
 test_Compilation :: TestTree
 test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
-      eitherRes <- compileLigoContractDebug "main" file
-      res <- either throwIO pure eitherRes
+      res <- compileLigoContractDebug "main" file
       take 15 (toList $ lmLocations res) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
@@ -38,18 +39,18 @@ test_ExpressionCompilation = testGroup "Compiling expression"
   in
   [ testCase "Evaluating pure values" do
       res <- evalExprOverContract1 "(5n, \"abc\")"
-      res @?= Right (U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|]))
+      res @?= (U.ValuePair (U.ValueInt 5) (U.ValueString [mt|abc|]))
 
   , testCase "Relying on constants defined in the contract" do
       res <- evalExprOverContract1 "defEmptyStorage"
-      res @?= Right (U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|]))
+      res @?= (U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|]))
 
   , testCase "Relying on functions defined in the contract" do
-      res <- evalExprOverContract1 "defStorage \"a\""
+      res <- try @_ @LigoException $ evalExprOverContract1 "defStorage \"a\""
       res @? isRight
 
   , testCase "Non-existing variable" do
-      res <- evalExprOverContract1 "absentStorage"
+      res <- try @_ @LigoException $ evalExprOverContract1 "absentStorage"
       res @? isLeft
 
   ]

@@ -8,7 +8,6 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Control.Exception
 import Control.Lens (ix, makeLensesWith, (?~), (^?!))
 import Data.Default (Default (def))
 import Data.Map qualified as M
@@ -16,7 +15,6 @@ import Data.Singletons (SingI, sing)
 import Data.Singletons.Decide (decideEquality)
 import Data.Typeable ((:~:) (Refl))
 import Fmt (Buildable, pretty)
-import Morley.Michelson.Typed qualified as T
 import System.FilePath (combine, dropExtension, makeRelative)
 import System.Timeout (timeout)
 import Test.Tasty (TestTree, testGroup)
@@ -35,6 +33,7 @@ import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv)
 import Morley.Michelson.Typed (SomeValue)
+import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI.Call
@@ -63,8 +62,7 @@ mkSnapshotsFor
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory InterpretSnapshot)
 mkSnapshotsFor (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
-  result <- compileLigoContractDebug entrypoint file
-  ligoMapper <- either throwIO pure result
+  ligoMapper <- compileLigoContractDebug entrypoint file
   (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
@@ -754,8 +752,7 @@ unit_Contracts_locations_are_sensible = do
     testContract contractName = do
       let CheckingOptions{..} = fromMaybe def (specialContracts M.!? dropExtension contractName)
 
-      result <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
-      ligoMapper <- either throwIO pure result
+      ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _) <-
         case readLigoMapper ligoMapper of
