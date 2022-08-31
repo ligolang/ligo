@@ -174,7 +174,7 @@ update_release_metadata:
 #######################################################################
 update-versionned-doc:
   stage: tooling  
-  image: node:14.20.0-buster
+  image: node:16.17.0-buster
   tags:
     - docker
   before_script:
