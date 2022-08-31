@@ -259,8 +259,8 @@ data LigoTypeContentInner
       { _ltciTypeOperator :: Text
       , _ltciArguments :: [LigoTypeFull]
       }
-  | -- | `"t_arrow"`, note that the order of its arguments is reversed.
-    LTCArrow -- "type2" -> "type1"
+  | -- | `"t_arrow"`
+    LTCArrow
       { _ltciType2 :: LigoTypeFull
       , _ltciType1 :: LigoTypeFull
       }
@@ -799,7 +799,7 @@ fromLigoTypeFull = enclose . \case
       LTCArrow {..} -> do
         st <- get
         let mkArrow = TArrow `on` fromLigoTypeFull
-        return $ make' (st, mkArrow _ltciType2 _ltciType1)
+        return $ make' (st, mkArrow _ltciType1 _ltciType2)
 
     fromLigoRecordField
       :: Text
