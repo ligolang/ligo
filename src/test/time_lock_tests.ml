@@ -8,6 +8,7 @@ let get_program = get_program "./contracts/time-lock.ligo"
 let compile_main ~raise () =
   Test_helpers.compile_main ~raise "./contracts/time-lock.ligo" ()
 
+open Ligo_prim
 open Ast_imperative
 
 let empty_op_list =

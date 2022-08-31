@@ -1,9 +1,9 @@
-open Stage_common.Helpers
-open Stage_common.Types
+open Ligo_prim
 module Region = Simple_utils.Region
 module Attr = Lexing_shared.Attr
 
-let binder_attributes_of_strings (ss : string list) : binder_attributes =
+let binder_attributes_of_strings (ss : string list) : Binder.binder_attributes =
+  let open Binder in
   if List.mem ~equal:String.equal ss "var" then
       var_attribute
   else if List.mem ~equal:String.equal ss "const" then
@@ -13,12 +13,12 @@ let binder_attributes_of_strings (ss : string list) : binder_attributes =
 
 let strings_of_binder_attributes
       (lang : [`CameLIGO | `ReasonLIGO | `PascaLIGO | `JsLIGO ])
-      (attributes : binder_attributes) : string list =
-  let pureligo {const_or_var} =
+      (attributes : Binder.binder_attributes) : string list =
+  let pureligo {Binder.const_or_var} =
     match const_or_var with
                 | Some `Var -> ["var"]
                 | _ -> [] in
-  let impureligo {const_or_var} =
+  let impureligo {Binder.const_or_var} =
     match const_or_var with
                 | Some `Var -> ["var"]
                 | Some `Const -> ["const"]

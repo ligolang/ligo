@@ -1,5 +1,5 @@
-let specialise_and_print_pascaligo m =
-  let ast = Self_ast_imperative.decompile_imperative m in
+let specialise_and_print_pascaligo p =
+  let ast = Self_ast_imperative.decompile_imperative p in
   let cst = Tree_abstraction.Pascaligo.decompile_declarations ast in
   let source = Parsing.Pascaligo.pretty_print Parsing.Pascaligo.CST.{decl=cst ; eof = Lexing_pascaligo.Token.ghost_eof}
   in source
@@ -11,7 +11,7 @@ let specialise_and_print_expression_pascaligo expression =
   in source
 
 let specialise_and_print_cameligo m =
-  let cst = Tree_abstraction.Cameligo.decompile_module m in
+  let cst = Tree_abstraction.Cameligo.decompile_program m in
   let source = (Parsing.Cameligo.pretty_print cst)
   in source
 
@@ -21,7 +21,7 @@ let specialise_and_print_expression_cameligo expression =
   in source
 
 let specialise_and_print_reasonligo m =
-  let cst = Tree_abstraction.Reasonligo.decompile_module m in
+  let cst = Tree_abstraction.Reasonligo.decompile_program m in
   let source = (Parsing.Reasonligo.pretty_print cst)
   in source
 
@@ -36,7 +36,7 @@ let specialise_and_print_jsligo m =
   let ast =
     Self_ast_imperative.decompile_imperative m in
   let cst =
-    Tree_abstraction.Jsligo.decompile_module ast in
+    Tree_abstraction.Jsligo.decompile_program ast in
   let source =
     (Parsing.Jsligo.pretty_print cst)
   in source

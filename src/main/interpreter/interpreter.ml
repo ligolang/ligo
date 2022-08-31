@@ -3,6 +3,7 @@ open Simple_utils
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
 
+open Ligo_prim
 module AST = Ast_aggregated
 
 include AST.Types
@@ -46,6 +47,7 @@ let monad_option error = fun v ->
 
 let wrap_compare_result comp cmpres loc calltrace =
   let open Monad in
+  let open Ligo_prim.Constant in
   match comp with
   | C_EQ -> return (cmpres = 0)
   | C_NEQ -> return (cmpres <> 0)
@@ -126,7 +128,7 @@ let compare_constants c o1 o2 loc calltrace =
 let rec apply_comparison :
     Location.t ->
     calltrace ->
-    AST.constant' ->
+    Ligo_prim.Constant.constant' ->
     value list ->
     value Monad.t =
   fun loc calltrace c operands ->
@@ -179,8 +181,9 @@ let rec apply_comparison :
             l) ;
       fail @@ Errors.meta_lang_eval loc calltrace not_comparable_string
 
-let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> AST.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
+let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_file : Location.t -> calltrace -> AST.type_expression -> env -> Constant.constant' -> (value * AST.type_expression * Location.t) list -> value Monad.t =
   fun loc calltrace expr_ty env c operands ->
+  let open Constant in
   let open Monad in
   let eval_ligo = eval_ligo ~raise ~steps ~options ?source_file in
   let types = List.map ~f:(fun (_, b, _) -> b) operands in
@@ -747,7 +750,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
          return (v_none ())
       | Some (e, m) ->
          let* v = eval_ligo e calltrace env in
-         return @@ (v_some (V_Record (LMap.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
+         return @@ (v_some (V_Record (Record.of_list [ (Label "0", v) ; (Label "1", V_Mutation m) ]))))
     | ( C_TEST_MUTATE_VALUE , _  ) -> fail @@ error_type
     | ( C_TEST_SAVE_MUTATION , [(V_Ct (C_string dir)) ; (V_Mutation ((loc, _, _) as mutation)) ] ) ->
       let* reg = monad_option (Errors.generic_error loc "Not a valid mutation") @@ Location.get_file loc in
@@ -935,7 +938,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t) ?source_fil
   )
 
 (*interpreter*)
-and eval_literal : AST.literal -> value Monad.t = function
+and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
   | Literal_unit           -> Monad.return @@ V_Ct (C_unit)
   | Literal_int i          -> Monad.return @@ V_Ct (C_int i)
   | Literal_nat n          -> Monad.return @@ V_Ct (C_nat n)
@@ -993,11 +996,11 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let* args' = eval_ligo args calltrace env in
         match f' with
           | V_Func_val {arg_binder ; body ; env; rec_name = None ; orig_lambda } ->
-            let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+            let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             eval_ligo { body with location = term.location } (term.location :: calltrace) f_env'
           | V_Func_val {arg_binder ; body ; env; rec_name = Some fun_name; orig_lambda} ->
-            let AST.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
+            let Arrow.{ type1 = in_ty ; type2 = _ } = AST.get_t_arrow_exn orig_lambda.type_expression in
             let f_env' = Env.extend env arg_binder (in_ty, args') in
             let f_env'' = Env.extend f_env' fun_name (orig_lambda.type_expression, f') in
             eval_ligo { body with location = term.location } (term.location :: calltrace) f_env''
@@ -1010,7 +1013,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
             match Michelson_backend.run_michelson_func ~raise ~options ~loc:term.location ctxt code term.type_expression args' args.type_expression with
             | Ok v -> return v
             | Error data -> (
-              let { type1 = data_t ; _ } = AST.get_t_arrow_exn f.type_expression in
+              let Arrow.{ type1 = data_t ; _ } = AST.get_t_arrow_exn f.type_expression in
               let data_t = Michelson_backend.compile_type ~raise data_t in
               let data_opt = to_option @@ Michelson_to_value.decompile_to_untyped_value ~bigmaps:[] (clean_locations data_t) (clean_locations data) in
               match data_opt with
@@ -1020,7 +1023,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
           )
           | _ -> fail @@ Errors.generic_error term.location "Trying to apply on something that is not a function?"
       )
-    | E_lambda {binder; result;} ->
+    | E_lambda {binder; output_type=_; result;} ->
       let fv = Self_ast_aggregated.Helpers.Free_variables.expression term in
       let env = List.filter ~f:(fun (v, _) -> List.mem fv v ~equal:ValueVar.equal) env in
       return @@ V_Func_val {rec_name = None; orig_lambda = term ; arg_binder=binder.var ; body=result ; env}
@@ -1035,31 +1038,31 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       eval_literal l
     | E_variable var ->
       let fst (a, _, _) = a in
-      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" AST.PP.expression_variable var)) in
+      let {eval_term=v ; _} = try fst (Option.value_exn (Env.lookup env var)) with _ -> (failwith (Format.asprintf "unbound variable: %a" ValueVar.pp var)) in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
         (fun (label,(v:AST.expression)) ->
           let* v' = eval_ligo v calltrace env in
           return (label,v'))
-        (LMap.to_kv_list_rev recmap)
+        (Record.LMap.to_kv_list_rev recmap)
       in
-      return @@ V_Record (LMap.of_list lv')
-    | E_record_accessor { record ; path} -> (
+      return @@ V_Record (Record.of_list lv')
+    | E_accessor { record ; path} -> (
       let* record' = eval_ligo record calltrace env in
       match record' with
       | V_Record recmap ->
-        let a = LMap.find path recmap in
+        let a = Record.LMap.find path recmap in
         return a
       | _ -> failwith "trying to access a non-record"
     )
-    | E_record_update {record ; path ; update} -> (
+    | E_update {record ; path ; update} -> (
       let* record' = eval_ligo record calltrace env in
       match record' with
       | V_Record recmap ->
-        if LMap.mem path recmap then
+        if Record.LMap.mem path recmap then
           let* field' = eval_ligo update calltrace env in
-          return @@ V_Record (LMap.add path field' recmap)
+          return @@ V_Record (Record.LMap.add path field' recmap)
         else
           failwith "field l does not exist in record"
       | _ -> failwith "this expression isn't a record"
@@ -1107,10 +1110,10 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let env' = Env.extend env pattern (ty, proj) in
         eval_ligo body calltrace env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
-        let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
-        let cases = LMap.of_list (List.map ~f:ctor_body cases) in
+        let ctor_body (case : _ matching_content_case) = (case.constructor, case.body) in
+        let cases = Record.of_list (List.map ~f:ctor_body cases) in
         let get_case c =
-            (LMap.find (Label c) cases) in
+            (Record.LMap.find (Label c) cases) in
         let match_true  = get_case "True" in
         let match_false = get_case "False" in
         if b then eval_ligo match_true calltrace env
@@ -1118,8 +1121,8 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
       | Match_variant {cases ; tv} , V_Construct (matched_c , proj) ->
         let* tv = match AST.get_t_sum_opt tv with
           | Some tv ->
-             let {associated_type; michelson_annotation=_; decl_pos=_} = LMap.find
-                                  (Label matched_c) tv.content in
+             let {associated_type; michelson_annotation=_; decl_pos=_}: row_element = Record.LMap.find
+                                  (Label matched_c) tv.fields in
              return associated_type
           | None ->
              match AST.get_t_option tv with
@@ -1136,15 +1139,15 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
         let env' = Env.extend env pattern (tv, proj) in
         eval_ligo body calltrace env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
-        let aux : label ->  _ binder -> env -> env =
+        let aux : Label.t ->  _ Binder.t -> env -> env =
           fun l {var;ascr;attributes=_} env ->
-            let iv = match LMap.find_opt l rv with
+            let iv = match Record.LMap.find_opt l rv with
               | Some x -> x
               | None -> failwith "label do not match"
             in
-            Env.extend env var (Option.value_exn ascr,iv)
+            Env.extend env var (ascr,iv)
         in
-        let env' = LMap.fold aux fields env in
+        let env' = Record.LMap.fold aux fields env in
         eval_ligo body calltrace env'
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" AST.PP.expression term)
     )
@@ -1159,7 +1162,7 @@ and eval_ligo ~raise ~steps ~options ?source_file : AST.expression -> calltrace 
     | E_raw_code {language ; code} -> (
       let open AST in
       match code.expression_content with
-      | E_literal (Literal_string x) when String.equal language Stage_common.Backends.michelson && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
+      | E_literal (Literal_string x) when String.equal language Backend.Michelson.name && (is_t_arrow (get_type code) || is_t_arrow (term.type_expression)) ->
         let ast_ty = get_type code in
         let exp_as_string = Ligo_string.extract x in
         let code, code_ty = Michelson_backend.parse_raw_michelson_code ~raise exp_as_string ast_ty in
@@ -1179,7 +1182,7 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let aux decl r =
     let ds, defs = r in
     match decl.Location.wrap_content with
-    | Ast_typed.Declaration_constant { binder ; expr ; _ } ->
+    | Ast_typed.Declaration.Declaration_constant { binder ; expr ; _ } ->
       let var = binder.var in
       if not (ValueVar.is_generated var) && (Base.String.is_prefix (ValueVar.to_name_exn var) ~prefix:"test") then
         let expr = Ast_typed.(e_a_variable var expr.type_expression) in
@@ -1193,9 +1196,9 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   let ctxt = Ligo_compile.Of_typed.compile_program ~raise decl_lst in
   let initial_state = Execution_monad.make_state ~raise ~options in
   let f (n, t) r =
-    let s, _ = ValueVar.internal_get_name_and_counter n.var in
-    LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
-  let map = List.fold_right lst ~f ~init:LMap.empty in
+    let s, _ = ValueVar.internal_get_name_and_counter n.Binder.var in
+    Record.LMap.add (Label s) (Ast_typed.e_a_variable n.var t) r in
+  let map = List.fold_right lst ~f ~init:Record.LMap.empty in
   let expr = Ast_typed.e_a_record map in
   let expr = ctxt expr in
   let expr = trace ~raise Main_errors.self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr in
@@ -1203,8 +1206,8 @@ let eval_test ~raise ~steps ~options ?source_file : Ast_typed.program -> ((strin
   match value with
   | V_Record m ->
     let f (n, _) r =
-      let s, _ = ValueVar.internal_get_name_and_counter n.var in
-      match LMap.find_opt (Label s) m with
+      let s, _ = ValueVar.internal_get_name_and_counter n.Binder.var in
+      match Record.LMap.find_opt (Label s) m with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r in
     List.fold_right ~f ~init:[] @@ lst

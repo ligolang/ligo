@@ -5,7 +5,8 @@ let expression_ppformat ~display_format f typed =
   | Human_readable | Dev -> PP.expression f typed
 
 let expression_jsonformat p : json =
-  To_yojson.expression p
+  Types.expression_to_yojson p
+
 let expression_format : 'a format = {
   pp = expression_ppformat;
   to_json = expression_jsonformat;

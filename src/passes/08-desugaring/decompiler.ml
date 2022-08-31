@@ -3,10 +3,10 @@ module O = Ast_core
 
 module Location = Simple_utils.Location
 module Pair     = Simple_utils.Pair
-open Stage_common.Maps
+open Ligo_prim
 
-let decompile_exp_attributes : O.known_attributes -> I.attributes = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
-  let aux : string list -> (unit -> string option) -> O.attributes = fun acc is_fun ->
+let decompile_exp_attributes : O.Attr.value -> I.Attr.value = fun { inline ; no_mutation ; view ; public ; hidden ; thunk } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.value = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -21,8 +21,8 @@ let decompile_exp_attributes : O.known_attributes -> I.attributes = fun { inline
       (fun () -> if thunk then Some "thunk" else None) ;
     ]
 
-let decompile_type_attributes : O.type_attribute -> I.attributes = fun { public ; hidden } ->
-  let aux : string list -> (unit -> string option) -> O.attributes = fun acc is_fun ->
+let decompile_type_attributes : O.Attr.type_ -> I.Attr.type_ = fun { public ; hidden } ->
+  let aux : string list -> (unit -> string option) -> I.Attr.type_ = fun acc is_fun ->
     match is_fun () with
     | Some v -> v::acc
     | None -> acc
@@ -44,34 +44,34 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
     match te.type_content with
       | O.T_variable type_variable -> return @@ T_variable type_variable
       | O.T_app tc ->
-        let tc = type_app self tc in
+        let tc = Type_app.map self tc in
         return @@ T_app tc
       | O.T_sum {fields;layout} ->
         let fields =
-          O.LMap.map (fun v ->
+          Record.map (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let associated_type = self associated_type in
             let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
-            let v' : _ I.row_element = {associated_type;attributes;decl_pos} in
+            let v' : _ Rows.row_element = {associated_type;attributes;decl_pos} in
             v'
           ) fields
         in
-        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" Layout.pp l))] | None -> [] in
         return @@ I.T_sum {fields ; attributes}
       | O.T_record {fields;layout} ->
         let fields =
-          O.LMap.map (fun v ->
+          Record.map (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let associated_type = self associated_type in
             let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
-            let v' : _ I.row_element = {associated_type ; attributes ; decl_pos} in
+            let v' : _ Rows.row_element = {associated_type ; attributes ; decl_pos} in
             v'
           ) fields
         in
-        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" Layout.pp l))] | None -> [] in
         return @@ I.T_record { fields ; attributes }
       | O.T_arrow arr ->
-        let arr = arrow self arr in
+        let arr = Arrow.map self arr in
         return @@ T_arrow arr
       | O.T_module_accessor ma -> return @@ T_module_accessor ma
       | O.T_singleton x -> return @@ I.T_singleton x
@@ -82,14 +82,16 @@ let rec decompile_type_expression : O.type_expression -> I.type_expression =
         let type_ = self x.type_ in
         return @@ I.T_for_all { x with type_ }
 
-let decompile_pattern_to_string pattern = 
-  let p = Stage_common.Helpers.map_pattern_t (binder decompile_type_expression) pattern in
+let decompile_type_expression_option = Option.map ~f:decompile_type_expression
+let decompile_pattern_to_string pattern =
+  let p = Pattern.map (decompile_type_expression_option) pattern in
   Purification.Decompiler.decompile_pattern_to_string p
 
 let rec decompile_expression : O.expression -> I.expression =
   fun e ->
   let self = decompile_expression in
   let self_type = decompile_type_expression in
+  let self_type_opt = decompile_type_expression_option in
   let return expr = I.make_e ~loc:e.location expr in
   match e.sugar with
     Some e -> e
@@ -101,100 +103,97 @@ let rec decompile_expression : O.expression -> I.expression =
       return @@ I.E_constant {cons_name = cons_name;arguments}
     | O.E_variable name -> return @@ I.E_variable name
     | O.E_application app ->
-      let app = application self app in
+      let app = Application.map self app in
       return @@ I.E_application app
     | O.E_lambda lamb ->
-      let lamb = lambda self self_type lamb in
+      let lamb = Lambda.map self self_type_opt lamb in
       return @@ I.E_lambda lamb
     | O.E_type_abstraction ta ->
-      let ta = type_abs self ta in
+      let ta = Type_abs.map self ta in
       return @@ I.E_type_abstraction ta
     | O.E_recursive recs ->
-      let recs = recursive self self_type recs in
+      let recs = Recursive.map self self_type recs in
       return @@ I.E_recursive recs
     | O.E_let_in {let_binder = {var; ascr;attributes=_};attr={inline=false;no_mutation=_;view=_;public=_;hidden=_;thunk=false};rhs=expr1;let_result=expr2}
-      when O.ValueVar.is_name var "()"
+      when ValueVar.is_name var "()"
            && Stdlib.(=) ascr (Some (O.t_unit ())) ->
       let expr1 = self expr1 in
       let expr2 = self expr2 in
       return @@ I.E_sequence {expr1;expr2}
     | O.E_let_in {let_binder;attr;rhs;let_result} ->
-      let let_binder = binder self_type let_binder in
+      let let_binder = Binder.map self_type_opt let_binder in
       let rhs = self rhs in
       let let_result = self let_result in
       let attributes = if attr.inline then ["inline"] else [] in
-      return @@ I.E_let_in {let_binder;mut=false;attributes;rhs;let_result}
+      return @@ I.E_let_in {let_binder;attributes;rhs;let_result}
     | O.E_type_in {type_binder; rhs; let_result} ->
       let rhs = self_type rhs in
       let let_result = self let_result in
       return @@ I.E_type_in {type_binder; rhs; let_result}
-    | O.E_mod_in mi ->
-      let f = Stage_common.Maps.mod_in
-        decompile_expression
-        decompile_type_expression
-        decompile_exp_attributes
-        decompile_type_attributes
-        decompile_module_attributes
-      in
-      return @@ I.E_mod_in (f mi)
+    | O.E_mod_in {module_binder;rhs;let_result} ->
+      let rhs = decompile_module_expr rhs in
+      let let_result = self let_result in
+      return @@ I.E_mod_in {module_binder;rhs;let_result}
     | O.E_raw_code rc ->
-      let rc = raw_code self rc in
+      let rc = Raw_code.map self rc in
       return @@ I.E_raw_code rc
     | O.E_constructor const ->
-      let const = constructor self const in
+      let const = Constructor.map self const in
       return @@ I.E_constructor const
-    | O.E_matching {matchee; cases} ->
-      let matchee = self matchee in
-      let aux :
-        (O.expression, O.type_expression) O.match_case -> (I.expression, I.type_expression) I.match_case =
-          fun {pattern ; body} ->
-            let body = self body in
-            let pattern = Stage_common.Helpers.map_pattern_t (binder self_type) pattern in
-            I.{pattern ; body}
-      in
-      let cases = List.map ~f:aux cases in
-      return @@ I.E_matching {matchee ; cases}
-    | O.E_record record ->
-      let record = O.LMap.to_kv_list_rev record in
-      let record =
-        List.map ~f:(fun (O.Label k,v) ->
-          let v = self v in
-          (I.Label k,v)
-        ) record
-      in
-      return @@ I.E_record (I.LMap.of_list record)
-    | O.E_record_accessor {record;path} ->
+    | O.E_matching m ->
+      let m = Match_expr.map self self_type_opt m in
+      return @@ I.E_matching m
+    | O.E_record recd ->
+      let recd = Record.map self recd in
+      return @@ I.E_record recd
+    | O.E_accessor {record;path} ->
       let record = self record in
       let Label path  = path in
-      return @@ I.E_accessor {record;path=[I.Access_record path]}
-    | O.E_record_update {record;path;update} ->
+      return @@ I.E_accessor {record;path=[Access_record path]}
+    | O.E_update {record;path;update} ->
       let record = self record in
       let update = self update in
       let Label path  = path in
-      return @@ I.E_update {record;path=[I.Access_record path];update}
+      return @@ I.E_update {record;path=[Access_record path];update}
     | O.E_ascription {anno_expr; type_annotation} ->
       let anno_expr = self anno_expr in
       let type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
     | O.E_module_accessor ma -> return @@ E_module_accessor ma
     | O.E_assign a ->
-      let a = assign self self_type a in
+      let a = Assign.map self self_type_opt a in
       return @@ I.E_assign a
 
-and decompile_lambda : _ O.lambda -> _ I.lambda =
-  fun {binder=b;output_type;result}->
-    let binder = binder decompile_type_expression b in
-    let output_type = Option.map ~f:decompile_type_expression output_type in
-    let result = decompile_expression result in
-    I.{binder;output_type;result}
+and decompile_declaration : O.declaration -> I.declaration = fun d ->
+  let return wrap_content : I.declaration = {d with wrap_content} in
+  match Location.unwrap d with
+  | Declaration_type {type_binder;type_expr;type_attr} ->
+    let type_expr = decompile_type_expression type_expr in
+    let type_attr = decompile_type_attributes type_attr in
+    return @@ Declaration_type {type_binder;type_expr;type_attr}
+  | Declaration_constant {binder;expr;attr} ->
+    let binder = Binder.map decompile_type_expression_option binder in
+    let expr   = decompile_expression expr in
+    let attr   = decompile_exp_attributes attr in
+    return @@ Declaration_constant {binder;expr;attr}
+  | Declaration_module {module_binder;module_;module_attr} ->
+    let module_ = decompile_module_expr module_ in
+    let module_attr = decompile_module_attributes module_attr in
+    return @@ Declaration_module {module_binder;module_;module_attr}
 
+and decompile_module_expr : O.module_expr -> I.module_expr = fun me ->
+  let return wrap_content : I.module_expr = {me with wrap_content} in
+  match me.wrap_content with
+    M_struct lst ->
+      let lst = decompile_module lst in
+      return @@ M_struct lst
+  | M_variable mv ->
+      return @@ M_variable mv
+  | M_module_path mp ->
+      return @@ M_module_path mp
+
+and decompile_decl : O.decl -> I.decl = fun (Decl d) -> Decl (decompile_declaration d)
 and decompile_module : O.module_ -> I.module_ = fun m ->
-  (* List.map ~f:(Location.map decompile_declaration) m *)
-  let pass = Stage_common.Maps.declarations
-    decompile_expression
-    decompile_type_expression
-    decompile_exp_attributes
-    decompile_type_attributes
-    decompile_module_attributes
-  in
-  pass m
+  List.map ~f:decompile_decl m
+
+let decompile_program = List.map ~f:decompile_declaration

@@ -86,12 +86,21 @@ let%expect_test _ =
     module E =
       Mangled_module_____________________test__contracts__build__E____mligo.
     const toto = ADD(E.toto , C.B.A.toto)
-    const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
+    const fbrecord[tata -> int , tete -> int , titi -> int , toto -> int] =
+      record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
     const main =
-      lambda (gen#5 : ( int * int )) return  match gen#5 with
-                                              | ( p , s ) ->
-                                              let s = ADD(ADD(p , s) ,
-                                              toto) in ( LIST_EMPTY() , s ) |}]
+      lambda (gen#5( int * int ))( list (operation) * int ) return  match
+                                                                     gen#5 with
+                                                                     | ( p , s ) ->
+                                                                     let sint =
+                                                                       ADD
+                                                                       (ADD
+                                                                        (p ,
+                                                                        s) ,
+                                                                        toto) in
+                                                                     ( LIST_EMPTY
+                                                                       () ,
+                                                                       s ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile" ; "contract" ; contract "instance/main.mligo" ] ;
@@ -107,7 +116,7 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
-                         
+
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "instance/main.mligo" ] ;
   [%expect {|
@@ -115,10 +124,11 @@ let%expect_test _ =
       Mangled_module_____________________test__contracts__build__instance____________common__errors____mligo.
     module Storage =
       Mangled_module_____________________test__contracts__build__instance____________common__storage____mligo.
-    const main =
-      lambda (gen#2 : ( unit * string )) return  match gen#2 with
-                                                  | ( _#4 , _#3 ) ->
-                                                  ( LIST_EMPTY() , CONCAT(Errors.undefined_token , Storage.s) ) |}]
+    const main( unit * string ) -> ( list (operation) * string ) =
+      lambda (gen#2( unit * string ))( list (operation) * string ) return
+       match gen#2 with
+        | ( _#4 , _#3 ) ->
+        ( LIST_EMPTY() , CONCAT(Errors.undefined_token , Storage.s) ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print" ; "mini-c" ; contract "D.mligo" ] ;

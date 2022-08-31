@@ -1,3 +1,4 @@
+open Ligo_prim
 open Ast_aggregated
 
 (* Problem we are solving
@@ -68,10 +69,10 @@ module Effect = struct
   let new_payload () : payload = {effects = ValueVarMap.empty; read = None}
   let empty : t = {env = ValueVarMap.empty; global = new_payload ()}
 
-  let add_effect t (ev : expression_variable) (type_ : type_expression) =
+  let add_effect t (ev : ValueVar.t) (type_ : type_expression) =
   {t with global = {t.global with effects = ValueVarMap.add ev type_ t.global.effects}}
 
-  let add_read_effect (t:t) (ev : expression_variable) (type_ : type_expression) =
+  let add_read_effect (t:t) (ev : ValueVar.t) (type_ : type_expression) =
     {t with global = {t.global with read = Some(match t.global.read with None -> ValueVarMap.singleton ev type_ | Some (read) -> ValueVarMap.add ev type_ read)}}
 
   let add_effects t ev_set =
@@ -79,7 +80,7 @@ module Effect = struct
     let new_    = ValueVarMap.union (fun _ a _ -> Some (a)) current ev_set in
     { t with global = {t.global with effects=new_}}
 
-  let store_binders_effects_func (t : t) (binder : expression_variable) =
+  let store_binders_effects_func (t : t) (binder : ValueVar.t) =
     let global = t.global in
     let t = {
       env = ValueVarMap.add binder t.global t.env;
@@ -87,7 +88,7 @@ module Effect = struct
     } in
     t
 
-  let store_binders_effects_var (t : t) (binder : expression_variable) =
+  let store_binders_effects_var (t : t) (binder : ValueVar.t) =
     let global = t.global in
     let store  = {effects=t.global.effects; read=None} in
     let t = {
@@ -115,13 +116,13 @@ module Effect = struct
   let pp ppf (t : t) =
     let pp_global ppf payload =
       Format.fprintf ppf "(%a),%a"
-      (PP.list_sep_d ValueVar.pp) (ValueVarMap.keys payload.effects)
-      (Format.pp_print_option ~none:(fun ppf () -> Format.fprintf ppf "None") (fun ppf -> Format.fprintf ppf "(%a)" (PP.list_sep_d ValueVar.pp))) (Option.map ~f:ValueVarMap.keys payload.read)
+      (PP_helpers.list_sep_d ValueVar.pp) (ValueVarMap.keys payload.effects)
+      (Format.pp_print_option ~none:(fun ppf () -> Format.fprintf ppf "None") (fun ppf -> Format.fprintf ppf "(%a)" (PP_helpers.list_sep_d ValueVar.pp))) (Option.map ~f:ValueVarMap.keys payload.read)
     in
     Format.fprintf ppf "Effects : @.
     @[{ env : %a @.
     global : %a } @]\n%!"
-    PP.(list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "%a => %a" ValueVar.pp a pp_global b) ) (ValueVarMap.to_kv_list t.env)
+    PP_helpers.(list_sep_d (fun ppf (a,b) -> Format.fprintf ppf "%a => %a" ValueVar.pp a pp_global b) ) (ValueVarMap.to_kv_list t.env)
     pp_global t.global
 
   let make_tuple (ev_list : type_expression ValueVarMap.t) : expression =
@@ -133,21 +134,21 @@ module Effect = struct
     let tuple,tuple_type = List.unzip ev_list in
     (* For function with no read effect *)
     match tuple with [] -> e_a_unit ()
-    | _ -> e_record (LMap.of_list @@ List.map ~f:(fun (i,e) -> Label (string_of_int i),e) tuple)
-      @@ t_record ~layout:L_tree @@ LMap.of_list @@ List.map ~f:(fun (i,t) ->
-       Label (string_of_int i),
-       {associated_type=t ; michelson_annotation=None ; decl_pos = 0})tuple_type
+    | _ -> e_record (Record.of_list @@ List.map ~f:(fun (i,e) -> Label.of_int i,e) tuple)
+      @@ t_record ~layout:L_tree @@ Record.of_list @@ List.map ~f:(fun (i,t) ->
+       (Label.of_int i,
+       (Rows.{associated_type=t ; michelson_annotation=None ; decl_pos = 0} : row_element)))tuple_type
 
-  let get_read_effect (t:t) (ev : expression_variable) =
+  let get_read_effect (t:t) (ev : ValueVar.t) =
     match ValueVarMap.find_opt ev t.env with
       None -> None
     | Some ({effects=_; read=None}) -> None
     | Some {effects=_; read=Some(read)} ->
-      if ValueVarMap.(compare Compare.type_expression read empty) = 0
+      if ValueVarMap.(compare compare_type_expression read empty) = 0
         then None else Some (make_tuple read)
 
-  let get_effect_var (t:t) (ev : expression_variable) =
-    (* Format.printf "get effect for %a in %a\n%!" PP.expression_variable ev pp t; *)
+  let get_effect_var (t:t) (ev : ValueVar.t) =
+    (* Format.printf "get effect for %a in %a\n%!" PP.ValueVar.t ev pp t; *)
     match ValueVarMap.find_opt ev t.env with
       None -> (None,None)
     | Some ({effects;read}) ->
@@ -157,13 +158,13 @@ module Effect = struct
             let map = (i,(ev,t)) :: map in
             i+1,map
         ) effects (0,[]) in
-        let effects' = LMap.of_list @@ List.map ~f:(fun (i,(var,ty)) -> Label (string_of_int i),{var;ascr=Some ty;attributes={const_or_var=None}}) map in
+        let effects' = Record.of_list @@ List.map ~f:(fun (i,(var,ascr)) -> Label.of_int i,({var;ascr;attributes={const_or_var=None}}: _ Binder.t)) map in
         effects', make_tuple effects
       in
       let empty_to_none f a = if ValueVarMap.is_empty a then None else Some (f a)  in
       empty_to_none aux effects, Option.map ~f:aux read
 
-  let rm_var (ev : expression_variable) (t : t) =
+  let rm_var (ev : ValueVar.t) (t : t) =
     let read = match t.global.read with None -> None
     | Some (read) ->
       let read = ValueVarMap.remove ev read in
@@ -180,7 +181,7 @@ end
 
 module ValueVarSet = Caml.Set.Make(ValueVar)
 let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
-  (* Format.printf "detect_effect_in_expression %a with mut_var %a\n%!" PP.expression e (Format.pp_print_seq ~pp_sep:(fun ppf () -> Format.fprintf ppf ",") PP.expression_variable) (ValueVarSet.to_seq mut_var); *)
+  (* Format.printf "detect_effect_in_expression %a with mut_var %a\n%!" PP.expression e (Format.pp_print_seq ~pp_sep:(fun ppf () -> Format.fprintf ppf ",") PP.ValueVar.t) (ValueVarSet.to_seq mut_var); *)
   let self ?(mut_var = mut_var) e = detect_effect_in_expression mut_var e in
   let return effect = (* Format.printf "effect_detected in %a : %a\n%!" PP.expression e Effect.pp effect; *) effect in
   match e.expression_content with
@@ -238,24 +239,24 @@ let rec detect_effect_in_expression (mut_var : ValueVarSet.t) (e : expression) =
             ) cases in
           Effect.concat effect
       | Match_record {fields;body;tv=_}->
-        let mut_var = LMap.fold (fun _ {var;ascr=_;attributes;} mut_var -> (match attributes.const_or_var with
-          Some (`Var) -> ValueVarSet.add var mut_var | _ -> mut_var) ) fields mut_var in
+        let mut_var = Record.fold (fun mut_var ({var;ascr=_;attributes;}:_ Binder.t) -> (match attributes.const_or_var with
+          Some (`Var) -> ValueVarSet.add var mut_var | _ -> mut_var) ) mut_var fields in
         let effect = self ~mut_var body in
-        let effect = LMap.fold (fun _ b -> Effect.rm_var b.var) fields effect in
+        let effect = Record.fold (fun e b -> Effect.rm_var b.Binder.var e) effect fields in
         effect
       ) in
       effect
   (* Record *)
   | E_record map ->
-    Effect.concat @@ List.map ~f:(fun e -> self e) @@ LMap.to_list map
-  | E_record_accessor {record;path=_} -> self record
-  | E_record_update {record;path=_;update} ->
+    Effect.concat @@ List.map ~f:(fun e -> self e) @@ Record.LMap.to_list map
+  | E_accessor {record;path=_} -> self record
+  | E_update {record;path=_;update} ->
     let effect = self record in
     let effect = Effect.add effect @@ self update in
     effect
   | E_assign {binder;expression} ->
     let effect = self expression in
-    return @@ Effect.add_effect effect binder.var (Option.value_exn binder.ascr)
+    return @@ Effect.add_effect effect binder.var binder.ascr
 
 (*
     This function attend to transform expression that have effect in an rhs.
@@ -286,9 +287,9 @@ let rec add_to_the_top_of_function_body binder effects effects_type e =
   let self = add_to_the_top_of_function_body binder effects effects_type in
   let return expression_content = { e with expression_content } in
   match e.expression_content with
-    E_lambda {binder;result}->
+    E_lambda {binder;output_type;result}->
       let result = self result in
-      return @@ E_lambda {binder;result}
+      return @@ E_lambda {binder;output_type;result}
   | _  ->
     e_matching {matchee = e_variable binder effects_type;
       cases = Match_record {fields = effects; body = e; tv = effects_type}}
@@ -297,37 +298,40 @@ let rec add_to_the_top_of_function_body binder effects effects_type e =
 (* Change 'a -> 'b -> .... -> 'return into 'read_effect_type -> 'a -> 'b -> ... -> 'effect_type * 'return *)
 let morph_function_type (read_effect_type : type_expression option) (effect_type : type_expression option) (fun_type : type_expression) =
   let rec add_to_retun_type effect_type fun_type =
-  let self = add_to_retun_type effect_type in
-  let return type_content = {fun_type with type_content} in
-  match fun_type.type_content with
-    T_variable _ | T_constant _ | T_sum _ | T_record _ | T_singleton _ ->
-      (match effect_type with None -> fun_type | Some (e) -> t_pair e fun_type)
-  | T_arrow {type1;type2} ->
-    let type2 = self type2 in
-    return @@ T_arrow {type1;type2}
-  | T_for_all {ty_binder;kind;type_} ->
-    let type_ = self type_ in
-    return @@ T_for_all {ty_binder;kind;type_}
-  in match read_effect_type with
+    let self = add_to_retun_type effect_type in
+    let return ascr ret type_content = {fun_type with type_content},ascr,ret in
+    match fun_type.type_content with
+      T_variable _ | T_constant _ | T_sum _ | T_record _ | T_singleton _ ->
+        (match effect_type with None -> fun_type,t_unit(),fun_type | Some (e) -> let t = t_pair e fun_type in t,t_unit(),t)
+    | T_arrow {type1;type2} ->
+      let type2,_,_ = self type2 in
+      return type1 type2 @@ T_arrow {type1;type2}
+    | T_for_all {ty_binder;kind;type_} ->
+      let type_,ascr,ret = self type_ in
+      return ascr ret @@ T_for_all {ty_binder;kind;type_}
+  in
+  match read_effect_type with
     None -> add_to_retun_type effect_type fun_type
-  | Some (read_effect_type) -> t_arrow read_effect_type (add_to_retun_type effect_type fun_type) ()
+  | Some (read_effect_type) ->
+    let ret,_,_ = (add_to_retun_type effect_type fun_type) in
+    t_arrow read_effect_type ret (), read_effect_type, ret
 
 let add_parameter read_effect read_effects effects_type rhs =
   (* Format.printf "add_parameters to rhs: %a" PP.expression rhs; *)
   match rhs.expression_content with
     E_lambda _ ->
+      let lambda_type,ascr,output_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) rhs.type_expression in
       let var = ValueVar.fresh ~name:"effect_binder" () in
-      let binder = {var;ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+      let binder : _ Binder.t = {var;ascr;attributes=Binder.empty_attribute} in
       let result = add_to_the_top_of_function_body var read_effects read_effect.type_expression rhs in
-      let lambda_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) rhs.type_expression in
-      e_lambda {binder;result} lambda_type
+      e_lambda {binder;output_type;result} lambda_type
   | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
+      let fun_type,ascr,output_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) fun_type in
       let var = ValueVar.fresh ~name:"effect_binder" () in
-      let binder_eff = {var;ascr=None;attributes=Stage_common.Helpers.empty_attribute} in
+      let binder_eff : _ Binder.t = {var;ascr;attributes=Binder.empty_attribute} in
       let result = add_to_the_top_of_function_body var read_effects read_effect.type_expression result in
-      let result = e_lambda {binder;result} rhs.type_expression in
-      let fun_type = morph_function_type (Some read_effect.type_expression) (Some effects_type) fun_type in
-      e_recursive {fun_name;fun_type;lambda={binder=binder_eff;result}} fun_type
+      let result = e_lambda {binder;output_type;result} rhs.type_expression in
+      e_recursive {fun_name;fun_type;lambda={binder=binder_eff;output_type;result}} fun_type
   | _ -> failwith "Add_parameters: not a function"
 
 let rec morph_function_application (effect : Effect.t) (e: expression) : _ * expression =
@@ -337,42 +341,41 @@ let rec morph_function_application (effect : Effect.t) (e: expression) : _ * exp
   | E_variable variable ->
       (match Effect.get_effect_var effect variable with
         returned_effect,None ->
-          let type_ = morph_function_type None (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
+          let type_,_,_ = morph_function_type None (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
           return returned_effect type_ @@ E_variable variable
       | returned_effect,Some (_,read_effects) ->
-          let type_ = morph_function_type (Some read_effects.type_expression) (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
+          let type_,_,type2 = morph_function_type (Some read_effects.type_expression) (Option.map ~f:(fun (_,x) -> x.type_expression) returned_effect) e.type_expression in
           let e     = e_variable variable type_ in
-          let {type1=_;type2} = get_t_arrow_exn type_ in
           return returned_effect type2 @@ E_application {lamb=e;args=read_effects})
   | E_type_inst {forall;type_} ->
       let returned_effect,forall = self forall in
-      let {ty_binder;kind=_;type_=ty} = get_t_for_all_exn forall.type_expression in
+      let {Abstraction.ty_binder;kind=_;type_=ty} = get_t_for_all_exn forall.type_expression in
       let ty = Helpers.subst_type ty_binder type_ ty in
       return returned_effect ty @@ E_type_inst {forall;type_}
   | E_application {lamb;args} ->
       let returned_effect,lamb = self lamb in
-      let {type1=_;type2} = get_t_arrow_exn lamb.type_expression in
+      let Arrow.{type1=_;type2} = get_t_arrow_exn lamb.type_expression in
       return returned_effect type2 @@ E_application {lamb;args}
   | _ -> failwith "Hypothesis 3 don't hold"
 
 let match_on_write_effect let_binder rhs let_result effects effect_type =
   let effect_var = ValueVar.fresh ~name:"effect_binder" () in
-  let effect_binder = {var=effect_var;ascr=Some effect_type;attributes={const_or_var=None}} in
+  let effect_binder : _ Binder.t = {var=effect_var;ascr=effect_type;attributes={const_or_var=None}} in
   let let_result = e_matching {matchee=e_variable effect_var effect_type;cases=
     Match_record {fields=effects;body=let_result;tv=effect_type}} let_result.type_expression in
   let tv = t_pair effect_type rhs.type_expression in
   E_matching {matchee=rhs;cases=
     Match_record {
-      fields=LMap.of_list
+      fields=Record.of_list
       [
-        (Label "0",effect_binder);
-        (Label "1",let_binder)
+        (Label.of_int 0,effect_binder);
+        (Label.of_int 1,let_binder)
       ];
       body=let_result;tv}
     }
 
 let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) : expression =
-  (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Stage_common.PP.option_type_expression expression) returned_effect; *)
+  (* Format.printf "Morph_expression %a with effect : (%a)\n%!" PP.expression e PP.(Ligo_prim.PP.option_type_expression expression) returned_effect; *)
   let return_1 ?returned_effect e =
     match returned_effect with None -> e
     | Some (ret_eff) -> e_a_pair ret_eff e  in
@@ -398,7 +401,7 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
                  collect ] as arguments} ->
       (* The effect should be provided by the E_let_in otherwise there is a failure in the detection *)
       (match returned_effect with Some (effects) ->
-      let cons_name = (match cons_name with
+      let cons_name : Constant.constant' = (match cons_name with
           C_LIST_ITER -> C_LIST_FOLD
         | C_MAP_ITER  -> C_MAP_FOLD
         | C_SET_ITER  -> C_SET_FOLD
@@ -408,12 +411,12 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
       let effects_binder = ValueVar.fresh ~name:"effects_binder" () in
       let result = self ?returned_effect result in
       let binder,result = (match get_e_record effects with Some (effects_rec) -> (* list of effect *)
-      let effects_lmap = LMap.map (fun e -> let var = get_e_variable_exn e in  {var; ascr = Some e.type_expression;attributes={const_or_var=None}}) (effects_rec) in
+      let effects_lmap = Record.map (fun e -> let var = get_e_variable_exn e in  ({var; ascr =e.type_expression;attributes={const_or_var=None}}: _ Binder.t)) (effects_rec) in
         effects_binder, add_to_the_top_of_function_body effects_binder effects_lmap effects.type_expression result
       | None -> get_e_variable_exn effects, result (* single effect *)
       ) in
       let effects = e_a_pair effects (e_a_unit ()) in
-      let effects_lmap = LMap.of_list @@ [(Label "0",{var=binder;ascr=Some(effects.type_expression);attributes={const_or_var=None}});(Label "1",{var=ValueVar.fresh ~name:"()" ();ascr=Some (t_unit ());attributes={const_or_var=None}})] in
+      let effects_lmap = Record.of_list @@ [(Label "0",({var=binder;ascr=(effects.type_expression);attributes={const_or_var=None}}: _ Binder.t));(Label "1",{var=ValueVar.fresh ~name:"()" ();ascr=(t_unit ());attributes={const_or_var=None}})] in
       (* modify parameters of lambda *)
       let lambda = (
         (* match effect_binder with (...)*)
@@ -421,11 +424,11 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
         let result = add_to_the_top_of_function_body effecs_binder effects_lmap effects.type_expression result in
         (* match iterm_param with (effect_binder,var) -> *)
         let iter_param = ValueVar.fresh ~name:"iter_param" () in
-        let params = e_a_pair (e_variable effecs_binder effects.type_expression) (e_variable var (Option.value_exn ascr)) in
-        let params_lmap = LMap.of_list @@ [(Label "0",{var=effecs_binder;ascr=Some(effects.type_expression);attributes={const_or_var=None}});(Label "1",{var;ascr;attributes={const_or_var=None}})] in
+        let params = e_a_pair (e_variable effecs_binder effects.type_expression) (e_variable var ascr) in
+        let params_lmap = Record.of_list @@ [(Label "0",({var=effecs_binder;ascr=(effects.type_expression);attributes={const_or_var=None}}: _ Binder.t));(Label "1",{var;ascr;attributes={const_or_var=None}})] in
         let result = add_to_the_top_of_function_body iter_param params_lmap params.type_expression result in
         let ty = t_arrow (params.type_expression) result.type_expression () in
-        e_lambda {binder={var=iter_param;ascr=Some(params.type_expression);attributes={const_or_var=None}};result} ty
+        e_lambda {binder={var=iter_param;ascr=(params.type_expression);attributes={const_or_var=None}};output_type=result.type_expression;result} ty
       ) in
       return_1 @@ e_constant {cons_name;arguments=[lambda;collect;effects]} effects.type_expression
       (* Normal usage of ITERATORS *)
@@ -446,19 +449,19 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
         let effect_type = ret_effect.type_expression in
         match returned_effect with
           (* optimize when ret_effect = returned_effect *)
-          Some (returned_effect) when Compare.expression returned_effect ret_effect = 0 -> return_1 @@ e
+          Some (returned_effect) when equal_expression returned_effect ret_effect -> return_1 @@ e
         |  _ ->
         let func_ret = ValueVar.fresh ~name:"func_ret" () in
-        let func_binder = {var=func_ret;ascr=Some e.type_expression;attributes={const_or_var=None}} in
+        let func_binder : _ Binder.t = {var=func_ret;ascr=e.type_expression;attributes={const_or_var=None}} in
         let res = return ?returned_effect @@ E_variable func_ret in
         return @@ match_on_write_effect func_binder e res effects effect_type
       )
-  | E_lambda {binder;result} ->
+  | E_lambda {binder;output_type;result} ->
       let result = self ?returned_effect result in
-      return @@ E_lambda {binder;result}
-  | E_recursive {fun_name;fun_type;lambda={binder;result}} ->
+      return @@ E_lambda {binder;output_type;result}
+  | E_recursive {fun_name;fun_type;lambda={binder;output_type;result}} ->
       let result = self ?returned_effect result in
-      return @@ E_recursive {fun_name;fun_type;lambda={binder;result}}
+      return @@ E_recursive {fun_name;fun_type;lambda={binder;output_type;result}}
       (*
     (* This detect let () = x := a in res, an assignation in a sequence *)
   | E_let_in {let_binder=_;rhs={expression_content=E_assign{variable;access_path=_;expression};_};let_result;attr} ->
@@ -516,20 +519,20 @@ let rec morph_expression ?(returned_effect) (effect : Effect.t) (e: expression) 
     return @@ E_matching {matchee;cases}
   (* Record *)
   | E_record record ->
-      let record = LMap.map self record in
+      let record = Record.map self record in
       return ?returned_effect @@ E_record record
-  | E_record_accessor {record;path} ->
+  | E_accessor {record;path} ->
       let record = self record in
-      return ?returned_effect @@ E_record_accessor {record;path}
-  | E_record_update {record;path;update} ->
+      return ?returned_effect @@ E_accessor {record;path}
+  | E_update {record;path;update} ->
       let record = self record in
       let update = self update in
-      return ?returned_effect @@ E_record_update {record;path;update}
+      return ?returned_effect @@ E_update {record;path;update}
   (* Todo : check if we can replace by morphin directly let () = x := e in into let x = e in *)
   | E_assign {binder;expression} ->
       let expression = self expression in
       let let_binder = binder in
-      let attr = {inline = false; no_mutation = false; view = false; public = false; hidden = false ; thunk = false} in
+      let attr = Attr.{inline = false; no_mutation = false; view = false; public = false; hidden = false; thunk = false} in
       let rhs = expression in
       (* Todo : Check for correct use *)
       let let_result = return ?returned_effect @@ e_unit () in

@@ -1064,8 +1064,11 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "sequence.mligo" ; ];
   [%expect {|
-    const y =
-      lambda (_#2 : unit) return let _x : nat = +1 in let ()#5 : unit = let _x : nat = +2 in unit in let ()#4 : unit = let _x : nat = +23 in unit in let ()#3 : unit = let _x : nat = +42 in unit in _x |}]
+    const yunit -> nat =
+      lambda (_#2unit)nat return let _xnat = +1 in
+                                 let ()#5unit = let _xnat = +2 in unit in
+                                 let ()#4unit = let _xnat = +23 in unit in
+                                 let ()#3unit = let _xnat = +42 in unit in _x |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "bad_address_format.religo" ; "--werror" ] ;
@@ -1637,6 +1640,14 @@ let%expect_test _ =
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
 
+    File "../../test/contracts/self_without_entrypoint.ligo", line 8, characters 41-63:
+      7 |   {
+      8 |     const self_contract: contract(int) = Tezos.self("%default") ;
+      9 |     const op : operation = Tezos.transaction (2, 300tz, self_contract) ;
+
+    Warning: Tezos.self type annotation.
+    Annotation "contract (int)" was given, but contract being compiled would expect "contract (int)".
+    Note that "Tezos.self" refers to the current contract, so the parameters should be generally the same.
     { parameter int ;
       storage nat ;
       code { CDR ;
@@ -1734,12 +1745,11 @@ Invalid entrypoint "Toto". One of the following patterns is expected:
   run_ligo_good ["print" ; "ast-imperative"; contract "letin.mligo"];
   [%expect {|
 type storage = (int , int)
-const main : (int , storage) -> (list (operation) , storage) =
+const main(int , storage) -> (list (operation) , storage) =
   lambda (n : (int , storage)) : (list (operation) , storage) return
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
-  (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return true
+  (set[] : list (operation) , x)const f0 = lambda (_a : string) return true
 const f1 = lambda (_a : string) return true
 const f2 = lambda (_a : string) return true
 const letin_nesting =
@@ -1772,8 +1782,7 @@ const main =
   lambda (n : (int , storage)) : (list (operation) , storage) return
   let x : (int , int) = let x : int = 7 in
                         (ADD(x ,n.0) , ADD(n.1.0 ,n.1.1)) in
-  (list[] : list (operation) , x)
-const f0 = lambda (_a : string) return true
+  (set[] : list (operation) , x)const f0 = lambda (_a : string) return true
 const f1 = lambda (_a : string) return true
 const f2 = lambda (_a : string) return true
 const letin_nesting =
@@ -2102,22 +2111,29 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "remove_recursion.mligo" ] ;
   [%expect {|
-    const f =
-      lambda (n : int) return let f : int -> int = rec (f:int -> int => lambda (n : int) return let gen#2[@var] = EQ(n ,
-      0) in  match gen#2 with
-              | False unit_proj#3 ->
-                (f)@(C_POLYMORPHIC_SUB(n ,
-                1))
-              | True unit_proj#4 ->
-                1 ) in (f)@(4)
-    const g =
-      rec (g:int -> int -> int -> int => lambda (f : int -> int) return (g)@(let h : int -> int = rec (h:int -> int => lambda (n : int) return let gen#5[@var] = EQ(n ,
-      0) in  match gen#5 with
-              | False unit_proj#6 ->
-                (h)@(C_POLYMORPHIC_SUB(n ,
-                1))
-              | True unit_proj#7 ->
-                1 ) in h) ) |}]
+    const fint -> int =
+      lambda (nint)int return let fint -> int =
+                                rec (fint -> int => lambda (nint)int return
+                              let gen#2[@var]bool = EQ(n , 0) in
+                               match gen#2 with
+                                | False unit_proj#3 ->
+                                  (f)@(C_POLYMORPHIC_SUB(n , 1))
+                                | True unit_proj#4 ->
+                                  1) in
+                              (f)@(4)
+    const gint -> int -> int -> int =
+      rec (gint -> int -> int -> int => lambda (fint -> int)int -> int return
+      (g)@(let hint -> int =
+             rec (hint -> int => lambda (nint)int return let gen#5[@var]bool =
+                                                           EQ(n , 0) in
+                                                          match gen#5 with
+                                                           | False unit_proj#6 ->
+                                                             (h)@(C_POLYMORPHIC_SUB
+                                                                  (n ,
+                                                                   1))
+                                                           | True unit_proj#7 ->
+                                                             1) in
+           h)) |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; bad_contract "reuse_variable_name_top.jsligo" ] ;
@@ -2153,14 +2169,18 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "attributes.jsligo" ] ;
   [%expect {|
-    const x = 1[@inline][@private]
-    const foo = lambda (a : int) return let test[@var] = C_POLYMORPHIC_ADD(2 ,
-      a)[@inline] in test[@inline][@private]
-    const y = 1[@private]
-    const bar =
-      lambda (b : int) return let test[@var] = lambda (z : int) return C_POLYMORPHIC_ADD(C_POLYMORPHIC_ADD(2 ,
-      b) , z)[@inline] in (test)@(b)[@private]
-    const check = 4[@private] |}]
+    const x[@var] = 1[@inline][@private]
+    const foo[@var] =
+      lambda (aint)int return let test[@var]int =
+                                C_POLYMORPHIC_ADD(2 , a)[@inline][@private] in
+                              test[@inline][@private]const y[@var] = 1[@private]
+    const bar[@var] =
+      lambda (bint)int return let test[@var]int -> int =
+                                lambda (zint)int return C_POLYMORPHIC_ADD
+                                                        (C_POLYMORPHIC_ADD(2 , b) ,
+                                                         z)[@inline][@private] in
+                              (test)@(b)[@private]
+    const check[@var] = 4[@private] |}]
 
 (* literal type "casting" inside modules *)
 let%expect_test _ =
@@ -2325,30 +2345,26 @@ let%expect_test _ =
   [%expect{|
     { "types":
         [ { "type_content":
-              [ "t_constant",
-                { "language": "Michelson", "injection": "unit",
-                  "parameters": [] } ], "type_meta": [ "None", null ],
-            "location": [ "Virtual", "generated" ],
-            "orig_var": [ "None", null ] },
+              [ "T_constant",
+                { "language": "Michelson", "injection": [ "Unit" ],
+                  "parameters": [] } ], "type_meta": null, "orig_var": null,
+            "location": [ "Virtual", "generated" ] },
           { "type_content":
-              [ "t_arrow",
+              [ "T_arrow",
                 { "type1":
                     { "type_content":
-                        [ "t_constant",
-                          { "language": "Michelson", "injection": "unit",
-                            "parameters": [] } ], "type_meta": [ "None", null ],
-                      "location": [ "Virtual", "generated" ],
-                      "orig_var": [ "None", null ] },
+                        [ "T_constant",
+                          { "language": "Michelson", "injection": [ "Unit" ],
+                            "parameters": [] } ], "type_meta": null,
+                      "orig_var": null, "location": [ "Virtual", "generated" ] },
                   "type2":
                     { "type_content":
-                        [ "t_constant",
-                          { "language": "Michelson", "injection": "unit",
-                            "parameters": [] } ], "type_meta": [ "None", null ],
-                      "location": [ "Virtual", "generated" ],
-                      "orig_var": [ "None", null ] } } ],
-            "type_meta": [ "None", null ],
-            "location": [ "Virtual", "generated" ],
-            "orig_var": [ "None", null ] } ],
+                        [ "T_constant",
+                          { "language": "Michelson", "injection": [ "Unit" ],
+                            "parameters": [] } ], "type_meta": null,
+                      "orig_var": null, "location": [ "Virtual", "generated" ] } } ],
+            "type_meta": null, "orig_var": null,
+            "location": [ "Virtual", "generated" ] } ],
       "michelson":
         { "expression":
             [ { "prim": "parameter", "args": [ { "prim": "unit" } ] },
@@ -2414,22 +2430,44 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print" ; "ast-typed" ; contract "tuple_decl_pos.mligo" ] ;
   [%expect {|
-const c =
-  lambda (gen#5 : unit) return CREATE_CONTRACT(lambda (gen#2 : ( unit * unit )) return
-   match gen#2 with
-    | ( _#4 , _#3 ) ->
-    ( LIST_EMPTY() , unit ) ,
-  None(unit) , 0mutez , unit)
+const cunit -> ( operation * address ) =
+  lambda (gen#5unit)( operation * address ) return CREATE_CONTRACT(lambda (gen#2
+                                                                   ( unit * unit ))
+                                                                   ( list (operation) * unit ) return
+                                                                    match
+                                                                    gen#2 with
+                                                                    |
+                                                                    ( _#4 , _#3 ) ->
+                                                                    ( LIST_EMPTY
+                                                                    () ,
+                                                                    unit ) ,
+                                                                   None(unit) ,
+                                                                   0mutez ,
+                                                                   unit)
 const foo =
-  let gen#8[@var] = (c)@(unit) in  match gen#8 with
-                                    | ( _a , _b ) ->
-                                    unit
-const c =
-  lambda (gen#6 : unit) return ( 1 , "1" , +1 , 2 , "2" , +2 , 3 , "3" , +3 , 4 , "4" )
+  let gen#8[@var]( operation * address ) = (c)@(unit) in
+   match gen#8 with
+    | ( _a , _b ) ->
+    unit
+const cunit -> ( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+  lambda (gen#6unit)( int * string * nat * int * string * nat * int * string * nat * int * string ) return
+  ( 1 ,
+    "1" ,
+    +1 ,
+    2 ,
+    "2" ,
+    +2 ,
+    3 ,
+    "3" ,
+    +3 ,
+    4 ,
+    "4" )
 const foo =
-  let gen#10[@var] = (c)@(unit) in  match gen#10 with
-                                     | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
-                                     unit |} ]
+  let gen#10[@var]( int * string * nat * int * string * nat * int * string * nat * int * string ) =
+    (c)@(unit) in
+   match gen#10 with
+    | ( _i1 , _s1 , _n1 , _i2 , _s2 , _n2 , _i3 , _s3 , _n3 , _i4 , _s4 ) ->
+    unit |} ]
 
 (* Module being defined does not type with its own type *)
 let%expect_test _ =

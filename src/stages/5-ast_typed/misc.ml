@@ -3,13 +3,14 @@ module List        = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 open Simple_utils
 open Types
+open Ligo_prim
 
 (* TODO: does that need to be cleaned-up ? *)
 module Free_variables = struct
 
-  type bindings = expression_variable list
-  let mem : bindings -> expression_variable -> bool = List.mem ~equal:ValueVar.equal
-  let singleton : expression_variable -> bindings = fun s -> [ s ]
+  type bindings = ValueVar.t list
+  let mem : bindings -> ValueVar.t -> bool = List.mem ~equal:ValueVar.equal
+  let singleton : ValueVar.t -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
@@ -27,9 +28,9 @@ module Free_variables = struct
       )
     | E_application {lamb;args} -> unions @@ List.map ~f:self [ lamb ; args ]
     | E_constructor {element;_} -> self element
-    | E_record m -> unions @@ List.map ~f:self @@ LMap.to_list m
-    | E_record_accessor {record;_} -> self record
-    | E_record_update {record; update;_} -> union (self record) @@ self update
+    | E_record m -> unions @@ List.map ~f:self @@ Record.LMap.to_list m
+    | E_accessor {record;_} -> self record
+    | E_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
     | E_let_in { let_binder; rhs; let_result; _} ->
       let b' = union (singleton let_binder.var) b in
@@ -48,21 +49,21 @@ module Free_variables = struct
       let b' = union (singleton binder.var) b in
       expression b' e
 
-  and lambda : bindings -> lambda -> bindings = fun b l ->
+  and lambda : bindings -> (expr,ty_expr) Lambda.t -> bindings = fun b l ->
     let b' = union (singleton l.binder.var) b in
     expression b' l.result
 
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-    and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
+    and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> _ matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
       f (union (singleton pattern) b) body
 
     and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
       match m with
       | Match_variant { cases ; tv=_ } -> unions @@ List.map ~f:(matching_variant_case f b) cases
       | Match_record {fields; body; tv = _} ->
-        f (union (List.map ~f:(fun b -> b.var) (LMap.to_list fields)) b) body
+        f (union (List.map ~f:(fun b -> b.var) (Record.LMap.to_list fields)) b) body
 
     and matching_expression = fun x -> matching expression x
 
@@ -80,13 +81,8 @@ let rec assert_list_eq f = fun a b -> match (a,b) with
     assert_list_eq f tla tlb
   )
 
-let layout_eq a b = match (a,b) with
-  | L_comb, L_comb
-  | L_tree, L_tree -> true
-  | _ -> false
-
 let constant_compare ia ib =
-  Stage_common.Constant.compare ia ib
+  Literal_types.compare ia ib
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
@@ -100,9 +96,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list_rev sa.content in
-      let sb' = LMap.to_kv_list_rev sb.content in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
+      let sa' = Record.LMap.to_kv_list_rev sa.fields in
+      let sb' = Record.LMap.to_kv_list_rev sb.fields in
+      let aux ((ka, ({associated_type=va;_} : row_element)), (kb, ({associated_type=vb;_} : row_element))) =
         let* _ = assert_eq ka kb in
         assert_type_expression_eq (va, vb)
       in
@@ -111,14 +107,12 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_sum _, _ -> None
   | T_record ra, T_record rb
-       when Bool.(<>) (Helpers.is_tuple_lmap ra.content) (Helpers.is_tuple_lmap rb.content) -> None
+       when Bool.(<>) (Record.is_tuple ra.fields) (Record.is_tuple rb.fields) -> None
   | T_record ra, T_record rb -> (
-      let sort_lmap r' = List.sort ~compare:(fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.content in
-      let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.content in
-      let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
-        let Label ka = ka in
-        let Label kb = kb in
+      let sort_lmap r' = List.sort ~compare:(fun (a,_) (b,_) -> Label.compare a b) r' in
+      let ra' = sort_lmap @@ Record.LMap.to_kv_list_rev ra.fields in
+      let rb' = sort_lmap @@ Record.LMap.to_kv_list_rev rb.fields in
+      let aux ((ka, ({associated_type=va;_} : row_element)), (kb, ({associated_type=vb;_} : row_element))) =
         let* _ = assert_eq ka kb in
         assert_type_expression_eq (va, vb)
       in
@@ -140,16 +134,16 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_singleton _ , _ -> None
   | T_abstraction a , T_abstraction b ->
     assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (equal_kind a.kind b.kind))
+    Some (assert (Kind.equal a.kind b.kind))
   | T_for_all a , T_for_all b ->
     assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
-    Some (assert (equal_kind a.kind b.kind))
+    Some (assert (Kind.equal a.kind b.kind))
   | T_abstraction _ , _ -> None
   | T_for_all _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 
-and assert_literal_eq (a, b : literal * literal) : unit option =
+and assert_literal_eq (a, b : Literal_value.t * Literal_value.t) : unit option =
   match (a, b) with
   | Literal_int a, Literal_int b when Z.equal a b -> Some ()
   | Literal_int _, Literal_int _ -> None
@@ -204,10 +198,10 @@ and assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_chest_key _, Literal_chest_key _ -> None
   | Literal_chest_key _, _ -> None
 
-let get_entry (lst : program) (name : expression_variable) : expression option =
+let get_entry (lst : program) (name : ValueVar.t) : expression option =
   let aux x =
     match Location.unwrap x with
-    | Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _ }} -> (
+    | Types.Declaration.Declaration_constant { binder; expr ; attr = {inline=_ ; no_mutation = _ ; view = _ ; public = _ ; hidden = _ ; thunk = _}} -> (
       if   (ValueVar.equal name binder.var)
       then Some expr
       else None
@@ -221,7 +215,7 @@ let get_type_of_contract ty =
   match ty with
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
-    | T_record tin , T_record tout when (Helpers.is_tuple_lmap tin.content) && (Helpers.is_tuple_lmap tout.content) ->
+    | T_record tin , T_record tout when (Record.is_tuple tin.fields) && (Record.is_tuple tout.fields) ->
       let open Simple_utils.Option in
       let* (parameter,storage) = Combinators.get_t_pair type1 in
       let* (listop,storage') = Combinators.get_t_pair type2 in

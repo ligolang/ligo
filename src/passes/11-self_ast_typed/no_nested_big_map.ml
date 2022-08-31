@@ -1,7 +1,7 @@
 open Errors
+open Ligo_prim
 open Ast_typed
 open Simple_utils.Trace
-open Stage_common.Constant
 
 type contract_pass_data = Contract_passes.contract_pass_data
 
@@ -17,11 +17,11 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
     let _ = List.map ~f:(check_no_nested_bigmap ~raise is_in_bigmap) parameters in
     ()
   | T_sum s ->
-    let es = List.map ~f:(fun {associated_type;_} -> associated_type) (LMap.to_list s.content) in
+    let es = List.map ~f:(fun {associated_type;_} -> associated_type) (Record.LMap.to_list s.fields) in
     let _ = List.map ~f:(fun l -> check_no_nested_bigmap ~raise is_in_bigmap l) es in
     ()
-  | T_record {content=elm;_} ->
-    let _ = LMap.map (fun {associated_type;_} -> check_no_nested_bigmap ~raise is_in_bigmap associated_type) elm in
+  | T_record {fields=elm;_} ->
+    let _ = Record.map (fun ({associated_type;_}: row_element) -> check_no_nested_bigmap ~raise is_in_bigmap associated_type) elm in
     ()
   | T_arrow { type1; type2 } ->
     let _ = check_no_nested_bigmap ~raise false type1 in

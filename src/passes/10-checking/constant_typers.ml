@@ -5,6 +5,7 @@ open Simple_utils.Trace
 open Errors
 open Ast_typed
 open H
+open Ligo_prim
 
 (*
   Each constant has its own type.
@@ -60,10 +61,10 @@ let rec record_comparator ~raise ~test : Location.t -> string -> typer = fun loc
     trace_option ~raise (comparator_composed loc a) @@
     get_t_record a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_record b in
-  let aux a b : type_expression =
+  let aux (a : row_element) (b : row_element) : type_expression =
     comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
-  let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let _ = List.map2_exn ~f:aux (Record.LMap.to_list a_r.fields) (Record.LMap.to_list b_r.fields) in
   t_bool ()
 
 and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a b ->
@@ -74,10 +75,10 @@ and sum_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> t
     trace_option ~raise (comparator_composed loc a) @@
     get_t_sum a in
   let b_r = trace_option ~raise (expected_variant loc b) @@ get_t_sum b in
-  let aux a b : type_expression =
+  let aux (a : row_element) (b : row_element) : type_expression =
     comparator ~cmp:s ~raise ~test loc [a.associated_type;b.associated_type] None
   in
-  let _ = List.map2_exn ~f:aux (LMap.to_list a_r.content) (LMap.to_list b_r.content) in
+  let _ = List.map2_exn ~f:aux (Record.LMap.to_list a_r.fields) (Record.LMap.to_list b_r.fields) in
   t_bool ()
 
 and list_comparator ~raise ~test : Location.t -> string -> typer = fun loc s -> typer_2 ~raise loc s @@ fun a_lst b_lst ->
@@ -227,30 +228,30 @@ let only_on_protocol ~protocol typer : typer = fun ~error ~raise ~options ~loc -
     fun _ _ -> None
 
 
-module CTMap = Simple_utils.Map.Make(struct type t = O.constant' let compare x y = O.Compare.constant' x y end)
+module CTMap = Simple_utils.Map.Make(struct type t = Constant.constant' let compare x y = Constant.compare_constant' x y end)
 type t = typer CTMap.t
 
 module Constant_types = struct
 
-  let a_var = O.TypeVar.of_input_var "'a"
-  let b_var = O.TypeVar.of_input_var "'b"
-  let c_var = O.TypeVar.of_input_var "'c"
+  let a_var = TypeVar.of_input_var "'a"
+  let b_var = TypeVar.of_input_var "'b"
+  let c_var = TypeVar.of_input_var "'c"
 
   (* Helpers *)
   let for_all binder f =
-    let binder = O.TypeVar.of_input_var ("'" ^ binder) in
+    let binder = TypeVar.of_input_var ("'" ^ binder) in
     t_for_all binder Type (f (t_variable binder ()))
 
   let (^->) arg ret = t_arrow arg ret ()
 
-  let of_type c t =
+  let of_type (c : Constant.constant') t =
     c, any_of [typer_of_ligo_type t]
 
   let of_type_since ~since ~constant c t =
     let _, t = of_type c t in
     c, constant_since_protocol ~since ~constant @@ t
 
-  let of_types c ts =
+  let of_types (c : Constant.constant') ts =
     (c, any_of (List.map ~f:(fun v -> typer_of_ligo_type v) ts))
 
   let of_types_protocol c ts =
@@ -575,6 +576,6 @@ let constant_typers ~raise ~options loc c =
      let error = ref [] in
      (match typer ~error ~raise ~options ~loc lst tv_opt with
       | Some tv -> tv
-      | None -> raise.error (corner_case @@ Format.asprintf "Cannot type constant %a" PP.constant' c))
+      | None -> raise.error (corner_case @@ Format.asprintf "Cannot type constant %a" Constant.pp_constant' c))
   | _ ->
-     raise.error (corner_case @@ Format.asprintf "Typer not implemented for constant %a" PP.constant' c)
+     raise.error (corner_case @@ Format.asprintf "Typer not implemented for constant %a" Constant.pp_constant' c)
