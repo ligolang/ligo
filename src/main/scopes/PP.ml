@@ -56,8 +56,8 @@ let rec def_to_yojson : def -> Yojson.Safe.t = function
       ("body_range", Location.to_yojson body_range);
       ("content", Ast_core.Yojson.type_expression content );
     ]
-  | Module { name ; range ; body_range ; mod_case } ->
-    ignore mod_case; (* DO NOT PRINT CONTENT (not necessary, only use internally)*)
+  | Module { name ; range ; body_range ; mod_case ; references } ->
+    ignore (mod_case,references); (* TODO: fix this *)
     `Assoc [
       ("name", `String name);
       ("range", Location.to_yojson range);
