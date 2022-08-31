@@ -376,7 +376,7 @@ instance Pretty J.UInt where
 
 instance LPP1 d ModuleAccess where
   lpp1 = \case
-    ModuleAccess path field -> mconcat (punctuate "." path) <> lpp field
+    ModuleAccess path field -> mconcat (punctuate "." path) <> "." <> lpp field
 
 instance LPP1 d QualifiedName where
   lpp1 = \case

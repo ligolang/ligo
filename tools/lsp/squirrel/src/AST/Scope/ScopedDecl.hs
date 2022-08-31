@@ -182,7 +182,6 @@ instance Pretty ScopedDecl where
   pp (ScopedDecl n o refs doc _ _ ns) =
     sexpr "decl" [pp n, pp ns, pp o, pp refs, pp doc]
 
--- TODO: handle namespaces
 lppDeclCategory :: ScopedDecl -> Doc
 lppDeclCategory decl = case _sdSpec decl of
   TypeSpec tparams tspec ->

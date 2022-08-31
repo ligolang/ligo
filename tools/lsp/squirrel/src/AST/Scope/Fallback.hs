@@ -8,6 +8,7 @@ module AST.Scope.Fallback
 import Control.Applicative (Alternative (..))
 import Control.Arrow ((&&&))
 import Control.Lens (makeLenses, view, _1, (%~), (^.), (|>))
+import Control.Monad.Reader (runReader)
 import Control.Monad.RWS.Strict (RWS, asks, evalRWS, get, local, modify, tell, void)
 import Control.Monad.Writer (Endo (..), Writer, execWriter)
 import Data.Bifunctor (first)
@@ -742,8 +743,8 @@ functionScopedDecl docs nameNode paramNodes typ body = do
   getName nameNode <<&>> \(PreprocessedRange origin, name) ->
     let
       _vdsInitRange = getRange <$> body
-      _vdsParams = pure $ parseParameters paramNodes
-      _vdsTspec = parseTypeDeclSpecifics <$> typ
+      _vdsParams = pure $ runReader (parseParameters paramNodes) dialect
+      _vdsTspec = runReader (traverse parseTypeDeclSpecifics typ) dialect
     in
     ScopedDecl
       { _sdName = name
@@ -767,6 +768,12 @@ valueScopedDecl
 valueScopedDecl docs nameNode typ body = do
   dialect <- askDialect
   namespace <- askNamespace
+
+  let
+    _vdsInitRange = getRange <$> body
+    _vdsParams = Nothing
+    _vdsTspec = runReader (traverse parseTypeDeclSpecifics typ) dialect
+
   getName nameNode <<&>> \(PreprocessedRange origin, name) ->
     ScopedDecl
       { _sdName = name
@@ -777,10 +784,6 @@ valueScopedDecl docs nameNode typ body = do
       , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
       , _sdNamespace = namespace
       }
-  where
-    _vdsInitRange = getRange <$> body
-    _vdsParams = Nothing
-    _vdsTspec = parseTypeDeclSpecifics <$> typ
 
 typeScopedDecl
   :: ( PPableLIGO info
@@ -800,7 +803,7 @@ typeScopedDecl docs nameNode body = do
       , _sdRefs = []
       , _sdDoc = docs
       , _sdDialect = dialect
-      , _sdSpec = TypeSpec Nothing (parseTypeDeclSpecifics body)  -- The type variables are filled later
+      , _sdSpec = TypeSpec Nothing $ runReader (parseTypeDeclSpecifics body) dialect  -- The type variables are filled later
       , _sdNamespace = namespace
       }
 
