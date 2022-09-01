@@ -17,6 +17,7 @@ BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts
 
 FILES_PATH_TO_EDIT=(
     "$ROOT_FOLDER/tools/webide/Dockerfile"
+    "$ROOT_FOLDER/gitlab-pages/doc/intro/installation.md
 )
 
 for VERSION_FOLDER in `ls $ROOT_FOLDER/gitlab-pages/website/versioned_docs/`
