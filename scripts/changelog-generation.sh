@@ -12,5 +12,5 @@ mustache ./changelog.json ./scripts/changelog.txt.mustache > changelog.txt
 
 jq '.changelog[0]' changelog.json > release-notes.json
 
-mustache ./changelog.json ./scripts/release-notes.md.mustache > release-notes.md
-mustache ./changelog.json ./scripts/release-notes.txt.mustache > release-notes.txt
+mustache ./release-notes.json ./scripts/release-notes.md.mustache > release-notes.md
+mustache ./release-notes.json ./scripts/release-notes.txt.mustache > release-notes.txt
