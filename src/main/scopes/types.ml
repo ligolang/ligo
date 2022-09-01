@@ -59,15 +59,21 @@ module Definitions = struct
     | Module x , Module y -> String.equal x.name y.name
     | (Variable _ | Type _ | Module _) , (Variable _ | Type _ | Module _) -> false
 
-  let merge_refs : string -> def -> def -> def option = fun _ a b ->
+  let rec merge_refs : string -> def -> def -> def option = fun _ a b ->
     match a,b with
     | Variable a , Variable b ->
       let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
       Some (Variable { a with references })
-    (* TODO: implement for Module & ModuleAlias *)
+    | Module ({ mod_case=Alias _ ; _ } as a), Module ({ mod_case=Alias _ ; _ } as b) ->
+      let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
+      Some (Module { a with references })
+    | Module ({ mod_case=Def d1 ; _ } as a), Module ({ mod_case=Def d2 ; _ } as b) ->
+      let references = List.dedup_and_sort ~compare:Location.compare (a.references @ b.references) in
+      let mod_case = Def (merge_defs d1 d2) in
+      Some (Module { a with references ; mod_case })
     | (Variable _ |Type _ | Module _) , (Variable _ |Type _ | Module _) -> Some a
 
-  let merge_defs a b =
+  and merge_defs a b =
     Def_map.union merge_refs a b
 
   let get_def_name = function
@@ -117,7 +123,7 @@ module Definitions = struct
 
   let add_module_reference : Ast_core.module_variable list -> def_map -> def_map = fun mvs env ->
     let rec update_module_reference env mv =
-      let rec aux d =
+      let aux d =
         match d with
         | Module ({ name ; mod_case ; references ; _ } as m)  ->
             (match Ast_core.ModuleVar.is_name mv name with
@@ -137,6 +143,7 @@ module Definitions = struct
     in
     List.fold_left mvs ~init:env ~f:update_module_reference
 
+  (* TODO: simplify this *)
   let add_module_element_reference : Ast_core.module_variable list -> Ast_core.expression_variable -> def_map -> def_map =
     fun mvs element env ->
       let (let*) x f = Option.bind x ~f in
@@ -144,17 +151,17 @@ module Definitions = struct
       let find_module acc mv =
         let* (xs,env) = acc in
         match Def_map.find_opt (get_mod_binder_name mv) env with
-        | Some (Module { mod_case = Alias alias }) ->
+        | Some (Module { mod_case = Alias alias ; _ }) ->
           let aux env n =
             let* env = env in
             match Def_map.find_opt n env with
-            | Some (Module { mod_case = Def env }) -> Some env
+            | Some (Module { mod_case = Def env ; _ } ) -> Some env
             | Some _ -> None
             | None -> None
           in
           let* def = List.fold_left alias ~init:(Some env) ~f:aux in
           Some (alias@xs,def)
-        | Some (Module { mod_case = Def def }) ->
+        | Some (Module { mod_case = Def def ; _ }) ->
           Some ((get_mod_binder_name mv)::xs,def)
         | Some _ -> None
         | None -> None

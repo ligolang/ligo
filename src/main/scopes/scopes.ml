@@ -35,6 +35,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       match rhs.wrap_content with
       | M_struct decls ->
         let (all_defs, env, scopes, _) = List.fold_left ~f:declaration ~init:(all_defs, env, scopes, partials) decls in
+        let all_defs = merge_defs env all_defs in
         let def = make_m_def ~range ~body_range:rhs.location (get_mod_binder_name module_binder) env in
         let env = add_shadowing_def (get_mod_binder_name module_binder) def env in
         let all_defs = merge_defs env all_defs in
@@ -130,7 +131,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
     | E_module_accessor { module_path ; element } -> (
       let env = add_module_reference module_path env in
       let env = add_module_element_reference module_path element env in
-      (* TODO: add scope *)
       let scopes = add_scope (lastloc, env) scopes in
       (all_defs,env,scopes)
     )
@@ -145,7 +145,7 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       (all_defs,env,scopes)
     )
     | E_assign { binder ; expression ; _ } -> (
-      (* in case of e_assign I dont think a shadowing def needs to be added ?? *)
+      (* QUESTION: in case of e_assign I dont think a shadowing def needs to be added ?? *)
       let def = make_v_def bindings binder.var ?core_type:binder.ascr (Ast_typed.ValueVar.get_location binder.var) expression.location in
       let env = add_shadowing_def (get_binder_name binder.var) def env in
       let all_defs = merge_defs env all_defs in
@@ -202,19 +202,22 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       let range = ModVar.get_location module_binder in
       match module_.wrap_content with
       | M_struct m ->
-        let (top_def_map, _new_inner_def_map, scopes, _) = List.fold_left ~f:declaration ~init:(top_def_map, inner_def_map, scopes, partials) m in
+        let (top_def_map, new_inner_def_map, scopes, _) = List.fold_left ~f:declaration ~init:(top_def_map, inner_def_map, scopes, partials) m in
+        let inner_def_map = merge_defs new_inner_def_map inner_def_map in
         let def = make_m_def ~range ~body_range:module_.location (get_mod_binder_name module_binder) inner_def_map in
         let top_def_map = add_shadowing_def (get_mod_binder_name module_binder) def top_def_map in
         ( top_def_map, inner_def_map, scopes, partials )
       | M_variable m -> 
         let alias = [get_mod_binder_name m] in
+        let top_def_map = add_module_reference [m] top_def_map in
         let def = make_m_alias_def ~range ~body_range:(ModVar.get_location m) (get_mod_binder_name module_binder) alias in
         let top_def_map = add_shadowing_def (get_mod_binder_name module_binder) def top_def_map in
         ( top_def_map, inner_def_map, scopes, partials )
       | M_module_path m ->
-        let path,body_range = List.fold ~init:([],Location.dummy) ~f:(fun (path,loc) m -> 
-          path@[get_mod_binder_name m], Location.cover loc (ModVar.get_location m)) 
+        let path,mods,body_range = List.fold ~init:([],[],Location.dummy) ~f:(fun (path,mods,loc) m -> 
+          path@[get_mod_binder_name m], mods@[m], Location.cover loc (ModVar.get_location m)) 
           (List.Ne.to_list m) in
+        let top_def_map = add_module_reference mods top_def_map in
         let def = make_m_alias_def ~range ~body_range (get_mod_binder_name module_binder) path in
         let top_def_map = add_shadowing_def (get_mod_binder_name module_binder) def top_def_map in
         ( top_def_map, inner_def_map, scopes, partials )
