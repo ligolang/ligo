@@ -41,7 +41,7 @@ instance (HasLigoClient m, Log m) => HasScopeForest FromCompiler m where
 -- | Extract `ScopeForest` from LIGO scope dump.
 fromCompiler :: forall m. Log m => Lang -> LigoDefinitions -> m (ScopeForest, [Message])
 fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
-  let msgs = maybe [] (map fromLigoErrorToMsg) (errors <> warnings)
+  let msgs = map fromLigoErrorToMsg (errors <> warnings)
   foldrM
     (\scope (sf, errs) -> buildTree decls scope sf <&> fmap (<> errs))
     (emptyScopeForest, msgs)
@@ -50,7 +50,7 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
     -- For a new scope to be injected, grab its range and decl and start
     -- injection process.
     buildTree :: LigoDefinitionsInner -> LigoScope -> ScopeForest -> m (ScopeForest, [Message])
-    buildTree (LigoDefinitionsInner decls') (LigoScope r es _) sf = do
+    buildTree (LigoDefinitionsInner decls' _) (LigoScope r es _) sf = do -- TODO ignored
       r' <- normalizeRange $ fromLigoRangeOrDef r
       (errs, decodedDecls) <- partitionEithers <$> traverse (decodeOrReport r') es
       let ds = Map.fromList decodedDecls
@@ -76,12 +76,12 @@ fromCompiler dialect (LigoDefinitions errors warnings decls scopes) = do
     normalizeRange = rFile canonicalizePath
 
     -- LIGO compiler provides no comments, so they left [].
-    fromLigoDecl :: LigoDefinitionScope -> m (DeclRef, ScopedDecl)
-    fromLigoDecl (LigoDefinitionScope n orig bodyR ty refs) = do
+    fromLigoDecl :: LigoVariableDefinitionScope -> m (DeclRef, ScopedDecl)
+    fromLigoDecl (LigoVariableDefinitionScope n orig bodyR ty refs) = do
       r <- normalizeRange . fromLigoRangeOrDef $ orig
       rs <- mapM (normalizeRange . fromLigoRangeOrDef) refs
       let _vdsInitRange = mbFromLigoRange bodyR
-          _vdsTspec = parseTypeDeclSpecifics . fromLigoTypeFull <$> ty
+          _vdsTspec = Just $ parseTypeDeclSpecifics $ fromLigoTypeFull ty
           -- `get scope` doesn't provide information about arguments.
           -- `_vdsParams` equals to `Nothing` maeans that it isn't a function.
           -- FIXME (LIGO-679)
