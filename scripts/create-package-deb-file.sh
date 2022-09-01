@@ -44,7 +44,6 @@ mkdir -p $pkgName/DEBIAN
 
 cp $LIGO_BINARY_PATH $pkgName/usr/local/bin/ligo
 mv ./control $pkgName/DEBIAN/control
-rm ./control
 
 # Generate .deb
 dpkg-deb --build $pkgName
