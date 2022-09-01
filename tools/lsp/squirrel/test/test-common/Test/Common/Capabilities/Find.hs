@@ -22,6 +22,7 @@ module Test.Common.Capabilities.Find
   ) where
 
 import Data.Foldable (for_)
+import Data.Functor ((<&>))
 import System.FilePath ((</>))
 import System.Directory (makeAbsolute)
 import Test.Tasty (TestTree, testGroup)
@@ -29,15 +30,19 @@ import Test.Tasty.HUnit (Assertion, testCase)
 import Text.Printf (printf)
 
 import AST.Capabilities.Find (definitionOf, findScopedDecl, referencesOf, typeDefinitionAt)
+import AST.Scope.Common (contractTree, lookupContract)
 import AST.Scope.ScopedDecl
   ( DeclarationSpecifics (..), ScopedDecl (..), ValueDeclSpecifics (..)
   )
+import Cli (TempDir (..), TempSettings (..))
 import Range (Range (..), interval, point)
 
 import Test.Common.Capabilities.Util qualified as Common (contractsDir)
 import Test.Common.FixedExpectations
   (expectationFailure, shouldBe, shouldContain, shouldMatchList)
-import Test.Common.Util (ScopeTester, readContractWithScopes)
+import Test.Common.Util
+  ( ScopeTester, parseContractsWithDependenciesScopes, readContractWithScopes, tempTemplate
+  )
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "find"
@@ -65,18 +70,20 @@ data DefinitionReferenceInvariant = DefinitionReferenceInvariant
   -- ^ references ranges
   }
 
--- | Check that the given @DefinitionReferenceInvariant@ holds.
-checkDefinitionReferenceInvariant
-  :: forall parser. ScopeTester parser => DefinitionReferenceInvariant -> Assertion
-checkDefinitionReferenceInvariant DefinitionReferenceInvariant{..} = test
-  where
-    test :: Assertion
-    test = do
+-- | Check that the given @DefinitionReferenceInvariant@s hold.
+checkDefinitionReferenceInvariants
+  :: forall parser. ScopeTester parser => [DefinitionReferenceInvariant] -> IO [TestTree]
+checkDefinitionReferenceInvariants tests = do
+  let temp = TempSettings contractsDir $ GenerateDir tempTemplate
+  contractsDir' <- makeAbsolute contractsDir
+  graph <- parseContractsWithDependenciesScopes @parser temp contractsDir'
+  pure $ tests <&> \DefinitionReferenceInvariant{..} ->
+    testCase (driFile <> ": " <> driDesc) do
       driFile' <- makeAbsolute driFile
       -- a tree parser labels ranges with files, so we should too to preserve equality
       driRefs' <- traverse (label driFile') driRefs
 
-      tree <- readContractWithScopes @parser driFile'
+      let Just tree = contractTree <$> lookupContract driFile' graph
       case driDef of
         Nothing ->
           for_ driRefs' \mention ->
@@ -382,13 +389,10 @@ findDefinitionAndGoToReferencesCorrespondence
   :: forall impl
    . ScopeTester impl
   => [DefinitionReferenceInvariant]
-  -> TestTree
-findDefinitionAndGoToReferencesCorrespondence testInvariants =
-  testGroup "Definition and References Correspondence" testCases
-  where
-    testCases = map makeTestCase testInvariants
-    makeTestCase inv = testCase name (checkDefinitionReferenceInvariant @impl inv)
-      where name = driFile inv <> ": " <> driDesc inv
+  -> IO TestTree
+findDefinitionAndGoToReferencesCorrespondence =
+  fmap (testGroup "Definition and References Correspondence")
+  . checkDefinitionReferenceInvariants @impl
 
 definitionOfId :: forall impl. ScopeTester impl => Assertion
 definitionOfId = checkIfDefinition @impl
