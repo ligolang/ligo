@@ -94,9 +94,27 @@ data InScopeRef
   -- constructor contains the 'Range' of @A@ as well as its alias @B.C@.
   deriving stock (Show)
 
+-- FIXME: The type alias `module B = type titi = int end` doesn't work inside
+-- `module A = type titi = B.titi end`.
+-- The culprit: We need to lookup outside of the module _even_ if it's qualified.
+-- The fix might be to have have a datatype like
+-- `data Qualified = Qualified Namespace Namespace` where the first one is
+-- unqualified/implicit and the second one is qualified/explicit.
+-- | A 'Namespace' may be explicitly qualified (e.g. @Foo.bar@) or implicitly
+-- qualified (e.g. @module Foo = struct let bar = 0 end@). This datatype records
+-- in which situation we're accessing a name.
+data Qualified = Qualified
+  { unqualified :: Namespace
+  , qualified   :: Namespace
+  } deriving stock (Show)
+
+mapInUnqualified, mapInQualified :: (Namespace -> Namespace) -> Qualified -> Qualified
+mapInUnqualified f (Qualified uns qns) = Qualified (f uns) qns
+mapInQualified   f (Qualified uns qns) = Qualified uns (f qns)
+
 -- | The scoping environment, that may be locally updated at each subnode.
 data ScopeEnv = ScopeEnv
-  { _seNamespace :: Namespace
+  { _seNamespace :: Qualified
   , _seInScope :: HashMap (Namespace, Text) InScopeRef
   , _seDialect :: Lang
   }
@@ -105,7 +123,7 @@ makeLenses ''ScopeEnv
 
 initScopeEnv :: Lang -> ScopeEnv
 initScopeEnv _seDialect = ScopeEnv
-  { _seNamespace = Namespace []
+  { _seNamespace = Qualified (Namespace []) (Namespace [])
   , _seInScope = HashMap.empty
   , _seDialect
   }
@@ -123,7 +141,7 @@ instance HasLigoClient m => HasScopeForest Fallback m where
 
 type ScopeM = RWS ScopeEnv (Endo [TreeDoesNotContainName]) (Map ExtendedDeclRef ScopedDecl)
 
-askNamespace :: ScopeM Namespace
+askNamespace :: ScopeM Qualified
 askNamespace = asks (view seNamespace)
 {-# INLINE askNamespace #-}
 
@@ -140,7 +158,14 @@ mapNamespace
   :: (Namespace -> Namespace)
   -> ScopeM a
   -> ScopeM a
-mapNamespace f = local (seNamespace %~ f)
+mapNamespace f = mapQualified (mapInQualified f)
+
+-- | Apply some transformation to the current 'Qualified'.
+mapQualified
+  :: (Qualified -> Qualified)
+  -> ScopeM a
+  -> ScopeM a
+mapQualified f = local (seNamespace %~ f)
 
 -- | Apply some transformation to the current scope.
 mapInScope
@@ -167,7 +192,7 @@ resolveModuleAlias :: Text -> ScopeM (Maybe Namespace)
 resolveModuleAlias moduleName = do
   namespace <- askNamespace
   inScope <- askInScope
-  pure $ HashMap.lookup (namespace, moduleName) inScope >>= \case
+  pure $ HashMap.lookup (unqualified namespace, moduleName) inScope >>= \case
     InScopeOrdinaryRef _ -> Nothing
     InScopeModuleAliasRef _ ns -> Just ns
 
@@ -182,23 +207,44 @@ withScope ExtendedDeclRef{edrDeclRef = DeclRef{..}, ..} =
 withScopes :: [ExtendedDeclRef] -> ScopeM a -> ScopeM a
 withScopes declRefs m = foldl' (flip withScope) m declRefs
 
+withUnqualifiedNamespace, withQualifiedNamespace :: Text -> ScopeM a -> ScopeM a
 -- | Inserts the given name at the top of the @Namespace@ and performs a @local@
 -- function with the modified environment. Useful to deal with modules.
-withNamespace :: Text -> ScopeM a -> ScopeM a
-withNamespace inner = mapNamespace (\(Namespace ns) -> Namespace (ns |> inner))
+-- Unlike 'withQualifiedNamespace', preserves the current qualification.
+withUnqualifiedNamespace inner =
+  mapQualified (mapInUnqualified (\(Namespace ns) -> Namespace (ns |> inner)))
+-- | Like 'withUnqualifiedNamespace', but makes the transformation in the
+-- 'Qualified' 'Namespace'.
+withQualifiedNamespace inner =
+  mapQualified (mapInQualified (\(Namespace ns) -> Namespace (ns |> inner)))
 
 insertRef :: Text -> PreprocessedRange -> ScopeM ()
 insertRef name (PreprocessedRange refRange) = do
   namespace <- askNamespace
-  inScope <- askInScope
-  case HashMap.lookup (namespace, name) inScope of
+  lookupInOuterModules namespace name >>= \case
     Nothing -> pure ()
-    Just inScopeRef -> do
+    Just (inScopeRef, declNamespace) -> do
       let
         (declRange, refKind) = case inScopeRef of
           InScopeOrdinaryRef range -> (range, OrdinaryRef)
           InScopeModuleAliasRef range ns -> (range, ModuleAliasRef ns)
-      modify $ Map.adjust (sdRefs %~ (refRange :)) (ExtendedDeclRef (DeclRef name declRange) namespace refKind)
+        ref = ExtendedDeclRef (DeclRef name declRange) declNamespace refKind
+      modify $ Map.adjust (sdRefs %~ (refRange :)) ref
+
+-- | Given a namespace @A.B@, attempts to find a name @n@ as @A.B.n@. If the
+-- namespace in non-qualified, then it continues searching as @A.n@, and then as
+-- @n@, in this order, stopping the lookup on the first occurrence that was
+-- found, if any. Returns the namespace in which it was found.
+lookupInOuterModules :: Qualified -> Text -> ScopeM (Maybe (InScopeRef, Namespace))
+lookupInOuterModules namespace name = do
+  inScope <- askInScope
+  let namespaceName = unqualified namespace <> qualified namespace
+  case HashMap.lookup (namespaceName, name) inScope of
+    Nothing -> case namespace of
+      Qualified (Namespace uns) qns
+        | null uns  -> pure Nothing
+        | otherwise -> lookupInOuterModules (Qualified (Namespace $ init uns) qns) name
+    Just inScopeRef -> pure $ Just (inScopeRef, namespaceName)
 
 getEnv :: LIGO ParsedInfo -> ScopeM ScopeForest
 getEnv info = do
@@ -576,6 +622,8 @@ instance HasGo Binding where
               (layer -> Just (TRecord fields)) -> do
                 (sts, concat -> refs) <- unzip <$> wither scopeTField fields
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
+              (layer -> Just (ModuleAccess path field)) ->
+                Nothing <$ walkModuleAccess path (Just field)
               _ -> pure Nothing
           pure $ Just
             ( (Set.fromList (declRef : paramRefs), getRange r) :< maybeToList subforest
@@ -591,7 +639,7 @@ instance HasGo Binding where
           moduleRef <- insertScope OrdinaryRef moduleDecl
           void $ withScope moduleRef $ walk name
           let moduleName = moduleDecl ^. sdName
-          (declTree, declRefs) <- withNamespace moduleName $ processSequence decls
+          (declTree, declRefs) <- withUnqualifiedNamespace moduleName $ processSequence decls
           pure $ Just
             ( (Set.singleton moduleRef, getRange r) :< declTree
             , moduleRef : Set.toList declRefs
@@ -662,13 +710,13 @@ walkModuleAccess path accessorM = go path
   where
     go [] = do
       maybe (pure ()) (void . walk) accessorM
-      Just <$> askNamespace
+      Just . qualified <$> askNamespace
     go (modName : modNames) = do
       void $ walk modName
       getName modName >>= \case
         Left _ -> pure Nothing
         Right (_, namespacePart) -> resolveModuleAlias namespacePart >>= \case
-          Nothing -> withNamespace namespacePart (go modNames)
+          Nothing -> withQualifiedNamespace namespacePart (go modNames)
           Just resolved -> mapNamespace (const resolved) (go modNames)
 
 instance HasGo ModuleAccess where
@@ -753,7 +801,7 @@ functionScopedDecl docs nameNode paramNodes typ body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
-      , _sdNamespace = namespace
+      , _sdNamespace = unqualified namespace
       }
 
 valueScopedDecl
@@ -782,7 +830,7 @@ valueScopedDecl docs nameNode typ body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = ValueSpec ValueDeclSpecifics{ .. }
-      , _sdNamespace = namespace
+      , _sdNamespace = unqualified namespace
       }
 
 typeScopedDecl
@@ -804,7 +852,7 @@ typeScopedDecl docs nameNode body = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = TypeSpec Nothing $ runReader (parseTypeDeclSpecifics body) dialect  -- The type variables are filled later
-      , _sdNamespace = namespace
+      , _sdNamespace = unqualified namespace
       }
 
 moduleScopedDecl
@@ -826,7 +874,7 @@ moduleScopedDecl docs nameNode = do
       , _sdDoc = docs
       , _sdDialect = dialect
       , _sdSpec = ModuleSpec (ModuleDeclSpecifics range ModuleDecl name)
-      , _sdNamespace = namespace
+      , _sdNamespace = unqualified namespace
       }
 
 mkTypeVariableScope :: Text -> Range -> ScopeM ScopedDecl
@@ -841,7 +889,7 @@ mkTypeVariableScope name range = do
     , _sdDoc = []
     , _sdDialect = dialect
     , _sdSpec = TypeSpec Nothing tspec
-    , _sdNamespace = namespace
+    , _sdNamespace = unqualified namespace
     }
 
 mkDecl :: Alternative f => ScopeM (Either TreeDoesNotContainName a) -> ScopeM (f a)
