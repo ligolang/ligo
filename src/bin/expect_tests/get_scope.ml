@@ -13,32 +13,53 @@ Scopes:
 [ ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 1, characters 0-9
 
 Variable definitions:
-(a#0 -> a) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 1, characters 4-5 |resolved: int|
+(a#0 -> a)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 1, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 1, characters 8-9
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 20-21 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 20-21 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 6-7
-(b#6 -> b) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 3, characters 4-5 |resolved: int|
+(b#6 -> b)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 3, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, character 2 to line 9, character 7
+Content: |resolved: int|
 references: []
-(f#5 -> f) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 6-7 |core: int -> int -> int|
+(f#5 -> f)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 6-7
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, character 32 to line 7, character 21
+Content: |core: int -> int -> int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 9, characters 2-3
-(g#3 -> g) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 8-9 |resolved: int|
+(g#3 -> g)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 8-9
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-21
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 24-25 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 16-17
-(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 37-38 |core: int|
+(i#1 -> i)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 37-38
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, character 32 to line 7, character 21
+Content: |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 8-9
-(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 47-48 |core: int|
+(j#2 -> j)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 47-48
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, character 4 to line 7, character 21
+Content: |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 4-5
-(k#4 -> k) File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 8-9 |resolved: int|
+(k#4 -> k)
+Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 8-9
+Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 12-25
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 20-21
 Type definitions:
@@ -56,29 +77,47 @@ Scopes:
 [ ] File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 0-9
 
 Variable definitions:
-(a#0 -> a) File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 4-5 |resolved: int|
+(a#0 -> a)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 8-9
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 14-15 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 12-13 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 4-5 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 2-3
-(b#5 -> b) File "../../test/contracts/get_scope_tests/letin.mligo", line 3, characters 4-5 |resolved: int|
+(b#5 -> b)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 3, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, character 2 to line 10, character 11
+Content: |resolved: int|
 references: []
-(c#1 -> c) File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 6-7 |resolved: int|
+(c#1 -> c)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 6-7
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 10-15
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 16-17 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 8-9 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 6-7
-(d#4 -> d) File "../../test/contracts/get_scope_tests/letin.mligo", line 5, characters 6-7 |resolved: int|
+(d#4 -> d)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 5, characters 6-7
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, character 4 to line 8, character 17
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 10-11
-(e#2 -> e) File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 8-9 |resolved: int|
+(e#2 -> e)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 8-9
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 12-17
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 20-21 ,
   File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 12-13
-(f#3 -> f) File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 8-9 |resolved: int|
+(f#3 -> f)
+Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 8-9
+Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 12-21
+Content: |resolved: int|
 references:
   File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 16-17
 Type definitions:
@@ -93,17 +132,32 @@ Scopes:
 [ ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 0-9
 
 Variable definitions:
-(a#0 -> a) File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 4-5 |resolved: int|
+(a#0 -> a)
+Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 8-9
+Content: |resolved: int|
 references: []
-(b#4 -> b) File "../../test/contracts/get_scope_tests/lambda.mligo", line 3, characters 4-5 |resolved: int|
+(b#4 -> b)
+Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 3, characters 4-5
+Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, character 2 to line 5, character 7
+Content: |resolved: int|
 references: []
-(f#3 -> f) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 6-7 |core: int -> int -> int|
+(f#3 -> f)
+Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 6-7
+Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 31-63
+Content: |core: int -> int -> int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-3
-(i#1 -> i) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 36-37 |core: int|
+(i#1 -> i)
+Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 36-37
+Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 31-63
+Content: |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 62-63
-(j#2 -> j) File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 46-47 |core: int|
+(j#2 -> j)
+Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 46-47
+Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-63
+Content: |core: int|
 references:
   File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-59
 Type definitions:
@@ -126,7 +180,10 @@ let%expect_test _ =
     [ mytype#0 ] File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 0-9
 
     Variable definitions:
-    (a#1 -> a) File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 4-5 |resolved: int|
+    (a#1 -> a)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 17-18 ,
       File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 17-18 ,
@@ -135,35 +192,70 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 28-29 ,
       File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
-    (b#5 -> b) File "../../test/contracts/get_scope_tests/match.mligo", line 5, characters 4-5 |resolved: int|
+    (b#5 -> b)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 5, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 6, character 2 to line 8, character 18
+    Content: |resolved: int|
     references: []
-    (c#2 -> c) File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 13-14 |resolved: int|
+    (c#2 -> c)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 13-14
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 17-18
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 26-27
-    (c#6 -> c) File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 8-9 |resolved: int|
+    (c#6 -> c)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 12-13
+    Content: |resolved: int|
     references: []
-    (c#9 -> c) File "../../test/contracts/get_scope_tests/match.mligo", line 10, characters 4-5 |resolved: int|
+    (c#9 -> c)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 10, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 11, character 2 to line 15, character 15
+    Content: |resolved: int|
     references: []
-    (d#10 -> d) File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 13-14 |resolved: int|
+    (d#10 -> d)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 13-14
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 17-18
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 30-31
-    (d#12 -> d) File "../../test/contracts/get_scope_tests/match.mligo", line 17, characters 4-5 |resolved: int|
+    (d#12 -> d)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 17, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 18, character 2 to line 20, character 13
+    Content: |resolved: int|
     references: []
-    (hd#8 -> hd) File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6 |resolved: int|
+    (hd#8 -> hd)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
+    Content: |resolved: int|
     references: []
-    (s#11 -> s) File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 10-11 |resolved: int|
+    (s#11 -> s)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 10-11
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 16-17
-    (tl#7 -> tl) File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 8-10 |resolved: list (int)|
+    (tl#7 -> tl)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 8-10
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 8-10
+    Content: |resolved: list (int)|
     references: []
-    (x#3 -> x) File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 8-9 |resolved: int|
+    (x#3 -> x)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 13-14
-    (y#4 -> y) File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 8-9 |resolved: string|
+    (y#4 -> y)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 8-9
+    Content: |resolved: string|
     references: []
     Type definitions:
-    (mytype#0 -> mytype) File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40 :
-    sum[Bar -> string , Foo -> int]
+    (mytype#0 -> mytype)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
+    Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-40
+    Content: : sum[Bar -> string , Foo -> int]
     Module definitions: |} ]
 
 let%expect_test _ =
@@ -178,30 +270,52 @@ let%expect_test _ =
     [ ] File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (a#0 -> a) File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 4-5 |resolved: int|
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 5-6
-    (b#6 -> b) File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 6-7 |resolved: int|
+    (b#6 -> b)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 8-9
-    (b#7 -> b) File "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5 |resolved: int|
+    (b#7 -> b)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 2 to line 9, character 10
+    Content: |resolved: int|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11 |core:
-    ( int * int ) -> int|
+    (c#1 -> c)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
+    Content: |core: ( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5
-    (c#5 -> c) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11 |core:
-    ( int * int ) -> int|
+    (c#5 -> c)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 6-9
+    Content: |core: ( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 2-3
-    (i#2 -> i) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38 |resolved: int|
+    (i#2 -> i)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
-    (j#3 -> j) File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40 |resolved: int|
+    (j#3 -> j)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17
-    (k#4 -> k) File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9 |resolved: int|
+    (k#4 -> k)
+    Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-21
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 7-8
     Type definitions:
@@ -219,27 +333,45 @@ let%expect_test _ =
     [ ] File "../../test/contracts/get_scope_tests/shadowing.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (a#0 -> a) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 1, characters 4-5 |resolved: int|
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 1, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, characters 14-15 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 12-13 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 12-13 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 10, characters 2-3
-    (a#3 -> a) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 8-9 |resolved: int|
+    (a#3 -> a)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 12-21
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 8, characters 4-5
-    (b#5 -> b) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 3, characters 4-5 |resolved: int|
+    (b#5 -> b)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, character 2 to line 10, character 11
+    Content: |resolved: int|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, characters 6-7 |resolved: int|
+    (c#1 -> c)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 4, characters 10-15
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 16-17 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 16-17 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 8, characters 8-9 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 10, characters 6-7
-    (d#4 -> d) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 5, characters 6-7 |resolved: int|
+    (d#4 -> d)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 5, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, character 4 to line 8, character 13
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 10, characters 10-11
-    (e#2 -> e) File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 8-9 |resolved: int|
+    (e#2 -> e)
+    Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 12-17
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 7, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/shadowing.mligo", line 8, characters 12-13
@@ -258,29 +390,49 @@ let%expect_test _ =
     [ myrec#0 ] File "../../test/contracts/get_scope_tests/records.mligo", line 3, characters 0-9
 
     Variable definitions:
-    (a#1 -> a) File "../../test/contracts/get_scope_tests/records.mligo", line 3, characters 4-5 |resolved: int|
+    (a#1 -> a)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 3, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 40-41 ,
       File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 23-24 ,
       File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 40-41
-    (b#4 -> b) File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 4-5 |resolved: myrec|
+    (b#4 -> b)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 8-56
+    Content: |resolved: myrec|
     references:
       File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 3-4 ,
       File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 32-33
-    (e#6 -> e) File "../../test/contracts/get_scope_tests/records.mligo", line 15, characters 4-5 |resolved: myrec|
+    (e#6 -> e)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 15, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 3-4
+    Content: |resolved: myrec|
     references: []
-    (g#5 -> g) File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 19-20 |resolved: int|
+    (g#5 -> g)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 19-20
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 23-24
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 28-29
-    (i#2 -> i) File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 18-19 |resolved: int|
+    (i#2 -> i)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 18-19
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 22-23
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 42-43
-    (j#3 -> j) File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 31-32 |resolved: int|
+    (j#3 -> j)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 31-32
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 35-36
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 44-45
     Type definitions:
-    (myrec#0 -> myrec) File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36 :
-    record[bar -> int , foo -> int]
+    (myrec#0 -> myrec)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
+    Body Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 13-36
+    Content: : record[bar -> int , foo -> int]
     Module definitions: |} ] ;
 
   run_ligo_good [ "info" ; "get-scope" ; gs "constant.mligo" ; "--format" ; "dev" ; "--with-types" ] ;
@@ -293,20 +445,35 @@ let%expect_test _ =
     [ ] File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (a#0 -> a) File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 4-5 |resolved: int|
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 43-44 ,
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 22-23 ,
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 29-30
-    (b#4 -> b) File "../../test/contracts/get_scope_tests/constant.mligo", line 3, characters 4-5 |resolved: list (int)|
+    (b#4 -> b)
+    Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 33
+    Content: |resolved: list (int)|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 10-11 |core: int|
+    (c#1 -> c)
+    Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 22-44
+    Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 39-40
-    (d#2 -> d) File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 26-27 |resolved: int|
+    (d#2 -> d)
+    Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 26-27
+    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 30-31
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-36
-    (e#3 -> e) File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 9-10 |resolved: int|
+    (e#3 -> e)
+    Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 9-10
+    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 13-14
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 27-28
@@ -323,20 +490,38 @@ let%expect_test _ =
     [ i#0 j#1 ] File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-63
 
     Variable definitions:
-    (a#5 -> a) File "../../test/contracts/get_scope_tests/application.mligo", line 1, characters 4-5 |resolved: int|
+    (a#5 -> a)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, character 2 to line 3, character 37
+    Content: |resolved: int|
     references: []
-    (b#3 -> b) File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 7-8 |resolved: int|
+    (b#3 -> b)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 11-12
+    Content: |resolved: int|
     references: []
-    (c#4 -> c) File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 26-27 |resolved: int|
+    (c#4 -> c)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 26-27
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 30-31
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 35-36
-    (f#2 -> f) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 6-7 |core: int -> int -> int|
+    (f#2 -> f)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 31-63
+    Content: |core: int -> int -> int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 16-17
-    (i#0 -> i) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 36-37 |core: int|
+    (i#0 -> i)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 36-37
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 31-63
+    Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 62-63
-    (j#1 -> j) File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 46-47 |core: int|
+    (j#1 -> j)
+    Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 46-47
+    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-63
+    Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-59
     Type definitions:
@@ -356,35 +541,59 @@ let%expect_test _ =
     [ ] File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 0-9
 
     Variable definitions:
-    (a#0 -> a) File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 4-5 |resolved: int|
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 1, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 14-15 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 12-13 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 12-13 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 4-5 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 2-3
-    (b#5 -> b) File "../../test/contracts/get_scope_tests/letin.mligo", line 3, characters 4-5 |resolved: int|
+    (b#5 -> b)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, character 2 to line 10, character 11
+    Content: |resolved: int|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 6-7 |resolved: int|
+    (c#1 -> c)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 4, characters 10-15
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 16-17 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 16-17 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 8-9 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 6-7
-    (d#4 -> d) File "../../test/contracts/get_scope_tests/letin.mligo", line 5, characters 6-7 |resolved: int|
+    (d#4 -> d)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 5, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, character 4 to line 8, character 17
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/letin.mligo", line 10, characters 10-11
-    (e#2 -> e) File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 8-9 |resolved: int|
+    (e#2 -> e)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 12-17
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 20-21 ,
       File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 12-13
-    (f#3 -> f) File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 8-9 |resolved: int|
+    (f#3 -> f)
+    Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 12-21
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/letin.mligo", line 8, characters 16-17
-    (x#6 -> x) File "../../test/contracts/get_scope_tests/include.mligo", line 3, characters 4-5 |resolved: int|
+    (x#6 -> x)
+    Range: File "../../test/contracts/get_scope_tests/include.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/include.mligo", line 3, characters 8-9
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 8-9
-    (y#7 -> y) File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 4-5 |resolved: int|
+    (y#7 -> y)
+    Range: File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 8-13
+    Content: |resolved: int|
     references: []
     Type definitions:
     Module definitions: |} ]
@@ -400,23 +609,40 @@ let%expect_test _ =
     [ foo_record#0 ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 4, character 8 to line 5, character 9
 
     Variable definitions:
-    (a#3 -> a) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 8, characters 4-5 |resolved: int|
+    (a#3 -> a)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 8, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, character 2 to line 10, character 3
+    Content: |resolved: int|
     references: []
-    (b#5 -> b) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, characters 4-5 |unresolved|
+    (b#5 -> b)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, character 2 to line 14, character 3
+    Content: |unresolved|
     references: []
-    (c#1 -> c) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 3, characters 4-5 |resolved: foo_record|
+    (c#1 -> c)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 3, character 8 to line 6, character 1
+    Content: |resolved: foo_record|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-11 ,
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-11
-    (i#2 -> i) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 6-7 |resolved: int|
+    (i#2 -> i)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-15
+    Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 10, characters 2-3
-    (j#4 -> j) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7 |unresolved|
+    (j#4 -> j)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15
+    Content: |unresolved|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
     Type definitions:
-    (foo_record#0 -> foo_record) File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43 :
-    record[bar -> int , foo -> int]
+    (foo_record#0 -> foo_record)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
+    Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 18-43
+    Content: : record[bar -> int , foo -> int]
     Module definitions: |} ];
 
   run_ligo_good [ "info"; "get-scope" ; gs "nominal_types.mligo" ; "--format"; "dev" ; "--with-types" ] ;
@@ -428,49 +654,173 @@ let%expect_test _ =
     [ foo_record#1 foo_variant#0 ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 12-13
 
     Variable definitions:
-    (a#2 -> a) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 4-5 |resolved: foo_variant|
+    (a#2 -> a)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 8-13
+    Content: |resolved: foo_variant|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
-    (b#3 -> b) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 4-5 |resolved: foo_variant|
+    (b#3 -> b)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 8-14
+    Content: |resolved: foo_variant|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
-    (c#4 -> c) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 8, characters 4-5 |resolved: foo_record|
+    (c#4 -> c)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 8, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 8, character 8 to line 11, character 1
+    Content: |resolved: foo_record|
     references: []
-    (main#6 -> main) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8 |core: foo_record -> foo_variant|
+    (main#6 -> main)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11
+    Content: |core: foo_record -> foo_variant|
     references: []
-    (p#5 -> p) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11 |core: foo_record|
+    (p#5 -> p)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-47
+    Content: |core: foo_record|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-43
     Type definitions:
-    (foo_record#1 -> foo_record) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58 :
-    record[bar -> foo_variant , foo -> foo_variant]
-    (foo_variant#0 -> foo_variant) File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45 :
-    sum[Bar -> string , Foo -> int]
+    (foo_record#1 -> foo_record)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
+    Content: : record[bar -> foo_variant , foo -> foo_variant]
+    (foo_variant#0 -> foo_variant)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-45
+    Content: : sum[Bar -> string , Foo -> int]
     Module definitions: |} ] ;
     
   run_ligo_good [ "info"; "get-scope" ; gs "module.mligo" ; "--format"; "dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
-    [ A#1 B#3 C#6 D#7 a#2 b#4 toto#0 ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
-    [ A#1 B#3 a#2 b#4 toto#0 ] File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 8-17
-    [ A#1 B#3 a#2 toto#0 ] File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 0-14
-    [ A#1 toto#0 ] File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 0-14
-    [ ] File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 4-16
+    [ C#6 D#7 a#5 ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
+    [ A#1 B#3 a#2 ] File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 0-14
+    [ A#1 ] File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 0-14
+    [ ] File "../../test/contracts/get_scope_tests/module.mligo", line 2, character 4 to line 13, character 17
 
     Variable definitions:
-    (a#2 -> a) File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 4-5 |resolved: int|
+    (a#2 -> a)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 8-14
+    Content: |resolved: int|
     references: []
-    (a#5 -> a) File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 12-13 |resolved: int|
+    (a#5 -> a)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 12-13
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 16-17
+    Content: |resolved: int|
     references: []
-    (b#4 -> b) File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 4-5 |resolved: int|
+    (b#4 -> b)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 8-14
+    Content: |resolved: int|
     references: []
-    (titi#8 -> titi) File "../../test/contracts/get_scope_tests/module.mligo", line 11, characters 4-8 |resolved: int|
+    (titi#8 -> titi)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 11, characters 4-8
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 12, character 4 to line 16, character 7
+    Content: |resolved: int|
     references: []
-    (toto#0 -> toto) File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 8-12 |resolved: int|
+    (toto#0 -> toto)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 8-12
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 15-16
+    Content: |resolved: int|
     references: []
     Type definitions:
     Module definitions:
-    (A#1 -> A) File "../../test/contracts/get_scope_tests/module.mligo", line 1, characters 7-8
-    (B#3 -> B) File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 7-8
-    (C#6 -> C) File "../../test/contracts/get_scope_tests/module.mligo", line 12, characters 11-12
-    (D#7 -> D) File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 11-12 |} ]
+    (A#1 -> A)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 1, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 1, character 0 to line 3, character 3
+    Content: Members: Variable definitions:
+                      (toto#0 -> toto)
+                      Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 8-12
+                      Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 15-16
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 10-14 ,
+                        File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 10-14
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 8-9 ,
+      File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 11-12
+
+    (B#3 -> B)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 11-12
+    Content: Alias: A
+    references:
+      File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 8-9
+
+    (C#6 -> C)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 12, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 12, character 4 to line 14, character 7
+    Content: Members: Variable definitions:
+                      (a#5 -> a)
+                      Range: File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 6-7
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
+
+    (D#7 -> D)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
+    Content: Alias: C
+    references:
+      File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-5 |} ]
+
+      (* TODO: tests
+         
+      1.
+      module A = struct
+        let x = 1
+        module B = struct
+          let y = 2
+        end
+        module E = B
+      end
+      module C = A.B
+      module D = A
+      module F = A.E
+      let a1 = A.B.y
+      let a2 = A.x
+      let a3 = C.y
+      let a4 = D.x
+      let a5 = F.y
+      
+      2.
+      module A = struct 
+        let x = 1
+      end 
+      let x =
+        module B = struct 
+          let y = 2
+          let z = A.x
+          module C = struct
+            let a1 = y
+            let a2 = z
+            let a3 = 3
+          end
+        end in
+        module D = B in
+        let b1 = B.y in
+        let b2 = B.z in
+        let b3 = B.C.a1 in
+        let b4 = B.C.a2 in
+        let b5 = B.C.a3 in
+        let c1 = D.y in
+        let c2 = D.z in
+        let c3 = D.C.a1 in
+        let c4 = D.C.a2 in
+        let c5 = D.C.a3 in
+        42
+
+      *)

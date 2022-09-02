@@ -10,8 +10,14 @@ let scopes : Format.formatter -> scopes -> unit = fun f s ->
   let pp_scopes f = List.iter ~f: (Format.fprintf f "@[<v>%a@ @]" pp_scope) in
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
-let definitions : Format.formatter -> def_map -> unit = fun f dm ->
+let rec definitions : Format.formatter -> def_map -> unit = fun f dm ->
   let kvl = Def_map.to_kv_list dm in
+  let refs ppf loclst =
+    match loclst with
+    | [] -> Format.fprintf ppf "references: []"
+    | _ ->
+      Format.fprintf ppf "@[<hv 2>references:@ %a@]" PP_helpers.(list_sep Location.pp (tag " ,@ ")) loclst
+  in
   let pp_content ppf d = match d with
     | Variable v -> (
         let tys ppf t = match t with
@@ -19,20 +25,19 @@ let definitions : Format.formatter -> def_map -> unit = fun f dm ->
           | Resolved t -> Format.fprintf ppf "resolved: %a" Ast_typed.PP.type_expression t
           | Unresolved -> Format.fprintf ppf "unresolved"
         in
-        let refs ppf loclst =
-          match loclst with
-          | [] -> Format.fprintf ppf "references: []"
-          | _ ->
-            Format.fprintf ppf "@[<hv 2>references:@ %a@]" PP_helpers.(list_sep Location.pp (tag " ,@ ")) loclst
-        in
+        
         Format.fprintf ppf "|%a|@ %a" tys v.t refs v.references
     )
     | Type t -> Format.fprintf ppf ": %a" Ast_core.PP.type_expression t.content
-    | Module _ -> () (* TODO: ?? *)
+    | Module { mod_case = Alias a ; references ; _ } ->
+      Format.fprintf ppf "Alias: %s @ %a @ " (String.concat ~sep:"." a) refs references
+    | Module { mod_case = Def d ; references ; _ } ->
+      Format.fprintf ppf "Members: %a @ %a @ " definitions d refs references
   in
-  let (variables,types) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ -> false | Variable _ -> true) kvl in
-  let (types,modules) = List.partition_tf ~f:(fun (_,def) -> match def with |Type _ -> true | _ -> false) types in
-  let pp_def f = List.iter ~f: (fun (k,v) -> Format.fprintf f "(%s -> %s) %a %a@ " k (get_def_name v) Location.pp (get_range v) pp_content v) in
+  let (variables,types_modules) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ | Module _ -> false | Variable _ -> true) kvl in
+  let (types,modules) = List.partition_tf ~f:(fun (_,def) -> match def with Type _ -> true | _ -> false) types_modules in
+  let pp_def f = List.iter ~f: (fun (k,v) -> Format.fprintf f "(%s -> %s) @ Range: %a @ Body Range: %a @ Content: %a@ " 
+    k (get_def_name v) Location.pp (get_range v) Location.pp (get_body_range v) pp_content v) in
   Format.fprintf f "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]" pp_def variables pp_def types pp_def modules
 
 let rec def_to_yojson : def -> Yojson.Safe.t = function

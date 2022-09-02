@@ -17,7 +17,7 @@ let get_mod_binder_name : Ast_typed.ModuleVar.t -> string = fun v ->
 module Definitions = struct
   module Location = Simple_utils.Location
   module List     = Simple_utils.List
-  module Def_map = Simple_utils.Map.Make(String)
+  module Def_map  = Simple_utils.Map.Make(String)
 
   type type_case =
     | Core of Ast_core.type_expression
@@ -86,6 +86,11 @@ module Definitions = struct
     | Variable    v -> v.range
     | Module      m -> m.range
 
+  let get_body_range = function
+    | Type        t -> t.body_range
+    | Variable    v -> v.body_range
+    | Module      m -> m.body_range
+
   let make_v_def : string -> type_case -> Location.t -> Location.t -> def =
     fun name t range body_range ->
       Variable { name ; range ; body_range ; t ; references = [] }
@@ -121,8 +126,8 @@ module Definitions = struct
       Def_map.update k aux env
     | None -> env
 
-  let add_module_reference : Ast_core.module_variable list -> def_map -> def_map = fun mvs env ->
-    let rec update_module_reference env mv =
+  let update_module_reference : Ast_core.module_variable list -> def_map -> def_map = fun mvs env ->
+    let rec aux env mv =
       let aux d =
         match d with
         | Module ({ name ; mod_case ; references ; _ } as m)  ->
@@ -133,7 +138,7 @@ module Definitions = struct
             | false ->
               let mod_case = match mod_case with
               | Alias _ -> mod_case
-              | Def env -> Def (update_module_reference env mv)
+              | Def env -> Def (aux env mv)
               in
               Module { m with mod_case }
             )
@@ -141,54 +146,48 @@ module Definitions = struct
       in
       Def_map.map aux env
     in
-    List.fold_left mvs ~init:env ~f:update_module_reference
+    List.fold_left mvs ~init:env ~f:aux
 
-  (* TODO: simplify this *)
+  let rec find_modules_to_update : string list -> def_map -> string list =
+    fun mvs env ->
+      match mvs with
+      | [] -> []
+      | mv::mvs ->
+        let aux (_,d) = 
+          match d with
+          | Module { name ; _ } -> String.(name = mv)
+          | Variable _ | Type _ -> false
+        in
+        (match List.find (Def_map.bindings env) ~f:aux with
+        | Some (k,Module { mod_case=Def d ; _ }) -> k :: find_modules_to_update mvs d
+        | Some (_,Module { mod_case=Alias a ; _ }) -> find_modules_to_update (a@mvs) env
+        | Some _ -> []
+        | None -> [] 
+        )
+
   let add_module_element_reference : Ast_core.module_variable list -> Ast_core.expression_variable -> def_map -> def_map =
     fun mvs element env ->
-      let (let*) x f = Option.bind x ~f in
-      (* let open Core.Option in *)
-      let find_module acc mv =
-        let* (xs,env) = acc in
-        match Def_map.find_opt (get_mod_binder_name mv) env with
-        | Some (Module { mod_case = Alias alias ; _ }) ->
-          let aux env n =
-            let* env = env in
-            match Def_map.find_opt n env with
-            | Some (Module { mod_case = Def env ; _ } ) -> Some env
-            | Some _ -> None
-            | None -> None
-          in
-          let* def = List.fold_left alias ~init:(Some env) ~f:aux in
-          Some (alias@xs,def)
-        | Some (Module { mod_case = Def def ; _ }) ->
-          Some ((get_mod_binder_name mv)::xs,def)
-        | Some _ -> None
-        | None -> None
+      let e = get_binder_name element in
+      let e_loc = Ast_core.ValueVar.get_location element in
+      let mvs = List.map mvs ~f:get_mod_binder_name in
+      let ms = List.rev @@ find_modules_to_update mvs env in
+      let rec aux ms env =
+        match ms with
+        | [] ->
+          Def_map.map (function 
+          | Variable v when String.(v.name = e)->
+            let references = e_loc :: v.references in
+            Variable { v with references }
+          | Variable v -> Variable v
+          | Type t -> Type t | Module m -> Module m) env
+        | m::ms -> Def_map.update m (function 
+          | None -> None
+          | Some (Module ({ mod_case=Def d ; _ } as modul)) ->
+            let mod_case = Def (aux ms d) in
+            Some (Module { modul with mod_case })
+          | Some x -> Some x) env
       in
-      match List.fold_left mvs ~init:(Some ([],env)) ~f:find_module with
-      | Some (names,inner_env) ->
-        let loc = Ast_core.ValueVar.get_location element in
-        let inner_env = Def_map.update (get_binder_name element) 
-          (function 
-          | Some (Variable v) -> Some (Variable { v with references = loc :: v.references })
-          | Some x -> Some x
-          | None -> None) inner_env in
-        let names = List.rev names in
-        let rec update_module names env =
-          match names with
-          | [] -> inner_env
-          | name::names ->
-            Def_map.update name 
-            (function 
-            | Some (Module ({ mod_case = Def def ; _ } as m)) -> 
-              let def = update_module names def in
-              Some (Module { m with mod_case = Def def })
-            | None -> None 
-            | Some x -> Some x) env
-        in
-        update_module names inner_env
-      | None -> env
+      aux ms env
 end
 
 include Definitions
