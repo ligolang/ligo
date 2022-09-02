@@ -13,7 +13,7 @@
   publish
   user
   cli_helpers
-  ldaemon
+  daemon
   ligo_api)
  (modules cli version))
 
@@ -50,12 +50,12 @@
  (modules user))
 
 (library
- (name ldaemon)
+ (name daemon)
  (instrumentation
   (backend bisect_ppx))
  (libraries parse-argv ligo_api cli_helpers)
  (preprocess (pps ppx_deriving_yojson))
- (modules ldaemon))
+ (modules daemon))
 
 (rule
  (targets version.ml)
