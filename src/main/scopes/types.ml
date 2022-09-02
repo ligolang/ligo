@@ -109,7 +109,7 @@ module Definitions = struct
       let mod_case = Alias alias in
       Module { name ; range ; body_range ; mod_case ; references = [] }
 
-  let add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
+  let rec add_reference : Ast_core.expression_variable -> def_map -> def_map = fun x env ->
     let aux : string * def -> bool = fun (_,d) ->
       match d with
       | Variable v -> Ast_core.ValueVar.is_name x v.name
@@ -120,6 +120,9 @@ module Definitions = struct
       let aux : def option -> def option = fun d_opt ->
         match d_opt with
         | Some (Variable v) -> Some (Variable { v with references = (Ast_core.ValueVar.get_location x :: v.references) })
+        | Some (Module ({ mod_case=Def d ; _ } as m)) ->
+          let mod_case = Def (add_reference x d) in
+          Some (Module { m with mod_case })
         | Some x -> Some x
         | None -> None
       in

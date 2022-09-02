@@ -961,7 +961,7 @@ let%expect_test _ =
                       Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 2, characters 8-9
                       Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 2, characters 12-13
                       Content: |resolved: int|
-                      references: [] FIX THIS
+                      references: []
                       Type definitions:
                       Module definitions:
 
@@ -978,7 +978,6 @@ let%expect_test _ =
                       references:
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 18, characters 15-16 ,
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 24, characters 15-16
-                        10
                       (z#3 -> z)
                       Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 8, characters 12-13
                       Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 8, characters 16-19
@@ -986,7 +985,6 @@ let%expect_test _ =
                       references:
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 19, characters 15-16 ,
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 25, characters 15-16
-                        11
                       Type definitions:
                       Module definitions:
                       (C#7 -> C)
@@ -1044,3 +1042,38 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 27, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 13-14 |}] ;
+
+  run_ligo_good [ "info"; "get-scope" ; gs "module4.mligo" ; "--format"; "dev" ; "--with-types" ] ;
+  [%expect{|
+    Scopes:
+    [ B#2 a#0 ] File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-7
+    [ ] File "../../test/contracts/get_scope_tests/module4.mligo", line 4, character 8 to line 6, character 7
+
+    Variable definitions:
+    (a#0 -> a)
+    Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 2, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 2, characters 12-13
+    Content: |resolved: int|
+    references: []
+    (x#3 -> x)
+    Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 2, character 4 to line 6, character 7
+    Content: |resolved: int|
+    references: []
+    Type definitions:
+    Module definitions:
+    (B#2 -> B)
+    Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 3, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 3, character 4 to line 5, character 7
+    Content: Members: Variable definitions:
+                      (y#1 -> y)
+                      Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 4, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 4, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 6-7
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/module4.mligo", line 6, characters 4-5 |}];
