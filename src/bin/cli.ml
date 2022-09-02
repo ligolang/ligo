@@ -811,6 +811,13 @@ let login =
     return_result ~return @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path)
 
+let daemon =
+  let summary   = "launch a long running LIGO process" in
+  let readme () = "Run LIGO subcommands without exiting the process" in
+  let f _ () =
+    return_result ~return @@ fun () -> Daemon.main () in
+  Command.basic ~summary ~readme (f <$> Command.Param.return ())
+
 let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
@@ -826,6 +833,7 @@ let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG co
     "publish"  , publish;
     "add-user" , add_user;
     "login"    , login;
+    "daemon"   , daemon;
   ]
 
 let run ?argv () =
