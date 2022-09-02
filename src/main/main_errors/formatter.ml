@@ -194,10 +194,22 @@ let rec error_ppformat : display_format:string display_format ->
            (Tezos_client_014_PtKathma.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
            Snippet.pp (List.hd_exn calltrace)
            (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
-    | `Main_interpret_target_lang_failwith (loc, v) ->
+    | `Main_interpret_target_lang_failwith (loc, [], v) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith: %a@]"
         Snippet.pp loc
         Tezos_utils.Michelson.pp v
+    | `Main_interpret_target_lang_failwith (loc, calltrace, v) ->
+      if not (is_dummy_location loc) || List.is_empty calltrace then
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith: %a@.Trace:@.%a@]"
+           Snippet.pp loc
+           Tezos_utils.Michelson.pp v
+           (PP_helpers.list_sep_d Location.pp) calltrace
+       else
+         Format.fprintf f "@[<v 4>%a@.An uncaught error occured:@.Failwith: %a@.Trace:@.%a@.%a@]"
+           Snippet.pp loc
+          Tezos_utils.Michelson.pp v
+           Snippet.pp (List.hd_exn calltrace)
+           (PP_helpers.list_sep_d Location.pp) (List.tl_exn calltrace)
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc

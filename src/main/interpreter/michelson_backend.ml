@@ -8,6 +8,7 @@ module Tezos_protocol_env = Tezos_protocol_environment_014_PtKathma
 module Tezos_raw_protocol = Tezos_raw_protocol_014_PtKathma
 open Ligo_prim
 
+let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
 let int_of_mutez t = Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 let tez_to_z : Tezos_protocol.Protocol.Tez_repr.t -> Z.t = fun t ->
@@ -442,9 +443,6 @@ and make_subst_ast_env_exp ~raise env =
          let expr = val_to_ast ~raise ~loc:(ValueVar.get_location name) item.eval_term item.ast_type in
          aux ((name, expr, no_mutation, inline) :: acc) tl in
   aux [] env
-
-
-let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
 
 let run_michelson_func ~raise ~options ~loc (ctxt : Tezos_state.context) (code : (unit, string) Tezos_micheline.Micheline.node) func_ty arg arg_ty =
   let open Ligo_interpreter.Types in

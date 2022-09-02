@@ -56,6 +56,7 @@ module Command = struct
     | Read_contract_from_file : Location.t * LT.calltrace * string -> LT.value t
     | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Eval : Location.t * LT.value * Ast_aggregated.type_expression -> LT.value t
+    | Run_Michelson : Location.t * LT.calltrace * (execution_trace, string) Tezos_micheline.Micheline.node * Ast_aggregated.type_expression * LT.value * Ast_aggregated.type_expression -> LT.value t
     | Compile_contract : Location.t * LT.value -> LT.value t
     | Compile_ast_contract : Location.t * LT.value -> LT.value t
     | Decompile : LT.mcode * LT.mcode * Ast_aggregated.type_expression -> LT.value t
@@ -275,7 +276,7 @@ module Command = struct
       let input_ty,_ = Ligo_run.Of_michelson.fetch_lambda_types ~raise func_code.expr_ty in
       let options = Michelson_backend.make_options ~raise ~param:input_ty (Some ctxt) in
       let runres = Ligo_run.Of_michelson.run_function ~raise ~options func_code.expr func_code.expr_ty arg_code in
-      let (expr_ty,expr) = match runres with | Success x -> x | Fail x -> raise.error @@ Errors.target_lang_failwith loc x in
+      let (expr_ty,expr) = match runres with | Success x -> x | Fail x -> raise.error @@ Errors.target_lang_failwith loc [] x in
       let expr, expr_ty =
         clean_locations expr, clean_locations expr_ty in
       let ret = LT.V_Michelson (Ty_code { code = expr ; code_ty = expr_ty ; ast_ty = f.body.type_expression }) in
@@ -283,6 +284,17 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_simple_value ~raise ~options ~ctxt ~loc v expr_ty in
       (LT.V_Michelson (Ty_code value), ctxt)
+    | Run_Michelson (loc, calltrace, func, func_ty, value, value_ty) -> (
+      match Michelson_backend.run_michelson_func ~raise ~options ~loc ctxt func func_ty value value_ty with
+      | Ok v -> (v, ctxt)
+      | Error data -> (
+        let data_t = Michelson_backend.compile_type ~raise func_ty in
+        let data_opt = to_option @@ Michelson_to_value.decompile_to_untyped_value ~bigmaps:[] (clean_locations data_t) (clean_locations data) in
+        match data_opt with
+        | Some data -> raise.error @@ Errors.meta_lang_eval loc calltrace data
+        | None -> raise.error @@ Errors.target_lang_failwith loc calltrace data
+      )
+    )
     | Compile_contract (loc, v) ->
        let ast_aggregated = match v with
          | LT.V_Func_val { arg_binder ; body ; orig_lambda ; env ; rec_name } ->
@@ -544,15 +556,3 @@ let bind_fold_right_list f init lst =
     f y x
   in
   List.fold_right ~f:aux ~init:(return init) lst
-
-let rec iter_while f lst =
-  match lst with
-  | [] ->
-     return None
-  | (x :: xs) ->
-     let* b = f x in
-     match b with
-     | None ->
-        iter_while f xs
-     | Some x ->
-        return (Some x)
