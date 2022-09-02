@@ -818,7 +818,7 @@ let daemon =
     return_result ~return @@ fun () -> Daemon.main () in
   Command.basic ~summary ~readme (f <$> Command.Param.return ())
 
-let main = fun () -> Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
+let main = Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler" @@
   [
     "compile"  , compile_group;
     "transpile", transpile_group;
@@ -837,7 +837,7 @@ let main = fun () -> Command.group ~preserve_subcommand_order:() ~summary:"The L
   ]
 
 let run ?argv () =
-  Command.run ~version:Version.version ?argv (main ());
+  Command.run ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
     Done -> 0;

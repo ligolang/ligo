@@ -22,5 +22,5 @@ let main () =
     done in Ok("", "")
   with 
     Break
-  | Sys.Break -> Ok("Bye.", "") 
+  | Sys.Break -> Ok("", "") 
   | _ -> Error ("","Unexpected error")
