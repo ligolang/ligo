@@ -344,21 +344,12 @@ invariants =
     , driDef  = Just (interval 5 7 13)
     , driRefs = [interval 6 3 9]
     }
-
-
-
-
-  -- FIXME:
-  -- * Does not pass because we have troubles with recursive functions
-  -- * in ReasonLIGO: https://issues.serokell.io/issue/LIGO-70
-  --
-  -- , DefinitionReferenceInvariant
-  --   { driFile = contractsDir </> "recursion.religo"
-  --   , driDesc = "sum"
-  --   , driDef = Just (interval 1 9 12)
-  --   , driRefs = [interval 2 29 32]
-  --   }
-
+  , DefinitionReferenceInvariant
+    { driFile = contractsDir </> "recursion.religo"
+    , driDesc = "sum"
+    , driDef = Just (interval 1 9 12)
+    , driRefs = [interval 2 29 32]
+    }
   , DefinitionReferenceInvariant
     { driFile = contractsDir </> "type-constructor.ligo"
     , driDesc = "Increment, type constructor"
