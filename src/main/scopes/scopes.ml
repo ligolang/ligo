@@ -35,8 +35,8 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       match rhs.wrap_content with
       | M_struct decls ->
         let (mod_top_env, mod_inner_env, scopes, _) = List.fold_left ~f:declaration ~init:(Def_map.empty, Def_map.empty, scopes, partials) decls in
-        let env = merge_defs mod_top_env mod_inner_env in
-        let def = make_m_def ~range ~body_range:rhs.location (get_mod_binder_name module_binder) env in
+        let mod_env = merge_defs mod_top_env mod_inner_env in
+        let def = make_m_def ~range ~body_range:rhs.location (get_mod_binder_name module_binder) mod_env in
         let env = add_shadowing_def (get_mod_binder_name module_binder) def env in
         let all_defs = merge_defs env all_defs in
         find_scopes' (all_defs,env,scopes,let_result.location) partials let_result
@@ -205,9 +205,9 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
       let range = ModVar.get_location module_binder in
       match module_.wrap_content with
       | M_struct m ->
-        let (mod_top_env, mod_inner_env, scopes, _) = List.fold_left ~f:declaration ~init:(Def_map.empty, inner_def_map, scopes, partials) m in
-        let inner_def_map = merge_defs mod_top_env mod_inner_env in
-        let def = make_m_def ~range ~body_range:module_.location (get_mod_binder_name module_binder) inner_def_map in
+        let (mod_top_env, mod_inner_env, scopes, _) = List.fold_left ~f:declaration ~init:(Def_map.empty, Def_map.empty, scopes, partials) m in
+        let mod_env = merge_defs mod_top_env mod_inner_env in
+        let def = make_m_def ~range ~body_range:module_.location (get_mod_binder_name module_binder) mod_env in
         let top_def_map = add_shadowing_def (get_mod_binder_name module_binder) def top_def_map in
         ( top_def_map, inner_def_map, scopes, partials )
       | M_variable m -> 
@@ -239,3 +239,6 @@ let scopes : with_types:bool -> options:Compiler_options.middle_end -> Ast_core.
   (* TODO: nested module name B2 or A.B.2 ?? *)
   (* TODO: update schema.json after modifying code *)
   (* TODO: check the body range of module defs *)
+
+  (* TODO: Fix nested module var references *)
+  (* TODO: Fix top module var used inside nested module update reference *)

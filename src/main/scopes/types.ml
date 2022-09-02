@@ -170,7 +170,7 @@ module Definitions = struct
       let e = get_binder_name element in
       let e_loc = Ast_core.ValueVar.get_location element in
       let mvs = List.map mvs ~f:get_mod_binder_name in
-      let ms = List.rev @@ find_modules_to_update mvs env in
+      let ms = find_modules_to_update mvs env in
       let rec aux ms env =
         match ms with
         | [] ->
