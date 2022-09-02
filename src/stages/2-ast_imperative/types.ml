@@ -105,7 +105,7 @@ and  declaration = declaration_content Location.wrap
 and  decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]
 
-and module_expr_content = decl Declaration.module_expr
+and module_expr_content = decl Module_expr.t
 and module_expr = module_expr_content Location.wrap
   [@@deriving eq,compare,yojson,hash]
 

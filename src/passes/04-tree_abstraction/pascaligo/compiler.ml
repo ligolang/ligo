@@ -1153,7 +1153,7 @@ and compile_declaration ~raise : ?attr:CST.attribute list -> CST.declaration -> 
 and compile_module_expression ~raise : CST.module_expr ->  AST.module_expr = function
   | CST.M_Body { region ; value = { enclosing = _ ; declarations } } -> (
     let decls = compile_declarations ~raise declarations in
-    Location.wrap ~loc:(Location.lift region) (AST.Declaration.M_struct decls)
+    Location.wrap ~loc:(Location.lift region) (Module_expr.M_struct decls)
   )
   | CST.M_Path { region ; value = { module_path ; selector = _ ; field } } -> (
     let path =
@@ -1161,11 +1161,11 @@ and compile_module_expression ~raise : CST.module_expr ->  AST.module_expr = fun
       let field = compile_mod_var field in
       List.Ne.append module_path (field,[])
     in
-    Location.wrap ~loc:(Location.lift region) (AST.Declaration.M_module_path path)
+    Location.wrap ~loc:(Location.lift region) (Module_expr.M_module_path path)
   )
   | CST.M_Var mod_name -> (
     let v : ModuleVar.t = compile_mod_var mod_name in
-    Location.wrap ~loc:(ModuleVar.get_location v) (AST.Declaration.M_variable v)
+    Location.wrap ~loc:(ModuleVar.get_location v) (Module_expr.M_variable v)
   )
 
 and compile_declarations ~raise : CST.declaration Utils.nseq -> AST.module_ =

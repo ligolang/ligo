@@ -148,7 +148,7 @@ module Fold_helpers(M : Monad) = struct
 
   and module_expr : (decl -> decl monad) ->  module_expr -> module_expr monad =
     fun f mexp ->
-      let open Declaration in
+      let open Module_expr in
       bind_map_location
         (function
         | M_struct prg ->

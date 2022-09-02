@@ -9,7 +9,7 @@ module Protocols = Protocols
 type t = module_
 let pp ppf m = PP.module_ ppf @@ m
 let add_module : ?public:unit -> ?hidden:unit -> Ligo_prim.ModuleVar.t -> Ast_typed.module_ -> t -> t = fun ?public ?hidden module_binder module_ env ->
-  let module_ = Location.wrap @@ Declaration.M_struct module_ in
+  let module_ = Location.wrap @@ Module_expr.M_struct module_ in
   let new_d = Location.wrap @@ Declaration.Declaration_module ({module_binder;module_=module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}}) in
   let new_decl = Decl new_d in
   new_decl :: env
@@ -23,7 +23,7 @@ let fold ~f ~init (env:t) = List.fold ~f ~init @@ List.rev env
 type core = Ast_core.module_
 let add_core_module ?public ?hidden : ModuleVar.t -> Ast_core.module_ -> core -> core =
   fun module_binder module_ env ->
-    let module_ = Location.wrap @@ Ast_core.Declaration.M_struct module_ in
+    let module_ = Location.wrap @@ Module_expr.M_struct module_ in
     let new_d = Location.wrap @@ Ast_core.Declaration.Declaration_module {module_binder;module_;module_attr={public=Option.is_some public;hidden=Option.is_some hidden}} in
   let new_decl = Ast_core.Decl new_d in
     new_decl :: env

@@ -182,7 +182,7 @@ and  declaration = declaration_content Location.wrap
 and  decl = Decl of declaration
   [@@deriving eq,compare,yojson,hash]
 
-and module_expr = decl Declaration.module_expr Location.wrap
+and module_expr = decl Module_expr.t Location.wrap
   [@@deriving eq,compare,yojson,hash]
 
 type module_ = decl list

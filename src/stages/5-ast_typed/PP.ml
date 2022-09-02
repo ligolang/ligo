@@ -166,7 +166,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
 and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
 and decl ppf (Types.Decl d) = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
-    Location.pp_wrap (Types.Declaration.PP.module_expr decl) ppf me
+    Location.pp_wrap (Module_expr.pp decl) ppf me
 
 let module_ ppf (m : module_) = list_sep decl (tag "@,") ppf m
 

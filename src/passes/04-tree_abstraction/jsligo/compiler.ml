@@ -1333,7 +1333,7 @@ and compile_statement_to_declaration ~raise ~export : CST.statement -> AST.decla
     let module_ =
       let _loc = Location.lift region_in in
       Location.wrap ~loc @@
-        Types.Declaration.M_struct (compile_namespace ~raise statements) in
+        Module_expr.M_struct (compile_namespace ~raise statements) in
     let d = Types.Declaration.Declaration_module  {module_binder; module_; module_attr=attributes} in
     [ Location.wrap ~loc d ]
   | SImport {value = {alias; module_path; _}; region} ->

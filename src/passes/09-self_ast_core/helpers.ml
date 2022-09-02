@@ -51,7 +51,7 @@ let rec fold_expression ~raise : ('a, 'err, 'warn) folder -> 'a -> expression ->
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_expr -> 'a = fun self acc x ->
   match x.wrap_content with
-  | Ast_core.Declaration.M_struct (decls : Ast_core.decl list) ->
+  | Module_expr.M_struct (decls : Ast_core.decl list) ->
     List.fold
       ~f:( fun acc (Decl x) ->
         match x.wrap_content with
@@ -61,7 +61,7 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a)  -> 'a -> module_e
       )
       ~init:acc
       decls
-  | Ast_core.Declaration.M_module_path _
+  | M_module_path _
   | M_variable _ -> acc
 
 type ('err,'warn) exp_mapper = raise:('err,'warn) raise -> expression -> expression

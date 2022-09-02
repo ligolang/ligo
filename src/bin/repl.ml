@@ -146,7 +146,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   let module_ =
     let prg = Build.merge_and_type_libraries ~raise ~options file_name in
     let prg = List.map ~f:(fun d -> Ast_typed.Decl d) prg in
-    Simple_utils.Location.wrap (Ast_typed.Declaration.M_struct prg)
+    Simple_utils.Location.wrap (Module_expr.M_struct prg)
   in
   let module_ = Ast_typed.([Simple_utils.Location.wrap @@ Declaration.Declaration_module {module_binder=ModuleVar.of_input_var module_name;module_;module_attr={public=true;hidden=false}}]) in
   let env     = Environment.append module_ state.env in

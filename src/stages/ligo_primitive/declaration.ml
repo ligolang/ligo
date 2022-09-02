@@ -29,7 +29,7 @@ module Make (Attr : Attr) = struct
 
   type ('dcl) declaration_module = {
       module_binder : Var.ModuleVar.t ;
-      module_ : 'dcl module_expr Location.wrap;
+      module_ : 'dcl Module_expr.t Location.wrap;
       module_attr : Attr.module_
     } [@@deriving eq,compare,yojson,hash]
 
@@ -39,14 +39,6 @@ module Make (Attr : Attr) = struct
     | Declaration_module   of ('dcl) declaration_module
 
   (*** Modules language ***)
-
-  and module_path = Var.ModuleVar.t Simple_utils.List.Ne.t
-
-  and 'dcl module_expr =
-    | M_struct of 'dcl list
-    | M_variable of Var.ModuleVar.t
-    | M_module_path of module_path
-    (* FUTURE: Functor ; Apply *)
 
   module Fold = struct
     let rec declaration_constant : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> 'acc -> ('exp,'ty_exp option) declaration_constant -> 'acc
@@ -62,7 +54,7 @@ module Make (Attr : Attr) = struct
 
     and declaration_module : ('acc -> 'dcl -> 'acc) -> 'acc -> ('dcl) declaration_module -> 'acc
     = fun f acc {module_binder=_;module_;module_attr=_} ->
-      let acc = Location.fold (module_expr f) acc module_ in
+      let acc = Location.fold (Module_expr.fold f) acc module_ in
       acc
 
     and declaration : ('acc -> 'exp -> 'acc) -> ('acc -> 'ty_exp -> 'acc) -> ('acc -> 'dcl -> 'acc) -> 'acc -> ('exp,'ty_exp,'dcl) declaration -> 'acc
@@ -72,13 +64,6 @@ module Make (Attr : Attr) = struct
       | Declaration_constant c -> declaration_constant f g acc c
       | Declaration_module   m -> declaration_module   h acc m
 
-    and module_expr : ('acc -> 'dcl -> 'acc) -> 'acc -> 'dcl module_expr -> 'acc =
-      fun f acc mexp ->
-        match mexp with
-        | M_variable _ -> acc
-        | M_struct prg ->
-          List.fold ~f ~init:acc prg
-        | M_module_path _ -> acc
   end
   module Map = struct
     let declaration_constant : ('a -> 'b) -> ('c -> 'd) -> ('a,'c) declaration_constant -> ('b,'d) declaration_constant
@@ -95,7 +80,7 @@ module Make (Attr : Attr) = struct
     let rec declaration_module : ('dcl_src -> 'dcl_dst) ->
       ('dcl_src) declaration_module -> ('dcl_dst) declaration_module
     = fun map {module_binder; module_; module_attr} ->
-      let module_ = Location.map (module_expr map) module_ in
+      let module_ = Location.map (Module_expr.map map) module_ in
       {module_binder;module_;module_attr}
 
     and module_alias
@@ -110,15 +95,6 @@ module Make (Attr : Attr) = struct
     | Declaration_constant c -> let c  = declaration_constant map_e (Option.map ~f:map_ty) c  in Declaration_constant c
     | Declaration_module   m -> let m  = declaration_module        map_dcl m  in Declaration_module m
 
-    and module_expr : ('dcl_src -> 'dcl_dst) ->
-        ('dcl_src) module_expr -> ('dcl_dst) module_expr =
-      fun map ->
-        function
-          | M_struct prg ->
-            let prg = List.map ~f:map prg in
-            M_struct prg
-          | M_variable x -> M_variable x
-          | M_module_path path -> M_module_path path
   end
   module Fold_map = struct
     let declaration_constant : ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a,'c) declaration_constant -> 'acc * ('b,'d) declaration_constant
@@ -135,7 +111,7 @@ module Make (Attr : Attr) = struct
     let rec declaration_module : ('acc -> 'a -> 'acc * 'b) -> 'acc ->
       ('a) declaration_module -> 'acc * ('b) declaration_module
     = fun f acc {module_binder; module_;module_attr} ->
-      let acc,module_ = Location.fold_map (module_expr f) acc module_ in
+      let acc,module_ = Location.fold_map (Module_expr.fold_map f) acc module_ in
       (acc, {module_binder;module_;module_attr})
 
     and module_alias = fun acc ma ->  (acc, ma)
@@ -146,14 +122,6 @@ module Make (Attr : Attr) = struct
       | Declaration_type    ty -> let (acc,ty) = declaration_type      g acc ty in (acc, (Declaration_type     ty))
       | Declaration_constant c -> let (acc,c)  = declaration_constant f (Option.fold_map g) acc c in (acc, (Declaration_constant c))
       | Declaration_module   m -> let (acc,m)  = declaration_module     h acc m in (acc, (Declaration_module   m))
-
-    and module_expr : ('acc -> 'a -> 'acc * 'b) -> 'acc -> ('a) module_expr -> 'acc * ('b) module_expr =
-      fun f acc mexp ->
-        match mexp with
-        | M_struct prg ->
-          let (x,prg) = List.fold_map ~f ~init:acc prg in
-          (x, (M_struct prg))
-        | M_variable _ | M_module_path _ -> (acc,mexp)
 
   end
   module PP = struct
@@ -178,21 +146,13 @@ module Make (Attr : Attr) = struct
     and declaration_module h ppf = fun {module_binder;module_;module_attr} ->
       Format.fprintf ppf "@[<2>module %a =@ %a%a@]"
         Var.ModuleVar.pp module_binder
-        (Location.pp_wrap (module_expr h)) module_
+        (Location.pp_wrap (Module_expr.pp h)) module_
         Attr.pp_module module_attr
 
     and declaration ?(print_type = true) f g h ppf = function
       | Declaration_type    ty -> declaration_type g ppf ty
       | Declaration_constant c -> declaration_constant ~print_type f (Format.pp_print_option g) ppf c
       | Declaration_module   m -> declaration_module h ppf m
-
-    and module_expr h ppf = function
-      | M_struct p ->
-        Format.fprintf ppf "@[<v>struct@,%a@,end@]"
-          Simple_utils.PP_helpers.(list_sep (h) (tag "@,")) p
-      | M_variable x -> Var.ModuleVar.pp ppf x
-      | M_module_path path ->
-        Simple_utils.PP_helpers.(ne_list_sep (Var.ModuleVar.pp) (tag ".")) ppf path
 
   end
 end

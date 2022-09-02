@@ -5,7 +5,7 @@ let internalize_typed ?(inner = false) (ds : Ast_typed.program) : Ast_typed.prog
       let module_attr = Attr.{ public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = Declaration.M_struct (module' ~inner:true x)}
+          { module_ with wrap_content = Ligo_prim.Module_expr.M_struct (module' ~inner:true x)}
         | _ -> module_
       in
       Declaration_module { module_binder ; module_ ; module_attr }
@@ -28,7 +28,7 @@ let internalize_core ?(inner = false) (ds : Ast_core.program) : Ast_core.program
       let module_attr = Attr.{ public = inner ; hidden = true } in
       let module_ = match module_ with
         | { wrap_content = M_struct x ; _ } ->
-          { module_ with wrap_content = Declaration.M_struct (module' ~inner:true x)}
+          { module_ with wrap_content = Ligo_prim.Module_expr.M_struct (module' ~inner:true x)}
         | _ -> module_
       in
       Declaration_module { module_binder ; module_ ; module_attr }

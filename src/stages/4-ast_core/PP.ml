@@ -98,6 +98,6 @@ and expression_content ppf (ec : expression_content) =
 and declaration ppf (d : declaration) = Types.Declaration.PP.declaration expression type_expression decl ppf (Location.unwrap d)
 and decl ppf (Types.Decl d) = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
-    Location.pp_wrap (Types.Declaration.PP.module_expr decl) ppf me
+    Location.pp_wrap (Module_expr.pp decl) ppf me
 
 let program ppf (p : program) = list_sep declaration (tag "@,") ppf p

@@ -323,7 +323,7 @@ and fold_map_expression_in_module_expr : 'a fold_mapper -> 'a -> module_expr -> 
   match x.wrap_content with
   | M_struct decls ->
     let res,decls = fold_map_module fold_mapper acc decls in
-    return res (Types.Declaration.M_struct decls)
+    return res (Module_expr.M_struct decls)
   | M_module_path _ as x -> return acc x
   | M_variable _ as x -> return acc x
 
